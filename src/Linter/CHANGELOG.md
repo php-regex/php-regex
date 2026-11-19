@@ -457,3 +457,9 @@ CHANGELOG
    generator, count as writes; a constant PHP defines keeps its value; a
    folded value past 64 KiB is not read, and a variable read many times is
    read once.
+ * The lint reads a file PHP warns about as it tokenizes it without a word:
+   a double-quoted literal holding an octal escape above `\377` printed
+   `Warning: Octal escape sequence overflow` on stdout, by default, once for
+   each reader of the file, in the middle of the report of `regex lint`, a
+   checkstyle, JUnit or GitHub document included, and of the JSON report of
+   `php artisan regex:lint`.

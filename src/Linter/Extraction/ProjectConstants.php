@@ -179,7 +179,8 @@ final class ProjectConstants
             $read += [\T_STRING => true, \T_NAME_FULLY_QUALIFIED => true];
         }
 
-        $tokens = token_get_all($content);
+        // As the extraction reads the source: without a word.
+        $tokens = @token_get_all($content);
         $offsets = PhpTokens::offsets($tokens);
         $closers = PhpTokens::closers($tokens);
         $collector = new TokenValueCollector($tokens, $offsets, $closers, $content, [], false);

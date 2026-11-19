@@ -127,7 +127,9 @@ final class AccessRuleSummary
         if ([] !== $methods) {
             $parts[] = 'methods='.implode('|', $methods);
         }
-        if (null !== $host && '' !== trim($host, " \t\n\r\0\x0B")) {
+        // The security bundle chains a host matcher for any host but "" and
+        // "0", one of spaces included.
+        if (null !== $host && '' !== $host && '0' !== $host) {
             $parts[] = 'host='.$host;
         }
         if ([] !== $ips) {
@@ -137,7 +139,7 @@ final class AccessRuleSummary
             $parts[] = 'channel='.$requiresChannel;
         }
 
-        // A host or a channel written empty restricts nothing.
+        // A host written empty, or a channel of spaces, restricts nothing.
         return [] === $parts ? 'any' : implode(' • ', $parts);
     }
 }

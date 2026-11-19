@@ -76,6 +76,40 @@ CHANGELOG
    `array_push()`, `array_unshift()` or `[] =` adds with a rule before the
    regex one, `'nullable|regex:/x|y/'`, is a rule Laravel names
    `nullable|regex`, and no pattern is linted.
+ * `regex:lint` splits on `|` each string element of the array
+   `Rule::anyOf()` or `new AnyOf()` takes (Laravel 12.8 and later), which
+   the rule validates alone through `Validator::make()`:
+   `Rule::anyOf(['regex:/^(a|b)$/'])` runs `/^(a`, where `/^(a|b)$/` was
+   linted. An array element, `Rule::anyOf([['required', 'regex:/^(a|b)$/']])`,
+   stays one rule.
+ * `regex:lint` reads the rule of Livewire's `#[Rule]` (Livewire 3.0 and
+   later) and `#[Validate]` (3.2 and later) as Livewire hands it to Laravel,
+   the property's rules: a string, given first or named `rule`, is split on
+   every `|`, `#[Validate('regex:/^(a|b)$/')]` runs `/^(a`, where
+   `/^(a|b)$/` was linted, and so is a value of keyed rules. A list keeps
+   one rule per element, and so do the strings two attributes of one
+   component give one key, whatever property each marks, which Livewire
+   merges into one list:
+   `'nullable|regex:/^a$/'` there is one rule Laravel names
+   `nullable|regex`, and no pattern is linted.
+ * `regex:lint` reads validation rules from the string literals of the PHP
+   code as PHP reads them, where it searched the file's text for quotes. A
+   rule whose `:` an escape writes, `"regex\x3a/^a$/"`, is read; a literal
+   over several lines is read; a quoted rule in a comment, in a heredoc or a
+   nowdoc, or in the text around the PHP tags, which Laravel never runs, is
+   no longer linted. In a double-quoted rules string that interpolates, a
+   rule between two `|` of its text is read, `"min:$min|regex:/^a$/"` runs
+   `/^a$/`; one an expression is part of, `"regex:/^{$prefix}-\d+$/"`, is
+   no longer linted with the expression as its text.
+ * `regex:lint` reads literals joined with `.` as the one string PHP
+   builds, where it read each literal alone: `'regex:/^(a' . 'b)$/'` runs
+   `/^(ab)$/`, and `/^(a`, which Laravel never runs, was linted;
+   `'required|' . 'regex:/^(a|b)$/'` is split as the rules string it is. An
+   operand that is no literal is read as an expression of an interpolated
+   string: the rule it is part of is not read, and `'regex:/^' . $prefix .
+   '$/'` no longer lints `/^`. A heredoc is read as PHP decodes it, a nowdoc
+   as written, where the code says it holds rules: given to a key,
+   assigned, or taken by a call as rules.
  * `regex:lint` reads a regex rule whose name has blanks around it,
    `'required | regex:/^b+$/'` or `'regex :/^b+$/'`, which Laravel trims and
    runs: it was not linted. Laravel reads the parameter of such a rule as

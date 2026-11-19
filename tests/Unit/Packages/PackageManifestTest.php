@@ -190,6 +190,9 @@ final class PackageManifestTest extends TestCase
             // A rule string is decoded as PHP decodes its literal, and one
             // given to a call is told apart by the tokens around it.
             'Linter\Extraction\PhpStringLiteral', 'Linter\Extraction\PhpTokens',
+            // A Livewire attribute is told by the class its name resolves
+            // to, as the extraction resolves the name of a call.
+            'Linter\Extraction\NameResolutionContext', 'Linter\Extraction\TokenNameResolver',
         ],
         // The overlap rule asks PCRE2 for the characters of a branch's first
         // atom where the byte sets stop, above ASCII, and compares the

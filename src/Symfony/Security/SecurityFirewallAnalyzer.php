@@ -52,6 +52,19 @@ final class SecurityFirewallAnalyzer
                 continue;
             }
 
+            // Known at run time only, in the environment the application
+            // runs in.
+            if ($firewall['fromEnvironment'] ?? false) {
+                $skipped[] = [
+                    'name' => $firewall['name'],
+                    'file' => $firewall['file'],
+                    'line' => $firewall['line'],
+                    'reason' => 'The pattern is read from the environment and is not evaluated.',
+                ];
+
+                continue;
+            }
+
             // The analysis gives a pattern the library refuses back as its
             // error; whatever it throws is a bug, and surfaces.
             $analysis = $this->regex->redos($this->patternNormalizer->normalize($pattern));

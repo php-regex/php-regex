@@ -13,10 +13,15 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Laravel\Extractor;
 
+use Illuminate\Contracts\Translation\Translator as TranslatorContract;
+use Illuminate\Support\Facades\Facade;
+use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\ConditionalRules;
+use Illuminate\Validation\Factory;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\AnyOf;
 use Illuminate\Validation\ValidationRuleParser;
 use Illuminate\Validation\Validator;
 use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
@@ -27,6 +32,7 @@ use PHPRegex\Tests\Fixtures\Laravel\ValidationRules\UpdateUserLaneRequest;
 use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RequiresMethod;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -276,21 +282,32 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         yield 'an escaped line feed after the name' => ['literal' => '"regex\n:/^b$/"', 'compiles' => true];
         yield 'an escaped letter in the name' => ['literal' => '"nullable|\x72egex:/^c$/"', 'compiles' => true];
         yield 'an escaped bar between two rules' => ['literal' => '"required\x7cregex:/^c$/"', 'compiles' => true];
+        yield 'a name of hexadecimal escapes' => ['literal' => '"\x72\x65\x67\x65\x78:/^o$/"', 'compiles' => true];
+        yield 'a name of octal escapes' => ['literal' => '"required|\162\145\147\145\170:/^p$/"', 'compiles' => true];
+        yield 'a name of code point escapes' => ['literal' => '"\u{72}\u{65}\u{67}\u{65}\u{78}:/^q$/"', 'compiles' => true];
+        yield 'an escaped colon after the name' => ['literal' => '"regex\x3a/^d$/"', 'compiles' => true];
+        yield 'an octal colon in a rules string' => ['literal' => '"required|regex\072/^(e|f)$/"', 'compiles' => false];
+        yield 'a code point colon after a negation' => ['literal' => '"not_regex\u{3a}/^g$/"', 'compiles' => true];
+        yield 'a binary literal given to a key' => ['literal' => "b'regex:/^(h|i)$/'", 'compiles' => false];
+        // PHP keeps a line feed written in the literal: Laravel reads it as
+        // a blank before the rule's name.
+        yield 'a literal over two lines' => ['literal' => "'required|\nregex:/^(j|k)$/'", 'compiles' => false];
     }
 
     /**
      * A double-quoted literal whose escapes spell no regex rule once PHP
      * decodes it holds no pattern: Laravel reads "regex=/a/" as a rule named
-     * "regex=/a/", and a line feed as no rule at all.
+     * "regex=/a/", and a line feed as no rule at all. A single-quoted one
+     * keeps its escapes: 'regex\x3a/a/' is a rule of that name.
      */
     #[Test]
     public function test_a_literal_whose_escapes_spell_no_rule_is_not_read(): void
     {
-        $this->assertSame([], self::laravelPatterns(['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/"]));
+        $this->assertSame([], self::laravelPatterns(['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'e' => 'regex\x3a/a/']));
 
         $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
             <?php
-            return ['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'c' => "required\n", 'd' => ["min:2\x7cmax:3"]];
+            return ['a' => "regex\x3d/a/", 'b' => "required|regex\x3d/a/", 'c' => "required\n", 'd' => ["min:2\x7cmax:3"], 'e' => 'regex\x3a/a/'];
             PHP]);
 
         $this->assertSame([], (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], [])));
@@ -316,6 +333,332 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
 
         $this->assertSame([[2, '/^d$/'], [3, '/^f$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A rule whose colon an escape writes is read once PHP decodes its
+     * literal, whatever quote another literal of the line holds: a double
+     * quote inside a single-quoted one, or a single quote inside a
+     * double-quoted one.
+     */
+    #[Test]
+    public function test_a_rule_whose_colon_is_escaped_is_read_whatever_quote_another_literal_holds(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $path = 'C:\dir "x\y'; $rules = ['c' => "regex\x3a/^d$/"];
+            $label = 'say "hi\n'; $more = ['e' => "required|regex\072/^(f|g)$/"];
+            $quote = "it's"; $last = ['h' => "regex\u{3a}/^i$/", 'j' => 'regex:/^k$/'];
+            return $rules + $more + $last;
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^d$/', '/^(f', '/^i$/', '/^k$/'], $expected);
+        $this->assertSame([true, false, true, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[2, '/^d$/'], [3, '/^(f'], [4, '/^i$/'], [4, '/^k$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A quote in a comment, in a heredoc or a nowdoc, or in the text around
+     * the PHP tags opens no literal: Laravel never runs the rule it seems to
+     * hold.
+     */
+    #[Test]
+    public function test_text_outside_the_php_code_holds_no_rule(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <p>'regex:/^(a|b)$/'</p>
+            <?php
+            // 'regex:/^(c|d)$/'
+            /** "regex:/^(e|f)$/" */
+            $text = <<<TEXT
+                'regex:/^(g|h)$/'
+                TEXT;
+            $quoted = <<<'TEXT'
+                "regex:/^(i|j)$/"
+                TEXT;
+            $rules = ['k' => 'regex:/^k$/'];
+            ?>
+            "regex:/^(l|m)$/"
+            <?php return $rules;
+            PHP]);
+        ob_start();
+
+        try {
+            $rules = require $project.'/app/Rules.php';
+        } finally {
+            ob_end_clean();
+        }
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^k$/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[11, '/^k$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A double-quoted rules string that interpolates is split on the "|"
+     * its text writes: a rule between two of them, or the start or the end
+     * of the string, is read once PHP decodes it, its colon escaped or not.
+     * A rule an expression is part of runs a pattern only the running code
+     * knows, and is not read: "/^{$prefix}[a-z]+$/" is no pattern Laravel
+     * runs.
+     */
+    #[Test]
+    public function test_a_rule_an_interpolation_builds_is_not_read_and_one_beside_it_is(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $min = 2; $max = 9; $prefix = 'ab'; $flags = 'i'; $rule = 'nullable';
+            return [
+                'a' => "min:$min|regex:/^a$/",
+                'b' => "regex:/^(b|c)$/|max:{$max}",
+                'c' => "{$rule}|regex\x3a/^(d|e)$/",
+                'd' => "required|regex:/^{$prefix}[a-z]+$/",
+                'e' => "regex:/^$prefix-\d+$/$flags",
+                'f' => ["regex:/^f$/{$flags}"],
+                'g' => "{$rule}regex:/^g$/",
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^a$/', '/^(b', '/^(d', '/^ab[a-z]+$/', '/^ab-\d+$/i', '/^f$/i'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^a$/'], [5, '/^(b'], [6, '/^(d']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * Literals joined with "." are the one string PHP builds, read where
+     * the concatenation starts: "'regex:/^(a' . 'b)$/'" runs "/^(ab)$/", not
+     * "/^(a". An operand that is no literal is as an expression of an
+     * interpolation: the rule it is part of is not read, and a rule between
+     * two "|" of the literals beside it is.
+     */
+    #[Test]
+    public function test_a_concatenation_is_read_as_the_string_php_builds(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $max = 9; $prefix = 'ab'; $base = 'nullable'; $rule = 'nullable|';
+            return [
+                'a' => 'regex:/^(a' . 'b)$/',
+                'b' => ['required', 'regex:/^(c|' . 'd)$/'],
+                'c' => 'required|'
+                    // The rule Laravel splits.
+                    . 'regex:/^(e|f)$/',
+                'd' => 'required|max:' . $max . '|regex:/^(g|h)$/',
+                'e' => 'regex:/^' . $prefix . '[a-z]+$/',
+                'f' => $base . '|regex:/^(i|j)$/',
+                'g' => ['required', $rule . 'regex:/^k$/'],
+                'h' => "regex:/^l" . '$/',
+                'i' => 'required|max:' . strlen($prefix) . '|regex:/^(m|n)$/',
+                'j' => trim($base) . '|regex:/^(o|p)$/',
+                'k' => $base . $max . '|regex:/^(q|r)$/',
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^(ab)$/', '/^(c|d)$/', '/^(e', '/^(g', '/^ab[a-z]+$/', '/^(i', '/^l$/', '/^(m', '/^(o', '/^(q'], $expected);
+        $this->assertSame([true, true, false, false, true, false, true, false, false, false], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^(ab)$/'], [5, '/^(c|d)$/'], [8, '/^(e'], [9, '/^(g'], [11, '/^(i'], [13, '/^l$/'], [14, '/^(m'], [15, '/^(o'], [16, '/^(q']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A rule of a concatenation is placed on the line of the literal it
+     * starts in, where a marker on that line finds it: the literals before
+     * it change nothing.
+     */
+    #[Test]
+    public function test_a_rule_of_a_concatenation_is_placed_on_the_line_of_its_literal(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            return [
+                'a' => 'required|'
+                    . 'regex:/[/',
+                'b' => 'regex:/^(a'
+                    . '|b)$/',
+                'c' => ['required', ('regex:/^c' . '$/')],
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/[/', '/^(a', '/^c$/'], $expected);
+        $this->assertSame([false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/[/'], [5, '/^(a'], [7, '/^c$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A heredoc is read as PHP decodes it, a nowdoc as written, where the
+     * code says it holds rules: given to a key, assigned, or taken by a call
+     * as rules, alone or in a concatenation. Anywhere else its text is
+     * not read.
+     */
+    #[Test]
+    public function test_a_heredoc_given_as_rules_is_read_as_php_decodes_it(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $length = strlen(<<<'TEXT'
+                regex:/^(x|y)$/
+                TEXT);
+            return [
+                'a' => <<<'RULES'
+                    required|regex:/^(a|b)$/
+                    RULES,
+                'b' => <<<RULES
+                    regex\x3a/^c$/
+                    RULES,
+                'c' => 'required|' . <<<'RULE'
+                    regex:/^d$/
+                    RULE,
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/^(a', '/^c$/', '/^d$/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[6, '/^(a'], [9, '/^c$/'], [12, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A comment between a key or an assignment and the rules changes
+     * nothing Laravel reads: the rules are given to the key, assigned or
+     * pushed all the same.
+     */
+    #[Test]
+    public function test_a_comment_before_the_rules_changes_nothing(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            $rules = [
+                'a' => /* partner rule */ <<<'RULES'
+                    required|regex:/^(a|b)$/
+                    RULES,
+                'b' => // the lane code
+                    'regex:/^(c|d)$/',
+            ];
+            $rules['e'] = /* split */ 'regex:/^(e|f)$/';
+            $rules['g'][ ] /* one element */ = 'regex:/^(g|h)$/';
+            return $rules;
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/^(a', '/^(c', '/^(e', '/^(g|h)$/'], $expected);
+        $this->assertSame([false, false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[3, '/^(a'], [7, '/^(c'], [9, '/^(e'], [10, '/^(g|h)$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * An operand of a concatenation in parentheses that only group it is
+     * the string they hold: "('regex:/^a') . '$/'" runs "/^a$/", and no
+     * operand of it is read on its own.
+     */
+    #[Test]
+    public function test_an_operand_in_parentheses_is_part_of_the_concatenation(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            function lane($validator): void
+            {
+                $validator->sometimes('e', ('required|') . 'regex:/^(e|f)$/', fn () => true);
+            }
+            return [
+                'a' => [('regex:/^a') . '$/'],
+                'b' => ('required|') . ('regex:/^(b|c)$/'),
+                'c' => (('regex:/^d') . ('$/')),
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = [...self::laravelPatterns(self::sometimes('e', ('required|').'regex:/^(e|f)$/')), ...self::laravelPatterns($rules)];
+        $this->assertSame(['/^(e', '/^a$/', '/^(b', '/^d$/'], $expected);
+        $this->assertSame([false, true, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[4, '/^(e'], [7, '/^a$/'], [8, '/^(b'], [9, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * A rule whose name and colon two literals write is read, in a file
+     * that writes neither elsewhere.
+     */
+    #[Test]
+    public function test_a_rule_whose_name_and_colon_are_two_literals_is_read(): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => <<<'PHP'
+            <?php
+            return [
+                'a' => 'regex' . ':/[/',
+                'b' => "required|not_regex" . ':/^(b|c)$/',
+                'c' => ['regex ' . ' :/^d$/'],
+            ];
+            PHP]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $expected = self::laravelPatterns($rules);
+        $this->assertSame(['/[/', '/^(b', '/^d$/'], $expected);
+        $this->assertSame([false, false, true], array_map(EngineProbe::compiles(...), $expected));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([[3, '/[/'], [4, '/^(b'], [5, '/^d$/']], array_map(static fn (PatternOccurrence $occurrence): array => [$occurrence->line, $occurrence->pattern], $occurrences));
+    }
+
+    /**
+     * Laravel reads the rule the literals of a concatenation join, whatever
+     * stands between them or cuts the name in two. The rule alone in its
+     * file is read all the same.
+     */
+    #[Test]
+    #[DataProvider('provideRuleNamesTheLiteralsCut')]
+    public function test_a_rule_whose_name_the_literals_cut_is_read_alone_in_its_file(string $rule): void
+    {
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nreturn ['a' => ".$rule."];\n"]);
+        $rules = require $project.'/app/Rules.php';
+        $this->assertIsArray($rules);
+        $this->assertSame(['/[/'], self::laravelPatterns($rules));
+
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame(['/[/'], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{rule: string}>
+     */
+    public static function provideRuleNamesTheLiteralsCut(): iterable
+    {
+        yield 'a comment before the dot' => ['rule' => "'regex' /* partner rule */ . ':/[/'"];
+        yield 'a line comment before the dot' => ['rule' => "'regex' // partner rule\n    . ':/[/'"];
+        yield 'the name in brackets' => ['rule' => "('regex') . ':/[/'"];
+        yield 'the name in a nowdoc' => ['rule' => "<<<'NAME'\n    regex\n    NAME . ':/[/'"];
+        yield 'the name in a heredoc' => ['rule' => "<<<NAME\n    regex\n    NAME . ':/[/'"];
+        yield 'the name cut in two' => ['rule' => "'re' . 'gex:/[/'"];
+        yield 'the name cut in three, the colon apart' => ['rule' => "'reg' . \"e\" . 'x' . ':/[/'"];
+        yield 'the name cut in capitals, an empty comment and brackets between' => ['rule' => "'RE' /**/ . ('GEX:/[/')"];
     }
 
     /**
@@ -363,13 +706,7 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     #[DataProvider('provideCallArguments')]
     public function test_a_string_is_split_where_the_call_takes_rules(string $code, \Closure $rules, string $expected, bool $compiles): void
     {
-        $this->assertSame([$expected], self::laravelPatterns($rules()));
-        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
-
-        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\n".$code."\n"]);
-        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
-
-        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+        $this->assertReadAsLaravelRunsIt($code, $rules, $expected, $compiles);
     }
 
     /**
@@ -427,6 +764,357 @@ final class ValidationRuleLaravelReadingTest extends TestCase
     }
 
     /**
+     * An element of the array Rule::anyOf() or an AnyOf rule takes is a
+     * rules string: the rule validates each alone through
+     * Validator::make(). An element of an array inside it is one rule. The
+     * code is read on every Laravel; the pattern Laravel runs is checked
+     * where Laravel has the call (12.8 and later), by the test below.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    #[Test]
+    #[DataProvider('provideRuleSetArguments')]
+    public function test_a_string_element_of_the_rule_sets_any_of_takes_is_split(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertReadInTheCode($code, $expected, $compiles);
+    }
+
+    /**
+     * The pattern each row of provideRuleSetArguments() expects is the one
+     * Laravel runs for its rules.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    #[Test]
+    #[DataProvider('provideRuleSetArguments')]
+    #[RequiresMethod(Rule::class, 'anyOf')]
+    public function test_laravel_runs_the_pattern_read_in_the_rule_sets_any_of_takes(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
+    }
+
+    /**
+     * Reading what Rule::anyOf() validates leaves the Validator facade as it
+     * found it: a factory it held before is its factory after. The test
+     * leaves it as it found it too: what an earlier test left in it is
+     * there after.
+     */
+    #[Test]
+    #[RequiresMethod(Rule::class, 'anyOf')]
+    public function test_the_any_of_oracle_leaves_the_validator_facade_as_it_found_it(): void
+    {
+        $application = Facade::getFacadeApplication();
+        Facade::setFacadeApplication(null);
+        // What the facade holds itself, none without an application.
+        $cached = ValidatorFacade::getFacadeRoot();
+        $factory = new Factory(new Translator(new ArrayLoader(), 'en'));
+        ValidatorFacade::swap($factory);
+
+        try {
+            $this->assertSame([['regex:/^(a', 'b)$/']], self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])));
+            $this->assertSame($factory, ValidatorFacade::getFacadeRoot());
+        } finally {
+            if (null === $cached) {
+                ValidatorFacade::clearResolvedInstance('validator');
+            } else {
+                ValidatorFacade::swap($cached);
+            }
+            $left = ValidatorFacade::getFacadeRoot();
+            Facade::setFacadeApplication($application);
+        }
+
+        $this->assertSame($cached, $left);
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: string, compiles: bool}>
+     */
+    public static function provideRuleSetArguments(): iterable
+    {
+        yield 'an element of the array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element after another of the array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf(['required', 'regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['required', 'regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the rules of Rule::anyOf() given by name' => [
+            'code' => "return ['code' => Rule::anyOf(rules: ['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(rules: ['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array Rule::anyOf() takes in parentheses' => [
+            'code' => "return ['code' => Rule::anyOf((['regex:/^(a|b)$/']))];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array() Rule::anyOf() takes' => [
+            'code' => "return ['code' => \\Illuminate\\Validation\\Rule::anyOf(array('regex:/^(a|b)$/'))];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array an AnyOf rule takes' => [
+            'code' => "return ['code' => new AnyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(new AnyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array an AnyOf rule imported under another name takes' => [
+            'code' => "use Illuminate\\Validation\\Rules\\AnyOf as Either;\nreturn ['code' => new Either(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => self::anyOfRules(new AnyOf(['regex:/^(a|b)$/'])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of the array another class named AnyOf takes' => [
+            'code' => "return ['code' => new \\App\\Rules\\AnyOf(['regex:/^(a|b)$/'])];",
+            'rules' => static fn (): array => ['code' => ['regex:/^(a|b)$/']],
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'an element of a rules array Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([['required', 'regex:/^(a|b)$/']])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([['required', 'regex:/^(a|b)$/']])),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'a rules string of keyed rules Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([['code' => 'regex:/^(a|b)$/']])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([['code' => 'regex:/^(a|b)$/']])),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'an element of an array a call inside Rule::anyOf() takes' => [
+            'code' => "return ['code' => Rule::anyOf([Rule::when(\$condition, ['regex:/^(a|b)$/'])])];",
+            'rules' => static fn (): array => self::anyOfRules(Rule::anyOf([Rule::when(true, ['regex:/^(a|b)$/'])])),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+    }
+
+    /**
+     * Livewire's #[Validate] and #[Rule] (Livewire 3.0 to 4.x) hand their
+     * rule to Laravel as the property's rules: BaseValidate::boot() adds
+     * [$property => $rule], or a keyed array as it is, and
+     * HandlesValidation::getRules() merges what every attribute adds with
+     * array_merge_recursive() before Validator::make(). A string is then a
+     * rules string, split on "|", a list holds one rule per element, and
+     * two attributes of one property make one list: each string is one
+     * rule. The rules are given first or named "rule"; "as" and "message"
+     * hold none.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Livewire hands them to Laravel
+     */
+    #[Test]
+    #[DataProvider('provideLivewireAttributes')]
+    public function test_a_livewire_attribute_is_read_as_livewire_hands_its_rules_to_laravel(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
+
+        $project = $this->makeProject(['app/Livewire/Lane.php' => "<?php\nnamespace App\\Livewire;\nuse Livewire\\Attributes\\Rule;\nuse Livewire\\Attributes\\Validate;\nuse Livewire\\Component;\nfinal class Lane extends Component\n{\n".$code."\n}\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: string, compiles: bool}>
+     */
+    public static function provideLivewireAttributes(): iterable
+    {
+        yield 'a string' => [
+            'code' => "#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string given by name, beside a name and a message' => [
+            'code' => "#[Validate(as: 'lane code', rule: 'regex:/^(a|b)$/', message: 'Pick a lane.')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string of the Rule attribute' => [
+            'code' => "#[Rule('required|regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required|regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string of the attribute named in full' => [
+            'code' => "#[\\Livewire\\Attributes\\Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a list' => [
+            'code' => "#[Validate(['required', 'regex:/^(a|b)$/'])]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => ['required', 'regex:/^(a|b)$/']]),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'keyed rules' => [
+            'code' => "#[Validate(['code' => 'regex:/^(a|b)$/', 'code.*' => 'required'])]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/', 'code.*' => 'required']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'two attributes of one property' => [
+            'code' => "#[Validate('required')]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'two attributes of one property in one group' => [
+            'code' => "#[Validate('required'), Rule('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a|b)$/',
+            'compiles' => true,
+        ];
+        yield 'one attribute of each of two properties' => [
+            'code' => "#[Validate('required')]\npublic \$name;\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['name' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string beside keyed rules for other keys' => [
+            'code' => "#[Validate(['other' => 'required'])]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string beside keyed rules for other keys written with array()' => [
+            'code' => "#[Validate(array('other' => 'required'))]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'required'], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string beside an attribute that gives no rule' => [
+            'code' => "#[Validate(as: 'lane code')]\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive([], ['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string of a typed property beside keyed rules for its elements' => [
+            'code' => "#[Validate('regex:/^(a|b)$/')]\n#[Validate(rule: ['code.*' => 'required'])]\npublic ?string \$code = null;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/'], ['code.*' => 'required']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+        yield 'a string for a key another component of the file gives too' => [
+            'code' => "#[Validate('required')]\npublic \$code;\n}\nfinal class Dock extends Component\n{\n#[Validate('regex:/^(a|b)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(a|b)$/']),
+            'expected' => '/^(a',
+            'compiles' => false,
+        ];
+    }
+
+    /**
+     * The strings Livewire attributes give one key of a component reach
+     * Laravel as the elements of the list array_merge_recursive() makes of
+     * them, whatever property the attributes mark and whether the key is
+     * written: each is one rule, which Laravel does not split.
+     * "nullable|regex:/^c$/" is then one rule named "nullable|regex", and
+     * runs no pattern.
+     *
+     * @param \Closure(): array<mixed> $rules    the rules as Livewire hands them to Laravel
+     * @param list<string>             $expected
+     */
+    #[Test]
+    #[DataProvider('provideMergedLivewireAttributes')]
+    public function test_the_rules_livewire_attributes_give_one_key_are_one_element_each(string $code, \Closure $rules, array $expected): void
+    {
+        $this->assertSame($expected, self::laravelPatterns($rules()));
+        $this->assertSame(array_fill(0, \count($expected), true), array_map(EngineProbe::compiles(...), $expected));
+
+        $project = $this->makeProject(['app/Livewire/Lane.php' => "<?php\nnamespace App\\Livewire;\nuse Livewire\\Attributes\\Rule;\nuse Livewire\\Attributes\\Validate;\nuse Livewire\\Component;\nfinal class Lane extends Component\n{\n".$code."\n}\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame($expected, array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
+     * @return iterable<string, array{code: string, rules: \Closure(): array<mixed>, expected: list<string>}>
+     */
+    public static function provideMergedLivewireAttributes(): iterable
+    {
+        yield 'two regex rules' => [
+            'code' => "#[Validate('regex:/^a$/')]\n#[Validate('not_regex:/^b$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^a$/'], ['code' => 'not_regex:/^b$/']),
+            'expected' => ['/^a$/', '/^b$/'],
+        ];
+        yield 'a rule before the regex one' => [
+            'code' => "#[Validate('required')]\n#[Validate('nullable|regex:/^c$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'nullable|regex:/^c$/']),
+            'expected' => [],
+        ];
+        yield 'a pattern that holds a bar' => [
+            'code' => "#[Validate(rule: 'regex:/^(d|e)$/'), Rule('required')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(d|e)$/'], ['code' => 'required']),
+            'expected' => ['/^(d|e)$/'],
+        ];
+        yield 'a string beside keyed rules for the property' => [
+            'code' => "#[Validate(['code' => 'required'])]\n#[Validate('regex:/^(f|g)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'required'], ['code' => 'regex:/^(f|g)$/']),
+            'expected' => ['/^(f|g)$/'],
+        ];
+        yield 'keyed rules for the property beside a string' => [
+            'code' => "#[Validate(['code' => 'regex:/^(h|i)$/'])]\n#[Validate('required')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(h|i)$/'], ['code' => 'required']),
+            'expected' => ['/^(h|i)$/'],
+        ];
+        yield 'keyed rules for a key another property gives too' => [
+            'code' => "#[Validate(['other' => 'regex:/^(j|k)$/'])]\npublic \$code;\n#[Validate('required')]\npublic \$other;",
+            'rules' => static fn (): array => array_merge_recursive(['other' => 'regex:/^(j|k)$/'], ['other' => 'required']),
+            'expected' => ['/^(j|k)$/'],
+        ];
+        yield 'a string for a property the keyed rules of another give too' => [
+            'code' => "#[Validate('regex:/^(l|m)$/')]\npublic \$code;\n#[Validate(['code' => 'required'])]\npublic \$other;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => 'regex:/^(l|m)$/'], ['code' => 'required']),
+            'expected' => ['/^(l|m)$/'],
+        ];
+        yield 'a string beside an empty list' => [
+            'code' => "#[Validate([])]\n#[Validate('regex:/^(n|o)$/')]\npublic \$code;",
+            'rules' => static fn (): array => array_merge_recursive(['code' => []], ['code' => 'regex:/^(n|o)$/']),
+            'expected' => ['/^(n|o)$/'],
+        ];
+    }
+
+    /**
+     * The extractor reads in the code the one pattern Laravel runs for these
+     * rules, which compiles or not as the engine says.
+     *
+     * @param \Closure(): array<mixed> $rules the rules as Laravel holds them
+     */
+    private function assertReadAsLaravelRunsIt(string $code, \Closure $rules, string $expected, bool $compiles): void
+    {
+        $this->assertSame([$expected], self::laravelPatterns($rules()));
+        $this->assertReadInTheCode($code, $expected, $compiles);
+    }
+
+    /**
+     * The extractor reads in the code this one pattern, which compiles or
+     * not as the engine says.
+     */
+    private function assertReadInTheCode(string $code, string $expected, bool $compiles): void
+    {
+        $this->assertSame($compiles, EngineProbe::compiles($expected), $expected);
+
+        $project = $this->makeProject(['app/Rules.php' => "<?php\nuse Illuminate\\Validation\\ConditionalRules;\nuse Illuminate\\Validation\\Rule;\nuse Illuminate\\Validation\\Rules\\AnyOf;\n".$code."\n"]);
+        $occurrences = (new ValidationRulePatternSource())->extract(new PatternSourceContext([$project.'/app'], []));
+
+        $this->assertSame([$expected], array_map(static fn (PatternOccurrence $occurrence): string => $occurrence->pattern, $occurrences));
+    }
+
+    /**
      * The rules Validator::sometimes() adds for the attribute, its callback
      * passing.
      *
@@ -438,6 +1126,46 @@ final class ValidationRuleLaravelReadingTest extends TestCase
         $validator->sometimes($attribute, $rules, static fn (): bool => true);
 
         return $validator->getRules();
+    }
+
+    /**
+     * The rules of each validator the AnyOf rule makes through the
+     * Validator facade, one for each element of its array, as each
+     * validator holds them. None runs: the factory hands the rule a
+     * validator that fails, so the rule makes the next one.
+     *
+     * @return list<mixed>
+     */
+    private static function anyOfRules(AnyOf $rule): array
+    {
+        $translator = new Translator(new ArrayLoader(), 'en');
+        $factory = new Factory($translator);
+        $validated = [];
+        $factory->resolver(static function (TranslatorContract $translator, array $data, array $rules, array $messages, array $attributes) use (&$validated): Validator {
+            array_push($validated, ...array_values((new Validator($translator, $data, $rules, $messages, $attributes))->getRules()));
+
+            return new Validator($translator, [], ['value' => 'required']);
+        });
+
+        // The facade answers what it holds itself, none without an
+        // application: that is what it holds again after.
+        $application = Facade::getFacadeApplication();
+        Facade::setFacadeApplication(null);
+        $previous = ValidatorFacade::getFacadeRoot();
+        ValidatorFacade::swap($factory);
+
+        try {
+            self::assertFalse($rule->setValidator(new Validator($translator, [], []))->passes('code', 'a'));
+        } finally {
+            if (null === $previous) {
+                ValidatorFacade::clearResolvedInstance('validator');
+            } else {
+                ValidatorFacade::swap($previous);
+            }
+            Facade::setFacadeApplication($application);
+        }
+
+        return $validated;
     }
 
     /**

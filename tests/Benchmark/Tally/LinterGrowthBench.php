@@ -64,8 +64,8 @@ final class LinterGrowthBench
     }
 
     /**
-     * Validation rule literals in a comment, each one looked up in the
-     * whole file again for its syntax and its line.
+     * Validation rule literals, each one read as PHP decodes it and placed
+     * by the code around it: what comes before it, its call and its line.
      */
     #[DataProvider('from1000')]
     #[Linear('size')]
@@ -76,7 +76,7 @@ final class LinterGrowthBench
             if (!is_dir($project)) {
                 mkdir($project);
             }
-            file_put_contents($project.'/Rules.php', "<?php\n/*\n".str_repeat("'regex:' \"not_regex:\"\n", $size)."*/\n");
+            file_put_contents($project.'/Rules.php', "<?php\n\$rules = [\n".str_repeat("'regex:', \"not_regex:\",\n", $size)."];\n");
 
             return Path::fromHost((string) realpath($project));
         });
