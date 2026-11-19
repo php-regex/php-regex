@@ -15,6 +15,19 @@
   `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
   ASCII read: both move with it. Spec first. From the review of #407.
 
+## Psalm 7.11
+
+- Psalm 7.11.0 (vimeo/psalm#14161) answers `preg_match()` in its
+  `AssertionFinder` with its own `MatchesPattern` assertion, and no longer
+  calls `processCustomAssertion()` for it: the assertions a plugin sets on
+  the call are dropped, and `php-regex/regex-psalm` types no `$matches`
+  (88 failures; users fall back to `array<array-key, string>`). The tests
+  stay on `vimeo/psalm` below 7.11 in `tools/phpunit` and
+  `tools/paratest` (#407). Fix upstream: merge the plugin's assertions with
+  `MatchesPattern` in the `preg_match` branch of `processFunctionCall()` and
+  in `scrapeComparisonAssertions()`, with a test. Lift the pin once the fix
+  is released; until then 2.x itself runs red on the newest Psalm.
+
 ## Left from the second pass before 2.0.0
 
 The bugs of the second pass are fixed in #403; these were left out of it.
