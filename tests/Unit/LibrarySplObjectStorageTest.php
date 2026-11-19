@@ -197,6 +197,28 @@ final class LibrarySplObjectStorageTest extends TestCase
                 PHP,
             'calls' => ['4 s->contains(), where PHP 8.5 wants isset($storage[$object])'],
         ];
+        yield 'another class of the same short name, in a file without a namespace' => [
+            'source' => <<<'PHP'
+                <?php
+                use Vendor\SplObjectStorage;
+                function f(SplObjectStorage $s, object $o): bool
+                {
+                    return $s->contains($o);
+                }
+                PHP,
+            'calls' => [],
+        ];
+        yield 'another class aliased to the short name, in a file without a namespace' => [
+            'source' => <<<'PHP'
+                <?php
+                use Vendor\Storage as SplObjectStorage;
+                function f(SplObjectStorage $s, object $o): bool
+                {
+                    return $s->contains($o);
+                }
+                PHP,
+            'calls' => [],
+        ];
         yield 'another class of the same short name' => [
             'source' => <<<'PHP'
                 <?php
@@ -288,9 +310,9 @@ final class LibrarySplObjectStorageTest extends TestCase
     /**
      * The names, lowercased, under which a file reaches SplObjectStorage:
      * "\SplObjectStorage", the name a "use" imports it under, and its own
-     * name in a file that declares no namespace. PHP reads a class name in
-     * any case; in a namespace, a name nothing imports is a class of that
-     * namespace.
+     * name in a file that declares no namespace, unless the import of
+     * another class takes that name. PHP reads a class name in any case;
+     * in a namespace, a name nothing imports is a class of that namespace.
      *
      * @param list<array{0: int, 1: string, 2: int}|string> $code
      *
@@ -307,13 +329,21 @@ final class LibrarySplObjectStorageTest extends TestCase
             }
 
             $imported = $code[$i + 1] ?? null;
-            if (!\is_array($token) || \T_USE !== $token[0] || !\is_array($imported) || 'splobjectstorage' !== strtolower(ltrim($imported[1], '\\'))) {
+            if (!\is_array($token) || \T_USE !== $token[0] || !\is_array($imported)) {
                 continue;
             }
 
+            // The name the import binds: its alias, or the last part of the
+            // class it names.
+            $class = strtolower(ltrim($imported[1], '\\'));
             $as = $code[$i + 2] ?? null;
             $alias = $code[$i + 3] ?? null;
-            $names[\is_array($as) && \T_AS === $as[0] && \is_array($alias) ? strtolower($alias[1]) : 'splobjectstorage'] = true;
+            $bound = \is_array($as) && \T_AS === $as[0] && \is_array($alias) ? strtolower($alias[1]) : substr((string) strrchr('\\'.$class, '\\'), 1);
+            if ('splobjectstorage' === $class) {
+                $names[$bound] = true;
+            } elseif ('splobjectstorage' === $bound) {
+                unset($names['splobjectstorage']);
+            }
         }
 
         return $names;
