@@ -334,6 +334,30 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
+     * A verb past a lookahead that may fail still keeps the iterations of
+     * the loop around apart: the lookahead sends the engine back into the
+     * run of the iteration it stands in, but each iteration that ends has
+     * passed the verb, and the loop around never splits the run again.
+     * PCRE takes 10 steps on 8 and 12 "a" then "!", where without the verb
+     * it goes exponential (512 -> 8 192), and the loop is safe.
+     */
+    #[Test]
+    public function test_a_verb_past_a_lookahead_that_may_fail_keeps_a_nested_loop_safe(): void
+    {
+        $steps = [];
+        foreach (['/^(x)(?:a+(?=a)(*COMMIT)b?)+\1$/', '/^(x)(?:a+(?=a)b?)+\1$/'] as $pattern) {
+            $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+            $steps[] = array_map(static fn (int $units): int => self::steps($unoptimized, 'x'.str_repeat('a', $units).'!'), [8, 12]);
+        }
+
+        $this->assertSame($steps[0][0], $steps[0][1], 'Oracle: past the verb the engine ends the attempt at once.');
+        $this->assertGreaterThan(8 * $steps[1][0], $steps[1][1], 'Oracle: without the verb the engine goes exponential.');
+
+        $this->assertSame(RedosSeverity::Safe, Regex::create(['cache' => null])->redos('/^(x)(?:a+(?=a)(*COMMIT)b?)+\1$/')->severity);
+        $this->assertSame(RedosSeverity::Critical, Regex::create(['cache' => null])->redos('/^(x)(?:a+(?=a)b?)+\1$/')->severity);
+    }
+
+    /**
      * A nested loop that ends the body is matched the first way through,
      * and nothing in the body can fail after it: the engine takes as many
      * steps on 16 letters as on 8 (5, 6, 4, 6 and 6 steps), and the heuristic
