@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\EndOfLineTail;
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
@@ -83,6 +84,19 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      */
     private ?CharSetAnalyzer $everyByte = null;
 
+    /**
+     * The analyzer of the context and the one reading every byte, under
+     * the flags in effect at the items read, keyed by those flags.
+     *
+     * @var array<string, CharSetAnalyzer>
+     */
+    private array $ascii = [];
+
+    /**
+     * @var array<string, CharSetAnalyzer>
+     */
+    private array $everyByteAt = [];
+
     public function __construct()
     {
         $this->questions = new QuestionBudget();
@@ -94,6 +108,8 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         $this->wordKinds = [];
         $this->newlineReads = [];
         $this->everyByte = null;
+        $this->ascii = [];
+        $this->everyByteAt = [];
     }
 
     public function getRuleIds(): array
@@ -163,7 +179,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             if (NodePredicates::isEndAnchorNode($child) && $i + 1 < $count) {
                 $tailCanBeEmpty ??= self::emptyFromEachItem($children);
                 for (; !$tailCanBeEmpty[$i + 1] && $read < $i; $read++) {
-                    $last = $this->lastCharacters($children[$read], $context);
+                    $last = $this->lastCharacters($children[$read], $flagsAtChild[$read], $context);
                     if (null === $last || !$last->isEmpty()) {
                         $before = $last;
                     }
@@ -209,19 +225,38 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * reads them and as one reading every byte does: the first reads ASCII
      * alone, where "[^\x00-\x7F]" reads nothing and "[^\x00-\x7E]" reads
      * "\x7F" alone, and the engine reads the bytes or the characters above
-     * ASCII too. Null where either cannot tell.
+     * ASCII too. Null where either cannot tell. Both read the item under
+     * the flags in effect at it, $flags, and at each node inside it: under
+     * i, "[^a-z]" leaves out the capitals, which it takes after "(?-i)".
      */
-    private function lastCharacters(NodeInterface $child, LintContext $context): ?ByteCharSet
+    private function lastCharacters(NodeInterface $child, string $flags, LintContext $context): ?ByteCharSet
     {
-        $ascii = EndOfLineTail::lastCharacters([$child], $context->charSetAnalyzer);
+        // No inline flag turns the u modifier off: "(?^)" resets i, m, n, s
+        // and x only.
+        if (str_contains($context->pattern->flags, 'u') && !str_contains($flags, 'u')) {
+            $flags .= 'u';
+        }
+
+        $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
+        $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
         if (null === $ascii) {
             return null;
         }
 
         $this->everyByte ??= new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
-        $everyByte = EndOfLineTail::lastCharacters([$child], $this->everyByte);
+        $this->everyByteAt[$flags] ??= $this->everyByte->withFlags($flags);
+        $everyByte = self::lastCharactersUnder($child, $this->everyByteAt[$flags]);
 
         return null === $everyByte ? null : $ascii->union($everyByte);
+    }
+
+    /**
+     * The characters the item reads last under the analyzer at its start,
+     * followed through the option settings inside it.
+     */
+    private static function lastCharactersUnder(NodeInterface $child, CharSetAnalyzer $analyzer): ?ByteCharSet
+    {
+        return EndOfLineTail::lastCharacters([$child], $analyzer, FlagScope::containsInlineFlags($child) ? $analyzer->inForce($child) : null);
     }
 
     /**

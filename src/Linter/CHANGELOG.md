@@ -34,7 +34,11 @@ CHANGELOG
    `'/é$\b\n/u'` match too; all three were reported. So were `\B` after a
    class of the bytes above ASCII, `'/a[^\x00-\x7F]$\B\n/'` on
    `"a\xFF\n"`, and `\b` after a class of the characters above ASCII under
-   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`. Without u a branch starting
+   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`, and `\b` after a class read
+   under the pattern's i where an option setting lifts it:
+   `'/(?-i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/i'` takes `A` and
+   matches `"A\n"`. The character before the anchor is now read under the
+   flags in effect where it stands. Without u a branch starting
    with such a byte is compared with the others by the engine under the
    target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
    `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.

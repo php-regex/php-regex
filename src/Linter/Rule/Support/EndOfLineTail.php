@@ -141,9 +141,12 @@ final class EndOfLineTail
      * when that cannot be told: an item that may read nothing, a reference,
      * an alternation.
      *
-     * @param array<int, NodeInterface> $nodes
+     * @param array<int, NodeInterface>                              $nodes
+     * @param \SplObjectStorage<NodeInterface, CharSetAnalyzer>|null $inForce the analyzer in force at each node, where an
+     *                                                                        option setting inside the items changes the
+     *                                                                        flags: "(?-i:[^a-z])" reads the class without i
      */
-    public static function lastCharacters(array $nodes, CharSetAnalyzer $analyzer): ?ByteCharSet
+    public static function lastCharacters(array $nodes, CharSetAnalyzer $analyzer, ?\SplObjectStorage $inForce = null): ?ByteCharSet
     {
         foreach (array_reverse($nodes) as $node) {
             if (self::isZeroWidth($node) || ($node instanceof LiteralNode && '' === $node->value)
@@ -153,7 +156,7 @@ final class EndOfLineTail
             }
 
             if ($node instanceof GroupNode) {
-                $set = self::lastCharacters([$node->child], $analyzer);
+                $set = self::lastCharacters([$node->child], $analyzer, $inForce);
                 if (null === $set || !$set->isEmpty()) {
                     return $set;
                 }
@@ -162,7 +165,7 @@ final class EndOfLineTail
             }
 
             if ($node instanceof SequenceNode) {
-                $set = self::lastCharacters($node->children, $analyzer);
+                $set = self::lastCharacters($node->children, $analyzer, $inForce);
                 if (null === $set || !$set->isEmpty()) {
                     return $set;
                 }
@@ -173,7 +176,7 @@ final class EndOfLineTail
             if ($node instanceof QuantifierNode) {
                 [$min] = QuantifierMath::parseRange($node);
 
-                return 0 === $min ? null : self::lastCharacters([$node->node], $analyzer);
+                return 0 === $min ? null : self::lastCharacters([$node->node], $analyzer, $inForce);
             }
 
             if ($node instanceof DotNode) {
@@ -181,7 +184,7 @@ final class EndOfLineTail
             }
 
             if ($node instanceof LiteralNode || (self::readsOneCharacter($node) && !($node instanceof CharTypeNode && \in_array($node->value, ['R', 'X', 'C'], true)))) {
-                $set = $analyzer->lastChars($node);
+                $set = (null !== $inForce && $inForce->offsetExists($node) ? $inForce[$node] : $analyzer)->lastChars($node);
 
                 return $set->isUnknown() ? null : $set;
             }
