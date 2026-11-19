@@ -1077,18 +1077,38 @@ final class RedosHeuristicShapesTest extends TestCase
     }
 
     /**
-     * Past eight items that may match empty, a loop meets no more: the
-     * runs of "a+x?{9}a+" meet as the engine reads them, as those of
-     * "a+x?{8}a+" and of "a+a+" do (31 -> 69 steps on 8 -> 12 "a" then
-     * "!"), but only the nearer pair is named; each run is still rated
-     * medium on its own.
+     * Past eight items that may match empty, a loop still meets the first
+     * loop further that reads its characters: the runs of "a+x?{9}a+" meet
+     * as the engine reads them, as those of "a+x?{8}a+" and of "a+a+" do
+     * (31 -> 69 steps on 8 -> 12 "a" then "!"), and the pair is named.
      *
      * @return iterable<string, array{pattern: string, named: bool}>
      */
     public static function provideLoopsPastOptionalItems(): iterable
     {
         yield 'eight optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 8).'a+)\1$/', 'named' => true];
-        yield 'nine optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 9).'a+)\1$/', 'named' => false];
+        yield 'nine optional items' => ['pattern' => '/^(a+'.str_repeat('x?', 9).'a+)\1$/', 'named' => true];
+    }
+
+    /**
+     * The scan cut past eight items that may match empty still finds the
+     * first loop further that meets the one read: in a loop, "a+" and "a+"
+     * past nine optional items meet as in "(?:ba+a+z)+", whose work grows
+     * fourfold with each two more "baaaz", and the pattern is rated high,
+     * as with fewer items between them. The scan stops at that first loop,
+     * so a run of loops still costs work that grows with its length.
+     */
+    #[Test]
+    public function test_a_loop_meets_the_first_loop_past_the_items_it_is_read_past(): void
+    {
+        $pattern = '/^(x)(?:ba+c?d?e?f?g?h?i?j?k?a+z)+\1$/';
+        foreach (['/^(x)(?:ba+a+z)+\1$/', $pattern] as $oracle) {
+            [$four, $six] = array_map(static fn (int $units): int => self::steps(PcreInterpreter::pattern($oracle), 'x'.str_repeat('baaaz', $units).'!'), [4, 6]);
+            $this->assertGreaterThanOrEqual(3 * $four, $six, 'Oracle: the work of '.$oracle.' grows fourfold with two more units.');
+        }
+
+        $this->assertSame(RedosSeverity::High, Regex::create(['cache' => null])->redos($pattern)->severity);
+        $this->assertSame(RedosSeverity::High, Regex::create(['cache' => null])->redos('/^(x)(?:ba+c?d?e?f?g?h?a+z)+\1$/')->severity);
     }
 
     #[Test]

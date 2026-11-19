@@ -68,11 +68,12 @@ final class RedosProfiler extends AbstractNodeVisitor
     private const UNROLLED_COUNT = 16;
 
     /**
-     * The items that may match empty a loop is read past, at most, on
-     * either side: a loop meets none further, and what stands further is
-     * taken to keep it apart from nothing, so that a run of loops that may
-     * all match empty costs the heuristics work and findings that grow
-     * with its length, not with its square.
+     * The items that may match empty a loop is read past in full, on either
+     * side. Further, what stands is taken to keep the loop apart from
+     * nothing, and of the loops it meets only the first is named, so that a
+     * run of loops that may all match empty costs the heuristics work and
+     * findings that grow with its length, not with its square, and still
+     * leaves no loop it meets unread.
      */
     private const ITEMS_READ_PAST = 8;
 
@@ -1800,18 +1801,23 @@ final class RedosProfiler extends AbstractNodeVisitor
                 continue;
             }
 
+            // A loop that repeats once at most, or is shielded, meets none.
+            [, $leftMax] = $this->quantifierBounds($leftQuantifier);
+            if (!$this->quantifierAllowsMultiple($leftMax) || $this->isQuantifierShielded($leftQuantifier)) {
+                continue;
+            }
+
             // A loop meets each item after it as far as the first that
-            // always reads a character, past ITEMS_READ_PAST that may match
-            // empty at most: "a+x?a+" meets the second "a+" where "x?"
-            // matches empty.
+            // always reads a character: "a+x?a+" meets the second "a+"
+            // where "x?" matches empty. Past ITEMS_READ_PAST items, the
+            // first loop it meets ends the scan.
             for ($m = $k + 1; $m < $count; $m++) {
                 $rightIndex = null === $reading ? $m : $reading[$m];
                 $right = $children[$rightIndex];
-                if ($rightIndex !== $tail) {
-                    $max = $this->maxSeverity($max, $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex));
-                }
+                $met = $rightIndex !== $tail ? $this->adjacentLoops($children, $leftIndex, $leftQuantifier, $rightIndex) : RedosSeverity::Safe;
+                $max = $this->maxSeverity($max, $met);
 
-                if ($m - $k > self::ITEMS_READ_PAST || $this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
+                if (($m - $k > self::ITEMS_READ_PAST && RedosSeverity::Safe !== $met) || $this->alwaysReads($right) || $this->hasTrailingBacktrackingControl($right)) {
                     break;
                 }
             }
