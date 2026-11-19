@@ -127,6 +127,35 @@ final class AtomicInertiaAnalyzerTest extends TestCase
     }
 
     /**
+     * "\Z" and "$" stand before the newline the pattern's convention names.
+     * Under "(*CRLF)" a run that takes the "\r" of a final "\r\n" leaves a
+     * "\n" no line ends before, so a line end proves nothing past a run;
+     * a pattern without one keeps its proof under any convention.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideNewlineConventions')]
+    public function test_reads_line_ends_under_the_patterns_newline_convention(string $pattern, string $plain, array $subjects, bool $inert): void
+    {
+        $parting = array_filter($subjects, static fn (string $subject): bool => self::span($pattern, $subject) !== self::span($plain, $subject));
+        $this->assertSame($inert, [] === $parting, $pattern.' against '.$plain);
+
+        $this->assertSame(!$inert, InertCommitments::of(RegexParser::create()->parse($pattern))->isEmpty(), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subjects: list<string>, inert: bool}>
+     */
+    public static function provideNewlineConventions(): iterable
+    {
+        yield 'a final carriage return and line feed' => ['pattern' => '/(*CRLF)^[a\r]++\Z/', 'plain' => '/(*CRLF)^[a\r]+\Z/', 'subjects' => ["a\r\n", 'a', "a\r", "\r\n"], 'inert' => false];
+        yield 'a line end under m' => ['pattern' => '/(*CRLF)^[a\r]++$/m', 'plain' => '/(*CRLF)^[a\r]+$/m', 'subjects' => ["a\r\nb", "a\nb", 'a'], 'inert' => false];
+        yield 'the line feed named' => ['pattern' => '/(*LF)^[a\r]++\Z/', 'plain' => '/(*LF)^[a\r]+\Z/', 'subjects' => ["a\r\n", "a\r", 'a', "a\n"], 'inert' => true];
+        yield 'no line end' => ['pattern' => '/(*CRLF)a++b/', 'plain' => '/(*CRLF)a+b/', 'subjects' => ['aab', 'ab', 'b'], 'inert' => true];
+    }
+
+    /**
      * What follows each part of a sequence is worked out in one pass from
      * its end: the first characters of the next part, through the parts
      * that may be skipped, then what follows the sequence. Under a search,

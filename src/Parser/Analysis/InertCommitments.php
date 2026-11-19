@@ -15,6 +15,7 @@ namespace PHPRegex\Parser\Analysis;
 
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * The possessive quantifiers and the atomic groups of a pattern that read
@@ -36,12 +37,16 @@ final class InertCommitments
 
     /**
      * The commitments of a pattern searched, as preg_match() searches it,
-     * that commit to nothing: none when the pattern cannot be read.
+     * that commit to nothing: none when the pattern cannot be read. Its
+     * line ends are read under the newline convention its start options
+     * name.
      */
     public static function of(RegexNode $regex): self
     {
         try {
-            return (new AtomicInertiaAnalyzer(wholeSubject: false))->inertCommitments((new HirTranslator())->translate($regex));
+            $lineFeedNewline = 'LF' === StartOptions::newline($regex->source ?? '');
+
+            return (new AtomicInertiaAnalyzer(wholeSubject: false, lineFeedNewline: $lineFeedNewline))->inertCommitments((new HirTranslator())->translate($regex));
         } catch (\Throwable) {
             return new self();
         }

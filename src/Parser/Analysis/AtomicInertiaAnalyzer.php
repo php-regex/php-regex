@@ -65,18 +65,23 @@ use PHPRegex\Parser\Hir\RepetitionHir;
  * there and not further on proves nothing: "^a++(?=a)" never matches where
  * "^a+(?=a)" matches "aa". Only the ends of the subject, "\z", "\Z" and
  * "$" without /m, hold at no place given back that the run passed, and
- * "$" under /m is read as the "\n" it stands before.
+ * "$" under /m is read as the "\n" it stands before. That reading is the
+ * newline "\n"'s: under another convention, "(*CRLF)" first, a run that
+ * takes the "\r" of a final "\r\n" leaves a "\n" no line ends before, so
+ * "\Z" and "$" prove nothing there.
  *
  * @internal
  */
 final class AtomicInertiaAnalyzer
 {
     /**
-     * @param bool $wholeSubject whether the pattern is read against a whole
-     *                           subject (the solver's full match), or as a
-     *                           search that may end anywhere (a printer)
+     * @param bool $wholeSubject    whether the pattern is read against a whole
+     *                              subject (the solver's full match), or as a
+     *                              search that may end anywhere (a printer)
+     * @param bool $lineFeedNewline whether lines end at "\n", the default
+     *                              newline convention, as "$" and "\Z" read
      */
-    public function __construct(private readonly bool $wholeSubject = true) {}
+    public function __construct(private readonly bool $wholeSubject = true, private readonly bool $lineFeedNewline = true) {}
 
     /**
      * Whether a possessive quantifier reads as its greedy spelling, before
@@ -496,7 +501,7 @@ final class AtomicInertiaAnalyzer
     private function followSetBefore(Hir $part, CharSet $rest): ?CharSet
     {
         if (!$this->wholeSubject) {
-            $zeroWidth = self::zeroWidthFirst($part);
+            $zeroWidth = $this->zeroWidthFirst($part);
             if (false === $zeroWidth) {
                 return null;
             }
@@ -518,14 +523,16 @@ final class AtomicInertiaAnalyzer
      * Under search semantics, what a zero-width part stands before: an
      * empty set for an end of the subject, "\n" for "$" under /m, false for
      * any other assertion or lookaround, or one held anywhere inside a
-     * consuming part; null for a consuming part that holds none.
+     * consuming part; null for a consuming part that holds none. "\Z" and
+     * "$" read so under the newline "\n" alone.
      */
-    private static function zeroWidthFirst(Hir $part): CharSet|false|null
+    private function zeroWidthFirst(Hir $part): CharSet|false|null
     {
         if ($part instanceof AssertionHir) {
             return match ($part->kind) {
-                AssertionKind::SubjectEnd, AssertionKind::EndOrFinalNewline, AssertionKind::ResetMatchStart => CharSet::empty(),
-                AssertionKind::LineEnd => CharSet::single(0x0A),
+                AssertionKind::SubjectEnd, AssertionKind::ResetMatchStart => CharSet::empty(),
+                AssertionKind::EndOrFinalNewline => $this->lineFeedNewline ? CharSet::empty() : false,
+                AssertionKind::LineEnd => $this->lineFeedNewline ? CharSet::single(0x0A) : false,
                 default => false,
             };
         }
