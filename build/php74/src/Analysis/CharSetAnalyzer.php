@@ -705,7 +705,7 @@ final class CharSetAnalyzer
      */
     private function with(string $options): self
     {
-        [$on, $off] = explode('-', ltrim($options, '^'), 2) + [1 => ''];
+        [$on, $off] = explode('-', $options, 2) + [1 => ''];
         $asciiSpaces = !self::holdsSpacesToAscii($off) && ($this->asciiSpaces || self::holdsSpacesToAscii($on));
         $setting = InlineFlags::read(InlineFlags::withoutAsciiOptions($options), InlineFlags::LETTERS.'r');
 
@@ -713,7 +713,7 @@ final class CharSetAnalyzer
             return $this;
         }
 
-        return new self(null === $setting ? $this->flags : $setting->applyTo($this->flags), $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces);
+        return new self((($nullsafeVariable1 = $setting) ? $nullsafeVariable1->applyTo($this->flags) : null) ?? $this->flags, $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces);
     }
 
     /**
@@ -814,7 +814,7 @@ final class CharSetAnalyzer
      */
     private function isOptional(QuantifierNode $node): bool
     {
-        return 0 === (($nullsafeVariable1 = $node->bounds) ? $nullsafeVariable1->min : null);
+        return 0 === (($nullsafeVariable2 = $node->bounds) ? $nullsafeVariable2->min : null);
     }
 
     private function isOptionalNode(NodeInterface $node, bool $fromStart): bool
