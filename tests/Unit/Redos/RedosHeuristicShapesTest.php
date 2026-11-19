@@ -1149,9 +1149,10 @@ final class RedosHeuristicShapesTest extends TestCase
         }
 
         $analysis = Regex::create(['cache' => null])->redos('/^(x)'.str_repeat('(?:ba)*', 400).'c+c+\1$/');
-        $named = array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens'));
+        $named = array_values(array_filter($analysis->findings, static fn ($finding): bool => str_starts_with($finding->message, 'Adjacent quantified tokens')));
 
         $this->assertCount(1, $named);
+        $this->assertSame('c+c+', $named[0]->pattern);
         $this->assertSame(RedosSeverity::Medium, $analysis->severity);
     }
 
