@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -172,5 +173,55 @@ final class LanguageAlgebraTest extends TestCase
         } catch (ComplexityException $exception) {
             $this->assertSame('product', $exception->getDiagnostic()['phase'] ?? null);
         }
+    }
+
+    /**
+     * Cycles of 32 and 3,125 states, coprime, pair every state of the one
+     * with every state of the other on "a", 100,000 pairs, and their dead
+     * states on any other character: one pair past the limit.
+     */
+    #[Test]
+    public function test_a_product_one_pair_past_its_limit_is_refused(): void
+    {
+        $this->assertSame(1, preg_match('/^(?:a{32})*$/', str_repeat('a', 64)));
+        $this->assertSame(1, preg_match('/^(?:a{3125})*$/', str_repeat('a', 3125)));
+
+        $solver = new LanguageSolver();
+        $options = new SolverOptions(maxNfaStates: 20_000);
+        $left = $solver->language('/^(?:a{32})*$/', $options);
+        $right = $solver->language('/^(?:a{3125})*$/', $options);
+
+        try {
+            $left->intersect($right);
+            $this->fail('The product is refused.');
+        } catch (ComplexityException $exception) {
+            $this->assertSame(['phase' => 'product', 'limit' => 100_000], $exception->getDiagnostic());
+        }
+    }
+
+    /**
+     * Under /u the alphabet of "é" runs from "ê" to the last code point
+     * across the surrogates, which no string holds: past U+D7FF, the
+     * complement goes on at U+E000.
+     */
+    #[Test]
+    public function test_a_complement_under_utf8_holds_no_surrogate(): void
+    {
+        $this->assertSame(0, preg_match('/^é$/u', "\u{D7FF}"));
+        $this->assertSame(0, preg_match('/^é$/u', "\u{E000}"));
+
+        $strings = [];
+        foreach ((new LanguageSolver())->language('/^é$/u')->complement()->strings() as $string) {
+            $strings[] = $string;
+            // The empty string, then each code point up to U+D7FF but "é".
+            if (0xD800 + 1 === \count($strings)) {
+                break;
+            }
+        }
+
+        $this->assertSame('', $strings[0]);
+        $this->assertSame("\u{D7FF}", $strings[0xD7FF]);
+        $this->assertSame("\u{E000}", $strings[0xD800], 'The surrogates are no characters.');
+        $this->assertNotContains('', \array_slice($strings, 1));
     }
 }

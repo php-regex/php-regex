@@ -628,9 +628,11 @@ final class Language
     }
 
     /**
-     * The product of the two automata, every pair of states reached, the
-     * missing move of either one leading to a dead state of its own: a
-     * pair accepts as the operation says of the two sides.
+     * The product of the two automata, every pair of states reached: a pair
+     * accepts as the operation says of the two sides. It moves on the ranges
+     * both alphabets cut alike, kept to the characters of the alphabet: under
+     * /u an alphabet range may run across the surrogates, which no string
+     * holds. Each side moves on every character of its alphabet.
      *
      * @param callable(bool, bool): bool $accepts
      *
@@ -645,26 +647,16 @@ final class Language
 
         $left = $this->dfa;
         $right = $other->dfa;
-        $min = min($left->minCodePoint, $right->minCodePoint);
-        $max = max($left->maxCodePoint, $right->maxCodePoint);
-        $boundaries = [$min => true, $max + 1 => true];
-        foreach ([$left, $right] as $dfa) {
-            foreach ($dfa->alphabetRanges as [$start, $end]) {
-                $boundaries[$start] = true;
-                $boundaries[$end + 1] = true;
-            }
-        }
-
-        $points = array_keys($boundaries);
-        sort($points, \SORT_NUMERIC);
+        $universe = CharSet::universe($this->unicode);
         $ranges = [];
-        for ($i = 0, $last = \count($points) - 1; $i < $last; $i++) {
-            if ($points[$i] >= $min && $points[$i] <= $max) {
-                $ranges[] = [$points[$i], min($points[$i + 1], $max + 1) - 1];
+        foreach ($left->alphabetRanges as [$leftStart, $leftEnd]) {
+            foreach ($right->alphabetRanges as [$rightStart, $rightEnd]) {
+                foreach (CharSet::range(max($leftStart, $rightStart), min($leftEnd, $rightEnd))->intersect($universe)->ranges as $range) {
+                    $ranges[] = $range;
+                }
             }
         }
 
-        $dead = -1;
         $numbers = [];
         $pairs = [];
         $number = static function (int $l, int $r) use (&$numbers, &$pairs): int {
@@ -684,25 +676,19 @@ final class Language
         $number($left->startState, $right->startState);
         $states = [];
         for ($id = 0; $id < \count($pairs); $id++) {
-            [$l, $r] = $pairs[$id];
-            $leftState = $dead === $l ? null : $left->getState($l);
-            $rightState = $dead === $r ? null : $right->getState($r);
+            $leftState = $left->getState($pairs[$id][0]);
+            $rightState = $right->getState($pairs[$id][1]);
             $moves = [];
             foreach ($ranges as [$start, $end]) {
-                $target = $number($leftState?->transitionFor($start) ?? $dead, $rightState?->transitionFor($start) ?? $dead);
-                $count = \count($moves);
-                if ($count > 0 && $moves[$count - 1] === $target && $moves[$count - 2] === $start - 1) {
-                    $moves[$count - 2] = $end;
-
-                    continue;
-                }
-
-                array_push($moves, $start, $end, $target);
+                array_push($moves, $start, $end, $number(
+                    $leftState->transitionFor($start) ?? throw new \LogicException('An automaton does not move on a character of its alphabet.'),
+                    $rightState->transitionFor($start) ?? throw new \LogicException('An automaton does not move on a character of its alphabet.'),
+                ));
             }
 
-            $states[$id] = new DfaState($id, [], $accepts(null !== $leftState && $leftState->isAccepting, null !== $rightState && $rightState->isAccepting), $moves);
+            $states[$id] = new DfaState($id, [], $accepts($leftState->isAccepting, $rightState->isAccepting), $moves);
         }
 
-        return new self(new Dfa(0, $states, $ranges, $min, $max), $this->unicode);
+        return new self(new Dfa(0, $states, $ranges, min($left->minCodePoint, $right->minCodePoint), max($left->maxCodePoint, $right->maxCodePoint)), $this->unicode);
     }
 }
