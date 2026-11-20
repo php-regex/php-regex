@@ -24,6 +24,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Sequentially;
 use Symfony\Component\Validator\Mapping\ClassMetadata;
+use Symfony\Component\Validator\Validation;
 
 /**
  * The audit of Regex constraints against the HTML pattern a form gives the
@@ -36,48 +37,243 @@ use Symfony\Component\Validator\Mapping\ClassMetadata;
 final class RegexConstraintAnalyzerTest extends TestCase
 {
     /**
-     * @param list<Constraint>   $constraints
-     * @param list<list<string>> $expected    each finding's check and severity
+     * The server's verdicts each row rests on are checked with preg_match()
+     * before the audit runs; each example the audit gives of a difference
+     * is checked against Symfony's own validator: the server rejects the
+     * example of a looser HTML pattern or of a rejected Choice value, and
+     * accepts that of a stricter one.
+     *
+     * @param list<Constraint>                  $constraints
+     * @param list<list<string>>                $expected    each finding's check and severity
+     * @param list<array{string, string, bool}> $verdicts    each pattern, subject and whether preg_match() matches
      */
     #[Test]
     #[DataProvider('provideProperties')]
-    public function test_the_findings_of_a_property(array $constraints, array $expected): void
+    public function test_the_findings_of_a_property(array $constraints, array $expected, array $verdicts): void
     {
+        foreach ($verdicts as [$pattern, $subject, $matches]) {
+            $this->assertSame($matches ? 1 : 0, preg_match($pattern, $subject), $pattern.' on '.json_encode($subject));
+        }
+
         $findings = self::audit($constraints);
 
         $this->assertSame($expected, array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], $findings));
+        foreach ($findings as $finding) {
+            if (!isset($finding['example'])) {
+                continue;
+            }
+
+            $regex = self::regexOf($constraints, $finding['pattern']);
+            $this->assertSame('html_pattern.stricter' !== $finding['check'], self::serverRejects($regex, $finding['example']), $finding['check'].' on '.json_encode($finding['example']));
+        }
     }
 
     /**
-     * @return iterable<string, array{list<Constraint>, list<list<string>>}>
+     * @return iterable<string, array{constraints: list<Constraint>, expected: list<list<string>>, verdicts: list<array{string, string, bool}>}>
      */
     public static function provideProperties(): iterable
     {
-        yield 'anchored digits read alike' => [[new Regex('/^\d+$/')], []];
-        yield 'an unanchored pattern the derivation wraps in .*' => [[new Regex('/^foo/')], [['html_pattern.stricter', 'warning']]];
-        yield 'an alternation the derivation wraps whole' => [[new Regex('/^(foo|bar)$/')], []];
-        yield 'an explicit htmlPattern that agrees' => [[new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9]+')], []];
-        yield 'an empty htmlPattern turns the attribute off' => [[new Regex(pattern: '/^a$/i', htmlPattern: '')], []];
-        yield 'a pattern that must not match, derived alike' => [[new Regex(pattern: '/\d/', match: false)], []];
-        yield 'flags drop the attribute' => [[new Regex('/^[a-z]+$/i')], [['html_pattern.dropped', 'warning']]];
-        yield 'a dash a class under v refuses' => [[new Regex('/^[a-z0-9-]+$/')], [['html_pattern.invalid', 'error']]];
-        yield 'a possessive a browser refuses' => [[new Regex('/^a++b$/')], [['html_pattern.invalid', 'error']]];
-        yield 'a POSIX class a browser misreads' => [[new Regex('/^[[:alpha:]]+$/')], [['html_pattern.misread', 'error']]];
-        yield 'an htmlPattern that lets more through' => [[new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9a-f]+')], [['html_pattern.looser', 'error']]];
-        yield 'an htmlPattern that lets less through' => [[new Regex(pattern: '/^[a-z ]+$/', htmlPattern: '[a-z]+')], [['html_pattern.stricter', 'warning']]];
-        yield 'bytes on the server, code points in the browser' => [[new Regex('/^.{2}$/')], [['html_pattern.looser', 'error'], ['html_pattern.stricter', 'warning']]];
-        yield 'a Length no value of the pattern fits' => [[new Length(max: 3), new Regex('/^[A-Z]{5}$/')], [['length.contradiction', 'error']]];
-        yield 'a Length min past every value' => [[new Regex('/^\d{2,4}$/'), new Length(min: 10)], [['length.contradiction', 'error']]];
-        yield 'a Length the pattern fits' => [[new Regex('/^\d{2,4}$/'), new Length(min: 2, max: 4)], []];
-        yield 'a Length in Sequentially' => [[new Sequentially([new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')])], [['length.contradiction', 'error']]];
-        yield 'a Length of another group' => [[new Length(max: 3, groups: ['short']), new Regex('/^[A-Z]{5}$/')], []];
-        yield 'a Choice value the pattern rejects' => [[new Choice(choices: ['ok', 'NO']), new Regex('/^[a-z]+$/')], [['choice.rejected', 'error']]];
-        yield 'a Choice the pattern takes' => [[new Choice(choices: ['ok', 'yes']), new Regex('/^[a-z]+$/')], []];
-        yield 'a Choice value a match: false pattern rejects' => [[new Choice(choices: ['ok', 'n0']), new Regex(pattern: '/\d/', match: false)], [['choice.rejected', 'error']]];
-        yield 'two patterns no value matches' => [[new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')], [['regex.contradiction', 'error']]];
-        yield 'two patterns some value matches' => [[new Regex('/^\w+$/'), new Regex('/^[a-z]+$/')], []];
-        yield 'a pattern every value of which the other forbids' => [[new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)], [['regex.contradiction', 'error']]];
-        yield 'an invalid pattern is left to the linter' => [[new Regex('/[a-z/')], [['html_pattern.unchecked', 'notice']]];
+        yield 'anchored digits read alike' => [
+            'constraints' => [new Regex('/^\d+$/')],
+            'expected' => [],
+            'verdicts' => [['/^\d+$/', '123', true], ['/^\d+$/', '12a', false]],
+        ];
+        yield 'an unanchored pattern the derivation wraps in .*' => [
+            'constraints' => [new Regex('/^foo/')],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^foo/', 'foo', true], ['/^foo/', "foo\u{2028}", true], ['/^foo/', 'xfoo', false]],
+        ];
+        yield 'an alternation the derivation wraps whole' => [
+            'constraints' => [new Regex('/^(foo|bar)$/')],
+            'expected' => [],
+            'verdicts' => [['/^(foo|bar)$/', 'bar', true], ['/^(foo|bar)$/', 'foobar', false]],
+        ];
+        yield 'an explicit htmlPattern that agrees' => [
+            'constraints' => [new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9]+')],
+            'expected' => [],
+            'verdicts' => [['/^\d+$/', '42', true], ['/^\d+$/', 'x', false]],
+        ];
+        yield 'an empty htmlPattern turns the attribute off' => [
+            'constraints' => [new Regex(pattern: '/^a$/i', htmlPattern: '')],
+            'expected' => [],
+            'verdicts' => [['/^a$/i', 'A', true]],
+        ];
+        yield 'a pattern that must not match, derived alike' => [
+            'constraints' => [new Regex(pattern: '/\d/', match: false)],
+            'expected' => [],
+            'verdicts' => [['/\d/', 'a1', true], ['/\d/', 'ab', false]],
+        ];
+        yield 'flags drop the attribute' => [
+            'constraints' => [new Regex('/^[a-z]+$/i')],
+            'expected' => [['html_pattern.dropped', 'warning']],
+            'verdicts' => [['/^[a-z]+$/i', 'ABC', true]],
+        ];
+        yield 'a dash a class under v refuses' => [
+            'constraints' => [new Regex('/^[a-z0-9-]+$/')],
+            'expected' => [['html_pattern.invalid', 'error']],
+            'verdicts' => [['/^[a-z0-9-]+$/', 'a-1', true]],
+        ];
+        yield 'a possessive a browser refuses' => [
+            'constraints' => [new Regex('/^a++b$/')],
+            'expected' => [['html_pattern.invalid', 'error']],
+            'verdicts' => [['/^a++b$/', 'aab', true]],
+        ];
+        yield 'a POSIX class a browser misreads' => [
+            'constraints' => [new Regex('/^[[:alpha:]]+$/')],
+            'expected' => [['html_pattern.misread', 'error']],
+            'verdicts' => [['/^[[:alpha:]]+$/', 'abc', true], ['/^[[:alpha:]]+$/', ':', false]],
+        ];
+        yield 'an htmlPattern that lets more through' => [
+            'constraints' => [new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9a-f]+')],
+            'expected' => [['html_pattern.looser', 'error']],
+            'verdicts' => [['/^\d+$/', 'a', false]],
+        ];
+        yield 'an htmlPattern that lets less through' => [
+            'constraints' => [new Regex(pattern: '/^[a-z ]+$/', htmlPattern: '[a-z]+')],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^[a-z ]+$/', ' ', true]],
+        ];
+        yield 'bytes on the server, code points in the browser' => [
+            'constraints' => [new Regex('/^.{2}$/')],
+            'expected' => [['html_pattern.looser', 'error'], ['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^.{2}$/', "\u{80}", true], ['/^.{2}$/', "\0\u{80}", false]],
+        ];
+        yield 'a Length no value of the pattern fits' => [
+            'constraints' => [new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^[A-Z]{5}$/', 'ABCDE', true], ['/^[A-Z]{5}$/', 'ABC', false]],
+        ];
+        yield 'a Length min past every value' => [
+            'constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 10)],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^\d{2,4}$/', '1234', true], ['/^\d{2,4}$/', '1234567890', false]],
+        ];
+        yield 'a Length the pattern fits' => [
+            'constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 2, max: 4)],
+            'expected' => [],
+            'verdicts' => [['/^\d{2,4}$/', '12', true]],
+        ];
+        yield 'a Length in Sequentially' => [
+            'constraints' => [new Sequentially([new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')])],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^[A-Z]{5}$/', 'ABCDE', true], ['/^[A-Z]{5}$/', 'ABC', false]],
+        ];
+        yield 'a Length of another group' => [
+            'constraints' => [new Length(max: 3, groups: ['short']), new Regex('/^[A-Z]{5}$/')],
+            'expected' => [],
+            'verdicts' => [['/^[A-Z]{5}$/', 'ABCDE', true]],
+        ];
+        yield 'a Choice value the pattern rejects' => [
+            'constraints' => [new Choice(choices: ['ok', 'NO']), new Regex('/^[a-z]+$/')],
+            'expected' => [['choice.rejected', 'error']],
+            'verdicts' => [['/^[a-z]+$/', 'ok', true], ['/^[a-z]+$/', 'NO', false]],
+        ];
+        yield 'a Choice the pattern takes' => [
+            'constraints' => [new Choice(choices: ['ok', 'yes']), new Regex('/^[a-z]+$/')],
+            'expected' => [],
+            'verdicts' => [['/^[a-z]+$/', 'ok', true], ['/^[a-z]+$/', 'yes', true]],
+        ];
+        yield 'a Choice value a match: false pattern rejects' => [
+            'constraints' => [new Choice(choices: ['ok', 'n0']), new Regex(pattern: '/\d/', match: false)],
+            'expected' => [['choice.rejected', 'error']],
+            'verdicts' => [['/\d/', 'ok', false], ['/\d/', 'n0', true]],
+        ];
+        yield 'two patterns no value matches' => [
+            'constraints' => [new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^\d+$/', '1', true], ['/^\d+$/', 'a', false], ['/^[a-z]+$/', '1', false], ['/^[a-z]+$/', 'a', true]],
+        ];
+        yield 'two patterns some value matches' => [
+            'constraints' => [new Regex('/^\w+$/'), new Regex('/^[a-z]+$/')],
+            'expected' => [],
+            'verdicts' => [['/^\w+$/', 'a', true], ['/^[a-z]+$/', 'a', true]],
+        ];
+        yield 'a pattern every value of which the other forbids' => [
+            'constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^\d+$/', '1', true], ['/[0-9]/', '1', true]],
+        ];
+    }
+
+    /**
+     * The linter reports a pattern PCRE refuses; the audit says it could
+     * not compare it.
+     */
+    #[Test]
+    public function test_an_invalid_pattern_is_left_to_the_linter(): void
+    {
+        $regex = new Regex('/[a-z/');
+        $this->assertFalse(@preg_match((string) $regex->pattern, ''));
+
+        $findings = self::audit([$regex]);
+
+        $this->assertSame([['html_pattern.unchecked', 'notice']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], $findings));
+    }
+
+    /**
+     * A contradiction holds on the engine: Symfony's validator finds no
+     * value over the alphabet, up to the length, that passes every
+     * constraint of the property. An empty value is left out: Regex
+     * constraints do not check it.
+     *
+     * @param list<Constraint> $constraints
+     */
+    #[Test]
+    #[DataProvider('provideContradictions')]
+    public function test_a_contradiction_leaves_no_value_on_the_engine(array $constraints, string $check, string $alphabet, int $length): void
+    {
+        $this->assertSame([$check], array_column(self::audit($constraints), 'check'));
+
+        $validator = Validation::createValidator();
+        $passing = [];
+        foreach (self::strings($alphabet, $length) as $value) {
+            if ('' !== $value && 0 === \count($validator->validate($value, $constraints))) {
+                $passing[] = $value;
+            }
+        }
+
+        $this->assertSame([], $passing);
+    }
+
+    /**
+     * @return iterable<string, array{constraints: list<Constraint>, check: string, alphabet: string, length: int}>
+     */
+    public static function provideContradictions(): iterable
+    {
+        yield 'a Length max under every value' => ['constraints' => [new Length(max: 3), new Regex('/^[A-Z]{5}$/')], 'check' => 'length.contradiction', 'alphabet' => 'AB', 'length' => 6];
+        yield 'a Length min past every value' => ['constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 10)], 'check' => 'length.contradiction', 'alphabet' => '01', 'length' => 11];
+        yield 'a Length in Sequentially' => ['constraints' => [new Sequentially([new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')])], 'check' => 'length.contradiction', 'alphabet' => 'AB', 'length' => 6];
+        yield 'two patterns no value matches' => ['constraints' => [new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
+        yield 'a pattern every value of which the other forbids' => ['constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
+    }
+
+    /**
+     * Each value a choice.rejected finding names fails the Regex
+     * constraint on the engine.
+     *
+     * @param list<string> $choices
+     * @param list<string> $rejected
+     */
+    #[Test]
+    #[DataProvider('provideRejectedChoices')]
+    public function test_a_rejected_choice_fails_the_regex_on_the_engine(array $choices, Regex $regex, array $rejected): void
+    {
+        $findings = self::audit([new Choice(choices: $choices), $regex]);
+
+        $this->assertSame(['choice.rejected'], array_column($findings, 'check'));
+        foreach ($choices as $value) {
+            $this->assertSame(\in_array($value, $rejected, true), self::serverRejects($regex, $value), $value);
+            $this->assertSame(\in_array($value, $rejected, true), str_contains($findings[0]['message'], '"'.$value.'"'), $value);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{choices: list<string>, regex: Regex, rejected: list<string>}>
+     */
+    public static function provideRejectedChoices(): iterable
+    {
+        yield 'an uppercase value' => ['choices' => ['ok', 'NO'], 'regex' => new Regex('/^[a-z]+$/'), 'rejected' => ['NO']];
+        yield 'a value a match: false pattern matches' => ['choices' => ['ok', 'n0'], 'regex' => new Regex(pattern: '/\d/', match: false), 'rejected' => ['n0']];
     }
 
     /**
@@ -194,6 +390,49 @@ final class RegexConstraintAnalyzerTest extends TestCase
         }
 
         return (new RegexConstraintAnalyzer())->analyze([$metadata])->findings;
+    }
+
+    /**
+     * Whether Symfony's validator rejects the value under the constraint.
+     */
+    private static function serverRejects(Regex $regex, string $value): bool
+    {
+        return \count(Validation::createValidator()->validate($value, $regex)) > 0;
+    }
+
+    /**
+     * @param list<Constraint> $constraints
+     */
+    private static function regexOf(array $constraints, string $pattern): Regex
+    {
+        foreach ($constraints as $constraint) {
+            if ($constraint instanceof Regex && $pattern === $constraint->pattern) {
+                return $constraint;
+            }
+        }
+
+        throw new \LogicException('No Regex constraint writes '.$pattern.'.');
+    }
+
+    /**
+     * Every string over the alphabet, up to the length.
+     *
+     * @return \Generator<int, string>
+     */
+    private static function strings(string $alphabet, int $length): \Generator
+    {
+        $level = [''];
+        for ($size = 0; $size <= $length; $size++) {
+            yield from $level;
+            $next = [];
+            foreach ($level as $prefix) {
+                foreach (str_split($alphabet) as $char) {
+                    $next[] = $prefix.$char;
+                }
+            }
+
+            $level = $next;
+        }
     }
 }
 
