@@ -575,8 +575,9 @@ under the `v` flag. For each constraint the command reports:
 Across the constraints of a property, in a shared validation group, it
 reports a `Length` no non-empty value of the pattern fits
 (`length.contradiction`): `/^(?:a|aaa)$/` and `Length(exactly: 2)` leave no
-value, though the lengths 1 and 3 straddle 2. It also reports a `Choice`
-value the pattern rejects (`choice.rejected`) and two `Regex` constraints no
+value, though the lengths 1 and 3 straddle 2. It also reports a value a
+`Choice` offers that the pattern rejects (`choice.rejected`), not one a
+`match: false` `Choice` refuses, and two `Regex` constraints no
 value passes together (`regex.contradiction`). `Regex` does not check an
 empty value: the message says whether one can still pass, or whether a
 `NotBlank` or the `Length` refuses it. A question the solver cannot answer

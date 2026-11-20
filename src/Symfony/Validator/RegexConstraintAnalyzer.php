@@ -441,20 +441,24 @@ final class RegexConstraintAnalyzer
     }
 
     /**
+     * The values a Choice offers that the pattern rejects: not those of a
+     * match: false Choice, which it refuses, nor the empty value, which
+     * Regex does not check.
+     *
      * @param array{class: string, property: string} $subject
      *
      * @return list<ValidatorFinding>
      */
     private function checkChoice(Regex $regex, Choice $choice, array $subject): array
     {
-        if ($choice->multiple || null !== $choice->callback || !\is_array($choice->choices) || null !== $regex->normalizer || !self::sharesAGroup($regex, $choice)) {
+        if (!$choice->match || $choice->multiple || null !== $choice->callback || !\is_array($choice->choices) || null !== $regex->normalizer || !self::sharesAGroup($regex, $choice)) {
             return [];
         }
 
         $pattern = (string) $regex->pattern;
         $rejected = [];
         foreach ($choice->choices as $value) {
-            if (!\is_string($value) && !\is_int($value)) {
+            if (!\is_string($value) && !\is_int($value) || '' === $value) {
                 continue;
             }
 

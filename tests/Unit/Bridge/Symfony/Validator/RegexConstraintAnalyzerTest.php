@@ -280,6 +280,19 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [['choice.rejected', 'error']],
             'verdicts' => [['/^[a-z]+$/', 'ok', true], ['/^[a-z]+$/', 'NO', false]],
         ];
+        // match: false lists the values the property refuses, not those it
+        // offers.
+        yield 'a Choice of refused values' => [
+            'constraints' => [new Regex(pattern: '/^ok$/Du', htmlPattern: ''), new Choice(choices: ['bad'], match: false)],
+            'expected' => [],
+            'verdicts' => [['/^ok$/Du', 'bad', false], ['/^ok$/Du', 'ok', true]],
+        ];
+        // Regex does not check an empty value: Symfony accepts "".
+        yield 'a Choice of the empty value' => [
+            'constraints' => [new Regex(pattern: '/^a$/Du', htmlPattern: ''), new Choice(choices: [''])],
+            'expected' => [],
+            'verdicts' => [['/^a$/Du', '', false]],
+        ];
         yield 'a Choice the pattern takes' => [
             'constraints' => [new Choice(choices: ['ok', 'yes']), new Regex('/^[a-z]+$/')],
             'expected' => [],
@@ -425,6 +438,15 @@ final class RegexConstraintAnalyzerTest extends TestCase
         $this->assertStringStartsWith('The Length constraint could not be compared with the pattern: Backreferences', $finding['message']);
     }
 
+    #[Test]
+    public function test_a_choice_beside_the_empty_value_says_some_values(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^a$/Du', htmlPattern: ''), new Choice(choices: ['', 'b'])])[0];
+
+        $this->assertSame('Some values the Choice constraint offers are rejected by the pattern: "b".', $finding['message']);
+        $this->assertFalse(self::serverRejects(new Regex(pattern: '/^a$/Du'), ''));
+    }
+
     /**
      * Each value a choice.rejected finding names fails the Regex
      * constraint on the engine.
@@ -452,6 +474,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
     public static function provideRejectedChoices(): iterable
     {
         yield 'an uppercase value' => ['choices' => ['ok', 'NO'], 'regex' => new Regex('/^[a-z]+$/'), 'rejected' => ['NO']];
+        yield 'a value beside the empty one' => ['choices' => ['', 'b'], 'regex' => new Regex(pattern: '/^a$/Du', htmlPattern: ''), 'rejected' => ['b']];
         yield 'a value a match: false pattern matches' => ['choices' => ['ok', 'n0'], 'regex' => new Regex(pattern: '/\d/', match: false), 'rejected' => ['n0']];
     }
 
