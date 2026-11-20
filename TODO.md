@@ -9,15 +9,22 @@
   (`GET /admin/`), listed with `--show-overlaps`. #403 declined it because
   it flags every static route declared before a catch-all. Keep it, or
   restore the carve-out in `RouteConflictAnalyzer` before merging.
-- Once #408 is merged, its own pull request: the JavaScript and HTML
-  pattern targets print a lookbehind of more than one length holding a
-  capture as is, and JavaScript reads it right to left, so the capture
-  differs. `/(?<=a?(a{1,2})b)c\1/` on `aabca`: PCRE captures `a` and finds
-  `ca`, JavaScript captures `aa` and finds nothing. Refuse such a
-  lookbehind. Raised on #408, older than it.
+- Review and merge #412, which refuses the lookbehinds JavaScript captures
+  otherwise: it settles the last thread left open on #408.
 - Once #410 is merged, drop the three entries it settles under "Left from
   the second pass": the trimmed `access_control` path, the partial
   trailing-slash redirect, and the `s` flag of symfony/http-foundation 6.4.
+
+## PHP 8.6.0
+
+- Merge #413: the workflows run PHP 8.6 from its release image, and the
+  demo moves to 8.6.
+- `docs/_articles/which-pcre2-ships-with-which-php.md` still reads 8.6 as a
+  candidate: its table row ("planned for 2026-11-19", "10.44 in 8.6.0RC3"),
+  the chart's label, the sentence on the 8.6.0 release candidate, and the
+  `8.6-rc` command with its output. 8.6.0 came out on 2026-11-19 with PCRE2
+  10.44: run the article's matrix script on `php:8.6-cli` and write what it
+  prints.
 
 ## Before 2.0.0, a pull request of its own
 
