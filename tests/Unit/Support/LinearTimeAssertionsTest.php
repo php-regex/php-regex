@@ -57,6 +57,22 @@ final class LinearTimeAssertionsTest extends TestCase
         $this->assertTrue(gc_enabled(), 'The collector was not given back.');
     }
 
+    /**
+     * The benchmarks under tests/Benchmark/Tally count how a read grows, the
+     * same on every run: a timed read only stands under its budget, read
+     * once at four times the units.
+     */
+    #[Test]
+    public function test_a_read_is_timed_once_at_four_times_the_units(): void
+    {
+        $sizes = [];
+        $this->assertLinearTime(static function (int $size) use (&$sizes): void {
+            $sizes[] = $size;
+        }, 100, 'A read that notes its size');
+
+        $this->assertSame([400], $sizes);
+    }
+
     #[Test]
     public function test_a_collector_that_was_off_is_left_off(): void
     {

@@ -136,6 +136,19 @@ final class LinterGrowthBench
     }
 
     /**
+     * The rule on nested quantifiers on a loop whose body opens with
+     * lookaheads: it reads past the items that may match nothing, to the
+     * loops behind them, once each.
+     */
+    #[DataProvider('from1000')]
+    #[Linear('size')]
+    public function benchLookaheadsBeforeTheLoopsOfABody(int $size): void
+    {
+        $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/(?:'.str_repeat('(?=b)', $size).'b?c+)+$/'));
+        $tree->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+    }
+
+    /**
      * Every lint rule on optional groups: each group asked whether its
      * pattern may match nothing, and what follows it. 4 000 took about 17 s
      * when each read the pattern again.

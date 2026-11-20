@@ -23,9 +23,10 @@ use Tally\Attribute\Linear;
 use Tally\Attribute\Linearithmic;
 
 /**
- * Two growth series of the timed benchmarks, held to the class they grow
- * in: the ReDoS proof of a counted repeat under a plus, and the automaton
- * of a counted repeat.
+ * Growth series of the analyses, held to the class they grow in: the ReDoS
+ * proof of a counted repeat under a plus, the ReDoS reading of loops that
+ * once compared each part with every other, and the automaton of a counted
+ * repeat.
  */
 final class AnalysisGrowthBench
 {
@@ -50,6 +51,29 @@ final class AnalysisGrowthBench
     public function benchProofOfACountedRepeatUnderAPlus(int $size): void
     {
         Workloads::redos('/^(?:a{'.$size.'}b)+$/', $this->parser);
+    }
+
+    /**
+     * A loop holding a lookahead and alternations whose branches start
+     * alike: each alternation read the whole loop again for the assertion.
+     */
+    #[DataProvider('from100')]
+    #[Linear('size')]
+    public function benchLoopHoldingALookahead(int $size): void
+    {
+        Workloads::redos('/^(x)(?:'.str_repeat('(?:a|ab)c', $size).'(?=c))+\\1$/', $this->parser);
+    }
+
+    /**
+     * A run of loops that never meet, "(?:ba)*" after "(?:ba)*": past eight
+     * items that may match empty, the scan reads a bounded number of pairs
+     * where each loop would be compared with every later one.
+     */
+    #[DataProvider('from100')]
+    #[Linear('size')]
+    public function benchRunOfLoopsThatNeverMeet(int $size): void
+    {
+        Workloads::redos('/^(x)'.str_repeat('(?:ba)*', $size).'\\1$/', $this->parser);
     }
 
     /**

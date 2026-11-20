@@ -93,4 +93,16 @@ final class LayoutGrowthBench
         (new \ReflectionProperty(DisplayEscaper::class, 'escapes'))->setValue(null, []);
         DisplayEscaper::escape('/(*ANY)'.str_repeat("#\n", $size).'a/x');
     }
+
+    /**
+     * The same under (*ANYCRLF), whose comments end at a carriage return or
+     * a line feed.
+     */
+    #[DataProvider('from2000')]
+    #[Linear('size')]
+    public function benchDisplayWithoutCommentsUnderAnyCrlf(int $size): void
+    {
+        (new \ReflectionProperty(DisplayEscaper::class, 'escapes'))->setValue(null, []);
+        DisplayEscaper::escape('/(*ANYCRLF)'.str_repeat("#\n", $size).'a/x');
+    }
 }

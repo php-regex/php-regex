@@ -173,17 +173,13 @@ final class LayoutSplicerTest extends TestCase
             $this->assertSame($after, (new LayoutSplicer($this->parser))->splice($original, $rewritten));
         }
 
-        // Parsed and rewritten once for each size: only the splice is timed.
-        $trees = [];
-        foreach ([2000, 8000] as $pairs) {
-            $tree = $this->parser->parse('/'.str_repeat('[aa][bb]', $pairs).'/x');
-            $rewritten = $tree->accept(new Rewriter(factorize: false));
-            $this->assertInstanceOf(RegexNode::class, $rewritten);
-            $trees[$pairs] = [$tree, $rewritten];
-        }
+        // Parsed and rewritten before: only the splice is timed.
+        $tree = $this->parser->parse('/'.str_repeat('[aa][bb]', 4 * 2000).'/x');
+        $rewritten = $tree->accept(new Rewriter(factorize: false));
+        $this->assertInstanceOf(RegexNode::class, $rewritten);
 
-        $this->assertLinearTime(function (int $pairs) use ($trees): void {
-            (new LayoutSplicer($this->parser))->splice(...$trees[$pairs]);
+        $this->assertLinearTime(function () use ($tree, $rewritten): void {
+            (new LayoutSplicer($this->parser))->splice($tree, $rewritten);
         }, 2000, 'Splicing rewritten classes');
     }
 

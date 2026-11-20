@@ -901,11 +901,10 @@ memory, one group per subsystem:
 | `lexer`, `parser`, `validate` | tokenizing, parsing and validating |
 | `lint` | the lint run over a fixed set of files, one process; the default rules alone over the lint corpus and over the cases of `data/lint/` |
 | `redos` | the theoretical ReDoS analysis |
-| `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group), and once over the whole corpus in one measurement, for the table |
+| `redos-corpus` | the same analysis once per pattern of the lint corpus, ASTs cached (the longest group) |
 | `automata` | NFA construction, determinization, minimization and the language solver |
 | `optimizer` | the optimizer, with its default options and with every rewrite verified by automata (the PHPStan extension's options) |
 | `capture-shape`, `formatter` | reading a capture shape, writing lint reports |
-| `table` | the corpus subjects of the groups above, with the noop floor of each class: what CI compares on a pull request (below) |
 
 ```bash
 composer bench -- --group=automata
@@ -955,20 +954,13 @@ The same run, locally:
 tools/phpbench/vendor/bin/phpbench run --iterations=1 --revs=1 --progress=none --stop-on-error
 ```
 
-A second job measures the `table` group and never gates. On a pull request
-that changes `src/` or `tests/Benchmark/`, it measures the base commit
-first, then the pull request, on the same runner, and writes the table to
-the job summary with the difference per subject; a subject taking 50 ms or
-more in the base and more than 30 % longer in the pull request is marked.
-The mark advises: the two passes run one after the other on a shared
-runner, which still varies between them, and nothing is required of the
-author. On a push and on the Monday run the group is measured once and the
-numbers are kept as an artifact for ninety days. The same comparison,
-locally, from the base commit and then from the change:
+No CI job compares times: the counted benchmarks below measure a change.
+To compare the time of two revisions, run a group from the base commit and
+then from the change, on the same idle machine:
 
 ```bash
-tools/phpbench/vendor/bin/phpbench run --group=table --tag=base
-tools/phpbench/vendor/bin/phpbench run --group=table --ref=base --report=table
+tools/phpbench/vendor/bin/phpbench run --group=parser --tag=base
+tools/phpbench/vendor/bin/phpbench run --group=parser --ref=base --report=table
 ```
 
 `tests/Unit/Benchmark/BenchmarkDataTest.php` checks every case file: the real
@@ -989,10 +981,10 @@ Two kinds of benchmark live there:
   read in quadratic time, read at a base size, twice and four times as
   much, under a complexity class such as `#[Linear('size')]`. Four times
   the input may cost at most 4.4 times the instructions of the base. The
-  tests that time the same inputs read them at far larger sizes and allow
-  eight times the time for four times the input: a counted run catches a
-  smaller quadratic part, at a fraction of the size. A fix that removes a
-  quadratic reading adds a method here in the same commit.
+  growth is judged here alone: the tests that time the same inputs read
+  one far larger size, once, under a budget of a few seconds, a tripwire
+  on every host the suite runs on. A fix that removes a quadratic reading
+  adds a method here in the same commit.
 - **Expected numbers** (`ValidationBench`, `AnalysisBench`, `LinterBench`):
   the data cases of `tests/Benchmark/data/` and the first patterns of the
   lint corpus, each with the numbers Tally counted written next to it as

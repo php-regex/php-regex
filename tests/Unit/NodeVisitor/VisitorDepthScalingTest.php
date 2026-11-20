@@ -59,13 +59,10 @@ final class VisitorDepthScalingTest extends TestCase
     #[Test]
     public function test_the_lengths_of_nested_sequences_read_each_level_once(): void
     {
-        $trees = [];
-        foreach ([120, 480] as $depth) {
-            $trees[$depth] = Regex::create(['cache' => null])->parse('/'.str_repeat('(', $depth).'^'.str_repeat('a$)', $depth).'/');
-        }
+        $tree = Regex::create(['cache' => null])->parse('/'.str_repeat('(', 4 * 120).'^'.str_repeat('a$)', 4 * 120).'/');
 
-        $this->assertLinearTime(static function (int $depth) use ($trees): void {
-            $trees[$depth]->accept(new LengthRangeCalculator());
+        $this->assertLinearTime(static function () use ($tree): void {
+            $tree->accept(new LengthRangeCalculator());
         }, 120, 'nested anchored sequences');
     }
 

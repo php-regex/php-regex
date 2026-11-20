@@ -54,10 +54,10 @@ final class DisplayEscaperLinearTimeTest extends TestCase
     }
 
     /**
-     * Sizes where reading the rest of the pattern for each comment takes
+     * Sizes where reading the rest of the pattern for each comment took
      * thirteen times as long for four times as many comments: below them
-     * the search itself is so fast that what is read once per comment hides
-     * it, and four times as many take nine to ten times as long.
+     * the search itself was so fast that what is read once per comment hid
+     * it.
      *
      * @return iterable<string, array{verb: string, comments: int}>
      */
