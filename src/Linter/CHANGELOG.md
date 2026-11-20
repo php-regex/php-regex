@@ -6,6 +6,42 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The class rules read the bytes PCRE2 reads in a class without UTF mode:
+   `regex.lint.charclass.redundant` reports a character written twice,
+   `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that
+   starts with it, `/[aä\xC3]/`, where each multibyte character was left
+   out as one it could not read. A byte two different characters share,
+   the `\xC3` of `/[äö]/`, is no duplicate, nor is the `\xA4` of
+   `/[a-ä]/`, which the range `a-\xC3` holds:
+   `regex.lint.unicode.multibyteInClassWithoutU` reports that class, with
+   the fix, `/u`.
+ * The rules that compare first and last characters read an escape that
+   names an ASCII character, `\x41`, `\101`, `\x{41}`, `\o{101}` or `\cA`,
+   as that character, where they asked the engine or gave up:
+   `/^(?:\x20*[\x22-\x7E])*$/`, which PCRE reads in 11 and 19 steps on 8 and
+   16 units, no longer reports nested quantifiers, nor does the quoted
+   text of the RFC 5322 address pattern of Symfony Mime and SwiftMailer,
+   and the branches `[^\s\042\047=><`]+` and `\s*(?U:[^\s\042\047=><`]*)` of
+   CodeIgniter's attribute pattern, which both start with `a`, are
+   reported as overlapping. An escape above ASCII is left to the engine as
+   before.
+ * A byte above ASCII written as it is, not as an escape, is read as the
+   target reads it. `\b` or `\B` after it, before the newline an end anchor
+   lets through, is not reported as never matching where the engine
+   matches: it is no word character under PCRE2's own tables, so, in PHP,
+   `"/\xFF\$\\B\\n/"` matches `"\xFF\n"`, and may be one under u, (*UCP)
+   or another locale's tables, so `"/(*UCP)\xFF\$\\b\\n/"` and
+   `'/é$\b\n/u'` match too; all three were reported. So were `\B` after a
+   class of the bytes above ASCII, `'/a[^\x00-\x7F]$\B\n/'` on
+   `"a\xFF\n"`, and `\b` after a class of the characters above ASCII under
+   u, `'/[^\x00-\x7E]$\b\n/u'` on `"é\n"`, and `\b` after a class read
+   under the pattern's i where an option setting lifts it:
+   `'/(?-i)[^a-z\x00-\x40\x5B-\x60\x7B-\x7E]$\b\n/i'` takes `A` and
+   matches `"A\n"`. The character before the anchor is now read under the
+   flags in effect where it stands. Without u a branch starting
+   with such a byte is compared with the others by the engine under the
+   target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
+   `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
@@ -22,11 +58,22 @@ CHANGELOG
    `\xE9`, met every other branch. PCRE gives those sets, as the target
    reads them, through the atomic or options group a branch opens with:
    `/(?:(?>ö)|è)+x/u` is no longer reported either, nor are a branch read
-   past its optional first item, `/(?:ö?è|ê)+x/u`, every branch of a branch
+   past its optional first item, `/(?:ö?è|ê)+x/u`, or past a lookaround,
+   which takes nothing, whatever options its body sets,
+   `/^(?:(?=ö)ö|è)+$/u` and `/\A(?:(?=(?i:b))b|B)+\z/`, every branch of a branch
    reset group, `/(?:(?|ö|ê)|è)+x/u`, and an atom under the very options of
    `a` that stand where it does, which restrict `\d`, `\s`, `\w`, their
    negations and the POSIX classes alone, `/(?:(?a:[ö])x|èy)+z/u`; the
-   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`.
+   pattern's own `/D` and `/S` are no `(?aD)` or `(?aS)`. The caseless
+   restriction `(*CASELESS_RESTRICT)` sets holds there until `(?-r)` lifts
+   it: `/(*CASELESS_RESTRICT)(?-r:\x{212A}|[^k])+/iu`, whose Kelvin sign
+   then matches `k` and `K`, which `[^k]` refuses, is no longer reported.
+   A lookahead before a branch narrows the characters it starts with, with
+   or without u: a positive one to those its body starts with, a negative
+   one to all but those its body refuses whatever follows them, so
+   `/\A(?:(?=b)[ab]|a)+\z/` and `/\A(?:(?!a)[ab]|a)+\z/` are no longer
+   reported, while `/\A(?:(?=a)[ab]|a)+\z/` and `/(?:(?!ab)a|a)+/` are; a
+   lookahead the rule cannot read leaves the branch unjudged.
    `/(?:[à-ÿ]+|é)+/u`, `/(?:(?a:\p{Lu})x|\p{L}y)+z/u` and
    `/(?:(?aD:\w)x|éy)+z/uD`, which it missed, are reported. The message quotes each branch as the
    pattern writes it, `\d+` rather than `\\d+`, and `é` under u rather than

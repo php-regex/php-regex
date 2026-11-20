@@ -223,6 +223,20 @@ final class ExtendedClassReader
                 continue;
             }
 
+            // The braced name of a property is read up to its "}": a "]"
+            // there closes nothing. With no "}" after it, PCRE reads the
+            // name to where it gives up on it, and the class never closes.
+            if ('\\' === $char && '{' === ($pattern[$at + 2] ?? '') && \in_array($pattern[$at + 1], ['p', 'P'], true)) {
+                $close = strpos($pattern, '}', $at + 3);
+                if (false === $close) {
+                    return null;
+                }
+
+                $at = $close + 1;
+
+                continue;
+            }
+
             if ('\\' === $char) {
                 // "\c]" is a control character: its "]" closes nothing.
                 $at += 'c' === ($pattern[$at + 1] ?? '') ? 3 : 2;
@@ -370,12 +384,15 @@ final class ExtendedClassReader
                 $this->refuse('POSIX collating elements are not supported', ErrorCode::PosixCollatingElement, $posixEnd);
             }
 
-            $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
+            // A nested class past the limit is refused on its "[", before
+            // PCRE reads its members, whether it closes or not; a POSIX
+            // class opens no level.
             if (null === $posixEnd) {
                 $this->enter($start);
                 $this->depth--;
             }
 
+            $end = $posixEnd ?? self::closedClassEnd($this->pattern, $start) ?? $this->refuseUnclosedClass($start);
             $this->at = $end;
 
             return $this->operands[] = $this->readApart($this->class, substr($this->pattern, $start, $end - $start), $start);
@@ -396,8 +413,11 @@ final class ExtendedClassReader
     }
 
     /**
-     * An operand right after another one: PCRE refuses it past an escape or a
-     * POSIX class it reads whole, and past the first character of the rest.
+     * What stands right after an operand, but an operator, a ")" or a "]":
+     * PCRE refuses what would start an operand, "[", "\", "(" or "!", as an
+     * expression with no operator before it, past an escape or a POSIX class
+     * it reads whole, and past the first character of the rest; any other
+     * character as one no extended class takes, past it.
      */
     private function refuseOperandAfterOperand(): void
     {
@@ -419,6 +439,10 @@ final class ExtendedClassReader
         // An escape is read, and judged, before it is found out of place.
         if ('\\' === $char) {
             $this->operands[] = $this->readApart($this->escape, substr($this->pattern, $this->at, $end - $this->at), $this->at);
+        }
+
+        if (!\in_array($char, ['[', '\\', '(', '!'], true)) {
+            $this->refuse('Unexpected character in an extended class', ErrorCode::ExtendedClassUnexpectedCharacter, $end);
         }
 
         $this->refuse('Two operands with no operator between them in an extended class', ErrorCode::ExtendedClassMissingOperator, $end);
@@ -461,17 +485,18 @@ final class ExtendedClassReader
     }
 
     /**
-     * A class that never closes: what PCRE refuses in it comes first, as it
-     * reads it before it meets the end.
+     * A class that never closes: PCRE reads it item by item to the end of
+     * the pattern, so what it refuses there comes before the missing "]".
+     * The class is read as written, with no "]" added: one would close a
+     * POSIX item, "[:foo:", or be the character of a "\c" the pattern ends
+     * in.
      */
     private function refuseUnclosedClass(int $start): never
     {
         try {
-            $this->operands[] = ($this->class)(substr($this->pattern, $start).']', $start);
+            $this->operands[] = ($this->class)(substr($this->pattern, $start), $start);
         } catch (LexerException|ParserException $error) {
-            // A fault in what the pattern writes comes first; one at its end
-            // is the "]" added to read it.
-            if (($error->position ?? $this->length) < $this->length) {
+            if (ErrorCode::CharclassUnclosed !== $error->errorCode) {
                 ($this->fail)($error, $start, $this->operands);
             }
         }

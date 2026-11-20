@@ -10,6 +10,82 @@ CHANGELOG
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
    an engine without them prints those plain.
+ * Without UTF mode the tree holds a multibyte character of a class as its
+   bytes, wherever it stands, as PCRE2 reads it: `/[à-é]/` is `\xC3`, the
+   range `\xA0` to `\xC3`, then `\xA9`, where it was one range from `à` to
+   `é`, which the explanation, the lint rules and the sample generator read
+   as code points. `/^[é]$/` now has a sample, and a reversed range names
+   the bytes PCRE2 reads: `/[é-a]/` is "Invalid range "\xA9-a"", where it
+   was "é-a". The pattern prints back as written.
+ * What follows an operand of an extended class, where an operator, a `)`
+   or the `]` is due, is refused as PCRE2 names it: a character that starts
+   no operand is `regex.extended_class.unexpected_character`, `/(?[\d a])/`
+   at offset 7, where it was `regex.extended_class.missing_operator`, which
+   a class, an escape, a `(` or a `!` there stays.
+ * A nested class an extended class leaves open is read as written to the
+   end of the pattern, with no `]` added, and a fault there comes before the
+   missing `]`: `/(?[[\c/` is `regex.control_char.invalid` at offset 6 and
+   `/(?[[\p{Lu}|-[:alpha:]/` is `regex.range.invalid_bounds` at 21, where
+   both were `regex.charclass.unclosed`. A range to an unknown POSIX class is
+   refused as the range, before PCRE2 reads the name: `/(?[[a-[:foo:]])/` is
+   `regex.range.invalid_bounds` at 13, where it was `regex.posix.invalid`.
+   Past the depth limit such a class is refused on its `[`, before what it
+   holds, as one that closes is: `(?[`, 14 `(`, then `[\p{L]` or `[a` is
+   `regex.extended_class.nested_too_deep` at offset 17, where they were
+   `regex.unicode.property_malformed` at 23 and `regex.charclass.unclosed`
+   at 19.
+ * The braced name of a `\p{` or `\P{` in an extended class is read as PCRE2
+   reads it, past the `]` of a nested class, a `\Q` or a `-`, up to its `}`
+   or to where PCRE2 gives up on it: `/(?[[\p{-\Q\cé]])/` is
+   `regex.unicode.property_malformed` at offset 13, where it was
+   `regex.range.reversed` at 11, `/(?[\p{L é])/` is refused at 9, where it
+   was 12, and `/(?[[\p{]}])/` is `regex.unicode.property_invalid` at 9,
+   where it was `regex.unicode.property_malformed` at 11.
+ * The options PCRE2 10.43 added, `r` and `a` with the class letter after
+   it, are read with the opener of the level past 250 as `i` is: 250 `(`
+   then `(?^a[` is `regex.group.syntax` at offset 255, where it was
+   `regex.group.nested_too_deep` at 254, and an option setting `(?a)` there
+   opens no level. The letters are read to their end, however many: 250 `(`
+   then `(?`, 160 `i`, `:` and `\x{}` is `regex.group.nested_too_deep` at
+   413, where it was `regex.escape.digits_missing` at 416, and an option
+   setting of that many letters still opens none.
+ * A condition on a relative zero, `/(?(+0)a)/`, is `regex.backref.zero`, as
+   `(?(0)` and `\g{-0}` are, where it was `regex.backref.relative`. A zero
+   that no `)` follows is refused on the number, as PCRE2 refuses it before
+   it looks for the `)`: `/(?(0x)a)/` and `/(?(+0 )a)/` are
+   `regex.backref.zero`, where they were `regex.conditional.unclosed`.
+ * The characters a node may start and end with, which the linter's rules,
+   the ReDoS heuristics and the optimizer's possessive rewrite compare, are
+   read past a lookaround, in either direction, positive or negative and in
+   its alphabetic forms, and past a substring scan: they read nothing.
+   `(?!x)a` and `(?<=x)a` start with `a`, where they were read as starting
+   with `x`, `a(?=x)` and `a(?<!x)` end with it, and a lookaround alone
+   reads nothing. An alternation that may match empty through one branch
+   lets the items around it lead too: `(?:|b)a` starts with `a` or `b`,
+   where it was read as starting with `b` alone. So does a repeat of an
+   item that may match empty, whatever its count: `(?=b){1}b` starts with
+   `b`, where it was read as starting with nothing, and `(a?)+b` with `a`
+   or `b`, where it was `a` alone. The ReDoS heuristics rate
+   `/(x)[^a]+(?:(?=b){1}b)+\1/` medium, where it was safe: PCRE takes 74,
+   274 and 1 058 steps on `x` then 8, 16 and 32 `b`. Two branches overlap on
+   the characters they take, never on what a lookaround looks at:
+   `regex.lint.overlap.charset` no longer reports `/(?:[^$]+|(?<=\\)\$)+/`
+   or `/^(?:>(?:(?!!)|!))+$/`, and reports `/^(?:(?!x)a|a)+$/`, which the
+   ReDoS heuristics, where it was medium, now rate critical: PCRE takes 94,
+   1 534 and 393 214 steps on 4, 8 and 16 `a` then `!`.
+ * Those characters follow what the start options set, read once for the
+   pattern rather than again at each option setting. `(*CASELESS_RESTRICT)`
+   keeps `k` and the Kelvin sign apart from the start, as the `r` modifier
+   does, until `(?-r)` or `(?^)` turns it off. `(*TURKISH_CASING)` pairs `i`
+   with `İ` and `I` with `ı`, never `i` with `I`, unless `r` holds. `\R`
+   takes CR and LF alone under `(*BSR_ANYCRLF)`. The ReDoS heuristics rate
+   `/(*CASELESS_RESTRICT)[^\x{212A}]+(?-i:k)+!/iu` and
+   `/(*TURKISH_CASING)[^I]+i+!/iu` medium, where they were safe: PCRE takes
+   30, 122 and 498 steps on 8, 16 and 32 `i` for the second. They rate
+   `/(*BSR_ANYCRLF)\R+\x85+$/` safe, where it was medium. Under `(*UCP)`
+   without UTF, `(?aS)` and `(?a)` hold `\s` to ASCII, and `\S` takes the
+   next line and the no-break space, `\x85` and `\xA0`, until `(?-aS)` or
+   `(?-a)` lets them go: `\S` was read as taking neither.
  * A mark written short accepts an `=` in its name, `/(*:foo=bar)/`, and
    four characters after it, `/(*:x)a=b/`: the check that only the limits
    take a value read it as `(*MARK:`, four characters longer, and refused

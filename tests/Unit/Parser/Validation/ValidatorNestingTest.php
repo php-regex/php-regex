@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\Validator;
@@ -227,6 +228,96 @@ final class ValidatorNestingTest extends TestCase
         yield 'alphabetic lookahead, then a class never closed' => ['opener' => '(*pla:', 'after' => '[', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 256, 'newer' => 256];
         yield 'named group, then a property never closed' => ['opener' => '(?<n>', 'after' => '\\p{', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 255, 'newer' => 255];
         yield 'non-capturing group, then a comment never closed' => ['opener' => '(?:', 'after' => '(?#', 'code' => ErrorCode::GroupNestedTooDeep, 'bundled' => 253, 'newer' => 253];
+    }
+
+    /**
+     * The options PCRE2 10.43 added, "r" and "a" with one of "D", "S", "W",
+     * "P" or "T" after it, are read with the opener as "i" is: a character
+     * after them that no option setting takes is refused there, before the
+     * level is counted, a ":" after them opens the level past the limit,
+     * and a ")" makes them an option setting, which opens none. Each row is
+     * what preg_match() reports on PHP 8.4.27 with PCRE2 10.49; "text" is
+     * what follows the 250 levels. Every engine refuses each row: a release
+     * before 10.43 refuses the letter it does not know, past the limit or
+     * not, at an offset of its own (PCRE2 10.39 and 10.42 agree).
+     */
+    #[Test]
+    #[DataProvider('provideOptionsOfPcre1043AtTheLevelPastTheLimit')]
+    public function test_the_options_of_pcre2_10_43_are_read_with_the_opener_of_the_level_past_the_limit(string $text, ErrorCode $code, int $offset): void
+    {
+        $pattern = '/'.str_repeat('(', 250).$text.'/';
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses '.$text);
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), 'Oracle on PCRE2 10.49: '.$text);
+        }
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], $text);
+    }
+
+    /**
+     * @return iterable<string, array{text: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOptionsOfPcre1043AtTheLevelPastTheLimit(): iterable
+    {
+        yield 'ASCII option after a caret' => ['text' => '(?^a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option' => ['text' => '(?a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 254];
+        yield 'ASCII digit option after a caret' => ['text' => '(?^aD[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'ASCII POSIX option' => ['text' => '(?aT[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option turned off' => ['text' => '(?-a[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option after another' => ['text' => '(?ia[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option, then one turned off' => ['text' => '(?a-i[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'caseless restriction' => ['text' => '(?r[', 'code' => ErrorCode::GroupSyntax, 'offset' => 254];
+        yield 'caseless restriction after a caret' => ['text' => '(?^r[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option and caseless restriction after a caret' => ['text' => '(?^ar[', 'code' => ErrorCode::GroupSyntax, 'offset' => 256];
+        yield 'an option PCRE2 always took, after a caret' => ['text' => '(?^i[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'ASCII option opening a group' => ['text' => '(?a:[', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 254];
+        // "a" takes one class letter along, and only after it.
+        yield 'ASCII class letter with no "a" before it' => ['text' => '(?D[', 'code' => ErrorCode::GroupSyntax, 'offset' => 253];
+        yield 'ASCII option with two class letters' => ['text' => '(?aDS[', 'code' => ErrorCode::GroupSyntax, 'offset' => 255];
+        yield 'unknown character after "(?", after an ASCII option setting' => ['text' => '(?a)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+        yield 'unknown character after "(?", after an ASCII digit option setting' => ['text' => '(?aD)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 258];
+        yield 'unknown character after "(?", after a caseless restriction setting' => ['text' => '(?r)(?%', 'code' => ErrorCode::GroupSyntax, 'offset' => 257];
+    }
+
+    /**
+     * PCRE reads the option letters of the opener of the level past the
+     * limit to their end, however many, before it counts the level: past
+     * a ":" it refuses the level at the start of the body, before an error
+     * there; a ")" makes them an option setting, which opens none, and the
+     * error after it is the verdict. Each row is what preg_match() reports
+     * on PHP 8.4.27 with PCRE2 10.49; PCRE2 10.39 and 10.42 refuse the rows
+     * of a ":" at the same offsets.
+     */
+    #[Test]
+    #[DataProvider('provideOptionLettersOfTheLevelPastTheLimit')]
+    public function test_the_option_letters_of_the_opener_past_the_limit_are_read_however_many(int $letters, string $after, ErrorCode $code, int $offset): void
+    {
+        $pattern = '/'.str_repeat('(', 250).'(?'.str_repeat('i', $letters).$after.'/';
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: the engine refuses the pattern.');
+        if ('10.49' === PcreTarget::runtime()->pcreVersion) {
+            $this->assertSame($offset, PhpErrorOffset::of($pattern), \sprintf('Oracle on PCRE2 10.49: %d letters, then %s', $letters, $after));
+        }
+
+        $result = RegexParser::create(['cache' => null, 'php_version' => '8.4', 'pcre_version' => '10.49', 'runtime_pcre_validation' => false])->validate($pattern);
+
+        $this->assertSame([$code, $offset], [$result->errorCode, $result->offset], \sprintf('%d letters, then %s', $letters, $after));
+    }
+
+    /**
+     * @return iterable<string, array{letters: int, after: string, code: ErrorCode, offset: int}>
+     */
+    public static function provideOptionLettersOfTheLevelPastTheLimit(): iterable
+    {
+        yield 'a short header' => ['letters' => 3, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 256];
+        yield '159 letters' => ['letters' => 159, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 412];
+        yield '160 letters' => ['letters' => 160, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 413];
+        yield '161 letters' => ['letters' => 161, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 414];
+        yield '400 letters' => ['letters' => 400, 'after' => ':\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 653];
+        yield '400 letters, then a letter' => ['letters' => 400, 'after' => ':a\x{}', 'code' => ErrorCode::GroupNestedTooDeep, 'offset' => 653];
+        yield '160 letters setting options' => ['letters' => 160, 'after' => ')\x{}', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 416];
+        yield '400 letters setting options' => ['letters' => 400, 'after' => ')\x{}', 'code' => ErrorCode::EscapeDigitsMissing, 'offset' => 656];
     }
 
     /**
