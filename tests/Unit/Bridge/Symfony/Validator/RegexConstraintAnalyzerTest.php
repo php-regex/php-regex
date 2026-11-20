@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Validator;
 
 use PHPRegex\Symfony\Validator\RegexConstraintAnalyzer;
+use PHPRegex\Tests\Support\NodeVerdicts;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -36,6 +37,13 @@ use Symfony\Component\Validator\Validation;
  */
 final class RegexConstraintAnalyzerTest extends TestCase
 {
+    /**
+     * The HTML patterns of these tests whose browser verdict comes from Node,
+     * besides provideSyntaxErrors(): tests/Tools/write_v_flag_verdicts.php
+     * records them.
+     */
+    public const BROWSER_VALUES = ['a++', '(?<n>a)|(?<n>b)'];
+
     /**
      * The server's verdicts each row rests on are checked with preg_match()
      * before the audit runs; each example the audit gives of a difference
@@ -517,10 +525,37 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'constraints' => [new Length(min: 1), new Regex(pattern: '/[0-9]/', match: false), new Regex('/^\d+$/')],
             'message' => 'Every non-empty value /^\d+$/ matches also matches /[0-9]/, which must not match: no value passes both.',
         ];
+        yield 'two patterns and a NotBlank in one of their groups' => [
+            'constraints' => [new NotBlank(groups: ['strict']), new Regex(pattern: '/^\d+$/', groups: ['public', 'strict']), new Regex(pattern: '/^[a-z]+$/', groups: ['public', 'strict'])],
+            'message' => 'No non-empty value matches both /^\d+$/ and /^[a-z]+$/: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'two patterns and a NotBlank in the one group they share' => [
+            'constraints' => [new NotBlank(groups: ['public']), new Regex(pattern: '/^\d+$/', groups: ['public', 'extra']), new Regex(pattern: '/^[a-z]+$/', groups: ['public'])],
+            'message' => 'No non-empty value matches both /^\d+$/ and /^[a-z]+$/: no value passes both.',
+        ];
+        yield 'two patterns, a NotBlank and a Length over their groups' => [
+            'constraints' => [new NotBlank(groups: ['public']), new Length(min: 1, groups: ['strict']), new Regex(pattern: '/^\d+$/', groups: ['public', 'strict']), new Regex(pattern: '/^[a-z]+$/', groups: ['public', 'strict'])],
+            'message' => 'No non-empty value matches both /^\d+$/ and /^[a-z]+$/: no value passes both.',
+        ];
         yield 'two patterns read otherwise' => [
             'constraints' => [new Regex(pattern: '/^.?$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/Du', htmlPattern: '')],
             'message' => 'The Regex constraints /^.?$/D and /^b*$/Du could not be compared: one reads bytes and the other characters, and the only value found both pass is the empty one, which Regex does not check.',
         ];
+    }
+
+    /**
+     * A NotBlank refuses the empty value only in its own groups: in a group
+     * both patterns run in and it does not, Symfony accepts "".
+     */
+    #[Test]
+    public function test_an_empty_value_passes_in_a_group_without_the_notblank(): void
+    {
+        $constraints = [new NotBlank(groups: ['strict']), new Regex(pattern: '/^\d+$/', groups: ['public', 'strict']), new Regex(pattern: '/^[a-z]+$/', groups: ['public', 'strict'])];
+        $validator = Validation::createValidator();
+
+        $this->assertCount(0, $validator->validate('', $constraints, ['public']));
+        $this->assertGreaterThan(0, \count($validator->validate('', $constraints, ['strict'])));
+        $this->assertStringEndsWith('only an empty value, which Regex does not check, can pass both.', self::audit($constraints)[0]['message']);
     }
 
     #[Test]
@@ -684,6 +719,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
     #[Test]
     public function test_an_explicit_htmlpattern_a_browser_refuses_is_invalid(): void
     {
+        $this->assertFalse(NodeVerdicts::compiles('a++'), 'Node refuses a possessive under v.');
         $finding = self::audit([new Regex(pattern: '/^a$/Du', htmlPattern: 'a++')])[0];
 
         $this->assertSame(['html_pattern.invalid', 'error'], [$finding['check'], $finding['severity']]);
@@ -693,9 +729,9 @@ final class RegexConstraintAnalyzerTest extends TestCase
      * A browser compiles the attribute alone under v before it wraps it in
      * ^(?:...)$, and checks nothing when that fails: a class or a group
      * never closed, a ")" that closes none, a "\" that ends it. PCRE
-     * refuses each of them too; Node 22 throws on each:
-     * "Unterminated character class", "Unmatched ')'", "Unterminated
-     * group", "\ at end of pattern".
+     * refuses each of them too, and Node, as tests/Tools/write_v_flag_verdicts.php
+     * records it: "Unterminated character class", "Unmatched ')'",
+     * "Unterminated group", "\ at end of pattern".
      *
      * @param non-empty-string $message
      */
@@ -704,6 +740,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
     public function test_an_html_pattern_pcre_cannot_read_is_reported_when_a_browser_refuses_it(string $html, string $message): void
     {
         $this->assertFalse(@preg_match('#'.$html.'#u', ''));
+        $this->assertFalse(NodeVerdicts::compiles($html), 'Node refuses '.$html.' under v.');
         $regex = new Regex(pattern: '/^a$/Du', htmlPattern: $html);
 
         $findings = self::audit([$regex]);
@@ -735,6 +772,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
     {
         $regex = new Regex(pattern: '/^a$/Du', htmlPattern: '(?<n>a)|(?<n>b)');
         $this->assertFalse(@preg_match('#'.(string) $regex->htmlPattern.'#u', ''));
+        $this->assertTrue(NodeVerdicts::compiles((string) $regex->htmlPattern), 'Node compiles a name two alternatives share under v.');
 
         $this->assertSame([['html_pattern.unchecked', 'notice']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], self::audit([$regex])));
     }

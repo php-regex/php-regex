@@ -202,6 +202,13 @@
         "\\p{Alphabetic}": true,
         "\\p{White_Space}": true,
         "\\p{Cased_Letter}": true,
-        "\\p{C}": true
+        "\\p{C}": true,
+        "[": false,
+        "b[a\\]": false,
+        "a)(b": false,
+        "a(b(c)": false,
+        "([)]": false,
+        "a\\": false,
+        "(?<n>a)|(?<n>b)": true
     }
 }

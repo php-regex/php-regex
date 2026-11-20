@@ -589,7 +589,8 @@ value, though the lengths 1 and 3 straddle 2. It also reports a value a
 non-empty value passes together (`regex.contradiction`): `/^a*$/` and
 `/^b*$/` share the empty value alone. `Regex` does not check an
 empty value: the message says whether one can still pass, or whether a
-`NotBlank` or the `Length` refuses it. A question the solver cannot answer
+`NotBlank` or the `Length` refuses it in every group both constraints
+run in. A question the solver cannot answer
 (`length.unchecked`, `regex.unchecked`, `html_pattern.unchecked`) is a
 warning of the section, as is a class or a mapping file it cannot read:
 the summary then says the audit is incomplete, or that a check could not

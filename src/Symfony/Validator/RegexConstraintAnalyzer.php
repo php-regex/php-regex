@@ -809,23 +809,25 @@ final class RegexConstraintAnalyzer
     }
 
     /**
-     * Whether a constraint of the property that runs with each given one
-     * refuses an empty value: a NotBlank, or a Length of a least length,
-     * neither normalizing the value first.
+     * Whether the property refuses an empty value in every group the two
+     * constraints run in together: a NotBlank, or a Length of a least
+     * length, neither normalizing the value first, refuses it in its own
+     * groups only.
      *
      * @param list<Constraint> $constraints
      */
-    private static function rejectsEmpty(array $constraints, Constraint ...$with): bool
+    private static function rejectsEmpty(array $constraints, Constraint $first, Constraint $second): bool
     {
+        $refused = [];
         foreach ($constraints as $constraint) {
-            $refuses = ($constraint instanceof NotBlank && null === $constraint->normalizer)
-                || ($constraint instanceof Length && null === $constraint->normalizer && ($constraint->min ?? 0) > 0);
-            if ($refuses && [] === array_filter($with, static fn (Constraint $other): bool => !self::sharesAGroup($constraint, $other))) {
-                return true;
+            if (($constraint instanceof NotBlank && null === $constraint->normalizer)
+                || ($constraint instanceof Length && null === $constraint->normalizer && ($constraint->min ?? 0) > 0)
+            ) {
+                $refused = [...$refused, ...(array) $constraint->groups];
             }
         }
 
-        return false;
+        return [] === array_diff(array_intersect((array) $first->groups, (array) $second->groups), $refused);
     }
 
     private static function sharesAGroup(Constraint $first, Constraint $second): bool

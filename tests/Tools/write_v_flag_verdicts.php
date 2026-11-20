@@ -11,16 +11,19 @@ declare(strict_types=1);
  * file that was distributed with this source code.
  */
 
+use PHPRegex\Tests\Support\NodeVerdicts;
+use PHPRegex\Tests\Unit\Bridge\Symfony\Validator\RegexConstraintAnalyzerTest;
 use PHPRegex\Tests\Unit\Transpiler\VModeCompatibilityTest;
 
 /*
- * Writes what Node compiles of each value VModeCompatibilityTest lists, as
- * the HTML pattern attribute compiles it: new RegExp(value, "v").
+ * Writes what Node compiles of each value the browser tests list, as the
+ * HTML pattern attribute compiles it: new RegExp(value, "v").
  *
  *   php tests/Tools/write_v_flag_verdicts.php
  *
- * The test reads its "compiles" column against this record: the column is
- * the browser's word, not the checker's. Run it again after adding a value.
+ * The tests read their browser verdicts from this record (NodeVerdicts):
+ * the verdict is the browser's word, not the library's. Run it again after
+ * adding a value.
  */
 
 require __DIR__.'/../../tools/phpunit/vendor/autoload.php';
@@ -30,6 +33,12 @@ $values = [];
 foreach (VModeCompatibilityTest::provideValues() as [$value]) {
     $values[] = $value;
 }
+
+foreach (RegexConstraintAnalyzerTest::provideSyntaxErrors() as ['html' => $value]) {
+    $values[] = $value;
+}
+
+$values = array_values(array_unique([...$values, ...RegexConstraintAnalyzerTest::BROWSER_VALUES]));
 
 $script = 'const values = JSON.parse(require("fs").readFileSync(0, "utf8"));'
     .'process.stdout.write(JSON.stringify(values.map(v => { try { new RegExp(v, "v"); return true; } catch (e) { return false; } })));';
@@ -56,5 +65,5 @@ foreach ($values as $index => $value) {
     $compiles[$value] = true === $verdicts[$index];
 }
 
-file_put_contents(__DIR__.'/../Fixtures/Transpiler/v-flag-compiles.json', json_encode(['node' => $version, 'compiles' => $compiles], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)."\n");
+file_put_contents(NodeVerdicts::RECORD, json_encode(['node' => $version, 'compiles' => $compiles], \JSON_PRETTY_PRINT | \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_THROW_ON_ERROR)."\n");
 echo count($compiles), ' values, Node ', $version, ".\n";
