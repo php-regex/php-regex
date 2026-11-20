@@ -103,7 +103,7 @@ jobs:
         if: matrix.dependency == 'prefer-lowest' && matrix.php != '8.1'
         shell: bash
         run: |
-          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress ${{ matrix.php == '8.6' && '--ignore-platform-req=php+' || '' }} 'symfony/*'
+          composer update -d tools/phpunit --prefer-lowest --prefer-stable --with-all-dependencies --no-interaction --no-progress 'symfony/*'
 
       - name: Lower the whole PHPUnit Tooling
         # On PHP 8.1, the floors of everything: Symfony 6.4.0, Laravel 10.37.3
