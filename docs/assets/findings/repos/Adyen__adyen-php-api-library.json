@@ -1,6 +1,6 @@
 {
     "repo": "Adyen/adyen-php-api-library",
-    "sha": "aae2b1eb2118743d4910f8623fba7fc12dd9e595",
+    "sha": "d9a2dc5c468e3fb9d8ad1210aae8844402b1ff00",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Adyen/adyen-php-api-library/blob/aae2b1eb2118743d4910f8623fba7fc12dd9e595/src/Adyen/HeaderSelector.php#L120-L126",
+            "permalink": "https://github.com/Adyen/adyen-php-api-library/blob/d9a2dc5c468e3fb9d8ad1210aae8844402b1ff00/src/Adyen/HeaderSelector.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,

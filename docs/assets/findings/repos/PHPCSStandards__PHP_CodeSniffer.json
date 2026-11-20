@@ -1,6 +1,6 @@
 {
     "repo": "PHPCSStandards/PHP_CodeSniffer",
-    "sha": "aac40634427a498e2de08fd7b88373cf8d0f88ed",
+    "sha": "75ace24c00ef53ac34d3bfb5d39511d235c13c0d",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -50,7 +50,7 @@
                 "limit": 100000
             },
             "subject": " <+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++!>",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/aac40634427a498e2de08fd7b88373cf8d0f88ed/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L472-L478",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/75ace24c00ef53ac34d3bfb5d39511d235c13c0d/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L472-L478",
             "snippet": [
                 {
                     "number": 472,
@@ -150,7 +150,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/aac40634427a498e2de08fd7b88373cf8d0f88ed/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/75ace24c00ef53ac34d3bfb5d39511d235c13c0d/src/Standards/PEAR/Sniffs/Commenting/FileCommentSniff.php#L499-L505",
             "snippet": [
                 {
                     "number": 499,
@@ -369,7 +369,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/aac40634427a498e2de08fd7b88373cf8d0f88ed/src/Util/Common.php#L489-L495",
+            "permalink": "https://github.com/PHPCSStandards/PHP_CodeSniffer/blob/75ace24c00ef53ac34d3bfb5d39511d235c13c0d/src/Util/Common.php#L489-L495",
             "snippet": [
                 {
                     "number": 489,

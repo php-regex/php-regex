@@ -371,10 +371,11 @@ final class QuantifierConcatenationRule extends AbstractLintRule
     /**
      * Whether each (?!X) holds wherever the text starts with a character of
      * the set: X needs at least one character, and none it can start with
-     * is in the set. A lookaround in X is refused: the first characters
-     * read "(?<!b)a" as starting with a "b", yet it matches an "a". A
-     * backreference or a subroutine call needs no such refusal: where one
-     * can come first in X, its first characters are unknown.
+     * is in the set. A lookaround in X is refused: X then holds on more
+     * than the characters it takes, "(?<!b)a" taking an "a" only after
+     * anything but a "b". A backreference or a subroutine call needs no
+     * such refusal: where one can come first in X, its first characters
+     * are unknown.
      *
      * @param list<NodeInterface> $guards
      */

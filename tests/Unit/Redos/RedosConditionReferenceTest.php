@@ -75,7 +75,11 @@ final class RedosConditionReferenceTest extends TestCase
     }
 
     /**
-     * The smallest backtrack limit under which the match attempt ends.
+     * The smallest backtrack limit under which the match attempt ends. Only
+     * an attempt the backtrack limit stops is read as one that needs more
+     * steps: any other error, a pattern PCRE refuses above all, fails the
+     * test, and so does an attempt that does not end within the largest
+     * limit searched.
      */
     private static function steps(string $pattern, string $subject): int
     {
@@ -87,12 +91,18 @@ final class RedosConditionReferenceTest extends TestCase
             while ($low < $high) {
                 $middle = intdiv($low + $high, 2);
                 ini_set('pcre.backtrack_limit', (string) $middle);
-                if (false === @preg_match($pattern, $subject)) {
-                    $low = $middle + 1;
-                } else {
+                if (false !== @preg_match($pattern, $subject)) {
                     $high = $middle;
+
+                    continue;
                 }
+
+                self::assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), \sprintf('Oracle: PCRE stops %s with "%s", not at the backtrack limit.', $pattern, preg_last_error_msg()));
+                $low = $middle + 1;
             }
+
+            ini_set('pcre.backtrack_limit', (string) $low);
+            self::assertNotFalse(@preg_match($pattern, $subject), \sprintf('Oracle: the attempt of %s ends within %d steps, not with "%s".', $pattern, $low, preg_last_error_msg()));
 
             return $low;
         } finally {

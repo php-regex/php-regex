@@ -100,9 +100,10 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     /**
      * The possessive quantifiers and atomic groups of the pattern that
-     * commit to nothing, by where they start: printed plain.
+     * commit to nothing, by where they start: printed plain. Read when the
+     * pattern is entered, before any of its nodes.
      */
-    private ?InertCommitments $inert = null;
+    private InertCommitments $inert;
 
     /**
      * @param bool $unicodeSets print for the v flag (the HTML pattern attribute): classes escape
@@ -213,7 +214,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             GroupType::LookbehindPositive => $this->compileLookbehind('(?<=', $child, $node),
             GroupType::LookbehindNegative => $this->compileLookbehind('(?<!', $child, $node),
             GroupType::InlineFlags => $this->unsupported('Inline flags groups are not supported in JavaScript.', $node),
-            GroupType::Atomic => $this->inert?->isInertAtomic($node->getStartPosition()) ?? false
+            GroupType::Atomic => $this->inert->isInertAtomic($node->getStartPosition())
                 ? $this->plainCommitment('(?:'.$child.')', 'the atomic group')
                 : $this->unsupported('Atomic groups are not supported in JavaScript.', $node),
             GroupType::BranchReset => $this->unsupported('Branch reset groups are not supported in JavaScript.', $node),
@@ -225,7 +226,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     public function visitQuantifier(QuantifierNode $node): string
     {
         $possessive = QuantifierType::Possessive === $node->type;
-        if ($possessive && !($this->inert?->isInertPossessive($node->getStartPosition()) ?? false)) {
+        if ($possessive && !$this->inert->isInertPossessive($node->getStartPosition())) {
             return $this->unsupported('Possessive quantifiers are not supported in JavaScript.', $node);
         }
 
@@ -317,7 +318,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
             return $this->inCharClass ? $set : '['.$set.']';
         }
 
-        if ('R' === $node->value && !$this->inCharClass && ($this->inert?->isInertAtomic($node->getStartPosition()) ?? false)) {
+        if ('R' === $node->value && !$this->inCharClass && $this->inert->isInertAtomic($node->getStartPosition())) {
             // "\R" tries "\r\n" first and keeps it: unless a "\n" may
             // follow, the alternation in that order reads the same matches.
             return $this->plainCommitment('(?:\r\n|['.$this->spaceSet('v').'])', '\R');

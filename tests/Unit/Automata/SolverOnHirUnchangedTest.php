@@ -90,10 +90,18 @@ final class SolverOnHirUnchangedTest extends TestCase
         $this->assertTrue($result->isEquivalent);
     }
 
+    /**
+     * Each right pattern matches one string as a whole: PCRE says first
+     * whether the left pattern, anchored at both ends as a whole match
+     * reads it, matches that string too.
+     */
     #[Test]
     #[DataProvider('provideAnsweredPossessiveRows')]
-    public function test_a_safe_possessive_stays_answered(string $left, string $right, bool $expectedEmpty): void
+    public function test_a_safe_possessive_stays_answered(string $left, string $right, bool $expectedEmpty, string $whole, string $subject): void
     {
+        $this->assertSame(1, preg_match($right, $subject), $right.' on '.$subject);
+        $this->assertSame($expectedEmpty ? 0 : 1, preg_match($whole, $subject), $whole.' on '.$subject);
+
         $solver = new LanguageSolver();
 
         $result = $solver->intersection($left, $right, $this->fullMatchOptions());
@@ -102,20 +110,22 @@ final class SolverOnHirUnchangedTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{left: string, right: string, expectedEmpty: bool}>
+     * @return iterable<string, array{left: string, right: string, expectedEmpty: bool, whole: string, subject: string}>
      */
     public static function provideAnsweredPossessiveRows(): iterable
     {
-        yield 'a possessive before a disjoint follower' => ['left' => '/a++b/', 'right' => '/aab/', 'expectedEmpty' => false];
-        yield 'the symfony requirement idiom' => ['left' => '#^/users/[^/]++$#', 'right' => '#^/users/list$#', 'expectedEmpty' => false];
-        yield 'the symfony requirement idiom stays disjoint' => ['left' => '#^/users/[^/]++$#', 'right' => '#^/users/list/extra$#', 'expectedEmpty' => true];
-        yield 'through groups and sequences' => ['left' => '/(?:ab*+)c/', 'right' => '/abbc/', 'expectedEmpty' => false];
-        yield 'a follower made of alternatives' => ['left' => '/a*+(?:[bc]|d)e/', 'right' => '/ade/', 'expectedEmpty' => false];
-        yield 'through a skippable follower' => ['left' => '/a*+b?c/', 'right' => '/ac/', 'expectedEmpty' => false];
+        yield 'a possessive before a disjoint follower' => ['left' => '/a++b/', 'right' => '/aab/', 'expectedEmpty' => false, 'whole' => '/^(?:a++b)\z/', 'subject' => 'aab'];
+        yield 'the symfony requirement idiom' => ['left' => '#^/users/[^/]++$#', 'right' => '#^/users/list$#', 'expectedEmpty' => false, 'whole' => '#^/users/[^/]++\z#', 'subject' => '/users/list'];
+        yield 'the symfony requirement idiom stays disjoint' => ['left' => '#^/users/[^/]++$#', 'right' => '#^/users/list/extra$#', 'expectedEmpty' => true, 'whole' => '#^/users/[^/]++\z#', 'subject' => '/users/list/extra'];
+        yield 'through groups and sequences' => ['left' => '/(?:ab*+)c/', 'right' => '/abbc/', 'expectedEmpty' => false, 'whole' => '/^(?:(?:ab*+)c)\z/', 'subject' => 'abbc'];
+        yield 'a follower made of alternatives' => ['left' => '/a*+(?:[bc]|d)e/', 'right' => '/ade/', 'expectedEmpty' => false, 'whole' => '/^(?:a*+(?:[bc]|d)e)\z/', 'subject' => 'ade'];
+        yield 'through a skippable follower' => ['left' => '/a*+b?c/', 'right' => '/ac/', 'expectedEmpty' => false, 'whole' => '/^(?:a*+b?c)\z/', 'subject' => 'ac'];
         // A whole match ends where the subject does: nothing follows a
-        // bare possessive, which has nothing to give back to.
-        yield 'a bare possessive' => ['left' => '/a*+/', 'right' => '/aa/', 'expectedEmpty' => false];
-        yield 'a bare possessive stays disjoint' => ['left' => '/a*+/', 'right' => '/ab/', 'expectedEmpty' => true];
+        // bare possessive, which has nothing to give back to. Unanchored,
+        // "/a*+/" matches the empty start of "ab": only the anchored probe
+        // says what a whole match reads.
+        yield 'a bare possessive' => ['left' => '/a*+/', 'right' => '/aa/', 'expectedEmpty' => false, 'whole' => '/^(?:a*+)\z/', 'subject' => 'aa'];
+        yield 'a bare possessive stays disjoint' => ['left' => '/a*+/', 'right' => '/ab/', 'expectedEmpty' => true, 'whole' => '/^(?:a*+)\z/', 'subject' => 'ab'];
     }
 
     #[Test]

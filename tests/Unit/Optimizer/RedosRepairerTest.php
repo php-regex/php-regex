@@ -252,10 +252,12 @@ final class RedosRepairerTest extends TestCase
             ],
         ];
         // Proven quadratic, which PHP confirms (6, 33 and 120 ms on 5,000,
-        // 10,000 and 20,000 "a" and a "!"), with no hotspot named.
-        yield 'no hotspot: the order they had' => [
+        // 10,000 and 20,000 "a" and a "!"): the two runs meet where "b?"
+        // matches nothing, as in "/^a*a*$/", and both are blamed, in the
+        // order they had.
+        yield 'two runs that meet past an optional item: the order they had' => [
             'pattern' => '/^a*b?a*$/',
-            'hotspots' => [],
+            'hotspots' => [[1, 7], [1, 3], [5, 7]],
             'candidates' => [
                 '/^a*+b?a*$/',
                 '/^a*b?a*+$/',
@@ -264,18 +266,45 @@ final class RedosRepairerTest extends TestCase
         ];
         // The runs of two iterations meet where "\s*" matches nothing:
         // 385 -> 6 145 -> 98 305 steps on 8 -> 12 -> 16 "a" and a "!". The
-        // run is blamed, and the loop it lies in, before the others.
+        // run is blamed, and the loop it lies in; so is the leading "\s*",
+        // which the loop after it, able to match nothing, keeps apart from
+        // nothing. The blamed ones come first, in the order they had.
         yield 'a run that meets the next one past a space that may be empty' => [
             'pattern' => '/^\s*(?:\w+\s*)*$/',
-            'hotspots' => [[7, 10]],
+            'hotspots' => [[1, 4], [4, 15], [7, 10]],
             'candidates' => [
+                '/^\s*+(?:\w+\s*)*$/',
                 '/^\s*(?:\w+\s*)*+$/',
                 '/^\s*(?:\w++\s*)*$/',
-                '/^\s*+(?:\w+\s*)*$/',
                 '/^\s*(?:\w+\s*+)*$/',
                 '/^\s*+(?:\w++\s*+)*+$/',
             ],
         ];
+    }
+
+    /**
+     * The engine premise of the two runs blamed together above: they share
+     * the characters of a subject, the item between them matching nothing,
+     * so that the engine may split the same run of characters between them.
+     *
+     * @param list<string> $matches
+     */
+    #[Test]
+    #[DataProvider('provideRunsThatMeet')]
+    public function test_the_runs_blamed_together_meet_where_the_item_between_matches_nothing(string $pattern, string $split, string $subject, array $matches): void
+    {
+        $this->assertSame(1, preg_match($pattern, $subject), 'Oracle: the pattern matches the subject.');
+        $this->assertSame(1, preg_match($split, $subject, $groups), 'Oracle: each run may take a share of it.');
+        $this->assertSame($matches, $groups);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, split: string, subject: string, matches: list<string>}>
+     */
+    public static function provideRunsThatMeet(): iterable
+    {
+        yield 'two runs past an optional item' => ['pattern' => '/^a*b?a*$/', 'split' => '/^(a+)b?(a+)$/', 'subject' => 'aa', 'matches' => ['aa', 'a', 'a']];
+        yield 'two iterations past a space that may be empty' => ['pattern' => '/^\s*(?:\w+\s*)*$/', 'split' => '/^\s*(?:(\w+)\s*)(?:(\w+)\s*)$/', 'subject' => 'ab', 'matches' => ['ab', 'a', 'b']];
     }
 
     /**

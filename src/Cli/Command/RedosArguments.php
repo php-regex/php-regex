@@ -61,7 +61,7 @@ final class RedosArguments
             Option::value('--safe', '<pattern>', 'Safe pattern to compare against')->takingAnyValue(),
             Option::value('--input', '<string>', 'Input string to benchmark (auto-generated when omitted)')->takingAnyValue(),
             Option::value('--input-file', '<path>', 'Read input from a file'),
-            self::number('--repeat', '<n>', 'Repeat input N times'),
+            self::number('--repeat', '<n>', 'Repeat input N times, into 8 MiB at most'),
             Option::value('--prefix', '<string>', 'Prefix for the input')->takingAnyValue(),
             Option::value('--suffix', '<string>', 'Suffix for the input')->takingAnyValue(),
             self::number('--iterations', '<n>', 'Number of iterations'),

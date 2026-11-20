@@ -100,6 +100,10 @@ final class BytesWithoutUtfTest extends TestCase
         yield 'character cut by a quantifier' => ['pattern' => '/é+/', 'fixed' => '/é+/u', 'subject' => 'éé', 'advice' => 'Add u.'];
         yield 'raw byte of invalid UTF-8' => ['pattern' => "/caf\xE9/", 'fixed' => '/café/u', 'subject' => 'café', 'advice' => 'refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'];
         yield 'multibyte character in a class' => ['pattern' => '/[é]/', 'fixed' => '/[é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
+        // The class holds 0xC3, the range 0xA0 to 0xC3, then 0xA9.
+        yield 'range between multibyte characters in a class' => ['pattern' => '/[à-é]/', 'fixed' => '/[à-é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
+        yield 'escaped multibyte character in a class' => ['pattern' => '/[\é]/', 'fixed' => '/[\é]/u', 'subject' => 'é', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
+        yield 'multibyte character of four bytes in a class' => ['pattern' => '/[😀]/', 'fixed' => '/[😀]/u', 'subject' => '😀', 'advice' => 'reads each of its bytes as a member of its own. Add u.'];
         // The class is refused first, but u needs the later byte fixed too.
         yield 'class before a raw byte of invalid UTF-8' => ['pattern' => "/(?=[é])\xE9/", 'fixed' => '/(?=[é])é/u', 'subject' => 'é', 'advice' => 'refuses a pattern that is not valid UTF-8: write the character as UTF-8, then add u.'];
         // Valid UTF-8 is not enough: PCRE refuses \C in a lookbehind under u, on every release, so the rest has to change too.

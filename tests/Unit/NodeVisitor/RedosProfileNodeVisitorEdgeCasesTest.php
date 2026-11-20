@@ -196,15 +196,22 @@ final class RedosProfileNodeVisitorEdgeCasesTest extends TestCase
         $this->assertTrue($this->invokePrivate($visitor, 'hasOverlappingAlternatives', [$propertyFirst]), 'An unknown set before a known one may overlap it');
     }
 
+    /**
+     * A branch that starts with the dot, in a group or not, is compared
+     * through the dot's set, in whichever order the branches come: the dot
+     * takes "a", and leaves out "\n" without s (PCRE agrees: "/^.$/" matches
+     * "a" and not "\n").
+     */
     #[Test]
-    public function test_prefix_signature_recurses_through_group(): void
+    public function test_a_branch_starting_with_the_dot_is_compared_through_its_set(): void
     {
+        $this->assertSame([1, 0], [preg_match('/^.$/', 'a'), preg_match('/^.\z/', "\n")]);
+
         $visitor = new RedosProfiler();
         $group = new GroupNode(new DotNode(0, 0), GroupType::NonCapturing, null, null, 0, 0);
 
-        $signature = $this->invokePrivate($visitor, 'getPrefixSignature', [$group]);
-
-        $this->assertSame('DOT', $signature);
+        $this->assertTrue($this->invokePrivate($visitor, 'hasOverlappingAlternatives', [new AlternationNode([new LiteralNode('a', 0, 0), $group], 0, 0)]));
+        $this->assertFalse($this->invokePrivate($visitor, 'hasOverlappingAlternatives', [new AlternationNode([new LiteralNode("\n", 0, 0), $group], 0, 0)]));
     }
 
     /**

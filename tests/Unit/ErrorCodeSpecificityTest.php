@@ -428,6 +428,26 @@ final class ErrorCodeSpecificityTest extends TestCase
         yield 'limit given a second value' => ['pattern' => '/(*LIMIT_MATCH=1=2)a/', 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
         yield 'limit given a doubled "="' => ['pattern' => '/(*LIMIT_MATCH==1)a/', 'code' => 'regex.verb.invalid', 'message' => 'needs a number'];
         yield 'script run given a value' => ['pattern' => '/a(*sr=a)/', 'code' => 'regex.verb.invalid', 'message' => '(*sr) takes no value'];
+        // PCRE: "a relative value of zero is not allowed", and "reference to
+        // non-existent subpattern" for group 0, where the digits end: the
+        // number is refused as it is read, before the ")" is looked for, as
+        // "\g{-0}" and "(?(0)" are.
+        yield 'condition on a relative zero' => ['pattern' => '/(?(+0)a)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a negative zero after a group' => ['pattern' => '/(a)(?(-0)a|b)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero of two digits' => ['pattern' => '/(?(-00)a)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero, the body left open' => ['pattern' => '/(?(+0)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero under u' => ['pattern' => '/(?(+0)a)/u', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero the pattern ends in' => ['pattern' => '/(?(+0/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero, then a space' => ['pattern' => '/(?(+0 )a)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero, then a space x skips elsewhere' => ['pattern' => '/(?(+0 )a)/x', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero, then empty quotes' => ['pattern' => '/(?(+0\Q\E)a)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on a relative zero, then a byte above ASCII' => ['pattern' => '/(?(+0é)a)/', 'code' => 'regex.backref.zero', 'message' => 'cannot be zero'];
+        yield 'condition on group zero, then a letter' => ['pattern' => '/(?(0x)a)/', 'code' => 'regex.backref.zero', 'message' => 'Backreference 0 is not valid'];
+        yield 'condition on group zero of two digits, then a letter' => ['pattern' => '/(?(00x)a)/', 'code' => 'regex.backref.zero', 'message' => 'Backreference 0 is not valid'];
+        yield 'condition on group zero, then a space' => ['pattern' => '/(?(0 )a)/', 'code' => 'regex.backref.zero', 'message' => 'Backreference 0 is not valid'];
+        // A group number is read, then the ")" is missing.
+        yield 'condition on group one, then a space' => ['pattern' => '/(?(1 )a)/', 'code' => 'regex.conditional.unclosed', 'message' => 'Expected ) after condition'];
+        yield 'condition on a relative one, then a letter' => ['pattern' => '/(?(+1x)a)/', 'code' => 'regex.conditional.unclosed', 'message' => 'Expected ) after condition'];
         // PCRE: "subpattern name expected", where the name should start.
         yield '\\g brace with nothing in it' => ['pattern' => '/\\g{/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];
         yield '\\g brace holding only padding' => ['pattern' => '/(a)\\g{  }/', 'code' => 'regex.group.name_expected', 'message' => 'a group name or number is expected'];

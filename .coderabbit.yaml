@@ -123,7 +123,7 @@ reviews:
 
     - path: "src/Automata/**"
       instructions: |
-        - The solver answers only for the regular subset it can model. Lookarounds, backreferences, possessive quantifiers, atomic groups and recursion must make it refuse (ComplexityException), never return an approximate "equivalent" or "subset".
+        - The solver answers only for the regular subset it can model. What docs/reference/logic-solver.md lists under "What the Solver Refuses" (backreferences and recursion among them) must make it refuse (ComplexityException), never return an approximate "equivalent" or "subset". A possessive quantifier, an atomic group or `\R` is read as its plain spelling only where AtomicInertiaAnalyzer proves it commits to nothing, and every such proof is checked against preg_match() in its tests; flag any other path that reads one plain.
         - DFA construction must stay under its state limits on hostile input.
 
     - path: "src/Transpiler/**"
@@ -163,7 +163,7 @@ reviews:
         - Test classes are `final`; each test is `#[Test]` and named `test_{feature}_{scenario}` in snake case; data providers are static, return iterable and yield keyed rows (`yield 'a reversed range' => ['pattern' => '/a{2,1}/', 'valid' => false];`).
         - Strict assertions (`assertSame`) in new or changed code, never `assertEquals`; leave older lines a change does not touch alone.
         - What a pattern means is checked against the real engine in the test itself, not assumed.
-        - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …") or a `#[RequiresPhpExtension]` or `#[RequiresFunction]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
+        - A test may be skipped only through the engine gates of tests/Support/PcreGates.php (message "is verified against PCRE2 …"), the locale gate of tests/Support/InstalledLocales.php (message "is verified against PHP under the … locale", after asserting the library refuses the missing locale), or a `#[RequiresPhpExtension]` or `#[RequiresFunction]`; flag any other markTestSkipped/markTestIncomplete, and any change that removes assertions.
         - The suite runs in random order, on Linux, macOS and Windows: flag shared static state, cache bleed between tests, shell strings that assume a POSIX shell, and hard-coded path separators.
 
     - path: "docs/**/*.md"

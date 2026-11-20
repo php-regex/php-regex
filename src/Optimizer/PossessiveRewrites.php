@@ -50,18 +50,35 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  *
  * It shares the rewriter's RewriteState, and reads the items the rewriter
  * has already rewritten. It remembers the repeats whose group the rewriter
- * dropped, for as long as the rewriter lives.
+ * dropped, for as long as the rewriter lives, and what follows the item the
+ * rewriter is in, for as long as it is in it.
  *
  * @internal
  */
 final class PossessiveRewrites
 {
     /**
+     * The groups that look around, which read nothing where they stand.
+     */
+    private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring];
+
+    /**
      * The repeats whose group was dropped, "(?:a)+" written "a+".
      *
      * @var \WeakMap<QuantifierNode, true>
      */
     private \WeakMap $ungroupedRepeats;
+
+    /**
+     * What follows each item the rewriter is in, the innermost last: the
+     * items of its sequence from the index given, or null at the end of an
+     * atomic group or a lookaround but a scan substring, which nothing
+     * after it backtracks into. What follows any other group is what
+     * follows the group.
+     *
+     * @var list<array{list<NodeInterface>, int}|null>
+     */
+    private array $after = [];
 
     public function __construct(private readonly RewriteState $state, private readonly RepeatRewrites $repeats)
     {
@@ -75,6 +92,46 @@ final class PossessiveRewrites
     public function ungrouped(QuantifierNode $node): void
     {
         $this->ungroupedRepeats[$node] = true;
+    }
+
+    /**
+     * Records the item the rewriter enters in a sequence: the items from
+     * $from on follow it.
+     *
+     * @param list<NodeInterface> $items
+     */
+    public function enter(array $items, int $from): void
+    {
+        $this->after[] = [$items, $from];
+    }
+
+    /**
+     * Forgets the item the rewriter leaves in a sequence.
+     */
+    public function leave(): void
+    {
+        array_pop($this->after);
+    }
+
+    /**
+     * Records the group the rewriter enters, when nothing after it
+     * backtracks into it.
+     */
+    public function enterGroup(GroupNode $node): void
+    {
+        if (self::closes($node)) {
+            $this->after[] = null;
+        }
+    }
+
+    /**
+     * Forgets the group the rewriter leaves.
+     */
+    public function leaveGroup(GroupNode $node): void
+    {
+        if (self::closes($node)) {
+            array_pop($this->after);
+        }
     }
 
     /**
@@ -99,7 +156,12 @@ final class PossessiveRewrites
                 $suffixNode = 1 === \count($suffix) ? $suffix[0] : new SequenceNode($suffix, $current->startPosition, $current->endPosition);
 
                 // The sets stop at 0x7F: above it nothing is known disjoint.
-                if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix)) {
+                // A lookaround reads nothing, yet it looks at the characters
+                // the repetition would give back: "a+(?!b)" matches "a" in
+                // "aab", "a++(?!b)" nothing. Past items that may match
+                // nothing, it may stand after the group the sequence ends:
+                // "(a+b?)(?!c)" matches "a" in "aac".
+                if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix) || ($this->suffixLooksAround($suffix) ?? $this->lookaroundFollows())) {
                     continue;
                 }
 
@@ -221,6 +283,77 @@ final class PossessiveRewrites
 
             if (!$this->canMatchEmpty($item)) {
                 return false;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether a lookaround stands among the items the suffix may start
+     * with, up to the first that reads a character, or null when each of
+     * them may match nothing without one: what follows decides.
+     *
+     * @param array<NodeInterface> $suffix
+     */
+    private function suffixLooksAround(array $suffix): ?bool
+    {
+        foreach ($suffix as $item) {
+            if (self::holdsLookaround($item)) {
+                return true;
+            }
+
+            if (!$this->canMatchEmpty($item)) {
+                return false;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Whether a lookaround may follow the sequence the rewriter is in
+     * before anything reads a character: past the end of the groups around
+     * it, up to the end of the pattern, of an atomic group or of a
+     * lookaround.
+     */
+    private function lookaroundFollows(): bool
+    {
+        for ($level = \count($this->after) - 1; $level >= 0; $level--) {
+            $after = $this->after[$level];
+            if (null === $after) {
+                return false;
+            }
+
+            $looksAround = $this->suffixLooksAround(\array_slice($after[0], $after[1]));
+            if (null !== $looksAround) {
+                return $looksAround;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether nothing after the group backtracks into it: an atomic group
+     * or a lookaround, but a scan substring, which what follows backtracks
+     * into: "^(aac)(*scs:(1)(a+b?))(?=\2ac)" matches "aac" in "aacaac"
+     * with group 2 given back to "a".
+     */
+    private static function closes(GroupNode $node): bool
+    {
+        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && \in_array($node->type, self::LOOKAROUNDS, true));
+    }
+
+    private static function holdsLookaround(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && \in_array($node->type, self::LOOKAROUNDS, true)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsLookaround($child)) {
+                return true;
             }
         }
 

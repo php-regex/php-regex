@@ -1,6 +1,6 @@
 {
     "repo": "ecsphp/ecs",
-    "sha": "fc97634b28c14a46ce661e36297b63571a63e81b",
+    "sha": "b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php#L146-L152",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Annotation/RemoveEventSubscriberDescriptionFixer.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -159,7 +159,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Annotation/RemoveMethodNameDuplicateDescriptionFixer.php#L73-L79",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Annotation/RemoveMethodNameDuplicateDescriptionFixer.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -322,7 +322,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Annotation/RemoveMethodNameDuplicateDescriptionFixer.php#L88-L94",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Annotation/RemoveMethodNameDuplicateDescriptionFixer.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -458,7 +458,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Annotation/RemovePHPStormAnnotationFixer.php#L25-L31",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Annotation/RemovePHPStormAnnotationFixer.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -625,7 +625,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Commenting/DoubleAsteriskInlineVarFixer.php#L19-L25",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Commenting/DoubleAsteriskInlineVarFixer.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -809,7 +809,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Commenting/SingleLineInlineVarDocBlockFixer.php#L24-L30",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Commenting/SingleLineInlineVarDocBlockFixer.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -936,7 +936,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ecsphp/ecs/blob/fc97634b28c14a46ce661e36297b63571a63e81b/packages/coding-standard/src/Fixer/Commenting/TypeToVarTagFixer.php#L32-L38",
+            "permalink": "https://github.com/ecsphp/ecs/blob/b78b2039ec94dc009f4b7b04376cdcf8e6f57ed1/packages/coding-standard/src/Fixer/Commenting/TypeToVarTagFixer.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,

@@ -17,7 +17,9 @@ use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
  * The analysis budget, counted in steps and states, never in time: the same
- * pattern stops at the same point on every machine.
+ * pattern stops at the same point on every machine. A budget may draw its
+ * steps from a pool too, which several proofs share: a step past the pool
+ * stops the proof as a step past its own does.
  *
  * @internal
  */
@@ -27,7 +29,11 @@ final class Budget
 
     private int $states = 0;
 
-    public function __construct(private readonly int $maxSteps, private readonly int $maxStates) {}
+    public function __construct(
+        private readonly int $maxSteps,
+        private readonly int $maxStates,
+        private readonly ?self $pool = null
+    ) {}
 
     /**
      * @throws ModelLimitException
@@ -38,6 +44,8 @@ final class Budget
         if ($this->steps > $this->maxSteps) {
             throw ModelLimitException::budget('Steps');
         }
+
+        $this->pool?->step($count);
     }
 
     /**
