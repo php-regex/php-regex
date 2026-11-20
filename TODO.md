@@ -9,9 +9,12 @@
   (`GET /admin/`), listed with `--show-overlaps`. #403 declined it because
   it flags every static route declared before a catch-all. Keep it, or
   restore the carve-out in `RouteConflictAnalyzer` before merging.
-- #408: the reference job and the coverage job failed on the earlier head,
-  reportedly with the same failures as `pre-tag-3-core`; check them on the
-  new head.
+- Once #408 is merged, its own pull request: the JavaScript and HTML
+  pattern targets print a lookbehind of more than one length holding a
+  capture as is, and JavaScript reads it right to left, so the capture
+  differs. `/(?<=a?(a{1,2})b)c\1/` on `aabca`: PCRE captures `a` and finds
+  `ca`, JavaScript captures `aa` and finds nothing. Refuse such a
+  lookbehind. Raised on #408, older than it.
 - Once #410 is merged, drop the three entries it settles under "Left from
   the second pass": the trimmed `access_control` path, the partial
   trailing-slash redirect, and the `s` flag of symfony/http-foundation 6.4.
