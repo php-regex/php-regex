@@ -81,6 +81,22 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         yield 'a fixed atomic body' => ['pattern' => '/(?>abc)c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:abc)c/', 'subjects' => ['abcc', 'abc', 'xabcc'], 'parting' => null];
         yield 'a longer branch first' => ['pattern' => '/(?>ab|a)c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:ab|a)c/', 'subjects' => ['abc', 'ac', 'abac', 'ab'], 'parting' => null];
         yield 'a run at the end of a lookahead' => ['pattern' => '/(?=a++)a/', 'possessives' => [3], 'atomics' => [], 'plain' => '/(?=a+)a/', 'subjects' => ['a', 'aa', 'b'], 'parting' => null];
+        yield 'a line break in an optional group' => ['pattern' => '/(?:\n\R)?x/', 'possessives' => [], 'atomics' => [5], 'plain' => '/(?:\n(?:\r\n|[\n\x0B\f\r\x85]))?x/', 'subjects' => ["\n\r\nx", "\n\rx", "\n\nx", 'x', "\n\r\n\nx"], 'parting' => null];
+        yield 'a run inside an atomic group' => ['pattern' => '/(?>a\d++)x/', 'possessives' => [4], 'atomics' => [], 'plain' => '/(?>a\d+)x/', 'subjects' => ['a12x', 'ax', 'a1x2', 'a1'], 'parting' => null];
+        yield 'a run in a branch' => ['pattern' => '/(?:\d++x|y)/', 'possessives' => [3], 'atomics' => [], 'plain' => '/(?:\d+x|y)/', 'subjects' => ['12x', 'y', '1', 'x'], 'parting' => null];
+        yield 'two runs side by side' => ['pattern' => '/a++\d++/', 'possessives' => [0, 3], 'atomics' => [], 'plain' => '/a+\d+/', 'subjects' => ['aa12', 'a', '1', 'aa1b'], 'parting' => null];
+        yield 'branches of one length' => ['pattern' => '/(?>a|[ab])c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:a|[ab])c/', 'subjects' => ['ac', 'bc', 'abc', 'c'], 'parting' => null];
+        yield 'branches that start apart' => ['pattern' => '/(?>ab|c)b/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:ab|c)b/', 'subjects' => ['abb', 'cb', 'ab', 'cbb'], 'parting' => null];
+        yield 'a caseless letter first' => ['pattern' => '/(?>(?i:a)|bc)d/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:(?i:a)|bc)d/', 'subjects' => ['ad', 'Ad', 'bcd', 'bd'], 'parting' => null];
+        yield 'a run of runs' => ['pattern' => '/(?:[ab]+)++c/', 'possessives' => [0], 'atomics' => [], 'plain' => '/(?:[ab]+)+c/', 'subjects' => ['abc', 'c', 'abab', 'bac'], 'parting' => null];
+        yield 'a run before the subject end' => ['pattern' => '/a++\z/', 'possessives' => [0], 'atomics' => [], 'plain' => '/a+\z/', 'subjects' => ['aa', 'aab', 'ba'], 'parting' => null];
+        yield 'a run before a match start reset' => ['pattern' => '/a++\Kb/', 'possessives' => [0], 'atomics' => [], 'plain' => '/a+\Kb/', 'subjects' => ['aab', 'ab', 'b', 'aa'], 'parting' => null];
+        yield 'a run before a line end under m' => ['pattern' => '/[a\t\x0B]++$/m', 'possessives' => [0], 'atomics' => [], 'plain' => '/[a\t\x0B]+$/m', 'subjects' => ["a\t\n", "a\x0B\nb", "a\tb", 'aa'], 'parting' => null];
+        yield 'a run before a group' => ['pattern' => '/a++(b)/', 'possessives' => [0], 'atomics' => [], 'plain' => '/a+(b)/', 'subjects' => ['aab', 'ab', 'aa'], 'parting' => null];
+        yield 'a line break before its own group again' => ['pattern' => '/(?:\n\R)+x/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:\n(?:\r\n|[\n\x0B\f\r\x85]))+x/', 'subject' => "\n\r\n\rx"]];
+        yield 'a line break closing a group' => ['pattern' => '/(x\R)\n/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(x(?:\r\n|[\n\x0B\f\r\x85]))\n/', 'subject' => "x\r\n"]];
+        yield 'a caseless pair before a cased letter' => ['pattern' => '/(?>AB|a)(?-i)b/i', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:AB|a)(?-i)b/i', 'subject' => 'ab']];
+        yield 'a branch holding a lookahead' => ['pattern' => '/a++(?:b|(?=a))/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a+(?:b|(?=a))/', 'subject' => 'aa']];
         yield 'a shorter branch first' => ['pattern' => '/(?>a|ab)c/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a|ab)c/', 'subject' => 'abc']];
         yield 'a run the follower shares' => ['pattern' => '/a*+a/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a*a/', 'subject' => 'aa']];
         yield 'a newline after a line break' => ['pattern' => "/\\R\n/", 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:\r\n|[\n\x0B\f\r\x85])\n/', 'subject' => "\r\n"]];
@@ -145,6 +161,10 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         $this->assertSame($inert, [] === $parting, $pattern.' against '.$plain);
 
         $this->assertSame(!$inert, InertCommitments::of(RegexParser::create()->parse($pattern))->isEmpty(), $pattern);
+
+        $hir = (new HirTranslator())->translate(RegexParser::create()->parse($pattern));
+        $lineFeed = !str_contains($pattern, '(*CRLF)');
+        $this->assertSame(!$inert, (new AtomicInertiaAnalyzer(wholeSubject: false, lineFeedNewline: $lineFeed))->inertCommitments($hir)->isEmpty(), $pattern.' read by the analyzer');
     }
 
     /**

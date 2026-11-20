@@ -49,7 +49,7 @@ final class JavaScriptCommitmentTest extends TestCase
         $regex = Regex::create(['cache' => null]);
         $result = $regex->transpile($pattern, 'javascript');
         $this->assertSame($literal, $result->literal);
-        $this->assertStringContainsString('without its commitment', implode("\n", $result->notes));
+        $this->assertMatchesRegularExpression('/^Printed (the atomic group|the possessive quantifier|\\\R) without its commitment: nothing that follows it can take back what it matched\.$/m', implode("\n", $result->notes));
 
         $this->assertSame($attribute, $regex->transpile($pattern, 'html-pattern')->pattern);
     }
@@ -65,6 +65,7 @@ final class JavaScriptCommitmentTest extends TestCase
         yield 'a line break under u' => ['pattern' => '/^a\Rb$/u', 'plain' => '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u', 'literal' => '/^a(?:\r\n|[\x0A-\x0D\x85\u2028\u2029])b(?=\n?$)/u', 'attribute' => '^a(?:\r\n|[\x0A-\x0D\x85\u2028\u2029])b$', 'subjects' => ["a\r\nb", "a\u{2028}b", "a\rb", "a\r\rb"]];
         yield 'an atomic letter in a search' => ['pattern' => '/(?>a)b/', 'plain' => '/ab/', 'literal' => '/(?:a)b/', 'attribute' => '[\s\S]*(?:(?:a)b)[\s\S]*', 'subjects' => ['xab', 'ab', 'b']];
         yield 'a possessive group' => ['pattern' => '/^(?:ab)++c$/', 'plain' => '/^(?:ab)+c$/', 'literal' => '/^(?:ab)+c(?=\n?$)/', 'attribute' => '^(?:ab)+c$', 'subjects' => ['abc', 'ababc', 'abac']];
+        yield 'an atomic pair in a negative lookbehind' => ['pattern' => '/(?<!(?>ab))c/', 'plain' => '/(?<!(?:ab))c/', 'literal' => '/(?<!(?:ab))c/', 'attribute' => '[\s\S]*(?:(?<!(?:ab))c)[\s\S]*', 'subjects' => ['abc', 'xc', 'c', 'ab']];
         yield 'a possessive run in a search' => ['pattern' => '/\d++px/', 'plain' => '/\d+px/', 'literal' => '/\d+px/', 'attribute' => '[\s\S]*(?:\d+px)[\s\S]*', 'subjects' => ['12px', 'x1px', '12p']];
     }
 

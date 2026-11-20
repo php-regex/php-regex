@@ -91,56 +91,6 @@ final class AtomicInertiaAnalyzer
     public function __construct(private readonly bool $wholeSubject = true, private readonly bool $lineFeedNewline = true) {}
 
     /**
-     * Whether a possessive quantifier reads as its greedy spelling, before
-     * the characters given.
-     */
-    public function possessiveIsInert(RepetitionHir $possessive, ?CharSet $follow): bool
-    {
-        if (null === $follow) {
-            return false;
-        }
-
-        $atom = $this->atomFirstSet($possessive->body);
-
-        return null !== $atom && $atom->intersect($follow)->isEmpty();
-    }
-
-    /**
-     * Whether an atomic group reads as its body, before the characters
-     * given.
-     */
-    public function atomicIsInert(AtomicHir $atomic, ?CharSet $follow): bool
-    {
-        $body = self::unwrap($atomic->body);
-
-        // One fixed way to match: nothing to backtrack into.
-        if (null !== $this->fixedFirstSet($body)) {
-            return true;
-        }
-
-        if (null === $follow) {
-            return false;
-        }
-
-        if ($body instanceof RepetitionHir) {
-            if (Greed::Lazy === $body->greed) {
-                return false;
-            }
-
-            // A greedy repetition held atomic is its possessive spelling.
-            $atom = $this->atomFirstSet($body->body);
-
-            return null !== $atom && $atom->intersect($follow)->isEmpty();
-        }
-
-        if ($body instanceof AlternationHir) {
-            return $this->alternationIsInert($body, $follow);
-        }
-
-        return false;
-    }
-
-    /**
      * For each part of a sequence, the first characters of everything after
      * it: the rest of the sequence, through the followers that may be
      * skipped, and what follows the sequence itself. All followers
@@ -256,7 +206,7 @@ final class AtomicInertiaAnalyzer
      * of the pattern needs nothing more: a match that reached it holds,
      * and nothing backtracks into what came before it.
      */
-    public function inertCommitments(Hir $root, ?CharSet $beyond = null): InertCommitments
+    public function inertCommitments(Hir $root): InertCommitments
     {
         if (!self::containsCommitment($root)) {
             return new InertCommitments();
@@ -264,9 +214,59 @@ final class AtomicInertiaAnalyzer
 
         $possessives = [];
         $atomics = [];
-        $this->collectSequence([$root], $beyond ?? CharSet::empty(), $possessives, $atomics);
+        $this->collectSequence([$root], CharSet::empty(), $possessives, $atomics);
 
         return new InertCommitments($possessives, $atomics);
+    }
+
+    /**
+     * Whether a possessive quantifier reads as its greedy spelling, before
+     * the characters given.
+     */
+    private function possessiveIsInert(RepetitionHir $possessive, ?CharSet $follow): bool
+    {
+        if (null === $follow) {
+            return false;
+        }
+
+        $atom = $this->atomFirstSet($possessive->body);
+
+        return null !== $atom && $atom->intersect($follow)->isEmpty();
+    }
+
+    /**
+     * Whether an atomic group reads as its body, before the characters
+     * given.
+     */
+    private function atomicIsInert(AtomicHir $atomic, ?CharSet $follow): bool
+    {
+        $body = self::unwrap($atomic->body);
+
+        // One fixed way to match: nothing to backtrack into.
+        if (null !== $this->fixedFirstSet($body)) {
+            return true;
+        }
+
+        if (null === $follow) {
+            return false;
+        }
+
+        if ($body instanceof RepetitionHir) {
+            if (Greed::Lazy === $body->greed) {
+                return false;
+            }
+
+            // A greedy repetition held atomic is its possessive spelling.
+            $atom = $this->atomFirstSet($body->body);
+
+            return null !== $atom && $atom->intersect($follow)->isEmpty();
+        }
+
+        if ($body instanceof AlternationHir) {
+            return $this->alternationIsInert($body, $follow);
+        }
+
+        return false;
     }
 
     /**
@@ -295,12 +295,8 @@ final class AtomicInertiaAnalyzer
             return;
         }
 
-        if ($node instanceof AtomicHir) {
-            $this->collect($node->body, $follow, $possessives, $atomics);
-
-            return;
-        }
-
+        // An atomic group, a capture, an alternation: each child is
+        // followed by what follows the node.
         foreach ($node->children() as $child) {
             $this->collect($child, $follow, $possessives, $atomics);
         }
@@ -354,11 +350,7 @@ final class AtomicInertiaAnalyzer
         }
 
         foreach ($branches as $i => $earlier) {
-            foreach ($branches as $j => $later) {
-                if ($j <= $i) {
-                    continue;
-                }
-
+            foreach (\array_slice($branches, $i + 1) as $later) {
                 if (\count($earlier) < \count($later) && self::mayPrefix($earlier, $later)) {
                     return false;
                 }

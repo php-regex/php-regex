@@ -218,15 +218,9 @@ final class HirToNfaTransformer
             return;
         }
 
-        if ($node instanceof AtomicHir) {
-            if (!isset($this->vouched[spl_object_id($node)])) {
-                throw new ComplexityException(self::ATOMIC_MESSAGE, $node->startPosition, $this->pattern);
-            }
-
-            // Proven inert: the group reads as its body.
-            $this->assertNode($node->body, $options, $follow);
-
-            return;
+        // Proven inert, an atomic group reads as its body, below.
+        if ($node instanceof AtomicHir && !($this->vouched[spl_object_id($node)] ?? false)) {
+            throw new ComplexityException(self::ATOMIC_MESSAGE, $node->startPosition, $this->pattern);
         }
 
         if ($node instanceof AssertionHir) {
@@ -256,7 +250,7 @@ final class HirToNfaTransformer
         }
 
         if ($node instanceof RepetitionHir) {
-            if (Greed::Possessive === $node->greed && !isset($this->vouched[spl_object_id($node)])) {
+            if (Greed::Possessive === $node->greed && !($this->vouched[spl_object_id($node)] ?? false)) {
                 throw new ComplexityException(self::POSSESSIVE_MESSAGE, $node->startPosition, $this->pattern);
             }
 

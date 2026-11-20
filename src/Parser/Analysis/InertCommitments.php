@@ -54,12 +54,12 @@ final class InertCommitments
 
     public function isInertPossessive(int $startPosition): bool
     {
-        return isset($this->possessives[$startPosition]);
+        return $this->possessives[$startPosition] ?? false;
     }
 
     public function isInertAtomic(int $startPosition): bool
     {
-        return isset($this->atomics[$startPosition]);
+        return $this->atomics[$startPosition] ?? false;
     }
 
     public function isEmpty(): bool
