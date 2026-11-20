@@ -42,7 +42,7 @@ Installation
 composer require php-regex/regex-symfony
 ```
 
-Requires PHP 8.1+ with the `tokenizer` extension, and Symfony 6.4, 7.4 or 8.x. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads; `symfony/validator` also brings the `ValidRegex` constraint.
+Requires PHP 8.1+ with the `tokenizer` extension, and Symfony 6.4, 7.4 or 8.x. `symfony/routing`, `symfony/validator` and `nikic/php-parser` are optional and widen what `regex:lint` reads; `symfony/validator` also brings the `ValidRegex` constraint, and its `validator` service is what `regex:validator` reads the classes through: without it the command exits with code 2.
 
 Configuration
 -------------

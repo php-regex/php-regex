@@ -533,6 +533,12 @@ for `GET` also takes the `GET` and `HEAD` requests whose path differs from
 one of its own by the trailing slash alone, which the matcher redirects;
 a route with a condition, or a host the analysis cannot read, takes none.
 
+`regex:validator` needs Symfony Validator and its `validator` service:
+`composer require symfony/validator`, which FrameworkBundle enables unless
+`framework.validation` turns it off. Without that service the command
+exits with code 2 before it reads a class, and `regex:analyze` reports its
+validator section as a warning.
+
 `regex:validator` audits the `Regex` constraints of the validated classes,
 those the validator mapping files name and those `src/` declares with the
 constraint, or the classes given, read through the application's
@@ -541,28 +547,53 @@ them. A form renders a `Regex` constraint as the HTML `pattern` attribute
 `getHtmlPattern()` gives, and the browser compiles it as `^(?:pattern)$`
 under the `v` flag. For each constraint the command reports:
 
-- `html_pattern.dropped`: the pattern has flags, so `getHtmlPattern()` gives
-  no attribute and the browser checks nothing; the report suggests an
-  `htmlPattern` written by the `html-pattern` target and proved to accept
-  the same values;
+- `html_pattern.dropped`: the pattern has flags, or a pair of delimiters
+  such as `{^a$}`, so `getHtmlPattern()` gives no attribute and the browser
+  checks nothing; the report suggests an
+  `htmlPattern` written by the `html-pattern` target, and its message says
+  whether the solver proved it accepts the same values (`/^[a-z]+$/i`
+  gives `^[a-zA-Z]+$`, proved) or could not (`/^a++b$/i` gives
+  `^[aA]+[bB]$`, a candidate to check by hand);
 - `html_pattern.invalid`: a browser refuses to compile the attribute under
   `v`, and checks nothing: `[a-z0-9-]` (a class under `v` takes `-`
   escaped only), a possessive, an atomic group, `\h`, `\A`, `(?P<name>`,
-  `\Q...\E`, an escape JavaScript does not know;
+  `\Q...\E`, an escape JavaScript does not know, a class or a group never
+  closed, a `)` that closes none (a browser compiles the attribute alone
+  before it wraps it in `^(?:...)$`, so `a)(b` is refused);
 - `html_pattern.misread`: a browser compiles it but reads it otherwise than
-  PCRE, a POSIX class as a nested class, `&&` as an intersection;
+  PCRE, a POSIX class as a nested class, `&&` as an intersection, `\v` as
+  the vertical tab alone. An explicit `htmlPattern` is written for the
+  browser: it is compared as a browser reads it, `\v` included, and one
+  the comparison cannot read so (a POSIX class, `&&`) is reported as not
+  compared;
 - `html_pattern.looser` (an error) and `html_pattern.stricter` (a warning),
   with the shortest value the browser accepts and the server rejects, or
   the reverse. The browser side is read as JavaScript reads it: code points
   where a pattern without `u` reads bytes (`/^.{2}$/` refuses `aé`, which
   the browser lets through), `\w`, `\d` and `\b` over ASCII, `.` refusing
-  U+2028, and only values an input can hold, without a line break.
+  U+2028, and only the values the browser checks: not the empty value,
+  which neither the browser nor `Regex` checks, and none holding a line
+  break, which no input holds. For a `match: false` pattern without `u`,
+  a value the server accepts and the browser rejects is searched for only
+  when the pattern matches the same UTF-8 values under `(*UTF)`; else the
+  report says it was not. A constraint with a `normalizer` matches the
+  normalized value, which the audit does not model: its HTML pattern is
+  checked for what a browser compiles, and reported as not compared.
 
 Across the constraints of a property, in a shared validation group, it
-reports a `Length` no value of the pattern fits (`length.contradiction`), a
-`Choice` value the pattern rejects (`choice.rejected`) and two `Regex`
-constraints no value passes together (`regex.contradiction`). A question the
-solver cannot answer is a warning of the section. The command exits 1 on an
+reports a `Length` no non-empty value of the pattern fits
+(`length.contradiction`): `/^(?:a|aaa)$/` and `Length(exactly: 2)` leave no
+value, though the lengths 1 and 3 straddle 2. It also reports a value a
+`Choice` offers that the pattern rejects (`choice.rejected`), not one a
+`match: false` `Choice` refuses, and two `Regex` constraints no
+non-empty value passes together (`regex.contradiction`): `/^a*$/` and
+`/^b*$/` share the empty value alone. `Regex` does not check an
+empty value: the message says whether one can still pass, or whether a
+`NotBlank` or the `Length` refuses it. A question the solver cannot answer
+(`length.unchecked`, `regex.unchecked`, `html_pattern.unchecked`) is a
+warning of the section, as is a class or a mapping file it cannot read:
+the summary then says the audit is incomplete, or that a check could not
+be made, never that every constraint agrees. The command exits 1 on an
 error; `regex:analyze` runs the same section and fails on it with
 `--fail-on=validator`.
 

@@ -45,7 +45,7 @@ final class ValidatedClassLocator
      * @param list<string> $classes     the classes to read; none reads the mapping files and directories
      * @param list<string> $directories where to look for PHP classes
      *
-     * @return array{list<ClassMetadataInterface>, list<string>} the metadata, and why a class was not read
+     * @return array{list<ClassMetadataInterface>, list<string>} the metadata, and why a class or a mapping file was not read
      */
     public function locate(array $classes = [], array $directories = []): array
     {
@@ -53,12 +53,13 @@ final class ValidatedClassLocator
             return [[], []];
         }
 
+        $unread = [];
         if ([] === $classes) {
-            $classes = [...$this->mappedClasses(), ...self::declaredClasses($directories)];
+            [$classes, $unread] = $this->mappedClasses();
+            $classes = [...$classes, ...self::declaredClasses($directories)];
         }
 
         $metadata = [];
-        $unread = [];
         foreach (array_values(array_unique($classes)) as $class) {
             try {
                 if (!class_exists($class)) {
@@ -83,11 +84,12 @@ final class ValidatedClassLocator
     }
 
     /**
-     * @return list<string>
+     * @return array{list<string>, list<string>} the classes the mapping files name, and why a file was not read
      */
     private function mappedClasses(): array
     {
         $classes = [];
+        $unread = [];
         foreach ($this->mappingFiles as $file) {
             if (!is_file($file)) {
                 continue;
@@ -101,12 +103,12 @@ final class ValidatedClassLocator
                         $classes[] = $class;
                     }
                 }
-            } catch (ExceptionInterface|\InvalidArgumentException) {
-                continue;
+            } catch (ExceptionInterface|\InvalidArgumentException $e) {
+                $unread[] = \sprintf('%s: %s', $file, $e->getMessage());
             }
         }
 
-        return $classes;
+        return [$classes, $unread];
     }
 
     /**

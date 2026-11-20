@@ -24,7 +24,9 @@ use PHPRegex\Symfony\Validator\ValidatedClassLocator;
  * property.
  *
  * An error or a warning of the audit is an issue of kind "validator"; a
- * question the solver could not answer is a warning of the section.
+ * question the solver could not answer, and a class or a mapping file that
+ * could not be read, is a warning of the section, and leaves no summary
+ * that says every constraint agrees.
  *
  * @internal
  *
@@ -75,7 +77,7 @@ final class ValidatorAnalyzer implements AnalyzerInterface
     }
 
     /**
-     * @param list<string> $unread
+     * @param list<string> $unread why a class or a mapping file was not read
      */
     public function section(RegexConstraintReport $report, array $unread = [], bool $debug = false): ReportSection
     {
@@ -91,6 +93,11 @@ final class ValidatorAnalyzer implements AnalyzerInterface
             $issues[] = self::issue($finding);
         }
 
+        $unchecked = \count($warnings);
+        foreach ($unread as $reason) {
+            $warnings[] = new AnalysisNotice(CheckOutcome::Warn, $reason);
+        }
+
         $suggestions = [];
         foreach ($report->findings as $finding) {
             if (isset($finding['suggestion']) && 'notice' !== $finding['severity']) {
@@ -99,25 +106,22 @@ final class ValidatorAnalyzer implements AnalyzerInterface
         }
 
         $errors = \count($report->ofSeverity('error'));
+        $regex = $report->stats['regex'];
+        $constraints = \sprintf('%d Regex constraint%s', $regex, 1 === $regex ? '' : 's');
         $summary = [];
-        if (0 === $report->stats['regex']) {
-            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'No Regex constraint found.');
-        } elseif ([] === $issues) {
-            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'Every Regex constraint agrees with its HTML pattern and its property.');
-        } else {
-            $summary[] = new AnalysisNotice($errors > 0 ? CheckOutcome::Fail : CheckOutcome::Warn, \sprintf('%d finding%s on %d Regex constraint%s.', \count($issues), 1 === \count($issues) ? '' : 's', $report->stats['regex'], 1 === $report->stats['regex'] ? '' : 's'));
+        if ([] !== $unread) {
+            $summary[] = new AnalysisNotice(CheckOutcome::Warn, \sprintf('The audit is incomplete: %d %s could not be read.', \count($unread), 1 === \count($unread) ? 'class or mapping file' : 'classes or mapping files'));
         }
 
-        $debugRows = [];
-        if ($debug) {
-            $debugRows = [
-                'Classes read' => $report->stats['classes'],
-                'HTML patterns compared' => $report->stats['html_compared'],
-            ];
-            foreach ($unread as $index => $reason) {
-                $debugRows['Unread class '.($index + 1)] = $reason;
-            }
+        if ([] !== $issues) {
+            $summary[] = new AnalysisNotice($errors > 0 ? CheckOutcome::Fail : CheckOutcome::Warn, \sprintf('%d finding%s on %s.', \count($issues), 1 === \count($issues) ? '' : 's', $constraints));
+        } elseif (0 !== $unchecked) {
+            $summary[] = new AnalysisNotice(CheckOutcome::Warn, \sprintf('No finding on %s, but %d check%s could not be made.', $constraints, $unchecked, 1 === $unchecked ? '' : 's'));
+        } elseif ([] === $unread) {
+            $summary[] = new AnalysisNotice(CheckOutcome::Pass, 0 === $regex ? 'No Regex constraint found.' : 'Every Regex constraint agrees with its HTML pattern and its property.');
         }
+
+        $debugRows = $debug ? ['Classes read' => $report->stats['classes'], 'HTML patterns compared' => $report->stats['html_compared']] : [];
 
         return new ReportSection(
             self::ID,

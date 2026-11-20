@@ -7,13 +7,15 @@ CHANGELOG
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
-   the `Regex` constraints of the validated classes: a pattern with flags
-   whose HTML pattern `getHtmlPattern()` drops, with an `htmlPattern` proved
-   to accept the same values; an HTML pattern a browser refuses or misreads
+   the `Regex` constraints of the validated classes: a pattern with flags,
+   or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,
+   with a suggested `htmlPattern`, said proved when the solver proves it
+   accepts the same values; an HTML pattern a browser refuses or misreads
    under the `v` flag (`[a-z0-9-]`, `a++`, `[[:alpha:]]`); the shortest
-   value the browser accepts and the server rejects, or the reverse; and a
-   `Length`, a `Choice` or a second `Regex` of the property no value of the
-   pattern passes with it. `regex:analyze --fail-on=validator` fails on them.
+   value the browser checks and accepts while the server rejects it, or
+   the reverse; and a `Length`, a `Choice` or a second `Regex` of the
+   property no non-empty value of the pattern passes with it.
+   `regex:analyze --fail-on=validator` fails on them.
  * `regex:routes --reachability` reports a route several earlier routes
    shadow together, none of them alone: `/n/{x<\d+>}` and `/n/{x<[a-z]+>}`
    before `/n/{x<\d+|[a-z]+>}`, or a route for `GET` and one for `POST`

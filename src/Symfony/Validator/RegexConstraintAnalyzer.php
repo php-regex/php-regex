@@ -26,6 +26,7 @@ use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Sequentially;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
@@ -41,13 +42,14 @@ use Symfony\Component\Validator\Mapping\GetterMetadata;
  * v flag. For each Regex constraint the audit asks:
  *
  * - whether that attribute is dropped, as getHtmlPattern() gives none for a
- *   pattern with flags, and which htmlPattern would carry it;
+ *   pattern with flags or a pair of delimiters, and which htmlPattern would
+ *   carry it;
  * - whether a browser compiles it at all, and reads it as PCRE does
  *   (VModeCompatibility);
  * - whether it accepts the values the server accepts, and only those: the
  *   pattern under preg_match() against ^(?:H)$ read as the browser reads
  *   it, code points, \w \d \b as ASCII, \s and . as JavaScript reads
- *   them, over the values an input can hold (no line break);
+ *   them, over the values the browser checks (not empty, no line break);
  *
  * and across the constraints of a property, whether a Length or a Choice
  * leaves any value the Regex accepts, and whether two Regex constraints of
@@ -76,8 +78,8 @@ use Symfony\Component\Validator\Mapping\GetterMetadata;
 final class RegexConstraintAnalyzer
 {
     /**
-     * The delimiters the browser's pattern is wrapped in for PCRE, the first
-     * one it does not write.
+     * The delimiters the HTML pattern is read between to check its syntax,
+     * the first one it does not write.
      */
     private const DELIMITERS = ['/', '#', '~', '%', '@', '!', ',', ';', '`', '='];
 
@@ -101,7 +103,7 @@ final class RegexConstraintAnalyzer
     private readonly SolverOptions $options;
 
     /**
-     * @var array<string, array{?string, ?string}|string> each comparison made, or why it failed, by pattern and HTML pattern
+     * @var array<string, array{?string, ?string, bool}|string> each comparison made, or why it failed, by pattern and HTML pattern
      */
     private array $compared = [];
 
@@ -161,7 +163,7 @@ final class RegexConstraintAnalyzer
 
                         foreach ($constraints as $other) {
                             $found = match (true) {
-                                $other instanceof Length => $this->checkLength($regex, $other, $subject),
+                                $other instanceof Length => $this->checkLength($regex, $other, $subject, $constraints),
                                 $other instanceof Choice => $this->checkChoice($regex, $other, $subject),
                                 default => [],
                             };
@@ -171,7 +173,7 @@ final class RegexConstraintAnalyzer
                         }
                     }
 
-                    foreach ($this->checkConsistency($regexes, $subject) as $finding) {
+                    foreach ($this->checkConsistency($regexes, $subject, $constraints) as $finding) {
                         $findings[] = $finding;
                     }
                 }
@@ -185,26 +187,12 @@ final class RegexConstraintAnalyzer
      * The HTML pattern a browser reads for the constraint, as PCRE: the
      * value of the attribute, ^(?:H)$, under u (the browser reads code
      * points), with \w \d \b \W \D \B and . read as ASCII JavaScript reads
-     * them, over the values an input holds: none holds a line break.
-     *
-     * Null when the value writes every delimiter.
+     * them, over the values an input holds: none holds a line break. A "/"
+     * the value writes is escaped.
      */
-    public static function browserPattern(string $html): ?string
+    public static function browserPattern(string $html): string
     {
-        $delimiter = null;
-        foreach (self::DELIMITERS as $candidate) {
-            if (!str_contains($html, $candidate)) {
-                $delimiter = $candidate;
-
-                break;
-            }
-        }
-
-        if (null === $delimiter) {
-            return null;
-        }
-
-        return $delimiter.'^(?:'.self::asJavaScriptReadsIt($html).')$'.$delimiter.'Du';
+        return '/^(?:'.self::asJavaScriptReadsIt($html).')$/Du';
     }
 
     /**
@@ -224,24 +212,47 @@ final class RegexConstraintAnalyzer
                 return [];
             }
 
-            $message = 'The pattern has flags, so getHtmlPattern() gives no HTML pattern: the browser checks nothing.';
+            $flags = $this->flagsOf($pattern);
+            $message = '' !== $flags
+                ? \sprintf('The pattern has flags ("%s"), so getHtmlPattern() gives no HTML pattern: the browser checks nothing.', $flags)
+                : 'getHtmlPattern() gives no HTML pattern, as the pattern does not end with the character it starts with: the browser checks nothing.';
             [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
             if (null === $suggestion) {
                 return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message)];
             }
 
-            $message .= $verified ? ' This htmlPattern matches the same values.' : ' The html-pattern target writes this htmlPattern; the solver could not prove it matches the same values.';
+            $message .= match (true) {
+                null !== $regex->normalizer => ' The html-pattern target writes this htmlPattern; the server normalizes the value first, which the audit does not model.',
+                $verified => ' This htmlPattern matches the same values.',
+                default => ' The html-pattern target writes this htmlPattern; the solver could not prove it matches the same values.',
+            };
 
             return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message, ['suggestion' => $suggestion])];
         }
 
         $findings = [];
-        $misread = $this->vModeFindings($html);
+        $misread = $this->vModeFindings($html, $this->parses($pattern));
+        if (null === $misread) {
+            return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', \sprintf('The HTML pattern writes every delimiter PCRE could read it between (%s): how a browser reads it was not checked.', implode('', self::DELIMITERS)), ['htmlPattern' => $html])];
+        }
+
+        // An explicit htmlPattern is written for the browser: what a browser
+        // reads otherwise than PCRE is no error of its own, the comparison
+        // reads it as the browser does (\v), or says it cannot.
+        $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
+        if (null !== $regex->htmlPattern && [] === $refused) {
+            $unread = array_values(array_filter($misread, static fn (array $finding): bool => 'char_type' !== $finding['construct']));
+            if ([] !== $unread) {
+                return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'A browser reads the HTML pattern under v otherwise than PCRE, which the comparison does not model: '.self::describe($unread), ['htmlPattern' => $html])];
+            }
+
+            $misread = [];
+        }
+
         if ([] !== $misread) {
-            $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
             $message = ([] !== $refused
                 ? 'A browser refuses to compile the HTML pattern under v, and then checks nothing: '
-                : 'A browser reads the HTML pattern under v otherwise than PCRE: ').implode(' ', array_map(static fn (array $r): string => \sprintf('[%s at %d] %s', $r['construct'], $r['offset'], $r['message']), [] !== $refused ? $refused : $misread));
+                : 'A browser reads the HTML pattern under v otherwise than PCRE: ').self::describe([] !== $refused ? $refused : $misread);
             [$suggestion] = $regex->match ? $this->suggest($pattern) : [null];
             $extra = ['htmlPattern' => $html];
             if (null !== $suggestion && $suggestion !== $html) {
@@ -251,11 +262,11 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, [] !== $refused ? 'html_pattern.invalid' : 'html_pattern.misread', 'error', $message, $extra)];
         }
 
-        $browser = self::browserPattern($html);
-        if (null === $browser) {
-            return [];
+        if (null !== $regex->normalizer) {
+            return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The server normalizes the value before it matches the pattern, which the audit does not model: the HTML pattern was not compared with the pattern.', ['htmlPattern' => $html])];
         }
 
+        $browser = self::browserPattern($html);
         $stats['html_compared']++;
 
         // A class often repeats a pattern: each pair is compared once.
@@ -274,9 +285,8 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The HTML pattern could not be compared with the pattern: '.$this->compared[$key], ['htmlPattern' => $html])];
         }
 
-        [$looser, $stricter] = $this->compared[$key];
+        [$looser, $stricter, $searched] = $this->compared[$key];
 
-        $normalized = null !== $regex->normalizer ? ' The server normalizes the value first; the browser does not.' : '';
         if (null !== $looser) {
             $extra = ['htmlPattern' => $html, 'example' => $looser];
             [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
@@ -284,11 +294,15 @@ final class RegexConstraintAnalyzer
                 $extra['suggestion'] = $suggestion;
             }
 
-            $findings[] = self::finding($subject, $pattern, 'html_pattern.looser', 'error', \sprintf('The browser accepts %s, which the server rejects.%s', self::quote($looser), $normalized), $extra);
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.looser', 'error', \sprintf('The browser accepts %s, which the server rejects.', self::quote($looser)), $extra);
         }
 
         if (null !== $stricter) {
-            $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.%s', self::quote($stricter), $normalized), ['htmlPattern' => $html, 'example' => $stricter]);
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.', self::quote($stricter)), ['htmlPattern' => $html, 'example' => $stricter]);
+        }
+
+        if (!$searched) {
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The pattern reads bytes and the browser code points: no value the server accepts and the browser rejects was searched for.', ['htmlPattern' => $html]);
         }
 
         return $findings;
@@ -297,65 +311,97 @@ final class RegexConstraintAnalyzer
     /**
      * For a pattern the value must match: a value the browser accepts and
      * the pattern does not match, and one the pattern matches and the
-     * browser rejects, each the shortest.
+     * browser rejects, each the shortest of the values the browser checks:
+     * neither the empty value, which Regex does not check either, nor one
+     * holding a line break, which no input holds. The third item says
+     * whether the second was searched for.
      *
      * @throws ComplexityException|RegexException|\InvalidArgumentException
      *
-     * @return array{?string, ?string}
+     * @return array{?string, ?string, bool}
      */
     private function compareMatching(string $pattern, string $browser): array
     {
-        $looser = $this->solver->subsetOf($browser, $pattern, $this->options);
-        $stricter = $this->solver->subsetOf($pattern, self::orLineBreak($browser), $this->options);
+        $looser = $this->solver->subsetOf(self::checkedAndAccepted($browser), $pattern, $this->options);
+        $stricter = $this->solver->subsetOf($pattern, self::acceptedOrUnchecked($browser), $this->options);
 
-        return [$looser->isSubset ? null : $looser->counterExample, $stricter->isSubset ? null : $stricter->counterExample];
+        return [$looser->isSubset ? null : $looser->counterExample, $stricter->isSubset ? null : $stricter->counterExample, true];
     }
 
     /**
-     * For a pattern the value must not match: a value the browser accepts
-     * the pattern matches; then a value neither the pattern matches nor the
-     * browser accepts, read on the languages, so only for a pattern under u
-     * that reads code points as the browser does.
+     * For a pattern the value must not match: a value the browser checks
+     * and accepts that the pattern matches; then one the browser checks,
+     * neither the pattern matches nor the browser accepts, read on the
+     * languages, so on code points as the browser reads them: a pattern
+     * over bytes is read under (*UTF) when it matches the same UTF-8
+     * values so, else that value is not searched for.
      *
      * @throws ComplexityException|RegexException|\InvalidArgumentException
      *
-     * @return array{?string, ?string}
+     * @return array{?string, ?string, bool}
      */
     private function compareNotMatching(string $pattern, string $browser): array
     {
-        $both = $this->solver->intersection($browser, $pattern, $this->options);
+        $both = $this->solver->intersection(self::checkedAndAccepted($browser), $pattern, $this->options);
         $looser = $both->isEmpty ? null : $both->example;
 
-        if (!$this->parser->parse($pattern)->isUnicode()) {
-            return [$looser, null];
+        $codePoints = $this->parser->parse($pattern)->isUnicode() ? $pattern : $this->overCodePoints($pattern);
+        if (null === $codePoints) {
+            return [$looser, null, false];
         }
 
-        $server = $this->solver->language($pattern, $this->options);
+        $server = $this->solver->language($codePoints, $this->options);
         $client = $this->solver->language($browser, $this->options);
-        $inputs = $this->solver->language('/^[^\r\n]*$/Du', $this->options);
+        $inputs = $this->solver->language('/^[^\r\n]+$/Du', $this->options);
         $stricter = $inputs->minus($server)->minus($client)->shortestExample();
 
-        return [$looser, $stricter];
+        return [$looser, $stricter, true];
     }
 
     /**
-     * The browser's pattern, or any value holding a line break: a value no
-     * input holds, so the server may accept it unchecked by the browser.
+     * The pattern over bytes read under (*UTF), when it matches the same
+     * UTF-8 values so; null when it does not.
+     *
+     * @throws ComplexityException|RegexException
      */
-    private static function orLineBreak(string $browser): string
+    private function overCodePoints(string $pattern): ?string
     {
-        $delimiter = $browser[0];
-        $body = substr($browser, 1, (int) strrpos($browser, $delimiter) - 1);
+        $utf = $pattern[0].'(*UTF)'.substr($pattern, 1);
 
-        return $delimiter.'^(?:'.substr($body, 1).'|[\s\S]*?[\r\n])'.$delimiter.'Du';
+        return $this->solver->equivalent($pattern, $utf, $this->options)->isEquivalent ? $utf : null;
     }
 
     /**
+     * The values the browser checks and accepts: not the empty value, and
+     * none holding a line break.
+     */
+    private static function checkedAndAccepted(string $browser): string
+    {
+        return '/^(?![\s\S]*[\r\n])(?=[\s\S])'.substr($browser, 2);
+    }
+
+    /**
+     * The values the browser accepts, and those it does not check: the
+     * empty value, and any value holding a line break.
+     */
+    private static function acceptedOrUnchecked(string $browser): string
+    {
+        return '/^(?:'.substr($browser, 2, -3).'|$|[\s\S]*?[\r\n])/Du';
+    }
+
+    /**
+     * A Length no non-empty value of the pattern fits: Regex does not check
+     * an empty value, which passes both unless the Length or a NotBlank
+     * refuses it. Length counts the characters of a valid UTF-8 value: the
+     * pattern is read on them, the shortest value it accepts of at least
+     * the least length the Length allows weighed against the most.
+     *
      * @param array{class: string, property: string} $subject
+     * @param list<Constraint>                       $constraints the constraints of the property
      *
      * @return list<ValidatorFinding>
      */
-    private function checkLength(Regex $regex, Length $length, array $subject): array
+    private function checkLength(Regex $regex, Length $length, array $subject, array $constraints): array
     {
         if (!$regex->match || null !== $regex->normalizer || null !== $length->normalizer || 'UTF-8' !== $length->charset || !self::sharesAGroup($regex, $length)) {
             return [];
@@ -370,49 +416,49 @@ final class RegexConstraintAnalyzer
         $pattern = (string) $regex->pattern;
 
         try {
-            // A pattern without u counts bytes, as many as code points over
-            // ASCII alone.
-            $unicode = $this->parser->parse($pattern)->isUnicode()
-                || $this->solver->subsetOf($pattern, '/\A[\x00-\x7F]*\z/', $this->options)->isSubset;
-            $language = $this->solver->language($pattern, $this->options);
-            $shortest = $language->minLength();
-            $longest = $language->isFinite() ? $language->maxLength() : null;
-        } catch (ComplexityException|RegexException|\InvalidArgumentException) {
+            $shortest = $this->solver->intersection($pattern, '/\A[\s\S]{'.max(1, (int) $length->min).',}\z/u', $this->options)->example;
+        } catch (ComplexityException|RegexException|\InvalidArgumentException $e) {
+            return [self::finding($subject, $pattern, 'length.unchecked', 'notice', 'The Length constraint could not be compared with the pattern: '.$e->getMessage())];
+        }
+
+        if (null !== $shortest && (null === $length->max || mb_strlen($shortest, 'UTF-8') <= $length->max)) {
             return [];
         }
 
-        if (null === $shortest) {
-            return [];
-        }
+        $allowed = match (true) {
+            null === $length->max => \sprintf('at least %d', $length->min),
+            null === $length->min => \sprintf('at most %d', $length->max),
+            $length->min === $length->max => \sprintf('exactly %d', $length->min),
+            default => \sprintf('%d to %d', $length->min, $length->max),
+        };
 
-        // Else bytes are never fewer than code points: only its longest
-        // value tells of a code point count.
-        $tooLong = $unicode && null !== $length->max && $shortest > $length->max;
-        $tooShort = null !== $length->min && null !== $longest && $longest < $length->min;
-        if (!$tooLong && !$tooShort) {
-            return [];
-        }
-
-        return [self::finding($subject, $pattern, 'length.contradiction', 'error', $tooLong
-            ? \sprintf('Every value the pattern accepts holds at least %d characters, more than the Length max of %d: no value passes both.', $shortest, $length->max)
-            : \sprintf('Every value the pattern accepts holds at most %d %s, fewer than the Length min of %d: no value passes both.', $longest, $unicode ? 'characters' : 'bytes', $length->min))];
+        return [self::finding($subject, $pattern, 'length.contradiction', 'error', \sprintf(
+            'No non-empty value the pattern accepts holds %s %s, as the Length constraint asks: %s',
+            $allowed,
+            1 === ($length->max ?? $length->min) ? 'character' : 'characters',
+            self::whatPasses(self::rejectsEmpty($constraints, $regex, $length)),
+        ))];
     }
 
     /**
+     * The values a Choice offers that the pattern rejects: not those of a
+     * match: false Choice, which it refuses, nor the empty value, which
+     * Regex does not check.
+     *
      * @param array{class: string, property: string} $subject
      *
      * @return list<ValidatorFinding>
      */
     private function checkChoice(Regex $regex, Choice $choice, array $subject): array
     {
-        if ($choice->multiple || null !== $choice->callback || !\is_array($choice->choices) || null !== $regex->normalizer || !self::sharesAGroup($regex, $choice)) {
+        if (!$choice->match || $choice->multiple || null !== $choice->callback || !\is_array($choice->choices) || null !== $regex->normalizer || !self::sharesAGroup($regex, $choice)) {
             return [];
         }
 
         $pattern = (string) $regex->pattern;
         $rejected = [];
         foreach ($choice->choices as $value) {
-            if (!\is_string($value) && !\is_int($value)) {
+            if (!\is_string($value) && !\is_int($value) || '' === $value) {
                 continue;
             }
 
@@ -438,14 +484,15 @@ final class RegexConstraintAnalyzer
     }
 
     /**
-     * Two Regex constraints of a group no value passes together.
+     * Two Regex constraints of a group no non-empty value passes together.
      *
      * @param list<Regex>                            $regexes
      * @param array{class: string, property: string} $subject
+     * @param list<Constraint>                       $constraints the constraints of the property
      *
      * @return list<ValidatorFinding>
      */
-    private function checkConsistency(array $regexes, array $subject): array
+    private function checkConsistency(array $regexes, array $subject, array $constraints): array
     {
         $findings = [];
         $count = \count($regexes);
@@ -462,17 +509,20 @@ final class RegexConstraintAnalyzer
                 [$must, $mustNot] = $first->match ? [$first, $second] : [$second, $first];
 
                 try {
-                    $contradicts = $mustNot->match
-                        ? $this->solver->intersection((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isEmpty
-                        : $this->solver->subsetOf((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isSubset;
-                } catch (ComplexityException|RegexException|\InvalidArgumentException) {
-                    continue;
+                    $contradicts = $this->contradicts((string) $must->pattern, (string) $mustNot->pattern, $mustNot->match);
+                } catch (ComplexityException|RegexException|\InvalidArgumentException $e) {
+                    $contradicts = $e->getMessage();
                 }
 
-                if ($contradicts) {
-                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.contradiction', 'error', $mustNot->match
-                        ? \sprintf('No value matches both %s and %s: the property rejects every value.', $first->pattern, $second->pattern)
-                        : \sprintf('Every value %s matches also matches %s, which must not match: the property rejects every value.', $must->pattern, $mustNot->pattern));
+                if (\is_string($contradicts)) {
+                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.unchecked', 'notice', \sprintf('The Regex constraints %s and %s could not be compared: %s', $first->pattern, $second->pattern, $contradicts));
+                } elseif ($contradicts) {
+                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.contradiction', 'error', \sprintf(
+                        $mustNot->match ? 'No non-empty value matches both %s and %s: %s' : 'Every non-empty value %s matches also matches %s, which must not match: %s',
+                        $mustNot->match ? $first->pattern : $must->pattern,
+                        $mustNot->match ? $second->pattern : $mustNot->pattern,
+                        self::whatPasses(self::rejectsEmpty($constraints, $first, $second)),
+                    ));
                 }
             }
         }
@@ -482,12 +532,14 @@ final class RegexConstraintAnalyzer
 
     /**
      * What a browser does wrong with the HTML pattern under v, refusing it
-     * or reading it otherwise; nothing when the parser cannot read it, as
-     * the comparison then says so.
+     * or reading it otherwise; null when it writes every delimiter. When
+     * the parser cannot read it, only what makes a browser refuse it
+     * whatever else it writes, and only when asked: the comparison says
+     * the rest.
      *
-     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     * @return list<array{offset: int, construct: string, message: string, refused: bool}>|null
      */
-    private function vModeFindings(string $html): array
+    private function vModeFindings(string $html, bool $structure = false): ?array
     {
         foreach (self::DELIMITERS as $delimiter) {
             if (str_contains($html, $delimiter)) {
@@ -497,11 +549,90 @@ final class RegexConstraintAnalyzer
             try {
                 return (new VModeCompatibility())->check($this->parser->parse($delimiter.$html.$delimiter.'u'));
             } catch (RegexException) {
-                return [];
+                return $structure ? self::unbalanced($html) : [];
             }
         }
 
-        return [];
+        return null;
+    }
+
+    /**
+     * What makes a browser refuse the pattern under v whatever else it
+     * writes: a class or a group never closed, a ")" that closes no group,
+     * a "\" that ends it. Under v a "[" in a class opens a nested class, a
+     * "]" closes one, and no "(" or ")" stands unescaped in a class, nor
+     * any of them in a name, a property or a quantifier.
+     *
+     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     */
+    private static function unbalanced(string $html): array
+    {
+        $classes = [];
+        $groups = [];
+        $length = \strlen($html);
+        for ($i = 0; $i < $length; $i++) {
+            $char = $html[$i];
+            if ('\\' === $char) {
+                if (++$i === $length) {
+                    return [self::refusal($i - 1, 'escape', 'A "\\" that ends the pattern is a syntax error.')];
+                }
+            } elseif ('[' === $char) {
+                $classes[] = $i;
+            } elseif ([] !== $classes) {
+                if (']' === $char) {
+                    array_pop($classes);
+                }
+            } elseif ('(' === $char) {
+                $groups[] = $i;
+            } elseif (')' === $char && null === array_pop($groups)) {
+                return [self::refusal($i, 'group', 'A ")" that closes no group is a syntax error.')];
+            }
+        }
+
+        return match (true) {
+            [] !== $classes => [self::refusal($classes[0], 'class', 'Under v a class that is never closed is a syntax error.')],
+            [] !== $groups => [self::refusal($groups[0], 'group', 'A group that is never closed is a syntax error.')],
+            default => [],
+        };
+    }
+
+    /**
+     * @return array{offset: int, construct: string, message: string, refused: bool}
+     */
+    private static function refusal(int $offset, string $construct, string $message): array
+    {
+        return ['offset' => $offset, 'construct' => $construct, 'message' => $message, 'refused' => true];
+    }
+
+    private function parses(string $pattern): bool
+    {
+        try {
+            $this->parser->parse($pattern);
+
+            return true;
+        } catch (RegexException) {
+            return false;
+        }
+    }
+
+    /**
+     * @param list<array{offset: int, construct: string, message: string, refused: bool}> $findings
+     */
+    private static function describe(array $findings): string
+    {
+        return implode(' ', array_map(static fn (array $r): string => \sprintf('[%s at %d] %s', $r['construct'], $r['offset'], $r['message']), $findings));
+    }
+
+    /**
+     * The flags of the pattern, none when PHP refuses it.
+     */
+    private function flagsOf(string $pattern): string
+    {
+        try {
+            return $this->parser->parse($pattern)->flags;
+        } catch (RegexException) {
+            return '';
+        }
     }
 
     /**
@@ -527,10 +658,11 @@ final class RegexConstraintAnalyzer
             return [null, false];
         }
 
-        $browser = self::browserPattern($html);
-        if (null === $browser || [] !== $this->vModeFindings($html)) {
+        if ([] !== $this->vModeFindings($html)) {
             return [null, false];
         }
+
+        $browser = self::browserPattern($html);
 
         try {
             [$looser, $stricter] = $this->compareMatching($pattern, $browser);
@@ -544,14 +676,15 @@ final class RegexConstraintAnalyzer
     /**
      * The value rewritten so PCRE reads it as JavaScript does, over the
      * values an input holds: \w \d \b and their negations over ASCII, \s
-     * over JavaScript's white space, and none of ".", \s, \S, \W, \D or a
-     * negated class taking a line break. A line break the value writes
-     * itself (\n, \x0A, \P{L}...) is kept.
+     * over JavaScript's white space, \v the vertical tab alone, and none
+     * of ".", \s, \S, \W, \D or a negated class taking a line break. A
+     * line break the value writes itself (\n, \x0A, \P{L}...) is kept.
      */
     private static function asJavaScriptReadsIt(string $html): string
     {
         $word = '['.self::WORD.']';
         $outside = [
+            'v' => '\x{B}',
             'w' => $word,
             'W' => '[^'.self::WORD.'\n\r]',
             'd' => '[0-9]',
@@ -562,6 +695,7 @@ final class RegexConstraintAnalyzer
             'B' => '(?:(?<='.$word.')(?='.$word.')|(?<!'.$word.')(?!'.$word.'))',
         ];
         $inside = [
+            'v' => '\x{B}',
             'w' => self::WORD,
             'W' => '\x{0}-\x{9}\x{B}\x{C}\x{E}-\x{2F}\x{3A}-\x{40}\x{5B}-\x{5E}\x{60}\x{7B}-\x{10FFFF}',
             'd' => '0-9',
@@ -595,6 +729,10 @@ final class RegexConstraintAnalyzer
                 $read .= '[^\n\r\x{2028}\x{2029}]';
 
                 continue;
+            } elseif ('/' === $char) {
+                $read .= '\/';
+
+                continue;
             }
 
             $read .= $char;
@@ -623,6 +761,69 @@ final class RegexConstraintAnalyzer
         }
 
         return $flat;
+    }
+
+    /**
+     * Whether no non-empty value both matches the first pattern and passes
+     * the second: matches it, or not, as it must. Regex does not check an
+     * empty value: when it is the only one the solver finds, the languages
+     * tell whether another passes, both read on code points; a message
+     * says why they cannot be.
+     *
+     * @throws ComplexityException|RegexException|\InvalidArgumentException
+     */
+    private function contradicts(string $must, string $other, bool $match): bool|string
+    {
+        $example = $match
+            ? $this->solver->intersection($must, $other, $this->options)->example
+            : $this->solver->subsetOf($must, $other, $this->options)->counterExample;
+        if ('' !== $example) {
+            return null === $example;
+        }
+
+        $unicode = $this->parser->parse($must)->isUnicode();
+        if ($unicode !== $this->parser->parse($other)->isUnicode()) {
+            $read = $this->overCodePoints($unicode ? $other : $must);
+            if (null === $read) {
+                return 'one reads bytes and the other characters, and the only value found both pass is the empty one, which Regex does not check.';
+            }
+
+            [$must, $other] = $unicode ? [$must, $read] : [$read, $other];
+        }
+
+        $mustLanguage = $this->solver->language($must, $this->options);
+        $otherLanguage = $this->solver->language($other, $this->options);
+
+        return 0 === ($match ? $mustLanguage->intersect($otherLanguage) : $mustLanguage->minus($otherLanguage))->maxLength();
+    }
+
+    /**
+     * What passes the constraints of a contradiction: nothing, or an empty
+     * value unless a constraint refuses it.
+     */
+    private static function whatPasses(bool $emptyRejected): string
+    {
+        return $emptyRejected ? 'no value passes both.' : 'only an empty value, which Regex does not check, can pass both.';
+    }
+
+    /**
+     * Whether a constraint of the property that runs with each given one
+     * refuses an empty value: a NotBlank, or a Length of a least length,
+     * neither normalizing the value first.
+     *
+     * @param list<Constraint> $constraints
+     */
+    private static function rejectsEmpty(array $constraints, Constraint ...$with): bool
+    {
+        foreach ($constraints as $constraint) {
+            $refuses = ($constraint instanceof NotBlank && null === $constraint->normalizer)
+                || ($constraint instanceof Length && null === $constraint->normalizer && ($constraint->min ?? 0) > 0);
+            if ($refuses && [] === array_filter($with, static fn (Constraint $other): bool => !self::sharesAGroup($constraint, $other))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function sharesAGroup(Constraint $first, Constraint $second): bool

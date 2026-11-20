@@ -60,17 +60,32 @@ final class ValidatorCommandTest extends TestCase
         $this->assertCount(6, JsonContract::asArray($section['issues'] ?? null));
     }
 
+    /**
+     * A class that could not be read is named at any verbosity, and the
+     * audit says it is incomplete rather than that it found nothing.
+     */
     #[Test]
-    public function test_verbose_output_names_the_classes_it_could_not_read(): void
+    public function test_the_classes_it_could_not_read_are_named(): void
     {
         $tester = new CommandTester(self::command());
 
-        $tester->execute(['classes' => ['App\Missing']], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE, 'decorated' => false]);
+        $tester->execute(['classes' => ['App\Missing']], ['decorated' => false]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('No Regex constraint found.', $tester->getDisplay());
-        // Text rows show a backslash escaped.
+        $this->assertStringNotContainsString('No Regex constraint found.', $tester->getDisplay());
+        $this->assertStringContainsString('The audit is incomplete: 1 class or mapping file could not be read.', $tester->getDisplay());
+        // Notices show a backslash escaped.
         $this->assertStringContainsString('App\\\\Missing: the class does not exist.', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function test_verbose_output_adds_the_counts(): void
+    {
+        $tester = new CommandTester(self::command());
+
+        $tester->execute(['classes' => [Signup::class]], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE, 'decorated' => false]);
+
+        $this->assertStringContainsString('HTML patterns compared', $tester->getDisplay());
     }
 
     #[Test]
@@ -80,6 +95,20 @@ final class ValidatorCommandTest extends TestCase
 
         $this->assertSame(Command::INVALID, $tester->execute([]));
         $this->assertStringContainsString('Validator service is not available.', $tester->getDisplay());
+    }
+
+    /**
+     * The help says a suggested htmlPattern is proved only when the solver
+     * proves it, and that the command needs the validator service.
+     */
+    #[Test]
+    public function test_the_help_says_what_a_suggestion_promises(): void
+    {
+        $help = self::command()->getHelp();
+
+        $this->assertStringContainsString("a suggested htmlPattern, and whether the\n    solver proved it matches the same values", $help);
+        $this->assertStringContainsString('It needs the validator service of Symfony Validator, and exits with code 2 without it.', $help);
+        $this->assertStringContainsString('a Length no non-empty value of the pattern fits', $help);
     }
 
     #[Test]
