@@ -448,10 +448,6 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:218
    WARN  Nested quantifiers in "(?:[^$]+|(?<=(?<!\\)\\)\$)" at offset 28 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "[^$]+" and "(?<=(?<!\\)\\)\$" have overlapping character sets, which may cause
-       unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/_inc/lib/markdown/gfm.php:250:4
     → #(?<!<)(?:https?|ftp)://([^\s<>"'\[\]()]+|\[(?1)*+\]|\((?1)*+\))+(?<![_*.?])#i
@@ -506,14 +502,14 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/json-endpoints/class.wpcom-js
        ↳ Hotspot offsets: 26-36
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
-           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
+           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - use possessive quantifiers .*+ instead of .* to prevent backtracking.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
@@ -541,10 +537,6 @@ corpus/Automattic/jetpack/projects/plugins/jetpack/modules/latex.php:42:11
    WARN  Nested quantifiers in "(?:[^$]+|(?<=(?<!\\)\\)\$)" at offset 26 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "[^$]+" and "(?<=(?<!\\)\\)\$" have overlapping character sets, which may cause
-       unnecessary backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
 
 corpus/Automattic/jetpack/projects/plugins/jetpack/modules/photon-cdn.php:329:20
     → /^\d+(\.\d+)+$/
@@ -1066,13 +1058,13 @@ corpus/DataDog/dd-trace-php/dockerfiles/testing-environment/Wordpress5/app/wp-in
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: [^\x00]+
        ↳ Hotspot offsets: 2-10
-       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
-         (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Suggested (verify behavior):
-           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 1 "([^\x00]+)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -1241,8 +1233,8 @@ corpus/DataDog/dd-trace-php/dockerfiles/testing-environment/Wordpress5/app/wp-in
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -1269,8 +1261,8 @@ corpus/DataDog/dd-trace-php/dockerfiles/testing-environment/Wordpress5/app/wp-in
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -4839,10 +4831,10 @@ corpus/Respect/Validation/src/Validators/Emoji.php:64:27
          (*+) or using atomic groups (?>...).
        ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
          backtracking.
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Make alternatives mutually exclusive or order longer alternatives first.
@@ -5506,8 +5498,8 @@ corpus/WordPress/Requests/src/Requests.php:855:19
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -5534,8 +5526,8 @@ corpus/WordPress/Requests/src/Requests.php:863:36
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -5795,13 +5787,13 @@ corpus/WordPress/wordpress-develop/src/wp-includes/ID3/module.tag.id3v2.php:2083
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: [^\x00]+
        ↳ Hotspot offsets: 2-10
-       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
-         (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Suggested (verify behavior):
-           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 1 "([^\x00]+)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -5904,8 +5896,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:856
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -5932,8 +5924,8 @@ corpus/WordPress/wordpress-develop/src/wp-includes/Requests/src/Requests.php:864
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -5982,23 +5974,20 @@ corpus/WordPress/wordpress-develop/src/wp-includes/SimplePie/src/Sanitize.php:42
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "</A" . " ! =" x n
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\x09\x0A\x0B\x0C\x0D\x20]+
-       ↳ Hotspot offsets: 92-119
+       ↳ The risky part is: (?:[\x09\x0A\x0B\x0C\x0D\x20]*=[\x09\x0A\x0B\x0C\x0D\x20]*(?:"(?:[^"]*)"|'(?:[^']*)'|(?:[^\x09\x0A\x0B\x0C\x0D\x20\x22\x27\x3E][^\x09\x0A\x0B\x0C\x0D\x20\x3E]*)?))?
+       ↳ Hotspot offsets: 194-358
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - Make alternatives mutually exclusive or order longer alternatives first.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:[\x09\x0A\x0B\x0C\x0D\x20]+…" at offset 89 can cause catastrophic backtracking.
@@ -6126,23 +6115,20 @@ corpus/WordPress/wordpress-develop/src/wp-includes/class-wp-simplepie-sanitize-k
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "</A" . " ! =" x n
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\x09\x0A\x0B\x0C\x0D\x20]+
-       ↳ Hotspot offsets: 92-119
+       ↳ The risky part is: (?:[\x09\x0A\x0B\x0C\x0D\x20]*=[\x09\x0A\x0B\x0C\x0D\x20]*(?:"(?:[^"]*)"|'(?:[^']*)'|(?:[^\x09\x0A\x0B\x0C\x0D\x20\x22\x27\x3E][^\x09\x0A\x0B\x0C\x0D\x20\x3E]*)?))?
+       ↳ Hotspot offsets: 194-358
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - Make alternatives mutually exclusive or order longer alternatives first.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:[\x09\x0A\x0B\x0C\x0D\x20]+…" at offset 89 can cause catastrophic backtracking.
@@ -6773,6 +6759,10 @@ corpus/bcit-ci/CodeIgniter/system/core/Security.php:528:14
    WARN  Nested quantifiers in "(?:[\s\042\047/=]*[^\s\042\047…" at offset 95 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
+   WARN  Alternation branches "[^\s\042\047=><`]+" and "\s*(?U:[^\s\042\047=><`]*)" have overlapping character sets,
+       which may cause unnecessary backtracking.
+       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
+         changes match semantics.
 
 corpus/bcit-ci/CodeIgniter/system/core/Security.php:785:5
     → #<img[\s/]+.*?src\s*=\s*(["'])([^\1]+?)\1.*?\>#i
@@ -7335,7 +7325,7 @@ corpus/cakephp/cakephp/src/Routing/Router.php:827:18
        ↳ Attack: "0::0" . "/A=-" x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 57 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: [a-z0-9]+
-       ↳ Hotspot offsets: 137-146
+       ↳ Hotspot offsets: 27-36
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or
@@ -7436,11 +7426,14 @@ corpus/canyongbs/aidingapp/app-modules/service-management/src/Rules/ValidService
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: .*?
        ↳ Hotspot offsets: 34-37
+       ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
+         a*a*).
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
+           - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
@@ -7524,20 +7517,18 @@ corpus/cebe/markdown/block/TableTrait.php:21:18
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: " - " x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: \s*
-       ↳ Hotspot offsets: 8-11
+       ↳ The risky part is: [\-\s]*
+       ↳ Hotspot offsets: 14-21
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
-           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
+           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 1 "(\s*:?-[\-\s]*:?\s*\|?)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -8419,9 +8410,12 @@ corpus/contao/contao/core-bundle/contao/library/Contao/Validator.php:213:27
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: \d+
        ↳ Hotspot offsets: 7-10
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 1 "(\d+[ +()\/-]*)" with "+": only the last iteration's capture is retained.
@@ -8441,8 +8435,6 @@ corpus/contao/contao/core-bundle/src/Cache/CacheTagManager.php:335:33
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
@@ -8557,6 +8549,8 @@ corpus/craftcms/cms/src/helpers/StringHelper.php:1027:20
          a*a*).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
+       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
+         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
@@ -8638,7 +8632,7 @@ corpus/craftcms/cms/src/web/twig/variables/Cp.php:401:53
 
 
 
-### corpus/cycle/database — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 0
+### corpus/cycle/database — Target: PHP 8.2, PCRE2 10.40 (composer.json require.php) — exit 0
 corpus/cycle/database/src/Driver/SQLite/Schema/SQLiteColumn.php:149:28
     → /^['""].*?['"]$/
    WARN  Redundant elements detected in character class.
@@ -8679,9 +8673,12 @@ corpus/deployphp/deployer/recipe/magento2.php:118:16
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: \d+
        ↳ Hotspot offsets: 1-4
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
@@ -8973,13 +8970,13 @@ corpus/drupal/drupal/core/lib/Drupal/Component/Utility/UrlHelper.php:456:32
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: [\w.\-+%!$&'()*+,;=]|%[0-9a-f]{2}
        ↳ Hotspot offsets: 422-460
-       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
-         (*+) or using atomic groups (?>...).
        ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
          backtracking.
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Suggested (verify behavior):
-           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Make alternatives mutually exclusive or order longer alternatives first.
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Redundant elements detected in character class.
@@ -9261,10 +9258,13 @@ corpus/drupal/drupal/core/modules/package_manager/src/SandboxManagerBase.php:146
        ↳ Hotspot offsets: 16-25
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 1 "([_.-]?[a-z0-9]+)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -9467,12 +9467,15 @@ corpus/elementor/elementor/core/files/css/base.php:376:52
        ↳ Hotspot offsets: 37-52
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
+       ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
+         a*a*).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
+           - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
@@ -10739,9 +10742,6 @@ corpus/freescout-help-desk/freescout/overrides/swiftmailer/swiftmailer/lib/class
    INFO  Quantified capturing group 7 "((?:(?:[ \t]*(?:\r\n))?[ \t])?…" with "*": only the last iteration's capture is
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers in capturing group 7 "((?:(?:[ \t]*(?:\r\n))?[ \t])?…" can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
    WARN  Alternation branches "(?:[\x01-\x08\x0B\x0C\x0E-\x19…" and "(?:\[\x00-\x08\x0B\x0C\x0E-…" have overlapping
        character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
@@ -12535,13 +12535,14 @@ corpus/laravel/boost/src/Mcp/Tools/DatabaseQuery.php:167:52
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "EXPLAIN " . "()FORMAT 0 " x n . "!DELETE"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 147 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: =?
-       ↳ Hotspot offsets: 71-73
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
+       ↳ The risky part is: \w+
+       ↳ Hotspot offsets: 76-79
+       ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
+         a*a*).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
+           - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:\([^)]*\)\s*|(?:ANALYZE|VER…" at offset 14 can cause catastrophic backtracking.
@@ -12984,14 +12985,14 @@ corpus/magento/magento2/app/code/Magento/CatalogImportExport/Model/Import/Produc
        ↳ Hotspot offsets: 24-34
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
-           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
+           - Replace inner quantifiers with possessive variants or wrap them in (?>...).
            - use possessive quantifiers .*+ instead of .* to prevent backtracking.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
@@ -13131,12 +13132,10 @@ corpus/magento/magento2/app/code/Magento/Elasticsearch/Model/Config/Backend/Mini
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0<00" x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: (\d+<)?
-       ↳ Hotspot offsets: 2-9
+       ↳ The risky part is: \d+
+       ↳ Hotspot offsets: 11-14
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
@@ -16539,23 +16538,20 @@ corpus/moodle/moodle/public/lib/simplepie/moodle_simplepie.php:190:28
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "</A" . " ! =" x n
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\x09\x0A\x0B\x0C\x0D\x20]+
-       ↳ Hotspot offsets: 92-119
+       ↳ The risky part is: (?:[\x09\x0A\x0B\x0C\x0D\x20]*=[\x09\x0A\x0B\x0C\x0D\x20]*(?:"(?:[^"]*)"|'(?:[^']*)'|(?:[^\x09\x0A\x0B\x0C\x0D\x20\x22\x27\x3E][^\x09\x0A\x0B\x0C\x0D\x20\x3E]*)?))?
+       ↳ Hotspot offsets: 194-358
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - Make alternatives mutually exclusive or order longer alternatives first.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:[\x09\x0A\x0B\x0C\x0D\x20]+…" at offset 89 can cause catastrophic backtracking.
@@ -16589,23 +16585,20 @@ corpus/moodle/moodle/public/lib/simplepie/src/Sanitize.php:421:32
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "</A" . " ! =" x n
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\x09\x0A\x0B\x0C\x0D\x20]+
-       ↳ Hotspot offsets: 92-119
+       ↳ The risky part is: (?:[\x09\x0A\x0B\x0C\x0D\x20]*=[\x09\x0A\x0B\x0C\x0D\x20]*(?:"(?:[^"]*)"|'(?:[^']*)'|(?:[^\x09\x0A\x0B\x0C\x0D\x20\x22\x27\x3E][^\x09\x0A\x0B\x0C\x0D\x20\x3E]*)?))?
+       ↳ Hotspot offsets: 194-358
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - Make alternatives mutually exclusive or order longer alternatives first.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:[\x09\x0A\x0B\x0C\x0D\x20]+…" at offset 89 can cause catastrophic backtracking.
@@ -17557,11 +17550,14 @@ corpus/moodle/moodle/public/repository/url/locallib.php:725:21
          (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
+       ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
+         a*a*).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive
              quantifiers.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
+           - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    INFO  Quantified capturing group 4 "([^\\'", \(\)]*(\\.)?)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -19240,7 +19236,7 @@ corpus/phan/phan/src/Phan/CLI.php:2443:40
    INFO  Quantified capturing group 1 "(\.[/\\]+)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Config.php:1659:35
+corpus/phan/phan/src/Phan/Config.php:1666:35
     → @^(\./)+@
    INFO  Quantified capturing group 1 "(\./)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -19781,7 +19777,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:549:25
    WARN  Inline flag '-i' overrides a flag set by an earlier inline flag group.
        ↳ Consider removing the outer flag or limiting it to specific groups.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:747:42
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:741:42
     → /@phan-type\s+([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*=\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)/
    ↳ via Builder::PHAN_TYPE_ALIAS_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 77 can cause catastrophic backtracking.
@@ -19864,7 +19860,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:747:42
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:948:33
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:942:33
     → /@phan-assert(?:(-true-condition|-false-condition)|\s+(!?)(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))\s+\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)/
    ↳ via self::ASSERT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 72 can cause catastrophic backtracking.
@@ -19950,7 +19946,42 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:948:33
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1472:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:976:25
+    → /@[\w-]+\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 25 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 474 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-2))" at offset 530 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Redundant elements detected in character class.
+       ↳ Redundant elements: '_' (duplicate)
+   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 1046 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1105 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?…" at offset 1125 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1140 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1254 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-…" at offset 1276 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1369 can cause catastrophic backtracking.
+       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
+         need.
+
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1471:25
     → /@(?:phan-|psalm-)?template(?:-(?P<variance>co|contra)variant)?\s+(?P<identifier>([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))(?:\s+of\s+(?P<constraint>((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))?/i
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 163 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20039,112 +20070,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1472:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1499:25
-    → /@(?:phan-)?(?:inherits|extends)\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 49 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 498 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-2))" at offset 554 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (duplicate)
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 1070 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1129 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?…" at offset 1149 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1164 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1278 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-…" at offset 1300 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1393 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1526:25
-    → /@(?:phan-)?implements\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 39 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 488 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-2))" at offset 544 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (duplicate)
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 1060 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1119 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?…" at offset 1139 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1154 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1268 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-…" at offset 1290 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1383 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1551:25
-    → /@(?:phan-)?use\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 32 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 481 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-2))" at offset 537 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (duplicate)
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 1053 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1112 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?…" at offset 1132 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1147 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1261 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-…" at offset 1283 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1376 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1590:40
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1529:40
     → /@(?:phan-)?suppress\s+(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*)(,\s*([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*))*)/
    ↳ via self::PHAN_SUPPRESS_REGEX
    INFO  Quantified capturing group 3 "(-[a-zA-Z0-9_\x7f-\xff]+)" with "*": only the last iteration's capture is
@@ -20157,7 +20083,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1590:40
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1610:38
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1549:38
     → /^(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)?\s*(?:(\.\.\.)\s*)?(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))?((?:\s*=.*)?)$/
    ↳ via self::MAGIC_PARAM_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 16 can cause catastrophic backtracking.
@@ -20243,7 +20169,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1610:38
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1680:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1619:25
     → /@(?:phan-)?method(?:\s+(static))?(?:(?:\s+((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*))?)\s+(&)?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*\(((?:[^()]|\([()]*\))*)\)\s*(.*)/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 58 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20331,7 +20257,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1680:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1817:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1756:25
     → /@(?:phan-)?(property|property-read|property-write)(?:\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))?(?:\s+(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)))/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 71 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20413,41 +20339,6 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1817:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 2825 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1881:25
-    → /@(PhanClosureScope|phan-closure-scope)\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 56 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 505 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-2))" at offset 561 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Redundant elements detected in character class.
-       ↳ Redundant elements: '_' (duplicate)
-   WARN  Nested quantifiers in "(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z…" at offset 1077 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1136 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?…" at offset 1156 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-5))" at offset 1171 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1285 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-…" at offset 1307 can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
-   WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-6))" at offset 1400 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
@@ -20560,7 +20451,7 @@ corpus/phan/phan/src/Phan/Language/Type.php:1856:28
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Type.php:3810:25
+corpus/phan/phan/src/Phan/Language/Type.php:3821:25
     → /^(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))$/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 16 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -21114,16 +21005,14 @@ corpus/php/php-src/scripts/dev/check_parameters.php:100:20
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0 0" . " , 0" x n . "!;"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: \**
-       ↳ Hotspot offsets: 107-110
+       ↳ The risky part is: [^,;]+
+       ↳ Hotspot offsets: 141-147
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
@@ -21900,27 +21789,27 @@ corpus/phpseclib/phpseclib/phpseclib/File/SPKAC.php:132:30
        - #(?:SPKAC=)|[ \r\n\\]#
        + #SPKAC=|[ \r\n\\]#
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1046:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1060:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1081:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1095:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1107:43
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1121:43
     → #^/|/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "^(?:/|/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1542:47
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:1556:47
     → #/(?=/)|/$#
    WARN  An anchor holds for its own alternative only: "/(?=/)" matches anywhere in the subject.
        ↳ If the anchors are meant for every alternative, group them: "(?:/(?=/)|/)$".
 
-corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2590:24
+corpus/phpseclib/phpseclib/phpseclib/Net/SFTP.php:2604:24
     → #^[^/]([r-][w-][xstST-]){3}#
    INFO  Quantified capturing group 1 "([r-][w-][xstST-])" with "{3}": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -21950,8 +21839,6 @@ corpus/phpspec/phpspec/src/PhpSpec/Locator/PSR0/PSR0Locator.php:288:20
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
@@ -23296,10 +23183,6 @@ corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Blocks.php:37:13
    WARN  Nested quantifiers in "(?: {0,3}>(?:(?!!)|!(?![^\n>]*…" at offset 24 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
-   WARN  Alternation branches "(?!!)" and "!(?![^\n>]*?!<)" have overlapping character sets, which may cause unnecessary
-       backtracking.
-       ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
-         changes match semantics.
 
 corpus/s9e/TextFormatter/src/Plugins/Litedown/Parser/Passes/Images.php:64:4
     → /!\[(?:[^\x17[\]]|\[[^\x17[\]]*\])*\]\(( *(?:[^\x17\s()]|\([^\x17\s()]*\))*(?=[ )]) *(?:"[^\x17]*?"|'[^\x17]*?'|\([^\x17)]*\))? *)\)/
@@ -24971,23 +24854,20 @@ corpus/simplepie/simplepie/src/Sanitize.php:421:32
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "</A" . " ! =" x n
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\x09\x0A\x0B\x0C\x0D\x20]+
-       ↳ Hotspot offsets: 92-119
+       ↳ The risky part is: (?:[\x09\x0A\x0B\x0C\x0D\x20]*=[\x09\x0A\x0B\x0C\x0D\x20]*(?:"(?:[^"]*)"|'(?:[^']*)'|(?:[^\x09\x0A\x0B\x0C\x0D\x20\x22\x27\x3E][^\x09\x0A\x0B\x0C\x0D\x20\x3E]*)?))?
+       ↳ Hotspot offsets: 194-358
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or
          a*a*).
-       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
-         (?>...) or possessive quantifiers (*+, ++).
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
-       ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
-         backtracking.
+       ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
+         (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
-           - Make alternatives mutually exclusive or order longer alternatives first.
            - replace * with *+ in groups to prevent backtracking or wrap in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
    WARN  Nested quantifiers in "(?:[\x09\x0A\x0B\x0C\x0D\x20]+…" at offset 89 can cause catastrophic backtracking.
@@ -26217,7 +26097,7 @@ corpus/symfony/polyfill/src/Intl/Grapheme/Grapheme.php:507:24
        - /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF}]|[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
        + /(?:\r\n|[\x{1F1E6}-\x{1F1FF}][\x{1F1E6}-\x{1F1FF}]?|(?:[ -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가개갸걔거게겨계고과괘괴교구궈궤귀규그긔기까깨꺄꺠꺼께껴꼐꼬꽈꽤꾀꾜꾸꿔꿰뀌뀨끄끠끼나내냐냬너네녀녜노놔놰뇌뇨누눠눼뉘뉴느늬니다대댜댸더데뎌뎨도돠돼되됴두둬뒈뒤듀드듸디따때땨떄떠떼뗘뗴또똬뙈뙤뚀뚜뚸뛔뛰뜌뜨띄띠라래랴럐러레려례로롸뢔뢰료루뤄뤠뤼류르릐리마매먀먜머메며몌모뫄뫠뫼묘무뭐뭬뮈뮤므믜미바배뱌뱨버베벼볘보봐봬뵈뵤부붜붸뷔뷰브븨비빠빼뺘뺴뻐뻬뼈뼤뽀뽜뽸뾔뾰뿌뿨쀄쀠쀼쁘쁴삐사새샤섀서세셔셰소솨쇄쇠쇼수숴쉐쉬슈스싀시싸쌔쌰썌써쎄쎠쎼쏘쏴쐐쐬쑈쑤쒀쒜쒸쓔쓰씌씨아애야얘어에여예오와왜외요우워웨위유으의이자재쟈쟤저제져졔조좌좨죄죠주줘줴쥐쥬즈즤지짜째쨔쨰쩌쩨쪄쪠쪼쫘쫴쬐쬬쭈쭤쮀쮜쮸쯔쯰찌차채챠챼처체쳐쳬초촤쵀최쵸추춰췌취츄츠츼치카캐캬컈커케켜켸코콰쾌쾨쿄쿠쿼퀘퀴큐크킈키타태탸턔터테텨톄토톼퇘퇴툐투퉈퉤튀튜트틔티파패퍄퍠퍼페펴폐포퐈퐤푀표푸풔풰퓌퓨프픠피하해햐햬허헤혀혜호화홰회효후훠훼휘휴흐희히]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*(?:\x{200D}(?:[\x{1F1E6}-\x{1F1FF} -~\x{200C}\x{200D}]|[ᆨ-ᇹ]+|[ᄀ-ᅟ]*(?:[가-힣]?[ᅠ-ᆢ]+|[가-힣])[ᆨ-ᇹ]*|[ᄀ-ᅟ]+|[^\p{Cc}\p{Cf}\p{Zl}\p{Zp}])[\p{Mn}\p{Mc}\p{Me}\x{09BE}\x{09D7}\x{0B3E}\x{0B57}\x{0BBE}\x{0BD7}\x{0CC2}\x{0CD5}\x{0CD6}\x{0D3E}\x{0D57}\x{0DCF}\x{0DDF}\x{200C}\x{1D165}\x{1D16E}-\x{1D172}\x{1F3FB}-\x{1F3FF}\x{FE0E}-\x{FE0F}\x{E0020}-\x{E007F}]*)*|[\p{Cc}\p{Cf}\p{Zl}\p{Zp}])/u
 
-corpus/symfony/polyfill/src/Intl/Icu/NumberFormatter.php:511:24
+corpus/symfony/polyfill/src/Intl/Icu/NumberFormatter.php:504:24
     → /^-?(?:\.\d++|(?P<grouping>\d++(,{1}\d+)++(\.\d*+)?)|\d++(\.\d*+)?)/
    INFO  Quantified capturing group 2 "(,{1}\d+)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -26411,12 +26291,10 @@ corpus/symfony/symfony/src/Symfony/Component/ErrorHandler/DebugClassLoader.php:1
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "\\AA" x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: \\?
-       ↳ Hotspot offsets: 4-7
+       ↳ The risky part is: [a-zA-Z0-9_\x80-\xff]*
+       ↳ Hotspot offsets: 25-47
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
@@ -26575,9 +26453,6 @@ corpus/symfony/symfony/src/Symfony/Component/Mime/Header/AbstractHeader.php:99:2
    INFO  Quantified capturing group 7 "((?:(?:[ \t]*(?:\r\n))?[ \t])?…" with "*": only the last iteration's capture is
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
-   WARN  Nested quantifiers in capturing group 7 "((?:(?:[ \t]*(?:\r\n))?[ \t])?…" can cause catastrophic backtracking.
-       ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
-         need.
    WARN  Alternation branches "(?:[\x01-\x08\x0B\x0C\x0E-\x19…" and "(?:\[\x00-\x08\x0B\x0C\x0E-…" have overlapping
        character sets, which may cause unnecessary backtracking.
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
@@ -26635,12 +26510,10 @@ corpus/symfony/symfony/src/Symfony/Component/Routing/Loader/AttributeClassLoader
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "\\AA" x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: \\?
-       ↳ Hotspot offsets: 4-7
+       ↳ The risky part is: [a-zA-Z0-9_\x7f-\xff]*
+       ↳ Hotspot offsets: 25-47
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
@@ -27731,12 +27604,10 @@ corpus/vimeo/psalm/src/Psalm/Config/FileFilter.php:346:37
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "A" . "\\00" x n . "!"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\\]?
-       ↳ Hotspot offsets: 22-27
+       ↳ The risky part is: [a-zA-Z0-9_\x80-\xff]+
+       ↳ Hotspot offsets: 27-49
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
-       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
-         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
@@ -27834,7 +27705,7 @@ Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the ol
 ### corpus/voku/anti-xss — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
 Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1653:29
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1685:31
     → /(?<html_entity>&[A-Za-z]{2,};{0})/
    WARN  Quantifier always repeats zero times; it can be removed.
        ↳ Remove the quantified element or replace it with an empty pattern.
@@ -27842,13 +27713,13 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1653:29
        - /(?<html_entity>&[A-Za-z]{2,};{0})/
        + /(?<html_entity>&[A-Za-z]{2,})/
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1758:32
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:1794:32
     → #\s*[\p{L}\d_\-\[\]]+\s*=\s*(?:(["'])(?:[^\1]*?)\1|\\"(?:[^"]*?)\\")#u
    WARN  Suspicious \1 inside character class: this is octal (\x01), not a backreference to group 1.
        ↳ Backreferences do not work inside character classes. If you intended to match the same text as group 1, move
          the check outside the class.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2387:21
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2562:21
     → #(?:%3C|¼|<)[^\p{L}@]*/*[^\p{L}@]*(?:[\p{L}_][\p{L}\p{N}_.-]*+:)?(?:script[^\p{L}@]+).*(?:%3E|¾|>)?#iUus
    WARN  Quantifier "+" is lazy under the U flag and is followed only by what may match nothing, so it always matches
        its minimum.
@@ -27859,7 +27730,7 @@ corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2387:21
    WARN  Quantifier "?" is lazy under the U flag and ends the pattern, so it always matches its minimum.
        ↳ Remove the quantified item, make the quantifier greedy, or anchor what must follow it.
 
-corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:2689:17
+corpus/voku/anti-xss/src/voku/helper/AntiXSS.php:3071:17
     → #<(?!!--|!\[)((?<start>/*\s*)((?<tagName>[\p{L}:]+)(?=[^\p{L}]|$|)|.+)[^\s"'\p{L}>/=]*[^>]*)(?<closeTag>>)?#iusS
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
    WARN  Alternation contains an empty alternative.
@@ -27909,6 +27780,8 @@ corpus/voku/portable-utf8/src/voku/helper/UTF8.php:3742:21
          a*a*).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
          (?>...) or possessive quantifiers (*+, ++).
+       ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
+         allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
            - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.
@@ -28343,24 +28216,24 @@ corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:97:27
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:577:18
-    → |^data-[^:= \t\r\n/>\0_＿]*$|i
+corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:575:18
+    → |^data-[^:= \t\r\f\n/>\0_＿]*$|Di
    FAIL  Character class holds "＿", which without /u is the bytes \xEF \xBC \xBF: the class matches each byte on its
        own.
        ↳ Add the /u flag; write the bytes as \x escapes if bytes are meant.
 
-corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1095:6
+corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1093:6
     → /(^[0-9\-])|[\x00-\x20!"#$%&'()*+,.\/:;<=>?@[\]^`{|}~]|\xC2\xA0/
    WARN  An anchor holds for its own alternative only: "[\x00-\x20!"#$%&'()*+,.\/:;<=>?@[\]^`{|}~]" matches anywhere in
        the subject.
        ↳ If the anchors are meant for every alternative, group them:
          "^(?:([0-9\-])|[\x00-\x20!"#$%&'()*+,.\/:;<=>?@[\]^`{|}~]|\xC2\xA0)".
 
-corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1916:20
+corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1914:20
     → !^([^:]+:)(//[^/]+)?(.*)$!iD
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1982:25
+corpus/wikimedia/mediawiki/includes/Parser/Sanitizer.php:1980:25
     → / ^ [a-z0-9!#$%&'*+\-\/=?^_`{|}~\.]+ @ [a-z0-9\-]+ (\.[a-z0-9\-]+)* $/ix
    ↳ via $html5_email_regexp
    INFO  Quantified capturing group 1 "(\.[a-z0-9\-]+)" with "*": only the last iteration's capture is retained.
@@ -28386,17 +28259,17 @@ corpus/wikimedia/mediawiki/includes/Rest/Router.php:37:33
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:393:4
+corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:406:4
     → /[ ,.!?~!@#$%^&*\(\)+=\-\\|\[\]"'<>]/
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '!' (duplicate)
 
-corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:477:25
+corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:490:25
     → /<\/?[^>]+>/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:478:25
+corpus/wikimedia/mediawiki/includes/Search/SearchHighlighter.php:491:25
     → /'''''/
    TIP 
        - /'''''/
@@ -28473,11 +28346,14 @@ corpus/wikimedia/mediawiki/includes/libs/Mime/XmlTypeCheck.php:440:4
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 261 (backtrack_limit 100000, JIT off).
        ↳ The risky part is: \s*<!ENTITY\s+\S+\s+(?:"(?:&[^"%&;]{1,64};|(?:[^"%&]|&amp;|&quot;){0,255})"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\s*>|\s*<!--(?:[^\-]|-[^\-])*-->|\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED "http:\/\/www.w3.org\/1999\/xlink">
        ↳ Hotspot offsets: 4-241
+       ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
+         (*+) or using atomic groups (?>...).
        ↳ Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic
          backtracking.
        ↳ A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This
          allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++).
        ↳ Suggested (verify behavior):
+           - Consider using possessive quantifiers or atomic groups to limit backtracking.
            - Make alternatives mutually exclusive or order longer alternatives first.
            - Replace inner quantifiers with possessive variants or wrap them in (?>...).
        ↳ Test with adversarial inputs like repeated strings followed by a non-matching character.
@@ -29026,8 +28902,8 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:856:19
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups
@@ -29054,8 +28930,8 @@ corpus/wp-cli/wp-cli/bundle/rmccue/requests/src/Requests.php:864:36
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "0" . ";=" x n . "!\x0D\n"
        ↳ Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off).
-       ↳ The risky part is: [\w\-]*
-       ↳ Hotspot offsets: 19-25
+       ↳ The risky part is: (?:[\w\-]*)*
+       ↳ Hotspot offsets: 33-44
        ↳ Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive
          (*+) or using atomic groups (?>...).
        ↳ Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups

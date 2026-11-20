@@ -1,6 +1,6 @@
 {
     "repo": "zircote/swagger-php",
-    "sha": "503f9d14b5cdd9055ef5361c5a3de3a1dba243ed",
+    "sha": "a0f37a9c7d5f05c6f3c7968b2cac17bc705730fc",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/zircote/swagger-php/blob/503f9d14b5cdd9055ef5361c5a3de3a1dba243ed/src/Annotations/Operation.php#L218-L224",
+            "permalink": "https://github.com/zircote/swagger-php/blob/a0f37a9c7d5f05c6f3c7968b2cac17bc705730fc/src/Annotations/Operation.php#L218-L224",
             "snippet": [
                 {
                     "number": 218,

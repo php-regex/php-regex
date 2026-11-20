@@ -1,6 +1,6 @@
 {
     "repo": "NativePHP/desktop",
-    "sha": "17c0416fa0e1bdf1f413e66a40db61359f5eadca",
+    "sha": "fd0a180806d008e6d8095c101701be45ed2bf8a4",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/NativePHP/desktop/blob/17c0416fa0e1bdf1f413e66a40db61359f5eadca/src/Drivers/Electron/Commands/RunCommand.php#L76-L82",
+            "permalink": "https://github.com/NativePHP/desktop/blob/fd0a180806d008e6d8095c101701be45ed2bf8a4/src/Drivers/Electron/Commands/RunCommand.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -201,7 +201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/NativePHP/desktop/blob/17c0416fa0e1bdf1f413e66a40db61359f5eadca/src/Drivers/Electron/Commands/RunCommand.php#L79-L85",
+            "permalink": "https://github.com/NativePHP/desktop/blob/fd0a180806d008e6d8095c101701be45ed2bf8a4/src/Drivers/Electron/Commands/RunCommand.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
