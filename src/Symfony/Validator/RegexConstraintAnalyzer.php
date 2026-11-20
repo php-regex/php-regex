@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Printer\DisplayEscaper;
@@ -421,7 +422,8 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, 'length.unchecked', 'notice', 'The Length constraint could not be compared with the pattern: '.$e->getMessage())];
         }
 
-        if (null !== $shortest && (null === $length->max || mb_strlen($shortest, 'UTF-8') <= $length->max)) {
+        // Length counts characters: the bytes of the value no UTF-8 sequence continues.
+        if (null !== $shortest && (null === $length->max || LibraryPcre::matchAll('/[^\x80-\xBF]/', $shortest) <= $length->max)) {
             return [];
         }
 

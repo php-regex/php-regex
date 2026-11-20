@@ -265,6 +265,11 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [],
             'verdicts' => [['/^.{2}$/D', 'é', true]],
         ];
+        yield 'a Length a pattern over three bytes fits' => [
+            'constraints' => [new Regex(pattern: '/^.{3}$/D', htmlPattern: ''), new Length(max: 1)],
+            'expected' => [],
+            'verdicts' => [['/^.{3}$/D', '€', true]],
+        ];
         yield 'a Length the solver cannot compare' => [
             'constraints' => [new Regex(pattern: '/^(a)\1$/', htmlPattern: ''), new Length(max: 1)],
             'expected' => [['length.unchecked', 'notice']],
