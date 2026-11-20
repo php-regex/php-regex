@@ -985,15 +985,15 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
     }
 
     /**
-     * One character inside a v class: as written when it is printable ASCII
-     * or the given text, escaped otherwise.
+     * One character of a caseless spelling inside a v class: as written when
+     * it is printable ASCII or the given text, escaped otherwise. Only a
+     * cased character comes here, and in ASCII that is a letter, which a v
+     * class takes as is.
      */
     private function classCharacter(int $codePoint, ?string $asWritten = null): string
     {
         if ($codePoint > 0x20 && $codePoint < 0x7F) {
-            $character = \chr($codePoint);
-
-            return isset(VModeCompatibility::CLASS_SET_META[$character]) ? '\\'.$character : $character;
+            return \chr($codePoint);
         }
 
         return $codePoint > 0x7F && null !== $asWritten ? $asWritten : $this->formatCodePoint($codePoint);
