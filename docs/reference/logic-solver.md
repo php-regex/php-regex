@@ -499,10 +499,42 @@ PHPRegex follows a formal pipeline:
 
 1. The pattern's normalized form (HIR) — where every character set is already
    the engine's — becomes an NFA (Thompson construction)
-2. NFA -> DFA (powerset construction)
-3. BFS traversal over product DFA to find overlap or counter-examples
+2. The product of the two automata is searched breadth first for a string
+   both take (`intersection()`), or the left one takes and the right one does
+   not (`subsetOf()`, and each side of `equivalent()`)
 
-The BFS step guarantees the **shortest possible counter-example** when one exists.
+The breadth-first search guarantees the **shortest possible counter-example**
+when one exists, and of those the least.
+
+## Search Strategies
+
+`intersection()`, `subsetOf()` and `equivalent()` search one of two products:
+
+- **lazy** (default): the product of the NFAs, built as it is reached. An
+  intersection pairs the states of both NFAs and determinizes neither; an
+  inclusion pairs the left NFA with the right one determinized one reached
+  state at a time. The search stops at the depth of the shortest witness:
+  `/a|(?:b{11})+/` meets `/a|(?:b{13})+/` at `a`, without the 143 pairs the
+  two `b` loops lead to.
+- **eager**: both patterns are determinized and minimized, and the product
+  of the two DFAs is searched.
+
+Neither wins everywhere. `/(a|b)*a(a|b){15}/` meets `/b+/` in a handful of
+pairs, where its DFA passes the 10,000-state limit; 2,000 branches `a|a|…`
+start four million pairs of NFA states, where their DFA holds three states.
+The lazy search keeps its pairs under `maxDfaStates`, each counted as it is
+reached, and charges each move to `maxTransitionsProcessed`; past either
+limit it gives up and leaves the answer to the eager search, which reads the
+patterns under its own limits: the answer is the eager one's, and so is a
+refusal. With a DFA cache, whose compiled DFAs it reuses, or for a pattern
+read as UTF-8 beside one read as bytes, the search is the eager one.
+
+```php
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Options\SolverStrategy;
+
+$options = new SolverOptions(strategy: SolverStrategy::Eager);
+```
 
 ## Determinization Strategies
 
