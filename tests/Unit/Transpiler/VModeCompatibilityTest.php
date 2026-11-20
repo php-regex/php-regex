@@ -155,6 +155,84 @@ final class VModeCompatibilityTest extends TestCase
         yield '[\\x41]' => ['[\\x41]', true, []];
         yield '[a-\\x7A]' => ['[a-\\x7A]', true, []];
         yield '\\u{1F600}' => ['\\u{1F600}', true, []];
+        yield '[\\Qa\\E]' => ['[\\Qa\\E]', false, [['quote', 1, true]]];
+        yield '\\Q\\Ea}' => ['\\Q\\Ea}', false, [['quote', 0, true], ['brace', 5, true]]];
+        yield 'x\\Qa\\E' => ['x\\Qa\\E', false, [['quote', 1, true]]];
+        yield '\\Qa{' => ['\\Qa{', false, [['quote', 0, true]]];
+        yield '\\Qa\\E{' => ['\\Qa\\E{', false, [['quote', 0, true], ['brace', 5, true]]];
+        yield '\\\\Qa' => ['\\\\Qa', true, []];
+        yield 'a\\E' => ['a\\E', false, [['escape', 1, true]]];
+        yield '\\B' => ['\\B', true, []];
+        yield '[\\B]' => ['[\\B]', false, [['escape', 1, true]]];
+        yield '\\01' => ['\\01', false, [['escape', 0, true]]];
+        yield '\\01a' => ['\\01a', false, [['escape', 0, true]]];
+        yield '\\0a1' => ['\\0a1', true, []];
+        yield '[\\0]' => ['[\\0]', true, []];
+        yield '\\c1' => ['\\c1', false, [['escape', 0, true]]];
+        yield '\\cA1' => ['\\cA1', true, []];
+        yield '\\x4' => ['\\x4', false, [['escape', 0, true]]];
+        yield '\\x414' => ['\\x414', true, []];
+        yield '\\u0041' => ['\\u0041', true, []];
+        yield '\\u004' => ['\\u004', false, [['escape', 0, true]]];
+        yield '\\u00412' => ['\\u00412', true, []];
+        yield '\\u{}' => ['\\u{}', false, [['escape', 0, true]]];
+        yield '\\u{41}' => ['\\u{41}', true, []];
+        yield '\\u{4G}' => ['\\u{4G}', false, [['escape', 0, true]]];
+        yield '\\u{41' => ['\\u{41', false, [['escape', 0, true], ['brace', 2, true]]];
+        yield '\\q{a}' => ['\\q{a}', false, [['escape', 0, true]]];
+        yield '[\\q{a|b}]' => ['[\\q{a|b}]', true, []];
+        yield '[\\qa]' => ['[\\qa]', false, [['escape', 1, true]]];
+        yield '(?<n>a)\\k{n}' => ['(?<n>a)\\k{n}', false, [['escape', 7, true], ['brace', 9, true], ['brace', 11, true]]];
+        yield '[^]]' => ['[^]]', false, [['class_syntax', 2, true]]];
+        yield '[a]}' => ['[a]}', false, [['brace', 3, true]]];
+        yield 'a{2}}' => ['a{2}}', false, [['brace', 4, true]]];
+        yield '\\d{a}' => ['\\d{a}', false, [['brace', 2, true], ['brace', 4, true]]];
+        yield '\\p{L}}' => ['\\p{L}}', false, [['brace', 5, true]]];
+        yield '[(-z]' => ['[(-z]', false, [['class_syntax', 1, true]]];
+        yield '[[:alpha:]]}' => ['[[:alpha:]]}', false, [['posix_class', 1, false], ['brace', 11, true]]];
+        yield '[[:^alpha:]]' => ['[[:^alpha:]]', true, [['posix_class', 1, false]]];
+        yield '[é&&]' => ['[é&&]', false, [['class_double_punctuator', 3, true]]];
+        yield '\\\\\\Qa\\E' => ['\\\\\\Qa\\E', false, [['quote', 2, true]]];
+        yield '\\N{U+41}' => ['\\N{U+41}', false, [['escape', 0, true]]];
+        yield '\\u{4}' => ['\\u{4}', true, []];
+        yield '\\uA1}' => ['\\uA1}', false, [['escape', 0, true], ['brace', 4, true]]];
+        yield '\\pL' => ['\\pL', false, [['escape', 0, true]]];
+        yield '[\\k<n>](?<n>a)' => ['[\\k<n>](?<n>a)', false, [['escape', 1, true]]];
+        yield '\\bfoo' => ['\\bfoo', true, []];
+        yield '[!-(]' => ['[!-(]', false, [['class_syntax', 3, true]]];
+        yield '[\\p{L}|]' => ['[\\p{L}|]', false, [['class_syntax', 6, true]]];
+        yield 'a{1,}}' => ['a{1,}}', false, [['brace', 5, true]]];
+        yield 'a{1,2}}' => ['a{1,2}}', false, [['brace', 6, true]]];
+    }
+
+    /**
+     * @param list<string> $messages
+     */
+    #[Test]
+    #[DataProvider('provideMessages')]
+    public function test_each_finding_says_what_the_browser_does(string $value, array $messages): void
+    {
+        $this->assertSame($messages, array_column(self::check($value), 'message'));
+    }
+
+    /**
+     * @return iterable<string, array{string, list<string>}>
+     */
+    public static function provideMessages(): iterable
+    {
+        yield 'a possessive' => ['a{2}+', ['JavaScript has no possessive quantifier: "a{2}+" is a syntax error under v.']];
+        yield 'a flag setting' => ['(a(?i)b)', ['JavaScript takes no flag setting "(?i)" that runs to the end of the group: a syntax error under v.']];
+        yield 'scoped modifiers' => ['(?i-m:a)', ['JavaScript reads the scoped modifiers "(?i-m:" from ES2025 on only; an older browser refuses the pattern.']];
+        yield 'a Python named group' => ['(?P<n>a)', ['JavaScript writes a named group "(?<name>" only: "(?P<" is a syntax error under v.']];
+        yield 'a quoted named group' => ["(?'n'a)", ['JavaScript writes a named group "(?<name>" only: "(?\'" is a syntax error under v.']];
+        yield 'a POSIX class' => ['[[:alpha:]]', ['JavaScript has no POSIX class: under v "[:alpha:]" is a nested class of the characters ":alpha:".']];
+        yield 'a quote' => ['[\\Qa\\E]', ['JavaScript has no \\Q...\\E: under v it is an invalid escape; escape each character instead.']];
+        yield 'a doubled punctuator' => ['[a$$]', ['Under v a class refuses "$$": escape one of them, "\\$".']];
+        yield 'a lone }' => ['a}', ['Under v a lone "}" is a syntax error: write "\\}".']];
+        yield 'a lone ]' => ['a]', ['Under v a lone "]" is a syntax error: write "\\]".']];
+        yield 'an empty class' => ['[]]', ['Under v "[]" is the empty class, and the "]" after it a syntax error: write "\\]".']];
+        yield 'an unknown escape' => ['a\\E', ['JavaScript knows no escape "\\E" under v: a syntax error.']];
+        yield 'an unknown escape with a brace' => ['\\o{101}', ['JavaScript knows no escape "\\o" under v: a syntax error.']];
     }
 
     #[Test]
@@ -192,7 +270,7 @@ final class VModeCompatibilityTest extends TestCase
     #[Test]
     public function test_what_the_html_pattern_target_writes_passes(): void
     {
-        foreach (['/^[-a()|{}\/]+$/', '/^[a-z0-9._%+-]+@[a-z]+$/i', '/^a++b$/', '/^(?>a|b)c$/', '/^\d\w\s$/'] as $pattern) {
+        foreach (['/^[-a()|{}\/]+$/', '/^[a-z0-9._%+-]+@[a-z]+$/i', '/^a++b$/', '/^(?>a|b)c$/', '/^\d\w\s$/', '/^[!-\/]$/i'] as $pattern) {
             $value = (new Transpiler())->transpile($pattern, 'html-pattern')->pattern;
 
             $this->assertSame([], self::check($value), $pattern.' as '.$value);

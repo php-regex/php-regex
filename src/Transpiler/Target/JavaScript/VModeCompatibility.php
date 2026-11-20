@@ -15,13 +15,11 @@ namespace PHPRegex\Transpiler\Target\JavaScript;
 
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
-use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
-use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
@@ -97,7 +95,7 @@ final class VModeCompatibility
     ];
 
     /**
-     * @var list<array{offset: int, construct: string, message: string, refused: bool}>
+     * @var array<int, array{offset: int, construct: string, message: string, refused: bool}>
      */
     private array $findings = [];
 
@@ -112,41 +110,41 @@ final class VModeCompatibility
     {
         $this->findings = [];
         $this->source = $regex->source ?? '';
-        $this->visit($regex->pattern, false);
+        $this->visit($regex->pattern);
         $this->scan();
         usort($this->findings, static fn (array $left, array $right): int => $left['offset'] <=> $right['offset']);
 
         return $this->findings;
     }
 
-    private function visit(NodeInterface $node, bool $inClass): void
+    private function visit(NodeInterface $node): void
     {
-        $this->judge($node, $inClass);
+        $this->judge($node);
 
         if ($node instanceof CharClassNode) {
             $this->judgeClassBody($node);
         }
 
         foreach ($node->getChildren() as $child) {
-            $this->visit($child, $inClass || $node instanceof CharClassNode);
+            $this->visit($child);
         }
     }
 
-    private function judge(NodeInterface $node, bool $inClass): void
+    private function judge(NodeInterface $node): void
     {
         $text = $this->text($node);
         match (true) {
             $node instanceof QuantifierNode && QuantifierType::Possessive === $node->type => $this->add($node, 'possessive', 'JavaScript has no possessive quantifier: "'.$text.'" is a syntax error under v.'),
             $node instanceof GroupNode && GroupType::Atomic === $node->type => $this->add($node, 'atomic', 'JavaScript has no atomic group: "(?>" is a syntax error under v.'),
             $node instanceof GroupNode && GroupType::BranchReset === $node->type => $this->add($node, 'branch_reset', 'JavaScript has no branch reset group "(?|".'),
-            $node instanceof GroupNode && GroupType::InlineFlags === $node->type => $this->add($node, 'inline_flags', str_ends_with($text, ')') && !str_contains($text, ':')
-                ? 'JavaScript takes no flag setting "'.$text.'" that runs to the end of the group: a syntax error under v.'
-                : 'JavaScript reads the scoped modifiers "'.substr($text, 0, (int) strpos($text.':', ':') + 1).'" from ES2025 on only; an older browser refuses the pattern.'),
-            $node instanceof GroupNode && (str_starts_with($text, '(?P<') || str_starts_with($text, "(?'")) => $this->add($node, 'named_group', 'JavaScript writes a named group "(?<name>" only: "'.substr($text, 0, 4).'" is a syntax error under v.'),
+            $node instanceof GroupNode && GroupType::InlineFlags === $node->type => $this->add($node, 'inline_flags', str_contains($text, ':')
+                ? 'JavaScript reads the scoped modifiers "'.substr($text, 0, strcspn($text, ':') + 1).'" from ES2025 on only; an older browser refuses the pattern.'
+                : 'JavaScript takes no flag setting "'.$text.'" that runs to the end of the group: a syntax error under v.'),
+            $node instanceof GroupNode && str_starts_with($text, '(?P<') => $this->add($node, 'named_group', 'JavaScript writes a named group "(?<name>" only: "(?P<" is a syntax error under v.'),
+            $node instanceof GroupNode && str_starts_with($text, "(?'") => $this->add($node, 'named_group', 'JavaScript writes a named group "(?<name>" only: "(?\'" is a syntax error under v.'),
             $node instanceof CharTypeNode && isset(self::CHAR_TYPES[$node->value]) => $this->add($node, 'char_type', self::CHAR_TYPES[$node->value], refused: 'v' !== $node->value),
             $node instanceof AssertionNode && isset(self::ASSERTIONS[$node->value]) => $this->add($node, 'assertion', self::ASSERTIONS[$node->value]),
             $node instanceof PosixClassNode => $this->add($node, 'posix_class', 'JavaScript has no POSIX class: under v "'.$text.'" is a nested class of the characters "'.substr($text, 1, -1).'".', refused: false),
-            $node instanceof LiteralNode && !$inClass && $this->opensQuote($node) => $this->add($node, 'quote', 'JavaScript has no \Q...\E: under v it is an invalid escape; escape each character instead.', -2),
             $node instanceof ConditionalNode => $this->add($node, 'conditional', 'JavaScript has no conditional group.'),
             $node instanceof SubroutineNode => $this->add($node, 'subroutine', 'JavaScript has no recursion or subroutine call.'),
             $node instanceof PcreVerbNode => $this->add($node, 'verb', 'JavaScript has no backtracking control verb.'),
@@ -187,9 +185,10 @@ final class VModeCompatibility
 
     /**
      * What the source writes that the browser refuses before reading any
-     * construct: an escape JavaScript does not know under v, a brace or a
-     * "]" that stands for itself outside a class, a class whose first
-     * character is "]". A \Q...\E quote is left to its own finding.
+     * construct: a \Q...\E quote, an escape JavaScript does not know under
+     * v, a brace or a "]" that stands for itself outside a class, a class
+     * whose first character is "]". Under v a "[" in a class opens a nested
+     * one, a POSIX class "[:alpha:]" included.
      */
     private function scan(): void
     {
@@ -198,10 +197,12 @@ final class VModeCompatibility
         $depth = 0;
         for ($i = 0; $i < $length; $i++) {
             $char = $source[$i];
-            if ('\\' === $char && $i + 1 < $length) {
+            // A pattern never ends on a backslash: it escapes the next byte.
+            if ('\\' === $char) {
                 $next = $source[$i + 1];
                 if ('Q' === $next) {
-                    $end = strpos($source, '\\E', $i + 2);
+                    $this->findings[] = ['offset' => $i, 'construct' => 'quote', 'message' => 'JavaScript has no \Q...\E: under v it is an invalid escape; escape each character instead.', 'refused' => true];
+                    $end = strpos($source, '\\E', $i);
                     $i = false === $end ? $length : $end + 1;
 
                     continue;
@@ -209,8 +210,13 @@ final class VModeCompatibility
 
                 $this->judgeEscape($i, $next, $depth > 0);
                 $i++;
-                // A braced argument, \p{L} or \u{41}, is no quantifier.
-                if (str_contains('pPuxqgoN', $next) && '{' === ($source[$i + 1] ?? '') && false !== $close = strpos($source, '}', $i + 1)) {
+                // A braced argument, \p{L} or \u{41}, is no quantifier; in a
+                // class, \q{...} is a string the class takes as written.
+                if (str_contains('pPuxqgoN', $next) && '{' === ($source[$i + 1] ?? '') && false !== $close = strpos($source, '}', $i)) {
+                    if ('q' === $next) {
+                        $this->findings = array_filter($this->findings, static fn (array $finding): bool => $finding['offset'] < $i || $finding['offset'] > $close);
+                    }
+
                     $i = $close;
                 }
 
@@ -218,13 +224,6 @@ final class VModeCompatibility
             }
 
             if ('[' === $char) {
-                $posix = $depth > 0 ? self::posixClassLength($source, $i) : 0;
-                if ($posix > 0) {
-                    $i += $posix - 1;
-
-                    continue;
-                }
-
                 $depth++;
                 $first = $i + 1 + ('^' === ($source[$i + 1] ?? '') ? 1 : 0);
                 if (']' === ($source[$first] ?? '')) {
@@ -244,9 +243,9 @@ final class VModeCompatibility
             }
 
             if ('{' === $char) {
-                $quantifier = self::quantifierLength($source, $i);
-                if ($quantifier > 0) {
-                    $i += $quantifier - 1;
+                $quantifier = self::quantifierEnd($source, $i);
+                if (null !== $quantifier) {
+                    $i = $quantifier;
 
                     continue;
                 }
@@ -266,20 +265,22 @@ final class VModeCompatibility
      */
     private function judgeEscape(int $offset, string $next, bool $inClass): void
     {
-        if (str_contains('hHvVRNXCAzZGKE', $next)) {
+        if (str_contains('hHvVRXCAzZGK', $next)) {
             return;
         }
 
         $rest = substr($this->source, $offset + 2);
         $known = match (true) {
             str_contains('^$\\.*+?()[]{}|/', $next) => true,
+            // \N alone is a character type, judged as one; \N{U+41} names a code point.
+            'N' === $next => !str_starts_with($rest, '{U+'),
             $inClass && isset(self::CLASS_SET_META[$next]) => true,
             str_contains('dDwWsSfnrt', $next) => true,
             'b' === $next || 'B' === $next => 'B' !== $next || !$inClass,
-            '0' === $next => !Ascii::isDigit(substr($rest, 0, 1)),
-            'c' === $next => Ascii::isAlpha(substr($rest, 0, 1)),
+            '0' === $next => !Ascii::isDigit($rest[0] ?? ''),
+            'c' === $next => Ascii::isAlpha($rest[0] ?? ''),
             'x' === $next => 2 === strspn($rest, self::HEX, 0, 2),
-            'u' === $next => 4 === strspn($rest, self::HEX, 0, 4) || ('{' === ($rest[0] ?? '') && strspn($rest, self::HEX, 1) > 0 && '}' === ($rest[1 + strspn($rest, self::HEX, 1)] ?? '')),
+            'u' === $next => 4 === strspn($rest, self::HEX, 0, 4) || self::bracedHex($rest),
             'p' === $next || 'P' === $next => str_starts_with($rest, '{'),
             'k' === $next => !$inClass && str_starts_with($rest, '<'),
             'q' === $next => $inClass && str_starts_with($rest, '{'),
@@ -293,31 +294,25 @@ final class VModeCompatibility
     }
 
     /**
-     * The length of the POSIX class "[:name:]" or "[:^name:]" written at the
-     * offset, or 0.
+     * Whether the text opens with "{", one hex digit or more, then "}".
      */
-    private static function posixClassLength(string $source, int $offset): int
+    private static function bracedHex(string $text): bool
     {
-        if (':' !== ($source[$offset + 1] ?? '')) {
-            return 0;
-        }
+        $digits = strspn($text, self::HEX, 1);
 
-        $at = $offset + 2 + ('^' === ($source[$offset + 2] ?? '') ? 1 : 0);
-        $name = strspn($source, 'abcdefghijklmnopqrstuvwxyz', $at);
-
-        return $name > 0 && ':]' === substr($source, $at + $name, 2) ? $at + $name + 2 - $offset : 0;
+        return '{' === ($text[0] ?? '') && $digits > 0 && '}' === ($text[1 + $digits] ?? '');
     }
 
     /**
-     * The length of the quantifier "{n}", "{n,}" or "{n,m}" written at the
-     * offset, or 0.
+     * The offset of the "}" that closes the quantifier "{n}", "{n,}" or
+     * "{n,m}" written at the offset, or null.
      */
-    private static function quantifierLength(string $source, int $offset): int
+    private static function quantifierEnd(string $source, int $offset): ?int
     {
         $at = $offset + 1;
         $low = strspn($source, '0123456789', $at);
         if (0 === $low) {
-            return 0;
+            return null;
         }
 
         $at += $low;
@@ -325,7 +320,7 @@ final class VModeCompatibility
             $at += 1 + strspn($source, '0123456789', $at + 1);
         }
 
-        return '}' === ($source[$at] ?? '') ? $at + 1 - $offset : 0;
+        return '}' === ($source[$at] ?? '') ? $at : null;
     }
 
     /**
@@ -340,30 +335,20 @@ final class VModeCompatibility
     }
 
     /**
-     * The character a literal of a class writes as is, one byte or one
-     * UTF-8 character, or null for one written as an escape.
+     * The ASCII character a part of a class writes as is, or null: an
+     * escape, a character type, a nested class or a character past ASCII,
+     * none of which the v flag refuses alone or twice.
      */
     private function unescaped(NodeInterface $node): ?string
     {
-        if (!$node instanceof LiteralNode && !$node instanceof CharLiteralNode) {
-            return null;
-        }
-
         $text = $this->text($node);
 
-        return '' === $text || '\\' === $text[0] || 1 !== mb_strlen($text, 'UTF-8') ? null : $text;
-    }
-
-    private function opensQuote(LiteralNode $node): bool
-    {
-        $start = $node->getStartPosition();
-
-        return $start >= 2 && '\Q' === substr($this->source, $start - 2, 2) && ($start < 3 || '\\' !== $this->source[$start - 3]);
+        return 1 === \strlen($text) ? $text : null;
     }
 
     private function add(NodeInterface $node, string $construct, string $message, int $shift = 0, bool $refused = true): void
     {
-        $this->findings[] = ['offset' => max(0, $node->getStartPosition() + $shift), 'construct' => $construct, 'message' => $message, 'refused' => $refused];
+        $this->findings[] = ['offset' => $node->getStartPosition() + $shift, 'construct' => $construct, 'message' => $message, 'refused' => $refused];
     }
 
     private function text(NodeInterface $node): string
