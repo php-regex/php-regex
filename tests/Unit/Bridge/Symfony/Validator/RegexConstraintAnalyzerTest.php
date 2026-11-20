@@ -98,10 +98,17 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [],
             'verdicts' => [['/^a$/i', 'A', true]],
         ];
-        yield 'a pattern that must not match, derived alike' => [
+        // ((?!\d).)* under v: JavaScript's dot refuses U+2028, which holds
+        // no digit.
+        yield 'a pattern that must not match, derived with a dot' => [
             'constraints' => [new Regex(pattern: '/\d/', match: false)],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/\d/', 'a1', true], ['/\d/', 'ab', false], ['/\d/', "\u{2028}", false]],
+        ];
+        yield 'a pattern that must not match, with an htmlPattern that agrees' => [
+            'constraints' => [new Regex(pattern: '/\d/', match: false, htmlPattern: '[^0-9]*')],
             'expected' => [],
-            'verdicts' => [['/\d/', 'a1', true], ['/\d/', 'ab', false]],
+            'verdicts' => [['/\d/', "\u{2028}", false]],
         ];
         yield 'flags drop the attribute' => [
             'constraints' => [new Regex('/^[a-z]+$/i')],
@@ -137,6 +144,48 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'constraints' => [new Regex('/^.{2}$/')],
             'expected' => [['html_pattern.looser', 'error'], ['html_pattern.stricter', 'warning']],
             'verdicts' => [['/^.{2}$/', "\u{80}", true], ['/^.{2}$/', "\0\u{80}", false]],
+        ];
+        // The browser checks no empty value, and Symfony's Regex does not
+        // either: '' is no difference.
+        yield 'an empty value neither side checks' => [
+            'constraints' => [new Regex(pattern: '/^a+$/Du', htmlPattern: 'a*')],
+            'expected' => [],
+            'verdicts' => [['/^a+$/Du', '', false], ['/^a+$/Du', 'aa', true]],
+        ];
+        yield 'an empty value the server matches and the browser leaves unchecked' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: 'a+')],
+            'expected' => [],
+            'verdicts' => [['/^a*$/D', '', true], ['/^a*$/D', 'aa', true]],
+        ];
+        // A text input strips a line break: its value holds none.
+        yield 'a line break no input holds' => [
+            'constraints' => [new Regex(pattern: '/^a$/Du', htmlPattern: 'a|\n')],
+            'expected' => [],
+            'verdicts' => [['/^a$/Du', "\n", false], ['/^a$/Du', 'a', true]],
+        ];
+        yield 'an empty value both sides of a match: false pattern skip' => [
+            'constraints' => [new Regex(pattern: '/^a*$/Du', htmlPattern: 'b*', match: false)],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^a*$/Du', '', true], ['/^a*$/Du', "\0", false]],
+        ];
+        // A pattern that reads bytes as it reads code points on UTF-8: the
+        // values neither it nor the browser takes are searched as such.
+        yield 'a match: false pattern over bytes' => [
+            'constraints' => [new Regex(pattern: '/^a$/D', htmlPattern: '[b]', match: false)],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^a$/D', 'c', false], ['/^a$/D', "\0", false]],
+        ];
+        // One that reads them otherwise: they are not searched, and the
+        // audit says so.
+        yield 'a match: false pattern bytes read otherwise' => [
+            'constraints' => [new Regex(pattern: '/^.$/D', htmlPattern: '.{2}', match: false)],
+            'expected' => [['html_pattern.unchecked', 'notice']],
+            'verdicts' => [['/^.$/D', 'a', true], ['/^.$/D', 'é', false]],
+        ];
+        yield 'a match: false pattern over code points' => [
+            'constraints' => [new Regex(pattern: '/^a$/Du', htmlPattern: '[b]', match: false)],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^a$/Du', "\0", false]],
         ];
         yield 'a Length no value of the pattern fits' => [
             'constraints' => [new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
@@ -175,7 +224,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
         ];
         yield 'a Choice value a match: false pattern rejects' => [
             'constraints' => [new Choice(choices: ['ok', 'n0']), new Regex(pattern: '/\d/', match: false)],
-            'expected' => [['choice.rejected', 'error']],
+            'expected' => [['html_pattern.stricter', 'warning'], ['choice.rejected', 'error']],
             'verdicts' => [['/\d/', 'ok', false], ['/\d/', 'n0', true]],
         ];
         yield 'two patterns no value matches' => [
@@ -190,7 +239,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
         ];
         yield 'a pattern every value of which the other forbids' => [
             'constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)],
-            'expected' => [['regex.contradiction', 'error']],
+            'expected' => [['html_pattern.stricter', 'warning'], ['regex.contradiction', 'error']],
             'verdicts' => [['/^\d+$/', '1', true], ['/[0-9]/', '1', true]],
         ];
     }
@@ -222,7 +271,7 @@ final class RegexConstraintAnalyzerTest extends TestCase
     #[DataProvider('provideContradictions')]
     public function test_a_contradiction_leaves_no_value_on_the_engine(array $constraints, string $check, string $alphabet, int $length): void
     {
-        $this->assertSame([$check], array_column(self::audit($constraints), 'check'));
+        $this->assertSame([$check], self::propertyChecks(self::audit($constraints)));
 
         $validator = Validation::createValidator();
         $passing = [];
@@ -260,10 +309,11 @@ final class RegexConstraintAnalyzerTest extends TestCase
     {
         $findings = self::audit([new Choice(choices: $choices), $regex]);
 
-        $this->assertSame(['choice.rejected'], array_column($findings, 'check'));
+        $this->assertSame(['choice.rejected'], self::propertyChecks($findings));
+        $message = array_column($findings, 'message', 'check')['choice.rejected'] ?? '';
         foreach ($choices as $value) {
             $this->assertSame(\in_array($value, $rejected, true), self::serverRejects($regex, $value), $value);
-            $this->assertSame(\in_array($value, $rejected, true), str_contains($findings[0]['message'], '"'.$value.'"'), $value);
+            $this->assertSame(\in_array($value, $rejected, true), str_contains($message, '"'.$value.'"'), $value);
         }
     }
 
@@ -378,6 +428,35 @@ final class RegexConstraintAnalyzerTest extends TestCase
     }
 
     /**
+     * Over bytes, the values a match: false pattern does not match and the
+     * browser rejects are not searched: the notice says which direction.
+     */
+    #[Test]
+    public function test_an_unsearched_direction_is_named(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^.$/D', htmlPattern: '.{2}', match: false)])[0];
+
+        $this->assertSame('The pattern reads bytes and the browser code points: no value the server accepts and the browser rejects was searched for.', $finding['message']);
+        $this->assertSame('.{2}', $finding['htmlPattern'] ?? null);
+    }
+
+    /**
+     * The value a match: false pattern does not match and the browser
+     * rejects is one an input holds: not the empty value, which neither
+     * side checks. Node 22 rejects "\0" with ^(?:b+)$ under v.
+     */
+    #[Test]
+    public function test_a_match_false_comparison_skips_the_empty_value(): void
+    {
+        $this->assertSame(0, preg_match('/a/u', "\0"));
+
+        $finding = self::audit([new Regex(pattern: '/a/u', htmlPattern: 'b+', match: false)])[0];
+
+        $this->assertSame('html_pattern.stricter', $finding['check']);
+        $this->assertSame("\0", $finding['example'] ?? null);
+    }
+
+    /**
      * The audit reads an HTML pattern with PCRE between delimiters it
      * does not write: one that writes all of them is not checked, and the
      * audit says so rather than report nothing.
@@ -405,6 +484,19 @@ final class RegexConstraintAnalyzerTest extends TestCase
         }
 
         return (new RegexConstraintAnalyzer())->analyze([$metadata])->findings;
+    }
+
+    /**
+     * The checks of the findings on the constraints of the property, not
+     * on an HTML pattern.
+     *
+     * @param list<array<string, string>> $findings
+     *
+     * @return list<string>
+     */
+    private static function propertyChecks(array $findings): array
+    {
+        return array_values(array_filter(array_column($findings, 'check'), static fn (string $check): bool => !str_starts_with($check, 'html_pattern.')));
     }
 
     /**

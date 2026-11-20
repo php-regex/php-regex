@@ -556,7 +556,12 @@ under the `v` flag. For each constraint the command reports:
   the reverse. The browser side is read as JavaScript reads it: code points
   where a pattern without `u` reads bytes (`/^.{2}$/` refuses `aé`, which
   the browser lets through), `\w`, `\d` and `\b` over ASCII, `.` refusing
-  U+2028, and only values an input can hold, without a line break.
+  U+2028, and only the values the browser checks: not the empty value,
+  which neither the browser nor `Regex` checks, and none holding a line
+  break, which no input holds. For a `match: false` pattern without `u`,
+  a value the server accepts and the browser rejects is searched for only
+  when the pattern matches the same UTF-8 values under `(*UTF)`; else the
+  report says it was not.
 
 Across the constraints of a property, in a shared validation group, it
 reports a `Length` no value of the pattern fits (`length.contradiction`), a

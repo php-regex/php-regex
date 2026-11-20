@@ -47,7 +47,7 @@ use Symfony\Component\Validator\Mapping\GetterMetadata;
  * - whether it accepts the values the server accepts, and only those: the
  *   pattern under preg_match() against ^(?:H)$ read as the browser reads
  *   it, code points, \w \d \b as ASCII, \s and . as JavaScript reads
- *   them, over the values an input can hold (no line break);
+ *   them, over the values the browser checks (not empty, no line break);
  *
  * and across the constraints of a property, whether a Length or a Choice
  * leaves any value the Regex accepts, and whether two Regex constraints of
@@ -101,7 +101,7 @@ final class RegexConstraintAnalyzer
     private readonly SolverOptions $options;
 
     /**
-     * @var array<string, array{?string, ?string}|string> each comparison made, or why it failed, by pattern and HTML pattern
+     * @var array<string, array{?string, ?string, bool}|string> each comparison made, or why it failed, by pattern and HTML pattern
      */
     private array $compared = [];
 
@@ -260,7 +260,7 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The HTML pattern could not be compared with the pattern: '.$this->compared[$key], ['htmlPattern' => $html])];
         }
 
-        [$looser, $stricter] = $this->compared[$key];
+        [$looser, $stricter, $searched] = $this->compared[$key];
 
         $normalized = null !== $regex->normalizer ? ' The server normalizes the value first; the browser does not.' : '';
         if (null !== $looser) {
@@ -277,63 +277,92 @@ final class RegexConstraintAnalyzer
             $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.%s', self::quote($stricter), $normalized), ['htmlPattern' => $html, 'example' => $stricter]);
         }
 
+        if (!$searched) {
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The pattern reads bytes and the browser code points: no value the server accepts and the browser rejects was searched for.', ['htmlPattern' => $html]);
+        }
+
         return $findings;
     }
 
     /**
      * For a pattern the value must match: a value the browser accepts and
      * the pattern does not match, and one the pattern matches and the
-     * browser rejects, each the shortest.
+     * browser rejects, each the shortest of the values the browser checks:
+     * neither the empty value, which Regex does not check either, nor one
+     * holding a line break, which no input holds. The third item says
+     * whether the second was searched for.
      *
      * @throws ComplexityException|RegexException|\InvalidArgumentException
      *
-     * @return array{?string, ?string}
+     * @return array{?string, ?string, bool}
      */
     private function compareMatching(string $pattern, string $browser): array
     {
-        $looser = $this->solver->subsetOf($browser, $pattern, $this->options);
-        $stricter = $this->solver->subsetOf($pattern, self::orLineBreak($browser), $this->options);
+        $looser = $this->solver->subsetOf(self::checkedAndAccepted($browser), $pattern, $this->options);
+        $stricter = $this->solver->subsetOf($pattern, self::acceptedOrUnchecked($browser), $this->options);
 
-        return [$looser->isSubset ? null : $looser->counterExample, $stricter->isSubset ? null : $stricter->counterExample];
+        return [$looser->isSubset ? null : $looser->counterExample, $stricter->isSubset ? null : $stricter->counterExample, true];
     }
 
     /**
-     * For a pattern the value must not match: a value the browser accepts
-     * the pattern matches; then a value neither the pattern matches nor the
-     * browser accepts, read on the languages, so only for a pattern under u
-     * that reads code points as the browser does.
+     * For a pattern the value must not match: a value the browser checks
+     * and accepts that the pattern matches; then one the browser checks,
+     * neither the pattern matches nor the browser accepts, read on the
+     * languages, so on code points as the browser reads them: a pattern
+     * over bytes is read under (*UTF) when it matches the same UTF-8
+     * values so, else that value is not searched for.
      *
      * @throws ComplexityException|RegexException|\InvalidArgumentException
      *
-     * @return array{?string, ?string}
+     * @return array{?string, ?string, bool}
      */
     private function compareNotMatching(string $pattern, string $browser): array
     {
-        $both = $this->solver->intersection($browser, $pattern, $this->options);
+        $both = $this->solver->intersection(self::checkedAndAccepted($browser), $pattern, $this->options);
         $looser = $both->isEmpty ? null : $both->example;
 
-        if (!$this->parser->parse($pattern)->isUnicode()) {
-            return [$looser, null];
+        $codePoints = $this->parser->parse($pattern)->isUnicode() ? $pattern : $this->overCodePoints($pattern);
+        if (null === $codePoints) {
+            return [$looser, null, false];
         }
 
-        $server = $this->solver->language($pattern, $this->options);
+        $server = $this->solver->language($codePoints, $this->options);
         $client = $this->solver->language($browser, $this->options);
-        $inputs = $this->solver->language('/^[^\r\n]*$/Du', $this->options);
+        $inputs = $this->solver->language('/^[^\r\n]+$/Du', $this->options);
         $stricter = $inputs->minus($server)->minus($client)->shortestExample();
 
-        return [$looser, $stricter];
+        return [$looser, $stricter, true];
     }
 
     /**
-     * The browser's pattern, or any value holding a line break: a value no
-     * input holds, so the server may accept it unchecked by the browser.
+     * The pattern over bytes read under (*UTF), when it matches the same
+     * UTF-8 values so; null when it does not.
+     *
+     * @throws ComplexityException|RegexException
      */
-    private static function orLineBreak(string $browser): string
+    private function overCodePoints(string $pattern): ?string
     {
-        $delimiter = $browser[0];
-        $body = substr($browser, 1, (int) strrpos($browser, $delimiter) - 1);
+        $utf = $pattern[0].'(*UTF)'.substr($pattern, 1);
 
-        return $delimiter.'^(?:'.substr($body, 1).'|[\s\S]*?[\r\n])'.$delimiter.'Du';
+        return $this->solver->equivalent($pattern, $utf, $this->options)->isEquivalent ? $utf : null;
+    }
+
+    /**
+     * The values the browser checks and accepts: not the empty value, and
+     * none holding a line break.
+     */
+    private static function checkedAndAccepted(string $browser): string
+    {
+        return '/^(?![\s\S]*[\r\n])(?=[\s\S])'.substr($browser, 2);
+    }
+
+    /**
+     * The values the browser accepts, and those it does not check: the
+     * empty value, and any value holding a line break.
+     */
+    private static function acceptedOrUnchecked(string $browser): string
+    {
+        return '/^(?:'.substr($browser, 2, -3).'|$|[\s\S]*?[\r\n])/Du';
     }
 
     /**

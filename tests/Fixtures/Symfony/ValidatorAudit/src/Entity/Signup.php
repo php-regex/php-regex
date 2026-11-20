@@ -66,8 +66,9 @@ final class Signup
     public string $pin = '';
 
     /**
-     * The value must hold no digit: the derived HTML pattern agrees.
+     * The value must hold no digit, and the htmlPattern says the same:
+     * the derived ((?!\d).)* would refuse U+2028, as JavaScript's dot does.
      */
-    #[Assert\Regex(pattern: '/\d/', match: false)]
+    #[Assert\Regex(pattern: '/\d/', match: false, htmlPattern: '[^0-9]*')]
     public string $nickname = '';
 }
