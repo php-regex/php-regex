@@ -235,11 +235,23 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', \sprintf('The HTML pattern writes every delimiter PCRE could read it between (%s): how a browser reads it was not checked.', implode('', self::DELIMITERS)), ['htmlPattern' => $html])];
         }
 
+        // An explicit htmlPattern is written for the browser: what a browser
+        // reads otherwise than PCRE is no error of its own, the comparison
+        // reads it as the browser does (\v), or says it cannot.
+        $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
+        if (null !== $regex->htmlPattern && [] === $refused) {
+            $unread = array_values(array_filter($misread, static fn (array $finding): bool => 'char_type' !== $finding['construct']));
+            if ([] !== $unread) {
+                return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'A browser reads the HTML pattern under v otherwise than PCRE, which the comparison does not model: '.self::describe($unread), ['htmlPattern' => $html])];
+            }
+
+            $misread = [];
+        }
+
         if ([] !== $misread) {
-            $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
             $message = ([] !== $refused
                 ? 'A browser refuses to compile the HTML pattern under v, and then checks nothing: '
-                : 'A browser reads the HTML pattern under v otherwise than PCRE: ').implode(' ', array_map(static fn (array $r): string => \sprintf('[%s at %d] %s', $r['construct'], $r['offset'], $r['message']), [] !== $refused ? $refused : $misread));
+                : 'A browser reads the HTML pattern under v otherwise than PCRE: ').self::describe([] !== $refused ? $refused : $misread);
             [$suggestion] = $regex->match ? $this->suggest($pattern) : [null];
             $extra = ['htmlPattern' => $html];
             if (null !== $suggestion && $suggestion !== $html) {
@@ -531,6 +543,14 @@ final class RegexConstraintAnalyzer
     }
 
     /**
+     * @param list<array{offset: int, construct: string, message: string, refused: bool}> $findings
+     */
+    private static function describe(array $findings): string
+    {
+        return implode(' ', array_map(static fn (array $r): string => \sprintf('[%s at %d] %s', $r['construct'], $r['offset'], $r['message']), $findings));
+    }
+
+    /**
      * The flags of the pattern, none when PHP refuses it.
      */
     private function flagsOf(string $pattern): string
@@ -583,14 +603,15 @@ final class RegexConstraintAnalyzer
     /**
      * The value rewritten so PCRE reads it as JavaScript does, over the
      * values an input holds: \w \d \b and their negations over ASCII, \s
-     * over JavaScript's white space, and none of ".", \s, \S, \W, \D or a
-     * negated class taking a line break. A line break the value writes
-     * itself (\n, \x0A, \P{L}...) is kept.
+     * over JavaScript's white space, \v the vertical tab alone, and none
+     * of ".", \s, \S, \W, \D or a negated class taking a line break. A
+     * line break the value writes itself (\n, \x0A, \P{L}...) is kept.
      */
     private static function asJavaScriptReadsIt(string $html): string
     {
         $word = '['.self::WORD.']';
         $outside = [
+            'v' => '\x{B}',
             'w' => $word,
             'W' => '[^'.self::WORD.'\n\r]',
             'd' => '[0-9]',
@@ -601,6 +622,7 @@ final class RegexConstraintAnalyzer
             'B' => '(?:(?<='.$word.')(?='.$word.')|(?<!'.$word.')(?!'.$word.'))',
         ];
         $inside = [
+            'v' => '\x{B}',
             'w' => self::WORD,
             'W' => '\x{0}-\x{9}\x{B}\x{C}\x{E}-\x{2F}\x{3A}-\x{40}\x{5B}-\x{5E}\x{60}\x{7B}-\x{10FFFF}',
             'd' => '0-9',

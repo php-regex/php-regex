@@ -130,6 +130,28 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [['html_pattern.misread', 'error']],
             'verdicts' => [['/^[[:alpha:]]+$/', 'abc', true], ['/^[[:alpha:]]+$/', ':', false]],
         ];
+        // An explicit htmlPattern is written for the browser: what matters
+        // is how a browser reads it, \v the vertical tab alone.
+        yield 'an explicit htmlPattern a browser reads as the server' => [
+            'constraints' => [new Regex(pattern: '/^\x0B$/Du', htmlPattern: '\v')],
+            'expected' => [],
+            'verdicts' => [['/^\x0B$/Du', "\x0B", true], ['/^\x0B$/Du', "\f", false]],
+        ];
+        yield 'an explicit htmlPattern with \v in a class' => [
+            'constraints' => [new Regex(pattern: '/^[\x0Ba]$/Du', htmlPattern: '[\va]')],
+            'expected' => [],
+            'verdicts' => [['/^[\x0Ba]$/Du', "\x0B", true], ['/^[\x0Ba]$/Du', "\f", false]],
+        ];
+        yield 'an explicit htmlPattern a browser reads otherwise than the server' => [
+            'constraints' => [new Regex(pattern: '/^\v$/Du', htmlPattern: '\v')],
+            'expected' => [['html_pattern.stricter', 'warning']],
+            'verdicts' => [['/^\v$/Du', "\f", true]],
+        ];
+        yield 'an explicit htmlPattern the comparison cannot read as a browser does' => [
+            'constraints' => [new Regex(pattern: '/^[a-z]$/Du', htmlPattern: '[[:alpha:]]')],
+            'expected' => [['html_pattern.unchecked', 'notice']],
+            'verdicts' => [['/^[a-z]$/Du', ':', false]],
+        ];
         yield 'an htmlPattern that lets more through' => [
             'constraints' => [new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9a-f]+')],
             'expected' => [['html_pattern.looser', 'error']],
@@ -417,6 +439,23 @@ final class RegexConstraintAnalyzerTest extends TestCase
         $this->assertFalse(@preg_match((string) $regex->pattern, 'a'));
 
         $this->assertSame('getHtmlPattern() gives no HTML pattern, as the pattern does not end with the character it starts with: the browser checks nothing.', self::audit([$regex])[0]['message']);
+    }
+
+    #[Test]
+    public function test_an_explicit_htmlpattern_names_what_the_comparison_cannot_read(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^[a-z]$/Du', htmlPattern: '[[:alpha:]]')])[0];
+
+        $this->assertSame('A browser reads the HTML pattern under v otherwise than PCRE, which the comparison does not model: [posix_class at 1] JavaScript has no POSIX class: under v "[:alpha:]" is a nested class of the characters ":alpha:".', $finding['message']);
+        $this->assertSame('[[:alpha:]]', $finding['htmlPattern'] ?? null);
+    }
+
+    #[Test]
+    public function test_an_explicit_htmlpattern_a_browser_refuses_is_invalid(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^a$/Du', htmlPattern: 'a++')])[0];
+
+        $this->assertSame(['html_pattern.invalid', 'error'], [$finding['check'], $finding['severity']]);
     }
 
     #[Test]

@@ -551,7 +551,11 @@ under the `v` flag. For each constraint the command reports:
   escaped only), a possessive, an atomic group, `\h`, `\A`, `(?P<name>`,
   `\Q...\E`, an escape JavaScript does not know;
 - `html_pattern.misread`: a browser compiles it but reads it otherwise than
-  PCRE, a POSIX class as a nested class, `&&` as an intersection;
+  PCRE, a POSIX class as a nested class, `&&` as an intersection, `\v` as
+  the vertical tab alone. An explicit `htmlPattern` is written for the
+  browser: it is compared as a browser reads it, `\v` included, and one
+  the comparison cannot read so (a POSIX class, `&&`) is reported as not
+  compared;
 - `html_pattern.looser` (an error) and `html_pattern.stricter` (a warning),
   with the shortest value the browser accepts and the server rejects, or
   the reverse. The browser side is read as JavaScript reads it: code points
