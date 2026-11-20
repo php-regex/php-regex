@@ -1,6 +1,6 @@
 {
     "repo": "thephpleague/uri",
-    "sha": "be89e2382e37acdef232259071ade5180821397b",
+    "sha": "76f5e6dcd35ba55341b22721a2ba3b92363e6039",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -64,7 +64,7 @@
                 "limit": 100000
             },
             "subject": "[]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]]:#",
-            "permalink": "https://github.com/thephpleague/uri/blob/be89e2382e37acdef232259071ade5180821397b/Uri.php#L111-L117",
+            "permalink": "https://github.com/thephpleague/uri/blob/76f5e6dcd35ba55341b22721a2ba3b92363e6039/Uri.php#L111-L117",
             "snippet": [
                 {
                     "number": 111,
@@ -287,7 +287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/be89e2382e37acdef232259071ade5180821397b/Uri.php#L121-L127",
+            "permalink": "https://github.com/thephpleague/uri/blob/76f5e6dcd35ba55341b22721a2ba3b92363e6039/Uri.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -518,7 +518,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/be89e2382e37acdef232259071ade5180821397b/Uri.php#L147-L153",
+            "permalink": "https://github.com/thephpleague/uri/blob/76f5e6dcd35ba55341b22721a2ba3b92363e6039/Uri.php#L147-L153",
             "snippet": [
                 {
                     "number": 147,
@@ -689,7 +689,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/be89e2382e37acdef232259071ade5180821397b/UriTemplate/Template.php#L48-L54",
+            "permalink": "https://github.com/thephpleague/uri/blob/76f5e6dcd35ba55341b22721a2ba3b92363e6039/UriTemplate/Template.php#L48-L54",
             "snippet": [
                 {
                     "number": 48,
@@ -848,7 +848,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/be89e2382e37acdef232259071ade5180821397b/Urn.php#L73-L79",
+            "permalink": "https://github.com/thephpleague/uri/blob/76f5e6dcd35ba55341b22721a2ba3b92363e6039/Urn.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,

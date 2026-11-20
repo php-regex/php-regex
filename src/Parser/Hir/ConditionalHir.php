@@ -18,7 +18,9 @@ use PHPRegex\Parser\Node\NodeInterface;
 /**
  * A conditional group: the yes branch where the condition holds, the no
  * branch where it does not. The condition stays the AST node it was written
- * as.
+ * as, and whether a "|" was written before the no branch is kept: in a
+ * lookbehind PCRE gives "(?(c)X)" the length of X alone, where "(?(c)X|)"
+ * may also be empty.
  *
  * @internal
  */
@@ -28,6 +30,7 @@ final class ConditionalHir extends Hir
         public readonly NodeInterface $condition,
         public readonly Hir $yes,
         public readonly Hir $no,
+        public readonly bool $noBranchWritten,
         int $conditionCaptureCount = 0,
         int $startPosition = 0,
         int $endPosition = 0,

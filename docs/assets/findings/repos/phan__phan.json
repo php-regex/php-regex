@@ -1,6 +1,6 @@
 {
     "repo": "phan/phan",
-    "sha": "65ed8b4d3dbb6fef8625e92757cca5e585584d86",
+    "sha": "59e5afed2679bc9d8c978fd08fc9c040ffc5745a",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/.phan/plugins/WhitespacePlugin.php#L46-L52",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/.phan/plugins/WhitespacePlugin.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -175,7 +175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/emit_signature_map_for_php_version.php#L27-L33",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/emit_signature_map_for_php_version.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -331,7 +331,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
             "snippet": [
                 {
                     "number": 372,
@@ -527,7 +527,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
             "snippet": [
                 {
                     "number": 354,
@@ -723,7 +723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
             "snippet": [
                 {
                     "number": 778,
@@ -855,7 +855,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
             "snippet": [
                 {
                     "number": 802,
@@ -987,7 +987,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
             "snippet": [
                 {
                     "number": 985,
@@ -1119,7 +1119,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
             "snippet": [
                 {
                     "number": 1039,
@@ -1421,7 +1421,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/BlockAnalysisVisitor.php#L544-L550",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/BlockAnalysisVisitor.php#L544-L550",
             "snippet": [
                 {
                     "number": 544,
@@ -1691,7 +1691,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -1961,7 +1961,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -2224,7 +2224,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -2487,7 +2487,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
             "snippet": [
                 {
                     "number": 250,
@@ -2582,7 +2582,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
             "snippet": [
                 {
                     "number": 303,
@@ -2960,7 +2960,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
             "snippet": [
                 {
                     "number": 305,
@@ -3223,7 +3223,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
             "snippet": [
                 {
                     "number": 306,
@@ -3318,7 +3318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
             "snippet": [
                 {
                     "number": 462,
@@ -3465,7 +3465,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
             "snippet": [
                 {
                     "number": 546,
@@ -4074,7 +4074,7 @@
         {
             "id": "f-ec3db85c6c",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 747,
+            "line": 741,
             "column": 42,
             "pattern": "/@phan-type\\s+([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)\\s*=\\s*(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*)(\\s*[|&]\\s*((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))*)/",
             "source": "preg_match_all()",
@@ -4260,10 +4260,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L744-L750",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L738-L744",
             "snippet": [
                 {
-                    "number": 744,
+                    "number": 738,
                     "focus": false,
                     "runs": [
                         [
@@ -4273,7 +4273,7 @@
                     ]
                 },
                 {
-                    "number": 745,
+                    "number": 739,
                     "focus": false,
                     "runs": [
                         [
@@ -4283,7 +4283,7 @@
                     ]
                 },
                 {
-                    "number": 746,
+                    "number": 740,
                     "focus": false,
                     "runs": [
                         [
@@ -4293,7 +4293,7 @@
                     ]
                 },
                 {
-                    "number": 747,
+                    "number": 741,
                     "focus": true,
                     "runs": [
                         [
@@ -4303,7 +4303,7 @@
                     ]
                 },
                 {
-                    "number": 748,
+                    "number": 742,
                     "focus": false,
                     "runs": [
                         [
@@ -4313,7 +4313,7 @@
                     ]
                 },
                 {
-                    "number": 749,
+                    "number": 743,
                     "focus": false,
                     "runs": [
                         [
@@ -4323,7 +4323,7 @@
                     ]
                 },
                 {
-                    "number": 750,
+                    "number": 744,
                     "focus": false,
                     "runs": [
                         [
@@ -4337,7 +4337,7 @@
         {
             "id": "f-97bc45fdab",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 948,
+            "line": 942,
             "column": 33,
             "pattern": "/@phan-assert(?:(-true-condition|-false-condition)|\\s+(!?)(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*)(\\s*[|&]\\s*((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))*))\\s+\\$([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)/",
             "source": "preg_match()",
@@ -4530,10 +4530,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L945-L951",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L939-L945",
             "snippet": [
                 {
-                    "number": 945,
+                    "number": 939,
                     "focus": false,
                     "runs": [
                         [
@@ -4543,7 +4543,7 @@
                     ]
                 },
                 {
-                    "number": 946,
+                    "number": 940,
                     "focus": false,
                     "runs": [
                         [
@@ -4553,7 +4553,7 @@
                     ]
                 },
                 {
-                    "number": 947,
+                    "number": 941,
                     "focus": false,
                     "runs": [
                         [
@@ -4563,7 +4563,7 @@
                     ]
                 },
                 {
-                    "number": 948,
+                    "number": 942,
                     "focus": true,
                     "runs": [
                         [
@@ -4573,7 +4573,7 @@
                     ]
                 },
                 {
-                    "number": 949,
+                    "number": 943,
                     "focus": false,
                     "runs": [
                         [
@@ -4583,7 +4583,7 @@
                     ]
                 },
                 {
-                    "number": 950,
+                    "number": 944,
                     "focus": false,
                     "runs": [
                         [
@@ -4593,7 +4593,7 @@
                     ]
                 },
                 {
-                    "number": 951,
+                    "number": 945,
                     "focus": false,
                     "runs": [
                         [
@@ -4605,9 +4605,174 @@
             ]
         },
         {
+            "id": "f-20439ae33f",
+            "file": "src/Phan/Language/Element/Comment/Builder.php",
+            "line": 976,
+            "column": 25,
+            "pattern": "/@[\\w-]+\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))/",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-1))\" at offset 25 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 474 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-2))\" at offset 530 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.charclass.redundant",
+                    "message": "Redundant elements detected in character class.",
+                    "hint": "Redundant elements: '_' (duplicate)",
+                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 1046 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1105 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?…\" at offset 1125 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1140 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1254 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-…\" at offset 1276 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1369 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L973-L979",
+            "snippet": [
+                {
+                    "number": 973,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 974,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function typeFromCommentLine(string $line): ?Type",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 975,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 976,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (\\preg_match('/@[\\w-]+\\s+(' . Type::type_regex . ')/', $line, $match)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 977,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return Type::fromStringInContext(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 978,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $match[1],",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 979,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $this->context,",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-41ea27df6b",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1472,
+            "line": 1471,
             "column": 25,
             "pattern": "/@(?:phan-|psalm-)?template(?:-(?P<variance>co|contra)variant)?\\s+(?P<identifier>([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*))(?:\\s+of\\s+(?P<constraint>((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*)(\\s*[|&]\\s*((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))*))?/i",
             "source": "preg_match()",
@@ -4807,10 +4972,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1469-L1475",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L1468-L1474",
             "snippet": [
                 {
-                    "number": 1469,
+                    "number": 1468,
                     "focus": false,
                     "runs": [
                         [
@@ -4820,7 +4985,7 @@
                     ]
                 },
                 {
-                    "number": 1470,
+                    "number": 1469,
                     "focus": false,
                     "runs": [
                         [
@@ -4830,7 +4995,7 @@
                     ]
                 },
                 {
-                    "number": 1471,
+                    "number": 1470,
                     "focus": false,
                     "runs": [
                         [
@@ -4840,7 +5005,7 @@
                     ]
                 },
                 {
-                    "number": 1472,
+                    "number": 1471,
                     "focus": true,
                     "runs": [
                         [
@@ -4850,7 +5015,7 @@
                     ]
                 },
                 {
-                    "number": 1473,
+                    "number": 1472,
                     "focus": false,
                     "runs": [
                         [
@@ -4860,7 +5025,7 @@
                     ]
                 },
                 {
-                    "number": 1474,
+                    "number": 1473,
                     "focus": false,
                     "runs": [
                         [
@@ -4870,7 +5035,7 @@
                     ]
                 },
                 {
-                    "number": 1475,
+                    "number": 1474,
                     "focus": false,
                     "runs": [
                         [
@@ -4882,504 +5047,9 @@
             ]
         },
         {
-            "id": "f-107f4707e2",
-            "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1499,
-            "column": 25,
-            "pattern": "/@(?:phan-)?(?:inherits|extends)\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-1))\" at offset 49 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 498 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-2))\" at offset 554 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.redundant",
-                    "message": "Redundant elements detected in character class.",
-                    "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 1070 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1129 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?…\" at offset 1149 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1164 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1278 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-…\" at offset 1300 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1393 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1496-L1502",
-            "snippet": [
-                {
-                    "number": 1496,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        string $line",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1497,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    ): Option {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1498,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $match = [];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1499,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "        if (\\preg_match('/@(?:phan-)?(?:inherits|extends)\\s+(' . Type::type_regex . ')/', $line, $match)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1500,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $type_string = $match[1];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1501,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1502,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $type = new Some(Type::fromStringInContext(",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-a77f51b595",
-            "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1526,
-            "column": 25,
-            "pattern": "/@(?:phan-)?implements\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-1))\" at offset 39 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 488 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-2))\" at offset 544 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.redundant",
-                    "message": "Redundant elements detected in character class.",
-                    "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 1060 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1119 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?…\" at offset 1139 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1154 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1268 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-…\" at offset 1290 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1383 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1523-L1529",
-            "snippet": [
-                {
-                    "number": 1523,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        string $line",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1524,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    ): ?Type {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1525,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $match = [];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1526,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "        if (\\preg_match('/@(?:phan-)?implements\\s+(' . Type::type_regex . ')/', $line, $match)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1527,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $type_string = $match[1];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1528,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1529,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            return Type::fromStringInContext(",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-3398c35eae",
-            "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1551,
-            "column": 25,
-            "pattern": "/@(?:phan-)?use\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-1))\" at offset 32 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 481 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-2))\" at offset 537 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.redundant",
-                    "message": "Redundant elements detected in character class.",
-                    "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 1053 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1112 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?…\" at offset 1132 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1147 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1261 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-…\" at offset 1283 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1376 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1548-L1554",
-            "snippet": [
-                {
-                    "number": 1548,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        string $line",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1549,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    ): ?Type {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1550,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        $match = [];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1551,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "        if (\\preg_match('/@(?:phan-)?use\\s+(' . Type::type_regex . ')/', $line, $match)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1552,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $type_string = $match[1];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1553,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1554,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            return Type::fromStringInContext(",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-3bf922d512",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1610,
+            "line": 1549,
             "column": 38,
             "pattern": "/^(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*)(\\s*[|&]\\s*((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))*)?\\s*(?:(\\.\\.\\.)\\s*)?(?:\\$([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*))?((?:\\s*=.*)?)$/",
             "source": "preg_match()",
@@ -5572,10 +5242,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1607-L1613",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L1546-L1552",
             "snippet": [
                 {
-                    "number": 1607,
+                    "number": 1546,
                     "focus": false,
                     "runs": [
                         [
@@ -5585,7 +5255,7 @@
                     ]
                 },
                 {
-                    "number": 1608,
+                    "number": 1547,
                     "focus": false,
                     "runs": [
                         [
@@ -5595,7 +5265,7 @@
                     ]
                 },
                 {
-                    "number": 1609,
+                    "number": 1548,
                     "focus": false,
                     "runs": [
                         [
@@ -5605,7 +5275,7 @@
                     ]
                 },
                 {
-                    "number": 1610,
+                    "number": 1549,
                     "focus": true,
                     "runs": [
                         [
@@ -5615,7 +5285,7 @@
                     ]
                 },
                 {
-                    "number": 1611,
+                    "number": 1550,
                     "focus": false,
                     "runs": [
                         [
@@ -5625,7 +5295,7 @@
                     ]
                 },
                 {
-                    "number": 1612,
+                    "number": 1551,
                     "focus": false,
                     "runs": [
                         [
@@ -5635,7 +5305,7 @@
                     ]
                 },
                 {
-                    "number": 1613,
+                    "number": 1552,
                     "focus": false,
                     "runs": [
                         [
@@ -5649,7 +5319,7 @@
         {
             "id": "f-a4a9d4e696",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1680,
+            "line": 1619,
             "column": 25,
             "pattern": "/@(?:phan-)?method(?:\\s+(static))?(?:(?:\\s+((((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*|\\$this))(?:<((?-6)(?:\\s*[|&]\\s*(?-6))*(?:\\s*,\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*)*)>|(\\{)((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?)*)?\\})?)(?:\\[\\])*))(\\s*[|&]\\s*(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*|\\$this))(?:<((?-6)(?:\\s*[|&]\\s*(?-6))*(?:\\s*,\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*)*)>|(\\{)((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?)*)?\\})?)(?:\\[\\])*)))*))?)\\s+(&)?([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)\\s*\\(((?:[^()]|\\([()]*\\))*)\\)\\s*(.*)/",
             "source": "preg_match()",
@@ -5849,10 +5519,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1677-L1683",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L1616-L1622",
             "snippet": [
                 {
-                    "number": 1677,
+                    "number": 1616,
                     "focus": false,
                     "runs": [
                         [
@@ -5862,7 +5532,7 @@
                     ]
                 },
                 {
-                    "number": 1678,
+                    "number": 1617,
                     "focus": false,
                     "runs": [
                         [
@@ -5872,7 +5542,7 @@
                     ]
                 },
                 {
-                    "number": 1679,
+                    "number": 1618,
                     "focus": false,
                     "runs": [
                         [
@@ -5882,7 +5552,7 @@
                     ]
                 },
                 {
-                    "number": 1680,
+                    "number": 1619,
                     "focus": true,
                     "runs": [
                         [
@@ -5892,7 +5562,7 @@
                     ]
                 },
                 {
-                    "number": 1681,
+                    "number": 1620,
                     "focus": false,
                     "runs": [
                         [
@@ -5902,7 +5572,7 @@
                     ]
                 },
                 {
-                    "number": 1682,
+                    "number": 1621,
                     "focus": false,
                     "runs": [
                         [
@@ -5912,7 +5582,7 @@
                     ]
                 },
                 {
-                    "number": 1683,
+                    "number": 1622,
                     "focus": false,
                     "runs": [
                         [
@@ -5926,7 +5596,7 @@
         {
             "id": "f-af989a0ebd",
             "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1817,
+            "line": 1756,
             "column": 25,
             "pattern": "/@(?:phan-)?(property|property-read|property-write)(?:\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*)(\\s*[|&]\\s*((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))*))?(?:\\s+(?:\\$([a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)))/",
             "source": "preg_match()",
@@ -6119,10 +5789,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1814-L1820",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Element/Comment/Builder.php#L1753-L1759",
             "snippet": [
                 {
-                    "number": 1814,
+                    "number": 1753,
                     "focus": false,
                     "runs": [
                         [
@@ -6132,7 +5802,7 @@
                     ]
                 },
                 {
-                    "number": 1815,
+                    "number": 1754,
                     "focus": false,
                     "runs": [
                         [
@@ -6142,7 +5812,7 @@
                     ]
                 },
                 {
-                    "number": 1816,
+                    "number": 1755,
                     "focus": false,
                     "runs": [
                         [
@@ -6152,7 +5822,7 @@
                     ]
                 },
                 {
-                    "number": 1817,
+                    "number": 1756,
                     "focus": true,
                     "runs": [
                         [
@@ -6162,7 +5832,7 @@
                     ]
                 },
                 {
-                    "number": 1818,
+                    "number": 1757,
                     "focus": false,
                     "runs": [
                         [
@@ -6172,7 +5842,7 @@
                     ]
                 },
                 {
-                    "number": 1819,
+                    "number": 1758,
                     "focus": false,
                     "runs": [
                         [
@@ -6182,176 +5852,11 @@
                     ]
                 },
                 {
-                    "number": 1820,
+                    "number": 1759,
                     "focus": false,
                     "runs": [
                         [
                             "                $flags = Flags::IS_READ_ONLY;",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-64309ed7fb",
-            "file": "src/Phan/Language/Element/Comment/Builder.php",
-            "line": 1881,
-            "column": 25,
-            "pattern": "/@(PhanClosureScope|phan-closure-scope)\\s+(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*))(?:<((?-5)(?:\\s*[|&]\\s*(?-5))*(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?-5))*)*)>|\\{((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*=?)*)?\\})?)(?:\\[\\])*))/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-1))\" at offset 56 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 505 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-2))\" at offset 561 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.charclass.redundant",
-                    "message": "Redundant elements detected in character class.",
-                    "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z…\" at offset 1077 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1136 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*,\\s*(?-5)(?:\\s*[|&]\\s*(?…\" at offset 1156 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-5))\" at offset 1171 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1285 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-…\" at offset 1307 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\s*[|&]\\s*(?-6))\" at offset 1400 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Element/Comment/Builder.php#L1878-L1884",
-            "snippet": [
-                {
-                    "number": 1878,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        // a Closure would be bound with bind() or bindTo(), so using a custom tag.",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1879,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        //",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1880,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        // TODO: Also add a version which forbids using $this in the closure?",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1881,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "        if (\\preg_match('/@(PhanClosureScope|phan-closure-scope)\\s+(' . Type::type_regex . ')/', $line, $match)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1882,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            $closure_scope_union_type_string = $match[2];",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1883,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        }",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 1884,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
                             ""
                         ]
                     ]
@@ -6379,7 +5884,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Type.php#L1119-L1125",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Type.php#L1119-L1125",
             "snippet": [
                 {
                     "number": 1119,
@@ -6474,7 +5979,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Type.php#L1527-L1533",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Type.php#L1527-L1533",
             "snippet": [
                 {
                     "number": 1527,
@@ -6744,7 +6249,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Type.php#L1853-L1859",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Type.php#L1853-L1859",
             "snippet": [
                 {
                     "number": 1853,
@@ -6821,7 +6326,7 @@
         {
             "id": "f-8ca653934f",
             "file": "src/Phan/Language/Type.php",
-            "line": 3810,
+            "line": 3821,
             "column": 25,
             "pattern": "/^(((?:\\??\\((?-1)(?:\\s*[|&]\\s*(?-1))*\\)|(?:\\??(?:\\\\?Closure|callable)(\\((?:[^()]|(?-1))*\\))(?:\\s*:\\s*(?:\\\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*)|\\((?-2)(?:\\s*[|&]\\s*(?-2))*\\)))?)|\\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)|'(?:[- ,.\\/?:;\"!#$%^&*_+=a-zA-Z0-9_\\x80-\\xff]|\\\\(?:['\\\\]|x[0-9a-fA-F]{2}))*')|((\\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*(?:\\\\[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*)*|\\$this))(?:<((?-6)(?:\\s*[|&]\\s*(?-6))*(?:\\s*,\\s*(?-6)(?:\\s*[|&]\\s*(?-6))*)*)>|(\\{)((?:(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?(?:,(?:\\s*(?:[-.\\/^;$%*+_a-zA-Z0-9\\x7f-\\xff]|\\\\(?:[nrt\\\\]|x[0-9a-fA-F]{2}))+\\??\\s*:)?\\s*(?-8)(?:\\s*[|&]\\s*(?-8))*=?)*)?\\})?)(?:\\[\\])*))$/",
             "source": "preg_match()",
@@ -6909,10 +6414,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Type.php#L3807-L3813",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Type.php#L3818-L3824",
             "snippet": [
                 {
-                    "number": 3807,
+                    "number": 3818,
                     "focus": false,
                     "runs": [
                         [
@@ -6922,7 +6427,7 @@
                     ]
                 },
                 {
-                    "number": 3808,
+                    "number": 3819,
                     "focus": false,
                     "runs": [
                         [
@@ -6932,7 +6437,7 @@
                     ]
                 },
                 {
-                    "number": 3809,
+                    "number": 3820,
                     "focus": false,
                     "runs": [
                         [
@@ -6942,7 +6447,7 @@
                     ]
                 },
                 {
-                    "number": 3810,
+                    "number": 3821,
                     "focus": true,
                     "runs": [
                         [
@@ -6952,7 +6457,7 @@
                     ]
                 },
                 {
-                    "number": 3811,
+                    "number": 3822,
                     "focus": false,
                     "runs": [
                         [
@@ -6962,7 +6467,7 @@
                     ]
                 },
                 {
-                    "number": 3812,
+                    "number": 3823,
                     "focus": false,
                     "runs": [
                         [
@@ -6972,7 +6477,7 @@
                     ]
                 },
                 {
-                    "number": 3813,
+                    "number": 3824,
                     "focus": false,
                     "runs": [
                         [
@@ -7004,7 +6509,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -7164,7 +6669,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Library/ConversionSpec.php#L55-L61",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Library/ConversionSpec.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -7427,7 +6932,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -7522,7 +7027,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/tool/validate_stubs.php#L90-L96",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/tool/validate_stubs.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -7678,7 +7183,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/tool/validate_stubs.php#L92-L98",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/tool/validate_stubs.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -7834,7 +7339,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/65ed8b4d3dbb6fef8625e92757cca5e585584d86/tool/validate_stubs.php#L93-L99",
+            "permalink": "https://github.com/phan/phan/blob/59e5afed2679bc9d8c978fd08fc9c040ffc5745a/tool/validate_stubs.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,

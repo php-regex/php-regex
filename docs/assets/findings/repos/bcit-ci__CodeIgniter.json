@@ -772,6 +772,13 @@
                     "message": "Nested quantifiers in \"(?:[\\s\\042\\047/=]*[^\\s\\042\\047…\" at offset 95 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
                     "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"[^\\s\\042\\047=><`]+\" and \"\\s*(?U:[^\\s\\042\\047=><`]*)\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
                 }
             ],
             "rewrite": null,

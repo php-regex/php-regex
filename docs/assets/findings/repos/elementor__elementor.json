@@ -1,6 +1,6 @@
 {
     "repo": "elementor/elementor",
-    "sha": "a5c2230c39e85a3992f621012725c74dd3adee8c",
+    "sha": "0db53fa7206b50fc7c1f9b5a842ea7acbb743835",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -21,7 +21,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"{{\" . \" || \" x n . \"|}}\" Replayed on PCRE2 10.49: preg_match fails from length 29 (backtrack_limit 100000, JIT off). The risky part is: (?:([^.}]+)\\.)? Hotspot offsets: 37-52 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"{{\" . \" || \" x n . \"|}}\" Replayed on PCRE2 10.49: preg_match fails from length 29 (backtrack_limit 100000, JIT off). The risky part is: (?:([^.}]+)\\.)? Hotspot offsets: 37-52 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "{{ ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  || |}}",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/core/files/css/base.php#L373-L379",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/core/files/css/base.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -164,12 +164,16 @@
                             "pg-snippet-pattern pg-tok-quantifier"
                         ],
                         [
-                            "\\|\\| ",
+                            "\\|\\|",
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "(?:(",
@@ -209,7 +213,7 @@
                         ],
                         [
                             "(",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "[^",
@@ -229,7 +233,7 @@
                         ],
                         [
                             ")",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             " ",
@@ -318,7 +322,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/core/utils/svg/svg-sanitizer.php#L230-L236",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/core/utils/svg/svg-sanitizer.php#L230-L236",
             "snippet": [
                 {
                     "number": 230,
@@ -525,7 +529,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/core/utils/svg/svg-sanitizer.php#L236-L242",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/core/utils/svg/svg-sanitizer.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -703,7 +707,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/includes/db.php#L606-L612",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/includes/db.php#L606-L612",
             "snippet": [
                 {
                     "number": 606,
@@ -903,7 +907,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/includes/embed.php#L175-L181",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/includes/embed.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -1102,7 +1106,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -1361,7 +1365,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/modules/mcp/media/media-mime-validator.php#L39-L45",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/modules/mcp/media/media-mime-validator.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -1576,7 +1580,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/modules/mcp/media/media-mime-validator.php#L41-L47",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/modules/mcp/media/media-mime-validator.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -1722,7 +1726,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/a5c2230c39e85a3992f621012725c74dd3adee8c/php-scoper/twig-inc.php#L31-L37",
+            "permalink": "https://github.com/elementor/elementor/blob/0db53fa7206b50fc7c1f9b5a842ea7acbb743835/php-scoper/twig-inc.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,

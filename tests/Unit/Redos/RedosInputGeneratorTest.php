@@ -110,9 +110,13 @@ final class RedosInputGeneratorTest extends TestCase
     #[Test]
     public function test_generate_with_set_that_only_has_non_printable(): void
     {
+        $this->assertSame(1, preg_match('/^[\x00-\x1F]$/', "\x1F"), 'Oracle: PCRE takes the byte below the space in the class.');
+        $this->assertSame(0, preg_match('/^[\x00-\x1F]$/', ' '), 'Oracle: PCRE leaves the space out of the class.');
+
         $ast = Regex::create()->parse('/[\x00-\x1F]+/');
         $input = $this->generator->generate($ast);
         $this->assertStringStartsWith('a', $input);
-        $this->assertStringEndsWith('!', $input);
+        // The class is read: the input ends with the first printable byte outside it.
+        $this->assertStringEndsWith(' ', $input);
     }
 }

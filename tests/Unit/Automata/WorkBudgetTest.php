@@ -229,6 +229,10 @@ final class WorkBudgetTest extends TestCase
     public function test_class_table_builds_a_large_alphabet_under_the_default_budget(): void
     {
         $pattern = self::urlValidatorPattern();
+        foreach (['https://example.com' => 1, 'https://example.com/a?b=c#d' => 1, 'http://localhost:8080' => 1, 'ftp://x' => 0, 'not a url' => 0, 'https://exa mple.com' => 0] as $subject => $matched) {
+            $this->assertSame($matched, preg_match($pattern, $subject), $subject);
+        }
+
         $dfa = (new LanguageSolver())->compile($pattern);
 
         $this->assertInstanceOf(Alphabet::class, $dfa->alphabet);

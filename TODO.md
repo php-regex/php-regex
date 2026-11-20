@@ -1,21 +1,56 @@
 # TODO
 
+## Before merging #408 to #411
+
+- None of the four has been reviewed yet; read them through, in stack
+  order, before merging the first.
+- #410 reports a trailing-slash redirect that takes part of a later
+  route's paths: `/admin` declared before a catch-all is now an overlap
+  (`GET /admin/`), listed with `--show-overlaps`. #403 declined it because
+  it flags every static route declared before a catch-all. Keep it, or
+  restore the carve-out in `RouteConflictAnalyzer` before merging.
+- Once #408 is merged, its own pull request: the JavaScript and HTML
+  pattern targets print a lookbehind of more than one length holding a
+  capture as is, and JavaScript reads it right to left, so the capture
+  differs. `/(?<=a?(a{1,2})b)c\1/` on `aabca`: PCRE captures `a` and finds
+  `ca`, JavaScript captures `aa` and finds nothing. Refuse such a
+  lookbehind. Raised on #408, older than it.
+- Once #410 is merged, drop the three entries it settles under "Left from
+  the second pass": the trimmed `access_control` path, the partial
+  trailing-slash redirect, and the `s` flag of symfony/http-foundation 6.4.
+
+## Before 2.0.0, a pull request of its own
+
+- The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
+  than C) reads a negated class in ASCII only, and misses quadratic
+  patterns: `"/^(x)[^a]+\xC3+\1$/"` (a raw 0xC3) is rated safe under
+  fr_FR.ISO8859-1, where PCRE takes 32, 124 and 500 steps on `x` then 8,
+  16 and 32 0xC3; `"/^(x)[^é]+\x90+\1$/"` the same. Under those tables,
+  read the bytes above ASCII of literals and complements, and leave unknown
+  what the tables decide (`\w`, the cases). Clip the gaps of
+  `ByteCharSet::complement()` to its bound in the same change, not before:
+  alone, that makes the second pattern safe too. The linter's overlap
+  fallback reads such a literal as its byte, and
+  `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
+  ASCII read: both move with it. Spec first. From the review of #407.
+
+## Psalm 7.11
+
+- Psalm 7.11.0 (vimeo/psalm#14161) answers `preg_match()` in its
+  `AssertionFinder` with its own `MatchesPattern` assertion, and no longer
+  calls `processCustomAssertion()` for it: the assertions a plugin sets on
+  the call are dropped, and `php-regex/regex-psalm` types no `$matches`
+  (88 failures; users fall back to `array<array-key, string>`). The tests
+  stay on `vimeo/psalm` below 7.11 in `tools/phpunit` and
+  `tools/paratest` (#407). Fix upstream: merge the plugin's assertions with
+  `MatchesPattern` in the `preg_match` branch of `processFunctionCall()` and
+  in `scrapeComparisonAssertions()`, with a test. Lift the pin once the fix
+  is released; until then 2.x itself runs red on the newest Psalm.
+
 ## Left from the second pass before 2.0.0
 
 The bugs of the second pass are fixed in #403; these were left out of it.
 
-- `readAlike()` and the rewrite check read `(?(c)X)` and `(?(c)X|)` alike,
-  while a lookbehind tells them apart on `c`: the normalized form carries
-  no "`|` written". No rewrite flips that `|` since #403, so nothing wrong
-  ships; carrying it moves the cache fingerprint and the PHP 7.4 twin.
-- Error offsets: an unclosed `\p{` in an extended class,
-  `(?[[\p{-\Q\cé]])` 11 against 13; the `a` option of 10.43+ at level 251,
-  `(?^a[` 254 against 255; check the code of `(?(+0)`.
-- `CharSetAnalyzer` reads a class written with hex escapes as an unknown
-  set, so the ReDoS heuristic rates `[\xC2-\xDF][\x80-\xBF]` loops
-  critical.
-- `redos --repeat` takes a count that fits but exhausts the memory
-  (10^10): cap it, or refuse it with a message.
 - `SecurityPatternNormalizer` trims an `access_control` path, which Symfony
   does not: `"^/a\\\n"` becomes an invalid pattern and is skipped.
 - A trailing-slash redirect that takes only part of a later route's paths,
@@ -31,27 +66,9 @@ The bugs of the second pass are fixed in #403; these were left out of it.
   on a variable, beside shared paths on disjoint schemes, is counted among
   the skipped pairs: its redirect is PCRE's ordered choice. One whose last
   requirement cannot end on "/" (the default `[^/]++`) could be read.
-- Read from the kernel, `access_control.port: '%env(int:APP_PORT)%'` fails
-  ("Expected "int", but got "string"") even with `APP_PORT` set, on 2.x
-  before #403 too: `extractFromKernel` runs the bundle's `Processor` on the
-  raw configs, without the merge pass that turns `%env()%` into
-  placeholders. Choose: resolve parameters and env values before
-  processing (an unset env in any field then aborts), copy the merge pass
-  (`BaseNode::setPlaceholder`, `@internal`), or document it.
 - symfony/http-foundation 6.4 compiles an `access_control` path as
   `'{'.$regexp.'}'`, without `s`; 8.1 adds it. The analyzer always reads
   with `s`, so on 6.4 it can disagree where `.` meets a decoded newline.
-- Laravel 12+ `Rule::anyOf(['regex:/^(a|b)$/'])` validates each element
-  through `Validator::make`, which splits it (`/^(a`); the extractor reads
-  it whole. A `:` written as an escape in a double-quoted rule
-  (`"regex\x3a/^a$/"`) is not read either: the extractor finds literals
-  with a regex over the file, which a double quote inside a single-quoted
-  literal misleads; reading the literals from the tokens would allow it.
-- `test_the_jit_decides_what_an_empty_match_option_refuses` asserts the JIT
-  answer ungated, as `LookaroundEdgeQuantifierTest` does: a PHP without JIT
-  support fails it. A `requiresJit()` gate in `PcreGates` would cover both.
-- A HEAD-only route before a GET route of the same path is an overlap; the
-  security side would call it a carve-out and say nothing.
 
 ## Engine reports
 
@@ -161,6 +178,46 @@ measured under 3 %.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
+- `/(?:(*sr:ö)|è)+/u` raises `regex.lint.quantifier.emptyRepeat`, though
+  `(*sr:ö)` cannot match empty.
+- Where no PCRE probe can be written for a branch (a script run, a class
+  holding every delimiter), `OverlappingAlternationRule` compares first
+  bytes, so under `u` a shared UTF-8 lead byte reads as an overlap:
+  `/(?:(*sr:ö)|è)+/u` is reported. Keeping only the ASCII part of the byte
+  sets in that fallback under `u` drops it; the fallback is kept today, as
+  `AlternationOverlapPastAsciiTest::test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes`
+  pins it. Decide.
+- The same rule leaves unjudged a branch behind lookaheads that differ by
+  the way taken, `(?:(?=a)|(?=b))x`, or a negative lookahead of a repeated
+  atom, `(?!a+)`; it takes `(?!a$)` to refuse `a` outright. Each can only
+  hide an overlap.
+- `CharSetAnalyzer::firstChars()` reads a start-of-pattern verb,
+  `(*CASELESS_RESTRICT)`, `(*UTF)` or `(*UCP)`, as an item of unknown set,
+  so the characters a whole pattern starts with come back unknown behind
+  it: `/(*UCP)a/` against `/a/`.
+
+
+## Optimizer precision
+
+- The possessive rewrite (`possessive: true`) does not read the characters
+  after a group whose last items may match nothing: it offers `/(a+b?)a/` as `/(a++b?)a/`,
+  `/(?:a+b?)*a$/` as `/(?:a++b?)*a$/` and `(?:[0-9]+b?)1` as
+  `(?:\d++b?)1`, which the engine tells apart (`(a+b?)\1` and
+  `(*scs:(1)(a+b?))\2c` too). The result check refuses them, so nothing
+  wrong ships, but the refusal drops the pattern's other rewrites:
+  `/(a+b?)a[0-9]/` stays as written, while `/(a+b?)[0-9]/` becomes
+  `/(a++b?)\d/`. Reading past the group would also stop
+  `/^(\d+\s*)$/` → `/^(\d++\s*)$/`, which the solver proves today.
+- With `possessive: true`, the solver refuses every possessive in a
+  pattern that holds a lookaround or `\b`, wherever it stands:
+  `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s` come back unchanged, the
+  `s` the default options drop included. On a refusal, `Optimizer::optimize()` could
+  rewrite again without the possessive step: one more rewrite and check,
+  only when a refusal happens.
+- `PossessiveRewrites::closes()` counts the non-atomic `(*napla:` among
+  the groups nothing after them backtracks into. Harmless today: its `*`
+  reads as an inline flag, which keeps the possessive rewrite out of the
+  whole pattern.
 
 
 ## Counted benchmarks

@@ -44,6 +44,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\ConditionParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -193,6 +194,7 @@ final class HirTranslator
                 $node->condition,
                 $this->node($node->yes, $flags),
                 $this->node($node->no, $this->flagsAfter($node->yes, $flags)),
+                ConditionParser::writesNoBranch($node),
                 self::capturesIn($node->condition),
                 $node->getStartPosition(),
                 $node->getEndPosition(),

@@ -23,6 +23,14 @@ CHANGELOG
    `--backtrack-limit`, `--recursion-limit`, `--time-limit`) refuse a value
    past the integer range or with a leading zero: `--repeat=99999999999999999999`
    was read as `PHP_INT_MAX` and stopped PHP on its memory limit.
+ * `regex redos --repeat` refuses a count that repeats the input past 8 MiB
+   before it builds the subject, exit code 2, naming the largest count the
+   input takes: `--repeat=10000000000` on a one-byte input asked PHP for
+   10 GB. Printed with `--show-input`, an 8 MiB subject of bytes to escape
+   takes up to about 115 MiB, within PHP's default `memory_limit` of 128M.
+   An `--input-file` is read to one byte past the limit, never whole: a
+   longer file is refused the same way, where one past the `memory_limit`
+   stopped PHP before the refusal.
  * `regex lint --min-savings` takes a whole number, 0 or more, and refuses
    anything else as `--jobs` does, exit code 2 and `The --min-savings value
    must be a non-negative integer.`: `--min-savings=abc` was read as 0 and
