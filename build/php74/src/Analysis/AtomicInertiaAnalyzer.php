@@ -21,12 +21,15 @@ use PHPRegex\Parser\Hir\CaptureHir;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassHir;
 use PHPRegex\Parser\Hir\ConcatHir;
+use PHPRegex\Parser\Hir\ConditionalHir;
 use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Hir\LookKind;
+use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
+use PHPRegex\Parser\Node\SubroutineNode;
 
 /**
  * When a commitment changes nothing: a possessive quantifier, an atomic
@@ -75,7 +78,19 @@ use PHPRegex\Parser\Hir\RepetitionHir;
  * lookbehind's body must end where the lookbehind stands: PCRE2's
  * interpreter lets a commitment run past that place and fail, its JIT
  * reads the subject as ending there, and only a commitment that cannot run
- * on reads the same under both.
+ * on reads the same under both. A lookaround the match may backtrack into,
+ * "(*napla:...)" or "(?*...)", is not read past at all.
+ *
+ * What a group holds may count beyond what follows it. Nothing is proven
+ * in a pattern that calls a group, "(?1)" or "(?R)": the call runs the
+ * group's commitments again before other characters. A script run checks
+ * its body once it has matched, so nothing in it is proven. Where a
+ * conditional tests a group, a commitment holding a capture is not proven:
+ * which branch set which group may be what the conditional reads.
+ *
+ * A printer's plain spelling runs on a backtracking engine: a run of runs,
+ * "(?:a+)++", is proven over a whole subject only. Printed plain, it would
+ * try every split of the run before rejecting a subject.
  *
  * @internal
  */
@@ -91,7 +106,9 @@ final class AtomicInertiaAnalyzer
     /**
      * @param bool $wholeSubject    whether the pattern is read against a whole
      *                              subject (the solver's full match), or as a
-     *                              search that may end anywhere (a printer)
+     *                              search that may end anywhere (a printer,
+     *                              whose plain spelling another backtracking
+     *                              engine runs)
      * @param bool $lineFeedNewline whether lines end at "\n", the default
      *                              newline convention, as "$" and "\Z" read
      */
@@ -207,10 +224,16 @@ final class AtomicInertiaAnalyzer
      * the lookbehind stands, and the interpreter lets a commitment run past
      * that place and fail there, where its plain spelling stops in time:
      * "(?<=\R)" does not hold between "\r" and "\n". Whatever character
-     * stands there may follow, so every character does.
+     * stands there may follow, so every character does. A lookaround the
+     * match may backtrack into is read again once what follows it fails:
+     * null, nothing known.
      */
-    public function lookaroundBodyFollow(LookHir $look): CharSet
+    public function lookaroundBodyFollow(LookHir $look): ?CharSet
     {
+        if (!$look->atomic) {
+            return null;
+        }
+
         return LookKind::Behind() === $look->kind || LookKind::NegativeBehind() === $look->kind ? CharSet::universe(true) : CharSet::empty();
     }
 
@@ -223,13 +246,14 @@ final class AtomicInertiaAnalyzer
      */
     public function inertCommitments(Hir $root): InertCommitments
     {
-        if (!self::containsCommitment($root)) {
+        if (!self::containsCommitment($root) || self::holds($root, static fn (Hir $node): bool => $node instanceof OpaqueHir && $node->node instanceof SubroutineNode)) {
             return new InertCommitments();
         }
 
+        $capturesTested = self::holds($root, static fn (Hir $node): bool => $node instanceof ConditionalHir);
         $possessives = [];
         $atomics = [];
-        $this->collectSequence([$root], CharSet::empty(), $possessives, $atomics);
+        $this->collectSequence([$root], CharSet::empty(), $capturesTested, $possessives, $atomics);
 
         return new InertCommitments($possessives, $atomics);
     }
@@ -285,27 +309,33 @@ final class AtomicInertiaAnalyzer
     }
 
     /**
+     * @param bool             $capturesTested whether a conditional of the pattern tests a group
      * @param array<int, true> $possessives
      * @param array<int, true> $atomics
      */
-    private function collect(Hir $node, ?CharSet $follow, array &$possessives, array &$atomics): void
+    private function collect(Hir $node, ?CharSet $follow, bool $capturesTested, array &$possessives, array &$atomics): void
     {
         if ($node instanceof LookHir) {
-            $this->collectSequence([$node->body], $this->lookaroundBodyFollow($node), $possessives, $atomics);
+            $this->collectSequence([$node->body], $this->lookaroundBodyFollow($node), $capturesTested, $possessives, $atomics);
 
+            return;
+        }
+
+        // A script run checks its body once the body has matched.
+        if ($node instanceof OpaqueHir) {
             return;
         }
 
         if ($node instanceof RepetitionHir) {
             $bodyFollow = null === $follow ? null
                 : (null === $node->max || $node->max > 1 ? ($nullsafeVariable1 = $node->body->properties->first) ? $nullsafeVariable1->union($follow) : null : $follow);
-            $this->collect($node->body, $bodyFollow, $possessives, $atomics);
+            $this->collect($node->body, $bodyFollow, $capturesTested, $possessives, $atomics);
 
             return;
         }
 
         if ($node instanceof ConcatHir) {
-            $this->collectSequence($node->parts, $follow, $possessives, $atomics);
+            $this->collectSequence($node->parts, $follow, $capturesTested, $possessives, $atomics);
 
             return;
         }
@@ -313,7 +343,7 @@ final class AtomicInertiaAnalyzer
         // An atomic group, a capture, an alternation: each child is
         // followed by what follows the node.
         foreach ($node->children() as $child) {
-            $this->collect($child, $follow, $possessives, $atomics);
+            $this->collect($child, $follow, $capturesTested, $possessives, $atomics);
         }
     }
 
@@ -322,17 +352,19 @@ final class AtomicInertiaAnalyzer
      * against what follows it.
      *
      * @param list<Hir>        $parts
+     * @param bool             $capturesTested whether a conditional of the pattern tests a group
      * @param array<int, true> $possessives
      * @param array<int, true> $atomics
      */
-    private function collectSequence(array $parts, ?CharSet $follow, array &$possessives, array &$atomics): void
+    private function collectSequence(array $parts, ?CharSet $follow, bool $capturesTested, array &$possessives, array &$atomics): void
     {
         $follows = $this->followSets($parts, $follow);
         $commitments = $this->commitmentsFrom($parts);
         foreach ($parts as $index => $part) {
             $partFollow = $follows[$index];
             $commitment = $this->commitmentAtEnd($part);
-            if (null !== $commitment && $this->commitmentIsInert($commitment, $partFollow, $commitments[$index + 2] ?? false)) {
+            if (null !== $commitment && !($capturesTested && self::holds($commitment, static fn (Hir $node): bool => $node instanceof CaptureHir))
+                && $this->commitmentIsInert($commitment, $partFollow, $commitments[$index + 2] ?? false)) {
                 if ($commitment instanceof RepetitionHir) {
                     $possessives[$commitment->startPosition] = true;
                 } else {
@@ -340,7 +372,7 @@ final class AtomicInertiaAnalyzer
                 }
             }
 
-            $this->collect($part, $partFollow, $possessives, $atomics);
+            $this->collect($part, $partFollow, $capturesTested, $possessives, $atomics);
         }
     }
 
@@ -477,7 +509,8 @@ final class AtomicInertiaAnalyzer
         $atom = self::unwrap($atom);
 
         if ($atom instanceof RepetitionHir) {
-            if (Greed::Greedy() !== $atom->greed || $atom->min < 1 || null !== $atom->max) {
+            // Printed plain, a run of runs tries every split of its run.
+            if (!$this->wholeSubject || Greed::Greedy() !== $atom->greed || $atom->min < 1 || null !== $atom->max) {
                 return null;
             }
 
@@ -581,6 +614,24 @@ final class AtomicInertiaAnalyzer
 
         foreach ($node->children() as $child) {
             if (self::holdsZeroWidth($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param \Closure(Hir): bool $test
+     */
+    private static function holds(Hir $node, \Closure $test): bool
+    {
+        if ($test($node)) {
+            return true;
+        }
+
+        foreach ($node->children() as $child) {
+            if (self::holds($child, $test)) {
                 return true;
             }
         }
