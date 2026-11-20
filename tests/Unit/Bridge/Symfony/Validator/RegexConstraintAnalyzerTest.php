@@ -308,6 +308,52 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [['regex.contradiction', 'error']],
             'verdicts' => [['/^\d+$/', '1', true], ['/^\d+$/', 'a', false], ['/^[a-z]+$/', '1', false], ['/^[a-z]+$/', 'a', true]],
         ];
+        // Both match the empty value, which Regex does not check, and no
+        // other.
+        yield 'two patterns only the empty value matches' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/D', htmlPattern: '')],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^a*$/D', '', true], ['/^b*$/D', '', true], ['/^a*$/D', 'a', true], ['/^b*$/D', 'a', false]],
+        ];
+        yield 'two patterns the empty value and another match' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/^a?$/D', htmlPattern: '')],
+            'expected' => [],
+            'verdicts' => [['/^a*$/D', 'a', true], ['/^a?$/D', 'a', true]],
+        ];
+        yield 'a pattern every non-empty value of which the other forbids' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/a/', match: false, htmlPattern: '')],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^a*$/D', '', true], ['/a/', '', false], ['/a/', 'a', true]],
+        ];
+        yield 'a pattern beside the empty value of which the other forbids none' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/b/', match: false, htmlPattern: '')],
+            'expected' => [],
+            'verdicts' => [['/^a*$/D', 'a', true], ['/b/', 'a', false]],
+        ];
+        // One reads bytes, one code points: the one over bytes is read
+        // under (*UTF), where it matches the same UTF-8 values.
+        yield 'two patterns, one over bytes, only the empty value matches' => [
+            'constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/Du', htmlPattern: '')],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^a*$/D', '', true], ['/^b*$/Du', '', true], ['/^b*$/Du', 'a', false]],
+        ];
+        yield 'two patterns, the second over bytes, only the empty value matches' => [
+            'constraints' => [new Regex(pattern: '/^b*$/Du', htmlPattern: ''), new Regex(pattern: '/^a*$/D', htmlPattern: '')],
+            'expected' => [['regex.contradiction', 'error']],
+            'verdicts' => [['/^b*$/Du', '', true], ['/^a*$/D', '', true], ['/^a*$/D', 'b', false]],
+        ];
+        // /^.?$/D reads one byte, /(*UTF)^.?$/D one character: they are not
+        // read alike, and the solver found only the empty value.
+        yield 'two patterns, one over bytes read otherwise' => [
+            'constraints' => [new Regex(pattern: '/^.?$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/Du', htmlPattern: '')],
+            'expected' => [['regex.unchecked', 'notice']],
+            'verdicts' => [['/^.?$/D', 'b', true], ['/^b*$/Du', 'b', true]],
+        ];
+        yield 'two patterns the solver cannot compare' => [
+            'constraints' => [new Regex(pattern: '/^(a)\1$/', htmlPattern: ''), new Regex(pattern: '/^a+$/', htmlPattern: '')],
+            'expected' => [['regex.unchecked', 'notice']],
+            'verdicts' => [['/^(a)\1$/', 'aa', true], ['/^a+$/', 'aa', true]],
+        ];
         yield 'two patterns some value matches' => [
             'constraints' => [new Regex('/^\w+$/'), new Regex('/^[a-z]+$/')],
             'expected' => [],
@@ -372,6 +418,8 @@ final class RegexConstraintAnalyzerTest extends TestCase
         yield 'a Length no non-empty value of the pattern fits' => ['constraints' => [new Regex(pattern: '/^(?:|abcd)$/D', htmlPattern: ''), new Length(max: 3)], 'check' => 'length.contradiction', 'alphabet' => 'abcd', 'length' => 4];
         yield 'a Length in Sequentially' => ['constraints' => [new Sequentially([new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')])], 'check' => 'length.contradiction', 'alphabet' => 'AB', 'length' => 6];
         yield 'two patterns no value matches' => ['constraints' => [new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
+        yield 'two patterns only the empty value matches' => ['constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/D', htmlPattern: '')], 'check' => 'regex.contradiction', 'alphabet' => 'ab', 'length' => 4];
+        yield 'a pattern every non-empty value of which the other forbids' => ['constraints' => [new Regex(pattern: '/^a*$/D', htmlPattern: ''), new Regex(pattern: '/a/', match: false, htmlPattern: '')], 'check' => 'regex.contradiction', 'alphabet' => 'ab', 'length' => 4];
         yield 'a pattern every value of which the other forbids' => ['constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
     }
 
@@ -428,6 +476,54 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'constraints' => [new NotBlank(normalizer: 'trim'), new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
             'message' => 'No non-empty value the pattern accepts holds at most 3 characters, as the Length constraint asks: only an empty value, which Regex does not check, can pass both.',
         ];
+    }
+
+    /**
+     * @param list<Constraint> $constraints
+     */
+    #[Test]
+    #[DataProvider('provideRegexMessages')]
+    public function test_a_regex_contradiction_says_what_passes(array $constraints, string $message): void
+    {
+        $findings = array_values(array_filter(self::audit($constraints), static fn (array $finding): bool => \in_array($finding['check'], ['regex.contradiction', 'regex.unchecked'], true)));
+
+        $this->assertCount(1, $findings);
+        $this->assertSame($message, $findings[0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array{constraints: list<Constraint>, message: string}>
+     */
+    public static function provideRegexMessages(): iterable
+    {
+        yield 'two patterns, an empty value' => [
+            'constraints' => [new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')],
+            'message' => 'No non-empty value matches both /^\d+$/ and /^[a-z]+$/: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'two patterns and a NotBlank' => [
+            'constraints' => [new NotBlank(), new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')],
+            'message' => 'No non-empty value matches both /^\d+$/ and /^[a-z]+$/: no value passes both.',
+        ];
+        yield 'a pattern the other forbids' => [
+            'constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)],
+            'message' => 'Every non-empty value /^\d+$/ matches also matches /[0-9]/, which must not match: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'a pattern the other forbids, and a Length' => [
+            'constraints' => [new Length(min: 1), new Regex(pattern: '/[0-9]/', match: false), new Regex('/^\d+$/')],
+            'message' => 'Every non-empty value /^\d+$/ matches also matches /[0-9]/, which must not match: no value passes both.',
+        ];
+        yield 'two patterns read otherwise' => [
+            'constraints' => [new Regex(pattern: '/^.?$/D', htmlPattern: ''), new Regex(pattern: '/^b*$/Du', htmlPattern: '')],
+            'message' => 'The Regex constraints /^.?$/D and /^b*$/Du could not be compared: one reads bytes and the other characters, and the only value found both pass is the empty one, which Regex does not check.',
+        ];
+    }
+
+    #[Test]
+    public function test_two_patterns_the_solver_cannot_compare_say_so(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^(a)\1$/', htmlPattern: ''), new Regex(pattern: '/^a+$/', htmlPattern: '')])[0];
+
+        $this->assertStringStartsWith('The Regex constraints /^(a)\1$/ and /^a+$/ could not be compared: Backreferences', $finding['message']);
     }
 
     #[Test]

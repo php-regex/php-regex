@@ -578,10 +578,12 @@ reports a `Length` no non-empty value of the pattern fits
 value, though the lengths 1 and 3 straddle 2. It also reports a value a
 `Choice` offers that the pattern rejects (`choice.rejected`), not one a
 `match: false` `Choice` refuses, and two `Regex` constraints no
-value passes together (`regex.contradiction`). `Regex` does not check an
+non-empty value passes together (`regex.contradiction`): `/^a*$/` and
+`/^b*$/` share the empty value alone. `Regex` does not check an
 empty value: the message says whether one can still pass, or whether a
 `NotBlank` or the `Length` refuses it. A question the solver cannot answer
-(`length.unchecked`, ...) is a warning of the section. The command exits 1 on an
+(`length.unchecked`, `regex.unchecked`, `html_pattern.unchecked`) is a
+warning of the section. The command exits 1 on an
 error; `regex:analyze` runs the same section and fails on it with
 `--fail-on=validator`.
 

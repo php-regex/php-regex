@@ -12,8 +12,8 @@ CHANGELOG
    to accept the same values; an HTML pattern a browser refuses or misreads
    under the `v` flag (`[a-z0-9-]`, `a++`, `[[:alpha:]]`); the shortest
    value the browser accepts and the server rejects, or the reverse; and a
-   `Length`, a `Choice` or a second `Regex` of the property no value of the
-   pattern passes with it. `regex:analyze --fail-on=validator` fails on them.
+   `Length`, a `Choice` or a second `Regex` of the property no non-empty
+   value of the pattern passes with it. `regex:analyze --fail-on=validator` fails on them.
  * `regex:routes --reachability` reports a route several earlier routes
    shadow together, none of them alone: `/n/{x<\d+>}` and `/n/{x<[a-z]+>}`
    before `/n/{x<\d+|[a-z]+>}`, or a route for `GET` and one for `POST`

@@ -173,7 +173,7 @@ final class RegexConstraintAnalyzer
                         }
                     }
 
-                    foreach ($this->checkConsistency($regexes, $subject) as $finding) {
+                    foreach ($this->checkConsistency($regexes, $subject, $constraints) as $finding) {
                         $findings[] = $finding;
                     }
                 }
@@ -436,7 +436,7 @@ final class RegexConstraintAnalyzer
             'No non-empty value the pattern accepts holds %s %s, as the Length constraint asks: %s',
             $allowed,
             1 === ($length->max ?? $length->min) ? 'character' : 'characters',
-            self::rejectsEmpty($constraints, $regex, $length) ? 'no value passes both.' : 'only an empty value, which Regex does not check, can pass both.',
+            self::whatPasses(self::rejectsEmpty($constraints, $regex, $length)),
         ))];
     }
 
@@ -484,14 +484,15 @@ final class RegexConstraintAnalyzer
     }
 
     /**
-     * Two Regex constraints of a group no value passes together.
+     * Two Regex constraints of a group no non-empty value passes together.
      *
      * @param list<Regex>                            $regexes
      * @param array{class: string, property: string} $subject
+     * @param list<Constraint>                       $constraints the constraints of the property
      *
      * @return list<ValidatorFinding>
      */
-    private function checkConsistency(array $regexes, array $subject): array
+    private function checkConsistency(array $regexes, array $subject, array $constraints): array
     {
         $findings = [];
         $count = \count($regexes);
@@ -508,17 +509,20 @@ final class RegexConstraintAnalyzer
                 [$must, $mustNot] = $first->match ? [$first, $second] : [$second, $first];
 
                 try {
-                    $contradicts = $mustNot->match
-                        ? $this->solver->intersection((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isEmpty
-                        : $this->solver->subsetOf((string) $must->pattern, (string) $mustNot->pattern, $this->options)->isSubset;
-                } catch (ComplexityException|RegexException|\InvalidArgumentException) {
-                    continue;
+                    $contradicts = $this->contradicts((string) $must->pattern, (string) $mustNot->pattern, $mustNot->match);
+                } catch (ComplexityException|RegexException|\InvalidArgumentException $e) {
+                    $contradicts = $e->getMessage();
                 }
 
-                if ($contradicts) {
-                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.contradiction', 'error', $mustNot->match
-                        ? \sprintf('No value matches both %s and %s: the property rejects every value.', $first->pattern, $second->pattern)
-                        : \sprintf('Every value %s matches also matches %s, which must not match: the property rejects every value.', $must->pattern, $mustNot->pattern));
+                if (\is_string($contradicts)) {
+                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.unchecked', 'notice', \sprintf('The Regex constraints %s and %s could not be compared: %s', $first->pattern, $second->pattern, $contradicts));
+                } elseif ($contradicts) {
+                    $findings[] = self::finding($subject, (string) $first->pattern, 'regex.contradiction', 'error', \sprintf(
+                        $mustNot->match ? 'No non-empty value matches both %s and %s: %s' : 'Every non-empty value %s matches also matches %s, which must not match: %s',
+                        $mustNot->match ? $first->pattern : $must->pattern,
+                        $mustNot->match ? $second->pattern : $mustNot->pattern,
+                        self::whatPasses(self::rejectsEmpty($constraints, $first, $second)),
+                    ));
                 }
             }
         }
@@ -757,6 +761,49 @@ final class RegexConstraintAnalyzer
         }
 
         return $flat;
+    }
+
+    /**
+     * Whether no non-empty value both matches the first pattern and passes
+     * the second: matches it, or not, as it must. Regex does not check an
+     * empty value: when it is the only one the solver finds, the languages
+     * tell whether another passes, both read on code points; a message
+     * says why they cannot be.
+     *
+     * @throws ComplexityException|RegexException|\InvalidArgumentException
+     */
+    private function contradicts(string $must, string $other, bool $match): bool|string
+    {
+        $example = $match
+            ? $this->solver->intersection($must, $other, $this->options)->example
+            : $this->solver->subsetOf($must, $other, $this->options)->counterExample;
+        if ('' !== $example) {
+            return null === $example;
+        }
+
+        $unicode = $this->parser->parse($must)->isUnicode();
+        if ($unicode !== $this->parser->parse($other)->isUnicode()) {
+            $read = $this->overCodePoints($unicode ? $other : $must);
+            if (null === $read) {
+                return 'one reads bytes and the other characters, and the only value found both pass is the empty one, which Regex does not check.';
+            }
+
+            [$must, $other] = $unicode ? [$must, $read] : [$read, $other];
+        }
+
+        $mustLanguage = $this->solver->language($must, $this->options);
+        $otherLanguage = $this->solver->language($other, $this->options);
+
+        return 0 === ($match ? $mustLanguage->intersect($otherLanguage) : $mustLanguage->minus($otherLanguage))->maxLength();
+    }
+
+    /**
+     * What passes the constraints of a contradiction: nothing, or an empty
+     * value unless a constraint refuses it.
+     */
+    private static function whatPasses(bool $emptyRejected): string
+    {
+        return $emptyRejected ? 'no value passes both.' : 'only an empty value, which Regex does not check, can pass both.';
     }
 
     /**
