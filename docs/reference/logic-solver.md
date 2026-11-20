@@ -468,16 +468,16 @@ Two refinements inside those rules:
   `\n` may follow it.
 
   A lookbehind branch that matches more than one length, as `\R` does,
-  compiles from PCRE2 10.43 on when its length is bounded, up to a limit
-  PCRE2 sets when it is built, 255 characters by default: there,
-  `/(?<=a{1,255})x/` compiles, `/(?<=a{1,256})x/` and `/(?<=a+)x/` do not. Before 10.43, `/(?<=\R)/` is a compile error, where
-  `/(?<=a|bc)x/`, each branch of one length, compiles. Its body must
-  end where the lookbehind stands, and PCRE2's interpreter lets a commitment
-  run past that place and fail there, where its JIT reads the subject as
-  ending at it: `/(?<=\R)/` does not hold between `\r` and `\n` under
-  `pcre.jit=0`. A commitment a lookbehind ends with is read as if any
-  character followed it, so `(?<=\R)` and `(?<=a{1,2}+)` are refused and
-  `(?<=\Rx)` holds.
+  compiles from PCRE2 10.43 on when its length is bounded, up to a limit PCRE2
+  sets when it is built, 255 characters by default: there, `/(?<=a{1,255})x/`
+  compiles, `/(?<=a{1,256})x/` and `/(?<=a+)x/` do not. Before 10.43,
+  `/(?<=\R)/` is a compile error, where `/(?<=a|bc)x/`, each branch of one
+  length, compiles. Its body must end where the lookbehind stands, and PCRE2's
+  interpreter lets a commitment run past that place and fail there, where its
+  JIT reads the subject as ending at it: `/(?<=\R)/` does not hold between
+  `\r` and `\n` under `pcre.jit=0`. A commitment a lookbehind ends with is
+  read as if any character followed it, so `(?<=\R)` and `(?<=a{1,2}+)` are
+  refused and `(?<=\Rx)` holds.
 
 An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:
