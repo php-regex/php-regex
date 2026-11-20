@@ -51,10 +51,7 @@ final class FirstMatchPartition
      */
     private array $nfas = [];
 
-    public function __construct(
-        private readonly LanguageSolver $solver = new LanguageSolver(),
-        private readonly SolverOptions $options = new SolverOptions(),
-    ) {}
+    public function __construct(private readonly LanguageSolver $solver = new LanguageSolver(), private readonly SolverOptions $options = new SolverOptions()) {}
 
     /**
      * @param array<int, list<list<string>>|null> $candidates in the order they are tried: the tuples each takes, or null for one that may take nothing

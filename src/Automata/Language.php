@@ -70,7 +70,7 @@ final class Language
     /**
      * The strings either language holds.
      *
-     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws ComplexityException           When the product outgrows its state limit
      * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
      */
     public function union(self $other): self
@@ -81,7 +81,7 @@ final class Language
     /**
      * The strings both languages hold.
      *
-     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws ComplexityException           When the product outgrows its state limit
      * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
      */
     public function intersect(self $other): self
@@ -92,7 +92,7 @@ final class Language
     /**
      * The strings this language holds and the other does not.
      *
-     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws ComplexityException           When the product outgrows its state limit
      * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
      */
     public function minus(self $other): self
@@ -114,7 +114,7 @@ final class Language
     /**
      * Whether every string of this language belongs to the other.
      *
-     * @throws ComplexityException       When the product outgrows its state limit
+     * @throws ComplexityException           When the product outgrows its state limit
      * @throws IncompatibleArgumentException When one language is read as UTF-8 and the other as bytes
      */
     public function isSubsetOf(self $other): bool

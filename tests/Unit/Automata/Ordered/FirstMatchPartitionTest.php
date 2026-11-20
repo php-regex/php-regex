@@ -84,7 +84,7 @@ final class FirstMatchPartitionTest extends TestCase
 
         $this->assertTrue($cells[2]->isShadowedCumulatively());
         $this->assertTrue($cells[3]->reachable);
-        $this->assertSame(['PUT', '/c/'."\0"], $cells[3]->witness, 'A method no earlier candidate takes.');
+        $this->assertSame(['PUT', "/c/\0"], $cells[3]->witness, 'A method no earlier candidate takes.');
     }
 
     #[Test]
