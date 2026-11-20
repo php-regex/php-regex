@@ -29,47 +29,14 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  images:
-    # The tag of the official image PHP 8.6 runs: its release candidates
-    # until its GA (2026-11-19), the release once Docker Hub serves it. The
-    # "-rc" tag lives on after a GA, on the candidates of the next patch
-    # release, so the stable one is taken as soon as there is one, and the
-    # candidates only when Docker Hub says it is not there: a timeout or its
-    # rate limit is asked again, then fails the run.
-    name: Image tags
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    outputs:
-      php86: ${{ steps.tags.outputs.php86 }}
-    steps:
-      - name: Find the tag of PHP 8.6
-        id: tags
-        run: |
-          for attempt in 1 2 3; do
-            if answer=$(docker manifest inspect php:8.6-cli 2>&1 > /dev/null); then
-              echo 'php86=8.6' >> "$GITHUB_OUTPUT"
-              exit 0
-            fi
-            case "$answer" in
-              *'no such manifest'*)
-                echo 'php86=8.6-rc' >> "$GITHUB_OUTPUT"
-                exit 0
-                ;;
-            esac
-            echo "Docker Hub did not say whether php:8.6-cli exists ($attempt/3): $answer" >&2
-            sleep 10
-          done
-          exit 1
-
   engines-bundled:
     # Part of the suite asks the running engine. The official images build
     # PHP with the PCRE2 php-src bundles, so each supported PHP runs here on
     # its own engine; the "tests" job runs them all on Ubuntu's system PCRE2.
     name: Tests (PHP ${{ matrix.php }}, bundled PCRE2 ${{ matrix.pcre }})
-    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    container: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
+    container: php:${{ matrix.php }}-cli
     strategy:
       fail-fast: false
       # Three of the six cells at once: the matrices of one pull request
@@ -82,7 +49,6 @@ jobs:
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
           - { php: '8.5', pcre: '10.44' }
-          # Its image's tag is the images job's: the candidates until the GA.
           - { php: '8.6', pcre: '10.44' }
 
     steps:
@@ -94,8 +60,8 @@ jobs:
         run: apt-get update && apt-get install -y --no-install-recommends git unzip jq
 
       - name: Install multibyte support
-        # An image without mbstring, as the candidates of 8.6 ship, compiles
-        # it, with oniguruma; an image that has it skips the rest.
+        # An image without mbstring, as the official images of 8.6 ship,
+        # compiles it, with oniguruma; an image that has it skips the rest.
         run: |
           if php -r 'exit(extension_loaded("mbstring") ? 0 : 1);'; then exit 0; fi
           apt-get update && apt-get install -y --no-install-recommends libonig-dev
@@ -166,11 +132,10 @@ jobs:
     # the claim and what the engine does. The 7.4 image runs PCRE2 10.35, not
     # the 10.33 of 7.4.0: claims are keyed by release, never by PHP version.
     name: Engine claims (PHP ${{ matrix.php }}, PCRE2 ${{ matrix.pcre }})
-    needs: images
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      IMAGE: php:${{ matrix.php == '8.6' && needs.images.outputs.php86 || matrix.php }}-cli
+      IMAGE: php:${{ matrix.php }}-cli
     strategy:
       fail-fast: false
       # Two at once: a cell takes a quarter of a minute.
@@ -185,7 +150,6 @@ jobs:
           - { php: '8.3', pcre: '10.42' }
           - { php: '8.4', pcre: '10.44' }
           - { php: '8.5', pcre: '10.44' }
-          # Its image's tag is the images job's, as engines-bundled's.
           - { php: '8.6', pcre: '10.44' }
 
     steps:
@@ -222,8 +186,6 @@ jobs:
       # request: a run that reads every cell holds two of them.
       max-parallel: 2
       matrix:
-        # 8.6 runs under setup-php's nightly-of-branch build until GA
-        # (2026-11-19), then the same plain '8.6' serves the stable release.
         php: [ '8.6', '8.5', '8.4', '8.3', '8.2' ]
         # A pull request reads the latest PCRE2 once, on the PHP of its
         # reference, so that what the cell finds is the engine's or the
