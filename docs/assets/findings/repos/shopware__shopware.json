@@ -1,6 +1,6 @@
 {
     "repo": "shopware/shopware",
-    "sha": "d8bad4d88be3756f36cd5dad9b46bf97f6a22ded",
+    "sha": "0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -187,6 +187,226 @@
             ]
         },
         {
+            "id": "f-f5e53bb89c",
+            "file": "src/Core/Content/Media/Util/PathHelper.php",
+            "line": 17,
+            "column": 49,
+            "pattern": "#^([^:/]+:/{1,2})[^/]*:[^/]*@(?=[^/])#s",
+            "source": "preg_replace()",
+            "location": "via self::REGEX_VALID_URL_CREDENTIALS",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.s",
+                    "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#^([^:/]+:/{1,2})[^/]*:[^/]*@(?=[^/])#",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Content/Media/Util/PathHelper.php#L14-L20",
+            "snippet": [
+                {
+                    "number": 14,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const REGEX_NON_ASCII_AND_CONTROL_BYTE_RANGES = '/[\\x00-\\x1F\\x7F-\\xFF]/';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 15,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 16,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // \"scheme:/\" or \"scheme://\", then everything without \"/\" containing a \":\" up to an \"@\" not followed by \"/\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 17,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    private const REGEX_VALID_URL_CREDENTIALS = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ":/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "{1,2}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "@",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?=",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "s",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // \"scheme:/\" or \"scheme://\", then everything containing a \":\" up to the last \"@\" not followed by \"/\"",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private const REGEX_INVALID_URL_CREDENTIALS = '#^([^:/]+:/{1,2}).*:.*@(?=[^/])#s';",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-b08ece0093",
             "file": "src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php",
             "line": 31,
@@ -207,7 +427,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -370,7 +590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -538,7 +758,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -686,7 +906,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -834,7 +1054,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -982,7 +1202,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -1140,7 +1360,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -1348,7 +1568,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Core/Test/FixtureLoader.php#L54-L60",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Test/FixtureLoader.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1483,7 +1703,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1654,7 +1874,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/d8bad4d88be3756f36cd5dad9b46bf97f6a22ded/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
+            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,

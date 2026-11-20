@@ -37,10 +37,7 @@ final class RouteReachabilityReport
      * @param list<RouteReach>   $routes every route read, in the order the matcher tries them
      * @param array<string, int> $stats
      */
-    public function __construct(
-        public readonly array $routes,
-        public readonly array $stats,
-    ) {}
+    public function __construct(public readonly array $routes, public readonly array $stats) {}
 
     /**
      * @return list<RouteReach>

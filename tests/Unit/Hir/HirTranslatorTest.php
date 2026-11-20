@@ -31,6 +31,8 @@ use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Node\BackrefNode;
+use PHPRegex\Tests\Support\EngineProbe;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +40,8 @@ use PHPUnit\Framework\TestCase;
 
 final class HirTranslatorTest extends TestCase
 {
+    use PcreGates;
+
     #[Test]
     public function test_adjacent_characters_are_one_literal_and_plain_groups_are_gone(): void
     {
@@ -353,6 +357,78 @@ final class HirTranslatorTest extends TestCase
         $this->assertInstanceOf(ConditionalHir::class, $conditional);
         $this->assertInstanceOf(LiteralHir::class, $conditional->yes);
         $this->assertInstanceOf(LiteralHir::class, $conditional->no);
+    }
+
+    /**
+     * Whether a "|" stands before the "no" branch, an empty one included,
+     * asked of the engine first: PCRE refuses a conditional of three
+     * branches, so one more "|" before its ")" compiles only where none
+     * was written.
+     */
+    #[Test]
+    #[DataProvider('provideConditionalBars')]
+    public function test_a_conditional_keeps_whether_a_bar_was_written_before_its_no_branch(string $pattern, bool $written): void
+    {
+        $this->assertSame(1, preg_match($pattern, 'ab'), 'Oracle: PCRE compiles '.$pattern.' and matches "ab".');
+        $close = strrpos($pattern, ')');
+        $this->assertIsInt($close);
+        $oneMoreBar = substr_replace($pattern, '|z', $close, 0);
+        $this->assertSame(!$written, EngineProbe::compiles($oneMoreBar), \sprintf('Oracle: PCRE reads %s bar before the no branch of %s: %s.', $written ? 'a' : 'no', $pattern, EngineProbe::warning($oneMoreBar) ?? 'compiled'));
+
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $conditional = $hir->parts[1];
+        $this->assertInstanceOf(ConditionalHir::class, $conditional);
+        $this->assertSame($written, $conditional->noBranchWritten);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, written: bool}>
+     */
+    public static function provideConditionalBars(): iterable
+    {
+        yield 'no bar' => ['pattern' => '/(a)?(?(1)b)/', 'written' => false];
+        yield 'a bar before an empty branch' => ['pattern' => '/(a)?(?(1)b|)/', 'written' => true];
+        yield 'a bar before a branch' => ['pattern' => '/(a)?(?(1)b|c)/', 'written' => true];
+        yield 'no bar after an empty yes branch' => ['pattern' => '/(a)?(?(1))/', 'written' => false];
+        yield 'a bar between two empty branches' => ['pattern' => '/(a)?(?(1)|)/', 'written' => true];
+        yield 'no bar after a space x skips' => ['pattern' => '/(a)?(?(1)b )/x', 'written' => false];
+        yield 'a bar after a space x skips' => ['pattern' => '/(a)?(?(1)b |)/x', 'written' => true];
+    }
+
+    /**
+     * The bar the conditional keeps is the one PCRE reads: in a lookbehind,
+     * it gives "(?(c)X)" the length of X alone, where "(?(c)X|)" may also
+     * be empty, so the negative lookbehind lets "c" through only without
+     * the bar.
+     */
+    #[Test]
+    #[DataProvider('provideConditionalBarsInALookbehind')]
+    public function test_the_bar_a_conditional_keeps_is_the_one_pcre_reads_in_a_lookbehind(string $pattern, bool $written, int $matches): void
+    {
+        $this->requiresCompile($pattern);
+        $this->assertSame($matches, preg_match($pattern, 'c'));
+
+        $bars = [];
+        $this->walk($this->translate($pattern), static function (Hir $hir) use (&$bars): void {
+            if ($hir instanceof ConditionalHir) {
+                $bars[] = $hir->noBranchWritten;
+            }
+        });
+
+        $this->assertSame([$written], $bars);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, written: bool, matches: int}>
+     */
+    public static function provideConditionalBarsInALookbehind(): iterable
+    {
+        yield 'no bar' => ['pattern' => '/(a)?(?<!(?(1)a))c/', 'written' => false, 'matches' => 1];
+        yield 'a bar before an empty branch' => ['pattern' => '/(a)?(?<!(?(1)a|))c/', 'written' => true, 'matches' => 0];
+        yield 'no bar after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)a ))c/x', 'written' => false, 'matches' => 1];
+        yield 'a bar after a space x skips' => ['pattern' => '/(a)?(?<!(?(1)a |))c/x', 'written' => true, 'matches' => 0];
     }
 
     #[Test]

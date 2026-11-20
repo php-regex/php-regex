@@ -174,6 +174,12 @@ final class ClassParser
             array_push($parts, ...$this->readParts());
         }
 
+        // Without UTF mode every multibyte character is its bytes; a class
+        // that holds none, the common case, keeps its parts as they are read.
+        if (!$this->state->unicodeMode && self::holdsALiteralOfSeveralBytes($parts)) {
+            $parts = array_merge(...array_map($this->asBytes(...), $parts));
+        }
+
         if (empty($parts)) {
             $position = $this->stream->current()->position;
 
@@ -372,7 +378,7 @@ final class ClassParser
      * range ends it on its first byte, and a "-" after it starts a range
      * from its last byte, the bytes between members: "[a-é-a]" is the range
      * a to 0xC3, then 0xA9 to "a". The range is cut only when that "-" makes
-     * a range.
+     * a range; readMembers() cuts every other multibyte character.
      *
      * @return non-empty-list<NodeInterface>
      */
@@ -407,6 +413,83 @@ final class ClassParser
         $parts[] = $part;
 
         return $parts;
+    }
+
+    /**
+     * Whether a part is, or a range has for an end, a literal of more than
+     * one byte.
+     *
+     * @param list<NodeInterface> $parts
+     */
+    private static function holdsALiteralOfSeveralBytes(array $parts): bool
+    {
+        foreach ($parts as $part) {
+            if (($part instanceof LiteralNode && isset($part->value[1]))
+                || ($part instanceof RangeNode && (($part->start instanceof LiteralNode && isset($part->start->value[1])) || ($part->end instanceof LiteralNode && isset($part->end->value[1]))))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * A part of a class read without UTF mode as PCRE reads it, byte by
+     * byte: a multibyte character is its bytes, each a member, but for the
+     * last byte of a range start, which starts the range, and the first
+     * byte of a range end, which ends it. "[à-é]" is 0xC3, the range 0xA0 to
+     * 0xC3, then 0xA9.
+     *
+     * @return non-empty-list<NodeInterface>
+     */
+    private function asBytes(NodeInterface $part): array
+    {
+        if ($part instanceof LiteralNode) {
+            return self::bytesOf($part);
+        }
+
+        if (!$part instanceof RangeNode) {
+            return [$part];
+        }
+
+        $before = self::bytesOf($part->start);
+        $after = self::bytesOf($part->end);
+        $start = array_pop($before);
+        $end = array_shift($after);
+        if ([] === $before && [] === $after) {
+            return [$part];
+        }
+
+        return [...$before, new RangeNode($start, $end, $start->getStartPosition(), $end->getEndPosition()), ...$after];
+    }
+
+    /**
+     * The bytes of a literal of several bytes, one node each, where the
+     * pattern writes them: the first one takes the backslash of an escaped
+     * character along. Any other node alone.
+     *
+     * @return non-empty-list<NodeInterface>
+     */
+    private static function bytesOf(NodeInterface $node): array
+    {
+        if (!$node instanceof LiteralNode) {
+            return [$node];
+        }
+
+        $value = $node->value;
+        $length = \strlen($value);
+        $start = $node->getStartPosition();
+        $escaped = $node->getEndPosition() - $start - $length;
+        if ($length < 2 || (0 !== $escaped && 1 !== $escaped)) {
+            return [$node];
+        }
+
+        $bytes = [new LiteralNode(substr($value, 0, 1), $start, $start + $escaped + 1, $node->isRaw)];
+        for ($index = 1; $index < $length; $index++) {
+            $bytes[] = new LiteralNode(substr($value, $index, 1), $start + $escaped + $index, $start + $escaped + $index + 1, $node->isRaw);
+        }
+
+        return $bytes;
     }
 
     /**

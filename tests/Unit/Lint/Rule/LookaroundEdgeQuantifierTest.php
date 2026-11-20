@@ -75,16 +75,20 @@ final class LookaroundEdgeQuantifierTest extends TestCase
     {
         // Every lookbehind here has a variable length, which compiles from
         // PCRE2 10.43 on: before, both sides fail alike and prove nothing.
+        // Each one tells the pattern from its rewrite under the JIT, which
+        // PHP runs by default. PCRE2's interpreter reads the end of the
+        // subject in a variable-length lookbehind at the real end, as a
+        // fixed-length one does: there /(?<=b{1,2}\z)a/ and /(?<=b\z)a/
+        // answer alike (10.44 to 10.49, pcre.jit=0).
         if (str_contains($pattern, '(?<')) {
             $this->requiresPcre2('10.43', $pattern);
+            $this->requiresJit($pattern);
         }
 
-        // Under the JIT, which PHP runs by default. PCRE2's interpreter reads
-        // the end of the subject in a variable-length lookbehind at the real
-        // end, as a fixed-length one does: there /(?<=b{1,2}\z)a/ and
-        // /(?<=b\z)a/ answer alike (10.44 to 10.49, pcre.jit=0). A pattern
-        // another test compiled with the JIT off stays so in PHP's cache, so
-        // the patterns run here under a delimiter of their own.
+        // A pattern another test compiled with the JIT off stays so in PHP's
+        // cache, so the patterns run here under a delimiter of their own, and
+        // the comparison sets the JIT whatever an earlier test left: the rows
+        // read the JIT's answer.
         $jit = (string) \ini_get('pcre.jit');
         ini_set('pcre.jit', '1');
 

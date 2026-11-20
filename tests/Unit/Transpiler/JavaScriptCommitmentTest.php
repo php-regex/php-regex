@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JavaScriptCommitmentTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     /**
@@ -47,7 +49,7 @@ final class JavaScriptCommitmentTest extends TestCase
         $regex = Regex::create(['cache' => null]);
         $result = $regex->transpile($pattern, 'javascript');
         $this->assertSame($literal, $result->literal);
-        $this->assertStringContainsString('without its commitment', implode("\n", $result->notes));
+        $this->assertMatchesRegularExpression('/^Printed (the atomic group|the possessive quantifier|\\\R) without its commitment: nothing that follows it can take back what it matched\.$/m', implode("\n", $result->notes));
 
         $this->assertSame($attribute, $regex->transpile($pattern, 'html-pattern')->pattern);
     }
@@ -63,6 +65,7 @@ final class JavaScriptCommitmentTest extends TestCase
         yield 'a line break under u' => ['pattern' => '/^a\Rb$/u', 'plain' => '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u', 'literal' => '/^a(?:\r\n|[\x0A-\x0D\x85\u2028\u2029])b(?=\n?$)/u', 'attribute' => '^a(?:\r\n|[\x0A-\x0D\x85\u2028\u2029])b$', 'subjects' => ["a\r\nb", "a\u{2028}b", "a\rb", "a\r\rb"]];
         yield 'an atomic letter in a search' => ['pattern' => '/(?>a)b/', 'plain' => '/ab/', 'literal' => '/(?:a)b/', 'attribute' => '[\s\S]*(?:(?:a)b)[\s\S]*', 'subjects' => ['xab', 'ab', 'b']];
         yield 'a possessive group' => ['pattern' => '/^(?:ab)++c$/', 'plain' => '/^(?:ab)+c$/', 'literal' => '/^(?:ab)+c(?=\n?$)/', 'attribute' => '^(?:ab)+c$', 'subjects' => ['abc', 'ababc', 'abac']];
+        yield 'an atomic pair in a negative lookbehind' => ['pattern' => '/(?<!(?>ab))c/', 'plain' => '/(?<!(?:ab))c/', 'literal' => '/(?<!(?:ab))c/', 'attribute' => '[\s\S]*(?:(?<!(?:ab))c)[\s\S]*', 'subjects' => ['abc', 'xc', 'c', 'ab']];
         yield 'a possessive run in a search' => ['pattern' => '/\d++px/', 'plain' => '/\d+px/', 'literal' => '/\d+px/', 'attribute' => '[\s\S]*(?:\d+px)[\s\S]*', 'subjects' => ['12px', 'x1px', '12p']];
     }
 
@@ -114,6 +117,76 @@ final class JavaScriptCommitmentTest extends TestCase
         yield 'a lookahead the run feeds' => ['pattern' => '/^a++(?=a)/', 'plain' => '/^a+(?=a)/', 'subject' => 'aa', 'message' => $possessive];
         yield 'a word boundary given back' => ['pattern' => '/^(?>a+)\B/', 'plain' => '/^a+\B/', 'subject' => 'aa', 'message' => $atomic];
         yield 'a line end under m' => ['pattern' => '/^\s++$/m', 'plain' => '/^\s+$/m', 'subject' => " \n x", 'message' => $possessive];
+        yield 'a lazy run repeated in an atomic group' => ['pattern' => '/(?>(?:a+?){2})b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $atomic];
+        yield 'a lazy run repeated possessively' => ['pattern' => '/(?:a+?){2}+b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $possessive];
+    }
+
+    /**
+     * A run of runs reads the same matches as its plain spelling, but
+     * written plain a backtracking engine tries every split of the run
+     * before it rejects "aaaa…a!": left committed, and refused.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideRunsOfRuns')]
+    public function test_refuses_a_run_of_runs(string $pattern, string $plain, array $subjects, string $message): void
+    {
+        foreach ($subjects as $subject) {
+            $this->assertSame(self::span($plain, $subject), self::span($pattern, $subject), $pattern.' on '.json_encode($subject));
+        }
+
+        foreach (['javascript', 'html-pattern'] as $target) {
+            try {
+                Regex::create(['cache' => null])->transpile($pattern, $target);
+                $this->fail($pattern.' was printed for '.$target.'.');
+            } catch (TranspileException $exception) {
+                $this->assertStringContainsString($message, $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subjects: list<string>, message: string}>
+     */
+    public static function provideRunsOfRuns(): iterable
+    {
+        yield 'a possessive run of a letter' => ['pattern' => '/^(?:a+)++b$/', 'plain' => '/^(?:a+)+b$/', 'subjects' => ['aab', 'b', 'aaa!', 'ab'], 'message' => 'Possessive quantifiers are not supported in JavaScript.'];
+        yield 'an atomic run of a letter' => ['pattern' => '/(?>(?:a+)+)b/', 'plain' => '/(?:(?:a+)+)b/', 'subjects' => ['aab', 'b', 'aaa!', 'ab'], 'message' => 'Atomic groups are not supported in JavaScript.'];
+    }
+
+    /**
+     * A lookbehind's body must end where the lookbehind stands. The
+     * interpreter lets a commitment the body ends with run past that place
+     * and fail there, where the plain spelling stops in time; the JIT does
+     * not. Refused, never printed plain.
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindCommitments')]
+    public function test_refuses_a_commitment_a_lookbehind_ends_with(string $pattern, string $plain, string $subject, string $message): void
+    {
+        $this->requiresPcre2('10.43', 'A lookbehind branch of more than one length');
+
+        $interpreted = static fn (string $pattern): string => $pattern[0].'(*NO_JIT)'.substr($pattern, 1);
+        $this->assertNotSame(self::span($interpreted($plain), $subject), self::span($interpreted($pattern), $subject), $pattern.' on '.json_encode($subject));
+
+        foreach (['javascript', 'html-pattern'] as $target) {
+            try {
+                Regex::create(['cache' => null])->transpile($pattern, $target);
+                $this->fail($pattern.' was printed for '.$target.'.');
+            } catch (TranspileException $exception) {
+                $this->assertStringContainsString($message, $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subject: string, message: string}>
+     */
+    public static function provideLookbehindCommitments(): iterable
+    {
+        yield 'a line break' => ['pattern' => '/(?<=\R)/', 'plain' => '/(?<=(?:\r\n|[\n\x0B\f\r\x85]))/', 'subject' => "\r\n", 'message' => 'Unsupported character type in JavaScript: \R.'];
+        yield 'a bounded run' => ['pattern' => '/(?<=a{1,2}+)/', 'plain' => '/(?<=a{1,2})/', 'subject' => 'aa', 'message' => 'Possessive quantifiers are not supported in JavaScript.'];
     }
 
     /**

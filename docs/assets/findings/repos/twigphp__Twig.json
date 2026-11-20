@@ -1,6 +1,6 @@
 {
     "repo": "twigphp/Twig",
-    "sha": "7bef834832d5e3426dfecc0564690acd81b6a68a",
+    "sha": "31667a0ff8e37a90d5253d5f8b633b46c1b55ee7",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -57,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--",
-            "permalink": "https://github.com/twigphp/Twig/blob/7bef834832d5e3426dfecc0564690acd81b6a68a/src/Test/IntegrationTestCase.php#L188-L194",
+            "permalink": "https://github.com/twigphp/Twig/blob/31667a0ff8e37a90d5253d5f8b633b46c1b55ee7/src/Test/IntegrationTestCase.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -143,11 +143,11 @@
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--CONDITION--",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
@@ -170,32 +170,28 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")",
+                            "))",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--DEPRECATION--",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
@@ -218,24 +214,20 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")",
+                            "))",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "((?:",
@@ -311,11 +303,11 @@
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--DATA--",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
@@ -338,24 +330,20 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")",
+                            "))",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "--EXCEPTION--",
@@ -478,7 +466,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--!--EXPECT--",
-            "permalink": "https://github.com/twigphp/Twig/blob/7bef834832d5e3426dfecc0564690acd81b6a68a/src/Test/IntegrationTestCase.php#L195-L201",
+            "permalink": "https://github.com/twigphp/Twig/blob/31667a0ff8e37a90d5253d5f8b633b46c1b55ee7/src/Test/IntegrationTestCase.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,
@@ -564,11 +552,11 @@
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--CONDITION--",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
@@ -591,32 +579,28 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")",
+                            "))",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--DEPRECATION--",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
@@ -639,31 +623,23 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")",
+                            "))",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "(?:",
+                            "((?:",
                             "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
@@ -724,7 +700,7 @@
                         ],
                         [
                             ")",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "--DATA--",

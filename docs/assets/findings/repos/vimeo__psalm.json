@@ -1,6 +1,6 @@
 {
     "repo": "vimeo/psalm",
-    "sha": "4cada67a9dec8ede8f2586802805f3bb162a2345",
+    "sha": "ef1458bf94f30be89ef01278265f846b254248cb",
     "target": {
         "php": "8.1.31",
         "pcre": "10.39",
@@ -21,7 +21,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"A\" . \"\\\\00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [\\\\]? Hotspot offsets: 22-27 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"A\" . \"\\\\00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9_\\x80-\\xff]+ Hotspot offsets: 27-49 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "A\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00\\00!",
-            "permalink": "https://github.com/vimeo/psalm/blob/4cada67a9dec8ede8f2586802805f3bb162a2345/src/Psalm/Config/FileFilter.php#L343-L349",
+            "permalink": "https://github.com/vimeo/psalm/blob/ef1458bf94f30be89ef01278265f846b254248cb/src/Psalm/Config/FileFilter.php#L343-L349",
             "snippet": [
                 {
                     "number": 343,
@@ -291,7 +291,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/4cada67a9dec8ede8f2586802805f3bb162a2345/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L153-L159",
+            "permalink": "https://github.com/vimeo/psalm/blob/ef1458bf94f30be89ef01278265f846b254248cb/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -422,7 +422,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/4cada67a9dec8ede8f2586802805f3bb162a2345/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L261-L267",
+            "permalink": "https://github.com/vimeo/psalm/blob/ef1458bf94f30be89ef01278265f846b254248cb/src/Psalm/Internal/Analyzer/CommentAnalyzer.php#L261-L267",
             "snippet": [
                 {
                     "number": 261,
@@ -580,7 +580,7 @@
                 "limit": 100000
             },
             "subject": "/**\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n *\n\n!*/",
-            "permalink": "https://github.com/vimeo/psalm/blob/4cada67a9dec8ede8f2586802805f3bb162a2345/src/Psalm/Internal/FileManipulation/FileManipulationBuffer.php#L148-L154",
+            "permalink": "https://github.com/vimeo/psalm/blob/ef1458bf94f30be89ef01278265f846b254248cb/src/Psalm/Internal/FileManipulation/FileManipulationBuffer.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -768,7 +768,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/vimeo/psalm/blob/4cada67a9dec8ede8f2586802805f3bb162a2345/src/Psalm/Internal/PhpVisitor/Reflector/FunctionLikeDocblockParser.php#L122-L128",
+            "permalink": "https://github.com/vimeo/psalm/blob/ef1458bf94f30be89ef01278265f846b254248cb/src/Psalm/Internal/PhpVisitor/Reflector/FunctionLikeDocblockParser.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,

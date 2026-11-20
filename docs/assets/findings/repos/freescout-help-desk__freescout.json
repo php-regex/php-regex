@@ -4148,13 +4148,6 @@
                 },
                 {
                     "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 7 \"((?:(?:[ \\t]*(?:\\r\\n))?[ \\t])?…\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x19…\" and \"(?:\\[\\x00-\\x08\\x0B\\x0C\\x0E-…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",

@@ -1,6 +1,6 @@
 {
     "repo": "wp-cli/wp-cli",
-    "sha": "5ec3c05d8b46bb50a6179bc722b97ede35fbd86f",
+    "sha": "bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -176,7 +176,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/bundle/rmccue/requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -304,7 +304,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: [\\w\\-]* Hotspot offsets: 19-25 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: (?:[\\w\\-]*)* Hotspot offsets: 33-44 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -338,7 +338,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/bundle/rmccue/requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -440,23 +440,23 @@
                         ],
                         [
                             "[",
-                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
                             "\\w",
-                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-escape"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
                             "]",
-                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-quantifier"
                         ],
                         [
                             ")(?:",
@@ -622,7 +622,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: [\\w\\-]* Hotspot offsets: 19-25 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: (?:[\\w\\-]*)* Hotspot offsets: 33-44 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -656,7 +656,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/bundle/rmccue/requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/bundle/rmccue/requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -758,23 +758,23 @@
                         ],
                         [
                             "[",
-                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
                             "\\w",
-                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-escape"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
                             "]",
-                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                            "pg-snippet-pattern pg-tok-quantifier"
                         ],
                         [
                             ")(?:",
@@ -947,7 +947,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L155-L161",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Configurator.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -1042,7 +1042,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L196-L202",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Configurator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,
@@ -1137,7 +1137,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L276-L282",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Configurator.php#L276-L282",
             "snippet": [
                 {
                     "number": 276,
@@ -1232,7 +1232,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Configurator.php#L483-L489",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Configurator.php#L483-L489",
             "snippet": [
                 {
                     "number": 483,
@@ -1309,7 +1309,7 @@
         {
             "id": "f-404f9f9def",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1046,
+            "line": 1054,
             "column": 18,
             "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
             "source": "preg_match()",
@@ -1327,10 +1327,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1043-L1049",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Runner.php#L1051-L1057",
             "snippet": [
                 {
-                    "number": 1043,
+                    "number": 1051,
                     "focus": false,
                     "runs": [
                         [
@@ -1340,7 +1340,7 @@
                     ]
                 },
                 {
-                    "number": 1044,
+                    "number": 1052,
                     "focus": false,
                     "runs": [
                         [
@@ -1350,7 +1350,7 @@
                     ]
                 },
                 {
-                    "number": 1045,
+                    "number": 1053,
                     "focus": false,
                     "runs": [
                         [
@@ -1360,7 +1360,7 @@
                     ]
                 },
                 {
-                    "number": 1046,
+                    "number": 1054,
                     "focus": true,
                     "runs": [
                         [
@@ -1370,7 +1370,7 @@
                     ]
                 },
                 {
-                    "number": 1047,
+                    "number": 1055,
                     "focus": false,
                     "runs": [
                         [
@@ -1380,7 +1380,7 @@
                     ]
                 },
                 {
-                    "number": 1048,
+                    "number": 1056,
                     "focus": false,
                     "runs": [
                         [
@@ -1390,7 +1390,7 @@
                     ]
                 },
                 {
-                    "number": 1049,
+                    "number": 1057,
                     "focus": false,
                     "runs": [
                         [
@@ -1404,7 +1404,7 @@
         {
             "id": "f-d9f175e288",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1049,
+            "line": 1057,
             "column": 21,
             "pattern": "#^--ssh(?:-args)?(?:=|$)|--alias=#",
             "source": "preg_match()",
@@ -1422,10 +1422,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1046-L1052",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Runner.php#L1054-L1060",
             "snippet": [
                 {
-                    "number": 1046,
+                    "number": 1054,
                     "focus": false,
                     "runs": [
                         [
@@ -1435,7 +1435,7 @@
                     ]
                 },
                 {
-                    "number": 1047,
+                    "number": 1055,
                     "focus": false,
                     "runs": [
                         [
@@ -1445,7 +1445,7 @@
                     ]
                 },
                 {
-                    "number": 1048,
+                    "number": 1056,
                     "focus": false,
                     "runs": [
                         [
@@ -1455,7 +1455,7 @@
                     ]
                 },
                 {
-                    "number": 1049,
+                    "number": 1057,
                     "focus": true,
                     "runs": [
                         [
@@ -1537,7 +1537,7 @@
                     ]
                 },
                 {
-                    "number": 1050,
+                    "number": 1058,
                     "focus": false,
                     "runs": [
                         [
@@ -1547,7 +1547,7 @@
                     ]
                 },
                 {
-                    "number": 1051,
+                    "number": 1059,
                     "focus": false,
                     "runs": [
                         [
@@ -1557,7 +1557,7 @@
                     ]
                 },
                 {
-                    "number": 1052,
+                    "number": 1060,
                     "focus": false,
                     "runs": [
                         [
@@ -1571,7 +1571,7 @@
         {
             "id": "f-404f9f9def-2",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1789,
+            "line": 1797,
             "column": 43,
             "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
             "source": "preg_match()",
@@ -1589,10 +1589,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/Runner.php#L1786-L1792",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/Runner.php#L1794-L1800",
             "snippet": [
                 {
-                    "number": 1786,
+                    "number": 1794,
                     "focus": false,
                     "runs": [
                         [
@@ -1602,7 +1602,7 @@
                     ]
                 },
                 {
-                    "number": 1787,
+                    "number": 1795,
                     "focus": false,
                     "runs": [
                         [
@@ -1612,7 +1612,7 @@
                     ]
                 },
                 {
-                    "number": 1788,
+                    "number": 1796,
                     "focus": false,
                     "runs": [
                         [
@@ -1622,7 +1622,7 @@
                     ]
                 },
                 {
-                    "number": 1789,
+                    "number": 1797,
                     "focus": true,
                     "runs": [
                         [
@@ -1632,7 +1632,7 @@
                     ]
                 },
                 {
-                    "number": 1790,
+                    "number": 1798,
                     "focus": false,
                     "runs": [
                         [
@@ -1642,7 +1642,7 @@
                     ]
                 },
                 {
-                    "number": 1791,
+                    "number": 1799,
                     "focus": false,
                     "runs": [
                         [
@@ -1652,7 +1652,7 @@
                     ]
                 },
                 {
-                    "number": 1792,
+                    "number": 1800,
                     "focus": false,
                     "runs": [
                         [
@@ -1684,7 +1684,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/WP_CLI/SynopsisParser.php#L21-L27",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/WP_CLI/SynopsisParser.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -1822,7 +1822,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/5ec3c05d8b46bb50a6179bc722b97ede35fbd86f/php/utils.php#L1537-L1543",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/bddd8ae06ab47979c2cbe7e3ef3cd403e3db01ff/php/utils.php#L1537-L1543",
             "snippet": [
                 {
                     "number": 1537,

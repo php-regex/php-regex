@@ -16,10 +16,13 @@ namespace PHPRegex\Tests\Unit\Automata;
 use PHPRegex\Automata\Builder\NfaComposer;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Nfa;
+use PHPRegex\Automata\Model\NfaState;
+use PHPRegex\Automata\Model\NfaTransition;
 use PHPRegex\Automata\Model\PackedNfa;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\LazyDfa;
 use PHPRegex\Automata\Solver\ProductSearch;
+use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -115,6 +118,42 @@ final class NfaComposerTest extends TestCase
 
         $this->assertNotNull($kept);
         $this->assertSame([...self::codePoints('GET'), NfaComposer::SEPARATOR, ...self::codePoints('/a/0a')], array_map(static fn (int $class): int => $l->alphabet->representative[$class], $kept));
+    }
+
+    /**
+     * The states of a composed NFA are numbered as the solver numbers those
+     * of a pattern: 0 to n - 1, in order.
+     */
+    #[Test]
+    public function test_the_composed_states_are_numbered_from_zero_in_order(): void
+    {
+        $solver = new LanguageSolver();
+        $composer = new NfaComposer();
+
+        foreach ([
+            'union' => $composer->union($solver->nfa('/^a$/'), $solver->nfa('/^bc$/')),
+            'concatenation' => $composer->concat($solver->nfa('/^a$/'), $solver->nfa('/^bc$/')),
+        ] as $operation => $nfa) {
+            $this->assertSame(range(0, \count($nfa->states) - 1), array_keys($nfa->states), $operation);
+        }
+    }
+
+    /**
+     * An accepting state of the left side still moves where it moved: here
+     * the start, which accepts "" and goes on to "b".
+     */
+    #[Test]
+    public function test_a_concatenation_keeps_the_moves_of_an_accepting_state(): void
+    {
+        $left = new Nfa(0, [
+            0 => new NfaState(0, [], [1], true),
+            1 => new NfaState(1, [new NfaTransition(CharSet::single(0x62), 2)], [], false),
+            2 => new NfaState(2, [], [], true),
+        ], 0, 0xFF);
+        $joined = (new NfaComposer())->concat($left, (new LanguageSolver())->nfa('/^c$/'));
+
+        $this->assertTrue(self::accepts($joined, [NfaComposer::SEPARATOR, ...self::codePoints('c')]));
+        $this->assertTrue(self::accepts($joined, [...self::codePoints('b'), NfaComposer::SEPARATOR, ...self::codePoints('c')]));
     }
 
     /**

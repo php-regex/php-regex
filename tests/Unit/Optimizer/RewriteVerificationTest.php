@@ -21,6 +21,7 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RewriteCheck;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RewriteVerificationTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * The lookbehind sends the check to the in-place proof, whose aligned
      * pass pairs some twelve hundred parts on each side: past the 65,536
@@ -205,6 +208,10 @@ final class RewriteVerificationTest extends TestCase
     {
         $original = '/[\pL0-9]*0[\pL0-9]{1100}$/um';
         $rewrite = '/[\pL0-9]*0[\pL0-9]{1099}[\pL0-9]$/um';
+        foreach (['0'.str_repeat('1', 1100), '0'.str_repeat('1', 1099), 'é0'.str_repeat('é', 1100)."\nz", str_repeat('1', 1101), '-0'.str_repeat('1', 1100)] as $subject) {
+            $this->assertSame(self::span($original, $subject), self::span($rewrite, $subject), \strlen($subject).' bytes');
+        }
+
         $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->rewritesAlikeInPlace($original, $rewrite), 'The default budget settles it.');
 
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
@@ -363,6 +370,44 @@ final class RewriteVerificationTest extends TestCase
         $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
 
         $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), '/(?<=x)(?:a|ab)c/', '/(?<=x)ac/'));
+    }
+
+    /**
+     * In a lookbehind PCRE gives "(?(c)X)" the length of X alone, where
+     * "(?(c)X|)" may also be empty: the engine tells the two apart where c
+     * fails. The normal form keeps the "|" its source wrote, so neither the
+     * patterns nor a part of them read alike, and the rewrite is not
+     * proven. Outside a lookbehind the two run alike, and are read apart
+     * all the same: such a rewrite is left unproven, never proven wrong.
+     */
+    #[Test]
+    #[DataProvider('provideConditionalsTheWrittenBarTellsApart')]
+    public function test_a_bar_written_before_an_empty_no_branch_is_read(string $original, string $rewrite, string $subject): void
+    {
+        $this->requiresCompile($original);
+        $this->requiresCompile($rewrite);
+        $this->assertNotSame(self::called('preg_match', $original, $subject), self::called('preg_match', $rewrite, $subject), 'The engine tells them apart.');
+
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null]));
+        $this->assertFalse($solver->readAlike($original, $rewrite));
+        $this->assertFalse($solver->rewritesAlikeInPlace($original, $rewrite));
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string, subject: string}>
+     */
+    public static function provideConditionalsTheWrittenBarTellsApart(): iterable
+    {
+        yield 'a lookahead condition in a lookbehind, the bar added' => ['original' => '/(?<=(?(?=b)bb))c/', 'rewrite' => '/(?<=(?(?=b)bb|))c/', 'subject' => 'c'];
+        yield 'a group condition in a negative lookbehind, the bar added' => ['original' => '/(a)?(?<!(?(1)a))c/', 'rewrite' => '/(a)?(?<!(?(1)a|))c/', 'subject' => 'c'];
+        yield 'a group condition in a negative lookbehind, the bar dropped' => ['original' => '/(a)?(?<!(?(1)a|))c/', 'rewrite' => '/(a)?(?<!(?(1)a))c/', 'subject' => 'c'];
+        yield 'a conditional after text in a lookbehind' => ['original' => '/(?<=x(?(?=b)bb))c/', 'rewrite' => '/(?<=x(?(?=b)bb|))c/', 'subject' => 'xc'];
+        yield 'a conditional in the no branch of another' => ['original' => '/(a)?(?<!(?(1)a|(?(?=x)xx)))c/', 'rewrite' => '/(a)?(?<!(?(1)a|(?(?=x)xx|)))c/', 'subject' => 'c'];
+        yield 'a yes branch ending in a space x skips' => ['original' => '/(a)?(?<!(?(1)a ))c/x', 'rewrite' => '/(a)?(?<!(?(1)a |))c/x', 'subject' => 'c'];
     }
 
     /**
@@ -575,5 +620,19 @@ final class RewriteVerificationTest extends TestCase
             'preg_replace' => preg_replace($pattern, '<$0>', $subject),
             default => preg_split($pattern, $subject, -1, \PREG_SPLIT_OFFSET_CAPTURE),
         };
+    }
+
+    /**
+     * Where preg_match() finds the first match, as offsets into the
+     * subject, or null.
+     *
+     * @return array{int, int}|null
+     */
+    private static function span(string $pattern, string $subject): ?array
+    {
+        $result = preg_match($pattern, $subject, $match, \PREG_OFFSET_CAPTURE);
+        self::assertNotFalse($result, $pattern);
+
+        return 1 === $result ? [$match[0][1], $match[0][1] + \strlen($match[0][0])] : null;
     }
 }

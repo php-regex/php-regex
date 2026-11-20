@@ -10,10 +10,22 @@ CHANGELOG
    (a possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, an
    unescaped `-` or `(` in a class, a lone `{`, an escape JavaScript does not
    know) or reads otherwise (a POSIX class, `&&`, `\v`), with its offset.
+ * JavaScript and the HTML pattern attribute refuse what a lookbehind
+   matched right to left reads otherwise than PCRE: a group in a branch of
+   more than one length, `/(?<=(ab|a)b?)c/`, which captures `ab` in PCRE
+   and `a` in JavaScript; a group repeated in it, `/(?<=(.){2})$/`; and a
+   reference to a group of the same lookbehind, `/(?<=(a)\1)b/`. All three
+   were printed as written.
  * JavaScript and the HTML pattern attribute print a possessive quantifier,
    an atomic group or `\R` that commits to nothing plain, with a note:
-   `/^\d++$/` gives `^\d+$`. One whose commitment changes the match, or one
-   a lookaround or a word boundary follows, stays refused.
+   `/^\d++$/` gives `^\d+$` as an HTML pattern and `^\d+(?=\n?$)` in
+   JavaScript. One whose commitment changes the match stays refused, and so
+   does one whose proof needs what follows it when a lookaround or a word
+   boundary follows: `/(?>a+)(?=b)/` is refused, `/(?>a)(?=b)/` printed.
+   One a lookbehind ends with is refused unless no character may take it
+   further: `/(?<=\R)/` is refused, `/(?<=\Rx)/` printed. A run of runs,
+   `/^(?:a+)++b$/`, stays refused too: printed plain, it would try every
+   split of its run before rejecting a subject.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The advice to add `u` looks at the target: where the target refuses the

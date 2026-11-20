@@ -1,6 +1,6 @@
 {
     "repo": "matomo-org/matomo",
-    "sha": "4eba44a1555143e16b4b4623769dbca709e22015",
+    "sha": "3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/DbHelper.php#L401-L407",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/DbHelper.php#L401-L407",
             "snippet": [
                 {
                     "number": 401,
@@ -128,7 +128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Period.php#L95-L101",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Period.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -311,7 +311,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Piwik.php#L772-L778",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Piwik.php#L772-L778",
             "snippet": [
                 {
                     "number": 772,
@@ -478,7 +478,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Segment/SegmentExpression.php#L371-L377",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Segment/SegmentExpression.php#L371-L377",
             "snippet": [
                 {
                     "number": 371,
@@ -784,7 +784,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Theme.php#L93-L99",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Theme.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -1018,7 +1018,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Theme.php#L96-L102",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Theme.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -1228,7 +1228,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Theme.php#L99-L105",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Theme.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -1431,7 +1431,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/core/Twig.php#L689-L695",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/core/Twig.php#L689-L695",
             "snippet": [
                 {
                     "number": 689,
@@ -1577,7 +1577,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
             "snippet": [
                 {
                     "number": 263,
@@ -1744,7 +1744,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/libs/Zend/Session/Namespace.php#L117-L123",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/libs/Zend/Session/Namespace.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -1895,7 +1895,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/Actions/ArchivingHelper.php#L1152-L1158",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/Actions/ArchivingHelper.php#L1152-L1158",
             "snippet": [
                 {
                     "number": 1152,
@@ -1997,7 +1997,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -2145,7 +2145,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/CoreVue/Commands/Build.php#L297-L303",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/CoreVue/Commands/Build.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -2411,7 +2411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/Diagnostics/Commands/Run.php#L87-L93",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/Diagnostics/Commands/Run.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2606,7 +2606,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -2796,7 +2796,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/LanguagesManager/Commands/Update.php#L162-L168",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/LanguagesManager/Commands/Update.php#L162-L168",
             "snippet": [
                 {
                     "number": 162,
@@ -2966,7 +2966,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/LanguagesManager/Commands/Update.php#L167-L173",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/LanguagesManager/Commands/Update.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -3129,7 +3129,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/4eba44a1555143e16b4b4623769dbca709e22015/plugins/UsersManager/Validators/Login.php#L40-L46",
+            "permalink": "https://github.com/matomo-org/matomo/blob/3d165b0c5363d4bb0cf52c0aaf0d41b8b8683b53/plugins/UsersManager/Validators/Login.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,

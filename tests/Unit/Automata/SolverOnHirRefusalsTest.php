@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class SolverOnHirRefusalsTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     /**
@@ -78,11 +80,11 @@ final class SolverOnHirRefusalsTest extends TestCase
         // Oracle: on "abc", the anchored atomic spelling finds no match,
         // where the plain group backtracks into "ab": the atomic group
         // commits to "a".
-        yield 'atomic group' => ['pattern' => '/(?>a|ab)c/', 'expected' => $atomic];
+        yield 'atomic group' => ['pattern' => '/(?>a|ab)c/', 'expected' => $atomic, 'engine' => ['/^(?>a|ab)c$/', '/^(?:a|ab)c$/', 'abc']];
         // Oracle: preg_match('/^(?:a|ab){1}+c$/', 'abc') is 0, where the
         // greedy "{1}" takes it: once is still possessive.
-        yield 'possessive count of one' => ['pattern' => '/(?:a|ab){1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
-        yield 'possessive count of one to one' => ['pattern' => '/(?:a|ab){1,1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
+        yield 'possessive count of one' => ['pattern' => '/(?:a|ab){1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.', 'engine' => ['/^(?:a|ab){1}+c$/', '/^(?:a|ab){1}c$/', 'abc']];
+        yield 'possessive count of one to one' => ['pattern' => '/(?:a|ab){1,1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.', 'engine' => ['/^(?:a|ab){1,1}+c$/', '/^(?:a|ab){1,1}c$/', 'abc']];
 
         yield 'match start after a character' => ['pattern' => '/a\G/', 'expected' => $assertion];
         yield 'word boundary inside a lookahead' => ['pattern' => '/(?=\b)a/', 'expected' => 'An anchor inside a lookaround is beyond what the automata solver reads.'];
@@ -135,35 +137,49 @@ final class SolverOnHirRefusalsTest extends TestCase
     }
 
     /**
-     * The engine the rows of an empty match option stand on: on "b", "/a?/"
-     * finds "" at 0. Under pcre.jit=0, or behind (*NO_JIT), (*NOTEMPTY)
-     * finds no match and (*NOTEMPTY_ATSTART) "" at 1; the JIT ignores both
-     * and finds "" at 0. A pattern stays in PHP's cache as compiled under
-     * the setting of its first use, so each setting reads the patterns
-     * under a delimiter of its own. Where the JIT cannot run, a PHP built
-     * without it, which has no pcre.jit, or one ini_set() cannot change,
-     * the interpreter runs, and honours the options there too.
+     * The engine the rows of an empty match option stand on, where the
+     * interpreter runs, whatever the JIT does: on "b", "/a?/" finds "" at 0.
+     * Under pcre.jit=0, or behind (*NO_JIT), (*NOTEMPTY) finds no match and
+     * (*NOTEMPTY_ATSTART) "" at 1. Where PHP is built without the JIT, it
+     * has no pcre.jit, and the interpreter runs all the same. A pattern
+     * stays in PHP's cache as compiled under the setting of its first use,
+     * so each setting reads the patterns under a delimiter of its own.
      */
     #[Test]
-    public function test_the_jit_decides_what_an_empty_match_option_refuses(): void
+    public function test_the_interpreter_honours_an_empty_match_option(): void
     {
         $this->assertSame([['', 0]], self::firstMatch('/a?/', 'b'));
         $this->assertSame([], self::firstMatch('/(*NO_JIT)(*NOTEMPTY)a?/', 'b'));
         $this->assertSame([['', 1]], self::firstMatch('/(*NO_JIT)(*NOTEMPTY_ATSTART)a?/', 'b'));
 
-        $jit = (string) \ini_get('pcre.jit');
+        $jit = \ini_get('pcre.jit');
 
         try {
             ini_set('pcre.jit', '0');
-            if ('0' === \ini_get('pcre.jit')) {
-                $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
-                $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
+            $this->assertSame([], self::firstMatch("\x01(*NOTEMPTY)a?\x01", 'b'));
+            $this->assertSame([['', 1]], self::firstMatch("\x01(*NOTEMPTY_ATSTART)a?\x01", 'b'));
+        } finally {
+            if (false !== $jit) {
+                ini_set('pcre.jit', $jit);
             }
+        }
+    }
 
+    /**
+     * The JIT ignores both options and finds "" at 0 on "b", where the
+     * interpreter does not: test_the_interpreter_honours_an_empty_match_option().
+     */
+    #[Test]
+    public function test_the_jit_decides_what_an_empty_match_option_refuses(): void
+    {
+        $this->requiresJit('An empty match option the JIT ignores');
+
+        $jit = (string) \ini_get('pcre.jit');
+
+        try {
             ini_set('pcre.jit', '1');
-            $jitRuns = '1' === \ini_get('pcre.jit');
-            $this->assertSame($jitRuns ? [['', 0]] : [], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
-            $this->assertSame($jitRuns ? [['', 0]] : [['', 1]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
+            $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY)a?\x02", 'b'));
+            $this->assertSame([['', 0]], self::firstMatch("\x02(*NOTEMPTY_ATSTART)a?\x02", 'b'));
         } finally {
             ini_set('pcre.jit', $jit);
         }

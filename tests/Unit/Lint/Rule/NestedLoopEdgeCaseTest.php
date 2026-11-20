@@ -430,7 +430,9 @@ final class NestedLoopEdgeCaseTest extends TestCase
      * the iterations apart: a run of letters then of spaces (11 -> 19), a
      * list after a comma (27 -> 51), words after spaces (11 -> 19), a
      * negated class under i before a run of the letter it leaves out, in
-     * either case (10 -> 18).
+     * either case (10 -> 18), and a class written in hex escapes, read as
+     * the characters they name, after a run of spaces (11 -> 19) or of
+     * spaces and tabs in quoted text (12 -> 20).
      *
      * @return iterable<string, array{pattern: string, prefix: string, unit: string, reported: bool}>
      */
@@ -447,6 +449,8 @@ final class NestedLoopEdgeCaseTest extends TestCase
         yield 'negated class under i before the letter it leaves out' => ['pattern' => '/(?:[^z]+Z+)+$/i', 'prefix' => '', 'unit' => 'aZ', 'reported' => false];
         yield 'list after a comma' => ['pattern' => '/^(?:\s*,\s*\w+)*$/', 'prefix' => '', 'unit' => ' , ab', 'reported' => false];
         yield 'words after spaces' => ['pattern' => '/^\w+(?:\s+\w+)*$/', 'prefix' => 'a', 'unit' => '  a', 'reported' => false];
+        yield 'spaces before a class written in hex' => ['pattern' => '/^(?:\x20*[\x22-\x7E])*$/', 'prefix' => '', 'unit' => ' a', 'reported' => false];
+        yield 'spaces and tabs in quoted text before a class written in hex' => ['pattern' => '/^"(?:[ \t]*[\x21\x23-\x7E])*"/', 'prefix' => '"', 'unit' => ' a', 'reported' => false];
     }
 
     #[Test]

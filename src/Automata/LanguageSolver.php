@@ -115,16 +115,20 @@ final class LanguageSolver
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
         $options ??= new SolverOptions();
-        $lazy = $this->lazyPair($left, $right, $options);
-        if (null !== $lazy) {
-            [$leftNfa, $rightNfa, $bytes] = $lazy;
-            $classes = (new ProductSearch($options))->intersection($leftNfa, $rightNfa);
-            $example = null === $classes ? null : ProductSearch::spell($classes, $leftNfa->alphabet, $bytes);
+        $nfas = $this->lazyNfas($left, $right, $options);
+        if (null !== $nfas) {
+            try {
+                [$leftNfa, $rightNfa, $bytes] = $this->packed($nfas, $options);
+                $classes = (new ProductSearch($options))->intersection($leftNfa, $rightNfa);
+                $example = null === $classes ? null : ProductSearch::spell($classes, $leftNfa->alphabet, $bytes);
 
-            return new IntersectionResult(null === $example, $example);
+                return new IntersectionResult(null === $example, $example);
+            } catch (ComplexityException) {
+                // Past its limits, the answer is the eager search's.
+            }
         }
 
-        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
+        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options, $nfas);
 
         $example = $this->findExample(
             $leftDfa,
@@ -145,16 +149,21 @@ final class LanguageSolver
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
         $options ??= new SolverOptions();
-        $lazy = $this->lazyPair($left, $right, $options);
-        if (null !== $lazy) {
-            // A language holds itself: the pattern was read, and refused
-            // if it leaves the regular subset, before this answer.
-            $example = $left === $right ? null : $this->lazyDifference($lazy[0], $lazy[1], $lazy[2], $options);
+        $nfas = $this->lazyNfas($left, $right, $options);
+        if (null !== $nfas) {
+            try {
+                [$leftNfa, $rightNfa, $bytes] = $this->packed($nfas, $options);
+                // A language holds itself: the pattern was read, and refused
+                // if it leaves the regular subset, before this answer.
+                $example = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
 
-            return new SubsetResult(null === $example, $example);
+                return new SubsetResult(null === $example, $example);
+            } catch (ComplexityException) {
+                // Past its limits, the answer is the eager search's.
+            }
         }
 
-        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
+        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options, $nfas);
 
         $example = $this->findExample(
             $leftDfa,
@@ -175,16 +184,20 @@ final class LanguageSolver
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
         $options ??= new SolverOptions();
-        $lazy = $this->lazyPair($left, $right, $options);
-        if (null !== $lazy) {
-            [$leftNfa, $rightNfa, $bytes] = $lazy;
-            $leftOnlyExample = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
-            $rightOnlyExample = $left === $right ? null : $this->lazyDifference($rightNfa, $leftNfa, $bytes, $options);
+        $nfas = $this->lazyNfas($left, $right, $options);
+        if (null !== $nfas) {
+            try {
+                [$leftNfa, $rightNfa, $bytes] = $this->packed($nfas, $options);
+                $leftOnlyExample = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
+                $rightOnlyExample = $left === $right ? null : $this->lazyDifference($rightNfa, $leftNfa, $bytes, $options);
 
-            return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+                return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+            } catch (ComplexityException) {
+                // Past its limits, the answer is the eager search's.
+            }
         }
 
-        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options);
+        [$leftDfa, $rightDfa] = $this->buildDfas($left, $right, $options, $nfas);
 
         $leftOnlyExample = $this->findExample(
             $leftDfa,
@@ -461,7 +474,7 @@ final class LanguageSolver
      */
     public function nfa(string $pattern, ?SolverOptions $options = null): Nfa
     {
-        return $this->buildNfa($pattern, $options ?? new SolverOptions());
+        return $this->buildNfa($pattern, $this->parser->parse($pattern), $options ?? new SolverOptions());
     }
 
     /**
@@ -774,20 +787,22 @@ final class LanguageSolver
     }
 
     /**
+     * @param array{Nfa, Nfa}|null $nfas the NFAs of both patterns, when a lazy search built them
+     *
      * @throws ComplexityException
      *
      * @return array{0: Dfa, 1: Dfa}
      */
-    private function buildDfas(string $left, string $right, SolverOptions $options): array
+    private function buildDfas(string $left, string $right, SolverOptions $options, ?array $nfas = null): array
     {
         if ($left === $right) {
-            $dfa = $this->buildDfa($left, $options);
+            $dfa = $this->buildDfa($left, $options, $nfas[0] ?? null);
 
             return [$dfa, $dfa];
         }
 
-        $leftDfa = $this->buildDfa($left, $options);
-        $rightDfa = $this->buildDfa($right, $options);
+        $leftDfa = $this->buildDfa($left, $options, $nfas[0] ?? null);
+        $rightDfa = $this->buildDfa($right, $options, $nfas[1] ?? null);
 
         // A pattern read as UTF-8 and one read as bytes, as "(*UTF)" or "u"
         // on one side only: the one read as bytes reads each character of a
@@ -801,9 +816,11 @@ final class LanguageSolver
     }
 
     /**
+     * @param Nfa|null $nfa the pattern's NFA, when it is built already
+     *
      * @throws ComplexityException
      */
-    private function buildDfa(string $pattern, SolverOptions $options): Dfa
+    private function buildDfa(string $pattern, SolverOptions $options, ?Nfa $nfa = null): Dfa
     {
         $cacheKey = null;
         if (null !== $this->dfaCache) {
@@ -814,7 +831,7 @@ final class LanguageSolver
             }
         }
 
-        $dfa = (new DfaBuilder())->determinize($this->buildNfa($pattern, $options), $options);
+        $dfa = (new DfaBuilder())->determinize($nfa ?? $this->buildNfa($pattern, $this->parser->parse($pattern), $options), $options);
 
         if (null !== $this->dfaCache && null !== $cacheKey) {
             $this->dfaCache->set($cacheKey, $dfa);
@@ -826,42 +843,58 @@ final class LanguageSolver
     /**
      * @throws ComplexityException
      */
-    private function buildNfa(string $pattern, SolverOptions $options): Nfa
+    private function buildNfa(string $pattern, RegexNode $ast, SolverOptions $options): Nfa
     {
-        $ast = $this->parser->parse($pattern);
         $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
 
         return (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast)))->transform($hir, $options);
     }
 
     /**
-     * The NFAs of both patterns packed over one alphabet, for the lazy
-     * search, and whether a witness is spelled in bytes; null where the
-     * eager search answers: under the Eager strategy, with a DFA cache,
-     * whose compiled DFAs it reuses, or for a pattern read as UTF-8 beside
-     * one read as bytes, which the eager search reads through the UTF-8 of
-     * each character.
+     * The NFAs of both patterns, for the lazy search; null where the eager
+     * search answers: under the Eager strategy, with a DFA cache, whose
+     * compiled DFAs it reuses, or for a pattern read as UTF-8 beside one
+     * read as bytes, which the eager search reads through the UTF-8 of each
+     * character. The modes are read from the patterns before any NFA is
+     * built.
      *
      * @throws ComplexityException
      *
-     * @return array{PackedNfa, PackedNfa, bool}|null
+     * @return array{Nfa, Nfa}|null
      */
-    private function lazyPair(string $left, string $right, SolverOptions $options): ?array
+    private function lazyNfas(string $left, string $right, SolverOptions $options): ?array
     {
         if (SolverStrategy::Lazy !== $options->strategy || null !== $this->dfaCache) {
             return null;
         }
 
-        $leftNfa = $this->buildNfa($left, $options);
-        $rightNfa = $left === $right ? $leftNfa : $this->buildNfa($right, $options);
-        if (($leftNfa->maxCodePoint > self::MAX_BYTE) !== ($rightNfa->maxCodePoint > self::MAX_BYTE)) {
+        $leftAst = $this->parser->parse($left);
+        $rightAst = $left === $right ? $leftAst : $this->parser->parse($right);
+        if (HirTranslator::unicodeOf($leftAst) !== HirTranslator::unicodeOf($rightAst)) {
             return null;
         }
 
-        $budget = null === $options->maxTransitionsProcessed ? null : new WorkBudget($options->maxTransitionsProcessed, 'determinize', 0, 0, 0);
-        [$leftPacked, $rightPacked] = PackedNfa::packPair($leftNfa, $rightNfa, $budget);
+        $leftNfa = $this->buildNfa($left, $leftAst, $options);
 
-        return [$leftPacked, $rightPacked, $leftNfa->maxCodePoint <= self::MAX_BYTE];
+        return [$leftNfa, $left === $right ? $leftNfa : $this->buildNfa($right, $rightAst, $options)];
+    }
+
+    /**
+     * Both NFAs packed over one alphabet, and whether a witness is spelled
+     * in bytes.
+     *
+     * @param array{Nfa, Nfa} $nfas
+     *
+     * @throws ComplexityException
+     *
+     * @return array{PackedNfa, PackedNfa, bool}
+     */
+    private function packed(array $nfas, SolverOptions $options): array
+    {
+        $budget = null === $options->maxTransitionsProcessed ? null : new WorkBudget($options->maxTransitionsProcessed, 'determinize', 0, 0, 0);
+        [$left, $right] = PackedNfa::packPair($nfas[0], $nfas[1], $budget);
+
+        return [$left, $right, $nfas[0]->maxCodePoint <= self::MAX_BYTE];
     }
 
     /**

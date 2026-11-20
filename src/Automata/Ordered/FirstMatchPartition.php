@@ -51,10 +51,7 @@ final class FirstMatchPartition
      */
     private array $nfas = [];
 
-    public function __construct(
-        private readonly LanguageSolver $solver = new LanguageSolver(),
-        private readonly SolverOptions $options = new SolverOptions(),
-    ) {}
+    public function __construct(private readonly LanguageSolver $solver = new LanguageSolver(), private readonly SolverOptions $options = new SolverOptions()) {}
 
     /**
      * @param array<int, list<list<string>>|null> $candidates in the order they are tried: the tuples each takes, or null for one that may take nothing
@@ -85,7 +82,7 @@ final class FirstMatchPartition
             } elseif (null === $candidate) {
                 $cells[$index] = new FirstMatchCell($index, false, null);
             } else {
-                $rivalsOf = array_values(array_filter($rivals[$index] ?? array_keys($candidates), static fn (int $j): bool => $j < $index && null !== ($built[$j][0] ?? null)));
+                $rivalsOf = array_filter($rivals[$index] ?? array_keys($candidates), static fn (int $j): bool => $j < $index && null !== ($built[$j][0] ?? null));
 
                 try {
                     $cells[$index] = $this->cell($index, $candidate, $unicode, $rivalsOf, $built, $composer);
@@ -139,7 +136,7 @@ final class FirstMatchPartition
 
     /**
      * @param array<int, bool>                                           $unicode
-     * @param list<int>                                                  $rivals
+     * @param array<int, int>                                            $rivals
      * @param array<int, array{Nfa|null, array<int, bool>, string|null}> $built
      *
      * @throws ComplexityException
@@ -180,8 +177,8 @@ final class FirstMatchPartition
         }
 
         // Kept nothing: by one earlier candidate alone, or only by several.
-        $shadowedBy = 1 === \count($earlier) ? array_key_first($earlier) : null;
-        foreach (\count($earlier) > 1 ? $earlier : [] as $j => $other) {
+        $shadowedBy = null;
+        foreach ($earlier as $j => $other) {
             [$left, $right] = PackedNfa::packPair($candidate, $other);
             if (null === (new ProductSearch($this->options))->difference($left, new LazyDfa($right, $this->options->maxDfaStates))) {
                 $shadowedBy = $j;

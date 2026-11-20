@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -57,13 +58,26 @@ final class OverlappingAlternationLocaleTest extends TestCase
         }
     }
 
+    /**
+     * @param array{string, string} $branches
+     */
     #[Test]
     #[DataProvider('provideRows')]
-    public function test_branches_overlap_by_the_tables_of_the_target_locale(string $pattern, string $locale, bool $reported): void
+    public function test_branches_overlap_by_the_tables_of_the_target_locale(string $pattern, array $branches, string $locale, bool $reported): void
     {
         if ('C' !== $locale) {
             $this->requiresLocale($locale, $pattern);
         }
+
+        // Oracle: under the row's locale, both branches take "\xE9" where
+        // the row says they overlap.
+        $taken = new \ArrayObject();
+        CharacterTables::under($locale, static function () use ($branches, $taken): void {
+            foreach ($branches as $branch) {
+                $taken[] = preg_match('/^(?:'.$branch.')$/', "\xE9");
+            }
+        });
+        $this->assertSame($reported, [1, 1] === $taken->getArrayCopy(), \sprintf('Oracle: %s under %s takes the byte 0xE9 in %s.', addcslashes($pattern, "\200..\377"), $locale, json_encode($taken->getArrayCopy())));
 
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
         $linter = new PatternLinter([], $regex->target());
@@ -74,13 +88,16 @@ final class OverlappingAlternationLocaleTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, locale: string, reported: bool}>
+     * @return iterable<string, array{pattern: string, branches: array{string, string}, locale: string, reported: bool}>
      */
     public static function provideRows(): iterable
     {
         foreach (['C' => false, self::LATIN1 => true] as $locale => $word) {
-            yield 'a word character or "\xE9", '.$locale => ['pattern' => '/(?:\w|\xE9)+/', 'locale' => $locale, 'reported' => $word];
-            yield 'no word character or "\xE9", '.$locale => ['pattern' => '/(?:\W|\xE9)+/', 'locale' => $locale, 'reported' => !$word];
+            yield 'a word character or "\xE9", '.$locale => ['pattern' => '/(?:\w|\xE9)+/', 'branches' => ['\w', '\xE9'], 'locale' => $locale, 'reported' => $word];
+            yield 'no word character or "\xE9", '.$locale => ['pattern' => '/(?:\W|\xE9)+/', 'branches' => ['\W', '\xE9'], 'locale' => $locale, 'reported' => !$word];
+            // The byte written as it is, not as an escape.
+            yield 'a word character or the byte 0xE9, '.$locale => ['pattern' => "/(?:\\w|\xE9)+/", 'branches' => ['\w', "\xE9"], 'locale' => $locale, 'reported' => $word];
+            yield 'no word character or the byte 0xE9, '.$locale => ['pattern' => "/(?:\\W|\xE9)+/", 'branches' => ['\W', "\xE9"], 'locale' => $locale, 'reported' => !$word];
         }
     }
 }

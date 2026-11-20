@@ -28,6 +28,7 @@ use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\Validator;
+use PHPRegex\Tests\TestUtils\PhpErrorOffset;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -52,6 +53,38 @@ final class ValidatorChecksTest extends TestCase
     public function test_the_check_reports_what_pcre2_10_49_reports(string $pattern, ?array $error): void
     {
         $this->assertSame($error, $this->firstError($pattern, '8.4', '10.49'), $pattern);
+    }
+
+    /**
+     * Without UTF a range from a character of two bytes starts at its last
+     * byte, 0xA9 for "é", and one from "\x{e9}", "\xe9" or "\351" at that
+     * byte: each is reversed before "a". The engine refuses each on every
+     * release, where the validator says for the release it runs on: PCRE2
+     * 10.39 and 10.42 one byte before 10.49. The message names the bytes
+     * the range runs between, as written.
+     */
+    #[Test]
+    #[DataProvider('provideReversedRangesWithoutUtf')]
+    public function test_a_reversed_range_without_utf_is_refused_where_the_engine_refuses_it(string $pattern, int $offset, string $message): void
+    {
+        $engine = PhpErrorOffset::of($pattern);
+        $this->assertNotNull($engine, 'Oracle: the engine refuses '.$pattern);
+
+        $result = RegexParser::create(['cache' => null, 'runtime_pcre_validation' => false])->validate($pattern);
+        $this->assertSame([ErrorCode::RangeReversed, $engine], [$result->errorCode, $result->offset], $pattern.' on PCRE2 '.\PCRE_VERSION);
+
+        $this->assertSame([ErrorCode::RangeReversed, $offset, $message], $this->firstError($pattern, '8.4', '10.49'), $pattern.' on PCRE2 10.49');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int, message: string}>
+     */
+    public static function provideReversedRangesWithoutUtf(): iterable
+    {
+        yield 'from the last byte of a character' => ['pattern' => "/[\u{e9}-a]/", 'offset' => 5, 'message' => 'Invalid range "\xA9-a": start character comes after end character.'];
+        yield 'from a braced hexadecimal escape' => ['pattern' => '/[\x{e9}-a]/', 'offset' => 9, 'message' => 'Invalid range "\x{e9}-a": start character comes after end character.'];
+        yield 'from a hexadecimal escape' => ['pattern' => '/[\xe9-a]/', 'offset' => 7, 'message' => 'Invalid range "\xe9-a": start character comes after end character.'];
+        yield 'from an octal escape' => ['pattern' => '/[\351-a]/', 'offset' => 7, 'message' => 'Invalid range "\351-a": start character comes after end character.'];
     }
 
     /**
@@ -172,7 +205,8 @@ final class ValidatorChecksTest extends TestCase
         // Ranges.
         yield 'reversed range' => ['pattern' => '/[z-a]/', 'error' => [ErrorCode::RangeReversed, 4, 'Invalid range "z-a": start character comes after end character.']];
         yield 'reversed range from an escape' => ['pattern' => '/[\x{100}-a]/u', 'error' => [ErrorCode::RangeReversed, 10, 'Invalid range "\x{100}-a": start character comes after end character.']];
-        yield 'reversed range from the last byte of a character' => ['pattern' => "/[\u{e9}-a]/", 'error' => [ErrorCode::RangeReversed, 5, "Invalid range \"\u{e9}-a\": start character comes after end character."]];
+        // Without UTF the range starts at the last byte of "é", 0xA9.
+        yield 'reversed range from the last byte of a character' => ['pattern' => "/[\u{e9}-a]/", 'error' => [ErrorCode::RangeReversed, 5, 'Invalid range "\xA9-a": start character comes after end character.']];
         yield 'reversed range in a payload' => ['pattern' => '/(*pla:[z-a])/', 'error' => [ErrorCode::RangeReversed, 10, 'Invalid range "z-a": start character comes after end character.']];
 
         // The branches of conditionals.

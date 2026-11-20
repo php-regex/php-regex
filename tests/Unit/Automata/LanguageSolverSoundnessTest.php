@@ -18,6 +18,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LanguageSolverSoundnessTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -118,6 +120,7 @@ final class LanguageSolverSoundnessTest extends TestCase
         yield 'an optional letter in the body' => ['possessive' => '/^(?:ab?)++b$/', 'greedy' => '/^(?:ab?)+b$/', 'subject' => 'ab'];
         yield 'a count between two bounds in the body' => ['possessive' => '/^(?:a{2,3})++b$/', 'greedy' => '/^(?:a{2,3})+b$/', 'subject' => 'aaaab'];
         yield 'an alternation in a sequence of the body' => ['possessive' => '/^(?:a(?:bc|b))++c$/', 'greedy' => '/^(?:a(?:bc|b))+c$/', 'subject' => 'abc'];
+        yield 'a lazy run in the body' => ['possessive' => '/^(?:a+?){2}+b$/', 'greedy' => '/^(?:a+?){2}b$/', 'subject' => 'aaab'];
     }
 
     /**
@@ -212,6 +215,7 @@ final class LanguageSolverSoundnessTest extends TestCase
         yield 'a shorter branch first' => ['atomic' => '/^(?>a|ab)c$/', 'plain' => '/^(?:a|ab)c$/', 'subject' => 'abc'];
         yield 'a run the follower shares' => ['atomic' => '/^(?>a+)a$/', 'plain' => '/^a+a$/', 'subject' => 'aa'];
         yield 'a lazy run' => ['atomic' => '/^(?>a+?)b$/', 'plain' => '/^a+?b$/', 'subject' => 'aab'];
+        yield 'a lazy run repeated' => ['atomic' => '/^(?>(?:a+?){2})b$/', 'plain' => '/^(?:a+?){2}b$/', 'subject' => 'aaab'];
         yield 'a longer branch the follower needs short' => ['atomic' => '/^(?>ab|a)b$/', 'plain' => '/^(?:ab|a)b$/', 'subject' => 'ab'];
         yield 'a newline after \R' => ['atomic' => "/^\\R\n$/", 'plain' => "/^(?:\r\n|\r|\n)\n$/", 'subject' => "\r\n"];
     }
@@ -223,11 +227,43 @@ final class LanguageSolverSoundnessTest extends TestCase
     #[Test]
     public function test_a_line_break_escape_reads_as_its_alternation(): void
     {
-        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
-        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
-        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", "a\n\rb", 'ab'] as $subject) {
+        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", "a\n\rb", 'ab', "a\x0Bb", "a\fb", "a\x85b"] as $subject) {
             $this->assertSame(preg_match('/^a(?:\r\n|[\n\x0B\f\r\x85])b$/', $subject), preg_match('/^a\Rb$/', $subject), (string) json_encode($subject));
         }
+
+        foreach (["a\r\nb", "a\nb", "a\rb", "a\r\rb", 'ab', "a\x0Bb", "a\u{85}b", "a\u{2028}b", "a\u{2029}b", "a\u{2028}\nb"] as $subject) {
+            $this->assertSame(preg_match('/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u', $subject), preg_match('/^a\Rb$/u', $subject), (string) json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
+        $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
+    }
+
+    /**
+     * A lookbehind's body must end where the lookbehind stands. The
+     * interpreter lets "\R" take the "\n" after that place and fail, where
+     * the alternation stops at the "\r"; the JIT does not. A commitment a
+     * lookbehind ends with is refused unless it cannot run on: before a
+     * letter, "\R" still reads as the alternation.
+     */
+    #[Test]
+    public function test_a_commitment_a_lookbehind_ends_with_is_refused(): void
+    {
+        $this->requiresPcre2('10.43', 'A lookbehind branch of more than one length');
+
+        $this->assertSame(0, preg_match('/(*NO_JIT)^\r(?<=\R)\n$/', "\r\n"));
+        $this->assertSame(1, preg_match('/(*NO_JIT)^\r(?<=(?:\r\n|[\n\x0B\f\r\x85]))\n$/', "\r\n"));
+
+        foreach (["\r\nx", "\nx", "\rx", "\r\rx", 'x'] as $subject) {
+            $this->assertSame(preg_match('/(*NO_JIT)^[\r\n]*x(?<=(?:\r\n|[\n\x0B\f\r\x85])x)$/', $subject), preg_match('/(*NO_JIT)^[\r\n]*x(?<=\Rx)$/', $subject), (string) json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent('/^[\r\n]*x(?<=\Rx)$/', '/^[\r\n]*x(?<=(?:\r\n|[\n\x0B\f\r\x85])x)$/')->isEquivalent);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('Atomic groups commit to their first match');
+
+        (new LanguageSolver())->equivalent('/^\r(?<=\R)\n$/', '/^\r(?<=(?:\r\n|[\n\x0B\f\r\x85]))\n$/');
     }
 
     /**

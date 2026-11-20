@@ -137,9 +137,10 @@ final class ReferenceChecks
         }
 
         // Relative conditions, "(?(-1)...)" and "(?(+1)...)", count groups
-        // from where they stand.
+        // from where they stand. A relative zero names group 0, as
+        // "\g{-0}" does.
         if (1 === LibraryPcre::match('/^[+-]\d++$/', $ref)) {
-            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), ErrorCode::BackrefRelative, 'Condition', $node);
+            $this->assertRelativeReferenceExists((int) $ref, $this->missingReferenceOffset($node), 0 === (int) $ref ? ErrorCode::BackrefZero : ErrorCode::BackrefRelative, 'Condition', $node);
 
             return;
         }

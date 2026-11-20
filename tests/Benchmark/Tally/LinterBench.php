@@ -72,7 +72,7 @@ final class LinterBench
         }
     }
 
-    #[Expected(instructions: '465.0M', cycles: '578.7M', memory: '1.712MiB')]
+    #[Expected(instructions: '444.5M', cycles: '556.0M', memory: '1.773MiB')]
     public function benchLintRealistic(): void
     {
         $patterns = $this->meter->exclude(static fn (): array => \array_slice(array_values(BenchCases::realistic()), 0, 100));
@@ -88,7 +88,7 @@ final class LinterBench
     }
 
     #[DataProvider('lintCases')]
-    #[ExpectedFor('always-empty-capture-many-groups', instructions: '7.959M', cycles: '10.23M', memory: '38.28KiB')]
+    #[ExpectedFor('always-empty-capture-many-groups', instructions: '7.602M', cycles: '9.793M', memory: '38.79KiB')]
     public function benchLint(string $pattern): void
     {
         $this->cold(static fn (Regex $regex): array => $regex->lint($pattern))->lint($pattern);

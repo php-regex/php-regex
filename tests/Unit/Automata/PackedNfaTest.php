@@ -92,6 +92,13 @@ final class PackedNfaTest extends TestCase
     #[Test]
     public function test_a_lazy_dfa_builds_only_the_states_reached(): void
     {
+        // What the automata read, as PCRE reads it over the whole subject:
+        // "b+" and the union take "bbb", the window alone does not.
+        $this->assertSame(1, preg_match('/^(?:b+)$/', 'bbb'));
+        $this->assertSame(1, preg_match('/^(?:(a|b)*a(a|b){15}|b+)$/', 'bbb'));
+        $this->assertSame(0, preg_match('/^(?:(a|b)*a(a|b){15})$/', str_repeat('b', 16)));
+        $this->assertSame(1, preg_match('/^(?:(a|b)*a(a|b){15})$/', 'a'.str_repeat('b', 15)));
+
         $window = self::nfa('/(a|b)*a(a|b){15}/');
         [$left, $right] = PackedNfa::packPair(self::nfa('/b+/'), self::nfa('/(a|b)*a(a|b){15}|b+/'));
         $dfa = new LazyDfa($right, 100);
@@ -103,6 +110,31 @@ final class PackedNfaTest extends TestCase
         $this->expectExceptionMessageIsOrContains('DFA state limit exceeded (100).');
         [$left, $right] = PackedNfa::packPair(self::nfa('/[ab]{16}/'), $window);
         (new ProductSearch(new SolverOptions()))->difference($left, new LazyDfa($right, 100));
+    }
+
+    /**
+     * A state that moves on many classes finds the moves of each, wherever
+     * the class sits among them: "[a-z]" cut into a class per letter by the
+     * other side's branches.
+     */
+    #[Test]
+    public function test_a_step_finds_the_moves_of_each_class(): void
+    {
+        $letters = range('a', 'z');
+        [$left] = PackedNfa::packPair(self::nfa('/[a-z]x/'), self::nfa('/'.implode('|', $letters).'/'));
+        $alphabet = $left->alphabet;
+        $moving = $left->closure($left->start)[0];
+
+        $this->assertCount(26, $left->classesFrom($moving));
+        foreach ($letters as $letter) {
+            $this->assertSame(1, preg_match('/^(?:[a-z]x)$/', $letter.'x'));
+            $class = (int) $alphabet->classOf(\ord($letter));
+            $this->assertCount(1, $left->step($moving, $class), $letter);
+        }
+
+        $this->assertSame(0, preg_match('/^(?:[a-z]x)$/', 'Ax'));
+        $this->assertSame([], $left->step($moving, (int) $alphabet->classOf(\ord('A'))));
+        $this->assertSame([], $left->step($moving, (int) $alphabet->classOf(0)));
     }
 
     private static function nfa(string $pattern): Nfa

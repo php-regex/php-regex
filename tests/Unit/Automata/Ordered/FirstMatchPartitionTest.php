@@ -13,10 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Automata\Ordered;
 
+use PHPRegex\Automata\Exception\IncompatibleArgumentException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Ordered\FirstMatchCell;
 use PHPRegex\Automata\Ordered\FirstMatchPartition;
+use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -26,6 +28,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class FirstMatchPartitionTest extends TestCase
 {
+    use PhpUnitForwardCompat;
+
     #[Test]
     public function test_several_earlier_candidates_may_shadow_one_none_of_them_alone(): void
     {
@@ -84,7 +88,7 @@ final class FirstMatchPartitionTest extends TestCase
 
         $this->assertTrue($cells[2]->isShadowedCumulatively());
         $this->assertTrue($cells[3]->reachable);
-        $this->assertSame(['PUT', '/c/'."\0"], $cells[3]->witness, 'A method no earlier candidate takes.');
+        $this->assertSame(['PUT', "/c/\0"], $cells[3]->witness, 'A method no earlier candidate takes.');
     }
 
     #[Test]
@@ -159,6 +163,64 @@ final class FirstMatchPartitionTest extends TestCase
         $this->assertNotNull($cells[0]->refused);
         $this->assertTrue($cells[1]->reachable);
         $this->assertSame([], $cells[1]->takenBy, 'A candidate the solver gave up on shadows nothing.');
+        $this->assertSame([], $cells[1]->unread, 'Nor is it left unread: it is no rival.');
+    }
+
+    #[Test]
+    public function test_a_field_reads_utf8_when_one_of_its_tuples_does(): void
+    {
+        $this->assertSame(1, preg_match('/^é$/u', 'é'));
+        $this->assertSame(1, preg_match('/^a$/', 'a'));
+
+        $cells = (new FirstMatchPartition())->partition([
+            [['/^é$/u']],
+            [['/^é$/u'], ['/^a$/']],
+        ]);
+
+        $this->assertSame([], $cells[1]->unread);
+        $this->assertSame([0 => ['é']], $cells[1]->takenBy);
+        $this->assertSame(['a'], $cells[1]->witness);
+    }
+
+    #[Test]
+    public function test_a_rival_left_unread_leaves_the_next_ones_read(): void
+    {
+        $this->assertSame(1, preg_match('/^\/[a-z]$/', '/a'));
+        $this->assertSame(1, preg_match('/^\/[a-z]$/', '/b'));
+
+        $cells = (new FirstMatchPartition())->partition([
+            [['/^\/é$/u']],
+            [['/^\/a$/']],
+            [['/^\/[a-z]$/']],
+        ]);
+
+        $this->assertSame([0], $cells[2]->unread);
+        $this->assertSame([1 => ['/a']], $cells[2]->takenBy);
+        $this->assertSame(['/b'], $cells[2]->witness);
+    }
+
+    #[Test]
+    public function test_the_first_earlier_candidate_that_takes_all_alone_is_named(): void
+    {
+        $this->assertSame(1, preg_match('/^\/[a-c]$/', '/b'));
+
+        $cells = (new FirstMatchPartition())->partition([
+            [['/^\/[a-z]$/']],
+            [['/^\/[a-c]$/']],
+            [['/^\/b$/']],
+        ]);
+
+        $this->assertFalse($cells[2]->reachable);
+        $this->assertSame(0, $cells[2]->shadowedBy, 'Both take "/b" alone: the first is named.');
+        $this->assertFalse($cells[2]->isShadowedCumulatively());
+    }
+
+    #[Test]
+    public function test_a_tuple_of_no_field_is_refused(): void
+    {
+        $this->expectException(IncompatibleArgumentException::class);
+        $this->expectExceptionMessageIsOrContains('at least one: 0 expected, 0 given.');
+        (new FirstMatchPartition())->partition([[[]]]);
     }
 
     #[Test]
