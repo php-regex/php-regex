@@ -549,7 +549,9 @@ under the `v` flag. For each constraint the command reports:
 - `html_pattern.invalid`: a browser refuses to compile the attribute under
   `v`, and checks nothing: `[a-z0-9-]` (a class under `v` takes `-`
   escaped only), a possessive, an atomic group, `\h`, `\A`, `(?P<name>`,
-  `\Q...\E`, an escape JavaScript does not know;
+  `\Q...\E`, an escape JavaScript does not know, a class or a group never
+  closed, a `)` that closes none (a browser compiles the attribute alone
+  before it wraps it in `^(?:...)$`, so `a)(b` is refused);
 - `html_pattern.misread`: a browser compiles it but reads it otherwise than
   PCRE, a POSIX class as a nested class, `&&` as an intersection, `\v` as
   the vertical tab alone. An explicit `htmlPattern` is written for the

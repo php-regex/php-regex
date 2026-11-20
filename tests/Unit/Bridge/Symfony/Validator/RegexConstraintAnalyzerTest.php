@@ -458,6 +458,56 @@ final class RegexConstraintAnalyzerTest extends TestCase
         $this->assertSame(['html_pattern.invalid', 'error'], [$finding['check'], $finding['severity']]);
     }
 
+    /**
+     * A browser compiles the attribute alone under v before it wraps it in
+     * ^(?:...)$, and checks nothing when that fails: a class or a group
+     * never closed, a ")" that closes none, a "\" that ends it. PCRE
+     * refuses each of them too; Node 22 throws on each:
+     * "Unterminated character class", "Unmatched ')'", "Unterminated
+     * group", "\ at end of pattern".
+     *
+     * @param non-empty-string $message
+     */
+    #[Test]
+    #[DataProvider('provideSyntaxErrors')]
+    public function test_an_html_pattern_pcre_cannot_read_is_reported_when_a_browser_refuses_it(string $html, string $message): void
+    {
+        $this->assertFalse(@preg_match('#'.$html.'#u', ''));
+        $regex = new Regex(pattern: '/^a$/Du', htmlPattern: $html);
+
+        $findings = self::audit([$regex]);
+
+        $this->assertSame([['html_pattern.invalid', 'error']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], $findings));
+        $this->assertSame('A browser refuses to compile the HTML pattern under v, and then checks nothing: '.$message, $findings[0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array{html: string, message: non-empty-string}>
+     */
+    public static function provideSyntaxErrors(): iterable
+    {
+        yield 'a class never closed' => ['html' => '[', 'message' => '[class at 0] Under v a class that is never closed is a syntax error.'];
+        yield 'a class whose "]" is escaped' => ['html' => 'b[a\]', 'message' => '[class at 1] Under v a class that is never closed is a syntax error.'];
+        yield 'a ")" that closes no group' => ['html' => 'a)(b', 'message' => '[group at 1] A ")" that closes no group is a syntax error.'];
+        yield 'a group never closed' => ['html' => 'a(b(c)', 'message' => '[group at 1] A group that is never closed is a syntax error.'];
+        yield 'a "(" in a class closes nothing' => ['html' => '([)]', 'message' => '[group at 0] A group that is never closed is a syntax error.'];
+        yield 'a "\\" that ends the pattern' => ['html' => 'a\\', 'message' => '[escape at 1] A "\\" that ends the pattern is a syntax error.'];
+    }
+
+    /**
+     * What PCRE alone refuses is not said to be refused by a browser: Node
+     * 24 compiles a name two alternatives share under v. The comparison
+     * says it could not run.
+     */
+    #[Test]
+    public function test_an_html_pattern_only_pcre_refuses_stays_unchecked(): void
+    {
+        $regex = new Regex(pattern: '/^a$/Du', htmlPattern: '(?<n>a)|(?<n>b)');
+        $this->assertFalse(@preg_match('#'.(string) $regex->htmlPattern.'#u', ''));
+
+        $this->assertSame([['html_pattern.unchecked', 'notice']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], self::audit([$regex])));
+    }
+
     #[Test]
     public function test_a_refused_attribute_comes_with_one_a_browser_compiles(): void
     {

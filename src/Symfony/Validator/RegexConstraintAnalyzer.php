@@ -230,7 +230,7 @@ final class RegexConstraintAnalyzer
         }
 
         $findings = [];
-        $misread = $this->vModeFindings($html);
+        $misread = $this->vModeFindings($html, $this->parses($pattern));
         if (null === $misread) {
             return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', \sprintf('The HTML pattern writes every delimiter PCRE could read it between (%s): how a browser reads it was not checked.', implode('', self::DELIMITERS)), ['htmlPattern' => $html])];
         }
@@ -520,12 +520,14 @@ final class RegexConstraintAnalyzer
 
     /**
      * What a browser does wrong with the HTML pattern under v, refusing it
-     * or reading it otherwise; nothing when the parser cannot read it, as
-     * the comparison then says so; null when it writes every delimiter.
+     * or reading it otherwise; null when it writes every delimiter. When
+     * the parser cannot read it, only what makes a browser refuse it
+     * whatever else it writes, and only when asked: the comparison says
+     * the rest.
      *
      * @return list<array{offset: int, construct: string, message: string, refused: bool}>|null
      */
-    private function vModeFindings(string $html): ?array
+    private function vModeFindings(string $html, bool $structure = false): ?array
     {
         foreach (self::DELIMITERS as $delimiter) {
             if (str_contains($html, $delimiter)) {
@@ -535,11 +537,70 @@ final class RegexConstraintAnalyzer
             try {
                 return (new VModeCompatibility())->check($this->parser->parse($delimiter.$html.$delimiter.'u'));
             } catch (RegexException) {
-                return [];
+                return $structure ? self::unbalanced($html) : [];
             }
         }
 
         return null;
+    }
+
+    /**
+     * What makes a browser refuse the pattern under v whatever else it
+     * writes: a class or a group never closed, a ")" that closes no group,
+     * a "\" that ends it. Under v a "[" in a class opens a nested class, a
+     * "]" closes one, and no "(" or ")" stands unescaped in a class, nor
+     * any of them in a name, a property or a quantifier.
+     *
+     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     */
+    private static function unbalanced(string $html): array
+    {
+        $classes = [];
+        $groups = [];
+        $length = \strlen($html);
+        for ($i = 0; $i < $length; $i++) {
+            $char = $html[$i];
+            if ('\\' === $char) {
+                if (++$i === $length) {
+                    return [self::refusal($i - 1, 'escape', 'A "\\" that ends the pattern is a syntax error.')];
+                }
+            } elseif ('[' === $char) {
+                $classes[] = $i;
+            } elseif ([] !== $classes) {
+                if (']' === $char) {
+                    array_pop($classes);
+                }
+            } elseif ('(' === $char) {
+                $groups[] = $i;
+            } elseif (')' === $char && null === array_pop($groups)) {
+                return [self::refusal($i, 'group', 'A ")" that closes no group is a syntax error.')];
+            }
+        }
+
+        return match (true) {
+            [] !== $classes => [self::refusal($classes[0], 'class', 'Under v a class that is never closed is a syntax error.')],
+            [] !== $groups => [self::refusal($groups[0], 'group', 'A group that is never closed is a syntax error.')],
+            default => [],
+        };
+    }
+
+    /**
+     * @return array{offset: int, construct: string, message: string, refused: bool}
+     */
+    private static function refusal(int $offset, string $construct, string $message): array
+    {
+        return ['offset' => $offset, 'construct' => $construct, 'message' => $message, 'refused' => true];
+    }
+
+    private function parses(string $pattern): bool
+    {
+        try {
+            $this->parser->parse($pattern);
+
+            return true;
+        } catch (RegexException) {
+            return false;
+        }
     }
 
     /**
