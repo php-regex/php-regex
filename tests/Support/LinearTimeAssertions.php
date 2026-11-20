@@ -14,80 +14,36 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Support;
 
 /**
- * Four times the text must cost about four times the time: a reading that
- * goes back over the rest of the pattern for each unit takes sixteen times
- * as long.
+ * A read that goes back over the rest of the pattern for each unit takes
+ * sixteen times as long for four times the text. The benchmarks under
+ * tests/Benchmark/Tally count that growth, in instructions that repeat from
+ * run to run; here a large read stands under a budget, a tripwire on every
+ * host the suite runs on.
  */
 trait LinearTimeAssertions
 {
     /**
-     * Reads $size units then four times as many, and asserts each read takes
-     * less than the budget and the larger one less than $maxRatio times the
-     * smaller.
+     * Reads four times $size units once and asserts the read takes less than
+     * the budget.
      *
      * The clock is the CPU time of the process, not the wall clock: a
      * process the machine sets aside while it reads (a loaded laptop, a
      * shared runner, the other test processes) is not charged for the wait.
-     * The cycle collector is held while a read is timed: what a run of it
-     * costs is the process's, and the larger read alone sets it off.
-     * The smaller read is read twice, then the two sizes in turns, each
-     * keeping its best reading, and the first turn under the line ends the
-     * measure. A slowed reading only errs one way: the larger one slowed
-     * fails a linear read for one turn, and the next turn reads it again;
-     * the smaller one slowed would pass a quadratic read, and it never
-     * stands alone: it has its twin from the first turn. A linear read so
-     * costs two smaller reads and one larger.
-     *
-     * Four times the units, not two: a linear read takes four times as long
-     * and a quadratic one sixteen, where twice the units gave two and four.
-     * At half the size a quadratic part of the read stands half as high
-     * against the linear one, and the wider gap still puts it past the line:
-     * a read the old measure (twice $size, 3.2) caught at the boundary,
-     * a quadratic part one and a half times the linear one, reads 9.1 here.
-     *
-     * Below a millisecond the clock says more than the read: the ratio of a
-     * smaller read that short is not judged, only the budget.
+     * The cycle collector is held while the read is timed: what a run of it
+     * costs is the process's, not the read's.
      *
      * @param \Closure(int): void $read
-     * @param float|null          $maxRatio the line for four times the units: 8 by default, 9.5 on a shared runner
      */
-    private function assertLinearTime(\Closure $read, int $size, string $what, ?float $maxRatio = null): void
+    private function assertLinearTime(\Closure $read, int $size, string $what): void
     {
-        $shared = false !== getenv('CI') && '' !== getenv('CI');
         // PHP 8.1 on a shared runner reads 4,000 assertion bodies in some six
-        // seconds of CPU time; the budget is a tripwire, the ratio is the measure.
-        $budget = $shared ? 8.0 : 3.0;
-        $maxRatio ??= $shared ? 11.0 : 10.0;
+        // seconds of CPU time.
+        $budget = false !== getenv('CI') && '' !== getenv('CI') ? 8.0 : 3.0;
 
-        $small = self::cpuTime($read, $size);
-        $large = \INF;
-        $readings = [];
-        for ($turn = 0; $turn < 5; $turn++) {
-            $small = min($small, self::cpuTime($read, $size));
-            $large = min($large, self::cpuTime($read, 4 * $size));
-            $readings[] = \sprintf('%.4f s for %d units, %.4f s for %d (%.2f)', $small, $size, $large, 4 * $size, $large / max($small, 1e-6));
-            $this->assertLessThan($budget, $large, \sprintf('%s x %d: %.3f s.', $what, 4 * $size, $large));
-            if ($small < 0.001) {
-                return;
-            }
-
-            if ($large / $small < $maxRatio) {
-                break;
-            }
-        }
-
-        $this->assertLessThan($maxRatio, $large / $small, \sprintf('%s: four times the units took more than %.1f times as long on every turn: %s.', $what, $maxRatio, implode('; ', $readings)));
-    }
-
-    /**
-     * The CPU time of one read, in seconds.
-     *
-     * @param \Closure(int): void $read
-     */
-    private static function cpuTime(\Closure $read, int $size): float
-    {
-        return CpuClock::time(static function () use ($read, $size): void {
-            $read($size);
+        $seconds = CpuClock::time(static function () use ($read, $size): void {
+            $read(4 * $size);
         });
+
+        $this->assertLessThan($budget, $seconds, \sprintf('%s x %d: %.3f s.', $what, 4 * $size, $seconds));
     }
 }

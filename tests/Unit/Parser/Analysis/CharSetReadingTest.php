@@ -226,13 +226,10 @@ final class CharSetReadingTest extends TestCase
     #[Test]
     public function test_the_start_options_are_read_once_for_the_settings_after_them(): void
     {
-        $patterns = [];
-        foreach ([500, 2000] as $size) {
-            $patterns[$size] = RegexParser::create(['cache' => null])->parse('/'.str_repeat('(*LF)', $size).str_repeat('(?s)a(?-s)b', $size).'/');
-        }
+        $pattern = RegexParser::create(['cache' => null])->parse('/'.str_repeat('(*LF)', 4 * 500).str_repeat('(?s)a(?-s)b', 4 * 500).'/');
 
-        $this->assertLinearTime(static function (int $size) use ($patterns): void {
-            CharSetAnalyzer::forRegex($patterns[$size], true)->inForce($patterns[$size]);
+        $this->assertLinearTime(static function () use ($pattern): void {
+            CharSetAnalyzer::forRegex($pattern, true)->inForce($pattern);
         }, 500, 'The sets in force after a run of options');
     }
 
