@@ -4,6 +4,19 @@ CHANGELOG
 2.0
 ---
 
+ * `Language` gains a boolean algebra: `union()`, `intersect()`, `minus()`,
+   `complement()`, `isSubsetOf()` and `shortestExample()`, the least of the
+   shortest strings. A language read as UTF-8 and one read as bytes are
+   refused together (`Exception\IncompatibleArgumentException`, an
+   `InvalidArgumentException`); a product past 100,000
+   pairs of states is refused with the `product` phase.
+ * `Ordered\FirstMatchPartition` reads a first-match list, routes or
+   `access_control` rules, all at once: each candidate keeps the strings no
+   earlier candidate takes, `Eff(i) = L(i) \ (L(1) ∪ ... ∪ L(i - 1))`, with
+   the least shortest string it keeps, the earlier ones that take some of
+   its strings and whether only several of them together take them all. A
+   candidate is a set of tuples of patterns (a method, a scheme, a host, a
+   path), joined by a separator past Unicode, never through their text.
  * `SolverOptions::$strategy` chooses how `intersection()`, `subsetOf()` and
    `equivalent()` search: `SolverStrategy::Lazy`, the default, walks the
    product of the NFAs as it is reached, the right side of an inclusion

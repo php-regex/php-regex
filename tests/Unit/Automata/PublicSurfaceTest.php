@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Exception\IncompatibleArgumentException;
 use PHPRegex\Automata\Language;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
@@ -23,6 +24,8 @@ use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Options\SolverStrategy;
+use PHPRegex\Automata\Ordered\FirstMatchCell;
+use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
@@ -47,6 +50,8 @@ final class PublicSurfaceTest extends TestCase
         SolverOptions::class,
         MatchMode::class,
         SolverStrategy::class,
+        FirstMatchPartition::class,
+        FirstMatchCell::class,
         DeterminizationAlgorithm::class,
         MinimizationAlgorithm::class,
         EquivalenceResult::class,
@@ -62,6 +67,7 @@ final class PublicSurfaceTest extends TestCase
         DfaCacheInterface::class,
         InMemoryDfaCache::class,
         ComplexityException::class,
+        IncompatibleArgumentException::class,
     ];
 
     #[Test]

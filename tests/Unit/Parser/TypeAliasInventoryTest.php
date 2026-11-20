@@ -55,6 +55,7 @@ use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
 use PHPRegex\Symfony\Command\LintCommand as SymfonyLintCommand;
 use PHPRegex\Symfony\Routing\RouteConflictReport;
+use PHPRegex\Symfony\Routing\RouteReachabilityReport;
 use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityFirewallReport;
@@ -130,12 +131,13 @@ final class TypeAliasInventoryTest extends TestCase
         AmbiguityFinder::class => ['Verdict', 'Witness'],
         SecurityAnalyzer::class => ['SkippedFile'],
         SymfonyLintCommand::class => ['RegexOptions'],
+        RouteReachabilityReport::class => ['RouteReach'],
 
         // Exported before the named-shape change and frozen since.
         RailroadLayoutVisitor::class => ['SvgBox', 'SvgLayout', 'SvgMarker', 'SvgNode', 'SvgPath', 'SvgPoint', 'SvgText'],
         LintReport::class => ['FlattenedProblem', 'LintResult', 'LintStats', 'OptimizationEntry'],
         RouteConflictReport::class => ['RouteConflict', 'RouteDescriptor', 'RouteSkip'],
-        SecurityAccessControlReport::class => ['AccessConflict', 'AccessRule', 'AccessSkip'],
+        SecurityAccessControlReport::class => ['AccessConflict', 'AccessCumulative', 'AccessRule', 'AccessSkip'],
         SecurityConfigExtractor::class => ['AccessControlRule', 'FirewallRule'],
         SecurityFirewallReport::class => ['FirewallFinding', 'FirewallSkip'],
     ];

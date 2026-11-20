@@ -16,6 +16,7 @@ namespace PHPRegex\Symfony\Analyzer;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteConflictReport;
 use PHPRegex\Symfony\Routing\RouteConflictSuggestionBuilder;
+use PHPRegex\Symfony\Routing\RouteReachabilityReport;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
@@ -23,6 +24,7 @@ use Symfony\Component\Routing\RouterInterface;
  *
  * @phpstan-import-type RouteConflict from RouteConflictReport
  * @phpstan-import-type RouteDescriptor from RouteConflictReport
+ * @phpstan-import-type RouteReach from RouteReachabilityReport
  */
 final class RoutesAnalyzer implements AnalyzerInterface
 {
@@ -93,6 +95,16 @@ final class RoutesAnalyzer implements AnalyzerInterface
             $issues[] = $this->buildIssue($conflict);
         }
 
+        if ($context->reachability) {
+            $reachability = $this->analyzer->analyzeReachability($collection);
+            $meta['Shadowed together'] = $reachability->stats['cumulative'];
+            $cumulative = $reachability->cumulativelyShadowed();
+            $summary = [...array_values(array_filter($summary, static fn (AnalysisNotice $notice): bool => [] === $cumulative || CheckOutcome::Pass !== $notice->severity)), ...$this->buildReachabilitySummary($reachability)];
+            foreach ($cumulative as $route) {
+                $issues[] = $this->buildReachabilityIssue($route);
+            }
+        }
+
         $suggestions = [];
         if ([] !== $report->conflicts) {
             $suggestions = $this->suggestionBuilder->collect($report->conflicts);
@@ -112,6 +124,10 @@ final class RoutesAnalyzer implements AnalyzerInterface
                 'Path subset checks' => $report->stats['path_subsets'] ?? 0,
                 'Pairs skipped (complexity)' => $report->stats['skipped_pairs'] ?? 0,
             ];
+            if (isset($reachability)) {
+                $debug['Reachability pairs compared'] = $reachability->stats['pairs_compared'];
+                $debug['Reachability routes refused'] = $reachability->stats['refused'];
+            }
             foreach ($report->skippedRoutes as $skip) {
                 $debug['Skipped route '.$skip['route']] = $skip['reason'];
             }
@@ -199,6 +215,41 @@ final class RoutesAnalyzer implements AnalyzerInterface
         }
 
         return $summary;
+    }
+
+    /**
+     * @return list<AnalysisNotice>
+     */
+    private function buildReachabilitySummary(RouteReachabilityReport $report): array
+    {
+        $count = $report->stats['cumulative'];
+        if (0 === $count) {
+            return [new AnalysisNotice(CheckOutcome::Pass, 'No route is shadowed by several earlier routes together.')];
+        }
+
+        return [new AnalysisNotice(CheckOutcome::Fail, \sprintf('%d routes shadowed by several earlier routes together.', $count))];
+    }
+
+    /**
+     * @phpstan-param RouteReach $route
+     */
+    private function buildReachabilityIssue(array $route): AnalysisIssue
+    {
+        $names = [];
+        $details = [new IssueDetail('Route', $route['path'])];
+        foreach ($route['takenBy'] as $earlier) {
+            $names[] = \sprintf('%s (#%d)', $earlier['name'], $earlier['index']);
+            $request = $earlier['example'];
+            $details[] = new IssueDetail('Taken by', \sprintf('%s (#%d) %s: %s %s://%s%s', $earlier['name'], $earlier['index'], $earlier['path'], $request['method'], $request['scheme'], '' === $request['host'] ? 'any-host' : $request['host'], $request['path']));
+        }
+
+        return new AnalysisIssue(
+            'shadowed',
+            CheckOutcome::Fail,
+            \sprintf('%s (#%d) %s %s', $route['name'], $route['index'], self::ARROW_LABEL, implode(' + ', $names)),
+            $details,
+            ['No earlier route takes every request of this one, but together they do: it is unreachable.'],
+        );
     }
 
     /**

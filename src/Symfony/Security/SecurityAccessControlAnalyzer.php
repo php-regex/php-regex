@@ -19,6 +19,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
@@ -35,6 +36,7 @@ use Symfony\Component\HttpFoundation\RequestMatcher\MethodRequestMatcher;
  * @phpstan-import-type AccessRule from SecurityAccessControlReport
  * @phpstan-import-type AccessConflict from SecurityAccessControlReport
  * @phpstan-import-type AccessSkip from SecurityAccessControlReport
+ * @phpstan-import-type AccessCumulative from SecurityAccessControlReport
  * @phpstan-import-type AccessControlRule from SecurityConfigExtractor
  */
 final class SecurityAccessControlAnalyzer
@@ -216,8 +218,14 @@ final class SecurityAccessControlAnalyzer
             }
         }
 
+        $cumulative = $this->cumulativeShadows($descriptors, $options);
+        foreach ($cumulative as $shadow) {
+            $critical += (int) ('critical' === $shadow['severity']);
+        }
+
         $stats = [
             'rules' => $index,
+            'cumulative' => \count($cumulative),
             'conflicts' => \count($conflicts),
             'shadowed' => $shadowed,
             'overlaps' => $overlaps,
@@ -243,7 +251,92 @@ final class SecurityAccessControlAnalyzer
             array_values(array_unique($rulesWithIps)),
             array_values(array_unique($rulesWithNoPath)),
             array_values(array_unique($rulesWithUnsupportedHosts)),
+            $cumulative,
         );
+    }
+
+    /**
+     * The rules several earlier rules shadow together, none of them alone:
+     * access_control applies the first rule whose request matcher holds,
+     * so a rule keeps the requests (a method, a host and a path, joined by
+     * a separator past Unicode) no rule before it takes. A rule matched on
+     * addresses, a port, a route, request attributes or a value read from
+     * the environment may take none of a request's: it shadows nothing.
+     * A path is searched for, as the request matcher does.
+     *
+     * @param list<AccessRule> $rules
+     *
+     * @return list<AccessCumulative>
+     */
+    private function cumulativeShadows(array $rules, SolverOptions $options): array
+    {
+        $candidates = [];
+        $rivals = [];
+        foreach ($rules as $i => $rule) {
+            $candidates[$i] = [] === $rule['methodsTaken'] ? null : [[
+                self::methodPattern($rule['methodsTaken']),
+                $rule['hostPattern'] ?? '{^.*$}s'.(str_contains(DelimitedPattern::fromDelimited($rule['pattern'])->flags, 'u') ? 'u' : ''),
+                $rule['pattern'],
+            ]];
+            $rivals[$i] = [];
+            for ($j = 0; $j < $i; $j++) {
+                if (self::takesEveryRequestItMatches($rules[$j]) && self::methodsOverlap($rules[$j], $rule)) {
+                    $rivals[$i][] = $j;
+                }
+            }
+        }
+
+        try {
+            $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates, $rivals);
+        } catch (ComplexityException|\InvalidArgumentException) {
+            return [];
+        }
+
+        $shadows = [];
+        foreach ($cells as $i => $cell) {
+            if (!$cell->isShadowedCumulatively()) {
+                continue;
+            }
+
+            $takenBy = [];
+            $severity = 'warning';
+            foreach ($cell->takenBy as $j => $example) {
+                $takenBy[] = ['rule' => $rules[$j], 'example' => \sprintf('%s %s%s', $example[0] ?? '', '' === ($example[1] ?? '') ? '' : $example[1].' ', $example[2] ?? '')];
+                if ('critical' === $this->resolveSeverity($rules[$j], $rules[$i], true)) {
+                    $severity = 'critical';
+                }
+            }
+
+            $shadows[] = ['rule' => $rules[$i], 'takenBy' => $takenBy, 'severity' => $severity];
+        }
+
+        return $shadows;
+    }
+
+    /**
+     * Whether a rule takes every request its methods, host and path match:
+     * nothing else it reads may turn one away.
+     *
+     * @phpstan-param AccessRule $rule
+     */
+    private static function takesEveryRequestItMatches(array $rule): bool
+    {
+        return [] === $rule['ips'] && null === $rule['port'] && null === $rule['route'] && [] === $rule['attributes']
+            && [] === $rule['fromEnvironment'] && !$rule['hostUnsupported'] && [] !== $rule['methodsTaken'];
+    }
+
+    /**
+     * @param list<string>|null $methods null for every method
+     */
+    private static function methodPattern(?array $methods): string
+    {
+        if (null === $methods) {
+            return '{^[A-Z]+$}';
+        }
+
+        // Each method as itself: every character a pattern may read as
+        // syntax is escaped, the delimiter braces among them.
+        return '{^(?:'.implode('|', array_map(static fn (string $method): string => addcslashes($method, '\\.+*?[^]$(){}=!<>|:-#/'), $methods)).')$}';
     }
 
     /**

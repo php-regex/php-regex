@@ -33,5 +33,6 @@ final class AnalysisContext
         public readonly bool $skipFirewalls = false,
         public readonly bool $debug = false,
         public readonly ?KernelInterface $kernel = null,
+        public readonly bool $reachability = false,
     ) {}
 }

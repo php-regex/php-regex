@@ -19,6 +19,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
@@ -43,6 +44,7 @@ use Symfony\Component\Routing\RouteCollection;
  * @phpstan-import-type RouteDescriptor from RouteConflictReport
  * @phpstan-import-type RouteConflict from RouteConflictReport
  * @phpstan-import-type RouteSkip from RouteConflictReport
+ * @phpstan-import-type RouteReach from RouteReachabilityReport
  */
 final class RouteConflictAnalyzer
 {
@@ -248,6 +250,24 @@ final class RouteConflictAnalyzer
                     }
                     $notes[] = 'Less specific route declared BEFORE more specific route.';
                 } elseif (($earlierPathInLater && !$laterPathInEarlier) || $laterTakesEarlier) {
+                    // A carve-out, but the earlier route redirects for the
+                    // trailing slash a GET or HEAD request of the later one
+                    // it does not match: "/admin" before a catch-all takes
+                    // "/admin/".
+                    try {
+                        $lost = $this->redirects($earlier, $later) && !(self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options)) ? $this->lostToTheRedirect($earlier, $later, $options) : null;
+                    } catch (ComplexityException) {
+                        $skippedPairs++;
+                        $lost = null;
+                    }
+
+                    if (null !== $lost) {
+                        $overlaps++;
+                        if ($includeOverlaps) {
+                            $conflicts[] = $this->redirected($earlier, $later, 'overlap', $lost, null === $hostsOverlap);
+                        }
+                    }
+
                     continue;
                 } elseif ($this->passesOnTheExample($earlier, $later, $intersection->example)) {
                     $skippedPairs++;
@@ -305,6 +325,109 @@ final class RouteConflictAnalyzer
             array_values(array_unique($routesWithConditions)),
             array_values(array_unique($routesWithUnsupportedHosts)),
         );
+    }
+
+    /**
+     * The requests each route keeps once the routes the matcher tries
+     * before it have taken theirs. A request is a method, a scheme, a host
+     * and a path, joined by a separator past Unicode, never through the
+     * text of their patterns; a route keeps the requests its methods
+     * (HEAD with GET), schemes, host and path match, and, when it takes
+     * GET, takes from the later routes the GET and HEAD requests on any
+     * scheme whose path differs from one of its own by the trailing slash,
+     * which the matcher redirects to whatever route matches the other. A
+     * route several earlier ones shadow together, none of them alone, is
+     * one the pairwise analysis cannot see.
+     *
+     * The routes the matcher looks up by their path come first. A route
+     * with a condition, or with a host the analysis cannot read, may take
+     * nothing: it shadows no other. An earlier route on a host the matcher
+     * may sort after the later one's shadows nothing either.
+     */
+    public function analyzeReachability(RouteCollection $collection): RouteReachabilityReport
+    {
+        $options = new SolverOptions(matchMode: MatchMode::Full, minimizeDfa: false);
+        $lookedUpByPath = self::routesLookedUpByPath($collection);
+        $skipped = $conditions = $hosts = [];
+        /** @var list<RouteDescriptor> $routes */
+        $routes = [];
+        $index = 0;
+        foreach ($collection as $name => $route) {
+            $descriptor = $this->buildDescriptor((string) $name, $route, ++$index, $skipped, $conditions, $hosts, $lookedUpByPath);
+            if (null !== $descriptor) {
+                $routes[] = $descriptor;
+            }
+        }
+
+        usort($routes, static fn (array $left, array $right): int => [!$left['static'], $left['index']] <=> [!$right['static'], $right['index']]);
+
+        $candidates = [];
+        $keeps = [];
+        $rivals = [];
+        $pairs = 0;
+        foreach ($routes as $i => $route) {
+            $candidates[$i] = $this->requestsOf($route);
+            if (null !== $candidates[$i]) {
+                // A path it redirects for the slash is one no later route
+                // gets, and one it does not serve either.
+                $keeps[$i] = [$candidates[$i][0]];
+            }
+
+            $rivals[$i] = [];
+            if (null === $candidates[$i]) {
+                continue;
+            }
+
+            for ($j = 0; $j < $i; $j++) {
+                $earlier = $routes[$j];
+                if (null === $candidates[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier['host'], $route['host'])) {
+                    continue;
+                }
+
+                $rivals[$i][] = $j;
+                $pairs++;
+            }
+        }
+
+        $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates, $rivals, $keeps);
+
+        $reach = [];
+        $unreachable = $cumulative = $refused = 0;
+        foreach ($routes as $i => $route) {
+            $cell = $cells[$i] ?? null;
+            if (null === $cell) {
+                continue;
+            }
+
+            $takenBy = [];
+            foreach ($cell->takenBy as $j => $example) {
+                $takenBy[] = ['name' => $routes[$j]['name'], 'index' => $routes[$j]['index'], 'path' => $routes[$j]['path'], 'example' => self::request($example)];
+            }
+
+            $reach[] = [
+                'name' => $route['name'],
+                'index' => $route['index'],
+                'path' => $route['path'],
+                'reachable' => $cell->reachable,
+                'example' => null === $cell->witness ? null : self::request($cell->witness),
+                'takenBy' => $takenBy,
+                'cumulative' => $cell->isShadowedCumulatively(),
+                'refused' => $cell->refused,
+            ];
+            $unreachable += (int) !$cell->reachable;
+            $cumulative += (int) $cell->isShadowedCumulatively();
+            $refused += (int) (null !== $cell->refused);
+        }
+
+        return new RouteReachabilityReport($reach, [
+            'routes' => $index,
+            'analyzed' => \count($reach),
+            'unreachable' => $unreachable,
+            'cumulative' => $cumulative,
+            'refused' => $refused,
+            'skipped_routes' => \count($skipped),
+            'pairs_compared' => $pairs,
+        ]);
     }
 
     /**
@@ -761,11 +884,51 @@ final class RouteConflictAnalyzer
             return $this->redirected($earlier, $later, 'overlap', $redirected->example, $hostsUnread);
         }
 
+        // The shortest path redirected is one the later route serves: the
+        // least path it loses, if any, is one the earlier route redirects,
+        // does not match as is, and whose landing the later route does not
+        // serve: (L ∩ swapped(E)) \ E \ swapped(L).
+        $lost = $this->lostToTheRedirect($earlier, $later, $options, true);
+        if (null === $lost) {
+            return null;
+        }
+
+        $landing = self::landing($lost);
+        if (null === $landing || !$this->sharesAString($later['pathPattern'], '^'.preg_quote($landing, '{').'$', $options) || self::capturesWithoutTheSlash($later, $landing)) {
+            return $this->redirected($earlier, $later, 'overlap', $lost, $hostsUnread);
+        }
+
         if (!$earlier['static'] && (!$this->solver->subsetOf($earlier['pathPattern'], $later['pathPattern'], $options)->isSubset || (str_ends_with($landing, '/') && $this->readsOwnPathsForTheSlash($later, $options)))) {
             $skippedPairs++;
         }
 
         return null;
+    }
+
+    /**
+     * The least path of the later route that the earlier one redirects
+     * for its trailing slash and does not match as is: (L ∩ swapped(E)) \ E,
+     * read on the languages of the two routes, null when there is none or
+     * when one path is read as UTF-8 and the other as bytes. Unless served,
+     * a path whose landing the later route matches is left out too, as
+     * the later route keeps it on schemes of its own: \ swapped(L).
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @throws ComplexityException When the solver gives up on the paths
+     */
+    private function lostToTheRedirect(array $earlier, array $later, SolverOptions $options, bool $unlessServed = false): ?string
+    {
+        try {
+            $lost = $this->solver->language($later['pathPattern'], $options)
+                ->intersect($this->solver->language($earlier['redirectPattern'], $options))
+                ->minus($this->solver->language($earlier['pathPattern'], $options));
+
+            return ($unlessServed ? $lost->minus($this->solver->language($later['redirectPattern'], $options)) : $lost)->shortestExample();
+        } catch (\InvalidArgumentException) {
+            return null;
+        }
     }
 
     /**
@@ -899,6 +1062,56 @@ final class RouteConflictAnalyzer
         $value = [] === $values ? null : end($values);
 
         return !\is_string($value) || ('' !== $value && !str_ends_with($value, '/'));
+    }
+
+    /**
+     * The requests a route takes, as tuples of patterns: a method, a
+     * scheme, a host and a path. Null when it takes none for certain (no
+     * method or no scheme it accepts) or when its host cannot be read.
+     *
+     * @phpstan-param RouteDescriptor $route
+     *
+     * @return list<list<string>>|null
+     */
+    private function requestsOf(array $route): ?array
+    {
+        if (self::NO_REQUEST === $route['methods'] || self::NO_REQUEST === $route['schemes'] || $route['hostUnsupported']) {
+            return null;
+        }
+
+        $unicode = str_contains(DelimitedPattern::fromDelimited($route['pathPattern'])->flags, 'u');
+        $host = $route['hasHostRequirement'] ? $route['hostPattern'] : '{^.*$}s'.($unicode ? 'u' : '');
+        $methods = \in_array('GET', $route['methods'], true) ? [...$route['methods'], 'HEAD'] : $route['methods'];
+        $requests = [[self::listOf($methods, '[A-Z]+'), self::listOf($route['schemes'], '[a-z][a-z0-9+.\-]*'), $host, $route['pathPattern']]];
+        if ($this->listHolds($route['methods'], ['GET'])) {
+            $requests[] = [self::listOf(['GET', 'HEAD'], ''), self::listOf([], '[a-z][a-z0-9+.\-]*'), $host, $route['redirectPattern']];
+        }
+
+        return $requests;
+    }
+
+    /**
+     * The pattern of one of the words, or of any word when none is listed.
+     *
+     * @param array<int, string> $words
+     */
+    private static function listOf(array $words, string $any): string
+    {
+        if ([] === $words) {
+            return '{^'.$any.'$}';
+        }
+
+        return '{^(?:'.implode('|', array_map(static fn (string $word): string => preg_quote($word, '{'), array_values(array_unique($words)))).')$}';
+    }
+
+    /**
+     * @param list<string> $parts
+     *
+     * @return array{method: string, scheme: string, host: string, path: string}
+     */
+    private static function request(array $parts): array
+    {
+        return ['method' => $parts[0] ?? '', 'scheme' => $parts[1] ?? '', 'host' => $parts[2] ?? '', 'path' => $parts[3] ?? ''];
     }
 
     private function resolveHostRegex(CompiledRoute $compiled): ?string

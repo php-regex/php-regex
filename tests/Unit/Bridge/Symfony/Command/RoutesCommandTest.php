@@ -63,6 +63,49 @@ final class RoutesCommandTest extends TestCase
     }
 
     #[Test]
+    public function test_reachability_reports_a_route_several_earlier_routes_shadow_together(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('show', new Route('/c/{id}', methods: ['GET']));
+        $collection->add('update', new Route('/c/{id}', methods: ['POST']));
+        $collection->add('both', new Route('/c/{id}', methods: ['GET', 'POST']));
+
+        $router = $this->createStub(RouterInterface::class);
+        $router->method('getRouteCollection')->willReturn($collection);
+        $command = new RoutesCommand(new RouteConflictAnalyzer(Regex::create()), new RouteConflictSuggestionBuilder(), $router);
+
+        $tester = new CommandTester($command);
+        $this->assertSame(0, $tester->execute([]), 'No pair of routes tells it.');
+        $this->assertStringContainsString('No route conflicts detected.', (string) $tester->getDisplay());
+
+        $status = $tester->execute(['--reachability' => true]);
+        $display = (string) $tester->getDisplay();
+
+        $this->assertSame(1, $status);
+        $this->assertStringContainsString('1 routes shadowed by several earlier routes together.', $display);
+        $this->assertStringContainsString('both (#3)', $display);
+        $this->assertStringContainsString('show (#1) + update (#2)', $display);
+        $this->assertStringNotContainsString('No route conflicts detected.', $display);
+    }
+
+    #[Test]
+    public function test_reachability_passes_routes_each_keeping_a_request(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('show', new Route('/c/{id}', methods: ['GET']));
+        $collection->add('any', new Route('/c/{id}'));
+
+        $router = $this->createStub(RouterInterface::class);
+        $router->method('getRouteCollection')->willReturn($collection);
+        $command = new RoutesCommand(new RouteConflictAnalyzer(Regex::create()), new RouteConflictSuggestionBuilder(), $router);
+
+        $tester = new CommandTester($command);
+
+        $this->assertSame(0, $tester->execute(['--reachability' => true]));
+        $this->assertStringContainsString('No route is shadowed by several earlier routes together.', (string) $tester->getDisplay());
+    }
+
+    #[Test]
     public function test_command_succeeds_when_no_conflicts(): void
     {
         $collection = new RouteCollection();

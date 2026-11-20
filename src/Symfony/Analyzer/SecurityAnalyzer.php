@@ -29,6 +29,7 @@ use PHPRegex\Symfony\Security\SecurityFirewallReport;
  *
  * @phpstan-import-type AccessConflict from SecurityAccessControlReport
  * @phpstan-import-type AccessRule from SecurityAccessControlReport
+ * @phpstan-import-type AccessCumulative from SecurityAccessControlReport
  * @phpstan-import-type FirewallFinding from SecurityFirewallReport
  * @phpstan-import-type AccessControlRule from SecurityConfigExtractor
  * @phpstan-import-type FirewallRule from SecurityConfigExtractor
@@ -189,6 +190,9 @@ final class SecurityAnalyzer implements AnalyzerInterface
             'Overlaps' => $report->stats['overlaps'],
             'Critical' => $report->stats['critical'],
         ];
+        if ([] !== $report->cumulative) {
+            $meta['Shadowed together'] = \count($report->cumulative);
+        }
 
         $warnings = $this->buildAccessWarnings($report, $skippedFiles);
         $summary = $this->buildAccessSummary($report, $context->includeOverlaps);
@@ -196,6 +200,10 @@ final class SecurityAnalyzer implements AnalyzerInterface
         $issues = [];
         foreach ($report->conflicts as $conflict) {
             $issues[] = $this->buildAccessIssue($conflict, $pathHelper);
+        }
+
+        foreach ($report->cumulative as $shadow) {
+            $issues[] = $this->buildCumulativeIssue($shadow, $pathHelper);
         }
 
         $suggestions = [];
@@ -308,8 +316,9 @@ final class SecurityAnalyzer implements AnalyzerInterface
         $shadowed = $report->stats['shadowed'];
         $overlaps = $report->stats['overlaps'];
         $critical = $report->stats['critical'];
+        $cumulative = \count($report->cumulative);
 
-        if (0 === $shadowed && 0 === $overlaps) {
+        if (0 === $shadowed && 0 === $overlaps && 0 === $cumulative) {
             $summary[] = new AnalysisNotice(CheckOutcome::Pass, 'No access_control conflicts detected.');
 
             return $summary;
@@ -326,6 +335,13 @@ final class SecurityAnalyzer implements AnalyzerInterface
             $summary[] = new AnalysisNotice(
                 CheckOutcome::Fail,
                 \sprintf('%d shadowed rules detected.', $shadowed),
+            );
+        }
+
+        if ($cumulative > 0) {
+            $summary[] = new AnalysisNotice(
+                CheckOutcome::Fail,
+                \sprintf('%d rules shadowed by several earlier rules together.', $cumulative),
             );
         }
 
@@ -379,6 +395,28 @@ final class SecurityAnalyzer implements AnalyzerInterface
             $title,
             $details,
             $conflict['notes'],
+        );
+    }
+
+    /**
+     * @phpstan-param AccessCumulative $shadow
+     */
+    private function buildCumulativeIssue(array $shadow, RelativePathHelper $pathHelper): AnalysisIssue
+    {
+        $rule = $shadow['rule'];
+        $names = [];
+        $details = [new IssueDetail('Rule', $this->formatRuleSummary($rule, $pathHelper))];
+        foreach ($shadow['takenBy'] as $earlier) {
+            $names[] = \sprintf('#%d', $earlier['rule']['index']);
+            $details[] = new IssueDetail('Taken by', \sprintf('%s, e.g. %s', $this->formatRuleSummary($earlier['rule'], $pathHelper), $earlier['example']));
+        }
+
+        return new AnalysisIssue(
+            'shadowed',
+            'critical' === $shadow['severity'] ? CheckOutcome::Critical : CheckOutcome::Fail,
+            \sprintf('#%d (%s) %s %s', $rule['index'], $this->formatLocation($pathHelper, $rule['file'], $rule['line']), self::ARROW_LABEL, implode(' + ', $names)),
+            $details,
+            ['No earlier rule takes every request of this one, but together they do: it never applies.'],
         );
     }
 

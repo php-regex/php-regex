@@ -465,6 +465,19 @@ final class LanguageSolver
     }
 
     /**
+     * The NFA of a pattern, its lookarounds read into it, under the match
+     * mode of the options.
+     *
+     * @internal
+     *
+     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     */
+    public function nfa(string $pattern, ?SolverOptions $options = null): Nfa
+    {
+        return $this->buildNfa($pattern, $this->parser->parse($pattern), $options ?? new SolverOptions());
+    }
+
+    /**
      * The key a compiled DFA is stored under.
      *
      * The PHP and PCRE2 judged decide what the pattern means: "{,2}" repeats
