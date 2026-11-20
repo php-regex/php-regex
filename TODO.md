@@ -7,15 +7,6 @@
   `Coverage and Mutations` job stops at a covered MSI of 64%, under the
   90% it requires.
 
-## PHP 8.6.0
-
-- `docs/_articles/which-pcre2-ships-with-which-php.md` still reads 8.6 as a
-  candidate: its table row ("planned for 2026-11-19", "10.44 in 8.6.0RC3"),
-  the chart's label, the sentence on the 8.6.0 release candidate, and the
-  `8.6-rc` command with its output. 8.6.0 came out on 2026-11-19 with PCRE2
-  10.44: run the article's matrix script on `php:8.6-cli` and write what it
-  prints.
-
 ## Before 2.0.0, a pull request of its own
 
 - The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
