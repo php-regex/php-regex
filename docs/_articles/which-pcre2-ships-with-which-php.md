@@ -1,6 +1,6 @@
 ---
 date: 2026-07-14 15:47:00 +00:00
-last_modified_at: 2026-10-16 12:00:00 +00:00
+last_modified_at: 2026-11-20 12:00:00 +00:00
 author: younes
 published: false
 tags: [PCRE2, Compatibility]
@@ -66,10 +66,10 @@ PHP carries its own copy of PCRE2, and each release picks one version of it. Tha
 | 8.3 | 2023-11-23 | 10.42 | none | 8.3.35 |
 | 8.4 | 2024-11-21 | 10.44 | none | 8.4.26 |
 | 8.5 | 2025-11-20 | 10.44 | none | 8.5.11 |
-| 8.6 | planned for 2026-11-19 | 10.44 in 8.6.0RC3 | — | 8.6.0RC3 |
+| 8.6 | 2026-11-19 | 10.44 | none | 8.6.0 |
 
 <figure class="pipeline-figure" role="group" aria-labelledby="timeline-chart-caption">
-<svg viewBox="0 0 640 250" role="img" aria-label="Step chart of the PCRE2 version each PHP release bundles, from 10.32 in PHP 7.3 up to 10.44 in PHP 8.4, then flat through 8.5 and the 8.6 release candidate.">
+<svg viewBox="0 0 640 250" role="img" aria-label="Step chart of the PCRE2 version each PHP release bundles, from 10.32 in PHP 7.3 up to 10.44 in PHP 8.4, then flat through 8.5 and 8.6.">
   <title>The engine staircase, and its flat tail</title>
   <g stroke="var(--line-soft)" stroke-width="1">
     <line x1="70" y1="190" x2="610" y2="190"/>
@@ -107,12 +107,12 @@ PHP carries its own copy of PCRE2, and each release picks one version of it. Tha
     <text x="407.5" y="212">8.3</text>
     <text x="475" y="212">8.4</text>
     <text x="542.5" y="212">8.5</text>
-    <text x="610" y="212">8.6&thinsp;RC</text>
+    <text x="610" y="212">8.6</text>
     <text x="340" y="238">the engine each PHP bundles at its .0 release</text>
   </g>
 </svg>
 <figcaption id="timeline-chart-caption">
-  Every PHP climbs one step of the staircase; from 8.4 on, nobody has &mdash; the amber tail is two releases and a candidate long, and no PHP has ever bundled a PCRE2 newer than 10.44. The two mid-series bumps (7.4 twice, 8.1 once) are in the table above.
+  Every PHP climbs one step of the staircase; from 8.4 on, nobody has &mdash; the amber tail is three releases long, and no PHP has ever bundled a PCRE2 newer than 10.44. The two mid-series bumps (7.4 twice, 8.1 once) are in the table above.
 </figcaption>
 </figure>
 
@@ -122,7 +122,7 @@ A few things stand out.
 
 **Most series keep one engine for life.** Only two changed it after their first release: 7.4 (twice) and 8.1 (once, in 8.1.1). For every other series, the patch number makes no difference.
 
-**The staircase stops at 10.44**, released on 7 June 2024. PHP 8.5 kept it, and so does the 8.6.0 release candidate. Today, a newer engine can only reach PHP through your system, as the next sections show.
+**The staircase stops at 10.44**, released on 7 June 2024. PHP 8.5 kept it, and so did PHP 8.6. Today, a newer engine can only reach PHP through your system, as the next sections show.
 
 ## Which PCRE2 does my PHP run?
 
@@ -210,7 +210,7 @@ int(1)
 
 PHP 8.2, with PCRE2 10.40, accepts it and matches. Branches of *different* fixed lengths were always allowed. What PCRE2 10.43 added is a single branch whose own length varies, like `a{1,3}` or `ab?`.
 
-> **Note:** a lookbehind with no maximum length, such as `(?<=a+)`, is refused on every PHP version, 8.5 included. From PHP 8.4 the error says "length of lookbehind assertion is not limited"; older versions give the same "not fixed length" error as above. PCRE2 10.43 allows a length that varies, but it still needs a maximum.
+> **Note:** a lookbehind with no maximum length, such as `(?<=a+)`, is refused on every PHP version, 8.6 included. From PHP 8.4 the error says "length of lookbehind assertion is not limited"; older versions give the same "not fixed length" error as above. PCRE2 10.43 allows a length that varies, but it still needs a maximum.
 
 ## Same engine, new rule: `\K` in PHP 8.5
 
@@ -332,7 +332,7 @@ If your servers link a system PCRE2, add `--pcre-version=10.46` (or whatever `PC
 
 ## In short
 
-- Your PHP version picks the bundled PCRE2: 10.40 on PHP 8.2, 10.42 on 8.3, 10.44 on 8.4 and 8.5. No PHP release bundles anything newer.
+- Your PHP version picks the bundled PCRE2: 10.40 on PHP 8.2, 10.42 on 8.3, 10.44 on 8.4, 8.5 and 8.6. No PHP release bundles anything newer.
 - A PHP linked to a system PCRE2 runs that library instead, so the same PHP version can run different engines.
 - `PCRE_VERSION` names the engine; `phpversion('pcre')` only repeats the PHP version.
 - "lookbehind assertion is not fixed length" means an engine older than 10.43: split the lookbehind into fixed-length branches.
@@ -342,7 +342,7 @@ Other constructs depend on the PCRE2 release too, such as loose `\p{...}` proper
 
 ## How I checked this
 
-The table was checked on 16 October 2026 in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag, and on the PHP-8.6 branch. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
+The table was checked on 16 October 2026, and its PHP 8.6 row on 20 November 2026, the day after 8.6.0 came out. Each check was made in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
 
 ```php
 <?php
@@ -362,13 +362,14 @@ printf(
 {: data-file="matrix.php" data-copy="" }
 
 ```console
-$ for v in 8.1 8.2 8.3 8.4 8.5 8.6-rc; do docker run --rm -i php:$v-cli php < matrix.php; done
+$ for v in 8.1 8.2 8.3 8.4 8.5; do docker run --rm -i php:$v-cli php < matrix.php; done
 8.1.34    10.39 2021-10-29  ranged=false split=1     keep=1
 8.2.34    10.40 2022-04-14  ranged=false split=1     keep=1
 8.3.35    10.42 2022-12-12  ranged=false split=1     keep=1
 8.4.26    10.44 2024-06-07  ranged=1     split=1     keep=1
 8.5.11    10.44 2024-06-07  ranged=1     split=1     keep=false
-8.6.0RC3  10.44 2024-06-07  ranged=1     split=1     keep=false
+$ docker run --rm -i php:8.6-cli php < matrix.php
+8.6.0     10.44 2024-06-07  ranged=1     split=1     keep=false
 ```
 {: data-copy="" }
 
@@ -383,5 +384,5 @@ If you would rather check than trust:
 - [php-src on GitHub](https://github.com/php/php-src): each release tag holds the bundled engine's version in `ext/pcre/pcre2lib/pcre2.h`. The tag, not a changelog entry, is the primary source for what a release ships.
 - [PHP 8.5.0 UPGRADING](https://github.com/php/php-src/blob/php-8.5.0/UPGRADING): the PCRE entry that drops `PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK`.
 - [The PCRE2 ChangeLog](https://github.com/PCRE2Project/pcre2/blob/main/ChangeLog): release dates, the 10.43 entry adding variable-length lookbehind, the 10.38 entry locking out `\K` in lookarounds.
-- [PHP 8.6 timetable](https://wiki.php.net/todo/php86): the planned release date.
+- [PHP 8.6 release announcement](https://www.php.net/releases/8.6/en.php): the release of 8.6.0 on 19 November 2026.
 - [PCRE constants on php.net](https://www.php.net/manual/en/pcre.constants.php): `PCRE_VERSION`, `PCRE_VERSION_MAJOR` and `PCRE_VERSION_MINOR`.
