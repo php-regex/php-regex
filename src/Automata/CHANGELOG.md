@@ -12,7 +12,8 @@ CHANGELOG
  * An atomic group or `\R` that commits to nothing reads as its body:
    `^(?>\d+)-x$` is equivalent to `^\d+-x$`, and `^a\Rb$` is answered. A
    commitment that keeps a match a follower needs, `^(?>a|ab)c$`, stays
-   refused.
+   refused, and so does one a lookbehind ends with that a character may
+   take further, `(?<=\R)`.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * `equivalent()`, `intersection()` and `subsetOf()` compare a pattern read

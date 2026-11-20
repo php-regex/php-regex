@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\Exception\TranspileException;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 final class JavaScriptCommitmentTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     /**
@@ -116,6 +118,40 @@ final class JavaScriptCommitmentTest extends TestCase
         yield 'a line end under m' => ['pattern' => '/^\s++$/m', 'plain' => '/^\s+$/m', 'subject' => " \n x", 'message' => $possessive];
         yield 'a lazy run repeated in an atomic group' => ['pattern' => '/(?>(?:a+?){2})b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $atomic];
         yield 'a lazy run repeated possessively' => ['pattern' => '/(?:a+?){2}+b/', 'plain' => '/(?:a+?){2}b/', 'subject' => 'aaab', 'message' => $possessive];
+    }
+
+    /**
+     * A lookbehind's body must end where the lookbehind stands. The
+     * interpreter lets a commitment the body ends with run past that place
+     * and fail there, where the plain spelling stops in time; the JIT does
+     * not. Refused, never printed plain.
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindCommitments')]
+    public function test_refuses_a_commitment_a_lookbehind_ends_with(string $pattern, string $plain, string $subject, string $message): void
+    {
+        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+
+        $interpreted = static fn (string $pattern): string => $pattern[0].'(*NO_JIT)'.substr($pattern, 1);
+        $this->assertNotSame(self::span($interpreted($plain), $subject), self::span($interpreted($pattern), $subject), $pattern.' on '.json_encode($subject));
+
+        foreach (['javascript', 'html-pattern'] as $target) {
+            try {
+                Regex::create(['cache' => null])->transpile($pattern, $target);
+                $this->fail($pattern.' was printed for '.$target.'.');
+            } catch (TranspileException $exception) {
+                $this->assertStringContainsString($message, $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subject: string, message: string}>
+     */
+    public static function provideLookbehindCommitments(): iterable
+    {
+        yield 'a line break' => ['pattern' => '/(?<=\R)/', 'plain' => '/(?<=(?:\r\n|[\n\x0B\f\r\x85]))/', 'subject' => "\r\n", 'message' => 'Unsupported character type in JavaScript: \R.'];
+        yield 'a bounded run' => ['pattern' => '/(?<=a{1,2}+)/', 'plain' => '/(?<=a{1,2})/', 'subject' => 'aa', 'message' => 'Possessive quantifiers are not supported in JavaScript.'];
     }
 
     /**

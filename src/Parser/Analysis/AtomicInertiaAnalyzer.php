@@ -25,6 +25,7 @@ use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\RepetitionHir;
 
 /**
@@ -69,6 +70,12 @@ use PHPRegex\Parser\Hir\RepetitionHir;
  * newline "\n"'s: under another convention, "(*CRLF)" first, a run that
  * takes the "\r" of a final "\r\n" leaves a "\n" no line ends before, so
  * "\Z" and "$" prove nothing there.
+ *
+ * A lookahead's body ends where it ends, and needs nothing after it. A
+ * lookbehind's body must end where the lookbehind stands: PCRE2's
+ * interpreter lets a commitment run past that place and fail, its JIT
+ * reads the subject as ending there, and only a commitment that cannot run
+ * on reads the same under both.
  *
  * @internal
  */
@@ -230,6 +237,19 @@ final class AtomicInertiaAnalyzer
     }
 
     /**
+     * What follows the end of a lookaround's body. A lookahead's body needs
+     * nothing after it: an empty set. A lookbehind's body must end where
+     * the lookbehind stands, and the interpreter lets a commitment run past
+     * that place and fail there, where its plain spelling stops in time:
+     * "(?<=\R)" does not hold between "\r" and "\n". Whatever character
+     * stands there may follow, so every character does.
+     */
+    public function lookaroundBodyFollow(LookHir $look): CharSet
+    {
+        return LookKind::Behind === $look->kind || LookKind::NegativeBehind === $look->kind ? CharSet::universe(true) : CharSet::empty();
+    }
+
+    /**
      * Every commitment of the tree the rule proves, by the position it
      * starts at: what a printer for an engine without possessive
      * quantifiers or atomic groups may spell as greedy and plain. The end
@@ -256,8 +276,7 @@ final class AtomicInertiaAnalyzer
     private function collect(Hir $node, ?CharSet $follow, array &$possessives, array &$atomics): void
     {
         if ($node instanceof LookHir) {
-            // The body is read where the lookaround stands, and ends there.
-            $this->collectSequence([$node->body], CharSet::empty(), $possessives, $atomics);
+            $this->collectSequence([$node->body], $this->lookaroundBodyFollow($node), $possessives, $atomics);
 
             return;
         }

@@ -18,6 +18,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -25,6 +26,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LanguageSolverSoundnessTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
     #[Test]
@@ -235,6 +237,33 @@ final class LanguageSolverSoundnessTest extends TestCase
 
         $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/', '/^a(?:\r\n|[\n\x0B\f\r\x85])b$/')->isEquivalent);
         $this->assertTrue((new LanguageSolver())->equivalent('/^a\Rb$/u', '/^a(?:\r\n|[\n\x0B\f\r\x{85}\x{2028}\x{2029}])b$/u')->isEquivalent);
+    }
+
+    /**
+     * A lookbehind's body must end where the lookbehind stands. The
+     * interpreter lets "\R" take the "\n" after that place and fail, where
+     * the alternation stops at the "\r"; the JIT does not. A commitment a
+     * lookbehind ends with is refused unless it cannot run on: before a
+     * letter, "\R" still reads as the alternation.
+     */
+    #[Test]
+    public function test_a_commitment_a_lookbehind_ends_with_is_refused(): void
+    {
+        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+
+        $this->assertSame(0, preg_match('/(*NO_JIT)^\r(?<=\R)\n$/', "\r\n"));
+        $this->assertSame(1, preg_match('/(*NO_JIT)^\r(?<=(?:\r\n|[\n\x0B\f\r\x85]))\n$/', "\r\n"));
+
+        foreach (["\r\nx", "\nx", "\rx", "\r\rx", 'x'] as $subject) {
+            $this->assertSame(preg_match('/(*NO_JIT)^[\r\n]*x(?<=(?:\r\n|[\n\x0B\f\r\x85])x)$/', $subject), preg_match('/(*NO_JIT)^[\r\n]*x(?<=\Rx)$/', $subject), (string) json_encode($subject));
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent('/^[\r\n]*x(?<=\Rx)$/', '/^[\r\n]*x(?<=(?:\r\n|[\n\x0B\f\r\x85])x)$/')->isEquivalent);
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('Atomic groups commit to their first match');
+
+        (new LanguageSolver())->equivalent('/^\r(?<=\R)\n$/', '/^\r(?<=(?:\r\n|[\n\x0B\f\r\x85]))\n$/');
     }
 
     /**

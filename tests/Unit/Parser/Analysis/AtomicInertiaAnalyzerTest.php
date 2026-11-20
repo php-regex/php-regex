@@ -20,6 +20,7 @@ use PHPRegex\Parser\Hir\ConcatHir;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -34,6 +35,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class AtomicInertiaAnalyzerTest extends TestCase
 {
+    use PcreGates;
+
     /**
      * @param list<int>                                  $possessives
      * @param list<int>                                  $atomics
@@ -156,6 +159,43 @@ final class AtomicInertiaAnalyzerTest extends TestCase
     }
 
     /**
+     * A lookbehind's body must end where the lookbehind stands. The
+     * interpreter lets a commitment run past that place and fail there,
+     * where its plain spelling stops in time: "(?<=\R)" does not hold
+     * between "\r" and "\n". The JIT reads the subject as ending there and
+     * holds it. A commitment the body ends with is proven only when it
+     * cannot run on, whatever stands after the lookbehind.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideLookbehindEnds')]
+    public function test_reads_a_lookbehind_as_ending_before_any_character(string $pattern, string $plain, array $subjects, bool $inert): void
+    {
+        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+
+        $parting = array_filter($subjects, static fn (string $subject): bool => self::span(self::interpreted($pattern), $subject) !== self::span(self::interpreted($plain), $subject));
+        $this->assertSame($inert, [] === $parting, $pattern.' against '.$plain.' under the interpreter');
+
+        $this->assertSame(!$inert, self::inert($pattern, false)->isEmpty(), $pattern.' searched');
+        $this->assertSame(!$inert, self::inert($pattern, true)->isEmpty(), $pattern.' over a whole subject');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subjects: list<string>, inert: bool}>
+     */
+    public static function provideLookbehindEnds(): iterable
+    {
+        yield 'a line break' => ['pattern' => '/(?<=\R)/', 'plain' => '/(?<=(?:\r\n|[\n\x0B\f\r\x85]))/', 'subjects' => ["\r\n", "a\r\nb", "\n"], 'inert' => false];
+        yield 'a bounded run' => ['pattern' => '/(?<=a{1,2}+)/', 'plain' => '/(?<=a{1,2})/', 'subjects' => ['aa', 'a', 'ba'], 'inert' => false];
+        yield 'a longer branch first' => ['pattern' => '/(?<=(?>ab|a))/', 'plain' => '/(?<=(?:ab|a))/', 'subjects' => ['ab', 'a'], 'inert' => false];
+        yield 'a line break after a letter' => ['pattern' => '/(?<=x\R)/', 'plain' => '/(?<=x(?:\r\n|[\n\x0B\f\r\x85]))/', 'subjects' => ["x\r\n", "x\n"], 'inert' => false];
+        yield 'a negative lookbehind' => ['pattern' => '/\r(?<!\R)/', 'plain' => '/\r(?<!(?:\r\n|[\n\x0B\f\r\x85]))/', 'subjects' => ["\r\n", "\r"], 'inert' => false];
+        yield 'a line break before a letter' => ['pattern' => '/(?<=\Rx)/', 'plain' => '/(?<=(?:\r\n|[\n\x0B\f\r\x85])x)/', 'subjects' => ["\r\nx", "\nx", "\rx", "\r\rx", 'x'], 'inert' => true];
+        yield 'a fixed atomic body' => ['pattern' => '/(?<=(?>ab))/', 'plain' => '/(?<=(?:ab))/', 'subjects' => ['ab', 'abab', 'a'], 'inert' => true];
+    }
+
+    /**
      * What follows each part of a sequence is worked out in one pass from
      * its end: the first characters of the next part, through the parts
      * that may be skipped, then what follows the sequence. Under a search,
@@ -218,6 +258,14 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         $hir = (new HirTranslator())->translate(RegexParser::create()->parse($pattern));
 
         return (new AtomicInertiaAnalyzer($wholeSubject))->inertCommitments($hir);
+    }
+
+    /**
+     * The pattern read by the interpreter, whatever pcre.jit says.
+     */
+    private static function interpreted(string $pattern): string
+    {
+        return $pattern[0].'(*NO_JIT)'.substr($pattern, 1);
     }
 
     /**

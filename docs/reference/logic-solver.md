@@ -465,6 +465,13 @@ Two refinements inside those rules:
   starts: `/(?>ab|a)c/` holds, `/(?>a|ab)c/` is refused. `\R` is the atomic
   group `(?>\r\n|\v)` to PCRE: it holds unless a `\n` may follow it.
 
+  A lookbehind's body must end where the lookbehind stands, and PCRE2's
+  interpreter lets a commitment run past that place and fail there, where
+  its JIT reads the subject as ending at it: `/(?<=\R)/` does not hold
+  between `\r` and `\n` under `pcre.jit=0`. A commitment a lookbehind ends
+  with is read as if any character followed it, so `(?<=\R)` and
+  `(?<=a{1,2}+)` are refused and `(?<=\Rx)` holds.
+
 An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:
 this solver answers languages, it does not read anything "as any character".

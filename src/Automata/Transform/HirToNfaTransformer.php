@@ -210,7 +210,7 @@ final class HirToNfaTransformer
             $this->insideLookaround = true;
 
             try {
-                $this->assertSequence([$node->body], new SolverOptions(matchMode: MatchMode::Full, maxNfaStates: $options->maxNfaStates, maxDfaStates: $options->maxDfaStates), CharSet::empty());
+                $this->assertSequence([$node->body], new SolverOptions(matchMode: MatchMode::Full, maxNfaStates: $options->maxNfaStates, maxDfaStates: $options->maxDfaStates), $this->inertia->lookaroundBodyFollow($node));
             } finally {
                 $this->insideLookaround = false;
             }
