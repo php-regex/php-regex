@@ -170,6 +170,7 @@ final class JsonErrorEnvelopeTest extends TestCase
         yield 'lint, --generate-baseline in a missing directory' => ['arguments' => ['lint', 'src', '--jobs=1', '--json', '--generate-baseline=missing/dir/baseline.json'], 'error' => 'Baseline file not writable: missing/dir/baseline.json'];
         yield 'lint, --generate-baseline naming a directory' => ['arguments' => ['lint', 'src', '--jobs=1', '--json', '--generate-baseline=src'], 'error' => 'Baseline file not writable: src'];
         yield 'redos, --input-file that does not exist' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt', '--json'], 'error' => 'Input file not readable: missing.txt'];
+        yield 'redos, --repeat past the limit' => ['arguments' => ['redos', '/a/', '--input=a', '--repeat=8388609', '--json'], 'error' => "--repeat 8388609 repeats the 1-byte input past 8 MiB (8388608 bytes), the most it may weigh: printed with --show-input, an 8 MiB subject of bytes to escape takes up to about 115 MiB, which must fit in PHP's default memory_limit of 128M. The largest count for this input is 8388608."];
         yield 'lint, invalid --pcre-version' => ['arguments' => ['--pcre-version=banana', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --pcre-version must be a PCRE2 release like "10.44", not "banana".'];
         yield 'lint, invalid --php-version beside a valid --pcre-version' => ['arguments' => ['--php-version=99', '--pcre-version=10.44', 'lint', 'src', '--jobs=1', '--json'], 'error' => 'Invalid option: --php-version 99 is no PHP_VERSION_ID: write PHP 9.9 as 90900 or "9.9".'];
         // The commands that read one pattern read --php-version as lint
@@ -381,7 +382,8 @@ final class JsonErrorEnvelopeTest extends TestCase
         [$exitCode, $stdout, $stderr] = $this->runRegex($arguments);
 
         $this->assertSame(2, $exitCode, $stdout);
-        $this->assertMatchesRegularExpression($line, $stdout.$stderr);
+        $this->assertSame('', $stdout);
+        $this->assertMatchesRegularExpression($line, $stderr);
     }
 
     /**
@@ -390,6 +392,7 @@ final class JsonErrorEnvelopeTest extends TestCase
     public static function provideTextErrors(): iterable
     {
         yield 'redos, --input-file that does not exist' => ['arguments' => ['redos', '/a/', '--input-file=missing.txt'], 'files' => '', 'line' => '/\AError: Input file not readable: missing\.txt\n\z/'];
+        yield 'redos, --repeat past the limit' => ['arguments' => ['redos', '/a/', '--input=a', '--repeat=8388609'], 'files' => '', 'line' => '/\AError: --repeat 8388609 repeats the 1-byte input past 8 MiB \(8388608 bytes\), the most it may weigh: .* The largest count for this input is 8388608\.\n\z/'];
         yield 'debug, a regex.json with an unknown key' => ['arguments' => ['debug', '/a/'], 'files' => '{"bogusKey": 1}', 'line' => '/\AError: Unknown key "bogusKey" in \S*regex\.json\.\n\z/'];
     }
 

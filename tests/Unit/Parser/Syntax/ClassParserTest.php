@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
+use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\PcreTarget;
@@ -109,6 +110,88 @@ final class ClassParserTest extends TestCase
             ], 1, 8), false, 0, 9),
             self::parse('[a-€-z]'),
         );
+    }
+
+    /**
+     * Without UTF mode every multibyte character of a class is its bytes,
+     * each a member, as PCRE reads them: a range starts at the last byte of
+     * its start and ends at the first byte of its end, "[à-é]" is 0xC3, the
+     * range 0xA0 to 0xC3, then 0xA9. A byte an escape writes keeps its
+     * backslash. In UTF mode the character stays whole. The engine says
+     * first which characters the class matches, one at a time: every byte
+     * without UTF, the code points up to U+02FF under it, those the tree
+     * expected holds. The tree read is then the one expected, node by node,
+     * with the bytes and the offsets of each.
+     */
+    #[Test]
+    #[DataProvider('provideMultibyteMembers')]
+    public function test_parse_reads_a_multibyte_member_as_its_bytes_without_utf(string $pattern, string $flags, CharClassNode $expected): void
+    {
+        $utf = str_contains($flags, 'u');
+        $this->assertSame(self::membersOf($expected, $utf), self::charactersMatched('/\A'.$pattern.'\z/'.$flags, $utf), 'Oracle: '.$pattern.' matches the members of the tree expected.');
+
+        $this->assertSame(self::shape($expected), self::shape(self::parse($pattern, $flags)));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, flags: string, expected: CharClassNode}>
+     */
+    public static function provideMultibyteMembers(): iterable
+    {
+        yield 'a lone member' => ['pattern' => '[é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new LiteralNode("\xA9", 2, 3),
+        ], 1, 3), false, 0, 4)];
+        yield 'a lone member of three bytes' => ['pattern' => '[€]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xE2", 1, 2),
+            new LiteralNode("\x82", 2, 3),
+            new LiteralNode("\xAC", 3, 4),
+        ], 1, 4), false, 0, 5)];
+        yield 'a negated member' => ['pattern' => '[^é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 2, 3),
+            new LiteralNode("\xA9", 3, 4),
+        ], 2, 4), true, 0, 5)];
+        yield 'a range between two multibyte characters' => ['pattern' => '[à-é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new RangeNode(new LiteralNode("\xA0", 2, 3), new LiteralNode("\xC3", 4, 5), 2, 5),
+            new LiteralNode("\xA9", 5, 6),
+        ], 1, 6), false, 0, 7)];
+        yield 'a range between two multibyte characters, the later first' => ['pattern' => '[é-à]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 2),
+            new RangeNode(new LiteralNode("\xA9", 2, 3), new LiteralNode("\xC3", 4, 5), 2, 5),
+            new LiteralNode("\xA0", 5, 6),
+        ], 1, 6), false, 0, 7)];
+        yield 'a range to a multibyte character' => ['pattern' => '[a-é]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode("\xC3", 3, 4), 1, 4),
+            new LiteralNode("\xA9", 4, 5),
+        ], 1, 5), false, 0, 6)];
+        yield 'a range from an escaped multibyte character' => ['pattern' => '[\é-ê]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 1, 3),
+            new RangeNode(new LiteralNode("\xA9", 3, 4), new LiteralNode("\xC3", 5, 6), 3, 6),
+            new LiteralNode("\xAA", 6, 7),
+        ], 1, 7), false, 0, 8)];
+        yield 'a quoted member' => ['pattern' => '[\Qé\E]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new LiteralNode("\xC3", 3, 4),
+            new LiteralNode("\xA9", 4, 5),
+        ], 3, 5), false, 0, 8)];
+        // The ASCII parts around a multibyte member stay as they are read.
+        yield 'a multibyte member between ranges' => ['pattern' => '[a-zé0-9]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode('z', 3, 4), 1, 4),
+            new LiteralNode("\xC3", 4, 5),
+            new LiteralNode("\xA9", 5, 6),
+            new RangeNode(new LiteralNode('0', 6, 7), new LiteralNode('9', 8, 9), 6, 9),
+        ], 1, 9), false, 0, 10)];
+        yield 'a class with no byte above 0x7F' => ['pattern' => '[a-z_0-9]', 'flags' => '', 'expected' => new CharClassNode(new AlternationNode([
+            new RangeNode(new LiteralNode('a', 1, 2), new LiteralNode('z', 3, 4), 1, 4),
+            new LiteralNode('_', 4, 5),
+            new RangeNode(new LiteralNode('0', 5, 6), new LiteralNode('9', 7, 8), 5, 8),
+        ], 1, 8), false, 0, 9)];
+        yield 'a range in UTF mode' => ['pattern' => '[à-é]', 'flags' => 'u', 'expected' => new CharClassNode(
+            new RangeNode(new LiteralNode('à', 1, 3), new LiteralNode('é', 4, 6), 1, 6),
+            false,
+            0,
+            7,
+        )];
     }
 
     /**
@@ -293,6 +376,11 @@ final class ClassParserTest extends TestCase
         yield 'a POSIX class' => ['pattern' => '[[:alpha:]-z]', 'flags' => ''];
         yield 'a multibyte range end in UTF mode' => ['pattern' => '[a-é-z]', 'flags' => 'u'];
         yield 'a multibyte range end, then no range' => ['pattern' => '[a-éb]', 'flags' => ''];
+        yield 'a range between two multibyte characters' => ['pattern' => '[à-é]', 'flags' => ''];
+        yield 'a range between two multibyte characters, caseless' => ['pattern' => '[à-é]', 'flags' => 'i'];
+        yield 'a multibyte range start past a quote' => ['pattern' => '[é\E-à]', 'flags' => ''];
+        yield 'a multibyte member of four bytes' => ['pattern' => '[a😀b]', 'flags' => ''];
+        yield 'a range between characters of four bytes' => ['pattern' => '[😀-😁]', 'flags' => ''];
         yield 'a backslash-k' => ['pattern' => '[\k]', 'flags' => ''];
         yield 'an octal escape past a byte' => ['pattern' => '[\400-a]', 'flags' => ''];
         yield 'a negation after a quote' => ['pattern' => '[\E^a]', 'flags' => ''];
@@ -310,5 +398,73 @@ final class ClassParserTest extends TestCase
         $stream->advance();
 
         return new ParseState($stream, $pattern, $target, str_contains($flags, 'u'), PhpVersionGates::badEscapeIsLiteral($target->phpVersionId, $flags));
+    }
+
+    /**
+     * The characters a class of literals and ranges holds, each a byte
+     * without UTF and a code point under it, up to U+02FF.
+     *
+     * @return list<int>
+     */
+    private static function membersOf(CharClassNode $class, bool $utf): array
+    {
+        $members = [];
+        $parts = $class->expression instanceof AlternationNode ? $class->expression->alternatives : [$class->expression];
+        foreach ($parts as $part) {
+            [$start, $end] = $part instanceof RangeNode ? [$part->start, $part->end] : [$part, $part];
+            self::assertInstanceOf(LiteralNode::class, $start);
+            self::assertInstanceOf(LiteralNode::class, $end);
+            $members = [...$members, ...range(self::characterOf($start->value, $utf), self::characterOf($end->value, $utf))];
+        }
+
+        $members = $class->isNegated ? array_diff(range(0, $utf ? 0x2FF : 0xFF), $members) : array_unique($members);
+        sort($members);
+
+        return $members;
+    }
+
+    private static function characterOf(string $value, bool $utf): int
+    {
+        $character = $utf ? mb_ord($value, 'UTF-8') : \ord($value);
+        self::assertIsInt($character);
+
+        return $character;
+    }
+
+    /**
+     * The characters the engine matches whole: every byte without UTF, the
+     * code points up to U+02FF under it.
+     *
+     * @return list<int>
+     */
+    private static function charactersMatched(string $pattern, bool $utf): array
+    {
+        $matched = [];
+        for ($character = 0; $character <= ($utf ? 0x2FF : 0xFF); $character++) {
+            if (1 === preg_match($pattern, $utf ? (string) mb_chr($character, 'UTF-8') : \chr($character))) {
+                $matched[] = $character;
+            }
+        }
+
+        return $matched;
+    }
+
+    /**
+     * The tree node by node: its kind, its offsets, a literal's bytes, a
+     * class's negation and what each holds.
+     *
+     * @return list<mixed>
+     */
+    private static function shape(NodeInterface $node): array
+    {
+        $shape = [$node::class, $node->getStartPosition(), $node->getEndPosition()];
+
+        return match (true) {
+            $node instanceof LiteralNode => [...$shape, bin2hex($node->value)],
+            $node instanceof RangeNode => [...$shape, self::shape($node->start), self::shape($node->end)],
+            $node instanceof AlternationNode => [...$shape, array_map(self::shape(...), $node->alternatives)],
+            $node instanceof CharClassNode => [...$shape, $node->isNegated, self::shape($node->expression)],
+            default => $shape,
+        };
     }
 }

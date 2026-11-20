@@ -116,6 +116,10 @@ final class MatchRunTest extends TestCase
         yield 'a lookbehind inside a lookahead' => ['left' => '/(?=(?<=a))b/', 'right' => '/b/', 'runs' => null];
         yield 'a word boundary' => ['left' => '/\ba/', 'right' => '/a/', 'runs' => null];
         yield 'a word boundary after the match' => ['left' => '/a\b/', 'right' => '/a/', 'runs' => null];
+        // In a lookbehind "(?(c)X|)" may be empty where "(?(c)X)" may not:
+        // the "|" written keeps the two from reading alike.
+        yield 'a "|" written before an empty "no" branch, in a lookbehind' => ['left' => '/(?<=(?(?=b)bb))c/', 'right' => '/(?<=(?(?=b)bb|))c/', 'runs' => null];
+        yield 'a "|" written on both sides, in a lookbehind' => ['left' => '/(?<=(?(?=b)bb|))c/', 'right' => '/(?<=(?(?=b)bb|))c/', 'runs' => []];
         yield 'no word boundary' => ['left' => '/a\B/', 'right' => '/a/', 'runs' => null];
         yield 'the start of a line' => ['left' => '/^a/m', 'right' => '/a/', 'runs' => null];
         yield 'the start of a line, inline' => ['left' => '/(?m)^a/', 'right' => '/a/', 'runs' => null];

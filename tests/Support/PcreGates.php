@@ -145,6 +145,23 @@ trait PcreGates
     }
 
     /**
+     * Skip unless PCRE2's JIT runs the patterns: PHP built without it has
+     * no pcre.jit, and pcre.jit=0 leaves every pattern to the interpreter,
+     * which answers some rows otherwise.
+     */
+    private function requiresJit(string $subject): void
+    {
+        $jit = \ini_get('pcre.jit');
+        if (false === $jit) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2\'s JIT; PHP %s is built without it.', $subject, \PHP_VERSION));
+        }
+
+        if (!filter_var($jit, \FILTER_VALIDATE_BOOL)) {
+            $this->markTestSkipped(\sprintf('%s is verified against PCRE2\'s JIT; pcre.jit is off.', $subject));
+        }
+    }
+
+    /**
      * Skip when the interpreter of the running engine keeps, after a
      * subroutine call, what the groups inside the called one captured — the
      * probe, never a release. PCRE2 gives them their earlier values back;

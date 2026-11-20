@@ -69,10 +69,17 @@ final class BacktrackProver
 
     private const BOUNDED_SUFFIXES = 3;
 
+    /**
+     * @param Budget|null $pool the budget every proof of this prover draws its steps from too,
+     *                          shared with other provers: running it out stops a proof as
+     *                          running out its own budget does; none when each proof has its
+     *                          own budget alone
+     */
     public function __construct(
         private readonly int $maxStates,
         private readonly int $maxSteps,
         private readonly int $boundedRepeatCutoff,
+        private readonly ?Budget $pool = null,
     ) {}
 
     /**
@@ -85,7 +92,7 @@ final class BacktrackProver
      */
     public function prove(RegexNode $regex, ?string $pattern = null, ?PcreTarget $target = null): ProofOutcome
     {
-        $budget = new Budget($this->maxSteps, $this->maxStates);
+        $budget = $this->budget();
         $builder = new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target);
         $stepBound = null;
         $search = null;
@@ -342,7 +349,7 @@ final class BacktrackProver
             return;
         }
 
-        $budget = new Budget($this->maxSteps, $this->maxStates);
+        $budget = $this->budget();
         $inPlace = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, true))->build()[0];
         $contexts = [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER];
         $offset = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->rereadLookaround();
@@ -400,7 +407,7 @@ final class BacktrackProver
             return $best;
         }
 
-        $budget = new Budget($this->maxSteps, $this->maxStates);
+        $budget = $this->budget();
 
         try {
             $inPlace = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, true))->build()[0];
@@ -545,6 +552,15 @@ final class BacktrackProver
     }
 
     /**
+     * A budget of the prover's limits, drawing its steps from the pool too
+     * when there is one.
+     */
+    private function budget(): Budget
+    {
+        return new Budget($this->maxSteps, $this->maxStates, $this->pool);
+    }
+
+    /**
      * The searches' bound so far plus this automaton's, on a budget of its
      * own so that it takes nothing from the proof; null for an exponential
      * ambiguity or a budget run out.
@@ -552,7 +568,7 @@ final class BacktrackProver
     private function boundOf(ItemAutomaton $automaton, int $sofar): ?int
     {
         try {
-            $bound = (new AmbiguityFinder($automaton, new Budget($this->maxSteps, $this->maxStates)))->stepBound();
+            $bound = (new AmbiguityFinder($automaton, $this->budget()))->stepBound();
         } catch (ModelLimitException) {
             return null;
         }

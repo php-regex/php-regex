@@ -60,6 +60,21 @@ final class PossessiveAboveAsciiTest extends TestCase
         $this->assertSame('/a++b/', $this->rewrite('/a+b/'));
     }
 
+    /**
+     * An escape that names an ASCII character is read as that character:
+     * "[\x30-\x39]+" never gives back the "x" after it, and is made
+     * possessive, which matches what the greedy repeat matches.
+     */
+    #[Test]
+    public function test_a_repeat_written_with_ascii_escapes_is_made_possessive(): void
+    {
+        foreach (['123x', '1x', 'x', '12', '1x2', "1\xE9x"] as $subject) {
+            $this->assertSame(preg_match('/^[\x30-\x39]+x$/', $subject), preg_match('/^[\x30-\x39]++x$/', $subject), 'Oracle: '.$subject);
+        }
+
+        $this->assertSame('/^[\x30-\x39]++x$/', $this->rewrite('/^[\x30-\x39]+x$/'));
+    }
+
     private function rewrite(string $pattern): string
     {
         return Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(possessive: true))->accept(new PatternPrinter());

@@ -17,9 +17,13 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Backtrack\BacktrackProver;
+use PHPRegex\Redos\Backtrack\Budget;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\Backtrack\SearchCostProver;
 use PHPRegex\Redos\Backtrack\WitnessReplayer;
@@ -119,7 +123,14 @@ final class RedosAnalyzer
             $profiler = null;
             $heuristics = self::NO_HEURISTICS;
             if (RedosComplexity::Linear !== $proof?->complexity) {
-                $profiler = new RedosProfiler(CharSetAnalyzer::forRegex($ast));
+                // Above ASCII the sets are read under PCRE2's own tables:
+                // another locale's may put any byte in a type or a case.
+                // Without a proof, a loop whose branches start alike is put
+                // to the proof alone.
+                $profiler = new RedosProfiler(
+                    CharSetAnalyzer::forRegex($ast, CharacterTables::BUILT_IN === $parser->target()->locale),
+                    null === $proof ? $this->provenLinearAlone($ast, $parser) : null,
+                );
                 $ast->accept($profiler);
                 $heuristics = $profiler->getResult();
             }
@@ -206,12 +217,71 @@ final class RedosAnalyzer
         }
     }
 
-    private function prover(): BacktrackProver
+    /**
+     * Whether a loop of the pattern, read alone before an end that never
+     * matches, "(?:...)(?!)", is proven linear: one that reads no text in
+     * two ways, as "(?:a|ab)+" does not. A loop whose text does not read
+     * alone, a reference or a call to a group outside it, is not; each text
+     * is proven once, read through a parser that keeps nothing: the text
+     * written for the proof stays out of the caller's caches. The proofs
+     * share one budget of steps, the one the proof of the whole pattern
+     * has: past it, a loop is not proven, whatever the number of loops.
+     *
+     * @return \Closure(QuantifierNode): bool
+     */
+    private function provenLinearAlone(RegexNode $ast, RegexParser $parser): \Closure
+    {
+        $source = $ast->source ?? '';
+        $options = StartOptions::of($source);
+        $proven = [];
+        $reader = null;
+        $pool = null;
+
+        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven, &$reader, &$pool): bool {
+            $text = substr($source, $loop->startPosition, $loop->endPosition - $loop->startPosition);
+            if (\array_key_exists($text, $proven)) {
+                return $proven[$text];
+            }
+
+            $delimiter = null;
+            foreach (['/', '#', '~', '%', '@', ';', ',', '`'] as $candidate) {
+                if (!str_contains($text.$options, $candidate)) {
+                    $delimiter = $candidate;
+
+                    break;
+                }
+            }
+
+            if (null === $delimiter) {
+                return $proven[$text] = false;
+            }
+
+            // A reference or a call to a group outside the loop leaves the
+            // text invalid alone, and with no tree.
+            $alone = $delimiter.$options.'(?:'.$text.')(?!)'.$delimiter.$ast->flags;
+            $reader ??= $parser->withoutCache();
+            $tree = $reader->validate($alone)->ast;
+            if (null === $tree) {
+                return $proven[$text] = false;
+            }
+
+            $pool ??= new Budget($this->options->maxSteps, $this->options->maxStates);
+            $outcome = $this->prover($pool)->prove($tree, $alone, $reader->target());
+
+            return $proven[$text] = null === $outcome->limit && RedosComplexity::Linear === $outcome->result?->complexity;
+        };
+    }
+
+    /**
+     * @param Budget|null $pool the budget the proofs draw their steps from too, when they share one
+     */
+    private function prover(?Budget $pool = null): BacktrackProver
     {
         return new BacktrackProver(
             $this->options->maxStates,
             $this->options->maxSteps,
             $this->options->boundedRepeatCutoff,
+            $pool,
         );
     }
 
