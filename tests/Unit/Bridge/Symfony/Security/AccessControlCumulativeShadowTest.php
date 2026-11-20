@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Security;
 
 use PHPRegex\Symfony\Security\SecurityAccessControlAnalyzer;
+use PHPRegex\Symfony\Security\SecurityAccessControlReport;
+use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -22,6 +24,8 @@ use PHPUnit\Framework\TestCase;
  * access_control applies the first rule that matches: a rule several
  * earlier rules cover together, none alone, never applies, which no pair
  * of rules tells.
+ *
+ * @phpstan-import-type AccessControlRule from SecurityConfigExtractor
  */
 final class AccessControlCumulativeShadowTest extends TestCase
 {
@@ -111,11 +115,10 @@ final class AccessControlCumulativeShadowTest extends TestCase
     }
 
     /**
-     * @param list<array<string, mixed>> $rules
+     * @param list<AccessControlRule> $rules
      */
-    private static function analyze(array $rules): \PHPRegex\Symfony\Security\SecurityAccessControlReport
+    private static function analyze(array $rules): SecurityAccessControlReport
     {
-        /* @phpstan-ignore argument.type */
         return (new SecurityAccessControlAnalyzer(Regex::create()))->analyze($rules);
     }
 
@@ -123,7 +126,7 @@ final class AccessControlCumulativeShadowTest extends TestCase
      * @param list<string> $roles
      * @param list<string> $methods
      *
-     * @return array<string, mixed>
+     * @return AccessControlRule
      */
     private static function rule(string $path, array $roles, array $methods = []): array
     {
