@@ -1,6 +1,6 @@
 {
     "repo": "wikimedia/mediawiki",
-    "sha": "de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0",
+    "sha": "ad3be8702081210aa9fae3667ea99b8a7fa95bb7",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/ExternalLinks/LinkFilter.php#L137-L143",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/ExternalLinks/LinkFilter.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -123,7 +123,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -290,7 +290,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/JobQueue/JobRunner.php#L600-L606",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/JobQueue/JobRunner.php#L600-L606",
             "snippet": [
                 {
                     "number": 600,
@@ -461,7 +461,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Language/Converters/MniConverter.php#L81-L87",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Language/Converters/MniConverter.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -604,7 +604,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Language/Language.php#L3060-L3066",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Language/Language.php#L3060-L3066",
             "snippet": [
                 {
                     "number": 3060,
@@ -859,7 +859,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Language/Language.php#L3089-L3095",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Language/Language.php#L3089-L3095",
             "snippet": [
                 {
                     "number": 3089,
@@ -954,7 +954,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Language/Language.php#L4317-L4323",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Language/Language.php#L4317-L4323",
             "snippet": [
                 {
                     "number": 4317,
@@ -1085,7 +1085,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Languages/LanguageFi.php#L30-L36",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Languages/LanguageFi.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1243,7 +1243,7 @@
                 "limit": 100000
             },
             "subject": "<H1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -1604,7 +1604,7 @@
                 "limit": 100000
             },
             "subject": "<STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE>!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/BlockLevelPass.php#L369-L375",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/BlockLevelPass.php#L369-L375",
             "snippet": [
                 {
                     "number": 369,
@@ -1831,7 +1831,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/CoreParserFunctions.php#L2070-L2076",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/CoreParserFunctions.php#L2070-L2076",
             "snippet": [
                 {
                     "number": 2070,
@@ -1926,7 +1926,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Parser.php#L1775-L1781",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Parser.php#L1775-L1781",
             "snippet": [
                 {
                     "number": 1775,
@@ -2021,7 +2021,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Parser.php#L2223-L2229",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Parser.php#L2223-L2229",
             "snippet": [
                 {
                     "number": 2223,
@@ -2143,7 +2143,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Parser.php#L5746-L5752",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Parser.php#L5746-L5752",
             "snippet": [
                 {
                     "number": 5746,
@@ -2238,7 +2238,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Sanitizer.php#L44-L50",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Sanitizer.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -2340,7 +2340,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Sanitizer.php#L94-L100",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Sanitizer.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -2415,11 +2415,11 @@
             ]
         },
         {
-            "id": "f-4f0e63cc2d",
+            "id": "f-d0180f3f9b",
             "file": "includes/Parser/Sanitizer.php",
-            "line": 577,
+            "line": 575,
             "column": 18,
-            "pattern": "|^data-[^:= \\t\\r\\n/>\\0_＿]*$|i",
+            "pattern": "|^data-[^:= \\t\\r\\f\\n/>\\0_＿]*$|Di",
             "source": "preg_match()",
             "location": null,
             "level": "fail",
@@ -2435,10 +2435,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Sanitizer.php#L574-L580",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Sanitizer.php#L572-L578",
             "snippet": [
                 {
-                    "number": 574,
+                    "number": 572,
                     "focus": false,
                     "runs": [
                         [
@@ -2448,7 +2448,7 @@
                     ]
                 },
                 {
-                    "number": 575,
+                    "number": 573,
                     "focus": false,
                     "runs": [
                         [
@@ -2458,7 +2458,7 @@
                     ]
                 },
                 {
-                    "number": 576,
+                    "number": 574,
                     "focus": false,
                     "runs": [
                         [
@@ -2468,7 +2468,7 @@
                     ]
                 },
                 {
-                    "number": 577,
+                    "number": 575,
                     "focus": true,
                     "runs": [
                         [
@@ -2496,7 +2496,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            ":= \\t\\r\\n/>",
+                            ":= \\t\\r\\f\\n/>",
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
@@ -2524,7 +2524,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "i",
+                            "Di",
                             "pg-snippet-pattern pg-tok-flag"
                         ],
                         [
@@ -2538,7 +2538,7 @@
                     ]
                 },
                 {
-                    "number": 578,
+                    "number": 576,
                     "focus": false,
                     "runs": [
                         [
@@ -2548,7 +2548,7 @@
                     ]
                 },
                 {
-                    "number": 579,
+                    "number": 577,
                     "focus": false,
                     "runs": [
                         [
@@ -2558,7 +2558,7 @@
                     ]
                 },
                 {
-                    "number": 580,
+                    "number": 578,
                     "focus": false,
                     "runs": [
                         [
@@ -2572,7 +2572,7 @@
         {
             "id": "f-94f2e07e24",
             "file": "includes/Parser/Sanitizer.php",
-            "line": 1095,
+            "line": 1093,
             "column": 6,
             "pattern": "/(^[0-9\\-])|[\\x00-\\x20!\"#$%&'()*+,.\\/:;<=>?@[\\]^`{|}~]|\\xC2\\xA0/",
             "source": "preg_replace()",
@@ -2590,10 +2590,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Sanitizer.php#L1092-L1098",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Sanitizer.php#L1090-L1096",
             "snippet": [
                 {
-                    "number": 1092,
+                    "number": 1090,
                     "focus": false,
                     "runs": [
                         [
@@ -2603,7 +2603,7 @@
                     ]
                 },
                 {
-                    "number": 1093,
+                    "number": 1091,
                     "focus": false,
                     "runs": [
                         [
@@ -2613,7 +2613,7 @@
                     ]
                 },
                 {
-                    "number": 1094,
+                    "number": 1092,
                     "focus": false,
                     "runs": [
                         [
@@ -2623,7 +2623,7 @@
                     ]
                 },
                 {
-                    "number": 1095,
+                    "number": 1093,
                     "focus": true,
                     "runs": [
                         [
@@ -2713,7 +2713,7 @@
                     ]
                 },
                 {
-                    "number": 1096,
+                    "number": 1094,
                     "focus": false,
                     "runs": [
                         [
@@ -2723,7 +2723,7 @@
                     ]
                 },
                 {
-                    "number": 1097,
+                    "number": 1095,
                     "focus": false,
                     "runs": [
                         [
@@ -2733,7 +2733,7 @@
                     ]
                 },
                 {
-                    "number": 1098,
+                    "number": 1096,
                     "focus": false,
                     "runs": [
                         [
@@ -2747,7 +2747,7 @@
         {
             "id": "f-c8b8d20830",
             "file": "includes/Parser/Sanitizer.php",
-            "line": 1916,
+            "line": 1914,
             "column": 20,
             "pattern": "!^([^:]+:)(//[^/]+)?(.*)$!iD",
             "source": "preg_match()",
@@ -2765,10 +2765,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Parser/Sanitizer.php#L1913-L1919",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Parser/Sanitizer.php#L1911-L1917",
             "snippet": [
                 {
-                    "number": 1913,
+                    "number": 1911,
                     "focus": false,
                     "runs": [
                         [
@@ -2778,7 +2778,7 @@
                     ]
                 },
                 {
-                    "number": 1914,
+                    "number": 1912,
                     "focus": false,
                     "runs": [
                         [
@@ -2788,7 +2788,7 @@
                     ]
                 },
                 {
-                    "number": 1915,
+                    "number": 1913,
                     "focus": false,
                     "runs": [
                         [
@@ -2798,7 +2798,7 @@
                     ]
                 },
                 {
-                    "number": 1916,
+                    "number": 1914,
                     "focus": true,
                     "runs": [
                         [
@@ -2912,7 +2912,7 @@
                     ]
                 },
                 {
-                    "number": 1917,
+                    "number": 1915,
                     "focus": false,
                     "runs": [
                         [
@@ -2922,7 +2922,7 @@
                     ]
                 },
                 {
-                    "number": 1918,
+                    "number": 1916,
                     "focus": false,
                     "runs": [
                         [
@@ -2932,7 +2932,7 @@
                     ]
                 },
                 {
-                    "number": 1919,
+                    "number": 1917,
                     "focus": false,
                     "runs": [
                         [
@@ -2971,7 +2971,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Rest/Router.php#L34-L40",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Rest/Router.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -3160,7 +3160,7 @@
         {
             "id": "f-9a7a02ceb9",
             "file": "includes/Search/SearchHighlighter.php",
-            "line": 393,
+            "line": 406,
             "column": 4,
             "pattern": "/[ ,.!?~!@#$%^&*\\(\\)+=\\-\\\\|\\[\\]\"'<>]/",
             "source": "preg_match()",
@@ -3178,10 +3178,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Search/SearchHighlighter.php#L390-L396",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Search/SearchHighlighter.php#L403-L409",
             "snippet": [
                 {
-                    "number": 390,
+                    "number": 403,
                     "focus": false,
                     "runs": [
                         [
@@ -3191,7 +3191,7 @@
                     ]
                 },
                 {
-                    "number": 391,
+                    "number": 404,
                     "focus": false,
                     "runs": [
                         [
@@ -3201,7 +3201,7 @@
                     ]
                 },
                 {
-                    "number": 392,
+                    "number": 405,
                     "focus": false,
                     "runs": [
                         [
@@ -3211,7 +3211,7 @@
                     ]
                 },
                 {
-                    "number": 393,
+                    "number": 406,
                     "focus": true,
                     "runs": [
                         [
@@ -3245,7 +3245,7 @@
                     ]
                 },
                 {
-                    "number": 394,
+                    "number": 407,
                     "focus": false,
                     "runs": [
                         [
@@ -3255,7 +3255,7 @@
                     ]
                 },
                 {
-                    "number": 395,
+                    "number": 408,
                     "focus": false,
                     "runs": [
                         [
@@ -3265,7 +3265,7 @@
                     ]
                 },
                 {
-                    "number": 396,
+                    "number": 409,
                     "focus": false,
                     "runs": [
                         [
@@ -3279,7 +3279,7 @@
         {
             "id": "f-fa36fc4c95",
             "file": "includes/Search/SearchHighlighter.php",
-            "line": 477,
+            "line": 490,
             "column": 25,
             "pattern": "/<\\/?[^>]+>/",
             "source": "preg_replace()",
@@ -3297,10 +3297,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Search/SearchHighlighter.php#L474-L480",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Search/SearchHighlighter.php#L487-L493",
             "snippet": [
                 {
-                    "number": 474,
+                    "number": 487,
                     "focus": false,
                     "runs": [
                         [
@@ -3310,7 +3310,7 @@
                     ]
                 },
                 {
-                    "number": 475,
+                    "number": 488,
                     "focus": false,
                     "runs": [
                         [
@@ -3320,7 +3320,7 @@
                     ]
                 },
                 {
-                    "number": 476,
+                    "number": 489,
                     "focus": false,
                     "runs": [
                         [
@@ -3330,7 +3330,7 @@
                     ]
                 },
                 {
-                    "number": 477,
+                    "number": 490,
                     "focus": true,
                     "runs": [
                         [
@@ -3388,7 +3388,7 @@
                     ]
                 },
                 {
-                    "number": 478,
+                    "number": 491,
                     "focus": false,
                     "runs": [
                         [
@@ -3398,7 +3398,7 @@
                     ]
                 },
                 {
-                    "number": 479,
+                    "number": 492,
                     "focus": false,
                     "runs": [
                         [
@@ -3408,7 +3408,7 @@
                     ]
                 },
                 {
-                    "number": 480,
+                    "number": 493,
                     "focus": false,
                     "runs": [
                         [
@@ -3447,7 +3447,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Title/Title.php#L2207-L2213",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Title/Title.php#L2207-L2213",
             "snippet": [
                 {
                     "number": 2207,
@@ -3650,7 +3650,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Title/TitleValue.php#L188-L194",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Title/TitleValue.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -3806,7 +3806,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L361-L367",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L361-L367",
             "snippet": [
                 {
                     "number": 361,
@@ -4022,7 +4022,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L367-L373",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L367-L373",
             "snippet": [
                 {
                     "number": 367,
@@ -4242,7 +4242,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L373-L379",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -4438,7 +4438,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L852-L858",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L852-L858",
             "snippet": [
                 {
                     "number": 852,
@@ -4602,7 +4602,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L863-L869",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L863-L869",
             "snippet": [
                 {
                     "number": 863,
@@ -4766,7 +4766,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/Upload/UploadVerification.php#L903-L909",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/Upload/UploadVerification.php#L903-L909",
             "snippet": [
                 {
                     "number": 903,
@@ -4933,7 +4933,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,
@@ -5069,7 +5069,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \" <!ENTITY ! \\\"&amp;\\\">\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 261 (backtrack_limit 100000, JIT off). The risky part is: \\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^\"%&;]{1,64};|(?:[^\"%&]|&amp;|&quot;){0,255})\"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\\s*>|\\s*<!--(?:[^\\-]|-[^\\-])*-->|\\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED \"http:\\/\\/www.w3.org\\/1999\\/xlink\"> Hotspot offsets: 4-241 Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \" <!ENTITY ! \\\"&amp;\\\">\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 261 (backtrack_limit 100000, JIT off). The risky part is: \\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^\"%&;]{1,64};|(?:[^\"%&]|&amp;|&quot;){0,255})\"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\\s*>|\\s*<!--(?:[^\\-]|-[^\\-])*-->|\\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED \"http:\\/\\/www.w3.org\\/1999\\/xlink\"> Hotspot offsets: 4-241 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -5112,7 +5112,7 @@
                 "limit": 100000
             },
             "subject": " <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\">!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
             "snippet": [
                 {
                     "number": 437,
@@ -5229,7 +5229,7 @@
                 "limit": 100000
             },
             "subject": "{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
             "snippet": [
                 {
                     "number": 616,
@@ -5444,7 +5444,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
             "snippet": [
                 {
                     "number": 267,
@@ -5671,7 +5671,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -5838,7 +5838,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/de0ae3b42a45bb85cf57a67f83cdcebc3aba46a0/maintenance/storage/trackBlobs.php#L116-L122",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/ad3be8702081210aa9fae3667ea99b8a7fa95bb7/maintenance/storage/trackBlobs.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,

@@ -1,6 +1,6 @@
 {
     "repo": "EdgedesignCZ/phpqa",
-    "sha": "ad97e48c8dfe406f3fab5f6a6fb0604035f7a3ea",
+    "sha": "7ba59ddd3df55320b4da3ac72a1848bd85361e8e",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/EdgedesignCZ/phpqa/blob/ad97e48c8dfe406f3fab5f6a6fb0604035f7a3ea/src/Tools/GetVersions.php#L170-L176",
+            "permalink": "https://github.com/EdgedesignCZ/phpqa/blob/7ba59ddd3df55320b4da3ac72a1848bd85361e8e/src/Tools/GetVersions.php#L170-L176",
             "snippet": [
                 {
                     "number": 170,

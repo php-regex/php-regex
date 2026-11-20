@@ -1,9 +1,9 @@
 {
     "repo": "cycle/database",
-    "sha": "3d1edf3775e67a6c77bb5b7e1c532b62736e735f",
+    "sha": "5b8b7d9fec0341a88b5d7b9eba44fc778325093b",
     "target": {
-        "php": "8.1",
-        "pcre": "10.39",
+        "php": "8.2",
+        "pcre": "10.40",
         "source": "composer.json require.php"
     },
     "findings": [
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cycle/database/blob/3d1edf3775e67a6c77bb5b7e1c532b62736e735f/src/Driver/SQLite/Schema/SQLiteColumn.php#L146-L152",
+            "permalink": "https://github.com/cycle/database/blob/5b8b7d9fec0341a88b5d7b9eba44fc778325093b/src/Driver/SQLite/Schema/SQLiteColumn.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,

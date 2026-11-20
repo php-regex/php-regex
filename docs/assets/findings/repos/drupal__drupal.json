@@ -21,7 +21,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"FTP://\" . \"!%00\" x n Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: [\\w.\\-+%!$&'()*+,;=]|%[0-9a-f]{2} Hotspot offsets: 422-460 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"FTP://\" . \"!%00\" x n Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: [\\w.\\-+%!$&'()*+,;=]|%[0-9a-f]{2} Hotspot offsets: 422-460 Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -3546,7 +3546,7 @@
                     "level": "fail",
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
-                    "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
                     "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
                 },
                 {
@@ -3749,7 +3749,7 @@
                         ],
                         [
                             "((",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "[",
@@ -3769,7 +3769,7 @@
                         ],
                         [
                             "|",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "-",
@@ -3781,47 +3781,47 @@
                         ],
                         [
                             ")",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "[",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "a",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "z0",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "-",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "9",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "]",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             ")",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "$",

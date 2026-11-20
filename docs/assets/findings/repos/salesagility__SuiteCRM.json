@@ -13731,20 +13731,24 @@
                             "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
-                            ")((?:",
+                            ")(",
                             "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "\\w",
@@ -13784,35 +13788,35 @@
                         ],
                         [
                             ")(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "=",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "\\s",
-                            "pg-snippet-pattern pg-tok-escape"
+                            "pg-snippet-pattern pg-tok-escape pg-snippet-hot"
                         ],
                         [
                             "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "(?:",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "\\\"",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             ".",
@@ -13824,15 +13828,15 @@
                         ],
                         [
                             "\\\"",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             "|",
-                            "pg-snippet-pattern pg-tok-meta"
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
                             "\\'",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
                             ".",
@@ -13844,14 +13848,10 @@
                         ],
                         [
                             "\\'",
-                            "pg-snippet-pattern pg-tok-literal"
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
                         ],
                         [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "[^",
+                            "|[^",
                             "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
                         ],
                         [
@@ -13872,19 +13872,19 @@
                         ],
                         [
                             "))",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             ")",
-                            "pg-snippet-pattern pg-tok-group"
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
                         ],
                         [
                             "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
                         ],
                         [
                             "\\s",

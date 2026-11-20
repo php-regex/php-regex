@@ -1,6 +1,6 @@
 {
     "repo": "akaunting/akaunting",
-    "sha": "31fe947b360f3784ec07de44d9d78888f4947270",
+    "sha": "16f57e5ed045e5fbf912f7a7ab1d2782117ac40f",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/akaunting/akaunting/blob/31fe947b360f3784ec07de44d9d78888f4947270/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php#L51-L57",
+            "permalink": "https://github.com/akaunting/akaunting/blob/16f57e5ed045e5fbf912f7a7ab1d2782117ac40f/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
