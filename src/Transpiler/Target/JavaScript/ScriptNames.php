@@ -131,7 +131,7 @@ final class ScriptNames
     {
         $script = self::javaScriptName($name);
 
-        return null !== $script && ($script === $name || (4 === \strlen($name) && ucfirst(Ascii::lower($name)) === $name));
+        return null !== $script && ($script === $name || (4 === \strlen($name) && Ascii::upperFirst(Ascii::lower($name)) === $name));
     }
 
     /**
