@@ -27,6 +27,8 @@ use PHPRegex\Automata\Support\WorkBudget;
  */
 final class LazyDfa
 {
+    public readonly int $start;
+
     /**
      * @var array<string, int> each state's number, by the key of its set
      */
@@ -46,8 +48,6 @@ final class LazyDfa
      * @var array<int, array<int, int>> the moves read so far, by state and class
      */
     private array $moves = [];
-
-    public readonly int $start;
 
     /**
      * @throws ComplexityException

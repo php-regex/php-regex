@@ -47,7 +47,7 @@ final class ProductSearch
      */
     private const STRIDE = 1 << 31;
 
-    private WorkBudget $budget;
+    private readonly WorkBudget $budget;
 
     public function __construct(private readonly SolverOptions $options)
     {
@@ -148,9 +148,9 @@ final class ProductSearch
     }
 
     /**
-     * @param list<int>                                $starts
-     * @param callable(int): array<int, list<int>>     $expand    the pairs each class leads to
-     * @param callable(int): bool                      $accepting
+     * @param list<int>                            $starts
+     * @param callable(int): array<int, list<int>> $expand    the pairs each class leads to
+     * @param callable(int): bool                  $accepting
      *
      * @throws ComplexityException
      *
