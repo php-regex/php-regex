@@ -424,7 +424,7 @@ verbatim:
 | a lookaround inside a lookaround           | `A lookaround inside a lookaround is beyond what the automata solver reads.` |
 | an anchor inside a lookaround              | `An anchor inside a lookaround is beyond what the automata solver reads.` |
 | a non-atomic lookaround, `(*napla:...)`    | `A non-atomic lookaround, (*napla:...) or its kind, backtracks into its body, which the automata solver does not read.` |
-| an atomic group (and `\R`)                 | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
+| an atomic group (and `\R`) the solver cannot prove inert | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
 | `\K` or `\G`                               | `\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
@@ -454,7 +454,30 @@ Two refinements inside those rules:
   `(?:ab?)++`, `(?:a{2,3})++` or `(?:a(?:bc|b))++`: it gives back nothing
   inside an iteration either, where the greedy spelling would give a `b` back
   to a follower `b`. The atom is a class, a literal, a sequence of them, or an
-  unbounded run of one class (`(?:a+)++`).
+  unbounded greedy run of one class (`(?:a+)++`); a lazy run stops at its
+  first character, and `(?:a+?){2}+` is refused.
+
+  An atomic group reads as its body when there is nothing it would keep that
+  a follower needs back: a body that matches one fixed way (`(?>ab)`), a
+  greedy run the rule above proves (`/^(?>\d+)-x$/`), or fixed branches of
+  which none tried first may match the start of a later one, and a later one
+  that may match the start of an earlier one stops where nothing that follows
+  starts: `/(?>ab|a)c/` holds, `/(?>a|ab)c/` is refused. `\R` is the atomic
+  group `(?>\r\n|\v)` to PCRE under the default `(*BSR_UNICODE)`, and
+  `(?>\r\n|[\r\n])` under `(*BSR_ANYCRLF)`: either way it holds unless a
+  `\n` may follow it.
+
+  A lookbehind branch that matches more than one length, as `\R` does,
+  compiles from PCRE2 10.43 on when its length is bounded, up to a limit PCRE2
+  sets when it is built, 255 characters by default: there, `/(?<=a{1,255})x/`
+  compiles, `/(?<=a{1,256})x/` and `/(?<=a+)x/` do not. Before 10.43,
+  `/(?<=\R)/` is a compile error, where `/(?<=a|bc)x/`, each branch of one
+  length, compiles. Its body must end where the lookbehind stands, and PCRE2's
+  interpreter lets a commitment run past that place and fail there, where its
+  JIT reads the subject as ending at it: `/(?<=\R)/` does not hold between
+  `\r` and `\n` under `pcre.jit=0`. A commitment a lookbehind ends with is
+  read as if any character followed it, so `(?<=\R)` and `(?<=a{1,2}+)` are
+  refused and `(?<=\Rx)` holds.
 
 An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:

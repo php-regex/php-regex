@@ -122,7 +122,7 @@ final class PythonMinimumVersionTest extends TestCase
         $this->expectException(TranspileException::class);
         $this->expectExceptionMessageIsOrContains('Atomic groups are not supported in JavaScript.');
 
-        Regex::create(['cache' => null])->transpile('/(?>a)b/', 'javascript', new TranspileOptions(pythonVersion: '3.11'));
+        Regex::create(['cache' => null])->transpile('/(?>a|ab)c/', 'javascript', new TranspileOptions(pythonVersion: '3.11'));
     }
 
     #[Test]

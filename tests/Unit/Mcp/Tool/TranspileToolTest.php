@@ -49,7 +49,7 @@ final class TranspileToolTest extends TestCase
         yield 'html' => ['arguments' => ['pattern' => '/^[a-z]+$/i', 'target' => 'html'], 'cli' => ['transpile', '/^[a-z]+$/i', '--target=html'], 'isError' => false];
         yield 'python 3.11, an atomic group' => ['arguments' => ['pattern' => '/(?>a+)b/', 'target' => 'python', 'python_version' => '3.11'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.11'], 'isError' => false];
         yield 'python 3.10, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)b/', 'target' => 'python', 'python_version' => '3.10'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.10'], 'isError' => true];
-        yield 'javascript, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)b/', 'target' => 'js'], 'cli' => ['transpile', '/(?>a+)b/', '--target=js'], 'isError' => true];
+        yield 'javascript, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)a/', 'target' => 'js'], 'cli' => ['transpile', '/(?>a+)a/', '--target=js'], 'isError' => true];
         yield 'javascript, a verb refused' => ['arguments' => ['pattern' => '/a(*SKIP)b/', 'target' => 'js'], 'cli' => ['transpile', '/a(*SKIP)b/', '--target=js'], 'isError' => true];
         yield 'an invalid pattern' => ['arguments' => ['pattern' => '/(a/', 'target' => 'js'], 'cli' => ['transpile', '/(a/', '--target=js'], 'isError' => true];
         yield 'a semantic error' => ['arguments' => ['pattern' => '/(?<=a+)b/', 'target' => 'js'], 'cli' => ['transpile', '/(?<=a+)b/', '--target=js'], 'isError' => true];
@@ -68,7 +68,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_refusal_is_read_in_the_text(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)b/', 'target' => 'js']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)a/', 'target' => 'js']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('Atomic groups are not supported in JavaScript.', $result->text);

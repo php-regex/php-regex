@@ -181,6 +181,23 @@ final class HopcroftWorklist implements MinimizationAlgorithmInterface, WorkBudg
         $inverse = [];
 
         foreach ($dfa->states as $stateId => $state) {
+            $alphabet = $state->alphabet();
+            if (null !== $alphabet) {
+                foreach ($state->classTargets() as $class => $target) {
+                    $symbol = $alphabet->representative[$class];
+                    if (!isset($alphabetSet[$symbol])) {
+                        continue;
+                    }
+
+                    if (null !== $this->budget) {
+                        $this->budget->consume();
+                    }
+                    $inverse[$symbol][$target][] = $stateId;
+                }
+
+                continue;
+            }
+
             $ranges = $state->packedRanges();
             if ([] !== $ranges) {
                 for ($at = 0, $count = \count($ranges); $at < $count; $at += 3) {

@@ -59,7 +59,7 @@ final class TranspileJsonContractTest extends LaravelTestCase
         yield 'a set past ASCII under u' => ['pattern' => '/^.,[^,]+$/u', 'target' => 'javascript', 'exitCode' => 0, 'address' => 'transpile'];
         yield 'a syntax error' => ['pattern' => '/(a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'a semantic error' => ['pattern' => '/(?<=a+)b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
-        yield 'a construct the target lacks' => ['pattern' => '/a++b/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
+        yield 'a construct the target lacks' => ['pattern' => '/a++a/', 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         // Without u a lone byte has no equivalent in a target that reads characters.
         yield 'an invalid UTF-8 byte' => ['pattern' => "/a\xFF/", 'target' => 'javascript', 'exitCode' => 1, 'address' => 'error'];
         yield 'the js alias' => ['pattern' => '/a+b/i', 'target' => 'js', 'exitCode' => 0, 'address' => 'transpile'];
