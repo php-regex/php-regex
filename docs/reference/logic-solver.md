@@ -468,9 +468,9 @@ Two refinements inside those rules:
   `\n` may follow it.
 
   A lookbehind branch that matches more than one length, as `\R` does,
-  compiles from PCRE2 10.43 on when its length is bounded, up to 255
-  characters: `/(?<=a{1,255})x/` compiles, `/(?<=a{1,256})x/` and
-  `/(?<=a+)x/` do not. Before 10.43, `/(?<=\R)/` is a compile error, where
+  compiles from PCRE2 10.43 on when its length is bounded, up to a limit
+  PCRE2 sets when it is built, 255 characters by default: there,
+  `/(?<=a{1,255})x/` compiles, `/(?<=a{1,256})x/` and `/(?<=a+)x/` do not. Before 10.43, `/(?<=\R)/` is a compile error, where
   `/(?<=a|bc)x/`, each branch of one length, compiles. Its body must
   end where the lookbehind stands, and PCRE2's interpreter lets a commitment
   run past that place and fail there, where its JIT reads the subject as
