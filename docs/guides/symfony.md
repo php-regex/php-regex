@@ -541,8 +541,9 @@ them. A form renders a `Regex` constraint as the HTML `pattern` attribute
 `getHtmlPattern()` gives, and the browser compiles it as `^(?:pattern)$`
 under the `v` flag. For each constraint the command reports:
 
-- `html_pattern.dropped`: the pattern has flags, so `getHtmlPattern()` gives
-  no attribute and the browser checks nothing; the report suggests an
+- `html_pattern.dropped`: the pattern has flags, or a pair of delimiters
+  such as `{^a$}`, so `getHtmlPattern()` gives no attribute and the browser
+  checks nothing; the report suggests an
   `htmlPattern` written by the `html-pattern` target and proved to accept
   the same values;
 - `html_pattern.invalid`: a browser refuses to compile the attribute under

@@ -41,7 +41,8 @@ use Symfony\Component\Validator\Mapping\GetterMetadata;
  * v flag. For each Regex constraint the audit asks:
  *
  * - whether that attribute is dropped, as getHtmlPattern() gives none for a
- *   pattern with flags, and which htmlPattern would carry it;
+ *   pattern with flags or a pair of delimiters, and which htmlPattern would
+ *   carry it;
  * - whether a browser compiles it at all, and reads it as PCRE does
  *   (VModeCompatibility);
  * - whether it accepts the values the server accepts, and only those: the
@@ -210,7 +211,10 @@ final class RegexConstraintAnalyzer
                 return [];
             }
 
-            $message = 'The pattern has flags, so getHtmlPattern() gives no HTML pattern: the browser checks nothing.';
+            $flags = $this->flagsOf($pattern);
+            $message = '' !== $flags
+                ? \sprintf('The pattern has flags ("%s"), so getHtmlPattern() gives no HTML pattern: the browser checks nothing.', $flags)
+                : 'getHtmlPattern() gives no HTML pattern, as the pattern does not end with the character it starts with: the browser checks nothing.';
             [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
             if (null === $suggestion) {
                 return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message)];
@@ -524,6 +528,18 @@ final class RegexConstraintAnalyzer
         }
 
         return null;
+    }
+
+    /**
+     * The flags of the pattern, none when PHP refuses it.
+     */
+    private function flagsOf(string $pattern): string
+    {
+        try {
+            return $this->parser->parse($pattern)->flags;
+        } catch (RegexException) {
+            return '';
+        }
     }
 
     /**

@@ -63,7 +63,7 @@ final class ValidatorCommand extends Command
             ->setHelp(<<<'EOF'
                 The <info>%command.name%</info> command audits each Regex constraint of the validated classes:
 
-                  * the HTML pattern a form gives the browser: whether getHtmlPattern() drops it (a pattern with flags),
+                  * the HTML pattern a form gives the browser: whether getHtmlPattern() drops it (flags, paired delimiters),
                     whether a browser compiles it under the v flag, and whether the browser accepts exactly the values
                     the server accepts, with an example of each difference and an htmlPattern that matches the same values;
                   * the other constraints of the property: a Length no value of the pattern fits, a Choice value the

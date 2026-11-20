@@ -7,8 +7,8 @@ CHANGELOG
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
-   the `Regex` constraints of the validated classes: a pattern with flags
-   whose HTML pattern `getHtmlPattern()` drops, with an `htmlPattern` proved
+   the `Regex` constraints of the validated classes: a pattern with flags,
+   or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops, with an `htmlPattern` proved
    to accept the same values; an HTML pattern a browser refuses or misreads
    under the `v` flag (`[a-z0-9-]`, `a++`, `[[:alpha:]]`); the shortest
    value the browser accepts and the server rejects, or the reverse; and a

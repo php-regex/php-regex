@@ -363,6 +363,62 @@ final class RegexConstraintAnalyzerTest extends TestCase
         $this->assertStringEndsWith('This htmlPattern matches the same values.', $finding['message']);
     }
 
+    /**
+     * Symfony gives no HTML pattern when the last character of the pattern
+     * is not its first: flags, or a pair of delimiters. The message names
+     * the flags only when the pattern has some.
+     *
+     * @param non-empty-string                  $message
+     * @param list<array{string, string, bool}> $verdicts each pattern, subject and whether preg_match() matches
+     */
+    #[Test]
+    #[DataProvider('provideDroppedAttributes')]
+    public function test_a_dropped_attribute_says_why(string $pattern, string $message, array $verdicts): void
+    {
+        foreach ($verdicts as [$verdictPattern, $subject, $matches]) {
+            $this->assertSame($matches ? 1 : 0, @preg_match($verdictPattern, $subject));
+        }
+
+        $regex = new Regex($pattern);
+        $this->assertNull($regex->getHtmlPattern());
+
+        $finding = self::audit([$regex])[0];
+
+        $this->assertSame('html_pattern.dropped', $finding['check']);
+        $this->assertStringStartsWith($message, $finding['message']);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, message: non-empty-string, verdicts: list<array{string, string, bool}>}>
+     */
+    public static function provideDroppedAttributes(): iterable
+    {
+        yield 'a flag' => [
+            'pattern' => '/^[a-z]+$/i',
+            'message' => 'The pattern has flags ("i"), so getHtmlPattern() gives no HTML pattern: the browser checks nothing.',
+            'verdicts' => [['/^[a-z]+$/i', 'A', true]],
+        ];
+        yield 'two flags' => [
+            'pattern' => '/^a$/Di',
+            'message' => 'The pattern has flags ("Di"), so getHtmlPattern() gives no HTML pattern: the browser checks nothing.',
+            'verdicts' => [['/^a$/Di', 'A', true]],
+        ];
+        yield 'a pair of delimiters' => [
+            'pattern' => '{^a$}',
+            'message' => 'getHtmlPattern() gives no HTML pattern, as the pattern does not end with the character it starts with: the browser checks nothing.',
+            'verdicts' => [['{^a$}', 'a', true]],
+        ];
+    }
+
+    #[Test]
+    public function test_a_dropped_attribute_of_a_pattern_php_refuses_names_no_flag(): void
+    {
+        $regex = new Regex('/[a-z/i');
+        $this->assertFalse(@preg_match((string) $regex->pattern, 'a'));
+
+        $this->assertSame('getHtmlPattern() gives no HTML pattern, as the pattern does not end with the character it starts with: the browser checks nothing.', self::audit([$regex])[0]['message']);
+    }
+
     #[Test]
     public function test_a_refused_attribute_comes_with_one_a_browser_compiles(): void
     {
