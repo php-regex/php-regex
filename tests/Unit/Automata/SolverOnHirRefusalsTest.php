@@ -77,11 +77,14 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'lookahead in a group repeated no time' => ['pattern' => '/(?:x|(?=a)){0}\w/', 'expected' => 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.'];
         yield 'start anchor in a group repeated no time' => ['pattern' => '/(?:x|^){0}b/', 'expected' => 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.'];
 
-        yield 'atomic group' => ['pattern' => '/(?>a+)b/', 'expected' => $atomic];
+        // Oracle: on "abc", the anchored atomic spelling finds no match,
+        // where the plain group backtracks into "ab": the atomic group
+        // commits to "a".
+        yield 'atomic group' => ['pattern' => '/(?>a|ab)c/', 'expected' => $atomic, 'engine' => ['/^(?>a|ab)c$/', '/^(?:a|ab)c$/', 'abc']];
         // Oracle: preg_match('/^(?:a|ab){1}+c$/', 'abc') is 0, where the
         // greedy "{1}" takes it: once is still possessive.
-        yield 'possessive count of one' => ['pattern' => '/(?:a|ab){1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
-        yield 'possessive count of one to one' => ['pattern' => '/(?:a|ab){1,1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.'];
+        yield 'possessive count of one' => ['pattern' => '/(?:a|ab){1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.', 'engine' => ['/^(?:a|ab){1}+c$/', '/^(?:a|ab){1}c$/', 'abc']];
+        yield 'possessive count of one to one' => ['pattern' => '/(?:a|ab){1,1}+c/', 'expected' => 'Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.', 'engine' => ['/^(?:a|ab){1,1}+c$/', '/^(?:a|ab){1,1}c$/', 'abc']];
 
         yield 'match start after a character' => ['pattern' => '/a\G/', 'expected' => $assertion];
         yield 'word boundary inside a lookahead' => ['pattern' => '/(?=\b)a/', 'expected' => 'An anchor inside a lookaround is beyond what the automata solver reads.'];

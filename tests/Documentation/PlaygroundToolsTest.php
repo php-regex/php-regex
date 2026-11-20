@@ -357,7 +357,7 @@ final class PlaygroundToolsTest extends TestCase
      */
     public static function provideRefusals(): iterable
     {
-        yield 'atomic group to JavaScript' => ['pattern' => '/(?>a+)b/', 'dialect' => 'js', 'fields' => [], 'message' => 'Atomic groups are not supported in JavaScript.'];
+        yield 'atomic group to JavaScript' => ['pattern' => '/(?>a|ab)c/', 'dialect' => 'js', 'fields' => [], 'message' => 'Atomic groups are not supported in JavaScript.'];
         yield 'a verb to JavaScript' => ['pattern' => '/a(*SKIP)b/', 'dialect' => 'js', 'fields' => [], 'message' => 'PCRE verbs are not supported in JavaScript.'];
         yield '\K to JavaScript' => ['pattern' => '/(?<=a)b\K/', 'dialect' => 'js', 'fields' => [], 'message' => '\K is not supported in JavaScript.'];
         yield 'atomic group to Python 3.10' => ['pattern' => '/(?>a+)b/', 'dialect' => 'python', 'fields' => ['pythonVersion' => '3.10'], 'message' => 'Atomic groups are not supported in Python re.'];

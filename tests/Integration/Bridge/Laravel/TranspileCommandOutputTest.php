@@ -79,7 +79,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
     #[Test]
     public function test_console_reports_a_construct_the_target_lacks(): void
     {
-        $status = Artisan::call('regex:transpile', ['pattern' => '/a++b/', '--target' => 'javascript']);
+        $status = Artisan::call('regex:transpile', ['pattern' => '/a++a/', '--target' => 'javascript']);
 
         $this->assertSame(1, $status);
         $this->assertStringContainsString('Transpilation failed: Possessive quantifiers are not supported in JavaScript.', Newlines::lf(Artisan::output()));

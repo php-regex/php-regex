@@ -57,7 +57,7 @@ final class PublicSurface
             'Analysis/LengthRangeCalculator', 'Analysis/LiteralExtractor', 'Analysis/LiteralExtractionResult',
             'Analysis/LiteralConfidence', 'Analysis/LiteralSet', 'Analysis/MetricsCollector',
             'Analysis/CaptureShapeAnalyzer', 'Analysis/CaptureShape', 'Analysis/CaptureGroupShape', 'Analysis/Participation',
-            'Analysis/RequiredLiteralAnalyzer',
+            'Analysis/RequiredLiteralAnalyzer', 'Analysis/InertCommitments',
             'Analysis/PatternInfoAnalyzer', 'Analysis/PatternInfo', 'NewlineConvention', 'BsrConvention',
             'Validation/CompatibilityChecker', 'Validation/PatternCompatibility', 'Validation/TargetVerdict', 'Validation/RangeDiff', 'Validation/RangeVerdict',
             'Cache/CacheInterface', 'Cache/RemovableCacheInterface', 'Cache/ArrayCache', 'Cache/NullCache',

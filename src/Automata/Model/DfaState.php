@@ -18,8 +18,11 @@ namespace PHPRegex\Automata\Model;
  *
  * Its moves are ranges, sorted and disjoint, each read as its first code
  * point (or byte), its last, inclusive, and the id of the state it leads to.
- * They are held as three ints a range in one flat list: a Unicode class
- * splits the alphabet into hundreds of ranges, written in every state.
+ * A state the solver determinizes holds one target per class of its
+ * automaton's alphabet: a Unicode class splits the alphabet into hundreds of
+ * ranges and a handful of classes, and the ranges are held once, by the
+ * alphabet. Other states hold their ranges as three ints a range in one
+ * flat list.
  *
  * @phpstan-type RangeTransition array{0: int, 1: int, 2: int}
  */
@@ -28,15 +31,19 @@ final class DfaState
     /**
      * @internal the solver builds the automata
      *
-     * @param array<int, int> $transitions the state each byte leads to, in an automaton over bytes; empty
-     *                                     over code points, where the ranges say it all
-     * @param list<int>       $ranges      three ints a range: its first code point, its last and its target
+     * @param array<int, int> $transitions  the state each byte leads to, in an automaton over bytes; empty
+     *                                      over code points, where the ranges say it all
+     * @param list<int>       $ranges       three ints a range: its first code point, its last and its target;
+     *                                      empty when the alphabet and the class targets say it
+     * @param list<int>       $classTargets the state each class of the alphabet leads to
      */
     public function __construct(
         public readonly int $id,
         private readonly array $transitions,
         public readonly bool $isAccepting,
         private readonly array $ranges = [],
+        private readonly ?Alphabet $alphabet = null,
+        private readonly array $classTargets = [],
     ) {}
 
     /**
@@ -47,6 +54,12 @@ final class DfaState
     {
         if (isset($this->transitions[$codePoint])) {
             return $this->transitions[$codePoint];
+        }
+
+        if (null !== $this->alphabet) {
+            $class = $this->alphabet->classOf($codePoint);
+
+            return null === $class ? null : ($this->classTargets[$class] ?? null);
         }
 
         $ranges = $this->ranges;
@@ -74,6 +87,10 @@ final class DfaState
      */
     public function rangeCount(): int
     {
+        if (null !== $this->alphabet) {
+            return $this->alphabet->rangeCount();
+        }
+
         return intdiv(\count($this->ranges), 3);
     }
 
@@ -86,8 +103,9 @@ final class DfaState
     public function ranges(): array
     {
         $ranges = [];
-        for ($at = 0, $count = \count($this->ranges); $at < $count; $at += 3) {
-            $ranges[] = [$this->ranges[$at], $this->ranges[$at + 1], $this->ranges[$at + 2]];
+        $packed = $this->packedRanges();
+        for ($at = 0, $count = \count($packed); $at < $count; $at += 3) {
+            $ranges[] = [$packed[$at], $packed[$at + 1], $packed[$at + 2]];
         }
 
         return $ranges;
@@ -103,7 +121,43 @@ final class DfaState
      */
     public function packedRanges(): array
     {
-        return $this->ranges;
+        if (null === $this->alphabet) {
+            return $this->ranges;
+        }
+
+        $alphabet = $this->alphabet;
+        $packed = [];
+        foreach ($alphabet->rangeStart as $index => $start) {
+            $packed[] = $start;
+            $packed[] = $alphabet->rangeEnd[$index];
+            $packed[] = $this->classTargets[$alphabet->classOfRange[$index]];
+        }
+
+        return $packed;
+    }
+
+    /**
+     * The alphabet whose classes the state moves on, null when the state
+     * holds its ranges itself.
+     *
+     * @internal the solver reads the moves by class
+     */
+    public function alphabet(): ?Alphabet
+    {
+        return $this->alphabet;
+    }
+
+    /**
+     * The state each class of the alphabet leads to, in class order; empty
+     * when the state holds its ranges itself.
+     *
+     * @internal the solver reads the moves by class
+     *
+     * @return list<int>
+     */
+    public function classTargets(): array
+    {
+        return $this->classTargets;
     }
 
     /**

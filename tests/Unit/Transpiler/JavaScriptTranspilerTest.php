@@ -326,7 +326,7 @@ final class JavaScriptTranspilerTest extends TestCase
         $regex = Regex::create();
 
         $this->expectException(TranspileException::class);
-        $regex->transpile('/a++/', 'javascript');
+        $regex->transpile('/a++a/', 'javascript');
     }
 
     #[Test]

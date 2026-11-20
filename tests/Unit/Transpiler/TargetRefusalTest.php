@@ -113,7 +113,9 @@ final class TargetRefusalTest extends TestCase
     public static function provideConstructsATargetLacks(): iterable
     {
         foreach (['javascript' => 'JavaScript', 'python' => 'Python'] as $target => $name) {
-            yield $name.': a line break' => ['target' => $target, 'pattern' => '/a\R/', 'message' => 'Unsupported character type in '.$name.': \R.', 'position' => 1];
+            // A "\n" after it may need the "\r" alone that "\R" never gives
+            // back from "\r\n": JavaScript has no spelling for that.
+            yield $name.': a line break' => ['target' => $target, 'pattern' => '/a\R\n/', 'message' => 'Unsupported character type in '.$name.': \R.', 'position' => 1];
             yield $name.': a subroutine call' => ['target' => $target, 'pattern' => '/(a)(?1)/', 'message' => 'Subroutine calls are not supported in '.('python' === $target ? 'Python re' : $name).'.', 'position' => 3];
             yield $name.': two flags it has no equivalent for' => ['target' => $target, 'pattern' => '/a/AJ', 'message' => 'Unsupported PCRE flag(s) for '.$name.': A, J.', 'position' => null];
         }

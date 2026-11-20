@@ -17,6 +17,7 @@ use PHPRegex\Automata\Determinization\DeterminizationAlgorithm;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\DfaMinimizer;
+use PHPRegex\Automata\Model\Alphabet;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\SolverOptions;
@@ -151,9 +152,12 @@ final class WorkBudgetTest extends TestCase
     }
 
     /**
-     * Each state of the DFA writes a transition per range of the alphabet,
-     * and \pL splits the Unicode alphabet into hundreds of ranges: the
-     * table, not the moves of the NFA, is where the work and the memory go.
+     * Each state of the DFA writes a transition per entry of its table, and
+     * \pL splits the Unicode alphabet into hundreds of ranges. The range by
+     * range construction writes one per range; the indexed one writes one
+     * per class of the shared alphabet. Either way, the table, not the moves
+     * of the NFA, is where the work and the memory go, and the budget counts
+     * every entry written.
      */
     #[Test]
     #[DataProvider('provideDeterminizationAlgorithms')]
@@ -162,10 +166,18 @@ final class WorkBudgetTest extends TestCase
         $pattern = '/\pL\pL\pL/u';
         $dfa = (new LanguageSolver())->compile($pattern, new SolverOptions(minimizeDfa: false, maxTransitionsProcessed: null, determinizationAlgorithm: $algorithm));
         $written = 0;
+        $ranges = 0;
         foreach ($dfa->states as $state) {
-            $written += $state->rangeCount();
+            $written += null === $state->alphabet() ? $state->rangeCount() : \count($state->classTargets());
+            $ranges += $state->rangeCount();
         }
-        $this->assertGreaterThan(1_000, $written);
+        $this->assertGreaterThan(1_000, $ranges);
+        if (DeterminizationAlgorithm::SubsetIndexed === $algorithm) {
+            // A handful of classes per state, not a thousand ranges.
+            $this->assertLessThan(100, $written);
+        } else {
+            $this->assertSame($ranges, $written);
+        }
 
         try {
             (new LanguageSolver())->compile($pattern, new SolverOptions(minimizeDfa: false, maxTransitionsProcessed: $written - 1, determinizationAlgorithm: $algorithm));
@@ -189,18 +201,16 @@ final class WorkBudgetTest extends TestCase
     }
 
     /**
-     * Under the default budget, a large Unicode pattern is refused while
-     * its DFA is built: the full table, over a thousand states by some two
-     * thousand ranges, is never held to be minimized afterwards.
+     * Under the default budget, the range by range construction refuses a
+     * large Unicode pattern while its DFA is built: the full table, over a
+     * thousand states by some two thousand ranges, is never held to be
+     * minimized afterwards.
      */
     #[Test]
     public function test_determinize_budget_stops_a_large_alphabet_before_its_table_is_built(): void
     {
-        /** @var string $pattern */
-        $pattern = require \dirname(__DIR__, 2).'/Fixtures/Automata/url_validator_pattern.php';
-
         try {
-            (new LanguageSolver())->compile($pattern);
+            (new LanguageSolver())->compile(self::urlValidatorPattern(), new SolverOptions(determinizationAlgorithm: DeterminizationAlgorithm::Subset));
             $this->fail('Expected a ComplexityException to be thrown.');
         } catch (ComplexityException $exception) {
             $diagnostic = $exception->getDiagnostic();
@@ -208,6 +218,32 @@ final class WorkBudgetTest extends TestCase
             $this->assertSame('determinize', $diagnostic['phase'] ?? null);
             $this->assertSame(1_000_000, $diagnostic['limit'] ?? null);
         }
+    }
+
+    /**
+     * The indexed construction writes one target per class of the shared
+     * alphabet: the same pattern fits the default budget, and the two
+     * thousand ranges are held once, by the alphabet, for every state.
+     */
+    #[Test]
+    public function test_class_table_builds_a_large_alphabet_under_the_default_budget(): void
+    {
+        $pattern = self::urlValidatorPattern();
+        foreach (['https://example.com' => 1, 'https://example.com/a?b=c#d' => 1, 'http://localhost:8080' => 1, 'ftp://x' => 0, 'not a url' => 0, 'https://exa mple.com' => 0] as $subject => $matched) {
+            $this->assertSame($matched, preg_match($pattern, $subject), $subject);
+        }
+
+        $dfa = (new LanguageSolver())->compile($pattern);
+
+        $this->assertInstanceOf(Alphabet::class, $dfa->alphabet);
+        $this->assertGreaterThan(1_000, $dfa->alphabet->rangeCount());
+        $this->assertLessThan(100, $dfa->alphabet->classCount);
+        foreach ($dfa->states as $state) {
+            $this->assertSame($dfa->alphabet, $state->alphabet());
+            $this->assertCount($dfa->alphabet->classCount, $state->classTargets());
+        }
+
+        $this->assertTrue((new LanguageSolver())->equivalent($pattern, $pattern)->isEquivalent);
     }
 
     #[Test]
@@ -231,5 +267,13 @@ final class WorkBudgetTest extends TestCase
             $this->assertSame('minimize', $diagnostic['phase'] ?? null);
             $this->assertSame(0, $diagnostic['limit'] ?? null);
         }
+    }
+
+    private static function urlValidatorPattern(): string
+    {
+        /** @var string $pattern */
+        $pattern = require \dirname(__DIR__, 2).'/Fixtures/Automata/url_validator_pattern.php';
+
+        return $pattern;
     }
 }

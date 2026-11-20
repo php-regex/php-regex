@@ -63,6 +63,17 @@ final class PartitionQuotient
                 $transitions[(int) $symbol] = $stateToGroup[$target];
             }
 
+            $alphabet = $representative->alphabet();
+            if (null !== $alphabet) {
+                $classTargets = [];
+                foreach ($representative->classTargets() as $target) {
+                    $classTargets[] = $stateToGroup[$target];
+                }
+                $newStates[$newId] = new DfaState($newId, $transitions, $representative->isAccepting, [], $alphabet, $classTargets);
+
+                continue;
+            }
+
             $packed = $representative->packedRanges();
             if ([] !== $packed) {
                 for ($at = 0, $count = \count($packed); $at < $count; $at += 3) {
@@ -83,6 +94,6 @@ final class PartitionQuotient
 
         $startState = $stateToGroup[$dfa->startState];
 
-        return new Dfa($startState, $newStates, $dfa->alphabetRanges, $dfa->minCodePoint, $dfa->maxCodePoint);
+        return new Dfa($startState, $newStates, $dfa->alphabetRanges, $dfa->minCodePoint, $dfa->maxCodePoint, $dfa->alphabet);
     }
 }
