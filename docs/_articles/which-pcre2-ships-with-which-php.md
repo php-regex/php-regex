@@ -62,10 +62,10 @@ PHP carries its own copy of PCRE2, and each release picks one version of it. Tha
 | 7.4 | 2019-11-28 | 10.33 | 10.34 in 7.4.6, 10.35 in 7.4.12 | 7.4.33 |
 | 8.0 | 2020-11-26 | 10.35 | none | 8.0.30 |
 | 8.1 | 2021-11-25 | 10.37 | 10.39 from 8.1.1 | 8.1.34 |
-| 8.2 | 2022-12-08 | 10.40 | none | 8.2.34 |
-| 8.3 | 2023-11-23 | 10.42 | none | 8.3.35 |
-| 8.4 | 2024-11-21 | 10.44 | none | 8.4.26 |
-| 8.5 | 2025-11-20 | 10.44 | none | 8.5.11 |
+| 8.2 | 2022-12-08 | 10.40 | none | 8.2.36 |
+| 8.3 | 2023-11-23 | 10.42 | none | 8.3.37 |
+| 8.4 | 2024-11-21 | 10.44 | none | 8.4.28 |
+| 8.5 | 2025-11-20 | 10.44 | none | 8.5.13 |
 | 8.6 | 2026-11-19 | 10.44 | none | 8.6.0 |
 
 <figure class="pipeline-figure" role="group" aria-labelledby="timeline-chart-caption">
@@ -342,7 +342,7 @@ Other constructs depend on the PCRE2 release too, such as loose `\p{...}` proper
 
 ## How I checked this
 
-The table was checked on 16 October 2026, and its PHP 8.6 row on 20 November 2026, the day after 8.6.0 came out. Each check was made in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
+The table was last checked on 20 November 2026, the day after PHP 8.6.0 came out, in two ways. First, the bundled library header `ext/pcre/pcre2lib/pcre2.h` at each php-src release tag. Second, a run of each official `php:X.Y-cli` image, with its bundled engine and default settings. You can repeat the second check for PHP 8.1 and newer with this probe:
 
 ```php
 <?php
@@ -362,13 +362,12 @@ printf(
 {: data-file="matrix.php" data-copy="" }
 
 ```console
-$ for v in 8.1 8.2 8.3 8.4 8.5; do docker run --rm -i php:$v-cli php < matrix.php; done
+$ for v in 8.1 8.2 8.3 8.4 8.5 8.6; do docker run --rm -i php:$v-cli php < matrix.php; done
 8.1.34    10.39 2021-10-29  ranged=false split=1     keep=1
-8.2.34    10.40 2022-04-14  ranged=false split=1     keep=1
-8.3.35    10.42 2022-12-12  ranged=false split=1     keep=1
-8.4.26    10.44 2024-06-07  ranged=1     split=1     keep=1
-8.5.11    10.44 2024-06-07  ranged=1     split=1     keep=false
-$ docker run --rm -i php:8.6-cli php < matrix.php
+8.2.36    10.40 2022-04-14  ranged=false split=1     keep=1
+8.3.37    10.42 2022-12-12  ranged=false split=1     keep=1
+8.4.28    10.44 2024-06-07  ranged=1     split=1     keep=1
+8.5.13    10.44 2024-06-07  ranged=1     split=1     keep=false
 8.6.0     10.44 2024-06-07  ranged=1     split=1     keep=false
 ```
 {: data-copy="" }
