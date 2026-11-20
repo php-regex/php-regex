@@ -124,6 +124,17 @@ final class ScriptNames
     }
 
     /**
+     * Whether JavaScript takes the name as written in "\p{Script=…}": the
+     * Unicode spelling of a script, or its four-letter alias, capitalized.
+     */
+    public static function isWritten(string $name): bool
+    {
+        $script = self::javaScriptName($name);
+
+        return null !== $script && ($script === $name || (4 === \strlen($name) && ucfirst(Ascii::lower($name)) === $name));
+    }
+
+    /**
      * A name as PCRE2 compares it: lowercase, without ASCII spaces, hyphens
      * or underscores.
      */

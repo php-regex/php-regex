@@ -16,6 +16,7 @@ namespace PHPRegex\Transpiler\Target\JavaScript;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -149,17 +150,21 @@ final class VModeCompatibility
             $node instanceof SubroutineNode => $this->add($node, 'subroutine', 'JavaScript has no recursion or subroutine call.'),
             $node instanceof PcreVerbNode => $this->add($node, 'verb', 'JavaScript has no backtracking control verb.'),
             $node instanceof KeepNode => $this->add($node, 'keep', 'JavaScript has no \K.'),
+            $node instanceof CommentNode => $this->add($node, 'comment', 'JavaScript has no comment group "(?#": a syntax error under v.'),
             default => null,
         };
     }
 
     /**
      * The characters of a class, written unescaped, that the v flag
-     * refuses: alone, or twice in a row.
+     * refuses: alone, or twice in a row. "&&" is read as an intersection
+     * only between single operands, "[a&&b&&c]": never a range, nor two
+     * characters side by side.
      */
     private function judgeClassBody(CharClassNode $class): void
     {
         $items = $class->expression instanceof RangeNode || [] === $class->expression->getChildren() ? [$class->expression] : $class->expression->getChildren();
+        $intersection = $this->isIntersection($items);
         $previous = null;
         foreach ($items as $item) {
             foreach ($item instanceof RangeNode ? [$item->start, $item->end] : [$item] as $part) {
@@ -171,7 +176,7 @@ final class VModeCompatibility
                 if (null !== $character && null !== $previous && isset(self::RESERVED_DOUBLE[$character]) && $previous[0] === $character && $previous[1] === $part->getStartPosition()) {
                     $this->add($part, 'class_double_punctuator', '&' === $character
                         ? 'Under v "&&" in a class is the intersection of its sides, not two "&": escape one of them, "\\&".'
-                        : 'Under v a class refuses "'.$character.$character.'": escape one of them, "\\'.$character.'".', -1, '&' !== $character || !$this->hasOperands($part->getStartPosition() - 1));
+                        : 'Under v a class refuses "'.$character.$character.'": escape one of them, "\\'.$character.'".', -1, '&' !== $character || !$intersection);
                 }
 
                 $previous = null === $character ? null : [$character, $part->getEndPosition()];
@@ -181,6 +186,22 @@ final class VModeCompatibility
                 $previous = null;
             }
         }
+    }
+
+    /**
+     * Whether the items of a class are single operands joined by "&&".
+     *
+     * @param list<NodeInterface> $items
+     */
+    private function isIntersection(array $items): bool
+    {
+        foreach ($items as $index => $item) {
+            if ($item instanceof RangeNode || (0 === $index % 3) === ('&' === $this->unescaped($item))) {
+                return false;
+            }
+        }
+
+        return 1 === \count($items) % 3;
     }
 
     /**
@@ -269,38 +290,60 @@ final class VModeCompatibility
             return;
         }
 
-        $rest = substr($this->source, $offset + 2);
+        // What follows the escape is read in place: a copy of the rest of the
+        // pattern for each escape would cost the square of its length.
+        $source = $this->source;
+        $at = $offset + 2;
+        $following = $source[$at] ?? '';
+        if (('p' === $next || 'P' === $next) && '{' === $following) {
+            $this->judgeProperty($offset, $next, substr($source, $at + 1, strcspn($source, '}', $at) - 1));
+
+            return;
+        }
+
         $known = match (true) {
             str_contains('^$\\.*+?()[]{}|/', $next) => true,
             // \N alone is a character type, judged as one; \N{U+41} names a code point.
-            'N' === $next => !str_starts_with($rest, '{U+'),
+            'N' === $next => '{U+' !== substr($source, $at, 3),
             $inClass && isset(self::CLASS_SET_META[$next]) => true,
             str_contains('dDwWsSfnrt', $next) => true,
             'b' === $next || 'B' === $next => 'B' !== $next || !$inClass,
-            '0' === $next => !Ascii::isDigit($rest[0] ?? ''),
-            'c' === $next => Ascii::isAlpha($rest[0] ?? ''),
-            'x' === $next => 2 === strspn($rest, self::HEX, 0, 2),
-            'u' === $next => 4 === strspn($rest, self::HEX, 0, 4) || self::bracedHex($rest),
-            'p' === $next || 'P' === $next => str_starts_with($rest, '{'),
-            'k' === $next => !$inClass && str_starts_with($rest, '<'),
-            'q' === $next => $inClass && str_starts_with($rest, '{'),
+            '0' === $next => !Ascii::isDigit($following),
+            'c' === $next => Ascii::isAlpha($following),
+            'x' === $next => 2 === strspn($source, self::HEX, $at, 2),
+            'u' === $next => 4 === strspn($source, self::HEX, $at, 4) || self::bracedHex($source, $at),
+            'k' === $next => !$inClass && '<' === $following,
+            'q' === $next => $inClass && '{' === $following,
             Ascii::isDigit($next) => !$inClass,
             default => false,
         };
 
         if (!$known) {
-            $this->findings[] = ['offset' => $offset, 'construct' => 'escape', 'message' => \sprintf('JavaScript knows no escape "\\%s%s" under v: a syntax error.', $next, 'x' === $next && str_starts_with($rest, '{') ? '{' : ''), 'refused' => true];
+            $this->findings[] = ['offset' => $offset, 'construct' => 'escape', 'message' => \sprintf('JavaScript knows no escape "\\%s%s" under v: a syntax error.', $next, 'x' === $next && '{' === $following ? '{' : ''), 'refused' => true];
         }
     }
 
     /**
-     * Whether the text opens with "{", one hex digit or more, then "}".
+     * A property JavaScript does not name as written: it takes "\p{Lu}",
+     * "\p{Letter}" or "\p{Script=Greek}", never PCRE's "\p{Greek}",
+     * "\p{lu}" or "\p{Xan}".
      */
-    private static function bracedHex(string $text): bool
+    private function judgeProperty(int $offset, string $next, string $name): void
     {
-        $digits = strspn($text, self::HEX, 1);
+        if (!JavaScriptProperties::readsAsWritten($name, 'P' === $next)) {
+            $this->findings[] = ['offset' => $offset, 'construct' => 'property', 'message' => \sprintf('JavaScript knows no property "\\%s{%s}" under v: a syntax error.', $next, $name), 'refused' => true];
+        }
+    }
 
-        return '{' === ($text[0] ?? '') && $digits > 0 && '}' === ($text[1 + $digits] ?? '');
+    /**
+     * Whether the source writes "{", one hex digit or more, then "}" at the
+     * offset.
+     */
+    private static function bracedHex(string $source, int $at): bool
+    {
+        $digits = strspn($source, self::HEX, $at + 1);
+
+        return '{' === ($source[$at] ?? '') && $digits > 0 && '}' === ($source[$at + 1 + $digits] ?? '');
     }
 
     /**
@@ -321,17 +364,6 @@ final class VModeCompatibility
         }
 
         return '}' === ($source[$at] ?? '') ? $at : null;
-    }
-
-    /**
-     * Whether the "&&" written at the offset stands between two operands,
-     * an intersection the browser reads, not at an end of its class.
-     */
-    private function hasOperands(int $offset): bool
-    {
-        $before = substr($this->source, 0, $offset);
-
-        return !str_ends_with($before, '[') && !str_ends_with($before, '[^') && ']' !== ($this->source[$offset + 2] ?? ']');
     }
 
     /**

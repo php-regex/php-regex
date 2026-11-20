@@ -7,9 +7,10 @@ CHANGELOG
  * `Target\JavaScript\VModeCompatibility` lists what a browser does wrong
    with a pattern written for PCRE and read as is under the `v` flag, as the
    HTML `pattern` attribute reads it: each construct it refuses to compile
-   (a possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, an
-   unescaped `-` or `(` in a class, a lone `{`, an escape JavaScript does not
-   know) or reads otherwise (a POSIX class, `&&`, `\v`), with its offset.
+   (a possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, `(?#`,
+   an unescaped `-` or `(` in a class, a lone `{`, an escape JavaScript does
+   not know, a property it does not name, `\p{Greek}`) or reads otherwise (a
+   POSIX class, `&&` between single operands, `\v`), with its offset.
  * JavaScript and the HTML pattern attribute refuse what a lookbehind
    matched right to left reads otherwise than PCRE: a group in a branch of
    more than one length, `/(?<=(ab|a)b?)c/`, which captures `ab` in PCRE

@@ -23,8 +23,9 @@ use PHPUnit\Framework\TestCase;
 /**
  * What a browser makes of a pattern written for PCRE, read as is under the
  * v flag, as the HTML pattern attribute reads it. Whether each value
- * compiles was checked with Node 22, new RegExp(value, "v"): a value
- * compiles exactly when no finding says the browser refuses it.
+ * compiles is what Node says, new RegExp(value, "v"), recorded by
+ * tests/Tools/write_v_flag_verdicts.php: a value compiles exactly when no
+ * finding says the browser refuses it.
  */
 final class VModeCompatibilityTest extends TestCase
 {
@@ -130,7 +131,7 @@ final class VModeCompatibilityTest extends TestCase
         yield '[[]' => ['[[]', false, [['class_syntax', 1, true], ['class_syntax', 2, true]]];
         yield '[]]' => ['[]]', false, [['class_syntax', 1, true]]];
         yield '[\\]]' => ['[\\]]', true, []];
-        yield '[a-z&&[aeiou]]' => ['[a-z&&[aeiou]]', false, [['class_double_punctuator', 4, false], ['class_syntax', 6, true]]];
+        yield '[a-z&&[aeiou]]' => ['[a-z&&[aeiou]]', false, [['class_double_punctuator', 4, true], ['class_syntax', 6, true]]];
         yield 'x{1,2}?' => ['x{1,2}?', true, []];
         yield '(?=a)' => ['(?=a)', true, []];
         yield '(?<=a)b' => ['(?<=a)b', true, []];
@@ -203,6 +204,76 @@ final class VModeCompatibilityTest extends TestCase
         yield '[\\p{L}|]' => ['[\\p{L}|]', false, [['class_syntax', 6, true]]];
         yield 'a{1,}}' => ['a{1,}}', false, [['brace', 5, true]]];
         yield 'a{1,2}}' => ['a{1,2}}', false, [['brace', 6, true]]];
+        yield '(?#note)a' => ['(?#note)a', false, [['comment', 0, true]]];
+        yield '(?:a)' => ['(?:a)', true, []];
+        yield '[ab&&c]' => ['[ab&&c]', false, [['class_double_punctuator', 3, true]]];
+        yield '[a&&bc]' => ['[a&&bc]', false, [['class_double_punctuator', 2, true]]];
+        yield '[a&&b&&c]' => ['[a&&b&&c]', true, [['class_double_punctuator', 2, false], ['class_double_punctuator', 5, false]]];
+        yield '[a-b&&c]' => ['[a-b&&c]', false, [['class_double_punctuator', 4, true]]];
+        yield '[\\d&&a]' => ['[\\d&&a]', true, [['class_double_punctuator', 3, false]]];
+        yield '[^a&&b]' => ['[^a&&b]', true, [['class_double_punctuator', 3, false]]];
+        yield '[a&&&b]' => ['[a&&&b]', false, [['class_double_punctuator', 2, true], ['class_double_punctuator', 3, true]]];
+        yield '\\p{Greek}' => ['\\p{Greek}', false, [['property', 0, true]]];
+        yield '[\\p{Greek}]' => ['[\\p{Greek}]', false, [['property', 1, true]]];
+        yield '\\p{Script=Greek}' => ['\\p{Script=Greek}', true, []];
+        yield '\\p{sc=Grek}' => ['\\p{sc=Grek}', true, []];
+        yield '\\p{sc=grek}' => ['\\p{sc=grek}', false, [['property', 0, true]]];
+        yield '\\p{Script_Extensions=Greek}' => ['\\p{Script_Extensions=Greek}', true, []];
+        yield '\\p{scx=Grek}' => ['\\p{scx=Grek}', true, []];
+        yield '\\p{Script=Old Italic}' => ['\\p{Script=Old Italic}', false, [['property', 0, true]]];
+        yield '\\p{sc=Zyyy}' => ['\\p{sc=Zyyy}', true, []];
+        yield '\\p{Letter}' => ['\\p{Letter}', true, []];
+        yield '\\p{Combining_Mark}' => ['\\p{Combining_Mark}', true, []];
+        yield '\\p{digit}' => ['\\p{digit}', true, []];
+        yield '\\p{gc=Lu}' => ['\\p{gc=Lu}', true, []];
+        yield '\\p{General_Category=Letter}' => ['\\p{General_Category=Letter}', true, []];
+        yield '\\p{lu}' => ['\\p{lu}', false, [['property', 0, true]]];
+        yield '\\p{ Lu }' => ['\\p{ Lu }', false, [['property', 0, true]]];
+        yield '\\p{L&}' => ['\\p{L&}', false, [['property', 0, true]]];
+        yield '\\P{Lu}' => ['\\P{Lu}', true, []];
+        yield '\\p{Alpha}' => ['\\p{Alpha}', true, []];
+        yield '\\p{alpha}' => ['\\p{alpha}', false, [['property', 0, true]]];
+        yield '\\p{ASCII}' => ['\\p{ASCII}', true, []];
+        yield '\\p{space}' => ['\\p{space}', true, []];
+        yield '\\p{Any}' => ['\\p{Any}', true, []];
+        yield '\\p{Xan}' => ['\\p{Xan}', false, [['property', 0, true]]];
+        yield '\\p{RGI_Emoji}' => ['\\p{RGI_Emoji}', true, []];
+        yield '\\p{Basic_Emoji}' => ['\\p{Basic_Emoji}', true, []];
+        yield '\\P{RGI_Emoji}' => ['\\P{RGI_Emoji}', false, [['property', 0, true]]];
+        yield '\\p{sc=GREK}' => ['\\p{sc=GREK}', false, [['property', 0, true]]];
+        yield '\\p{sc=Abcd}' => ['\\p{sc=Abcd}', false, [['property', 0, true]]];
+        yield '\\p{sc=Lu}' => ['\\p{sc=Lu}', false, [['property', 0, true]]];
+        yield '\\p{gc=Alpha}' => ['\\p{gc=Alpha}', false, [['property', 0, true]]];
+        yield '\\p{Bidi_Class=L}' => ['\\p{Bidi_Class=L}', false, [['property', 0, true]]];
+        yield '\\p{Alphabetic}' => ['\\p{Alphabetic}', true, []];
+        yield '\\p{White_Space}' => ['\\p{White_Space}', true, []];
+        yield '\\p{Cased_Letter}' => ['\\p{Cased_Letter}', true, []];
+        yield '\\p{C}' => ['\\p{C}', true, []];
+    }
+
+    /**
+     * The "compiles" column is what Node compiles, as recorded by
+     * tests/Tools/write_v_flag_verdicts.php: new RegExp(value, "v"). Scoped
+     * modifiers, "(?i:a)", compile from ES2025 on; the checker refuses them
+     * for the browsers before, and the column says so.
+     */
+    #[Test]
+    public function test_the_compiles_column_is_what_node_compiles(): void
+    {
+        $record = json_decode((string) file_get_contents(__DIR__.'/../../Fixtures/Transpiler/v-flag-compiles.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($record);
+        $this->assertIsArray($record['compiles'] ?? null);
+
+        foreach (self::provideValues() as $name => [$value, $compiles, $expected]) {
+            $this->assertArrayHasKey($value, $record['compiles'], $name.' is recorded: run tests/Tools/write_v_flag_verdicts.php.');
+            if (true === $record['compiles'][$value] && !$compiles) {
+                $this->assertSame([['inline_flags', 0, true]], $expected, $name.' compiles in Node only as an ES2025 modifier.');
+
+                continue;
+            }
+
+            $this->assertSame($record['compiles'][$value], $compiles, $name);
+        }
     }
 
     /**
@@ -233,6 +304,9 @@ final class VModeCompatibilityTest extends TestCase
         yield 'an empty class' => ['[]]', ['Under v "[]" is the empty class, and the "]" after it a syntax error: write "\\]".']];
         yield 'an unknown escape' => ['a\\E', ['JavaScript knows no escape "\\E" under v: a syntax error.']];
         yield 'an unknown escape with a brace' => ['\\o{101}', ['JavaScript knows no escape "\\o" under v: a syntax error.']];
+        yield 'a comment group' => ['(?#note)a', ['JavaScript has no comment group "(?#": a syntax error under v.']];
+        yield 'a property JavaScript does not name' => ['\\p{Greek}', ['JavaScript knows no property "\\p{Greek}" under v: a syntax error.']];
+        yield 'a negated property of strings' => ['\\P{RGI_Emoji}', ['JavaScript knows no property "\\P{RGI_Emoji}" under v: a syntax error.']];
     }
 
     #[Test]
