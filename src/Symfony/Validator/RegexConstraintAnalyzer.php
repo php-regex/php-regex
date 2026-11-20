@@ -76,8 +76,8 @@ use Symfony\Component\Validator\Mapping\GetterMetadata;
 final class RegexConstraintAnalyzer
 {
     /**
-     * The delimiters the browser's pattern is wrapped in for PCRE, the first
-     * one it does not write.
+     * The delimiters the HTML pattern is read between to check its syntax,
+     * the first one it does not write.
      */
     private const DELIMITERS = ['/', '#', '~', '%', '@', '!', ',', ';', '`', '='];
 
@@ -185,26 +185,12 @@ final class RegexConstraintAnalyzer
      * The HTML pattern a browser reads for the constraint, as PCRE: the
      * value of the attribute, ^(?:H)$, under u (the browser reads code
      * points), with \w \d \b \W \D \B and . read as ASCII JavaScript reads
-     * them, over the values an input holds: none holds a line break.
-     *
-     * Null when the value writes every delimiter.
+     * them, over the values an input holds: none holds a line break. A "/"
+     * the value writes is escaped.
      */
-    public static function browserPattern(string $html): ?string
+    public static function browserPattern(string $html): string
     {
-        $delimiter = null;
-        foreach (self::DELIMITERS as $candidate) {
-            if (!str_contains($html, $candidate)) {
-                $delimiter = $candidate;
-
-                break;
-            }
-        }
-
-        if (null === $delimiter) {
-            return null;
-        }
-
-        return $delimiter.'^(?:'.self::asJavaScriptReadsIt($html).')$'.$delimiter.'Du';
+        return '/^(?:'.self::asJavaScriptReadsIt($html).')$/Du';
     }
 
     /**
@@ -237,6 +223,10 @@ final class RegexConstraintAnalyzer
 
         $findings = [];
         $misread = $this->vModeFindings($html);
+        if (null === $misread) {
+            return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', \sprintf('The HTML pattern writes every delimiter PCRE could read it between (%s): how a browser reads it was not checked.', implode('', self::DELIMITERS)), ['htmlPattern' => $html])];
+        }
+
         if ([] !== $misread) {
             $refused = array_values(array_filter($misread, static fn (array $finding): bool => $finding['refused']));
             $message = ([] !== $refused
@@ -252,10 +242,6 @@ final class RegexConstraintAnalyzer
         }
 
         $browser = self::browserPattern($html);
-        if (null === $browser) {
-            return [];
-        }
-
         $stats['html_compared']++;
 
         // A class often repeats a pattern: each pair is compared once.
@@ -483,11 +469,11 @@ final class RegexConstraintAnalyzer
     /**
      * What a browser does wrong with the HTML pattern under v, refusing it
      * or reading it otherwise; nothing when the parser cannot read it, as
-     * the comparison then says so.
+     * the comparison then says so; null when it writes every delimiter.
      *
-     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     * @return list<array{offset: int, construct: string, message: string, refused: bool}>|null
      */
-    private function vModeFindings(string $html): array
+    private function vModeFindings(string $html): ?array
     {
         foreach (self::DELIMITERS as $delimiter) {
             if (str_contains($html, $delimiter)) {
@@ -501,7 +487,7 @@ final class RegexConstraintAnalyzer
             }
         }
 
-        return [];
+        return null;
     }
 
     /**
@@ -527,10 +513,11 @@ final class RegexConstraintAnalyzer
             return [null, false];
         }
 
-        $browser = self::browserPattern($html);
-        if (null === $browser || [] !== $this->vModeFindings($html)) {
+        if ([] !== $this->vModeFindings($html)) {
             return [null, false];
         }
+
+        $browser = self::browserPattern($html);
 
         try {
             [$looser, $stricter] = $this->compareMatching($pattern, $browser);
@@ -593,6 +580,10 @@ final class RegexConstraintAnalyzer
                 $depth--;
             } elseif ('.' === $char && 0 === $depth) {
                 $read .= '[^\n\r\x{2028}\x{2029}]';
+
+                continue;
+            } elseif ('/' === $char) {
+                $read .= '\/';
 
                 continue;
             }

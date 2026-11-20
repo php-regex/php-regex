@@ -369,12 +369,27 @@ final class RegexConstraintAnalyzerTest extends TestCase
     {
         $this->assertSame('/^(?:[A-Za-z0-9_][0-9][^\n\r\x{2028}\x{2029}])$/Du', RegexConstraintAnalyzer::browserPattern('\w\d.'));
         $this->assertSame('/^(?:[^\n\r0-9])$/Du', RegexConstraintAnalyzer::browserPattern('[^0-9]'));
-        $this->assertSame('#^(?:[a/])$#Du', RegexConstraintAnalyzer::browserPattern('[a/]'));
-        $this->assertNull(RegexConstraintAnalyzer::browserPattern('/#~%@!,;`='));
+        $this->assertSame('/^(?:a\/b\/)$/Du', RegexConstraintAnalyzer::browserPattern('a/b\/'));
+        $this->assertSame('/^(?:\/#~%@!,;`=)$/Du', RegexConstraintAnalyzer::browserPattern('/#~%@!,;`='));
 
         $finding = self::audit([new Regex(pattern: '/^\w+$/u', htmlPattern: '\w+')])[0];
         $this->assertSame('html_pattern.stricter', $finding['check']);
         $this->assertSame('ª', $finding['example'] ?? null);
+    }
+
+    /**
+     * The audit reads an HTML pattern with PCRE between delimiters it
+     * does not write: one that writes all of them is not checked, and the
+     * audit says so rather than report nothing.
+     */
+    #[Test]
+    public function test_an_html_pattern_writing_every_delimiter_is_reported_unchecked(): void
+    {
+        $findings = self::audit([new Regex(pattern: '/^x$/', htmlPattern: '/#~%@!,;`=')]);
+
+        $this->assertSame([['html_pattern.unchecked', 'notice']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], $findings));
+        $this->assertSame('The HTML pattern writes every delimiter PCRE could read it between (/#~%@!,;`=): how a browser reads it was not checked.', $findings[0]['message']);
+        $this->assertSame('/#~%@!,;`=', $findings[0]['htmlPattern'] ?? null);
     }
 
     /**
