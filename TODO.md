@@ -30,20 +30,31 @@
   fallback reads such a literal as its byte, and
   `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
   ASCII read: both move with it. Spec first. From the review of #407.
+- The Psalm plugin types `$matches` where nothing matched, on every Psalm
+  it narrows on. After
+  `if (preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)) { return; }`,
+  `$m` is `array<never, never>`, where PHP leaves `['ab', 'a', 'b']` for
+  `('x', 'ab')`: Psalm drops the left operand's clauses on a variable the
+  right one writes, and the plugin's conditions reach that formula; without
+  the plugin, `$m` stays `array<array-key, string>`. On Psalm 6, the `else`
+  of `if ($found = preg_match('/(a)(b)?/', $s, $m))` and the body of
+  `if (!($found = preg_match(…))) { … return; }` type `$m` as the shape.
+  Pin both forms on every Psalm row of the plugin's job.
 
 ## Psalm 7.11
 
-- Psalm 7.11.0 (vimeo/psalm#14161), and 7.12.0 after it, answers
-  `preg_match()` in its `AssertionFinder` with its own `MatchesPattern`
-  assertion, and no longer calls `processCustomAssertion()` for it: the
-  assertions a plugin sets on the call are dropped, and
-  `php-regex/regex-psalm` types no `$matches`
-  (88 failures; users fall back to `array<array-key, string>`). The tests
-  stay on `vimeo/psalm` below 7.11 in `tools/phpunit` and
-  `tools/paratest` (#407). Fix upstream: merge the plugin's assertions with
-  `MatchesPattern` in the `preg_match` branch of `processFunctionCall()` and
-  in `scrapeComparisonAssertions()`, with a test. Lift the pin once the fix
-  is released; until then 2.x itself runs red on the newest Psalm.
+- Psalm 7.11.0 (vimeo/psalm#14161) and later no longer read the condition
+  the plugin sets on `preg_match()`. The branch
+  `psalm-711-preg-match-assertions` (not committed yet) writes that
+  condition into the assertion cache Psalm reads first, lifts the `<7.11`
+  pin in `tools/phpunit` and `tools/paratest`, and adds Psalm 7.10 and
+  7.12 rows to the plugin's job: open its pull request.
+- A loop that changes the pattern between two passes keeps the shape of
+  the first: with `$p = '/(a)(b)?/'` before a `foreach` whose body runs
+  `if (preg_match_all($p, $s, $n)) { … }` then `$p = '/(x)(y)(z)/'`, `$n`
+  is typed from `/(a)(b)?/` on every Psalm; `preg_match()` does the same
+  up to Psalm 7.10. Psalm clears the condition cache between the passes,
+  not the assertions set on the call.
 
 ## Engine reports
 
