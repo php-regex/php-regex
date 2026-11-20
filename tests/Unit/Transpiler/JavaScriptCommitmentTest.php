@@ -165,7 +165,7 @@ final class JavaScriptCommitmentTest extends TestCase
     #[DataProvider('provideLookbehindCommitments')]
     public function test_refuses_a_commitment_a_lookbehind_ends_with(string $pattern, string $plain, string $subject, string $message): void
     {
-        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+        $this->requiresPcre2('10.43', 'A lookbehind branch of more than one length');
 
         $interpreted = static fn (string $pattern): string => $pattern[0].'(*NO_JIT)'.substr($pattern, 1);
         $this->assertNotSame(self::span($interpreted($plain), $subject), self::span($interpreted($pattern), $subject), $pattern.' on '.json_encode($subject));

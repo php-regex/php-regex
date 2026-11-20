@@ -249,7 +249,7 @@ final class LanguageSolverSoundnessTest extends TestCase
     #[Test]
     public function test_a_commitment_a_lookbehind_ends_with_is_refused(): void
     {
-        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+        $this->requiresPcre2('10.43', 'A lookbehind branch of more than one length');
 
         $this->assertSame(0, preg_match('/(*NO_JIT)^\r(?<=\R)\n$/', "\r\n"));
         $this->assertSame(1, preg_match('/(*NO_JIT)^\r(?<=(?:\r\n|[\n\x0B\f\r\x85]))\n$/', "\r\n"));

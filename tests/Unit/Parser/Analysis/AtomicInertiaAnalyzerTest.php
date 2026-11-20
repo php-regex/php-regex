@@ -229,7 +229,7 @@ final class AtomicInertiaAnalyzerTest extends TestCase
     #[DataProvider('provideLookbehindEnds')]
     public function test_reads_a_lookbehind_as_ending_before_any_character(string $pattern, string $plain, array $subjects, bool $inert): void
     {
-        $this->requiresPcre2('10.43', 'A lookbehind of more than one length');
+        $this->requiresPcre2('10.43', 'A lookbehind branch of more than one length');
 
         $parting = array_filter($subjects, static fn (string $subject): bool => self::span(self::interpreted($pattern), $subject) !== self::span(self::interpreted($plain), $subject));
         $this->assertSame($inert, [] === $parting, $pattern.' against '.$plain.' under the interpreter');
