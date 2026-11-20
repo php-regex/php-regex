@@ -247,17 +247,22 @@ final class PackedNfa
      */
     public function step(int $state, int $class): array
     {
+        // The moves are sorted by class: the first of the class is found by
+        // halving, so a state read on each of many classes is not scanned
+        // from its first move each time.
+        $low = $this->moveStart[$state];
+        $high = $this->moveStart[$state + 1];
+        while ($low < $high) {
+            $mid = ($low + $high) >> 1;
+            if ($this->moveClass[$mid] < $class) {
+                $low = $mid + 1;
+            } else {
+                $high = $mid;
+            }
+        }
+
         $reached = [];
-        for ($at = $this->moveStart[$state], $end = $this->moveStart[$state + 1]; $at < $end; $at++) {
-            $moveClass = $this->moveClass[$at];
-            if ($moveClass < $class) {
-                continue;
-            }
-
-            if ($moveClass > $class) {
-                break;
-            }
-
+        for ($at = $low, $end = $this->moveStart[$state + 1]; $at < $end && $this->moveClass[$at] === $class; $at++) {
             foreach ($this->closure($this->moveTarget[$at]) as $target) {
                 $reached[$target] = true;
             }
