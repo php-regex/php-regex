@@ -533,6 +533,12 @@ for `GET` also takes the `GET` and `HEAD` requests whose path differs from
 one of its own by the trailing slash alone, which the matcher redirects;
 a route with a condition, or a host the analysis cannot read, takes none.
 
+`regex:validator` needs Symfony Validator and its `validator` service:
+`composer require symfony/validator`, which FrameworkBundle enables unless
+`framework.validation` turns it off. Without that service the command
+exits with code 2 before it reads a class, and `regex:analyze` reports its
+validator section as a warning.
+
 `regex:validator` audits the `Regex` constraints of the validated classes,
 those the validator mapping files name and those `src/` declares with the
 constraint, or the classes given, read through the application's
@@ -544,8 +550,10 @@ under the `v` flag. For each constraint the command reports:
 - `html_pattern.dropped`: the pattern has flags, or a pair of delimiters
   such as `{^a$}`, so `getHtmlPattern()` gives no attribute and the browser
   checks nothing; the report suggests an
-  `htmlPattern` written by the `html-pattern` target and proved to accept
-  the same values;
+  `htmlPattern` written by the `html-pattern` target, and its message says
+  whether the solver proved it accepts the same values (`/^[a-z]+$/i`
+  gives `^[a-zA-Z]+$`, proved) or could not (`/^a++b$/i` gives
+  `^[aA]+[bB]$`, a candidate to check by hand);
 - `html_pattern.invalid`: a browser refuses to compile the attribute under
   `v`, and checks nothing: `[a-z0-9-]` (a class under `v` takes `-`
   escaped only), a possessive, an atomic group, `\h`, `\A`, `(?P<name>`,

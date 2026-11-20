@@ -97,6 +97,20 @@ final class ValidatorCommandTest extends TestCase
         $this->assertStringContainsString('Validator service is not available.', $tester->getDisplay());
     }
 
+    /**
+     * The help says a suggested htmlPattern is proved only when the solver
+     * proves it, and that the command needs the validator service.
+     */
+    #[Test]
+    public function test_the_help_says_what_a_suggestion_promises(): void
+    {
+        $help = self::command()->getHelp();
+
+        $this->assertStringContainsString("a suggested htmlPattern, and whether the\n    solver proved it matches the same values", $help);
+        $this->assertStringContainsString('It needs the validator service of Symfony Validator, and exits with code 2 without it.', $help);
+        $this->assertStringContainsString('a Length no non-empty value of the pattern fits', $help);
+    }
+
     #[Test]
     public function test_an_unknown_format_is_refused(): void
     {

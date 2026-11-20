@@ -65,9 +65,12 @@ final class ValidatorCommand extends Command
 
                   * the HTML pattern a form gives the browser: whether getHtmlPattern() drops it (flags, paired delimiters),
                     whether a browser compiles it under the v flag, and whether the browser accepts exactly the values
-                    the server accepts, with an example of each difference and an htmlPattern that matches the same values;
-                  * the other constraints of the property: a Length no value of the pattern fits, a Choice value the
-                    pattern rejects, two Regex constraints no value passes together.
+                    the server accepts, with an example of each difference and a suggested htmlPattern, and whether the
+                    solver proved it matches the same values;
+                  * the other constraints of the property: a Length no non-empty value of the pattern fits, a Choice
+                    value the pattern rejects, two Regex constraints no non-empty value passes together.
+
+                It needs the validator service of Symfony Validator, and exits with code 2 without it.
 
                 Without classes it reads those the validator mapping files name and those src/ declares with a Regex constraint.
                 It names each class or mapping file it could not read, and says the audit is incomplete; with -v,
