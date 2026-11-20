@@ -1,7 +1,7 @@
 {
     "name": "php-regex/regex-symfony",
     "type": "symfony-bundle",
-    "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:analyze, regex:compare, regex:explain and regex:transpile commands.",
+    "description": "Symfony bundle for PHPRegex: the Regex service and the regex:lint, regex:routes, regex:security, regex:validator, regex:analyze, regex:compare, regex:explain and regex:transpile commands.",
     "keywords": [
         "regex",
         "pcre",
@@ -31,6 +31,7 @@
     ],
     "require": {
         "php": ">=8.1",
+        "ext-tokenizer": "*",
         "symfony/config": "^6.4|^7.4|^8.0",
         "symfony/console": "^6.4|^7.4|^8.0",
         "symfony/dependency-injection": "^6.4|^7.4|^8.0",

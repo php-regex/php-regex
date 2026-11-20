@@ -25,6 +25,7 @@ use PHPRegex\Symfony\Analyzer\Formatter\ConsoleReportFormatter;
 use PHPRegex\Symfony\Analyzer\Formatter\JsonReportFormatter;
 use PHPRegex\Symfony\Analyzer\RoutesAnalyzer;
 use PHPRegex\Symfony\Analyzer\SecurityAnalyzer;
+use PHPRegex\Symfony\Analyzer\ValidatorAnalyzer;
 use PHPRegex\Symfony\Command\AnalyzeCommand;
 use PHPRegex\Symfony\Command\CompareCommand;
 use PHPRegex\Symfony\Command\ExplainCommand;
@@ -32,6 +33,7 @@ use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Symfony\Command\RoutesCommand;
 use PHPRegex\Symfony\Command\SecurityCommand;
 use PHPRegex\Symfony\Command\TranspileCommand;
+use PHPRegex\Symfony\Command\ValidatorCommand;
 use PHPRegex\Symfony\Extractor\RoutePatternSource;
 use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
@@ -44,6 +46,7 @@ use PHPRegex\Symfony\Security\SecurityConfigLocator;
 use PHPRegex\Symfony\Security\SecurityFirewallAnalyzer;
 use PHPRegex\Symfony\Security\SecurityPatternNormalizer;
 use PHPRegex\Symfony\Validator\Constraints\ValidRegexValidator;
+use PHPRegex\Symfony\Validator\ValidatedClassLocator;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -186,9 +189,22 @@ return static function (ContainerConfigurator $container): void {
         ->arg('$firewallAnalyzer', service('php_regex.security.firewall_analyzer'))
         ->arg('$suggestionBuilder', service('php_regex.security.access_suggestion_builder'));
 
-    // The two analyzers regex:analyze runs, in this order.
+    // The mapping files are set by ValidatorMappingPass.
+    $services->set('php_regex.validator.class_locator', ValidatedClassLocator::class)
+        ->arg('$metadataFactory', service('validator')->nullOnInvalid())
+        ->arg('$mappingFiles', []);
+
+    $services->set('php_regex.analyzer.validator', ValidatorAnalyzer::class)
+        ->arg('$locator', service('php_regex.validator.class_locator'));
+
+    $services->set('php_regex.command.validator', ValidatorCommand::class)
+        ->arg('$locator', service('php_regex.validator.class_locator'))
+        ->arg('$kernel', service('kernel')->nullOnInvalid())
+        ->tag('console.command');
+
+    // The three analyzers regex:analyze runs, in this order.
     $services->set('php_regex.command.analyze', AnalyzeCommand::class)
-        ->arg('$analyzers', [service('php_regex.analyzer.routes'), service('php_regex.analyzer.security')])
+        ->arg('$analyzers', [service('php_regex.analyzer.routes'), service('php_regex.analyzer.security'), service('php_regex.analyzer.validator')])
         ->arg('$consoleFormatter', service('php_regex.analyzer.console_formatter'))
         ->arg('$jsonFormatter', service('php_regex.analyzer.json_formatter'))
         ->arg('$kernel', service('kernel')->nullOnInvalid())
