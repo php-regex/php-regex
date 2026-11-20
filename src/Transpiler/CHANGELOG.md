@@ -11,7 +11,9 @@ CHANGELOG
    does one whose proof needs what follows it when a lookaround or a word
    boundary follows: `/(?>a+)(?=b)/` is refused, `/(?>a)(?=b)/` printed.
    One a lookbehind ends with is refused unless no character may take it
-   further: `/(?<=\R)/` is refused, `/(?<=\Rx)/` printed.
+   further: `/(?<=\R)/` is refused, `/(?<=\Rx)/` printed. A run of runs,
+   `/^(?:a+)++b$/`, stays refused too: printed plain, it would try every
+   split of its run before rejecting a subject.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The advice to add `u` looks at the target: where the target refuses the

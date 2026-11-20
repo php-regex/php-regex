@@ -122,6 +122,40 @@ final class JavaScriptCommitmentTest extends TestCase
     }
 
     /**
+     * A run of runs reads the same matches as its plain spelling, but
+     * written plain a backtracking engine tries every split of the run
+     * before it rejects "aaaa…a!": left committed, and refused.
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideRunsOfRuns')]
+    public function test_refuses_a_run_of_runs(string $pattern, string $plain, array $subjects, string $message): void
+    {
+        foreach ($subjects as $subject) {
+            $this->assertSame(self::span($plain, $subject), self::span($pattern, $subject), $pattern.' on '.json_encode($subject));
+        }
+
+        foreach (['javascript', 'html-pattern'] as $target) {
+            try {
+                Regex::create(['cache' => null])->transpile($pattern, $target);
+                $this->fail($pattern.' was printed for '.$target.'.');
+            } catch (TranspileException $exception) {
+                $this->assertStringContainsString($message, $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subjects: list<string>, message: string}>
+     */
+    public static function provideRunsOfRuns(): iterable
+    {
+        yield 'a possessive run of a letter' => ['pattern' => '/^(?:a+)++b$/', 'plain' => '/^(?:a+)+b$/', 'subjects' => ['aab', 'b', 'aaa!', 'ab'], 'message' => 'Possessive quantifiers are not supported in JavaScript.'];
+        yield 'an atomic run of a letter' => ['pattern' => '/(?>(?:a+)+)b/', 'plain' => '/(?:(?:a+)+)b/', 'subjects' => ['aab', 'b', 'aaa!', 'ab'], 'message' => 'Atomic groups are not supported in JavaScript.'];
+    }
+
+    /**
      * A lookbehind's body must end where the lookbehind stands. The
      * interpreter lets a commitment the body ends with run past that place
      * and fail there, where the plain spelling stops in time; the JIT does

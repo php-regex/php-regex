@@ -88,7 +88,6 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         yield 'branches of one length' => ['pattern' => '/(?>a|[ab])c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:a|[ab])c/', 'subjects' => ['ac', 'bc', 'abc', 'c'], 'parting' => null];
         yield 'branches that start apart' => ['pattern' => '/(?>ab|c)b/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:ab|c)b/', 'subjects' => ['abb', 'cb', 'ab', 'cbb'], 'parting' => null];
         yield 'a caseless letter first' => ['pattern' => '/(?>(?i:a)|bc)d/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:(?i:a)|bc)d/', 'subjects' => ['ad', 'Ad', 'bcd', 'bd'], 'parting' => null];
-        yield 'a run of runs' => ['pattern' => '/(?:[ab]+)++c/', 'possessives' => [0], 'atomics' => [], 'plain' => '/(?:[ab]+)+c/', 'subjects' => ['abc', 'c', 'abab', 'bac'], 'parting' => null];
         yield 'a run before the subject end' => ['pattern' => '/a++\z/', 'possessives' => [0], 'atomics' => [], 'plain' => '/a+\z/', 'subjects' => ['aa', 'aab', 'ba'], 'parting' => null];
         yield 'a run before a match start reset' => ['pattern' => '/a++\Kb/', 'possessives' => [0], 'atomics' => [], 'plain' => '/a+\Kb/', 'subjects' => ['aab', 'ab', 'b', 'aa'], 'parting' => null];
         yield 'a run before a line end under m' => ['pattern' => '/[a\t\x0B]++$/m', 'possessives' => [0], 'atomics' => [], 'plain' => '/[a\t\x0B]+$/m', 'subjects' => ["a\t\n", "a\x0B\nb", "a\tb", 'aa'], 'parting' => null];
@@ -97,6 +96,14 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         yield 'a line break closing a group' => ['pattern' => '/(x\R)\n/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(x(?:\r\n|[\n\x0B\f\r\x85]))\n/', 'subject' => "x\r\n"]];
         yield 'a caseless pair before a cased letter' => ['pattern' => '/(?>AB|a)(?-i)b/i', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:AB|a)(?-i)b/i', 'subject' => 'ab']];
         yield 'a branch holding a lookahead' => ['pattern' => '/a++(?:b|(?=a))/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a+(?:b|(?=a))/', 'subject' => 'aa']];
+        yield 'a run in a lookahead the match backtracks into' => ['pattern' => '/^(?*(a++))\1a$/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/^(?*(a+))\1a$/', 'subject' => 'aa']];
+        yield 'a run in a script run' => ['pattern' => '/^(*sr:a.++)/u', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/^(*sr:a.+)/u', 'subject' => 'aaα']];
+        yield 'captures a conditional tells apart' => ['pattern' => '/^(?>(a)|(a))(?(2)b|c)$/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/^(?:(a)|(a))(?(2)b|c)$/', 'subject' => 'ab']];
+        yield 'captures a later conditional tells apart' => ['pattern' => '/^(?>(a)|(a))x(?(2)b|c)$/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/^(?:(a)|(a))x(?(2)b|c)$/', 'subject' => 'axb']];
+        yield 'a run a call runs again' => ['pattern' => '/^(?1)a(a++)b$/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/^(?1)a(a+)b$/', 'subject' => 'aaaab']];
+        yield 'captures no conditional tests' => ['pattern' => '/(?>(a)|(b))c/', 'possessives' => [], 'atomics' => [0], 'plain' => '/(?:(a)|(b))c/', 'subjects' => ['ac', 'bc', 'abc', 'c'], 'parting' => null];
+        yield 'a run after a backreference' => ['pattern' => '/(x)\1a++b/', 'possessives' => [5], 'atomics' => [], 'plain' => '/(x)\1a+b/', 'subjects' => ['xxaab', 'xxab', 'xab', 'xxb'], 'parting' => null];
+        yield 'branches holding no capture before a conditional' => ['pattern' => '/(a)?(?>b|[bc])(?(1)d|e)/', 'possessives' => [], 'atomics' => [4], 'plain' => '/(a)?(?:b|[bc])(?(1)d|e)/', 'subjects' => ['abd', 'be', 'ce', 'acd', 'bd', 'abe'], 'parting' => null];
         yield 'a shorter branch first' => ['pattern' => '/(?>a|ab)c/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:a|ab)c/', 'subject' => 'abc']];
         yield 'a run the follower shares' => ['pattern' => '/a*+a/', 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/a*a/', 'subject' => 'aa']];
         yield 'a newline after a line break' => ['pattern' => "/\\R\n/", 'possessives' => [], 'atomics' => [], 'plain' => null, 'subjects' => [], 'parting' => ['plain' => '/(?:\r\n|[\n\x0B\f\r\x85])\n/', 'subject' => "\r\n"]];
@@ -109,6 +116,36 @@ final class AtomicInertiaAnalyzerTest extends TestCase
         // The first run commits to nothing either, but its proof would read
         // past the second one: the rule's limit, with no subject to part on.
         yield 'a commitment further along' => ['pattern' => '/a++b\d++c/', 'possessives' => [4], 'atomics' => [], 'plain' => '/a++b\d+c/', 'subjects' => ['ab12c', 'aab1c', 'abc', 'ab1'], 'parting' => null];
+    }
+
+    /**
+     * A run of runs, "(?:a+)++", reads the same matches as its plain
+     * spelling before a follower it shares nothing with, and the solver
+     * reads it so. A printer leaves it committed: written plain, a
+     * backtracking engine tries every split of the run before it rejects a
+     * subject, "aaaa…a!" against "^(?:a+)+b$".
+     *
+     * @param list<string> $subjects
+     */
+    #[Test]
+    #[DataProvider('provideRunsOfRuns')]
+    public function test_leaves_a_run_of_runs_committed_for_a_printer(string $pattern, string $plain, array $subjects): void
+    {
+        foreach ($subjects as $subject) {
+            $this->assertSame(self::span($pattern, $subject), self::span($plain, $subject), $plain.' on '.json_encode($subject));
+        }
+
+        $this->assertTrue(self::inert($pattern, false)->isEmpty(), $pattern.' searched');
+        $this->assertFalse(self::inert($pattern, true)->isEmpty(), $pattern.' over a whole subject');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, plain: string, subjects: list<string>}>
+     */
+    public static function provideRunsOfRuns(): iterable
+    {
+        yield 'a possessive run of a class' => ['pattern' => '/(?:[ab]+)++c/', 'plain' => '/(?:[ab]+)+c/', 'subjects' => ['abc', 'c', 'abab', 'bac']];
+        yield 'an atomic run of a letter' => ['pattern' => '/(?>(?:a+)+)b/', 'plain' => '/(?:(?:a+)+)b/', 'subjects' => ['aab', 'b', 'aaa!', 'ab']];
     }
 
     /**

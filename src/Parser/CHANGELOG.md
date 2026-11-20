@@ -9,7 +9,10 @@ CHANGELOG
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
-   an engine without them prints those plain.
+   an engine without them prints those plain. It names none in a pattern
+   that calls a group, none in a script run or in a lookaround the match
+   may backtrack into, no run of runs, and, where a conditional tests a
+   group, none that holds a capture.
  * Without UTF mode the tree holds a multibyte character of a class as its
    bytes, wherever it stands, as PCRE2 reads it: `/[à-é]/` is `\xC3`, the
    range `\xA0` to `\xC3`, then `\xA9`, where it was one range from `à` to
