@@ -37,18 +37,6 @@ final class ValidatorCommandKernelTest extends TestCase
 
     private const MAPPING = __DIR__.'/../../../Fixtures/Symfony/ValidatorMapping/config/validator/customer.yaml';
 
-    #[Before]
-    protected function rememberTheWorkingDirectory(): void
-    {
-        $this->rememberWorkingDirectory();
-    }
-
-    #[After]
-    protected function removeTheProjects(): void
-    {
-        $this->removeTemporaryProjects();
-    }
-
     #[Test]
     public function test_regex_validator_audits_the_project_classes_and_the_mapped_ones(): void
     {
@@ -84,5 +72,17 @@ final class ValidatorCommandKernelTest extends TestCase
 
         $this->assertSame(Command::FAILURE, $status);
         $this->assertStringContainsString('"kind": "validator"', $tester->getDisplay());
+    }
+
+    #[Before]
+    protected function rememberTheWorkingDirectory(): void
+    {
+        $this->rememberWorkingDirectory();
+    }
+
+    #[After]
+    protected function removeTheProjects(): void
+    {
+        $this->removeTemporaryProjects();
     }
 }

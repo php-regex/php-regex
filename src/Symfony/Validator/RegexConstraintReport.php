@@ -27,10 +27,7 @@ final class RegexConstraintReport
      * @param list<ValidatorFinding> $findings
      * @param array<string, int>     $stats    classes, properties, regex (constraints read) and html_compared
      */
-    public function __construct(
-        public readonly array $findings,
-        public readonly array $stats,
-    ) {}
+    public function __construct(public readonly array $findings, public readonly array $stats) {}
 
     /**
      * @return list<ValidatorFinding>

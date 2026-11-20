@@ -34,10 +34,7 @@ final class ValidatedClassLocator
     /**
      * @param list<string> $mappingFiles the files the validator builder reads, as FrameworkBundle gives them
      */
-    public function __construct(
-        private readonly ?MetadataFactoryInterface $metadataFactory,
-        private readonly array $mappingFiles = [],
-    ) {}
+    public function __construct(private readonly ?MetadataFactoryInterface $metadataFactory, private readonly array $mappingFiles = []) {}
 
     public function isSupported(): bool
     {

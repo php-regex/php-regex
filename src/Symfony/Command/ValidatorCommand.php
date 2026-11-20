@@ -48,10 +48,8 @@ final class ValidatorCommand extends Command
 
     private readonly JsonReportFormatter $jsonFormatter;
 
-    public function __construct(
-        private readonly ValidatedClassLocator $locator,
-        private readonly ?KernelInterface $kernel = null,
-    ) {
+    public function __construct(private readonly ValidatedClassLocator $locator, private readonly ?KernelInterface $kernel = null)
+    {
         $this->consoleFormatter = new ConsoleReportFormatter();
         $this->jsonFormatter = new JsonReportFormatter();
         parent::__construct();
