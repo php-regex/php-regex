@@ -143,6 +143,13 @@ note, there as for JavaScript, and `/U` or `(?U)` swaps greedy and lazy in the
 quantifiers it governs: `/<.+>/U` is `/<[^\n]+?>/` for JavaScript, the dot
 written as PCRE reads it.
 
+JavaScript matches a lookbehind right to left, where PCRE matches it left to
+right. A group in a lookbehind branch of more than one length, a group
+repeated in a lookbehind, and a reference to a group of the same lookbehind
+would be read otherwise, and are refused: on `abc`, `/(?<=(ab|a)b?)c/`
+captures `ab` in PCRE and `a` in JavaScript. A branch of one length with no
+group repeated in it is printed as it reads.
+
 JavaScript and Python read characters, where PCRE without `u` reads bytes. A
 multibyte character written whole outside a class (`/café/`) stays that
 character. The rest has no equivalent there and is refused with the advice that

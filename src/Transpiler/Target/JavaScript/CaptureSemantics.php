@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target\JavaScript;
 
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -51,7 +52,15 @@ use PHPRegex\Transpiler\Exception\TranspileException;
  *   "" in "b" in PCRE, where JavaScript backtracks into the repetition for
  *   the dot. The two agree where the empty repetition sets no group and
  *   is tried after every longer one: PCRE then goes on from where
- *   JavaScript does, in the same state, once more.
+ *   JavaScript does, in the same state, once more;
+ * - JavaScript matches a lookbehind right to left, where PCRE matches it
+ *   left to right: a branch of more than one length may be split
+ *   otherwise, "(?<=(ab|a)b?)c" on "abc" captures "ab" in PCRE, "a" in
+ *   JavaScript; of a group repeated in it, JavaScript keeps the leftmost
+ *   capture, "(?<=(.){2})" on "ab" captures "a"; and a reference to a group
+ *   of the same lookbehind is read before its group, where PCRE reads it
+ *   after, or after where PCRE reads it before. A branch of one length
+ *   with no group repeated in it is split the same way.
  *
  * Each case is refused; a pattern that holds none prints as it reads.
  *
@@ -103,6 +112,12 @@ final class CaptureSemantics
     private string $reason = '';
 
     /**
+     * Whether the pattern is read in UTF-8 characters, as its lookbehinds
+     * are measured.
+     */
+    private bool $unicode = false;
+
+    /**
      * The first construct whose captures JavaScript reads otherwise, with
      * the reason, or null when there is none.
      *
@@ -111,6 +126,7 @@ final class CaptureSemantics
     public static function firstDivergence(RegexNode $ast): ?array
     {
         $check = new self();
+        $check->unicode = $ast->isUnicode();
         $check->ungreedy = str_contains($ast->flags, 'U') || 1 === LibraryPcre::match('/\\(\\?[\\^a-zA-Z]*U/', (string) $ast->source);
         $check->number($ast->pattern);
         $check->walk($ast->pattern, []);
@@ -192,6 +208,10 @@ final class CaptureSemantics
      */
     private function walkGroup(GroupNode $node, array $set): array
     {
+        if (GroupType::LookbehindPositive === $node->type || GroupType::LookbehindNegative === $node->type) {
+            $this->checkLookbehind($node);
+        }
+
         $after = $this->walk($node->child, $set);
         $number = $this->numbers[spl_object_id($node)] ?? null;
         if (null !== $number) {
@@ -230,6 +250,88 @@ final class CaptureSemantics
         }
 
         return $bounds->min > 0 ? $after : $set;
+    }
+
+    /**
+     * JavaScript matches a lookbehind right to left. A negative one keeps no
+     * group, but a reference to one of its own groups is read in the other
+     * order all the same.
+     */
+    private function checkLookbehind(GroupNode $node): void
+    {
+        $reference = $this->referenceTo($node->child, $this->capturesIn($node->child));
+        if (null !== $reference) {
+            $this->diverge('A backreference to a group of the same lookbehind cannot be carried into JavaScript: JavaScript matches a lookbehind right to left, and reads the reference and its group in the other order.', $reference);
+        }
+
+        if (GroupType::LookbehindPositive !== $node->type) {
+            return;
+        }
+
+        $branches = $node->child instanceof AlternationNode ? $node->child->alternatives : [$node->child];
+        foreach ($branches as $branch) {
+            if ([] !== $this->capturesIn($branch) && !$this->hasOneLength($branch)) {
+                $this->diverge('A capturing group in a lookbehind of more than one length cannot be carried into JavaScript: JavaScript matches a lookbehind right to left, and may split it otherwise than PCRE.', $node);
+            }
+        }
+
+        $repeated = $this->repeatedCapture($node->child);
+        if (null !== $repeated) {
+            $this->diverge('A capturing group repeated in a lookbehind cannot be carried into JavaScript: matching it right to left, JavaScript keeps the leftmost capture, where PCRE keeps the rightmost.', $repeated);
+        }
+    }
+
+    private function hasOneLength(NodeInterface $node): bool
+    {
+        [$min, $max] = $node->accept(new LengthRangeCalculator($this->unicode));
+
+        return $min === $max;
+    }
+
+    /**
+     * The first reference under the node to one of the groups given, or null.
+     *
+     * @param array<int, true> $groups
+     */
+    private function referenceTo(NodeInterface $node, array $groups): ?BackrefNode
+    {
+        if ($node instanceof BackrefNode) {
+            $number = $this->referenced($node->ref);
+
+            return null !== $number && isset($groups[$number]) ? $node : null;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $reference = $this->referenceTo($child, $groups);
+            if (null !== $reference) {
+                return $reference;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The first repetition under the node that may repeat a capturing group
+     * it holds, or null.
+     */
+    private function repeatedCapture(NodeInterface $node): ?QuantifierNode
+    {
+        if ($node instanceof QuantifierNode && [] !== $this->capturesIn($node->node)) {
+            $max = $node->bounds?->max;
+            if (null === $max || $max > 1) {
+                return $node;
+            }
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $repeated = $this->repeatedCapture($child);
+            if (null !== $repeated) {
+                return $repeated;
+            }
+        }
+
+        return null;
     }
 
     /**

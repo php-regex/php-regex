@@ -4,6 +4,12 @@ CHANGELOG
 2.0
 ---
 
+ * JavaScript and the HTML pattern attribute refuse what a lookbehind
+   matched right to left reads otherwise than PCRE: a group in a branch of
+   more than one length, `/(?<=(ab|a)b?)c/`, which captures `ab` in PCRE
+   and `a` in JavaScript; a group repeated in it, `/(?<=(.){2})$/`; and a
+   reference to a group of the same lookbehind, `/(?<=(a)\1)b/`. All three
+   were printed as written.
  * JavaScript and the HTML pattern attribute print a possessive quantifier,
    an atomic group or `\R` that commits to nothing plain, with a note:
    `/^\d++$/` gives `^\d+$` as an HTML pattern and `^\d+(?=\n?$)` in
