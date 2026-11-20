@@ -60,17 +60,32 @@ final class ValidatorCommandTest extends TestCase
         $this->assertCount(6, JsonContract::asArray($section['issues'] ?? null));
     }
 
+    /**
+     * A class that could not be read is named at any verbosity, and the
+     * audit says it is incomplete rather than that it found nothing.
+     */
     #[Test]
-    public function test_verbose_output_names_the_classes_it_could_not_read(): void
+    public function test_the_classes_it_could_not_read_are_named(): void
     {
         $tester = new CommandTester(self::command());
 
-        $tester->execute(['classes' => ['App\Missing']], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE, 'decorated' => false]);
+        $tester->execute(['classes' => ['App\Missing']], ['decorated' => false]);
 
         $this->assertSame(Command::SUCCESS, $tester->getStatusCode());
-        $this->assertStringContainsString('No Regex constraint found.', $tester->getDisplay());
-        // Text rows show a backslash escaped.
+        $this->assertStringNotContainsString('No Regex constraint found.', $tester->getDisplay());
+        $this->assertStringContainsString('The audit is incomplete: 1 class or mapping file could not be read.', $tester->getDisplay());
+        // Notices show a backslash escaped.
         $this->assertStringContainsString('App\\\\Missing: the class does not exist.', $tester->getDisplay());
+    }
+
+    #[Test]
+    public function test_verbose_output_adds_the_counts(): void
+    {
+        $tester = new CommandTester(self::command());
+
+        $tester->execute(['classes' => [Signup::class]], ['verbosity' => OutputInterface::VERBOSITY_VERBOSE, 'decorated' => false]);
+
+        $this->assertStringContainsString('HTML patterns compared', $tester->getDisplay());
     }
 
     #[Test]

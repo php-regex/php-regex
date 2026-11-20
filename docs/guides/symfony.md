@@ -583,7 +583,9 @@ non-empty value passes together (`regex.contradiction`): `/^a*$/` and
 empty value: the message says whether one can still pass, or whether a
 `NotBlank` or the `Length` refuses it. A question the solver cannot answer
 (`length.unchecked`, `regex.unchecked`, `html_pattern.unchecked`) is a
-warning of the section. The command exits 1 on an
+warning of the section, as is a class or a mapping file it cannot read:
+the summary then says the audit is incomplete, or that a check could not
+be made, never that every constraint agrees. The command exits 1 on an
 error; `regex:analyze` runs the same section and fails on it with
 `--fail-on=validator`.
 

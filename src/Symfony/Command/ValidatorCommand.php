@@ -70,7 +70,8 @@ final class ValidatorCommand extends Command
                     pattern rejects, two Regex constraints no value passes together.
 
                 Without classes it reads those the validator mapping files name and those src/ declares with a Regex constraint.
-                With -v, it also prints the counts and the classes it could not read.
+                It names each class or mapping file it could not read, and says the audit is incomplete; with -v,
+                it also prints the counts.
 
                 <info>php %command.full_name%</info>
                 <info>php %command.full_name% 'App\Entity\User'</info>
