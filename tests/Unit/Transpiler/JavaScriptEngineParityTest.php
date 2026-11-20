@@ -45,7 +45,7 @@ final class JavaScriptEngineParityTest extends TestCase
      * The refused rows that compile from a PCRE2 newer than the floor: a
      * lookbehind branch of more than one length from 10.43.
      */
-    private const NEWER_REFUSED_RELEASES = ['10.43' => ['/(?<=a?(a{1,2})b)c\1/', '/(?<=(ab|a)b?)c/'], '10.45' => ['/\p{Lu}/iu']];
+    private const NEWER_REFUSED_RELEASES = ['10.43' => ['/(?<=a?(a{1,2})b)c\1/', '/(?<=a?((?>a{1,2}))b)c\1/', '/(?<=(ab|a)b?)c/'], '10.45' => ['/\p{Lu}/iu']];
 
     /**
      * @param list<?array{int, int}>|null $spans byte offsets, as preg_match() gives them
@@ -296,6 +296,12 @@ final class JavaScriptEngineParityTest extends TestCase
         ];
         yield 'a group split otherwise in a lookbehind' => [
             'pattern' => '/(?<=a?(a{1,2})b)c\1/', 'message' => 'A capturing group in a lookbehind of more than one length cannot be carried into JavaScript',
+            'subject' => 'aabca', 'spans' => [[3, 5], [1, 2]], 'javaScript' => 'finds nothing: matching the lookbehind right to left, the group takes "aa"',
+        ];
+        // The atomic group commits to nothing and is printed plain: the
+        // group around it is refused all the same.
+        yield 'a group split otherwise around an atomic group in a lookbehind' => [
+            'pattern' => '/(?<=a?((?>a{1,2}))b)c\1/', 'message' => 'A capturing group in a lookbehind of more than one length cannot be carried into JavaScript',
             'subject' => 'aabca', 'spans' => [[3, 5], [1, 2]], 'javaScript' => 'finds nothing: matching the lookbehind right to left, the group takes "aa"',
         ];
         yield 'a group of more than one length in a lookbehind' => [
