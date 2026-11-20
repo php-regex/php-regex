@@ -8,7 +8,7 @@ The bundle registers a `Regex` service for your application and the
 `bin/console regex:*` commands. Its configuration lives under the
 `php_regex` key.
 
-Requires PHP 8.1 or later and Symfony 6.4 LTS, 7.4 or 8.x.
+Requires PHP 8.1 or later with the `tokenizer` extension, and Symfony 6.4 LTS, 7.4 or 8.x.
 {% include install.html package="php-regex/regex-symfony" %}
 
 With Symfony Flex, `composer require` registers the bundle in

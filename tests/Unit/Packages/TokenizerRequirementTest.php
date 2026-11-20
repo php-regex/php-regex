@@ -25,6 +25,7 @@ final class TokenizerRequirementTest extends TestCase
             'root' => 'composer.json',
             'linter' => 'src/Linter/composer.json',
             'language server' => 'src/LanguageServer/composer.json',
+            'symfony' => 'src/Symfony/composer.json',
         ];
 
         foreach ($manifestPaths as $package => $path) {
