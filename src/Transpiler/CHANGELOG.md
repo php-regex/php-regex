@@ -4,6 +4,12 @@ CHANGELOG
 2.0
 ---
 
+ * JavaScript and the HTML pattern attribute refuse what a lookbehind
+   matched right to left reads otherwise than PCRE: a group in a branch of
+   more than one length, `/(?<=(ab|a)b?)c/`, which captures `ab` in PCRE
+   and `a` in JavaScript; a group repeated in it, `/(?<=(.){2})$/`; and a
+   reference to a group of the same lookbehind, `/(?<=(a)\1)b/`. All three
+   were printed as written.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
  * The advice to add `u` looks at the target: where the target refuses the

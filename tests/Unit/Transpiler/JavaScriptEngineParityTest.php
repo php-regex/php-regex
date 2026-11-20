@@ -36,9 +36,16 @@ final class JavaScriptEngineParityTest extends TestCase
     /**
      * The rows that hold from a PCRE2 newer than the floor: a property
      * spelled loosely or by another short name from 10.40; "{,3}" is a
-     * quantifier, and "\w" takes the marks and the connectors, from 10.43.
+     * quantifier, "\w" takes the marks and the connectors, and a lookbehind
+     * branch may match more than one length, from 10.43.
      */
-    private const NEWER_RELEASES = ['10.40' => ['/\p{WSpace}/u', '/\p{white space}/u', '/\p{ lu }/u'], '10.43' => ['/a{,3}b/', '/\w/u', '/\W/u', '/\bé/u', '/a\B/u', '/[\W\d]/u', '/[^\W\d]/u', '/[\W]/u', '/[^\S\W]/u', '/[^x\S\W]/u']];
+    private const NEWER_RELEASES = ['10.40' => ['/\p{WSpace}/u', '/\p{white space}/u', '/\p{ lu }/u'], '10.43' => ['/a{,3}b/', '/\w/u', '/\W/u', '/\bé/u', '/a\B/u', '/[\W\d]/u', '/[^\W\d]/u', '/[\W]/u', '/[^\S\W]/u', '/[^x\S\W]/u', '/(?<!(ab|a)b?)c/', '/(?<=a{1,2})(b)/']];
+
+    /**
+     * The refused rows that compile from a PCRE2 newer than the floor: a
+     * lookbehind branch of more than one length from 10.43.
+     */
+    private const NEWER_REFUSED_RELEASES = ['10.43' => ['/(?<=a?(a{1,2})b)c\1/', '/(?<=(ab|a)b?)c/'], '10.45' => ['/\p{Lu}/iu']];
 
     /**
      * @param list<?array{int, int}>|null $spans byte offsets, as preg_match() gives them
@@ -156,6 +163,16 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'alternatives that all match empty' => ['pattern' => '/a(?:||)?b/', 'literal' => '/a(?:||)?b/', 'subject' => 'ab', 'spans' => [[0, 2]]];
         yield 'an empty alternative before a lookahead' => ['pattern' => '/(?:a?|(?=b))*b/', 'literal' => '/(?:a?|(?=b))*b/', 'subject' => 'aab', 'spans' => [[0, 3]]];
         yield 'a lookahead before an optional item' => ['pattern' => '/(?:(?:a|(?=b))c?)*/', 'literal' => '/(?:(?:a|(?=b))c?)*/', 'subject' => 'bc', 'spans' => [[0, 0]]];
+        // JavaScript matches a lookbehind right to left: where each branch
+        // has one length and no group in it repeats, it splits the branch
+        // as PCRE does.
+        yield 'groups in lookbehind branches of one length each' => ['pattern' => '/(?<=(a)|(bc))d/', 'literal' => '/(?<=(a)|(bc))d/', 'subject' => 'bcd', 'spans' => [[2, 3], null, [0, 2]]];
+        yield 'a group in a negative lookbehind of more than one length' => ['pattern' => '/(?<!(ab|a)b?)c/', 'literal' => '/(?<!(ab|a)b?)c/', 'subject' => 'xc', 'spans' => [[1, 2], null]];
+        yield 'a group after a lookbehind of more than one length' => ['pattern' => '/(?<=a{1,2})(b)/', 'literal' => '/(?<=a{1,2})(b)/', 'subject' => 'aab', 'spans' => [[2, 3], [2, 3]]];
+        yield 'a reference in a lookbehind to an earlier group' => ['pattern' => '/(a)(?<=\1)b/', 'literal' => '/(a)(?<=\1)b/', 'subject' => 'ab', 'spans' => [[0, 2], [0, 1]]];
+        yield 'a group once in a lookbehind' => ['pattern' => '/(?<=(a){1})b/', 'literal' => '/(?<=(a){1})b/', 'subject' => 'ab', 'spans' => [[1, 2], [0, 1]]];
+        yield 'a group beside a count in a lookbehind' => ['pattern' => '/(?<=(a)b{2})c/', 'literal' => '/(?<=(a)b{2})c/', 'subject' => 'abbc', 'spans' => [[3, 4], [0, 1]]];
+        yield 'a group of one character under u in a lookbehind' => ['pattern' => '/(?<=(é|a))b/u', 'literal' => '/(?<=(é|a))b/u', 'subject' => 'éb', 'spans' => [[2, 3], [0, 2]]];
     }
 
     /**
@@ -167,7 +184,7 @@ final class JavaScriptEngineParityTest extends TestCase
     {
         // What PCRE does and what JavaScript would do in its place, checked
         // with node, differ: the construct is refused.
-        $this->requiresPcre2For($pattern, ['10.45' => ['/\p{Lu}/iu']]);
+        $this->requiresPcre2For($pattern, self::NEWER_REFUSED_RELEASES);
         $this->assertSame($spans, self::spans($pattern, $subject), 'Oracle: '.$pattern.'; JavaScript '.$javaScript);
 
         $this->expectException(TranspileException::class);
@@ -276,6 +293,30 @@ final class JavaScriptEngineParityTest extends TestCase
         yield 'a non-atomic lookahead' => [
             'pattern' => '/(*napla:(a+))a\1/', 'message' => 'Non-atomic assertions are not supported in JavaScript.',
             'subject' => 'aaa', 'spans' => [[0, 3], [0, 2]], 'javaScript' => 'has atomic lookaheads only: (?=(a+))a\1 fails on "aaa"',
+        ];
+        yield 'a group split otherwise in a lookbehind' => [
+            'pattern' => '/(?<=a?(a{1,2})b)c\1/', 'message' => 'A capturing group in a lookbehind of more than one length cannot be carried into JavaScript',
+            'subject' => 'aabca', 'spans' => [[3, 5], [1, 2]], 'javaScript' => 'finds nothing: matching the lookbehind right to left, the group takes "aa"',
+        ];
+        yield 'a group of more than one length in a lookbehind' => [
+            'pattern' => '/(?<=(ab|a)b?)c/', 'message' => 'A capturing group in a lookbehind of more than one length cannot be carried into JavaScript',
+            'subject' => 'abc', 'spans' => [[2, 3], [0, 2]], 'javaScript' => 'gives the group "a"',
+        ];
+        yield 'a group repeated in a lookbehind' => [
+            'pattern' => '/(?<=(.){2})$/', 'message' => 'A capturing group repeated in a lookbehind cannot be carried into JavaScript',
+            'subject' => 'ab', 'spans' => [[2, 2], [1, 2]], 'javaScript' => 'gives the group "a", the repetition it takes last',
+        ];
+        yield 'a group in a repeated group of a lookbehind' => [
+            'pattern' => '/(?<=x(?:a(b)){2})c/', 'message' => 'A capturing group repeated in a lookbehind cannot be carried into JavaScript',
+            'subject' => 'xababc', 'spans' => [[5, 6], [4, 5]], 'javaScript' => 'gives the group the first "b"',
+        ];
+        yield 'a reference to a group of the same lookbehind' => [
+            'pattern' => '/(?<=(a)\1)b/', 'message' => 'A backreference to a group of the same lookbehind cannot be carried into JavaScript',
+            'subject' => 'ab', 'spans' => null, 'javaScript' => 'matches "b": the reference is read before its group, and matches empty',
+        ];
+        yield 'a reference to a group of the same negative lookbehind' => [
+            'pattern' => '/(?<!(a)\1)b/', 'message' => 'A backreference to a group of the same lookbehind cannot be carried into JavaScript',
+            'subject' => 'ab', 'spans' => [[1, 2], null], 'javaScript' => 'finds nothing: the lookbehind holds, the reference matching empty',
         ];
         yield 'a property of PCRE alone' => [
             'pattern' => '/\p{Xan}/u', 'message' => 'Unsupported Unicode property in JavaScript: Xan.',
