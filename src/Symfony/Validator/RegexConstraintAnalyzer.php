@@ -26,6 +26,7 @@ use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Constraints\Sequentially;
 use Symfony\Component\Validator\Mapping\ClassMetadataInterface;
@@ -162,7 +163,7 @@ final class RegexConstraintAnalyzer
 
                         foreach ($constraints as $other) {
                             $found = match (true) {
-                                $other instanceof Length => $this->checkLength($regex, $other, $subject),
+                                $other instanceof Length => $this->checkLength($regex, $other, $subject, $constraints),
                                 $other instanceof Choice => $this->checkChoice($regex, $other, $subject),
                                 default => [],
                             };
@@ -389,11 +390,18 @@ final class RegexConstraintAnalyzer
     }
 
     /**
+     * A Length no non-empty value of the pattern fits: Regex does not check
+     * an empty value, which passes both unless the Length or a NotBlank
+     * refuses it. Length counts the characters of a valid UTF-8 value: the
+     * pattern is read on them, the shortest value it accepts of at least
+     * the least length the Length allows weighed against the most.
+     *
      * @param array{class: string, property: string} $subject
+     * @param list<Constraint>                       $constraints the constraints of the property
      *
      * @return list<ValidatorFinding>
      */
-    private function checkLength(Regex $regex, Length $length, array $subject): array
+    private function checkLength(Regex $regex, Length $length, array $subject, array $constraints): array
     {
         if (!$regex->match || null !== $regex->normalizer || null !== $length->normalizer || 'UTF-8' !== $length->charset || !self::sharesAGroup($regex, $length)) {
             return [];
@@ -408,32 +416,28 @@ final class RegexConstraintAnalyzer
         $pattern = (string) $regex->pattern;
 
         try {
-            // A pattern without u counts bytes, as many as code points over
-            // ASCII alone.
-            $unicode = $this->parser->parse($pattern)->isUnicode()
-                || $this->solver->subsetOf($pattern, '/\A[\x00-\x7F]*\z/', $this->options)->isSubset;
-            $language = $this->solver->language($pattern, $this->options);
-            $shortest = $language->minLength();
-            $longest = $language->isFinite() ? $language->maxLength() : null;
-        } catch (ComplexityException|RegexException|\InvalidArgumentException) {
+            $shortest = $this->solver->intersection($pattern, '/\A[\s\S]{'.max(1, (int) $length->min).',}\z/u', $this->options)->example;
+        } catch (ComplexityException|RegexException|\InvalidArgumentException $e) {
+            return [self::finding($subject, $pattern, 'length.unchecked', 'notice', 'The Length constraint could not be compared with the pattern: '.$e->getMessage())];
+        }
+
+        if (null !== $shortest && (null === $length->max || mb_strlen($shortest, 'UTF-8') <= $length->max)) {
             return [];
         }
 
-        if (null === $shortest) {
-            return [];
-        }
+        $allowed = match (true) {
+            null === $length->max => \sprintf('at least %d', $length->min),
+            null === $length->min => \sprintf('at most %d', $length->max),
+            $length->min === $length->max => \sprintf('exactly %d', $length->min),
+            default => \sprintf('%d to %d', $length->min, $length->max),
+        };
 
-        // Else bytes are never fewer than code points: only its longest
-        // value tells of a code point count.
-        $tooLong = $unicode && null !== $length->max && $shortest > $length->max;
-        $tooShort = null !== $length->min && null !== $longest && $longest < $length->min;
-        if (!$tooLong && !$tooShort) {
-            return [];
-        }
-
-        return [self::finding($subject, $pattern, 'length.contradiction', 'error', $tooLong
-            ? \sprintf('Every value the pattern accepts holds at least %d characters, more than the Length max of %d: no value passes both.', $shortest, $length->max)
-            : \sprintf('Every value the pattern accepts holds at most %d %s, fewer than the Length min of %d: no value passes both.', $longest, $unicode ? 'characters' : 'bytes', $length->min))];
+        return [self::finding($subject, $pattern, 'length.contradiction', 'error', \sprintf(
+            'No non-empty value the pattern accepts holds %s %s, as the Length constraint asks: %s',
+            $allowed,
+            1 === ($length->max ?? $length->min) ? 'character' : 'characters',
+            self::rejectsEmpty($constraints, $regex, $length) ? 'no value passes both.' : 'only an empty value, which Regex does not check, can pass both.',
+        ))];
     }
 
     /**
@@ -749,6 +753,26 @@ final class RegexConstraintAnalyzer
         }
 
         return $flat;
+    }
+
+    /**
+     * Whether a constraint of the property that runs with each given one
+     * refuses an empty value: a NotBlank, or a Length of a least length,
+     * neither normalizing the value first.
+     *
+     * @param list<Constraint> $constraints
+     */
+    private static function rejectsEmpty(array $constraints, Constraint ...$with): bool
+    {
+        foreach ($constraints as $constraint) {
+            $refuses = ($constraint instanceof NotBlank && null === $constraint->normalizer)
+                || ($constraint instanceof Length && null === $constraint->normalizer && ($constraint->min ?? 0) > 0);
+            if ($refuses && [] === array_filter($with, static fn (Constraint $other): bool => !self::sharesAGroup($constraint, $other))) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static function sharesAGroup(Constraint $first, Constraint $second): bool

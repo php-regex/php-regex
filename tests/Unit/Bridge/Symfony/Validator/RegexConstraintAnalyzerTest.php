@@ -229,6 +229,47 @@ final class RegexConstraintAnalyzerTest extends TestCase
             'expected' => [['length.contradiction', 'error']],
             'verdicts' => [['/^[A-Z]{5}$/', 'ABCDE', true], ['/^[A-Z]{5}$/', 'ABC', false]],
         ];
+        // Lengths 1 and 3 straddle 2, which neither is.
+        yield 'a Length between the lengths of the pattern' => [
+            'constraints' => [new Regex(pattern: '/^(?:a|aaa)$/Du', htmlPattern: ''), new Length(exactly: 2)],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^(?:a|aaa)$/Du', 'a', true], ['/^(?:a|aaa)$/Du', 'aa', false], ['/^(?:a|aaa)$/Du', 'aaa', true]],
+        ];
+        // The pattern matches an empty value, which Regex does not check,
+        // and no other value Length(max: 3) allows.
+        yield 'a Length no non-empty value of the pattern fits' => [
+            'constraints' => [new Regex(pattern: '/^(?:|abcd)$/D', htmlPattern: ''), new Length(max: 3)],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^(?:|abcd)$/D', '', true], ['/^(?:|abcd)$/D', 'abcd', true]],
+        ];
+        yield 'a Length min some value of the pattern reaches' => [
+            'constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 3)],
+            'expected' => [],
+            'verdicts' => [['/^\d{2,4}$/', '000', true]],
+        ];
+        yield 'a Length one length of the pattern fits' => [
+            'constraints' => [new Regex(pattern: '/^(?:a|aa|aaa)$/Du', htmlPattern: ''), new Length(exactly: 2)],
+            'expected' => [],
+            'verdicts' => [['/^(?:a|aa|aaa)$/Du', 'aa', true]],
+        ];
+        // Regex does not check an empty value: Length(max: 1) and the
+        // pattern let it through, and nothing else.
+        yield 'a Length only an empty value fits' => [
+            'constraints' => [new Length(max: 1), new Regex(pattern: '/^ab$/Du', htmlPattern: '')],
+            'expected' => [['length.contradiction', 'error']],
+            'verdicts' => [['/^ab$/Du', 'ab', true], ['/^ab$/Du', '', false]],
+        ];
+        // Two bytes, one character: Length counts characters.
+        yield 'a Length a pattern over bytes fits' => [
+            'constraints' => [new Regex(pattern: '/^.{2}$/D', htmlPattern: ''), new Length(max: 1)],
+            'expected' => [],
+            'verdicts' => [['/^.{2}$/D', 'é', true]],
+        ];
+        yield 'a Length the solver cannot compare' => [
+            'constraints' => [new Regex(pattern: '/^(a)\1$/', htmlPattern: ''), new Length(max: 1)],
+            'expected' => [['length.unchecked', 'notice']],
+            'verdicts' => [['/^(a)\1$/', 'aa', true]],
+        ];
         yield 'a Length of another group' => [
             'constraints' => [new Length(max: 3, groups: ['short']), new Regex('/^[A-Z]{5}$/')],
             'expected' => [],
@@ -313,9 +354,75 @@ final class RegexConstraintAnalyzerTest extends TestCase
     {
         yield 'a Length max under every value' => ['constraints' => [new Length(max: 3), new Regex('/^[A-Z]{5}$/')], 'check' => 'length.contradiction', 'alphabet' => 'AB', 'length' => 6];
         yield 'a Length min past every value' => ['constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 10)], 'check' => 'length.contradiction', 'alphabet' => '01', 'length' => 11];
+        yield 'a Length between the lengths of the pattern' => ['constraints' => [new Regex('/^(?:a|aaa)$/Du'), new Length(exactly: 2)], 'check' => 'length.contradiction', 'alphabet' => 'ab', 'length' => 4];
+        yield 'a Length only an empty value fits' => ['constraints' => [new Length(max: 1), new Regex('/^ab$/Du')], 'check' => 'length.contradiction', 'alphabet' => 'ab', 'length' => 3];
+        yield 'a Length no non-empty value of the pattern fits' => ['constraints' => [new Regex(pattern: '/^(?:|abcd)$/D', htmlPattern: ''), new Length(max: 3)], 'check' => 'length.contradiction', 'alphabet' => 'abcd', 'length' => 4];
         yield 'a Length in Sequentially' => ['constraints' => [new Sequentially([new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')])], 'check' => 'length.contradiction', 'alphabet' => 'AB', 'length' => 6];
         yield 'two patterns no value matches' => ['constraints' => [new Regex('/^\d+$/'), new Regex('/^[a-z]+$/')], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
         yield 'a pattern every value of which the other forbids' => ['constraints' => [new Regex('/^\d+$/'), new Regex(pattern: '/[0-9]/', match: false)], 'check' => 'regex.contradiction', 'alphabet' => '0a', 'length' => 4];
+    }
+
+    /**
+     * The message says the lengths the Length allows, and whether an empty
+     * value, which Regex does not check, may pass both.
+     *
+     * @param list<Constraint> $constraints
+     */
+    #[Test]
+    #[DataProvider('provideLengthMessages')]
+    public function test_a_length_contradiction_says_what_passes(array $constraints, string $message): void
+    {
+        $findings = array_values(array_filter(self::audit($constraints), static fn (array $finding): bool => 'length.contradiction' === $finding['check']));
+
+        $this->assertCount(1, $findings);
+        $this->assertSame($message, $findings[0]['message']);
+    }
+
+    /**
+     * @return iterable<string, array{constraints: list<Constraint>, message: string}>
+     */
+    public static function provideLengthMessages(): iterable
+    {
+        yield 'a max an empty value fits' => [
+            'constraints' => [new Length(max: 1), new Regex('/^ab$/Du')],
+            'message' => 'No non-empty value the pattern accepts holds at most 1 character, as the Length constraint asks: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'an exact length' => [
+            'constraints' => [new Regex('/^(?:a|aaa)$/Du'), new Length(exactly: 2)],
+            'message' => 'No non-empty value the pattern accepts holds exactly 2 characters, as the Length constraint asks: no value passes both.',
+        ];
+        yield 'a min' => [
+            'constraints' => [new Regex('/^\d{2,4}$/'), new Length(min: 10)],
+            'message' => 'No non-empty value the pattern accepts holds at least 10 characters, as the Length constraint asks: no value passes both.',
+        ];
+        yield 'a min and a max' => [
+            'constraints' => [new Regex('/^[A-Z]{5}$/'), new Length(min: 1, max: 3)],
+            'message' => 'No non-empty value the pattern accepts holds 1 to 3 characters, as the Length constraint asks: no value passes both.',
+        ];
+        yield 'a min of none' => [
+            'constraints' => [new Regex('/^[A-Z]{5}$/'), new Length(min: 0, max: 3)],
+            'message' => 'No non-empty value the pattern accepts holds 0 to 3 characters, as the Length constraint asks: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'a NotBlank that refuses the empty value' => [
+            'constraints' => [new NotBlank(), new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
+            'message' => 'No non-empty value the pattern accepts holds at most 3 characters, as the Length constraint asks: no value passes both.',
+        ];
+        yield 'a NotBlank of another group' => [
+            'constraints' => [new NotBlank(groups: ['strict']), new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
+            'message' => 'No non-empty value the pattern accepts holds at most 3 characters, as the Length constraint asks: only an empty value, which Regex does not check, can pass both.',
+        ];
+        yield 'a NotBlank with a normalizer' => [
+            'constraints' => [new NotBlank(normalizer: 'trim'), new Length(max: 3), new Regex('/^[A-Z]{5}$/')],
+            'message' => 'No non-empty value the pattern accepts holds at most 3 characters, as the Length constraint asks: only an empty value, which Regex does not check, can pass both.',
+        ];
+    }
+
+    #[Test]
+    public function test_a_length_the_solver_cannot_compare_says_so(): void
+    {
+        $finding = self::audit([new Regex(pattern: '/^(a)\1$/', htmlPattern: ''), new Length(max: 1)])[0];
+
+        $this->assertStringStartsWith('The Length constraint could not be compared with the pattern: Backreferences', $finding['message']);
     }
 
     /**

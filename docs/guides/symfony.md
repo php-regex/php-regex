@@ -573,10 +573,14 @@ under the `v` flag. For each constraint the command reports:
   checked for what a browser compiles, and reported as not compared.
 
 Across the constraints of a property, in a shared validation group, it
-reports a `Length` no value of the pattern fits (`length.contradiction`), a
-`Choice` value the pattern rejects (`choice.rejected`) and two `Regex`
-constraints no value passes together (`regex.contradiction`). A question the
-solver cannot answer is a warning of the section. The command exits 1 on an
+reports a `Length` no non-empty value of the pattern fits
+(`length.contradiction`): `/^(?:a|aaa)$/` and `Length(exactly: 2)` leave no
+value, though the lengths 1 and 3 straddle 2. It also reports a `Choice`
+value the pattern rejects (`choice.rejected`) and two `Regex` constraints no
+value passes together (`regex.contradiction`). `Regex` does not check an
+empty value: the message says whether one can still pass, or whether a
+`NotBlank` or the `Length` refuses it. A question the solver cannot answer
+(`length.unchecked`, ...) is a warning of the section. The command exits 1 on an
 error; `regex:analyze` runs the same section and fails on it with
 `--fail-on=validator`.
 
