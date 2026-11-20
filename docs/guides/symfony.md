@@ -561,7 +561,9 @@ under the `v` flag. For each constraint the command reports:
   break, which no input holds. For a `match: false` pattern without `u`,
   a value the server accepts and the browser rejects is searched for only
   when the pattern matches the same UTF-8 values under `(*UTF)`; else the
-  report says it was not.
+  report says it was not. A constraint with a `normalizer` matches the
+  normalized value, which the audit does not model: its HTML pattern is
+  checked for what a browser compiles, and reported as not compared.
 
 Across the constraints of a property, in a shared validation group, it
 reports a `Length` no value of the pattern fits (`length.contradiction`), a

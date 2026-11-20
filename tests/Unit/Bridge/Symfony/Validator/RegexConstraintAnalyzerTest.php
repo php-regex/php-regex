@@ -403,11 +403,35 @@ final class RegexConstraintAnalyzerTest extends TestCase
     }
 
     #[Test]
-    public function test_a_normalizer_is_named_in_the_message(): void
+    public function test_a_normalizer_leaves_the_comparison_unchecked(): void
     {
-        $finding = self::audit([new Regex(pattern: '/^\d+$/', htmlPattern: '[0-9a-f]+', normalizer: 'trim')])[0];
+        // Symfony matches strtolower("A"), so it accepts "A" though the
+        // pattern alone does not match it.
+        $regex = new Regex(pattern: '/^a$/Du', htmlPattern: '[Aa]', normalizer: 'strtolower');
+        $this->assertSame(0, preg_match('/^a$/Du', 'A'));
+        $this->assertFalse(self::serverRejects($regex, 'A'));
 
-        $this->assertStringEndsWith('The server normalizes the value first; the browser does not.', $finding['message']);
+        $findings = self::audit([$regex]);
+
+        $this->assertSame([['html_pattern.unchecked', 'notice']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], $findings));
+        $this->assertSame('The server normalizes the value before it matches the pattern, which the audit does not model: the HTML pattern was not compared with the pattern.', $findings[0]['message']);
+        $this->assertSame('[Aa]', $findings[0]['htmlPattern'] ?? null);
+    }
+
+    /**
+     * A normalizer leaves the syntax of the HTML pattern to check, and a
+     * suggestion unproved.
+     */
+    #[Test]
+    public function test_a_normalizer_keeps_the_syntax_checks_and_proves_no_suggestion(): void
+    {
+        $this->assertSame([['html_pattern.invalid', 'error']], array_map(static fn (array $finding): array => [$finding['check'], $finding['severity']], self::audit([new Regex(pattern: '/^a++$/', normalizer: 'trim')])));
+
+        $finding = self::audit([new Regex(pattern: '/^[a-z]+$/i', normalizer: 'trim')])[0];
+
+        $this->assertSame('html_pattern.dropped', $finding['check']);
+        $this->assertSame('^[a-zA-Z]+$', $finding['suggestion'] ?? null);
+        $this->assertStringEndsWith(' The html-pattern target writes this htmlPattern; the server normalizes the value first, which the audit does not model.', $finding['message']);
     }
 
     /**

@@ -216,7 +216,11 @@ final class RegexConstraintAnalyzer
                 return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message)];
             }
 
-            $message .= $verified ? ' This htmlPattern matches the same values.' : ' The html-pattern target writes this htmlPattern; the solver could not prove it matches the same values.';
+            $message .= match (true) {
+                null !== $regex->normalizer => ' The html-pattern target writes this htmlPattern; the server normalizes the value first, which the audit does not model.',
+                $verified => ' This htmlPattern matches the same values.',
+                default => ' The html-pattern target writes this htmlPattern; the solver could not prove it matches the same values.',
+            };
 
             return [self::finding($subject, $pattern, 'html_pattern.dropped', 'warning', $message, ['suggestion' => $suggestion])];
         }
@@ -241,6 +245,10 @@ final class RegexConstraintAnalyzer
             return [self::finding($subject, $pattern, [] !== $refused ? 'html_pattern.invalid' : 'html_pattern.misread', 'error', $message, $extra)];
         }
 
+        if (null !== $regex->normalizer) {
+            return [self::finding($subject, $pattern, 'html_pattern.unchecked', 'notice', 'The server normalizes the value before it matches the pattern, which the audit does not model: the HTML pattern was not compared with the pattern.', ['htmlPattern' => $html])];
+        }
+
         $browser = self::browserPattern($html);
         $stats['html_compared']++;
 
@@ -262,7 +270,6 @@ final class RegexConstraintAnalyzer
 
         [$looser, $stricter, $searched] = $this->compared[$key];
 
-        $normalized = null !== $regex->normalizer ? ' The server normalizes the value first; the browser does not.' : '';
         if (null !== $looser) {
             $extra = ['htmlPattern' => $html, 'example' => $looser];
             [$suggestion, $verified] = $regex->match ? $this->suggest($pattern) : [null, false];
@@ -270,11 +277,11 @@ final class RegexConstraintAnalyzer
                 $extra['suggestion'] = $suggestion;
             }
 
-            $findings[] = self::finding($subject, $pattern, 'html_pattern.looser', 'error', \sprintf('The browser accepts %s, which the server rejects.%s', self::quote($looser), $normalized), $extra);
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.looser', 'error', \sprintf('The browser accepts %s, which the server rejects.', self::quote($looser)), $extra);
         }
 
         if (null !== $stricter) {
-            $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.%s', self::quote($stricter), $normalized), ['htmlPattern' => $html, 'example' => $stricter]);
+            $findings[] = self::finding($subject, $pattern, 'html_pattern.stricter', 'warning', \sprintf('The browser rejects %s, which the server accepts.', self::quote($stricter)), ['htmlPattern' => $html, 'example' => $stricter]);
         }
 
         if (!$searched) {
