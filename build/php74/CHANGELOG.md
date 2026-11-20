@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Analysis\InertCommitments::of()` names the possessive quantifiers and
+   the atomic groups of a pattern searched that commit to nothing: nothing
+   that may follow one can take back a character it matched. A printer for
+   an engine without them prints those plain.
  * Without UTF mode the tree holds a multibyte character of a class as its
    bytes, wherever it stands, as PCRE2 reads it: `/[à-é]/` is `\xC3`, the
    range `\xA0` to `\xC3`, then `\xA9`, where it was one range from `à` to
