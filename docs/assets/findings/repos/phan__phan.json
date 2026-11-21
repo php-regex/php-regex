@@ -1,6 +1,6 @@
 {
     "repo": "phan/phan",
-    "sha": "17fe34ddf918f6e222d948d0b6bc19238258d6b6",
+    "sha": "4ebfb4174b17e5dc09d1d89e5044a406b15bfba3",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/.phan/plugins/WhitespacePlugin.php#L46-L52",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/.phan/plugins/WhitespacePlugin.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -175,7 +175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/emit_signature_map_for_php_version.php#L27-L33",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/emit_signature_map_for_php_version.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -331,7 +331,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleRealStubsSignatureDetector.php#L372-L378",
             "snippet": [
                 {
                     "number": 372,
@@ -527,7 +527,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleStubsSignatureDetector.php#L354-L360",
             "snippet": [
                 {
                     "number": 354,
@@ -723,7 +723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleXMLSignatureDetector.php#L778-L784",
             "snippet": [
                 {
                     "number": 778,
@@ -855,7 +855,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleXMLSignatureDetector.php#L802-L808",
             "snippet": [
                 {
                     "number": 802,
@@ -987,7 +987,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleXMLSignatureDetector.php#L985-L991",
             "snippet": [
                 {
                     "number": 985,
@@ -1119,7 +1119,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/internal/lib/IncompatibleXMLSignatureDetector.php#L1039-L1045",
             "snippet": [
                 {
                     "number": 1039,
@@ -1421,7 +1421,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/BlockAnalysisVisitor.php#L544-L550",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/BlockAnalysisVisitor.php#L544-L550",
             "snippet": [
                 {
                     "number": 544,
@@ -1691,7 +1691,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -1961,7 +1961,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -2224,7 +2224,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -2487,7 +2487,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L250-L256",
             "snippet": [
                 {
                     "number": 250,
@@ -2582,7 +2582,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L303-L309",
             "snippet": [
                 {
                     "number": 303,
@@ -2960,7 +2960,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L305-L311",
             "snippet": [
                 {
                     "number": 305,
@@ -3223,7 +3223,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L306-L312",
             "snippet": [
                 {
                     "number": 306,
@@ -3318,7 +3318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L462-L468",
             "snippet": [
                 {
                     "number": 462,
@@ -3465,7 +3465,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L546-L552",
             "snippet": [
                 {
                     "number": 546,
@@ -4260,7 +4260,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L738-L744",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L738-L744",
             "snippet": [
                 {
                     "number": 738,
@@ -4425,7 +4425,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L929-L935",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L929-L935",
             "snippet": [
                 {
                     "number": 929,
@@ -4695,7 +4695,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L962-L968",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L962-L968",
             "snippet": [
                 {
                     "number": 962,
@@ -4860,7 +4860,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L996-L1002",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L996-L1002",
             "snippet": [
                 {
                     "number": 996,
@@ -5137,7 +5137,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L1491-L1497",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L1491-L1497",
             "snippet": [
                 {
                     "number": 1491,
@@ -5407,7 +5407,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L1569-L1575",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L1569-L1575",
             "snippet": [
                 {
                     "number": 1569,
@@ -5684,7 +5684,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L1639-L1645",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L1639-L1645",
             "snippet": [
                 {
                     "number": 1639,
@@ -5954,7 +5954,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Element/Comment/Builder.php#L1776-L1782",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Element/Comment/Builder.php#L1776-L1782",
             "snippet": [
                 {
                     "number": 1776,
@@ -6049,7 +6049,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Type.php#L1119-L1125",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Type.php#L1119-L1125",
             "snippet": [
                 {
                     "number": 1119,
@@ -6144,7 +6144,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Type.php#L1527-L1533",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Type.php#L1527-L1533",
             "snippet": [
                 {
                     "number": 1527,
@@ -6414,7 +6414,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Type.php#L1853-L1859",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Type.php#L1853-L1859",
             "snippet": [
                 {
                     "number": 1853,
@@ -6579,7 +6579,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Type.php#L3818-L3824",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Type.php#L3818-L3824",
             "snippet": [
                 {
                     "number": 3818,
@@ -6674,7 +6674,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Language/Type/LiteralStringType.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -6834,7 +6834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Library/ConversionSpec.php#L55-L61",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Library/ConversionSpec.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -7097,7 +7097,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/src/Phan/Plugin/Internal/MethodSearcherPlugin.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -7192,7 +7192,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/tool/validate_stubs.php#L90-L96",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/tool/validate_stubs.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -7348,7 +7348,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/tool/validate_stubs.php#L92-L98",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/tool/validate_stubs.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -7504,7 +7504,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phan/phan/blob/17fe34ddf918f6e222d948d0b6bc19238258d6b6/tool/validate_stubs.php#L93-L99",
+            "permalink": "https://github.com/phan/phan/blob/4ebfb4174b17e5dc09d1d89e5044a406b15bfba3/tool/validate_stubs.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,

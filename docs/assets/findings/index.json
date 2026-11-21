@@ -3,10 +3,10 @@
         "version": "2.0.0-RC1"
     },
     "totals": {
-        "repos": 234,
-        "findings": 2779,
-        "fail": 178,
-        "warn": 2601
+        "repos": 235,
+        "findings": 2785,
+        "fail": 179,
+        "warn": 2606
     },
     "owners": {
         "10up": {
@@ -232,6 +232,10 @@
         "concretecms": {
             "avatar": "/assets/findings/avatars/concretecms.png",
             "profile": "https://github.com/concretecms"
+        },
+        "consolidation": {
+            "avatar": "/assets/findings/avatars/consolidation.png",
+            "profile": "https://github.com/consolidation"
         },
         "contao": {
             "avatar": "/assets/findings/avatars/contao.png",
@@ -1515,8 +1519,8 @@
                 "pcre": "10.39",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "9babb0c7868eabea82d34447e6e157fa92a4e2fb",
-            "committed": "2026-11-20",
+            "sha": "4cc2fa000b20f3c11eb0138fa782de89a3e5485e",
+            "committed": "2026-11-21",
             "findings": 18,
             "fail": 2,
             "warn": 16,
@@ -1855,6 +1859,29 @@
                 "regex.lint.quantifier.concatenation",
                 "regex.lint.quantifier.nested",
                 "regex.lint.redos"
+            ]
+        },
+        {
+            "repo": "consolidation/robo",
+            "owner": "consolidation",
+            "slug": "consolidation__robo",
+            "target": {
+                "php": "8.2.18",
+                "pcre": "10.40",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "3a51c1dcb39ebfbebcc8f46dc7710ec6d0358500",
+            "committed": "2026-11-20",
+            "findings": 6,
+            "fail": 1,
+            "warn": 5,
+            "rules": [
+                "regex.delimiter.invalid",
+                "regex.lint.alternation.empty",
+                "regex.lint.anchor.impossible.start",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousRange",
+                "regex.lint.flag.useless.m"
             ]
         },
         {
@@ -4292,8 +4319,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "17fe34ddf918f6e222d948d0b6bc19238258d6b6",
-            "committed": "2026-11-20",
+            "sha": "4ebfb4174b17e5dc09d1d89e5044a406b15bfba3",
+            "committed": "2026-11-21",
             "findings": 36,
             "fail": 0,
             "warn": 36,
