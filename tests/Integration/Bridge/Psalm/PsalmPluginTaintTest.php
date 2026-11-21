@@ -29,10 +29,33 @@ final class PsalmPluginTaintTest extends TestCase
 {
     private const DIRECTORY = 'Taint';
 
+    /**
+     * What preg_match() returns and writes for the patterns of a fixture, by
+     * fixture: a pattern anchored at both ends holds the subject to letters
+     * and digits where the call returned 1, the engine matching the whole
+     * subject there, and writes [] where it returned 0; one not anchored
+     * matches inside markup.
+     */
+    private const ENGINE_RUNS = [
+        'anchored_subject.php' => [
+            ['pattern' => '/^[a-z0-9]+$/D', 'subject' => 'ab12', 'returns' => 1, 'matches' => ['ab12']],
+            ['pattern' => '/^[a-z0-9]+$/D', 'subject' => '<b>', 'returns' => 0, 'matches' => []],
+            ['pattern' => '/^[a-z0-9]+$/D', 'subject' => "ab\n", 'returns' => 0, 'matches' => []],
+            ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => 'ab12', 'returns' => 1, 'matches' => ['ab12', 'ab12']],
+            ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => '<b>', 'returns' => 0, 'matches' => []],
+            ['pattern' => '/[a-z0-9]+/', 'subject' => '<b>', 'returns' => 1, 'matches' => ['b']],
+        ],
+    ];
+
+    /**
+     * @param list<array{pattern: string, subject: string, returns: int, matches: list<string>}> $runs what the engine returns and writes for the patterns the check rests on
+     */
     #[Test]
     #[DataProvider('provideTypeChecks')]
-    public function test_plugin_taint_run_types_as_the_fixture_checks(string $file, int $from, int $to, string $variable, string $expected): void
+    public function test_plugin_taint_run_types_as_the_fixture_checks(string $file, int $from, int $to, string $variable, string $expected, array $runs): void
     {
+        $this->assertTheEngineWrites($runs);
+
         // Psalm 6 keeps only the taints during a taint run: there the types
         // are read in a run of their own.
         $issues = array_values(array_filter(
@@ -46,24 +69,12 @@ final class PsalmPluginTaintTest extends TestCase
         $this->assertSame([], array_map(PsalmRun::describe(...), $checks), \sprintf('%s:%d expects %s = %s; Psalm traced %s.', $file, $from, $variable, $expected, $traces[0]->message));
     }
 
-    /**
-     * The fixtures read a pattern anchored at both ends as holding the
-     * subject to letters and digits where the call returned 1: the engine
-     * matches the whole subject there, and writes [] where it returned 0.
-     *
-     * @param list<string> $matches
-     */
-    #[Test]
-    #[DataProvider('provideFixturePatternRuns')]
-    public function test_plugin_taint_fixture_patterns_match_as_the_engine_writes(string $pattern, string $subject, int $expected, array $matches): void
-    {
-        $this->assertSame($expected, preg_match($pattern, $subject, $actual));
-        $this->assertSame($matches, $actual);
-    }
-
     #[Test]
     public function test_plugin_taint_reports_what_psalm_reports_without_the_plugin(): void
     {
+        // The pattern not anchored matches inside markup: its subject stays tainted.
+        $this->assertTheEngineWrites(self::ENGINE_RUNS['anchored_subject.php']);
+
         $with = self::flows(self::issues([]));
         $without = self::flows(self::issues(null));
 
@@ -73,24 +84,27 @@ final class PsalmPluginTaintTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{file: string, from: int, to: int, variable: string, expected: string}>
+     * @return iterable<string, array{file: string, from: int, to: int, variable: string, expected: string, runs: list<array{pattern: string, subject: string, returns: int, matches: list<string>}>}>
      */
     public static function provideTypeChecks(): iterable
     {
-        return PsalmRun::typeChecks(PsalmRun::filesIn(self::DIRECTORY));
+        foreach (PsalmRun::typeChecks(PsalmRun::filesIn(self::DIRECTORY)) as $name => $check) {
+            yield $name => $check + ['runs' => self::ENGINE_RUNS[basename($check['file'])] ?? []];
+        }
     }
 
     /**
-     * @return iterable<string, array{pattern: string, subject: string, expected: int, matches: list<string>}>
+     * The engine first: what a fixture reads of a pattern is what
+     * preg_match() returns and writes.
+     *
+     * @param list<array{pattern: string, subject: string, returns: int, matches: list<string>}> $runs
      */
-    public static function provideFixturePatternRuns(): iterable
+    private function assertTheEngineWrites(array $runs): void
     {
-        yield 'letters and digits' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => 'ab12', 'expected' => 1, 'matches' => ['ab12']];
-        yield 'markup' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => '<b>', 'expected' => 0, 'matches' => []];
-        yield 'letters before a newline' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => "ab\n", 'expected' => 0, 'matches' => []];
-        yield 'letters and digits in a group' => ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => 'ab12', 'expected' => 1, 'matches' => ['ab12', 'ab12']];
-        yield 'markup against a group' => ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => '<b>', 'expected' => 0, 'matches' => []];
-        yield 'markup against a pattern not anchored' => ['pattern' => '/[a-z0-9]+/', 'subject' => '<b>', 'expected' => 1, 'matches' => ['b']];
+        foreach ($runs as ['pattern' => $pattern, 'subject' => $subject, 'returns' => $returns, 'matches' => $matches]) {
+            $this->assertSame($returns, preg_match($pattern, $subject, $actual), \sprintf('%s on %s', $pattern, json_encode($subject)));
+            $this->assertSame($matches, $actual, \sprintf('%s on %s', $pattern, json_encode($subject)));
+        }
     }
 
     /**
