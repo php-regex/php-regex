@@ -164,23 +164,6 @@ request goes to `phpstan/phpstan-src`.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
-- `/(?:(*sr:ö)|è)+/u` raises `regex.lint.quantifier.emptyRepeat`, though
-  `(*sr:ö)` cannot match empty.
-- Where no PCRE probe can be written for a branch (a script run, a class
-  holding every delimiter), `OverlappingAlternationRule` compares first
-  bytes, so under `u` a shared UTF-8 lead byte reads as an overlap:
-  `/(?:(*sr:ö)|è)+/u` is reported. Keeping only the ASCII part of the byte
-  sets in that fallback under `u` drops it; the fallback is kept today, as
-  `AlternationOverlapPastAsciiTest::test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes`
-  pins it. Decide.
-- The same rule leaves unjudged a branch behind lookaheads that differ by
-  the way taken, `(?:(?=a)|(?=b))x`, or a negative lookahead of a repeated
-  atom, `(?!a+)`; it takes `(?!a$)` to refuse `a` outright. Each can only
-  hide an overlap.
-- `CharSetAnalyzer::firstChars()` reads a start-of-pattern verb,
-  `(*CASELESS_RESTRICT)`, `(*UTF)` or `(*UCP)`, as an item of unknown set,
-  so the characters a whole pattern starts with come back unknown behind
-  it: `/(*UCP)a/` against `/a/`.
 
 
 ## Optimizer precision
