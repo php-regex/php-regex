@@ -29,6 +29,7 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
@@ -39,6 +40,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 
 /**
@@ -64,9 +66,17 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * like the others, and the engine is asked for each set under the options in
  * force where its atom stands.
  *
- * Of the options a pattern opens with, "(*UCP)" alone is read: it reads
- * nothing, and every set is asked of the engine under it. Any other start
- * option, and any verb, is outside the model.
+ * The options a pattern opens with read nothing. Every set is asked of the
+ * engine under "(*UCP)" and the newline convention, which the dot and "\N"
+ * read. Under
+ * a convention other than LF an anchor that reads a newline, "$" but under D
+ * alone, "\Z", and "^" and "$" under m, is outside the model; under "(*CRLF)"
+ * the dot and "\N" are too, as they take a carriage return unless a line feed
+ * follows it. "(*CASELESS_RESTRICT)" is r. "(*UTF)" without u, under
+ * which PHP hands the engine a subject it does not check, and caseless
+ * matching under "(*TURKISH_CASING)" are outside the model. The other start
+ * options change no match one attempt makes. Any other verb is outside the
+ * model.
  *
  * @internal
  */
@@ -207,12 +217,40 @@ final class PnfaBuilder
     private readonly string $source;
 
     /**
-     * The "(*UCP)" the pattern opens with, as written, every set read under
-     * it; empty when it opens with no verb, or with another one beside it,
-     * which is then outside the model: no probe is ever written under
-     * "(*UTF)" without u, which would read bytes that are not UTF-8.
+     * The options the pattern opens with that change what an atom matches,
+     * every set read under them: its newline convention but LF, which the
+     * dot and "\N" read, and "(*UCP)"; empty for most patterns. No probe is
+     * ever written under "(*UTF)" without u, which would read bytes that are
+     * not UTF-8: such a pattern is outside the model.
      */
     private readonly string $startOptions;
+
+    /**
+     * The newline convention the pattern opens with, "(*CR)" say; empty for
+     * LF, the one the model reads.
+     */
+    private readonly string $newline;
+
+    /**
+     * The types outside the model: "\R", "\X" and "\C", and under "(*CRLF)"
+     * "\N", which takes a carriage return unless a line feed follows it.
+     *
+     * @var list<string>
+     */
+    private readonly array $outOfModelTypes;
+
+    /**
+     * The length of the run of options the pattern opens with.
+     */
+    private readonly int $startEnd;
+
+    private readonly bool $caselessRestrict;
+
+    /**
+     * Why the options the pattern opens with keep it outside the model;
+     * null when they do not.
+     */
+    private readonly ?string $startLimit;
 
     /**
      * The locale whose character tables the sets without /u are read
@@ -240,7 +278,20 @@ final class PnfaBuilder
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
-        $this->startOptions = self::leadingUcp($regex);
+        // Most patterns open with no option: nothing is read for them.
+        $options = str_starts_with($this->source, '(*') ? StartOptions::items($this->source) : [];
+        $this->startEnd = [] === $options ? 0 : \strlen(StartOptions::of($this->source));
+        $newline = [] === $options ? 'LF' : StartOptions::newline($this->source);
+        $this->newline = 'LF' === $newline ? '' : '(*'.$newline.')';
+        $this->startOptions = $this->newline.(\in_array('UCP', $options, true) ? '(*UCP)' : '');
+        $this->outOfModelTypes = 'CRLF' === $newline ? [...self::OUT_OF_MODEL_TYPES, 'N'] : self::OUT_OF_MODEL_TYPES;
+        $this->caselessRestrict = \in_array('CASELESS_RESTRICT', $options, true);
+        // "(*TURKISH_CASING)" folds "i" with U+0130 and "I" with U+0131.
+        $this->startLimit = match (true) {
+            !$this->unicode && (\in_array('UTF', $options, true) || \in_array('UTF8', $options, true)) => '(*UTF) without u',
+            \in_array('TURKISH_CASING', $options, true) && (str_contains($regex->flags, 'i') || self::setsCaseless($regex->pattern)) => 'Caseless matching under (*TURKISH_CASING)',
+            default => null,
+        };
         $this->collectAbstractions($regex->pattern);
     }
 
@@ -253,7 +304,12 @@ final class PnfaBuilder
      */
     public function build(): array
     {
-        $flags = 0;
+        if (null !== $this->startLimit) {
+            throw ModelLimitException::outOfModel($this->startLimit);
+        }
+
+        // "(*CASELESS_RESTRICT)" is a pattern-wide r: "(?-r)" takes it off.
+        $flags = $this->caselessRestrict ? self::RESTRICT : 0;
         foreach ([['i', self::CASELESS], ['s', self::DOT_ALL], ['m', self::MULTILINE], ['x', self::EXTENDED], ['U', self::UNGREEDY], ['r', self::RESTRICT]] as [$letter, $bit]) {
             if (str_contains($this->regex->flags, $letter)) {
                 $flags |= $bit;
@@ -300,26 +356,21 @@ final class PnfaBuilder
     }
 
     /**
-     * The verbs the pattern opens with, one after the other from its first
-     * byte, as written, when each is "(*UCP)"; empty otherwise.
+     * Whether an option setting may turn i on somewhere in the node.
      */
-    private static function leadingUcp(RegexNode $regex): string
+    private static function setsCaseless(NodeInterface $node): bool
     {
-        $pattern = $regex->pattern;
-        $end = 0;
-        foreach ($pattern instanceof SequenceNode ? $pattern->children : [$pattern] as $child) {
-            if (!$child instanceof PcreVerbNode || $child->getStartPosition() !== $end) {
-                break;
-            }
-
-            if ('UCP' !== $child->verb) {
-                return '';
-            }
-
-            $end = $child->getEndPosition();
+        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'i')) {
+            return true;
         }
 
-        return substr($regex->source ?? '', 0, $end);
+        foreach ($node->getChildren() as $child) {
+            if (self::setsCaseless($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function node(NodeInterface $node, int $next, int $flags, Pnfa $pnfa, int $search): int
@@ -335,18 +386,11 @@ final class PnfaBuilder
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
             $node instanceof KeepNode, $node instanceof CommentNode => $next,
-            $node instanceof PcreVerbNode && $this->isStartUcp($node) => $next,
+            // An option the pattern opens with, which reads nothing: no other
+            // node ends inside their run.
+            0 !== $this->startEnd && $node->getEndPosition() <= $this->startEnd => $next,
             default => $this->char($pnfa, $this->charSet($node, $flags), $next),
         };
-    }
-
-    /**
-     * Whether the verb is "(*UCP)" among the options the pattern opens with,
-     * which it applies to every set before any character is read.
-     */
-    private function isStartUcp(PcreVerbNode $node): bool
-    {
-        return 'UCP' === $node->verb && $node->getEndPosition() <= \strlen($this->startOptions);
     }
 
     private function sequence(SequenceNode $node, int $next, int $flags, Pnfa $pnfa, int $search): int
@@ -459,7 +503,7 @@ final class PnfaBuilder
     private static function isZeroWidth(NodeInterface $node): bool
     {
         return $node instanceof AnchorNode || $node instanceof AssertionNode || $node instanceof KeepNode
-            || $node instanceof CommentNode || $node instanceof PcreVerbNode
+            || $node instanceof CommentNode || $node instanceof PcreVerbNode || $node instanceof LimitMatchNode
             || ($node instanceof GroupNode && !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset], true))
             || ($node instanceof LiteralNode && '' === $node->value);
     }
@@ -842,6 +886,11 @@ final class PnfaBuilder
 
     private function anchor(AnchorNode|AssertionNode $node, int $next, int $flags, Pnfa $pnfa): int
     {
+        // Under another convention a newline is not the line feed these read.
+        if ('' !== $this->newline && $this->readsNewline($node->value, $flags)) {
+            throw ModelLimitException::outOfModel(\sprintf('The anchor %s under %s', 'Z' === $node->value ? '\\Z' : $node->value, $this->newline));
+        }
+
         $none = CharSet::empty();
 
         return match ($node->value) {
@@ -857,6 +906,22 @@ final class PnfaBuilder
             'Z' => $this->endOrFinalNewline($next, $pnfa),
             'b', 'B' => $pnfa->boundary('B' === $node->value, $this->wordSet($flags), $next),
             default => throw ModelLimitException::outOfModel('The assertion \\'.$node->value),
+        };
+    }
+
+    /**
+     * Whether the anchor reads a newline: "^" and "$" under m, "$" without
+     * D, and "\Z".
+     */
+    private function readsNewline(string $anchor, int $flags): bool
+    {
+        $multiline = 0 !== ($flags & self::MULTILINE);
+
+        return match ($anchor) {
+            '^' => $multiline,
+            '$' => $multiline || !$this->dollarEndOnly,
+            'Z' => true,
+            default => false,
         };
     }
 
@@ -897,7 +962,7 @@ final class PnfaBuilder
             return $this->characterSet($node->codePoint, $flags);
         }
 
-        if ($node instanceof CharTypeNode && \in_array($node->value, self::OUT_OF_MODEL_TYPES, true)) {
+        if ($node instanceof CharTypeNode && \in_array($node->value, $this->outOfModelTypes, true)) {
             throw ModelLimitException::outOfModel('\\'.$node->value);
         }
 
@@ -912,8 +977,17 @@ final class PnfaBuilder
             return $this->query($this->text($node), $flags);
         }
 
-        if ($node instanceof DotNode || $node instanceof CharTypeNode
-            || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode) {
+        if ($node instanceof DotNode) {
+            // Under "(*CRLF)" the dot without s takes a carriage return unless
+            // a line feed follows it: no set of characters.
+            if (0 === ($flags & self::DOT_ALL) && '(*CRLF)' === $this->newline) {
+                throw ModelLimitException::outOfModel('The dot under (*CRLF)');
+            }
+
+            return $this->query($this->text($node), $flags);
+        }
+
+        if ($node instanceof CharTypeNode || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode) {
             return $this->query($this->text($node), $flags);
         }
 
@@ -997,7 +1071,7 @@ final class PnfaBuilder
 
         if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode || $node instanceof CharClassNode
             || $node instanceof DotNode || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode
-            || ($node instanceof CharTypeNode && !\in_array($node->value, self::OUT_OF_MODEL_TYPES, true))) {
+            || ($node instanceof CharTypeNode && !\in_array($node->value, $this->outOfModelTypes, true))) {
             return $this->charSet($node, $flags);
         }
 
@@ -1119,7 +1193,8 @@ final class PnfaBuilder
         // The options are the whole scope: a pattern-wide /r is a bit of
         // them already, and "(?-r)" takes it off. The start options change
         // what a class matches, "(*UCP)" without u the bytes past ASCII, and
-        // so do the tables of the locale without u.
+        // so do the tables of the locale without u; the newline convention
+        // what the dot and "\N" leave out.
         $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
         if (null !== $set) {
             return $set;

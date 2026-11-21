@@ -131,6 +131,16 @@ final class RedosSearchCostTest extends TestCase
         // (pcre2test: "First code unit at start or follows newline"): a
         // newline run makes every position one.
         yield 'leading dot-star without s, newline run' => ['pattern' => '/.*\n+x/'];
+        // Under (*CR) a line starts after a carriage return.
+        yield 'leading dot-star under (*CR), carriage return run' => ['pattern' => '/(*CR).*\r+x/'];
+        // (*NO_DOTSTAR_ANCHOR) keeps PCRE2 from anchoring a leading dot-star
+        // (pcre2test 10.49: neither "anchored" nor "follows newline"), and
+        // (*NO_START_OPT) from starting it at line starts only, under s it
+        // stays anchored: every position starts an attempt.
+        yield 'dot-star under s with (*NO_DOTSTAR_ANCHOR)' => ['pattern' => '/(*NO_DOTSTAR_ANCHOR).*[xy]/s'];
+        yield 'dot-star without s with (*NO_DOTSTAR_ANCHOR)' => ['pattern' => '/(*NO_DOTSTAR_ANCHOR).*[xy]/'];
+        yield 'dot-star without s with (*NO_START_OPT)' => ['pattern' => '/(*NO_START_OPT).*[xy]/'];
+        yield 'dot-star with (*NO_DOTSTAR_ANCHOR) after another option' => ['pattern' => '/(*NO_JIT)(*NO_DOTSTAR_ANCHOR).*[xy]/'];
         // The trim regex: the first attempt matches the bare run, a prefix
         // takes it away (743 / 2970 ms on "x"." "x10k/20k."x", pcre.jit=0).
         yield 'trim regex' => ['pattern' => '/^\s+|\s+$/'];
@@ -638,6 +648,17 @@ final class RedosSearchCostTest extends TestCase
         yield 'caret after a group holding only an inline m' => ['pattern' => '/(?:(?m)(?#c))^\s+x/'];
         yield 'leading dot-star without s, newline-free run' => ['pattern' => '/.*[xy]/'];
         yield 'caret then a run, alternatives both anchored' => ['pattern' => '/^a+b|\Ac+d/'];
+        // A start option reads nothing: the dot-star after it still leads
+        // (pcre2test 10.49: "anchored" under s, "follows newline" without;
+        // under (*CR) and (*ANY) the newline is theirs). (*NO_START_OPT)
+        // keeps the anchor under s.
+        yield 'leading dot-star under s after (*UCP)' => ['pattern' => '/(*UCP).*[xy]/s'];
+        yield 'leading dot-star after (*UCP), newline-free run' => ['pattern' => '/(*UCP).*[xy]/'];
+        yield 'leading dot-star under s after a match limit' => ['pattern' => '/(*LIMIT_MATCH=1000000).*[xy]/s'];
+        yield 'leading dot-star under s with (*NO_START_OPT)' => ['pattern' => '/(*NO_START_OPT).*[xy]/s'];
+        yield 'leading dot-star under (*CR), newline-free run' => ['pattern' => '/(*CR).*[xy]/'];
+        yield 'leading dot-star under (*ANY), newline-free run' => ['pattern' => '/(*ANY).*[xy]/'];
+        yield 'leading dot-star after (*UCP), before a top-level alternation' => ['pattern' => '/(*UCP).*[xy]|^z/s'];
         // Without u, a class of every character is PCRE2's any character:
         // the leading [\s\S]* is anchored like ".*" under s (pcre2test 10.49:
         // "anchored"; not under utf and ucp, see the quadratic rows).
@@ -771,11 +792,7 @@ final class RedosSearchCostTest extends TestCase
         yield 'exponential attempt' => ['pattern' => '/(a+)+$/', 'mode' => RedosMode::Theoretical, 'proof' => RedosProof::Proven];
         yield 'back reference, heuristic' => ['pattern' => '/(a)\1+/', 'mode' => RedosMode::Theoretical, 'proof' => RedosProof::Heuristic];
         yield 'analysis off' => ['pattern' => '/\s+$/', 'mode' => RedosMode::Off, 'proof' => RedosProof::NotAnalyzed];
-        // PCRE2 does not anchor it (pcre2test 10.49 lists no "anchored") and
-        // each attempt is linear: the search is quadratic on the engine. A
-        // start verb takes the attempt out of the model today, so no witness
-        // is looked for: a known gap, not a proof of a linear search.
-        yield 'dot-star under s with (*NO_DOTSTAR_ANCHOR)' => ['pattern' => '/(*NO_DOTSTAR_ANCHOR).*[xy]/s', 'mode' => RedosMode::Theoretical, 'proof' => RedosProof::Heuristic];
+        yield 'start option outside the model' => ['pattern' => '/(*CRLF).*[xy]/', 'mode' => RedosMode::Theoretical, 'proof' => RedosProof::Heuristic];
     }
 
     /**

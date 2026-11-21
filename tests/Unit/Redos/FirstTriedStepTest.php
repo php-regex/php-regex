@@ -76,6 +76,9 @@ final class FirstTriedStepTest extends TestCase
         yield 'define block lets the attempt through' => ['pattern' => '/(?(DEFINE)(a))(?R)|b/', 'expected' => 'R'];
         yield 'keep lets the attempt through' => ['pattern' => '/\K(?R)|b/', 'expected' => 'R'];
         yield 'opening option lets the attempt through' => ['pattern' => '/(*UTF)(?R)|b/', 'expected' => 'R'];
+        yield 'match limit lets the attempt through' => ['pattern' => '/(*LIMIT_MATCH=10)(?R)|b/', 'expected' => 'R'];
+        yield 'depth limit lets the attempt through' => ['pattern' => '/(*LIMIT_DEPTH=10)(?R)|b/', 'expected' => 'R'];
+        yield 'heap limit lets the attempt through' => ['pattern' => '/(*LIMIT_HEAP=10)(?R)|b/', 'expected' => 'R'];
         yield from self::ungreedyPatterns();
         yield 'nothing but transparent steps' => ['pattern' => '/(?#one)(?#two)/', 'expected' => true];
         yield 'lookaround is a step of its own' => ['pattern' => '/(?=a)(?R)|b/', 'expected' => false];

@@ -120,6 +120,8 @@ final class RedosRecursionLoopTest extends TestCase
         yield 'an option setting and a comment before the recursion' => ['pattern' => '/(?i)(?#c)(?R)?a/'];
         yield 'a start option before the recursion' => ['pattern' => '/(*UTF)(?R)?a/u'];
         yield 'other start options before the recursion' => ['pattern' => '/(*CRLF)(*NO_AUTO_POSSESS)(*NOTEMPTY)(?R)?a/'];
+        yield 'a match limit before the recursion' => ['pattern' => '/(*LIMIT_MATCH=1000000)(?R)?a/'];
+        yield 'a depth limit before the recursion' => ['pattern' => '/(*LIMIT_DEPTH=1000000)(?R)?a/'];
         yield 'an exponential loop the attempt never reaches' => ['pattern' => '/((?R)?a?)+(a+)+$/'];
         yield 'a \\K before the recursion' => ['pattern' => '/\\K(?R)?a/'];
         yield 'a DEFINE block before the recursion' => ['pattern' => '/(?(DEFINE)(?<x>b))(?R)?a/'];

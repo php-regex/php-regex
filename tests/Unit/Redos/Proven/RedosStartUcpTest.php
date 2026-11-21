@@ -24,11 +24,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * A pattern that opens with "(*UCP)" alone is in the prover's model, every
- * set read under it: without /u, "\w", "\d", "\s", the POSIX classes and
+ * A pattern that opens with "(*UCP)" is in the prover's model, every set
+ * read under it: without /u, "\w", "\d", "\s", the POSIX classes and
  * caseless matching then follow the Unicode properties of the bytes past
- * ASCII. Any other start option, or a backtracking verb, keeps the pattern
- * outside the model.
+ * ASCII. A start option beside it that changes no match keeps the proof
+ * (RedosStartOptionsTest reads each one); one that changes what the model
+ * does not read, or a backtracking verb, keeps the pattern outside the
+ * model.
  *
  * Each row carries its engine fact, measured in the same test: the steps
  * one match attempt needs ("(*NO_JIT)", "(*NO_START_OPT)", the smallest
@@ -99,9 +101,42 @@ final class RedosStartUcpTest extends TestCase
     }
 
     /**
-     * Only "(*UCP)" enters the model: another start option beside it, or a
-     * backtracking verb after it, leaves the pattern to the heuristics, as
-     * before.
+     * A start option beside "(*UCP)" that changes no match keeps the
+     * proof: the loop reads under "(*UCP)" alone.
+     */
+    #[Test]
+    #[DataProvider('provideNeutralNeighbourRows')]
+    public function test_a_neutral_start_option_beside_it_keeps_the_proof(string $pattern, string $unit, bool $exponential): void
+    {
+        $short = self::steps($pattern, str_repeat($unit, 4).'!');
+        $long = self::steps($pattern, str_repeat($unit, 8).'!');
+        $this->assertSame($exponential, $long / $short > self::EXPONENTIAL_RATIO, \sprintf('Oracle disagrees with the row %s: %d -> %d steps.', $pattern, $short, $long));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $message = \sprintf('%s is "%s", the engine says %s', $pattern, $analysis->headline(), $exponential ? 'exponential' : 'linear');
+
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $message);
+        $this->assertSame($exponential ? RedosComplexity::Exponential : RedosComplexity::Linear, $analysis->complexity, $message);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, unit: string, exponential: bool}>
+     */
+    public static function provideNeutralNeighbourRows(): iterable
+    {
+        // Engine: 64 -> 1 024 steps, as without the option.
+        yield 'a match limit after it' => ['pattern' => '/(*UCP)(*LIMIT_MATCH=1000000)(?:\w|\xC9)+$/', 'unit' => "\xC9", 'exponential' => true];
+        yield 'a match limit before it' => ['pattern' => '/(*LIMIT_MATCH=1000000)(*UCP)(?:\w|\xC9)+$/', 'unit' => "\xC9", 'exponential' => true];
+        yield 'no JIT before it' => ['pattern' => '/(*NO_JIT)(*UCP)(?:\w|\xC9)+$/', 'unit' => "\xC9", 'exponential' => true];
+        // Engine: linear, as without the option.
+        yield 'no JIT before it, a linear loop' => ['pattern' => '/(*NO_JIT)(*UCP)^(?:\W|\xC9)+$/', 'unit' => "\xC9", 'exponential' => false];
+        yield 'before a top-level alternation' => ['pattern' => '/(*UCP)(?:\w|\xC9)+$|b/', 'unit' => "\xC9", 'exponential' => true];
+    }
+
+    /**
+     * A start option beside "(*UCP)" that changes what the model does not
+     * read, or a backtracking verb after it, leaves the pattern to the
+     * heuristics, as before.
      */
     #[Test]
     #[DataProvider('provideOutOfModelRows')]
@@ -119,12 +154,9 @@ final class RedosStartUcpTest extends TestCase
      */
     public static function provideOutOfModelRows(): iterable
     {
-        yield 'a newline convention after it' => ['pattern' => '/(*UCP)(*CR)a+$/'];
-        yield 'a newline convention before it' => ['pattern' => '/(*ANY)(*UCP)a+$/'];
-        yield 'UTF before it' => ['pattern' => '/(*UTF)(*UCP)\w+$/'];
-        yield 'a match limit after it' => ['pattern' => '/(*UCP)(*LIMIT_MATCH=1000)a+$/'];
-        yield 'a match limit before it' => ['pattern' => '/(*LIMIT_MATCH=1000)(*UCP)a+$/'];
-        yield 'no JIT before it' => ['pattern' => '/(*NO_JIT)(*UCP)a+$/'];
+        yield 'a newline convention after it, read by the dollar' => ['pattern' => '/(*UCP)(*CR)a+$/'];
+        yield 'a newline convention before it, read by the dollar' => ['pattern' => '/(*ANY)(*UCP)a+$/'];
+        yield 'UTF without u before it' => ['pattern' => '/(*UTF)(*UCP)\w+$/'];
         yield 'a commit after it' => ['pattern' => '/(*UCP)a(*COMMIT)a+$/'];
         yield 'a skip after it' => ['pattern' => '/(*UCP)a+(*SKIP)b/'];
         yield 'a fail after it' => ['pattern' => '/(*UCP)a+(*FAIL)|b/'];
