@@ -60,6 +60,26 @@ Found while fixing the bugs of #400; each is PCRE2's, not the library's.
   returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
 
 
+## PCRE2 10.50
+
+10.50 is due on 2026-11-30. On 2026-11-21, 10.49 is the newest release, and
+the 140 patterns PCRE2's development branch added to `testinput2` and
+`testinput5` since then all get from the library the verdict 10.49 gives.
+
+- Once 10.50 is out, move the vendored suite to it
+  (`tests/Fixtures/Pcre2/README.md`), and add 10.50 to
+  `release-outcomes.json` and to the `pcre2test` builds of `engines.yml`.
+  Error 204 reads "requires" where 10.49 writes "require", the wording
+  `Pcre2TestdataExtractorTest` quotes.
+- PCRE2#1072, in the 10.50 milestone: `/(?<=a(?(DEFINE)(?<=b+)))x/`
+  compiles on 10.49, and the library agrees (`DefineSkippedInLookbehind`,
+  from 10.35). Should 10.50 measure a lookbehind inside a DEFINE inside a
+  lookbehind, it refuses that pattern with error 125, and the feature needs
+  a last release.
+- PCRE2#549, in the 10.51 milestone (due 2027-01-31), points every compile
+  error offset at the failing character. The library gives PCRE2's offsets
+  release by release: expect offset gates.
+
 ## Release 2.0.0
 
 `v2.0.0-RC1` is out (2026-11-14, a pre-release from `a680f3979a`): the
