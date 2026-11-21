@@ -13,14 +13,35 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm\Fixtures\Types;
 
-// A result assigned in the condition: past an early return where it is
-// false, $matches is the shape, on every release.
+// A result assigned in the condition: where it is true, and past an early
+// return where it is false, $matches is the shape, on every release; where
+// it is false, the call wrote [], and $matches keeps Psalm's type.
 // preg_match('/(a)(b)?/', 'a', $m) -> 1, $m = ['a', 'a'];
+// preg_match('/(a)(b)?/', 'x', $m) -> 0, $m = [];
 // preg_match('/^(\d+)$/D', '42', $m) -> 1, $m = ['42', '42'] (PHP 8.4.28).
+
+function assigned_condition_else(string $s): void
+{
+    if ($found = preg_match('/(a)(b)?/', $s, $m)) {
+        /**
+         * @psalm-check-type-exact $m = array{0: 'a'|'ab', 1: 'a', 2?: 'b'}
+         * @psalm-trace $m
+         */
+    } else {
+        /**
+         * @psalm-check-type-exact $m = array<array-key, string>
+         * @psalm-trace $m
+         */
+    }
+}
 
 function assigned_condition_early_return(string $s): void
 {
     if (!($found = preg_match('/(a)(b)?/', $s, $m))) {
+        /**
+         * @psalm-check-type-exact $m = array<array-key, string>
+         * @psalm-trace $m
+         */
         return;
     }
 

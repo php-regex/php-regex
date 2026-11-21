@@ -182,6 +182,16 @@ returns `0` when nothing matches, so `preg_match(…) !== false` holds on a
 call that left `[]`, and the plugin drops its condition from every
 comparison.
 
+Nor is a branch read where it would speak of another value than the one
+`$matches` holds. A call on the left of a `&&` or a `||` whose right operand
+writes the variable again keeps no condition: in
+`preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)`, `$m` is
+typed from the right call alone, since the right one never ran where the
+left one was false. Where `if ($found = preg_match(…))` is false, and in the
+body of `if (!($found = preg_match(…)))`, `$matches` keeps Psalm's type on
+every release. A loop body that changes its pattern is read again by Psalm
+with the pattern holding either value: `$matches` keeps Psalm's type there.
+
 Psalm 7.11 and later no longer read the condition a plugin sets on a
 `preg_match()` call, so the plugin hands it to Psalm through the cache Psalm
 reads a condition from. Psalm reads a few forms without that cache, and

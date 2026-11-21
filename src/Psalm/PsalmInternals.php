@@ -29,6 +29,7 @@ use Psalm\Storage\Assertion;
 use Psalm\Storage\Assertion\NestedAssertions;
 use Psalm\Storage\FunctionLikeParameter;
 use Psalm\Storage\Possibilities;
+use Psalm\Type\Reconciler;
 
 /**
  * Every use the plugin makes of Psalm's internal classes, which Psalm keeps
@@ -85,6 +86,8 @@ final class PsalmInternals
 
     private static ?bool $cachesAssertions = null;
 
+    private static ?bool $negatesNestedAssertions = null;
+
     /**
      * Whether the running Psalm has every internal method the plugin calls
      * and every internal property it reads.
@@ -127,6 +130,18 @@ final class PsalmInternals
         }
 
         return self::$cachesAssertions;
+    }
+
+    /**
+     * Whether the running Psalm negates what a nested assertion holds where
+     * the condition it stands for is false, as 7.2 and later do in a
+     * private method of their reconciler: Psalm 6 reads it there as it
+     * stands, as where the condition is true. A release that moves the
+     * method is read as Psalm 6, which costs precision, never soundness.
+     */
+    public static function negatesNestedAssertions(): bool
+    {
+        return self::$negatesNestedAssertions ??= (new \ReflectionClass(Reconciler::class))->hasMethod('negateNestedAssertions');
     }
 
     /**
