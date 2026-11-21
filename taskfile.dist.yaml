@@ -312,10 +312,14 @@ tasks:
     cmds:
       - php bin/corpus update --force
       - task cache-version --force
-      - php bin/corpus-lint
+      # Exits 1 whenever the corpus has findings, which it always does.
+      - cmd: php bin/corpus-lint
+        ignore_error: true
       - php bin/findings-report
       - git add corpus.json var/log/corpus.log
       - git diff --cached --quiet -- corpus.json var/log/corpus.log || git commit -m "[Corpus] Refresh the pins and relog the findings" -- corpus.json var/log/corpus.log
+      - git add docs/_findings docs/assets/findings
+      - git diff --cached --quiet -- docs/_findings docs/assets/findings || git commit -m "[Corpus] Refresh the findings pages" -- docs/_findings docs/assets/findings
 
   serve:
     desc: Serve the docs site at localhost:4000 with live reload
