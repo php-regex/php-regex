@@ -74,10 +74,10 @@ final class AnalysisBench
     }
 
     #[DataProvider('automataCases')]
-    #[ExpectedFor('arabic-block', instructions: '1.021M', cycles: '2.376M', memory: '20.51KiB')]
+    #[ExpectedFor('arabic-block', instructions: '1.024M', cycles: '2.416M', memory: '17.20KiB')]
     #[ExpectedFor('counted-past-budget', instructions: '25.03M', cycles: '31.80M', memory: '2.657MiB')]
-    #[ExpectedFor('mixed-blocks', instructions: '1.236M', cycles: '2.664M', memory: '23.55KiB')]
-    #[ExpectedFor('nested-same-alternation', instructions: '5.239M', cycles: '7.445M', memory: '349.0KiB')]
+    #[ExpectedFor('mixed-blocks', instructions: '1.199M', cycles: '2.662M', memory: '17.86KiB')]
+    #[ExpectedFor('nested-same-alternation', instructions: '5.262M', cycles: '7.474M', memory: '312.4KiB')]
     #[ExpectedFor('same-alternation-counted', instructions: '6.286M', cycles: '8.586M', memory: '499.0KiB')]
     public function benchAutomata(string $group, string $pattern, string $expected): void
     {

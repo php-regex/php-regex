@@ -116,6 +116,11 @@ final class BacktrackProver
      */
     private static function withoutLimits(string $pattern): string
     {
+        // Most patterns set no limit: nothing is read for them.
+        if (!str_contains($pattern, '(*LIMIT_')) {
+            return $pattern;
+        }
+
         // A pattern PHP refuses before its body is left as it is.
         [$open, $body, $close, $flags] = NoJit::split($pattern) ?? ['', '', '', ''];
         $options = StartOptions::of($body);

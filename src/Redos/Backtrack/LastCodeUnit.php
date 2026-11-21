@@ -189,10 +189,11 @@ final class LastCodeUnit
         $target ??= PcreTarget::runtime();
         $unicode = $regex->isUnicode();
         $source = $regex->source ?? '';
-        $ucp = !$unicode && str_contains(StartOptions::of($source), '(*UCP)');
+        $opening = str_starts_with($source, '(*') ? StartOptions::of($source) : '';
+        $ucp = !$unicode && str_contains($opening, '(*UCP)');
         $reader = new self($unicode, $source, $ucp, $unicode || $ucp ? null : CharacterTables::forLocale($target->locale), $target);
         // "(*CASELESS_RESTRICT)" is a pattern-wide r.
-        $options = \in_array('CASELESS_RESTRICT', StartOptions::items($source), true) ? self::RESTRICT : 0;
+        $options = str_contains($opening, '(*CASELESS_RESTRICT)') ? self::RESTRICT : 0;
         foreach (['i' => self::CASELESS, 'm' => self::MULTILINE, 'r' => self::RESTRICT] as $letter => $bit) {
             if (str_contains($regex->flags, $letter)) {
                 $options |= $bit;

@@ -67,7 +67,8 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * force where its atom stands.
  *
  * The options a pattern opens with read nothing. Every set is asked of the
- * engine under "(*UCP)", the dot and "\N" under the newline convention. Under
+ * engine under "(*UCP)" and the newline convention, which the dot and "\N"
+ * read. Under
  * a convention other than LF an anchor that reads a newline, "$" but under D
  * alone, "\Z", and "^" and "$" under m, is outside the model; under "(*CRLF)"
  * the dot and "\N" are too, as they take a carriage return unless a line feed
@@ -216,18 +217,27 @@ final class PnfaBuilder
     private readonly string $source;
 
     /**
-     * "(*UCP)" when the pattern opens with it, every set read under it;
-     * empty otherwise. No probe is ever written under "(*UTF)" without u,
-     * which would read bytes that are not UTF-8: such a pattern is outside
-     * the model.
+     * The options the pattern opens with that change what an atom matches,
+     * every set read under them: its newline convention but LF, which the
+     * dot and "\N" read, and "(*UCP)"; empty for most patterns. No probe is
+     * ever written under "(*UTF)" without u, which would read bytes that are
+     * not UTF-8: such a pattern is outside the model.
      */
     private readonly string $startOptions;
 
     /**
-     * The newline convention the pattern opens with, "(*CR)" say, the dot
-     * and "\N" read under it; empty for LF, the one the model reads.
+     * The newline convention the pattern opens with, "(*CR)" say; empty for
+     * LF, the one the model reads.
      */
     private readonly string $newline;
+
+    /**
+     * The types outside the model: "\R", "\X" and "\C", and under "(*CRLF)"
+     * "\N", which takes a carriage return unless a line feed follows it.
+     *
+     * @var list<string>
+     */
+    private readonly array $outOfModelTypes;
 
     /**
      * The length of the run of options the pattern opens with.
@@ -235,8 +245,6 @@ final class PnfaBuilder
     private readonly int $startEnd;
 
     private readonly bool $caselessRestrict;
-
-    private readonly bool $turkishCasing;
 
     /**
      * Why the options the pattern opens with keep it outside the model;
@@ -270,14 +278,20 @@ final class PnfaBuilder
         $this->unicode = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
-        $options = StartOptions::items($this->source);
-        $this->startEnd = \strlen(StartOptions::of($this->source));
-        $this->startOptions = \in_array('UCP', $options, true) ? '(*UCP)' : '';
-        $newline = StartOptions::newline($this->source);
+        // Most patterns open with no option: nothing is read for them.
+        $options = str_starts_with($this->source, '(*') ? StartOptions::items($this->source) : [];
+        $this->startEnd = [] === $options ? 0 : \strlen(StartOptions::of($this->source));
+        $newline = [] === $options ? 'LF' : StartOptions::newline($this->source);
         $this->newline = 'LF' === $newline ? '' : '(*'.$newline.')';
+        $this->startOptions = $this->newline.(\in_array('UCP', $options, true) ? '(*UCP)' : '');
+        $this->outOfModelTypes = 'CRLF' === $newline ? [...self::OUT_OF_MODEL_TYPES, 'N'] : self::OUT_OF_MODEL_TYPES;
         $this->caselessRestrict = \in_array('CASELESS_RESTRICT', $options, true);
-        $this->turkishCasing = \in_array('TURKISH_CASING', $options, true);
-        $this->startLimit = !$this->unicode && StartOptions::turnUtfOn($this->source) ? '(*UTF) without u' : null;
+        // "(*TURKISH_CASING)" folds "i" with U+0130 and "I" with U+0131.
+        $this->startLimit = match (true) {
+            !$this->unicode && (\in_array('UTF', $options, true) || \in_array('UTF8', $options, true)) => '(*UTF) without u',
+            \in_array('TURKISH_CASING', $options, true) && (str_contains($regex->flags, 'i') || self::setsCaseless($regex->pattern)) => 'Caseless matching under (*TURKISH_CASING)',
+            default => null,
+        };
         $this->collectAbstractions($regex->pattern);
     }
 
@@ -341,6 +355,24 @@ final class PnfaBuilder
         return null !== $this->anyCharacter;
     }
 
+    /**
+     * Whether an option setting may turn i on somewhere in the node.
+     */
+    private static function setsCaseless(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'i')) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::setsCaseless($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function node(NodeInterface $node, int $next, int $flags, Pnfa $pnfa, int $search): int
     {
         $this->offset = $node->getStartPosition();
@@ -354,8 +386,9 @@ final class PnfaBuilder
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
             $node instanceof KeepNode, $node instanceof CommentNode => $next,
-            // An option the pattern opens with, which reads nothing.
-            ($node instanceof PcreVerbNode || $node instanceof LimitMatchNode) && $node->getEndPosition() <= $this->startEnd => $next,
+            // An option the pattern opens with, which reads nothing: no other
+            // node ends inside their run.
+            0 !== $this->startEnd && $node->getEndPosition() <= $this->startEnd => $next,
             default => $this->char($pnfa, $this->charSet($node, $flags), $next),
         };
     }
@@ -929,7 +962,7 @@ final class PnfaBuilder
             return $this->characterSet($node->codePoint, $flags);
         }
 
-        if ($node instanceof CharTypeNode && \in_array($node->value, self::OUT_OF_MODEL_TYPES, true)) {
+        if ($node instanceof CharTypeNode && \in_array($node->value, $this->outOfModelTypes, true)) {
             throw ModelLimitException::outOfModel('\\'.$node->value);
         }
 
@@ -944,15 +977,17 @@ final class PnfaBuilder
             return $this->query($this->text($node), $flags);
         }
 
-        // Under "(*CRLF)" the dot without s and "\N" take a carriage return
-        // unless a line feed follows it: no set of characters.
-        $lineDot = ($node instanceof DotNode && 0 === ($flags & self::DOT_ALL)) || ($node instanceof CharTypeNode && 'N' === $node->value);
-        if ($lineDot && '(*CRLF)' === $this->newline) {
-            throw ModelLimitException::outOfModel($this->text($node).' under (*CRLF)');
+        if ($node instanceof DotNode) {
+            // Under "(*CRLF)" the dot without s takes a carriage return unless
+            // a line feed follows it: no set of characters.
+            if (0 === ($flags & self::DOT_ALL) && '(*CRLF)' === $this->newline) {
+                throw ModelLimitException::outOfModel('The dot under (*CRLF)');
+            }
+
+            return $this->query($this->text($node), $flags);
         }
 
-        if ($node instanceof DotNode || $node instanceof CharTypeNode
-            || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode) {
+        if ($node instanceof CharTypeNode || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode) {
             return $this->query($this->text($node), $flags);
         }
 
@@ -1036,7 +1071,7 @@ final class PnfaBuilder
 
         if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode || $node instanceof CharClassNode
             || $node instanceof DotNode || $node instanceof UnicodePropNode || $node instanceof ExtendedCharClassNode
-            || ($node instanceof CharTypeNode && !\in_array($node->value, self::OUT_OF_MODEL_TYPES, true))) {
+            || ($node instanceof CharTypeNode && !\in_array($node->value, $this->outOfModelTypes, true))) {
             return $this->charSet($node, $flags);
         }
 
@@ -1142,11 +1177,6 @@ final class PnfaBuilder
 
     private function query(string $atom, int $flags): CharSet
     {
-        // "(*TURKISH_CASING)" folds "i" with U+0130 and "I" with U+0131.
-        if ($this->turkishCasing && 0 !== ($flags & self::CASELESS)) {
-            throw ModelLimitException::outOfModel('Caseless matching under (*TURKISH_CASING)');
-        }
-
         $modifiers = self::modifiers($flags);
         $written = $atom;
         $atom = ClassSetProvider::spelledFor($atom, $this->target);
@@ -1165,8 +1195,7 @@ final class PnfaBuilder
         // what a class matches, "(*UCP)" without u the bytes past ASCII, and
         // so do the tables of the locale without u; the newline convention
         // what the dot and "\N" leave out.
-        $startVerbs = '.' === $written || '\\N' === $written ? $this->newline.$this->startOptions : $this->startOptions;
-        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $startVerbs, true, $this->locale);
+        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
         if (null !== $set) {
             return $set;
         }
