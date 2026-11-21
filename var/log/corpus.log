@@ -19282,7 +19282,7 @@ corpus/phan/phan/src/Phan/CLI.php:2443:40
    INFO  Quantified capturing group 1 "(\.[/\\]+)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Config.php:1666:35
+corpus/phan/phan/src/Phan/Config.php:1675:35
     → @^(\./)+@
    INFO  Quantified capturing group 1 "(\./)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -21133,21 +21133,6 @@ corpus/php/web-bugs/src/Repository/PhpInfoRepository.php:41:30
 
 
 ### corpus/php/web-php — Target: PHP 8.4, PCRE2 10.49 (composer.json config.platform.php) — exit 0
-corpus/php/web-php/public/credits.php:12:12
-    → !<body.*?>(.*)</body>!ims
-   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
-   TIP 
-       - !<body.*?>(.*)</body>!ims
-       + !<body.*?>(.*)</body>!is
-
-corpus/php/web-php/public/credits.php:13:25
-    → !<style.*?>.*</style>!ims
-   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
-   TIP 
-       - !<style.*?>.*</style>!ims
-       + !<style.*?>.*</style>!is
-
-
 
 ### corpus/phpDocumentor/ReflectionDocBlock — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
