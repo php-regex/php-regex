@@ -23,6 +23,21 @@ CHANGELOG
    `#^(?:([=<>!]=?|<>)\s*)?((?:\d*\.)?\d+)\s*(K|M|G|)B?$#Di` stays greedy:
    the empty branch lets `B` or the end follow it, which the first
    characters of the other branches left out.
+ * The possessive rewrite reads past the group a repetition ends when the
+   items after it in the group may match nothing: `/(a+b?)a/`,
+   `/(?:a+b?)*a$/` and `/(?:[0-9]+b?)1/` keep their repetition greedy, which
+   the check of the result refused, and `/(a+b?)a[0-9]/` becomes
+   `/(a+b?)a\d/`. The body of a group that must run again follows its own
+   end: `/(?:a+b?){2}c/` gives an `a` back to its second run on `aac`. `$`
+   and `\Z` read as the newline they may stand before, so `/^(\d+\s*)$/`
+   still becomes `/^(\d++\s*)$/`, and `/[0-9]+\s*$/` now becomes
+   `/\d++\s*$/`.
+ * Under the possessive option, a rewrite whose possessive quantifiers the
+   check of the result refuses is made again without them, and the other
+   rewrites ship: the solver proves no possessive in a pattern that holds a
+   lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
+   now lose their useless `s`, as they do without the option. The second
+   rewrite runs only on such a refusal.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
