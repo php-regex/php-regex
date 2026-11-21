@@ -1,6 +1,6 @@
 {
     "repo": "thephpleague/uri",
-    "sha": "88015743e3a8eee428bd4b7cdd1d88dbffee84c0",
+    "sha": "1a5420b3ca6be11607539de564680836c964ac31",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -10,7 +10,7 @@
         {
             "id": "f-92968f6bb7",
             "file": "Uri.php",
-            "line": 114,
+            "line": 115,
             "column": 38,
             "pattern": ",^(?<host>(\\[.*]|[^:])*)(:(?<port>[^/?#]*))?$,x",
             "source": "preg_match()",
@@ -64,10 +64,10 @@
                 "limit": 100000
             },
             "subject": "[]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]][]]:#",
-            "permalink": "https://github.com/thephpleague/uri/blob/88015743e3a8eee428bd4b7cdd1d88dbffee84c0/Uri.php#L111-L117",
+            "permalink": "https://github.com/thephpleague/uri/blob/1a5420b3ca6be11607539de564680836c964ac31/Uri.php#L112-L118",
             "snippet": [
                 {
-                    "number": 111,
+                    "number": 112,
                     "focus": false,
                     "runs": [
                         [
@@ -77,7 +77,7 @@
                     ]
                 },
                 {
-                    "number": 112,
+                    "number": 113,
                     "focus": false,
                     "runs": [
                         [
@@ -87,7 +87,7 @@
                     ]
                 },
                 {
-                    "number": 113,
+                    "number": 114,
                     "focus": false,
                     "runs": [
                         [
@@ -97,7 +97,7 @@
                     ]
                 },
                 {
-                    "number": 114,
+                    "number": 115,
                     "focus": true,
                     "runs": [
                         [
@@ -235,7 +235,7 @@
                     ]
                 },
                 {
-                    "number": 115,
+                    "number": 116,
                     "focus": false,
                     "runs": [
                         [
@@ -245,7 +245,7 @@
                     ]
                 },
                 {
-                    "number": 116,
+                    "number": 117,
                     "focus": false,
                     "runs": [
                         [
@@ -255,7 +255,7 @@
                     ]
                 },
                 {
-                    "number": 117,
+                    "number": 118,
                     "focus": false,
                     "runs": [
                         [
@@ -269,7 +269,7 @@
         {
             "id": "f-c715099d22",
             "file": "Uri.php",
-            "line": 124,
+            "line": 125,
             "column": 38,
             "pattern": ",^(?<delim>/)?(?<volume>[a-zA-Z])(?:[:|\\|]|%7C)(?<rest>.*)?,",
             "source": "preg_replace_callback()",
@@ -287,10 +287,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/88015743e3a8eee428bd4b7cdd1d88dbffee84c0/Uri.php#L121-L127",
+            "permalink": "https://github.com/thephpleague/uri/blob/1a5420b3ca6be11607539de564680836c964ac31/Uri.php#L122-L128",
             "snippet": [
                 {
-                    "number": 121,
+                    "number": 122,
                     "focus": false,
                     "runs": [
                         [
@@ -300,7 +300,7 @@
                     ]
                 },
                 {
-                    "number": 122,
+                    "number": 123,
                     "focus": false,
                     "runs": [
                         [
@@ -310,7 +310,7 @@
                     ]
                 },
                 {
-                    "number": 123,
+                    "number": 124,
                     "focus": false,
                     "runs": [
                         [
@@ -320,7 +320,7 @@
                     ]
                 },
                 {
-                    "number": 124,
+                    "number": 125,
                     "focus": true,
                     "runs": [
                         [
@@ -466,7 +466,7 @@
                     ]
                 },
                 {
-                    "number": 125,
+                    "number": 126,
                     "focus": false,
                     "runs": [
                         [
@@ -476,7 +476,7 @@
                     ]
                 },
                 {
-                    "number": 126,
+                    "number": 127,
                     "focus": false,
                     "runs": [
                         [
@@ -486,7 +486,7 @@
                     ]
                 },
                 {
-                    "number": 127,
+                    "number": 128,
                     "focus": false,
                     "runs": [
                         [
@@ -500,7 +500,7 @@
         {
             "id": "f-c1c76c84ad",
             "file": "Uri.php",
-            "line": 150,
+            "line": 151,
             "column": 40,
             "pattern": ",^(?<root>[a-zA-Z][:|\\|]),",
             "source": "preg_match()",
@@ -518,10 +518,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/88015743e3a8eee428bd4b7cdd1d88dbffee84c0/Uri.php#L147-L153",
+            "permalink": "https://github.com/thephpleague/uri/blob/1a5420b3ca6be11607539de564680836c964ac31/Uri.php#L148-L154",
             "snippet": [
                 {
-                    "number": 147,
+                    "number": 148,
                     "focus": false,
                     "runs": [
                         [
@@ -531,7 +531,7 @@
                     ]
                 },
                 {
-                    "number": 148,
+                    "number": 149,
                     "focus": false,
                     "runs": [
                         [
@@ -541,7 +541,7 @@
                     ]
                 },
                 {
-                    "number": 149,
+                    "number": 150,
                     "focus": false,
                     "runs": [
                         [
@@ -551,7 +551,7 @@
                     ]
                 },
                 {
-                    "number": 150,
+                    "number": 151,
                     "focus": true,
                     "runs": [
                         [
@@ -637,7 +637,7 @@
                     ]
                 },
                 {
-                    "number": 151,
+                    "number": 152,
                     "focus": false,
                     "runs": [
                         [
@@ -647,7 +647,7 @@
                     ]
                 },
                 {
-                    "number": 152,
+                    "number": 153,
                     "focus": false,
                     "runs": [
                         [
@@ -657,7 +657,7 @@
                     ]
                 },
                 {
-                    "number": 153,
+                    "number": 154,
                     "focus": false,
                     "runs": [
                         [
@@ -689,7 +689,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/88015743e3a8eee428bd4b7cdd1d88dbffee84c0/UriTemplate/Template.php#L48-L54",
+            "permalink": "https://github.com/thephpleague/uri/blob/1a5420b3ca6be11607539de564680836c964ac31/UriTemplate/Template.php#L48-L54",
             "snippet": [
                 {
                     "number": 48,
@@ -848,7 +848,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/thephpleague/uri/blob/88015743e3a8eee428bd4b7cdd1d88dbffee84c0/Urn.php#L73-L79",
+            "permalink": "https://github.com/thephpleague/uri/blob/1a5420b3ca6be11607539de564680836c964ac31/Urn.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,

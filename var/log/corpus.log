@@ -27342,7 +27342,7 @@ Note: composer.json require.php allows PHP 7.2, and PHP 7.2 and earlier ship PCR
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
 ### corpus/thephpleague/uri — Target: PHP 8.1, PCRE2 10.39 (composer.json require.php) — exit 1
-corpus/thephpleague/uri/Uri.php:114:38
+corpus/thephpleague/uri/Uri.php:115:38
     → ,^(?<host>(\[.*]|[^:])*)(:(?<port>[^/?#]*))?$,x
    ↳ via self::REGEXP_HOST_PORT
    WARN  Flag 'x' is useless: the pattern contains no whitespace and no # comment.
@@ -27376,13 +27376,13 @@ corpus/thephpleague/uri/Uri.php:114:38
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
-corpus/thephpleague/uri/Uri.php:124:38
+corpus/thephpleague/uri/Uri.php:125:38
     → ,^(?<delim>/)?(?<volume>[a-zA-Z])(?:[:|\|]|%7C)(?<rest>.*)?,
    ↳ via self::REGEXP_FILE_PATH
    WARN  Redundant elements detected in character class.
        ↳ Redundant elements: '|' (duplicate)
 
-corpus/thephpleague/uri/Uri.php:150:40
+corpus/thephpleague/uri/Uri.php:151:40
     → ,^(?<root>[a-zA-Z][:|\|]),
    ↳ via self::REGEXP_WINDOW_PATH
    WARN  Redundant elements detected in character class.
