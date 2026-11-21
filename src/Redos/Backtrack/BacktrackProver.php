@@ -16,6 +16,7 @@ namespace PHPRegex\Redos\Backtrack;
 use PHPRegex\Parser\Analysis\LiteralExtractor;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreLimits;
 use PHPRegex\Parser\Hir\Utf8;
@@ -29,6 +30,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosComplexity;
 
@@ -98,7 +100,7 @@ final class BacktrackProver
         $search = null;
 
         try {
-            $result = $this->attempt($regex, $pattern, $builder, $budget, $stepBound, $search, $target);
+            $result = $this->attempt($regex, null === $pattern ? null : self::withoutLimits($pattern), $builder, $budget, $stepBound, $search, $target);
         } catch (ModelLimitException $limit) {
             return ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
         }
@@ -107,9 +109,29 @@ final class BacktrackProver
     }
 
     /**
+     * The pattern without the limits it opens with, "(*LIMIT_MATCH=n)" and
+     * the like: they lower the limits PHP runs it under, while the checks
+     * the proof asks of the engine run under PHP's defaults, so that a
+     * limit, which changes no match, changes no verdict either.
+     */
+    private static function withoutLimits(string $pattern): string
+    {
+        // A pattern PHP refuses before its body is left as it is.
+        [$open, $body, $close, $flags] = NoJit::split($pattern) ?? ['', '', '', ''];
+        $options = StartOptions::of($body);
+        $kept = '';
+        foreach (StartOptions::items($body) as $option) {
+            $kept .= str_starts_with($option, 'LIMIT_') ? '' : '(*'.$option.')';
+        }
+
+        return $kept === $options ? $pattern : $open.$kept.substr($body, \strlen($options)).$close.$flags;
+    }
+
+    /**
      * The proof itself. What a caller reads whichever way it ends is handed
      * back as soon as it is known: the bound once every search was read, the
-     * pattern's own search once it was built.
+     * pattern's own search once it was built. The pattern is the one the
+     * engine is asked about, without its limits.
      *
      * @param array{ItemAutomaton, Budget}|null $search
      *

@@ -107,6 +107,8 @@ final class RedosSoundnessFuzzTest extends TestCase
 
     private const UCP_PATTERNS = 80;
 
+    private const START_OPTION_PATTERNS = 120;
+
     /**
      * Every inline option letter PCRE2 10.43+ reads, each written set,
      * unset, after a caret, and as a bare caret.
@@ -371,6 +373,42 @@ final class RedosSoundnessFuzzTest extends TestCase
                 ['', 'a'],
                 ["\xC9", "\xE9", "\xAA", "\xA0", "\xB2", "\xB5", "\xC9\xE9", "a\xC9", "\xC9 ", 'a', 'é'],
                 ['', '!', 'a', "\xD7", "\xC9", "\n"],
+            ),
+        );
+    }
+
+    /**
+     * The start options the model reads, before shapes over the atoms each
+     * may move: a newline convention before the dot, "\N" and the line
+     * ends, (*CASELESS_RESTRICT) before k and the Kelvin sign, and the
+     * options that change no match. Engine facts the attack rests on:
+     * "/(*CR)^(?:.|\n)+$/D" needs 1 023 -> 262 143 steps on 8 then 16 line
+     * feeds and a carriage return ("(*NO_JIT)", "(*NO_START_OPT)",
+     * "(*NO_AUTO_POSSESS)"), where without (*CR) the dot takes the carriage
+     * return and the pattern matches.
+     */
+    #[Test]
+    public function test_start_option_shapes_proven_safe_survive_the_pump_attacks(): void
+    {
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(*CR)^(?:.|\n)+$/D'), str_repeat("\n", 25)."\r"));
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern('/^(?:.|\n)+$/D'), str_repeat("\n", 25)."\r"));
+
+        $patterns = $this->startOptionPatterns();
+        $analyzer = new RedosAnalyzer();
+        $proven = 0;
+        foreach ($patterns as $pattern) {
+            $proven += RedosProof::Proven === $analyzer->analyze($pattern)->proof ? 1 : 0;
+        }
+        $this->assertGreaterThan(\count($patterns) / 2, $proven, 'the start option shapes no longer carry a proof');
+
+        $this->assertNoFalseSafeVerdict(
+            $patterns,
+            static fn (string $pattern): ?string => self::attack(
+                $pattern,
+                ['', 'a'],
+                ['a', 'ab', "\n", "\r", "\r\n", "\0", "\x85", 'k', self::KELVIN_SIGN, "a\n", "a\r"],
+                ['', '!', 'b', "\n", "\r", "\0"],
             ),
         );
     }
@@ -702,16 +740,17 @@ final class RedosSoundnessFuzzTest extends TestCase
 
     /**
      * Shapes kept outside the model: recursion, subroutines, the
-     * backtracking verbs, the start-of-pattern verbs but a lone (*UCP),
-     * conditionals, \R and \X. None of them may ever carry a proof.
+     * backtracking verbs, the start options that change what the model does
+     * not read, conditionals, \R and \X. None of them may ever carry a
+     * proof.
      *
      * @return list<string>
      */
     private function outOfModelPatterns(): array
     {
-        // A lone (*UCP) is in the model, its shapes attacked on their own;
-        // beside another start verb it is not.
-        $startVerbs = ['(*UTF)', '(*UCP)(*CR)', '(*CR)', '(*ANY)'];
+        // (*UTF) without u, a newline convention before an anchor that reads
+        // a newline, and the dot under (*CRLF).
+        $startVerbs = ['(*UTF)%s', '(*UCP)(*CR)%s$', '(*CR)%s\Z', '(*ANY)(?m)^%s', '(*NUL)%s$', '(*CRLF).%s'];
         $verbs = ['(*COMMIT)', '(*PRUNE)', '(*SKIP)', '(*FAIL)', '(*SKIP:m)'];
         $cores = ['a+', '\w+', '(a+)+', '(?:ab|a)+', '[a-z]+!', '\d+$', '(\w\w)+', 'a*b*'];
 
@@ -720,7 +759,7 @@ final class RedosSoundnessFuzzTest extends TestCase
             $verb = $this->pick($verbs);
             $shell = $this->pick([
                 // Start-of-pattern verbs must come first; the others travel.
-                $this->pick($startVerbs).$core,
+                \sprintf($this->pick($startVerbs), $core),
                 $verb.$core,
                 $core.$verb.$this->pick(['b', '', 'c']),
                 '(?:'.$verb.$core.')+',
@@ -739,7 +778,11 @@ final class RedosSoundnessFuzzTest extends TestCase
                 '(\X+)+!',
                 '('.$core.'\X)+',
             ]);
-            $flags = str_contains($shell, '\X') ? 'u' : $this->pick(['', '', 'i', 'u']);
+            $flags = match (true) {
+                str_contains($shell, '\X') => 'u',
+                str_starts_with($shell, '(*UTF)') => $this->pick(['', 'i']),
+                default => $this->pick(['', '', 'i', 'u']),
+            };
 
             return '/'.$shell.'/'.$flags;
         });
@@ -794,6 +837,23 @@ final class RedosSoundnessFuzzTest extends TestCase
         return $this->compilable(self::UCP_PATTERNS, fn (): string => '/(*UCP)'.(0 === $this->next(3)
             ? $this->pick($cores)
             : \sprintf($this->pick($shells), $this->pick($atoms), $this->pick($atoms))).'/'.$this->pick(['', '', 'i', 'u', 'm']));
+    }
+
+    /**
+     * A start option the model reads before a loop over two atoms it may
+     * move, under modifiers that change what the dot, "$" and caseless
+     * matching read; those this engine compiles.
+     *
+     * @return list<string>
+     */
+    private function startOptionPatterns(): array
+    {
+        $options = ['(*NO_JIT)', '(*LIMIT_MATCH=1000000)', '(*LIMIT_DEPTH=1000000)', '(*NOTEMPTY)', '(*NOTEMPTY_ATSTART)', '(*NO_AUTO_POSSESS)', '(*NO_START_OPT)', '(*NO_DOTSTAR_ANCHOR)', '(*BSR_ANYCRLF)', '(*LF)', '(*CR)', '(*NUL)', '(*ANYCRLF)', '(*ANY)', '(*CASELESS_RESTRICT)', '(*CR)(*UCP)', '(*NO_JIT)(*ANY)'];
+        $atoms = ['.', '\N', '\n', '\r', '\x00', '\x85', 'a', '\w', '[^a]', '\s', 'k', '\x{212A}'];
+        $shells = ['^(?:%s|%s)+$', '(?:%s|%s)+b', '(%s+)+!', '^%s*%s*b', '(?:%s%s?)+$', '^(?:%s|%s)*!', '%s+%s'];
+
+        return $this->compilable(self::START_OPTION_PATTERNS, fn (): string => '/'.$this->pick($options)
+            .\sprintf($this->pick($shells), $this->pick($atoms), $this->pick($atoms)).'/'.$this->pick(['', '', 's', 'u', 'iu', 'D', 'sD', 'm']));
     }
 
     /**

@@ -26,8 +26,10 @@ use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -36,6 +38,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Redos\ConfirmationOptions;
@@ -64,10 +67,13 @@ use PHPRegex\Redos\RedosSearchCost;
  * alternative opens with "^" (without m), "\A", "\G", or a ".*" under s
  * outside an atomic group (a class of every character too, without u, where
  * PCRE2 reads it as the dot): none is reported. A leading "^" under m or
- * ".*" without s starts attempts only after a newline: reported only when
- * the run word ends with one. A possessive or atomic repeat of any
- * character moves to the end of the subject in one step: no run is read
- * through it.
+ * ".*" without s starts attempts only after a newline of the pattern's
+ * convention: reported only when the run word ends with one. The options a
+ * pattern opens with read nothing; "(*NO_DOTSTAR_ANCHOR)" keeps PCRE2 from
+ * tying a leading ".*" to the search start or to line starts, and
+ * "(*NO_START_OPT)" from tying it to line starts. A possessive or atomic
+ * repeat of any character moves to the end of the subject in one step: no
+ * run is read through it.
  *
  * The model reads a bounded repeat above the unrolling cutoff as unbounded:
  * no run is read through it, the engine's attempts there stop at the bound.
@@ -111,6 +117,20 @@ final class SearchCostProver
     private const HORIZONTAL_SPACES = [[0x09, 0x09], [0x20, 0x20], [0xA0, 0xA0], [0x1680, 0x1680], [0x180E, 0x180E], [0x2000, 0x200A], [0x202F, 0x202F], [0x205F, 0x205F], [0x3000, 0x3000]];
 
     private const VERTICAL_SPACES = [[0x0A, 0x0D], [0x85, 0x85], [0x2028, 0x2029]];
+
+    /**
+     * The characters a line starts after, by newline convention (pcre2pattern,
+     * "Newline conventions"): what the dot without s leaves out, the line
+     * feed of a CRLF pair.
+     */
+    private const LINE_ENDS = [
+        'LF' => [[0x0A, 0x0A]],
+        'CR' => [[0x0D, 0x0D]],
+        'CRLF' => [[0x0A, 0x0A]],
+        'ANYCRLF' => [[0x0A, 0x0A], [0x0D, 0x0D]],
+        'ANY' => [[0x0A, 0x0D], [0x85, 0x85], [0x2028, 0x2029]],
+        'NUL' => [[0x00, 0x00]],
+    ];
 
     public function __construct(private readonly SearchCostReplayerInterface $replayer = new SearchCostReplayer()) {}
 
@@ -158,7 +178,12 @@ final class SearchCostProver
         // set anywhere, or taken off.
         $caseless = str_contains($regex->flags, 'i')
             || self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'i'));
-        $start = self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false);
+        $source = $regex->source ?? '';
+        $startOptions = StartOptions::items($source);
+        $lineEnds = CharSet::fromRanges(self::LINE_ENDS[StartOptions::newline($source)] ?? self::LINE_ENDS['LF']);
+        $anchorsDotStar = !\in_array('NO_DOTSTAR_ANCHOR', $startOptions, true);
+        $lineDot = $anchorsDotStar && !\in_array('NO_START_OPT', $startOptions, true) ? CharSet::universe($unicode)->subtract($lineEnds) : null;
+        $start = self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false, $anchorsDotStar, $lineDot);
         if (null === $start || $start[0]) {
             return null;
         }
@@ -168,7 +193,7 @@ final class SearchCostProver
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
 
         try {
-            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart, $jumps, $pnfa->readsFinalNewline);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline);
         } catch (ModelLimitException) {
             return null;
         }
@@ -256,20 +281,24 @@ final class SearchCostProver
      * Whether every attempt of the node is tied to the search start, and
      * whether it starts only at the subject's start or after a newline, read
      * as PCRE2 reads the first item of each alternative under the m option
-     * in force there; null when the start is undecided.
+     * in force there; null when the start is undecided. An option the
+     * pattern opens with reads nothing: the proof leaves no other verb.
      *
-     * @param array<int, CharSet> $sets the set the automaton reads for the atom at each offset
+     * @param array<int, CharSet> $sets           the set the automaton reads for the atom at each offset
+     * @param bool                $anchorsDotStar whether PCRE2 ties a leading ".*" under s to the search start
+     * @param CharSet|null        $lineDot        what the dot reads without s, whose leading star PCRE2
+     *                                            starts at line starts only; null when it starts it anywhere
      *
      * @return array{bool, bool}|null
      */
-    private static function start(NodeInterface $node, array $sets, bool $multiline, bool $unicode, bool $caseless, bool $atomic): ?array
+    private static function start(NodeInterface $node, array $sets, bool $multiline, bool $unicode, bool $caseless, bool $atomic, bool $anchorsDotStar, ?CharSet $lineDot): ?array
     {
         if ($node instanceof SequenceNode) {
             foreach ($node->children as $child) {
                 if (self::isOptionSetting($child)) {
                     $multiline = self::multilineUnder((string) $child->flags, $multiline);
-                } elseif (!$child instanceof CommentNode && !($child instanceof LiteralNode && '' === $child->value)) {
-                    return self::start($child, $sets, $multiline, $unicode, $caseless, $atomic);
+                } elseif (!$child instanceof CommentNode && !$child instanceof PcreVerbNode && !$child instanceof LimitMatchNode && !($child instanceof LiteralNode && '' === $child->value)) {
+                    return self::start($child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineDot);
                 }
             }
 
@@ -280,7 +309,7 @@ final class SearchCostProver
             $anchored = true;
             $lineStart = true;
             foreach ($node->alternatives as $alternative) {
-                $start = self::start($alternative, $sets, $multiline, $unicode, $caseless, $atomic);
+                $start = self::start($alternative, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineDot);
                 if (null === $start) {
                     return null;
                 }
@@ -297,9 +326,9 @@ final class SearchCostProver
 
         if ($node instanceof GroupNode) {
             return match ($node->type) {
-                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic),
-                GroupType::InlineFlags => self::start($node->child, $sets, self::multilineUnder((string) $node->flags, $multiline), $unicode, $caseless, $atomic),
-                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true),
+                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineDot),
+                GroupType::InlineFlags => self::start($node->child, $sets, self::multilineUnder((string) $node->flags, $multiline), $unicode, $caseless, $atomic, $anchorsDotStar, $lineDot),
+                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true, $anchorsDotStar, $lineDot),
                 default => [false, false],
             };
         }
@@ -319,12 +348,13 @@ final class SearchCostProver
 
         $bounds = $node->bounds;
         if (null !== $bounds && $bounds->min > 0) {
-            return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic);
+            return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineDot);
         }
 
         // A leading ".*": PCRE2 anchors it under s, and starts it after a
-        // newline without s; inside an atomic group it does neither.
-        if ($atomic || null === $bounds || null !== $bounds->max) {
+        // newline without s; inside an atomic group, or under
+        // "(*NO_DOTSTAR_ANCHOR)", it does neither.
+        if ($atomic || !$anchorsDotStar || null === $bounds || null !== $bounds->max) {
             return [false, false];
         }
 
@@ -342,7 +372,7 @@ final class SearchCostProver
 
         $dot = $node->node instanceof DotNode || ($node->node instanceof CharTypeNode && 'N' === $node->node->value);
 
-        return [false, $dot && $set->key() === $universe->subtract(CharSet::single(0x0A))->key()];
+        return [false, $dot && null !== $lineDot && $set->key() === $lineDot->key()];
     }
 
     /**
@@ -578,6 +608,8 @@ final class SearchCostProver
      *
      * @param array{int, ?int}|null $required     the code unit PCRE2 requires, as a character, and its other case
      *                                            when PCRE2 looks for either
+     * @param CharSet|null          $lineStart    the characters a line starts after, when attempts start
+     *                                            only at line starts; null when they start anywhere
      * @param array<int, true>      $jumps        where the repeats that jump to the end read
      * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
      *
@@ -585,7 +617,7 @@ final class SearchCostProver
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>}|null
      */
-    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, bool $lineStart, array $jumps, bool $finalNewline): ?array
+    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, ?CharSet $lineStart, array $jumps, bool $finalNewline): ?array
     {
         $prefixes = [[]];
         for ($class = 0; $class < $automaton->classCount() && \count($prefixes) <= self::MAX_PREFIXES; $class++) {
@@ -594,7 +626,7 @@ final class SearchCostProver
 
         foreach ($this->runWords($automaton, $budget, $jumps) as $word) {
             $last = $automaton->representatives[$word[\count($word) - 1]];
-            if ($lineStart && 0x0A !== $last) {
+            if (null !== $lineStart && !$lineStart->contains($last)) {
                 continue;
             }
 

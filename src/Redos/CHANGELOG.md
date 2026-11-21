@@ -6,6 +6,31 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The options a pattern opens with are read by what each changes, and no
+   longer keep every pattern but one opening with `(*UCP)` alone out of the
+   proof. Those that change no match one attempt makes keep the verdict of
+   the bare pattern: `(*NO_JIT)`, the limits, `(*NOTEMPTY)`,
+   `(*NOTEMPTY_ATSTART)`, `(*NO_AUTO_POSSESS)`, `(*NO_START_OPT)`,
+   `(*NO_DOTSTAR_ANCHOR)`, `(*BSR_ANYCRLF)`, `(*BSR_UNICODE)`, `(*LF)` and
+   `(*UTF)` under u. `/(*NO_JIT)(?:a|ab)+c/`, `/(*LIMIT_MATCH=100)(?:a|ab)+c/`
+   and `/(*CR)(?:a|ab)+c/`, critical by the heuristics, are safe (proven), as
+   `/(?:a|ab)+c/` is, and so is `/(*UCP)\w+|b/`, an option before a
+   top-level alternation. A limit the pattern sets does not reach the checks
+   the proof asks of the engine, which run under PHP's default limits. Under
+   a newline convention the dot and `\N` are read as PCRE2 reads them:
+   `/(*CR)^(?:.|\r)+b/` is safe (proven), `/(*CR)^(?:.|\n)+b/` exponential.
+   `(*CASELESS_RESTRICT)` is read as r. Kept out of the proof: `(*UTF)`
+   without u, under which PHP hands PCRE2 a subject it does not check; under
+   a convention other than LF, an anchor that reads a newline and a comment
+   under x, which the parser ends at a line feed alone; the dot and `\N`
+   under `(*CRLF)`, which take a carriage return unless a line feed follows
+   it; and caseless matching under `(*TURKISH_CASING)`. The search cost
+   reads a leading `.*` after an option as PCRE2 does: `/(*UCP).*[xy]/s`,
+   anchored, is no longer reported quadratic, while
+   `/(*NO_DOTSTAR_ANCHOR).*[xy]/s` and `/(*NO_START_OPT).*[xy]/` are. The
+   heuristics read a limit before a recursion as reading nothing:
+   `/(*LIMIT_MATCH=1000000)(?R)?a/` is reported as the recursion loop PCRE
+   stops at.
  * An atomic group or a possessive repeat over greedy unbounded repeats of
    one run, each taken at most once at least, is read as the longest run it
    commits to: `/^(?:a+)++$/` is proven linear where its body was kept with

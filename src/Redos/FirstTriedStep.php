@@ -20,6 +20,7 @@ use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
+use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierNode;
@@ -28,6 +29,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Syntax\InlineFlags;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * The first step a match attempt tries, read from the tree: the call to the
@@ -42,19 +44,6 @@ use PHPRegex\Parser\Syntax\InlineFlags;
  */
 final class FirstTriedStep extends AbstractNodeVisitor
 {
-    /**
-     * The verbs that set an option for the whole pattern: they stand at its
-     * start and try nothing.
-     */
-    private const OPENING_OPTIONS = [
-        'UTF' => true, 'UTF8' => true, 'UCP' => true,
-        'CR' => true, 'LF' => true, 'CRLF' => true, 'ANYCRLF' => true, 'ANY' => true, 'NUL' => true,
-        'BSR_ANYCRLF' => true, 'BSR_UNICODE' => true,
-        'NOTEMPTY' => true, 'NOTEMPTY_ATSTART' => true,
-        'NO_AUTO_POSSESS' => true, 'NO_DOTSTAR_ANCHOR' => true, 'NO_JIT' => true, 'NO_START_OPT' => true,
-        'CASELESS_RESTRICT' => true, 'TURKISH_CASING' => true,
-    ];
-
     private bool $ungreedy = false;
 
     private ?string $source = null;
@@ -165,10 +154,23 @@ final class FirstTriedStep extends AbstractNodeVisitor
         return true;
     }
 
+    /**
+     * An option the pattern opens with, "(*LIMIT_DEPTH=5)" too, stands at
+     * its start and tries nothing.
+     */
     #[\Override]
     public function visitPcreVerb(PcreVerbNode $node): bool
     {
-        return isset(self::OPENING_OPTIONS[$node->verb]);
+        return isset(StartOptions::NAMES[$node->name]);
+    }
+
+    /**
+     * "(*LIMIT_MATCH=n)", an option the pattern opens with, tries nothing.
+     */
+    #[\Override]
+    public function visitLimitMatch(LimitMatchNode $node): bool
+    {
+        return true;
     }
 
     /**

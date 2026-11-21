@@ -191,7 +191,8 @@ final class LastCodeUnit
         $source = $regex->source ?? '';
         $ucp = !$unicode && str_contains(StartOptions::of($source), '(*UCP)');
         $reader = new self($unicode, $source, $ucp, $unicode || $ucp ? null : CharacterTables::forLocale($target->locale), $target);
-        $options = 0;
+        // "(*CASELESS_RESTRICT)" is a pattern-wide r.
+        $options = \in_array('CASELESS_RESTRICT', StartOptions::items($source), true) ? self::RESTRICT : 0;
         foreach (['i' => self::CASELESS, 'm' => self::MULTILINE, 'r' => self::RESTRICT] as $letter => $bit) {
             if (str_contains($regex->flags, $letter)) {
                 $options |= $bit;
