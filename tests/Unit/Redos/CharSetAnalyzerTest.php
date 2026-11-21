@@ -607,6 +607,43 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * An option the pattern opens with reads nothing: the analyzer reads
+     * its effect from the run of options, and the pattern starts with what
+     * follows the run.
+     */
+    #[Test]
+    #[DataProvider('provideStartOptions')]
+    public function test_an_option_the_pattern_opens_with_reads_nothing(string $pattern, string $first): void
+    {
+        foreach (str_split('abx') as $char) {
+            $this->assertSame(str_contains($first, $char) ? 1 : 0, preg_match($pattern, $char), \sprintf('Oracle: %s on "%s".', $pattern, $char));
+        }
+
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $set = CharSetAnalyzer::forRegex($regex)->firstChars($regex);
+
+        $this->assertFalse($set->isUnknown(), $pattern);
+        foreach (str_split('abx') as $char) {
+            $this->assertSame(str_contains($first, $char), $set->intersects(ByteCharSet::fromChar($char)), \sprintf('%s: %s', $pattern, $char));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, first: string}>
+     */
+    public static function provideStartOptions(): iterable
+    {
+        yield 'the Unicode properties' => ['pattern' => '/(*UCP)a/', 'first' => 'a'];
+        yield 'UTF then the Unicode properties' => ['pattern' => '/(*UTF)(*UCP)[ab]/', 'first' => 'ab'];
+        yield 'the caseless restriction' => ['pattern' => '/(*CASELESS_RESTRICT)a/i', 'first' => 'a'];
+        yield 'a newline convention' => ['pattern' => '/(*CR)a/', 'first' => 'a'];
+        yield 'the restriction to a non-empty match' => ['pattern' => '/(*NOTEMPTY)[ab]/', 'first' => 'ab'];
+        yield 'a match limit' => ['pattern' => '/(*LIMIT_MATCH=50)a/', 'first' => 'a'];
+        yield 'a depth limit' => ['pattern' => '/(*LIMIT_DEPTH=50)a/', 'first' => 'a'];
+        yield 'two optimizations turned off' => ['pattern' => '/(*NO_JIT)(*NO_START_OPT)b/', 'first' => 'b'];
+    }
+
+    /**
      * The analyzer of the pattern, and its last atom: the one after the
      * options it opens with.
      *
