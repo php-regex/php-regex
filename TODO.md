@@ -47,6 +47,20 @@
   up to Psalm 7.10. Psalm clears the condition cache between the passes,
   not the assertions set on the call.
 
+## Playground on PHP 8.6
+
+- Merge #418: the Step through tab on every engine of the select (one
+  PCRE2 trace module per bundled release, 10.35 to 10.44).
+- Offer PHP 8.6 in the playground and the Run buttons. php-wasm 0.2.0
+  stops at 8.5.2 and its Makefile refuses 8.6, so the engine is built from
+  php-wasm's v0.2.0 sources with 8.6.0 added (its php-src patch ported:
+  six files moved, `zend_free_internal_arg_info()` takes a second
+  argument), with mbstring, and served from `docs/` beside a manifest of
+  sha256s. 8.6 cannot be stood in by 8.5: it refuses `\C` under u, keys
+  MARK once and fixes `preg_grep()`. The branch `php-86-playground-engine`
+  (on top of #418) has the 8.6.0 options row; the engine itself needs
+  Docker at 4 CPU and 8 GB or more.
+
 ## Engine reports
 
 Found while fixing the bugs of #400; each is PCRE2's, not the library's.
