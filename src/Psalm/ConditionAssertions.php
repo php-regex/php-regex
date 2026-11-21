@@ -21,6 +21,7 @@ use Psalm\FileSource;
 use Psalm\StatementsSource;
 use Psalm\Storage\Assertion;
 use Psalm\Storage\Assertion\NestedAssertions;
+use Psalm\Storage\Assertion\Truthy;
 use Psalm\Storage\Possibilities;
 
 /**
@@ -139,11 +140,28 @@ final class ConditionAssertions
      * from the call's cache: the assignment's cache nests what holds where
      * the call is true under the variable, as one, Psalm's reading of the
      * pattern included.
+     *
+     * A Psalm that reads the call's assertions itself nests them the same
+     * way; one that reads a nested assertion where the condition is false
+     * as it stands, not negated, as Psalm 6 does, would read there what
+     * holds where the call is true: the assignment's cache then holds the
+     * variable truthy and the call's assertions beside it, whose negation
+     * says nothing of either.
      */
     public static function cacheAssignment(StatementsSource $source, Context $context, Assign $assignment): void
     {
         $call = $assignment->expr;
-        if (false !== self::$psalmReadsThem || !$context->inside_conditional || !$call instanceof FuncCall || !$call->name instanceof Name || 'preg_match' !== CallArguments::globalFunction($call->name, $source)) {
+        if (null === self::$psalmReadsThem || !$context->inside_conditional || !$call instanceof FuncCall || !$call->name instanceof Name || 'preg_match' !== CallArguments::globalFunction($call->name, $source)) {
+            return;
+        }
+
+        if (self::$psalmReadsThem) {
+            $scraped = PsalmInternals::negatesNestedAssertions() ? null : PsalmInternals::scrapedAssertions($source, $call, $context->self);
+            $variable = null === $scraped || [] === $scraped ? null : PsalmInternals::variableId($assignment->var, $context->self, $source);
+            if (null !== $scraped && null !== $variable) {
+                PsalmInternals::cacheAssertions($source, $assignment, [[$variable => [[new Truthy()]]], ...$scraped]);
+            }
+
             return;
         }
 

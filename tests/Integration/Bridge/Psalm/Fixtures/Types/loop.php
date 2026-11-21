@@ -31,3 +31,43 @@ function call_in_a_loop_body(array $lines): void
         }
     }
 }
+
+// A pattern the body changes is read on the next pass as either: there,
+// $matches keeps Psalm's type, whatever the first pass read.
+// preg_match('/(x)(y)(z)/', 'xyz', $m) -> 1, $m = ['xyz', 'x', 'y', 'z'];
+// preg_match_all('/(x)(y)(z)/', 'xyz', $m) -> 1,
+// $m = [['xyz'], ['x'], ['y'], ['z']] (PHP 8.4.28).
+
+/**
+ * @param list<string> $lines
+ */
+function pattern_changed_in_a_loop_body(array $lines): void
+{
+    $pattern = '/(a)(b)?/';
+    foreach ($lines as $line) {
+        if (preg_match($pattern, $line, $m)) {
+            /**
+             * @psalm-check-type-exact $m = array<array-key, string>
+             * @psalm-trace $m
+             */
+        }
+        $pattern = '/(x)(y)(z)/';
+    }
+}
+
+/**
+ * @param list<string> $lines
+ */
+function pattern_changed_in_a_loop_body_for_all_matches(array $lines): void
+{
+    $pattern = '/(a)(b)?/';
+    foreach ($lines as $line) {
+        if ((bool) preg_match_all($pattern, $line, $m)) {
+            /**
+             * @psalm-check-type-exact $m = array<array-key, list<string>>
+             * @psalm-trace $m
+             */
+        }
+        $pattern = '/(x)(y)(z)/';
+    }
+}

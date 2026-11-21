@@ -17,7 +17,11 @@ use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp;
+use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
+use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\BinaryOp\LogicalAnd;
+use PhpParser\Node\Expr\BinaryOp\LogicalOr;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
@@ -61,6 +65,9 @@ use Psalm\Type\Union;
  * PsalmInternals: should it move, the calls are left to the stubs.
  * ConditionAssertions writes it where Psalm 7.11 and later read the
  * condition a preg_match() call stands in, its own assignment included.
+ * What holds on a call goes where Psalm would read it of another value:
+ * before the call is read again, on a later pass over a loop body, and on
+ * the left of a && or a || whose right operand writes the variable again.
  *
  * @internal
  *
@@ -83,6 +90,12 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return null;
         }
 
+        if ($call instanceof BooleanAnd || $call instanceof BooleanOr || $call instanceof LogicalAnd || $call instanceof LogicalOr) {
+            CallAssertions::dropOverwritten($call, $source, $event->getContext()->self);
+
+            return null;
+        }
+
         if ($call instanceof Assign) {
             ConditionAssertions::cacheAssignment($source, $event->getContext(), $call);
 
@@ -94,6 +107,11 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         }
 
         $function = CallArguments::globalFunction($call->name, $source);
+        if (null !== $function) {
+            // A loop body is read more than once: what the last pass read of the call goes.
+            CallAssertions::forget($source, $call);
+        }
+
         $arguments = null === $function ? null : CallArguments::bind(array_values($call->getArgs()), CallArguments::PARAMETERS[$function]);
         if ('preg_quote' === $function && null !== $arguments) {
             CallTypes::quote($call, $arguments, $source->getNodeTypeProvider());

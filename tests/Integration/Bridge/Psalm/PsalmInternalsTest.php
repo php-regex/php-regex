@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
@@ -61,6 +63,17 @@ final class PsalmInternalsTest extends TestCase
     public function test_psalm_internals_are_available_on_the_installed_psalm(): void
     {
         $this->assertTrue(PsalmInternals::available());
+    }
+
+    /**
+     * Psalm 6 reads a nested assertion where the condition it stands for is
+     * false as it stands, as where the condition is true; 7.2 and later
+     * negate it there.
+     */
+    #[Test]
+    public function test_psalm_internals_negate_nested_assertions_from_psalm_7_2_on(): void
+    {
+        $this->assertSame(InstalledVersions::satisfies(new VersionParser(), 'vimeo/psalm', '>=7.2'), PsalmInternals::negatesNestedAssertions());
     }
 
     /**

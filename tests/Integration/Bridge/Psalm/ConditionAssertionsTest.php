@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ArrayDimFetch;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Identifier;
@@ -27,6 +28,7 @@ use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Psalm\Context;
 use Psalm\Internal\Analyzer\FileAnalyzer;
 use Psalm\Internal\Analyzer\IssueData;
 use Psalm\Internal\Analyzer\ProjectAnalyzer;
@@ -263,6 +265,43 @@ final class ConditionAssertionsTest extends TestCase
         $this->assertFalse(self::psalmReadsThem());
     }
 
+    /**
+     * A Psalm that reads the call's assertions itself, but reads a nested
+     * assertion as it stands where the condition is false, as Psalm 6 does,
+     * gets the assignment's condition flat: the variable truthy, and what it
+     * reads of the call beside it. One that negates it reads its own.
+     */
+    #[Test]
+    public function test_condition_assertions_cache_an_assignment_flat_where_psalm_does_not_negate_nesting(): void
+    {
+        $analyzer = self::analyzer();
+        $call = new FuncCall(new Name('preg_match'), self::arguments($pattern = new String_('/^\d+$/D'), new Variable('s'), new Variable('m')));
+        $assignment = new Assign(new Variable('found'), $call);
+        $context = new Context();
+        $context->inside_conditional = true;
+        // Psalm reads the call's assertions up to 7.10, its own reading of the pattern from 7.11 on.
+        $analyzer->getNodeTypeProvider()->setType($pattern, Type::getString('/^\d+$/D'));
+        PsalmInternals::assert($analyzer, $call, [new Possibilities(2, [new IsType(new TNonEmptyString())])], null);
+        (new \ReflectionProperty(ConditionAssertions::class, 'psalmReadsThem'))->setValue(null, true);
+        $scraped = PsalmInternals::scrapedAssertions($analyzer, $call, null);
+        $this->assertNotSame([], $scraped);
+
+        self::forceNegation(true);
+        ConditionAssertions::cacheAssignment($analyzer, $context, $assignment);
+        $this->assertNull(PsalmInternals::cachedAssertions($analyzer, $assignment));
+
+        self::forceNegation(false);
+        ConditionAssertions::cacheAssignment($analyzer, $context, $assignment);
+        $cached = PsalmInternals::cachedAssertions($analyzer, $assignment);
+        $this->assertNotNull($cached);
+        $this->assertSame(['$found'], array_keys($cached[0]));
+        $this->assertCount(1, $cached[0]['$found']);
+        $this->assertCount(1, $cached[0]['$found'][0]);
+        $this->assertInstanceOf(Truthy::class, $cached[0]['$found'][0][0]);
+        // Each reading builds its assertions anew: equal, not the same objects.
+        $this->assertEquals($scraped, \array_slice($cached, 1));
+    }
+
     #[Test]
     public function test_condition_assertions_cache_off_read_nothing_of_psalm(): void
     {
@@ -384,9 +423,15 @@ final class ConditionAssertionsTest extends TestCase
         (new \ReflectionProperty(PsalmInternals::class, 'cachesAssertions'))->setValue(null, $caches);
     }
 
+    private static function forceNegation(?bool $negates): void
+    {
+        (new \ReflectionProperty(PsalmInternals::class, 'negatesNestedAssertions'))->setValue(null, $negates);
+    }
+
     private static function forget(): void
     {
         self::forceCaching(null);
+        self::forceNegation(null);
         (new \ReflectionProperty(ConditionAssertions::class, 'psalmReadsThem'))->setValue(null, null);
     }
 }

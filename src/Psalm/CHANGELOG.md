@@ -52,3 +52,12 @@ CHANGELOG
    characters the subject holds, `$matches` keeps Psalm's type, not `[]`,
    where the call returned 0. A baseline made on Psalm 7.11 or later should
    be regenerated.
+ * `$matches` keeps Psalm's type where the plugin's condition would speak of
+   another value than the one the variable holds, and typed it as a shape,
+   or as `array<never, never>`, that PHP does not leave: where the right
+   operand of a `&&` or a `||` writes the variable again, as in
+   `preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)`, the
+   left call's condition goes, the right one's stays; where a loop body
+   changes the pattern, the condition the pass before set goes; and on
+   Psalm 6, where `if ($found = preg_match(…))` is false, which Psalm 6
+   read as where it is true.
