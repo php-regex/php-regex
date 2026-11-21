@@ -238,5 +238,46 @@ window.PHPRegexPcreOptions = {
             "jitStackLimit": 6,
             "internal": 1
         }
+    },
+    "8.6.0": {
+        "commit": "8aaada3f9605d81a38b8240f93c7389dfbc77ef9",
+        "tag": "php-8.6.0",
+        "pcre2": "10.44",
+        "base": 0,
+        "baseRule": "PCRE2_NO_START_OPTIMIZE only for an external PCRE2 10.37 (coptions = PCRE2_NO_START_OPTIMIZE when 10 == PCRE2_MAJOR && 37 == PCRE2_MINOR && !defined(HAVE_BUNDLED_PCRE), else 0); the bundled library starts from 0",
+        "modifiers": {
+            "i": 8,
+            "m": 1024,
+            "n": 8192,
+            "s": 32,
+            "x": 128,
+            "A": 2147483648,
+            "D": 16,
+            "S": 0,
+            "X": 0,
+            "U": 262144,
+            "u": 1703936,
+            "J": 64
+        },
+        "extra": {
+            "always": 0,
+            "r": 128
+        },
+        "refused": [
+            "e"
+        ],
+        "utfCheck": "php",
+        "matchLimit": 1000000,
+        "depthLimit": 100000,
+        "newline": "lf",
+        "bsr": "unicode",
+        "errors": {
+            "matchLimit": 2,
+            "depthLimit": 3,
+            "badUtfOffset": 5,
+            "badUtf": 4,
+            "jitStackLimit": 6,
+            "internal": 1
+        }
     }
 };

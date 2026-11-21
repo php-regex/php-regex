@@ -54,6 +54,8 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
         'PCRE2_UTF' => 0x80000,
         'PCRE2_UCP' => 0x20000,
         'PCRE2_DUPNAMES' => 0x40,
+        // u from 8.6: \C can split a UTF-8 character, so PHP refuses it.
+        'PCRE2_NEVER_BACKSLASH_C' => 0x100000,
     ]);
     \define('PHPREGEX_PCRE2_EXTRA_OPTIONS', [
         'PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK' => 0x40,

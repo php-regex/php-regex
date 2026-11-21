@@ -24,7 +24,7 @@ use PHPUnit\Framework\TestCase;
  * The step debugger traces PCRE2 with the options PHP passes, and PHP's
  * wrapper changes between versions: BSK in lookarounds from 8.1 to 8.4 and
  * gone in 8.5 (8.0's bundled PCRE2 10.35 predates the option), the n
- * modifier from 8.2, r from 8.4. The page reads those
+ * modifier from 8.2, r from 8.4, and from 8.6 u refuses \C. The page reads those
  * facts from a generated table, one row per exact PHP version its engines
  * report, each row read from php-src's ext/pcre/php_pcre.c at that
  * version's tag and naming the commit. The lines the generator reads are
@@ -54,6 +54,7 @@ final class PhpPcreOptionsTableTest extends TestCase
         '8.3.11' => '10.42',
         '8.4.1' => '10.44',
         '8.5.2' => '10.44',
+        '8.6.0' => '10.44',
     ];
 
     /**
@@ -71,6 +72,7 @@ final class PhpPcreOptionsTableTest extends TestCase
     private const UTF = 0x80000;
     private const UCP = 0x20000;
     private const DUPNAMES = 0x40;
+    private const NEVER_BACKSLASH_C = 0x100000;
     private const EXTRA_ALLOW_LOOKAROUND_BSK = 0x40;
     private const EXTRA_CASELESS_RESTRICT = 0x80;
 
@@ -113,19 +115,21 @@ final class PhpPcreOptionsTableTest extends TestCase
      * checked against the oracle where the host can: n and r present or not,
      * the BSK define in the source, the BSK bit the bundled PCRE2 lets
      * through (the define sits under #ifdef PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK,
-     * a macro 10.35 does not have), and whether the 10.37 rule excludes the
-     * bundled library by name.
+     * a macro 10.35 does not have), whether the 10.37 rule excludes the
+     * bundled library by name, and whether u also sets PCRE2_NEVER_BACKSLASH_C
+     * (8.6 refuses \C under u, an escape that can split a UTF-8 character).
      *
-     * @return iterable<string, array{version: string, hasN: bool, hasR: bool, bsk: bool, bskBit: bool, bundledGuard: bool}>
+     * @return iterable<string, array{version: string, hasN: bool, hasR: bool, bsk: bool, bskBit: bool, bundledGuard: bool, uRefusesC: bool}>
      */
     public static function provideWrapperFacts(): iterable
     {
-        yield 'PHP 8.0.30: no n, no r, BSK define without the macro' => ['version' => '8.0.30', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => false, 'bundledGuard' => false];
-        yield 'PHP 8.1.28: no n, no r, BSK' => ['version' => '8.1.28', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
-        yield 'PHP 8.2.11: n, no r, BSK' => ['version' => '8.2.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
-        yield 'PHP 8.3.11: n, no r, BSK' => ['version' => '8.3.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
-        yield 'PHP 8.4.1: n, r, BSK' => ['version' => '8.4.1', 'hasN' => true, 'hasR' => true, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
-        yield 'PHP 8.5.2: n, r, no BSK' => ['version' => '8.5.2', 'hasN' => true, 'hasR' => true, 'bsk' => false, 'bskBit' => false, 'bundledGuard' => true];
+        yield 'PHP 8.0.30: no n, no r, BSK define without the macro' => ['version' => '8.0.30', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => false, 'bundledGuard' => false, 'uRefusesC' => false];
+        yield 'PHP 8.1.28: no n, no r, BSK' => ['version' => '8.1.28', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true, 'uRefusesC' => false];
+        yield 'PHP 8.2.11: n, no r, BSK' => ['version' => '8.2.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true, 'uRefusesC' => false];
+        yield 'PHP 8.3.11: n, no r, BSK' => ['version' => '8.3.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true, 'uRefusesC' => false];
+        yield 'PHP 8.4.1: n, r, BSK' => ['version' => '8.4.1', 'hasN' => true, 'hasR' => true, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true, 'uRefusesC' => false];
+        yield 'PHP 8.5.2: n, r, no BSK' => ['version' => '8.5.2', 'hasN' => true, 'hasR' => true, 'bsk' => false, 'bskBit' => false, 'bundledGuard' => true, 'uRefusesC' => false];
+        yield 'PHP 8.6.0: n, r, no BSK, u refuses \\C' => ['version' => '8.6.0', 'hasN' => true, 'hasR' => true, 'bsk' => false, 'bskBit' => false, 'bundledGuard' => true, 'uRefusesC' => true];
     }
 
     /**
@@ -239,7 +243,7 @@ final class PhpPcreOptionsTableTest extends TestCase
 
     #[Test]
     #[DataProvider('provideWrapperFacts')]
-    public function test_the_parser_reads_the_wrapper_facts_from_the_excerpt(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard): void
+    public function test_the_parser_reads_the_wrapper_facts_from_the_excerpt(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard, bool $uRefusesC): void
     {
         $facts = self::parse($version);
 
@@ -252,7 +256,7 @@ final class PhpPcreOptionsTableTest extends TestCase
         $present = array_keys($facts['modifiers']);
         sort($present);
         $this->assertSame($letters, $present, 'The compile-option modifiers of the switch.');
-        $this->assertSame(['PCRE2_UTF', 'PCRE2_UCP'], $facts['modifiers']['u'], 'u sets UTF and UCP.');
+        $this->assertSame($uRefusesC ? ['PCRE2_UTF', 'PCRE2_UCP', 'PCRE2_NEVER_BACKSLASH_C'] : ['PCRE2_UTF', 'PCRE2_UCP'], $facts['modifiers']['u'], 'u sets UTF and UCP, and from 8.6 refuses \\C.');
         $this->assertSame([], $facts['modifiers']['S'], 'S is a no-op.');
         $this->assertSame([], $facts['modifiers']['X'], 'X is a no-op.');
         $this->assertSame(['PCRE2_CASELESS'], $facts['modifiers']['i']);
@@ -268,7 +272,7 @@ final class PhpPcreOptionsTableTest extends TestCase
 
     #[Test]
     #[DataProvider('provideWrapperFacts')]
-    public function test_the_table_row_carries_the_wrapper_facts(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard): void
+    public function test_the_table_row_carries_the_wrapper_facts(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard, bool $uRefusesC): void
     {
         $table = self::table();
         $this->assertArrayHasKey($version, $table, \sprintf('No row for PHP %s in %s.', $version, self::TABLE));
@@ -285,12 +289,15 @@ final class PhpPcreOptionsTableTest extends TestCase
         if ($hasN) {
             $modifiers['n'] = self::NO_AUTO_CAPTURE;
         }
+        if ($uRefusesC) {
+            $modifiers['u'] |= self::NEVER_BACKSLASH_C;
+        }
         ksort($modifiers);
         $rowModifiers = $row['modifiers'];
         ksort($rowModifiers);
         $this->assertSame($modifiers, $rowModifiers);
-        $this->assertSame(self::UTF | self::UCP, $row['modifiers']['u']);
-        $this->assertSame(0xA0000, $row['modifiers']['u']);
+        $this->assertSame(self::UTF | self::UCP | ($uRefusesC ? self::NEVER_BACKSLASH_C : 0), $row['modifiers']['u']);
+        $this->assertSame($uRefusesC ? 0x1A0000 : 0xA0000, $row['modifiers']['u']);
 
         $extra = ['always' => $bskBit ? self::EXTRA_ALLOW_LOOKAROUND_BSK : 0];
         if ($hasR) {
