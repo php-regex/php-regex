@@ -406,11 +406,15 @@ final class Rewriter extends AbstractNodeVisitor
         // what the enclosing item set, never to false.
         $wasInsideQuantifier = $this->isInsideQuantifier;
         $this->isInsideQuantifier = true;
+        // The possessive rewrite inside the body reads its next run where
+        // the body must run again.
+        $this->possessiveRewrites->enterRepeat($node);
 
         try {
             $optimizedNode = $node->node->accept($this);
         } finally {
             $this->isInsideQuantifier = $wasInsideQuantifier;
+            $this->possessiveRewrites->leaveRepeat($node);
         }
 
         $ungrouped = $node->node instanceof GroupNode && !$optimizedNode instanceof GroupNode;
