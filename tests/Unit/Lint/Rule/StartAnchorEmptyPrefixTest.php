@@ -51,6 +51,7 @@ final class StartAnchorEmptyPrefixTest extends TestCase
         yield 'conditional holding a reference to an empty group' => ['pattern' => '/()(?(1)\1|b)^a/', 'subject' => 'a'];
         yield 'accept after a letter' => ['pattern' => '/a(*ACCEPT)^b/', 'subject' => 'a'];
         yield 'accept in a group after a letter' => ['pattern' => '/a(?:(*ACCEPT))^b/', 'subject' => 'a'];
+        yield 'script run of an optional letter' => ['pattern' => '/(*sr:b?)^a/', 'subject' => 'a'];
     }
 
     #[Test]
@@ -78,6 +79,9 @@ final class StartAnchorEmptyPrefixTest extends TestCase
         yield 'lookahead after a letter' => ['pattern' => '/a(?=b)^b/'];
         yield 'commit after a letter' => ['pattern' => '/a(*COMMIT)^b/'];
         yield 'alternation of letters' => ['pattern' => '/(?:a|b)^c/'];
+        // A script run reads what its body reads.
+        yield 'script run of a letter' => ['pattern' => '/(*sr:a)^b/'];
+        yield 'atomic script run of letters' => ['pattern' => '/(*atomic_script_run:a+)^b/'];
     }
 
     /**

@@ -82,14 +82,76 @@ final class AlternationOverlapLookaroundTest extends TestCase
         yield 'a negative lookahead of a group' => ['pattern' => '/\A(?:(?!(?:a))[ab]|a)+\z/', 'branches' => ['(?!(?:a))[ab]', 'a'], 'reported' => false];
         // Without u "é" is two bytes: the lookahead refuses its first only before its second.
         yield 'a negative lookahead of a character of two bytes' => ['pattern' => '/\A(?:(?!é)[ab]|a)+\z/', 'branches' => ['(?!é)[ab]', 'a'], 'reported' => true];
-        // A lookahead the rule cannot read leaves its branch unjudged.
+        // A character repeated at least once is refused as the character
+        // alone is: "a+" matches as soon as one "a" stands there.
         yield 'a negative lookahead of a repeated character' => ['pattern' => '/\A(?:(?!a+)[ab]|a)+\z/', 'branches' => ['(?!a+)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a repeated character, on the character left' => ['pattern' => '/\A(?:(?!a+)[ab]|b)+\z/', 'branches' => ['(?!a+)[ab]', 'b'], 'reported' => true];
         yield 'a negative lookahead of a choice holding a repeated character' => ['pattern' => '/\A(?:(?!a|b+)[ab]|a)+\z/', 'branches' => ['(?!a|b+)[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a choice holding a repeated character, on the character left' => ['pattern' => '/\A(?:(?!a|b+)[abx]|x)+\z/', 'branches' => ['(?!a|b+)[abx]', 'x'], 'reported' => true];
+        // A character that needs a second one, or what follows it to hold,
+        // is refused only there.
+        yield 'a negative lookahead of a character repeated twice' => ['pattern' => '/\A(?:(?!a{2})[ab]|a)+\z/', 'branches' => ['(?!a{2})[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before an end' => ['pattern' => '/\A(?:(?!a$)[ab]|a)+\z/', 'branches' => ['(?!a$)[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before a word boundary' => ['pattern' => '/\A(?:(?!a\b)[ab]|a)+\z/', 'branches' => ['(?!a\b)[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before a lookahead' => ['pattern' => '/\A(?:(?!a(?=b))[ab]|a)+\z/', 'branches' => ['(?!a(?=b))[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before an optional one' => ['pattern' => '/\A(?:(?!a(?:b|))[ab]|a)+\z/', 'branches' => ['(?!a(?:b|))[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a character before a choice of two' => ['pattern' => '/\A(?:(?!a(?:b|c))[ab]|a)+\z/', 'branches' => ['(?!a(?:b|c))[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before optional ones' => ['pattern' => '/\A(?:(?!a(?:b?c?))[ab]|a)+\z/', 'branches' => ['(?!a(?:b?c?))[ab]', 'a'], 'reported' => false];
+        yield 'a negative lookahead of a character before an optional one and a needed one' => ['pattern' => '/\A(?:(?!a(?:b?c))[ab]|a)+\z/', 'branches' => ['(?!a(?:b?c))[ab]', 'a'], 'reported' => true];
+        yield 'a negative lookahead of a character before a comment' => ['pattern' => '/\A(?:(?!a(?#note))[ab]|a)+\z/', 'branches' => ['(?!a(?#note))[ab]', 'a'], 'reported' => false];
+        // "(?!a*)" never holds: its body matches the empty string. The rule
+        // does not read it, and leaves the branch unjudged.
+        yield 'a negative lookahead that may match nothing' => ['pattern' => '/\A(?:(?!a*)[ab]|a)+\z/', 'branches' => ['(?!a*)[ab]', 'a'], 'reported' => false];
+        // Lookaheads that differ by the way taken let through what any way
+        // lets through.
+        yield 'lookaheads that differ by the way taken, on the shared character' => ['pattern' => '/\A(?:(?:(?=a)|(?=b))[ab]|a)+\z/', 'branches' => ['(?:(?=a)|(?=b))[ab]', 'a'], 'reported' => true];
+        yield 'lookaheads that differ by the way taken, apart' => ['pattern' => '/\A(?:(?:(?=b)|(?=x))[ab]|a)+\z/', 'branches' => ['(?:(?=b)|(?=x))[ab]', 'a'], 'reported' => false];
+        yield 'lookaheads that differ by the way taken, then another lookahead' => ['pattern' => '/\A(?:(?:(?=a)|(?=b))(?!a)[ab]|a)+\z/', 'branches' => ['(?:(?=a)|(?=b))(?!a)[ab]', 'a'], 'reported' => false];
+        yield 'lookaheads that differ by the way taken, one way free' => ['pattern' => '/\A(?:(?:(?=b)|x?)[ab]|a)+\z/', 'branches' => ['(?:(?=b)|x?)[ab]', 'a'], 'reported' => true];
+        yield 'lookaheads that differ by the way taken, twice' => ['pattern' => '/\A(?:(?:(?=a)|(?=b))(?:(?=b)|(?=x))[ab]|a)+\z/', 'branches' => ['(?:(?=a)|(?=b))(?:(?=b)|(?=x))[ab]', 'a'], 'reported' => false];
         // What stands before the lookahead and reads nothing passes it on.
         yield 'a lookahead after an option setting' => ['pattern' => '/\A(?:(?i)(?=b)[ab]|a)+\z/', 'branches' => ['(?i)(?=b)[ab]', 'a'], 'reported' => false];
         yield 'a lookahead after a character taken no time' => ['pattern' => '/\A(?:x{0}(?=b)[ab]|a)+\z/', 'branches' => ['x{0}(?=b)[ab]', 'a'], 'reported' => false];
         yield 'a lookahead after an empty alternative' => ['pattern' => '/\A(?:(?:|x)(?=b)[ab]|a)+\z/', 'branches' => ['(?:|x)(?=b)[ab]', 'a'], 'reported' => false];
         yield 'a lookahead in a group that may read nothing' => ['pattern' => '/\A(?:(?:(?=b)x?)[ab]|a)+\z/', 'branches' => ['(?:(?=b)x?)[ab]', 'a'], 'reported' => false];
+        // Sixteen ways through the lookaheads are read, past which the
+        // branch is not judged.
+        // A way free of lookaheads lets everything through, however many
+        // ways stand beside it.
+        $thirtyTwoWays = '(?:(?=a)|(?=b))(?:(?=a)|(?=c))(?:(?=a)|(?=d))(?:(?=a)|(?=e))(?:(?=a)|(?=x))';
+        yield 'lookaheads in more ways than are read, then a free way' => ['pattern' => '/\A(?:(?:'.$thirtyTwoWays.'|x?)[ab]|a)+\z/', 'branches' => ['(?:'.$thirtyTwoWays.'|x?)[ab]', 'a'], 'reported' => true];
+        yield 'a free way, then lookaheads in more ways than are read' => ['pattern' => '/\A(?:(?:x?|'.$thirtyTwoWays.')[ab]|a)+\z/', 'branches' => ['(?:x?|'.$thirtyTwoWays.')[ab]', 'a'], 'reported' => true];
+        yield 'lookaheads in sixteen ways, on the shared character' => ['pattern' => '/\A(?:(?:(?=a)|(?=b))(?:(?=a)|(?=c))(?:(?=a)|(?=d))(?:(?=a)|(?=e))[ab]|a)+\z/', 'branches' => ['(?:(?=a)|(?=b))(?:(?=a)|(?=c))(?:(?=a)|(?=d))(?:(?=a)|(?=e))[ab]', 'a'], 'reported' => true];
+    }
+
+    /**
+     * Past sixteen ways through the lookaheads before an atom, its branch
+     * is not judged, as one behind a lookahead the probe cannot read: an
+     * overlap goes unreported there.
+     */
+    #[Test]
+    #[DataProvider('provideLookaheadsInMoreWaysThanAreRead')]
+    public function test_lookaheads_in_more_ways_than_are_read_leave_the_branch_unjudged(string $branch): void
+    {
+        $this->assertContains('a', array_intersect(self::starts($branch), self::starts('a')), 'Oracle: '.$branch.' starts a match with "a".');
+
+        $linter = new PatternLinter();
+        Regex::create(['cache' => null])->parse('/\A(?:'.$branch.'|a)+\z/')->accept($linter);
+        $ids = array_map(static fn (object $issue): string => $issue->id, $linter->getIssues());
+
+        $this->assertNotContains('regex.lint.overlap.charset', $ids, $branch);
+    }
+
+    /**
+     * @return iterable<string, array{branch: string}>
+     */
+    public static function provideLookaheadsInMoreWaysThanAreRead(): iterable
+    {
+        $twoWays = static fn (string $other): string => '(?:(?=a)|(?='.$other.'))';
+
+        yield 'thirty-two ways, one after the other' => ['branch' => $twoWays('b').$twoWays('c').$twoWays('d').$twoWays('e').$twoWays('x').'[ab]'];
+        yield 'seventeen ways side by side' => ['branch' => '(?:(?=a)|(?=b)|(?=c)|(?=d)|(?=e)|(?=f)|(?=g)|(?=h)|(?=i)|(?=j)|(?=k)|(?=l)|(?=m)|(?=n)|(?=o)|(?=p)|(?=q))[ab]'];
+        yield 'thirty-two ways as one way of a choice' => ['branch' => '(?:'.$twoWays('b').$twoWays('c').$twoWays('d').$twoWays('e').$twoWays('x').'|(?=b))[ab]'];
     }
 
     /**
