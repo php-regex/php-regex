@@ -1,29 +1,156 @@
 {
-    "release": "10.44",
-    "pcre2": {
-        "tag": "pcre2-10.44",
-        "commit": "6ae58beca071f13ccfed31d03b3f479ab520639b"
+    "10.35": {
+        "release": "10.35",
+        "pcre2": {
+            "tag": "pcre2-10.35",
+            "commit": "0c4141b78bdaff0bd704508edeca48573ec1e0b2"
+        },
+        "patches": [],
+        "emscripten": {
+            "image": "emscripten/emsdk:4.0.15",
+            "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+        },
+        "module": "pcre2-10.35.wasm",
+        "sha256": "828c60018ac7e38326f205199e0a432479b0f9aca555bdce45f9cd34b31b4c10",
+        "bytes": 263772,
+        "exports": [
+            "memory",
+            "__indirect_function_table",
+            "malloc",
+            "free",
+            "pcre2_trace_run",
+            "pcre2_trace_version",
+            "pcre2_trace_free",
+            "_initialize",
+            "_emscripten_stack_restore",
+            "emscripten_stack_get_current"
+        ],
+        "imports": [
+            "env.emscripten_notify_memory_growth"
+        ]
     },
-    "emscripten": {
-        "image": "emscripten/emsdk:4.0.15",
-        "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+    "10.39": {
+        "release": "10.39",
+        "pcre2": {
+            "tag": "pcre2-10.39",
+            "commit": "35fee4193b852cb504892352bd0155de10809889"
+        },
+        "patches": [
+            "gh-11374"
+        ],
+        "emscripten": {
+            "image": "emscripten/emsdk:4.0.15",
+            "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+        },
+        "module": "pcre2-10.39.wasm",
+        "sha256": "9594ac2aa964169ccd0cc72cd626b7eeb8d42dd53ac1f557ba7a98074bf51b13",
+        "bytes": 265842,
+        "exports": [
+            "memory",
+            "__indirect_function_table",
+            "malloc",
+            "free",
+            "pcre2_trace_run",
+            "pcre2_trace_version",
+            "pcre2_trace_free",
+            "_initialize",
+            "_emscripten_stack_restore",
+            "emscripten_stack_get_current"
+        ],
+        "imports": [
+            "env.emscripten_notify_memory_growth"
+        ]
     },
-    "module": "pcre2-10.44.wasm",
-    "sha256": "78e68fff05d8c0e0743e062f22b072125895de453878f43fb555a6cde0460d1d",
-    "bytes": 289812,
-    "exports": [
-        "memory",
-        "__indirect_function_table",
-        "malloc",
-        "free",
-        "pcre2_trace_run",
-        "pcre2_trace_version",
-        "pcre2_trace_free",
-        "_initialize",
-        "_emscripten_stack_restore",
-        "emscripten_stack_get_current"
-    ],
-    "imports": [
-        "env.emscripten_notify_memory_growth"
-    ]
+    "10.40": {
+        "release": "10.40",
+        "pcre2": {
+            "tag": "pcre2-10.40",
+            "commit": "3103b8f20a3b9944b177e812fde29fbfb8b90558"
+        },
+        "patches": [],
+        "emscripten": {
+            "image": "emscripten/emsdk:4.0.15",
+            "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+        },
+        "module": "pcre2-10.40.wasm",
+        "sha256": "e97d5c8d9faf606b72bd22cfc8b55b6c1c5ee977dc59692c46960f7a9a24d357",
+        "bytes": 284851,
+        "exports": [
+            "memory",
+            "__indirect_function_table",
+            "malloc",
+            "free",
+            "pcre2_trace_run",
+            "pcre2_trace_version",
+            "pcre2_trace_free",
+            "_initialize",
+            "_emscripten_stack_restore",
+            "emscripten_stack_get_current"
+        ],
+        "imports": [
+            "env.emscripten_notify_memory_growth"
+        ]
+    },
+    "10.42": {
+        "release": "10.42",
+        "pcre2": {
+            "tag": "pcre2-10.42",
+            "commit": "52c08847921a324c804cabf2814549f50bce1265"
+        },
+        "patches": [
+            "gh-11374"
+        ],
+        "emscripten": {
+            "image": "emscripten/emsdk:4.0.15",
+            "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+        },
+        "module": "pcre2-10.42.wasm",
+        "sha256": "92fb0d6ebb91a452c2f60ea6cd3670a555947428880ca92596c0e5b86317e44f",
+        "bytes": 284609,
+        "exports": [
+            "memory",
+            "__indirect_function_table",
+            "malloc",
+            "free",
+            "pcre2_trace_run",
+            "pcre2_trace_version",
+            "pcre2_trace_free",
+            "_initialize",
+            "_emscripten_stack_restore",
+            "emscripten_stack_get_current"
+        ],
+        "imports": [
+            "env.emscripten_notify_memory_growth"
+        ]
+    },
+    "10.44": {
+        "release": "10.44",
+        "pcre2": {
+            "tag": "pcre2-10.44",
+            "commit": "6ae58beca071f13ccfed31d03b3f479ab520639b"
+        },
+        "patches": [],
+        "emscripten": {
+            "image": "emscripten/emsdk:4.0.15",
+            "digest": "sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8"
+        },
+        "module": "pcre2-10.44.wasm",
+        "sha256": "78e68fff05d8c0e0743e062f22b072125895de453878f43fb555a6cde0460d1d",
+        "bytes": 289812,
+        "exports": [
+            "memory",
+            "__indirect_function_table",
+            "malloc",
+            "free",
+            "pcre2_trace_run",
+            "pcre2_trace_version",
+            "pcre2_trace_free",
+            "_initialize",
+            "_emscripten_stack_restore",
+            "emscripten_stack_get_current"
+        ],
+        "imports": [
+            "env.emscripten_notify_memory_growth"
+        ]
+    }
 }

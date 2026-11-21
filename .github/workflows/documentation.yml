@@ -6,9 +6,10 @@ name: Documentation
 # that judge the code stay out; a pull request that changes the code runs
 # them with the whole suite, and so does every push to 2.x.
 #
-# The playground's PCRE2 trace module too: built here from the sources and
-# the toolchain its manifest pins, and compared with the bytes the bundle
-# embeds, so the site never serves a module nobody can rebuild.
+# The playground's PCRE2 trace modules too, one per release the browser
+# engines bundle: built here from the sources and the toolchain the manifest
+# pins, and compared with the bytes the site serves, so it never serves a
+# module nobody can rebuild.
 
 on:
   pull_request:
@@ -46,16 +47,23 @@ concurrency:
 
 jobs:
   pcre2-module:
-    # The PCRE2 trace module the playground embeds, rebuilt from the PCRE2
-    # tag and the Emscripten image wasm/pcre2-trace/manifest.json pins (the
-    # image by digest, so a moved tag cannot change the bytes). The build
-    # script prints the module's size and sha256 and fails when the sha256
-    # is not the manifest's: a toolchain that drifts fails here, by name,
-    # before the bundle check below compares the same bytes.
-    name: PCRE2 trace module (Emscripten, pinned)
+    # The PCRE2 trace modules the playground serves, each rebuilt from its
+    # PCRE2 tag, the patches php-src carries in its bundled copy, and the
+    # Emscripten image wasm/pcre2-trace/manifest.json pins (the image by
+    # digest, so a moved tag cannot change the bytes). The build script
+    # prints the module's size and sha256 and fails when the sha256 is not
+    # the manifest's: a toolchain that drifts fails here, by name, before
+    # the bundle check below compares the same bytes.
+    name: PCRE2 ${{ matrix.release }} trace module (Emscripten, pinned)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container: emscripten/emsdk@sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8
+    strategy:
+      fail-fast: false
+      matrix:
+        # PHP 8.0 bundles 10.35, 8.1 10.39, 8.2 10.40, 8.3 10.42, 8.4 and
+        # 8.5 10.44.
+        release: [ '10.35', '10.39', '10.40', '10.42', '10.44' ]
 
     steps:
       - name: Checkout Code
@@ -66,12 +74,12 @@ jobs:
       - name: Build the module and compare it with the manifest
         # The script clones PCRE2 at its tag itself and refuses to run
         # outside the pinned image.
-        run: wasm/pcre2-trace/build.sh --check
+        run: wasm/pcre2-trace/build.sh ${{ matrix.release }} --check
 
       - name: Upload the module
         uses: actions/upload-artifact@v7
         with:
-          name: pcre2-module
+          name: pcre2-module-${{ matrix.release }}
           path: wasm/pcre2-trace/build/*.wasm
           if-no-files-found: error
           retention-days: 1
@@ -108,16 +116,19 @@ jobs:
       - name: Run the Documentation Tests
         run: tools/phpunit/vendor/bin/phpunit --colors=always --group documentation
 
-      # The module the job above built, where bin/playground-bundle reads it
-      # from: the check below compares the bytes bundle.json embeds with these.
-      - name: Download the PCRE2 trace module
+      # The modules the job above built, where bin/playground-bundle reads
+      # them from: the check below compares the bytes the site serves with
+      # these.
+      - name: Download the PCRE2 trace modules
         uses: actions/download-artifact@v8
         with:
-          name: pcre2-module
+          pattern: pcre2-module-*
+          merge-multiple: true
           path: wasm/pcre2-trace/build
 
       # The one check of the playground's actual path: the bundle inside the
-      # browser's PHP engine, under Node, compared with the local driver, and
-      # the embedded PCRE2 trace module compared with the freshly built one.
+      # browser's PHP engines, under Node, compared with the local driver,
+      # and every served PCRE2 trace module compared with the freshly built
+      # one and with the engines of its release.
       - name: Run the playground bundle inside the browser engine
         run: bin/playground-check

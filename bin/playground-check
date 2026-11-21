@@ -18,23 +18,27 @@
  * mbstring extension, the bundle written into the engine's filesystem, the
  * driver included once and asked many times.
  *
- * The trace module behind the step debugger rides in the same bundle, and
- * this is the one check of what visitors get of it too:
+ * The trace modules behind the step debugger, one per PCRE2 release the
+ * engines bundle, are served beside the bundle, and this is the one check
+ * of what visitors get of them too:
  *
- *   - the embedded bytes are the ones wasm/pcre2-trace/manifest.json pins
- *     (size, sha256, and the built file when wasm/pcre2-trace/build/ has
- *     it), the module imports only the memory-growth notice and exports what the manifest lists;
- *   - run under Node, the module reproduces pcre2test's own trace of every
+ *   - each served file (docs/assets/playground/pcre2-<release>.wasm) holds
+ *     the bytes wasm/pcre2-trace/manifest.json pins for its release (size,
+ *     sha256, and the built file when wasm/pcre2-trace/build/ has it), the
+ *     bundle's manifest names exactly those, and each module imports only
+ *     the memory-growth notice and exports what the manifest lists;
+ *   - run under Node, each module reproduces pcre2test's own trace of every
  *     case in tests/Documentation/Fixtures/pcre2-trace/cases.txt, pinned
  *     for its release;
- *   - over the pinned outcomes and the same cases, the module run with the
- *     options PHP passes (docs/assets/js/php-pcre-options.js, the row of
- *     the engine's exact version) answers as the engine's preg_match()
- *     does: matched or not, the numbered captures, the error;
+ *   - on every engine the options table has a row for, over the pinned
+ *     outcomes and the same cases, the module of the engine's release run
+ *     with the options PHP passes (docs/assets/js/php-pcre-options.js, the
+ *     row of the engine's exact version) answers as the engine's
+ *     preg_match() does: matched or not, the numbered captures, the error;
  *   - the four witnesses the page probes before offering the debugger
- *     agree between the module and every engine that has a row and a
- *     module: the newline convention, \R on NEL under u, \K in a
- *     lookbehind, and the parentheses nesting limit.
+ *     agree between the module and every engine: the newline convention,
+ *     \R on NEL under u, \K in a lookbehind, and the parentheses nesting
+ *     limit.
  *
  * php-wasm and php-wasm-mbstring (the versions run-worker.js pins) are
  * installed into a temporary directory for the run: the repository carries
@@ -56,6 +60,7 @@ const BUNDLE = path.join(ROOT, 'docs/assets/playground/bundle.json');
 const DEFAULT_DATA = path.join(ROOT, 'docs/_data/playground.json');
 const MODULE_MANIFEST = path.join(ROOT, 'wasm/pcre2-trace/manifest.json');
 const MODULE_BUILD = path.join(ROOT, 'wasm/pcre2-trace/build');
+const MODULE_DIR = path.join(ROOT, 'docs/assets/playground');
 const OPTIONS_TABLE = path.join(ROOT, 'docs/assets/js/php-pcre-options.js');
 const FIXTURES = path.join(ROOT, 'tests/Documentation/Fixtures/pcre2-trace');
 const PHP_WASM = 'php-wasm@0.2.0';
@@ -178,58 +183,72 @@ function sorted(list) {
   return [...list].sort();
 }
 
-// --- the embedded module -----------------------------------------------------
+// --- the served modules ------------------------------------------------------
 
-// The module the bundle embeds, checked against the tree's pin: the bytes,
-// their checksum, the built file when it is there, the imports and the
-// exports. Returns the compiled module with its name and release.
-function embeddedModule(bundle, expect) {
+// PCRE2 releases as numbers, for the options a release predates.
+function atLeast(release, floor) {
+  const [a, b] = release.split('.').map(Number);
+  const [c, d] = floor.split('.').map(Number);
+  return a > c || (a === c && b >= d);
+}
+
+// The modules the page serves, each checked against the tree's pin: the
+// bytes, their checksum, the bundle manifest's entry, the built file when
+// it is there, the imports and the exports. Returns release → the compiled
+// module with its name and release.
+function servedModules(bundle, expect) {
   const pinned = JSON.parse(fs.readFileSync(MODULE_MANIFEST, 'utf8'));
-  const name = `pcre2-${pinned.release}`;
-  const modules = bundle.modules || {};
-  expect(sameList(Object.keys(modules), [name]), `The bundle embeds ${JSON.stringify(Object.keys(modules))}, the tree pins ${name}.`);
-  const embedded = modules[name];
-  if (!embedded) {
-    return null;
-  }
-  expect(sameList(Object.keys(embedded), ['release', 'sha256', 'bytes', 'base64']), `The ${name} entry carries ${JSON.stringify(Object.keys(embedded))}.`);
-  expect(embedded.release === pinned.release, `The ${name} entry names release ${embedded.release}, the tree pins ${pinned.release}.`);
+  const releases = Object.keys(pinned);
+  const names = releases.map((release) => `pcre2-${release}`);
+  expect(!('modules' in bundle), 'The bundle carries module bytes; they are files of their own beside it.');
+  const named = bundle.manifest.modules || {};
+  expect(sameList(Object.keys(named), names), `The bundle manifest names ${JSON.stringify(Object.keys(named))}, the tree pins ${JSON.stringify(names)}.`);
+  const files = fs.readdirSync(MODULE_DIR).filter((file) => file.endsWith('.wasm')).sort();
+  expect(sameList(files, names.map((name) => `${name}.wasm`).sort()), `${path.relative(ROOT, MODULE_DIR)} serves ${JSON.stringify(files)}, the tree pins ${JSON.stringify(names)}.`);
 
-  const bytes = Buffer.from(embedded.base64, 'base64');
-  expect(bytes.toString('base64') === embedded.base64, `The ${name} entry is not strict base64.`);
-  expect(bytes.length === embedded.bytes, `The ${name} entry decodes to ${bytes.length} bytes, its size says ${embedded.bytes}.`);
-  expect(bytes.length === pinned.bytes, `The ${name} entry decodes to ${bytes.length} bytes, the tree pins ${pinned.bytes}.`);
-  const digest = sha256(bytes);
-  expect(digest === embedded.sha256, `The ${name} entry's bytes hash to ${digest}, its sha256 says ${embedded.sha256}.`);
-  expect(digest === pinned.sha256, `The ${name} entry's bytes hash to ${digest}, the tree pins ${pinned.sha256}: rebuild the module or regenerate the bundle.`);
-  const manifest = (bundle.manifest.modules || {})[name];
-  const manifestDifference = firstDifference(manifest, { release: embedded.release, sha256: embedded.sha256, bytes: embedded.bytes });
-  expect(manifestDifference === null, `The bundle manifest's ${name} entry differs from the embedded module at ${manifestDifference}.`);
+  const served = {};
+  releases.forEach((release) => {
+    const pin = pinned[release];
+    const name = `pcre2-${release}`;
+    const file = path.join(MODULE_DIR, `${name}.wasm`);
+    if (!expect(fs.existsSync(file), `No ${path.relative(ROOT, file)}: regenerate the bundle.`)) {
+      return;
+    }
+    const bytes = fs.readFileSync(file);
+    expect(pin.release === release, `The manifest entry ${release} names release ${pin.release}.`);
+    expect(bytes.length === pin.bytes, `${name}.wasm holds ${bytes.length} bytes, the tree pins ${pin.bytes}.`);
+    const digest = sha256(bytes);
+    expect(digest === pin.sha256, `${name}.wasm hashes to ${digest}, the tree pins ${pin.sha256}: rebuild the module or regenerate the bundle.`);
+    const manifestDifference = firstDifference(named[name], { release, sha256: digest, bytes: bytes.length });
+    expect(manifestDifference === null, `The bundle manifest's ${name} entry differs from the served module at ${manifestDifference}.`);
 
-  const built = path.join(MODULE_BUILD, pinned.module);
-  let builtState = 'no built file to compare with';
-  if (fs.existsSync(built)) {
-    const same = sameBytes(fs.readFileSync(built), bytes);
-    expect(same, `The ${name} entry differs from the built ${built}: regenerate the bundle or rebuild the module.`);
-    builtState = same ? `byte-equal to ${path.relative(ROOT, built)}` : `differs from ${path.relative(ROOT, built)}`;
-  }
+    const built = path.join(MODULE_BUILD, pin.module);
+    let builtState = 'no built file to compare with';
+    if (fs.existsSync(built)) {
+      const same = sameBytes(fs.readFileSync(built), bytes);
+      expect(same, `${name}.wasm differs from the built ${built}: regenerate the bundle or rebuild the module.`);
+      builtState = same ? `byte-equal to ${path.relative(ROOT, built)}` : `differs from ${path.relative(ROOT, built)}`;
+    }
 
-  let module = null;
-  try {
-    module = new WebAssembly.Module(bytes);
-  } catch (error) {
-    expect(false, `The ${name} entry is not a WebAssembly module: ${error.message}`);
-    return null;
-  }
-  const imports = WebAssembly.Module.imports(module).map((entry) => `${entry.module}.${entry.name}`);
-  expect(sameList(sorted(imports), sorted(MODULE_IMPORTS)), `The ${name} module imports ${JSON.stringify(imports)}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
-  expect(sameList(sorted(pinned.imports || []), sorted(MODULE_IMPORTS)), `The tree pins imports ${JSON.stringify(pinned.imports)} for ${name}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
-  const exports = WebAssembly.Module.exports(module).map((entry) => entry.name);
-  expect(sameList(sorted(exports), sorted(pinned.exports)), `The ${name} module exports ${JSON.stringify(sorted(exports))}, the tree pins ${JSON.stringify(sorted(pinned.exports))}.`);
-  REQUIRED_EXPORTS.forEach((required) => expect(exports.includes(required), `The ${name} module does not export ${required}.`));
+    let module = null;
+    try {
+      module = new WebAssembly.Module(bytes);
+    } catch (error) {
+      expect(false, `${name}.wasm is not a WebAssembly module: ${error.message}`);
+      return;
+    }
+    const imports = WebAssembly.Module.imports(module).map((entry) => `${entry.module}.${entry.name}`);
+    expect(sameList(sorted(imports), sorted(MODULE_IMPORTS)), `The ${name} module imports ${JSON.stringify(imports)}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
+    expect(sameList(sorted(pin.imports || []), sorted(MODULE_IMPORTS)), `The tree pins imports ${JSON.stringify(pin.imports)} for ${name}; the page provides exactly ${JSON.stringify(MODULE_IMPORTS)}.`);
+    const exports = WebAssembly.Module.exports(module).map((entry) => entry.name);
+    expect(sameList(sorted(exports), sorted(pin.exports)), `The ${name} module exports ${JSON.stringify(sorted(exports))}, the tree pins ${JSON.stringify(sorted(pin.exports))}.`);
+    REQUIRED_EXPORTS.forEach((required) => expect(exports.includes(required), `The ${name} module does not export ${required}.`));
+    (pin.patches || []).forEach((patch) => expect(fs.existsSync(path.join(ROOT, 'wasm/pcre2-trace/patches', `${patch}.patch`)), `The ${name} module names the patch ${patch}, which wasm/pcre2-trace/patches/ does not hold.`));
 
-  say(`The bundle embeds ${name} as the tree pins it: ${bytes.length} bytes, sha256 ${digest.slice(0, 12)}…, ${builtState}, one import (the memory-growth notice), ${exports.length} exports.`);
-  return { name, release: pinned.release, module, bytes };
+    say(`The page serves ${name} as the tree pins it: ${bytes.length} bytes, sha256 ${digest.slice(0, 12)}…, ${builtState}, ${(pin.patches || []).length ? `patched with ${pin.patches.join(', ')}` : 'unpatched'}, one import, ${exports.length} exports.`);
+    served[release] = { name, release, module, bytes };
+  });
+  return served;
 }
 
 // The module instantiated the way the page does it, the memory-growth
@@ -721,7 +740,7 @@ async function main() {
 
   // The module first: a bundle that embeds other bytes than the tree pins
   // is said before any engine boots.
-  const embedded = embeddedModule(bundle, expect);
+  const served = servedModules(bundle, expect);
   const table = optionsTable();
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phpregex-playground-check-'));
@@ -818,7 +837,10 @@ async function main() {
 
   const translated = await ask(main84, { op: 'transpile', regex: data.default.regex, dialect: 'js' });
   expect(translated.transpile && typeof translated.transpile.literal === 'string' && translated.refusal === null, `The sample has no JavaScript translation: ${JSON.stringify(translated)}`);
-  const refused = await ask(main84, { op: 'transpile', regex: '/(?>a+)b/', dialect: 'js' });
+  // An atomic group whose commitment changes the match: (?>a+) gives back
+  // nothing to the a after it, which JavaScript cannot say. (One that
+  // nothing after it could take back, as in /(?>a+)b/, is printed without.)
+  const refused = await ask(main84, { op: 'transpile', regex: '/(?>a+)a/', dialect: 'js' });
   expect(refused.refusal && refused.refusal.message === 'Atomic groups are not supported in JavaScript.', `The transpiler's refusal came through as ${JSON.stringify(refused.refusal)}.`);
 
   const samples = await ask(main84, { op: 'samples', regex: data.default.regex });
@@ -903,109 +925,115 @@ async function main() {
 
   say(`The bundle ${problems.length === beforeEngines ? 'answers' : 'does not answer'} inside the browser engine as the sample says (PHP ${php84}, PCRE2 ${analyze.engine.pcre}; match on PHP ${matched.engine.php}).`);
 
-  // --- the trace module, run as the page runs it ---------------------------
+  // --- the trace modules, run as the page runs them -------------------------
 
-  if (embedded) {
-    const trace = await tracer(embedded.module);
-    expect(trace.version === embedded.release, `The ${embedded.name} module reports PCRE2 ${trace.version}, the tree pins ${embedded.release}.`);
+  const cases = readCases();
+  expect(cases.length >= 22, `cases.txt holds ${cases.length} cases; 22 or more were expected.`);
+  const tracers = {};
+  for (const release of Object.keys(served)) {
+    const module = served[release];
+    const trace = await tracer(module.module);
+    tracers[release] = trace;
+    expect(trace.version === release, `The ${module.name} module reports PCRE2 ${trace.version}, the tree pins ${release}.`);
 
     // pcre2test's own trace of every case, pinned for the module's release:
-    // the module must print the same steps.
-    let before = problems.length;
-    const cases = readCases();
-    const blocks = pinnedBlocks(embedded.release);
-    expect(cases.length >= 22, `cases.txt holds ${cases.length} cases; 22 or more were expected.`);
+    // the module must print the same steps. Before 10.38 a \K in a
+    // lookaround needs no option, and the pin was taken without one.
+    const before = problems.length;
+    const blocks = pinnedBlocks(release);
     let steps = 0;
     let refusals = 0;
     cases.forEach((one) => {
-      if (!expect(one.name in blocks, `${embedded.release}.txt carries no "# name: ${one.name}" block: re-pin it from cases.txt.`)) {
+      if (!expect(one.name in blocks, `${release}.txt carries no "# name: ${one.name}" block: re-pin it from cases.txt.`)) {
         return;
       }
       let want;
       try {
         want = expected(blocks[one.name], one.subject, one.utf);
       } catch (error) {
-        expect(false, `${one.name}: the pinned text could not be read: ${error.message}`);
+        expect(false, `${one.name}: the pinned ${release} text could not be read: ${error.message}`);
         return;
       }
-      const traced = trace.run(one.body, one.subject, one.compile, one.extra);
-      compareTrace(one.name, one.body, one.subject, want, traced, expect);
+      const extra = atLeast(release, '10.38') ? one.extra : one.extra & ~EXTRA_ALLOW_LOOKAROUND_BSK;
+      const traced = trace.run(one.body, one.subject, one.compile, extra);
+      compareTrace(`${release} ${one.name}`, one.body, one.subject, want, traced, expect);
       steps += want.steps.length;
       refusals += want.compileError === null ? 0 : 1;
     });
-    say(`The ${embedded.name} module ${problems.length === before ? 'reproduces' : 'does not reproduce'} pcre2test ${embedded.release}'s trace of the ${cases.length} cases (${steps} steps, ${refusals} refused).`);
+    say(`The ${module.name} module ${problems.length === before ? 'reproduces' : 'does not reproduce'} pcre2test ${release}'s trace of the ${cases.length} cases (${steps} steps, ${refusals} refused).`);
+  }
 
-    // The differential: the pinned outcomes and the cases, matched by the
-    // engine's preg_match() and by the module run with the options the
-    // engine's row passes, must answer the same.
-    const row = table[php84];
-    if (expect(row !== undefined, `The options table has no row for PHP ${php84}, the default engine: the debugger would be refused there.`)) {
-      expect(row.pcre2 === analyze.engine.pcre, `The ${php84} row names PCRE2 ${row.pcre2}, the engine reports ${analyze.engine.pcre}.`);
-      expect(row.matchLimit === analyze.engine.backtrackLimit, `The ${php84} row's match limit is ${row.matchLimit}, the engine runs with ${analyze.engine.backtrackLimit}.`);
-      const rows = cases.map((one) => ({ id: one.name, regex: `/${decoder.decode(one.body)}/${one.modifiers}`, subject: decoder.decode(one.subject) }))
-        .concat(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'outcomes.json'), 'utf8')));
-      expect(rows.length >= 322, `${rows.length} rows to compare; 300 pinned outcomes and the cases were expected.`);
-      before = problems.length;
-      const byRegex = new Map();
-      rows.forEach((one) => {
-        if (!byRegex.has(one.regex)) {
-          byRegex.set(one.regex, []);
-        }
-        byRegex.get(one.regex).push(one);
-      });
-      const tally = {};
-      for (const [regex, group] of byRegex) {
-        const parts = split(regex);
-        if (!expect(parts !== null, `${group[0].id}: ${regex} is not /body/modifiers.`)) {
-          continue;
-        }
-        const options = rowOptions(row, parts.modifiers);
-        if (!expect(options.unknown === undefined, `${group[0].id}: PHP ${php84} has no modifier ${options.unknown}.`)) {
-          continue;
-        }
-        for (let start = 0; start < group.length; start += 50) {
-          const slice = group.slice(start, start + 50);
-          const answer = await ask(main84, { op: 'check', regex, subjects: slice.map((one) => one.subject) });
-          if (!expect(answer.checks && answer.checks.length === slice.length, `${slice[0].id}: the engine checked ${answer.checks ? answer.checks.length : 0} of ${slice.length} subjects of ${regex}.`)) {
-            continue;
-          }
-          slice.forEach((one, i) => {
-            const label = `${one.id} ${regex} on ${JSON.stringify(one.subject)}`;
-            const subject = encoder.encode(one.subject);
-            const traced = trace.run(encoder.encode(parts.body), subject, options.compile, options.extra, row.matchLimit, row.depthLimit);
-            const word = compareOutcome(label, row, traced, subject, answer.checks[i], expect);
-            tally[word] = (tally[word] || 0) + 1;
-          });
-        }
-      }
-      say(`The ${embedded.name} module and PHP ${php84} ${problems.length === before ? 'agree' : 'disagree'} on ${rows.length} outcomes with the ${php84} row's options (${Object.keys(tally).sort().map((word) => `${tally[word]} ${word}`).join(', ')}).`);
+  // Every engine the table has a row for: the row names the engine's exact
+  // version and PCRE2 release, the page serves a module of that release,
+  // and the module run with the row's options answers the pinned outcomes
+  // and the cases as the engine's preg_match() does. Then the probe's four
+  // witnesses, as the page runs them once per engine.
+  const outcomeRows = cases.map((one) => ({ id: one.name, regex: `/${decoder.decode(one.body)}/${one.modifiers}`, subject: decoder.decode(one.subject) }))
+    .concat(JSON.parse(fs.readFileSync(path.join(FIXTURES, 'outcomes.json'), 'utf8')));
+  expect(outcomeRows.length >= 322, `${outcomeRows.length} rows to compare; 300 pinned outcomes and the cases were expected.`);
+  const byRegex = new Map();
+  outcomeRows.forEach((one) => {
+    if (!byRegex.has(one.regex)) {
+      byRegex.set(one.regex, []);
     }
-
-    // The probe: every engine the table has a row for whose PCRE2 the bundle
-    // has a module runs the four witnesses on both sides.
-    for (const version of Object.keys(table)) {
-      const candidate = table[version];
-      if (!(`pcre2-${candidate.pcre2}` in bundle.modules)) {
+    byRegex.get(one.regex).push(one);
+  });
+  const instances = new Map([[php84.split('.').slice(0, 2).join('.'), main84], [matched.engine.php.split('.').slice(0, 2).join('.'), php80]]);
+  for (const version of Object.keys(table)) {
+    const row = table[version];
+    const short = version.split('.').slice(0, 2).join('.');
+    if (!instances.has(short)) {
+      instances.set(short, await engine(short, false));
+    }
+    const instance = instances.get(short);
+    const trace = tracers[row.pcre2];
+    if (!expect(trace !== undefined, `The ${version} row names PCRE2 ${row.pcre2}, and the page serves no module of that release: the debugger would be refused there.`)) {
+      continue;
+    }
+    const before = problems.length;
+    const tally = {};
+    let reported = null;
+    for (const [regex, group] of byRegex) {
+      const parts = split(regex);
+      if (!expect(parts !== null, `${group[0].id}: ${regex} is not /body/modifiers.`)) {
         continue;
       }
-      const short = version.split('.').slice(0, 2).join('.');
-      const instance = short === php84.split('.').slice(0, 2).join('.') ? main84 : await engine(short, false);
-      const words = [];
-      let agreed = true;
-      for (const witness of WITNESSES) {
-        const answer = await ask(instance, { op: 'check', regex: witness.regex, subjects: [witness.subject] });
-        if (!expect(answer.engine && answer.engine.php === version, `The ${short} engine reports PHP ${answer.engine && answer.engine.php}, the table has a row for ${version}.`)) {
-          break;
-        }
-        const parts = split(witness.regex);
-        const options = rowOptions(candidate, parts.modifiers);
-        const traced = trace.run(encoder.encode(parts.body), encoder.encode(witness.subject), options.compile, options.extra, candidate.matchLimit, candidate.depthLimit);
-        const word = witnessWord(traced, answer.checks[0]);
-        agreed = expect(word.module === word.engine, `Probe ${witness.name} on PHP ${version}: the module says ${word.module}, the engine says ${word.engine}.`) && agreed;
-        words.push(`${witness.name} ${word.module}${word.module === word.engine ? '' : ` (engine: ${word.engine})`}`);
+      const options = rowOptions(row, parts.modifiers);
+      if (!expect(options.unknown === undefined, `${group[0].id}: PHP ${version} has no modifier ${options.unknown}.`)) {
+        continue;
       }
-      say(`Probe on PHP ${version} (PCRE2 ${candidate.pcre2}, ${embedded.name}): ${words.join(', ')} — ${agreed ? 'the engine agrees' : 'the engine disagrees'}.`);
+      for (let start = 0; start < group.length; start += 50) {
+        const slice = group.slice(start, start + 50);
+        const answer = await ask(instance, { op: 'check', regex, subjects: slice.map((one) => one.subject) });
+        reported = reported || answer.engine;
+        if (!expect(answer.checks && answer.checks.length === slice.length, `${slice[0].id}: PHP ${version} checked ${answer.checks ? answer.checks.length : 0} of ${slice.length} subjects of ${regex}.`)) {
+          continue;
+        }
+        slice.forEach((one, i) => {
+          const label = `PHP ${version}: ${one.id} ${regex} on ${JSON.stringify(one.subject)}`;
+          const subject = encoder.encode(one.subject);
+          const traced = trace.run(encoder.encode(parts.body), subject, options.compile, options.extra, row.matchLimit, row.depthLimit);
+          const word = compareOutcome(label, row, traced, subject, answer.checks[i], expect);
+          tally[word] = (tally[word] || 0) + 1;
+        });
+      }
     }
+    expect(reported && reported.php === version, `The ${short} engine reports PHP ${reported && reported.php}, the table has a row for ${version}.`);
+    expect(!reported || !reported.pcre || reported.pcre === row.pcre2, `The ${short} engine reports PCRE2 ${reported && reported.pcre}, the ${version} row names ${row.pcre2}.`);
+    say(`The pcre2-${row.pcre2} module and PHP ${version} ${problems.length === before ? 'agree' : 'disagree'} on ${outcomeRows.length} outcomes with the row's options (${Object.keys(tally).sort().map((word) => `${tally[word]} ${word}`).join(', ')}).`);
+
+    const words = [];
+    let agreed = true;
+    for (const witness of WITNESSES) {
+      const answer = await ask(instance, { op: 'check', regex: witness.regex, subjects: [witness.subject] });
+      const parts = split(witness.regex);
+      const options = rowOptions(row, parts.modifiers);
+      const traced = trace.run(encoder.encode(parts.body), encoder.encode(witness.subject), options.compile, options.extra, row.matchLimit, row.depthLimit);
+      const word = witnessWord(traced, answer.checks[0]);
+      agreed = expect(word.module === word.engine, `Probe ${witness.name} on PHP ${version}: the module says ${word.module}, the engine says ${word.engine}.`) && agreed;
+      words.push(`${witness.name} ${word.module}${word.module === word.engine ? '' : ` (engine: ${word.engine})`}`);
+    }
+    say(`Probe on PHP ${version} (pcre2-${row.pcre2}): ${words.join(', ')} — ${agreed ? 'the engine agrees' : 'the engine disagrees'}.`);
   }
 
   fs.rmSync(dir, { recursive: true, force: true });

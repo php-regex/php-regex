@@ -11,6 +11,9 @@
 # The CLI phar fixtures carry a byte-exact signature: never normalized
 /tests/Fixtures/Cli/*.phar -text
 
+# WebAssembly modules the site serves, pinned by sha256: bytes, never text
+*.wasm binary
+
 # Export-ignore patterns (for composer archive)
 # Development and CI/CD files
 /.github                export-ignore

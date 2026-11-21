@@ -32,5 +32,14 @@ if [ "$actual" != "$release" ]; then
 fi
 
 target="${fixtures}/${release}.txt"
+# Before 10.38 a \K in a lookaround needs no option and pcre2test knows no
+# allow_lookaround_bsk modifier: the modifier is dropped, which asks those
+# releases for what it asks the later ones.
+if [ "$(printf '%s\n' "$release" 10.38 | sort -V | head -n 1)" != 10.38 ]; then
+    input="$(mktemp "${TMPDIR:-/tmp}/cases.XXXXXX")"
+    trap 'rm -f "$input"' EXIT
+    sed -E 's/,allow_lookaround_bsk(,|$)/\1/' "$cases" > "$input"
+    cases="$input"
+fi
 "$pcre2test" -q "$cases" > "$target"
 echo "${target}: $(wc -l < "$target" | tr -d ' ') lines from PCRE2 ${release}"

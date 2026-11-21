@@ -23,7 +23,8 @@ use PHPUnit\Framework\TestCase;
 /**
  * The step debugger traces PCRE2 with the options PHP passes, and PHP's
  * wrapper changes between versions: BSK in lookarounds from 8.1 to 8.4 and
- * gone in 8.5, the n modifier from 8.2, r from 8.4. The page reads those
+ * gone in 8.5 (8.0's bundled PCRE2 10.35 predates the option), the n
+ * modifier from 8.2, r from 8.4. The page reads those
  * facts from a generated table, one row per exact PHP version its engines
  * report, each row read from php-src's ext/pcre/php_pcre.c at that
  * version's tag and naming the commit. The lines the generator reads are
@@ -42,11 +43,12 @@ final class PhpPcreOptionsTableTest extends TestCase
     private const FIXTURES = __DIR__.'/Fixtures/php-pcre';
 
     /**
-     * The exact PHP versions the page's engines report (8.0 is out of
-     * scope), with the PCRE2 release each bundles. A version here with no
-     * excerpt or no row fails with the version named.
+     * The exact PHP versions the page's engines report, with the PCRE2
+     * release each bundles. A version here with no excerpt or no row fails
+     * with the version named.
      */
     private const ENGINES = [
+        '8.0.30' => '10.35',
         '8.1.28' => '10.39',
         '8.2.11' => '10.40',
         '8.3.11' => '10.42',
@@ -109,17 +111,56 @@ final class PhpPcreOptionsTableTest extends TestCase
     /**
      * What each version's wrapper does, read by hand from the excerpts and
      * checked against the oracle where the host can: n and r present or not,
-     * BSK on or off.
+     * the BSK define in the source, the BSK bit the bundled PCRE2 lets
+     * through (the define sits under #ifdef PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK,
+     * a macro 10.35 does not have), and whether the 10.37 rule excludes the
+     * bundled library by name.
      *
-     * @return iterable<string, array{version: string, hasN: bool, hasR: bool, bsk: bool}>
+     * @return iterable<string, array{version: string, hasN: bool, hasR: bool, bsk: bool, bskBit: bool, bundledGuard: bool}>
      */
     public static function provideWrapperFacts(): iterable
     {
-        yield 'PHP 8.1.28: no n, no r, BSK' => ['version' => '8.1.28', 'hasN' => false, 'hasR' => false, 'bsk' => true];
-        yield 'PHP 8.2.11: n, no r, BSK' => ['version' => '8.2.11', 'hasN' => true, 'hasR' => false, 'bsk' => true];
-        yield 'PHP 8.3.11: n, no r, BSK' => ['version' => '8.3.11', 'hasN' => true, 'hasR' => false, 'bsk' => true];
-        yield 'PHP 8.4.1: n, r, BSK' => ['version' => '8.4.1', 'hasN' => true, 'hasR' => true, 'bsk' => true];
-        yield 'PHP 8.5.2: n, r, no BSK' => ['version' => '8.5.2', 'hasN' => true, 'hasR' => true, 'bsk' => false];
+        yield 'PHP 8.0.30: no n, no r, BSK define without the macro' => ['version' => '8.0.30', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => false, 'bundledGuard' => false];
+        yield 'PHP 8.1.28: no n, no r, BSK' => ['version' => '8.1.28', 'hasN' => false, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
+        yield 'PHP 8.2.11: n, no r, BSK' => ['version' => '8.2.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
+        yield 'PHP 8.3.11: n, no r, BSK' => ['version' => '8.3.11', 'hasN' => true, 'hasR' => false, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
+        yield 'PHP 8.4.1: n, r, BSK' => ['version' => '8.4.1', 'hasN' => true, 'hasR' => true, 'bsk' => true, 'bskBit' => true, 'bundledGuard' => true];
+        yield 'PHP 8.5.2: n, r, no BSK' => ['version' => '8.5.2', 'hasN' => true, 'hasR' => true, 'bsk' => false, 'bskBit' => false, 'bundledGuard' => true];
+    }
+
+    /**
+     * php_pcre.c guards the BSK default and the r modifier with #ifdef on
+     * the PCRE2 macro, so a bundled release older than the macro compiles
+     * without them: 10.38 brought PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK and 10.43
+     * PCRE2_EXTRA_CASELESS_RESTRICT. Handing the module a bit its release
+     * does not know would fail every compile with PCRE2_ERROR_BAD_OPTIONS.
+     *
+     * @return iterable<string, array{pcre2: string, always: int, letters: array<string, int>}>
+     */
+    public static function provideBundledReleases(): iterable
+    {
+        yield 'PCRE2 10.35: neither macro' => ['pcre2' => '10.35', 'always' => 0, 'letters' => []];
+        yield 'PCRE2 10.37: neither macro' => ['pcre2' => '10.37', 'always' => 0, 'letters' => []];
+        yield 'PCRE2 10.38: BSK' => ['pcre2' => '10.38', 'always' => self::EXTRA_ALLOW_LOOKAROUND_BSK, 'letters' => []];
+        yield 'PCRE2 10.42: BSK' => ['pcre2' => '10.42', 'always' => self::EXTRA_ALLOW_LOOKAROUND_BSK, 'letters' => []];
+        yield 'PCRE2 10.43: BSK and r' => ['pcre2' => '10.43', 'always' => self::EXTRA_ALLOW_LOOKAROUND_BSK, 'letters' => ['r' => self::EXTRA_CASELESS_RESTRICT]];
+        yield 'PCRE2 10.44: BSK and r' => ['pcre2' => '10.44', 'always' => self::EXTRA_ALLOW_LOOKAROUND_BSK, 'letters' => ['r' => self::EXTRA_CASELESS_RESTRICT]];
+    }
+
+    /**
+     * @param array<string, int> $letters
+     */
+    #[Test]
+    #[DataProvider('provideBundledReleases')]
+    public function test_the_row_drops_the_extra_options_the_bundled_release_does_not_define(string $pcre2, int $always, array $letters): void
+    {
+        $facts = self::parse('8.4.1');
+        $this->assertTrue($facts['bsk'], 'The 8.4.1 excerpt defines the BSK default.');
+        $this->assertSame(['r' => ['PCRE2_EXTRA_CASELESS_RESTRICT']], $facts['extra'], 'The 8.4.1 excerpt reads r.');
+
+        $row = phpregex_pcre_options_row($facts, '8.4.1', str_repeat('0', 40), $pcre2);
+
+        $this->assertSame(['always' => $always] + $letters, $row['extra']);
     }
 
     #[Test]
@@ -198,7 +239,7 @@ final class PhpPcreOptionsTableTest extends TestCase
 
     #[Test]
     #[DataProvider('provideWrapperFacts')]
-    public function test_the_parser_reads_the_wrapper_facts_from_the_excerpt(string $version, bool $hasN, bool $hasR, bool $bsk): void
+    public function test_the_parser_reads_the_wrapper_facts_from_the_excerpt(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard): void
     {
         $facts = self::parse($version);
 
@@ -219,7 +260,7 @@ final class PhpPcreOptionsTableTest extends TestCase
         $this->assertSame(['e'], $facts['refused']);
         $this->assertSame($bsk, $facts['bsk'], 'PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK set on the compile context.');
         $this->assertStringContainsString('37 == PCRE2_MINOR', $facts['baseRule']);
-        $this->assertStringContainsString('HAVE_BUNDLED_PCRE', $facts['baseRule']);
+        $this->assertSame($bundledGuard, str_contains($facts['baseRule'], 'HAVE_BUNDLED_PCRE'), 'The 10.37 rule names the bundled library from 8.1 on.');
         $this->assertSame(1000000, $facts['matchLimit'], 'pcre.backtrack_limit default, wired to pcre2_set_match_limit.');
         $this->assertSame(100000, $facts['depthLimit'], 'pcre.recursion_limit default, wired to pcre2_set_depth_limit.');
         $this->assertSame(self::ERRORS, $facts['errors']);
@@ -227,7 +268,7 @@ final class PhpPcreOptionsTableTest extends TestCase
 
     #[Test]
     #[DataProvider('provideWrapperFacts')]
-    public function test_the_table_row_carries_the_wrapper_facts(string $version, bool $hasN, bool $hasR, bool $bsk): void
+    public function test_the_table_row_carries_the_wrapper_facts(string $version, bool $hasN, bool $hasR, bool $bsk, bool $bskBit, bool $bundledGuard): void
     {
         $table = self::table();
         $this->assertArrayHasKey($version, $table, \sprintf('No row for PHP %s in %s.', $version, self::TABLE));
@@ -251,7 +292,7 @@ final class PhpPcreOptionsTableTest extends TestCase
         $this->assertSame(self::UTF | self::UCP, $row['modifiers']['u']);
         $this->assertSame(0xA0000, $row['modifiers']['u']);
 
-        $extra = ['always' => $bsk ? self::EXTRA_ALLOW_LOOKAROUND_BSK : 0];
+        $extra = ['always' => $bskBit ? self::EXTRA_ALLOW_LOOKAROUND_BSK : 0];
         if ($hasR) {
             $extra['r'] = self::EXTRA_CASELESS_RESTRICT;
         }

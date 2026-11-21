@@ -61,6 +61,17 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
     ]);
 
     /*
+     * The PCRE2 release that brought each extra option's macro. php_pcre.c
+     * reads both under #ifdef on the macro (the BSK default and the r case),
+     * so a bundled release older than the macro compiles without them: 8.0's
+     * 10.35 sets no BSK bit, whatever the define below the #ifdef says.
+     */
+    \define('PHPREGEX_PCRE2_EXTRA_SINCE', [
+        'PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK' => '10.38',
+        'PCRE2_EXTRA_CASELESS_RESTRICT' => '10.43',
+    ]);
+
+    /*
      * PHP's PREG_* codes by the name php_pcre.h gives them.
      */
     \define('PHPREGEX_PREG_CODES', [
@@ -138,8 +149,14 @@ if (!\function_exists('phpregex_pcre_options_parse')) {
         foreach ($facts['modifiers'] as $letter => $names) {
             $modifiers[$letter] = phpregex_pcre_options_bits($names, PHPREGEX_PCRE2_COMPILE_OPTIONS);
         }
-        $extra = ['always' => $facts['bsk'] ? PHPREGEX_PCRE2_EXTRA_OPTIONS['PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK'] : 0];
+        $defined = static fn (string $name): bool => version_compare($pcre2, PHPREGEX_PCRE2_EXTRA_SINCE[$name] ?? '0', '>=');
+        $extra = ['always' => $facts['bsk'] && $defined('PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK') ? PHPREGEX_PCRE2_EXTRA_OPTIONS['PCRE2_EXTRA_ALLOW_LOOKAROUND_BSK'] : 0];
         foreach ($facts['extra'] as $letter => $names) {
+            // A letter whose macro the release lacks has no case in the
+            // switch PHP compiled: PHP refuses it as an unknown modifier.
+            if (array_filter($names, $defined) !== $names) {
+                continue;
+            }
             $extra[$letter] = phpregex_pcre_options_bits($names, PHPREGEX_PCRE2_EXTRA_OPTIONS);
         }
 
