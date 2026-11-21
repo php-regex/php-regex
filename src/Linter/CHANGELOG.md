@@ -42,6 +42,13 @@ CHANGELOG
    with such a byte is compared with the others by the engine under the
    target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
    `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
+ * Without u, where the engine judges no branch, one that matches empty
+   above all, `regex.lint.overlap.charset` reads the bytes above ASCII a
+   negated class takes: `"/(?:[^a]|\xC3|)+/"` with a raw `\xC3` is
+   reported, and so is `"/(?:\\W|\xE9|)+/"` under C, where `\W` takes
+   every byte above ASCII; neither was. What another locale's tables
+   decide, `\w` or a case, is still read in ASCII: `"/(?:\\W|\xE9|)+/"`
+   is not reported under fr_FR.ISO8859-1, where `\xE9` is a letter.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

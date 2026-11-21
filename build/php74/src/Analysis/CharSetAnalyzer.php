@@ -49,7 +49,10 @@ use PHPRegex\Parser\Text\Utf8;
  * UTF a character above ASCII is two to four bytes, and a set knows it by
  * the byte it starts with, the last character of a node as its first: "é"
  * is 0xC3 at either end, so a node that ends with it meets one that starts
- * with it.
+ * with it. Under another locale's tables than PCRE2's own, a set still
+ * holds the bytes a literal writes and those a complement takes, and what
+ * the tables decide is not known: "\d", "\s" and "\w" without UCP, and the
+ * other case of a character.
  *
  * @internal
  */
@@ -107,6 +110,9 @@ final class CharSetAnalyzer
     /**
      */
     private bool $asciiSpaces = false;
+    /**
+     */
+    private bool $ownTables = true;
 
     /**
      * @param string    $startOptions    the options the pattern opens with, such
@@ -120,17 +126,22 @@ final class CharSetAnalyzer
      * @param bool      $asciiSpaces     whether "(?aS)" or "(?a)" holds "\s" to
      *                                   ASCII under (*UCP), and "\S" takes the
      *                                   spaces above it
+     * @param bool      $ownTables       whether the engine compiles with PCRE2's
+     *                                   own tables, as under "C": under another
+     *                                   locale's, what they decide is not known
      */
     public function __construct(
         string $flags = '',
         string $startOptions = '',
         bool $readsAboveAscii = false,
         ?self $samePattern = null,
-        bool $asciiSpaces = false
+        bool $asciiSpaces = false,
+        bool $ownTables = true
     ) {
         $this->startOptions = $startOptions;
         $this->readsAboveAscii = $readsAboveAscii;
         $this->asciiSpaces = $asciiSpaces;
+        $this->ownTables = $ownTables;
         $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
         $this->flags = null === $samePattern ? $this->flagsAtTheStart($flags) : $flags;
         $this->unicodeMode = false !== strpos($flags, 'u') || $this->options['ucp'];
@@ -145,9 +156,9 @@ final class CharSetAnalyzer
      * An analyzer for the pattern as a whole: its flags and the newline
      * convention its start options set.
      */
-    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false): self
+    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false, bool $ownTables = true): self
     {
-        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii);
+        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii, null, false, $ownTables);
     }
 
     /**
@@ -174,7 +185,7 @@ final class CharSetAnalyzer
      */
     public function withFlags(string $flags): self
     {
-        return new self($flags, $this->startOptions, $this->readsAboveAscii, $this);
+        return new self($flags, $this->startOptions, $this->readsAboveAscii, $this, false, $this->ownTables);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -336,9 +347,18 @@ final class CharSetAnalyzer
         return ByteCharSet::unknown();
     }
 
+    /**
+     * The characters of a type. Under UCP "\d" and "\w" take Unicode's,
+     * which the sets do not hold; without it the three types read the
+     * tables, which another locale's fill as its C library says.
+     */
     private function fromCharType(string $type): ByteCharSet
     {
-        if ($this->unicodeMode && \in_array($type, ['d', 'D', 'w', 'W'], true)) {
+        if (($this->unicodeMode || !$this->ownTables) && \in_array($type, ['d', 'D', 'w', 'W'], true)) {
+            return ByteCharSet::unknown();
+        }
+
+        if (!$this->ownTables && !$this->unicodeMode && \in_array($type, ['s', 'S'], true)) {
             return ByteCharSet::unknown();
         }
 
@@ -499,10 +519,16 @@ final class CharSetAnalyzer
      * that start with any byte, and "k" and "s" match the Kelvin sign and
      * the long s, both ways, unless r keeps ASCII apart. Under Turkish
      * casing "i" and "I" are no pair: "i" matches the capital dotted I,
-     * U+0130, and "I" the small dotless i, U+0131, both ways.
+     * U+0130, and "I" the small dotless i, U+0131, both ways. The tables
+     * give the other case of a byte, and under UTF or UCP of an ASCII
+     * character: another locale's are not read.
      */
     private function otherCases(int $start, int $end): ByteCharSet
     {
+        if (!$this->ownTables && ($start <= 0x7F || !$this->utf && !$this->unicodeMode)) {
+            return ByteCharSet::unknown();
+        }
+
         $set = ByteCharSet::empty();
         if ($start === $end && $end <= 0x7F) {
             // One ASCII character, the case of most literals.
@@ -713,7 +739,7 @@ final class CharSetAnalyzer
             return $this;
         }
 
-        return new self((($nullsafeVariable1 = $setting) ? $nullsafeVariable1->applyTo($this->flags) : null) ?? $this->flags, $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces);
+        return new self((($nullsafeVariable1 = $setting) ? $nullsafeVariable1->applyTo($this->flags) : null) ?? $this->flags, $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces, $this->ownTables);
     }
 
     /**

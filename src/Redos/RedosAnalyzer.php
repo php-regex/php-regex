@@ -123,12 +123,13 @@ final class RedosAnalyzer
             $profiler = null;
             $heuristics = self::NO_HEURISTICS;
             if (RedosComplexity::Linear !== $proof?->complexity) {
-                // Above ASCII the sets are read under PCRE2's own tables:
-                // another locale's may put any byte in a type or a case.
-                // Without a proof, a loop whose branches start alike is put
-                // to the proof alone.
+                // The sets hold the bytes above ASCII the pattern writes and
+                // those a complement takes. Another locale's tables than
+                // PCRE2's own may put any byte in a type or a case, which the
+                // sets leave unknown there. Without a proof, a loop whose
+                // branches start alike is put to the proof alone.
                 $profiler = new RedosProfiler(
-                    CharSetAnalyzer::forRegex($ast, CharacterTables::BUILT_IN === $parser->target()->locale),
+                    CharSetAnalyzer::forRegex($ast, true, CharacterTables::BUILT_IN === $parser->target()->locale),
                     null === $proof ? $this->provenLinearAlone($ast, $parser) : null,
                 );
                 $ast->accept($profiler);

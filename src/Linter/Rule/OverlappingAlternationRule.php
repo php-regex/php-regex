@@ -20,6 +20,7 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Linter\Rule\Support\SourceQuote;
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -202,7 +203,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // characters the lookahead refuses.
         $sets = match (true) {
             $anyUnknown, $guarded => $this->setsFromPcre($node, $starts, $context),
-            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? array_map(self::alphabetSet(...), $charSets),
+            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? array_map(self::alphabetSet(...), $context->pattern->unicodeMode ? $charSets : self::everyByte($node, $charSets, $context)),
             default => array_map(self::alphabetSet(...), $charSets),
         };
         if (null === $sets) {
@@ -791,6 +792,32 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // The simple case folding, as PCRE compares caselessly: a final
         // sigma folds to the sigma, "ß" stays itself.
         return $context->pattern->unicodeMode ? mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8') : Ascii::lower($text);
+    }
+
+    /**
+     * The bytes each branch starts with, read above ASCII under the
+     * target's tables, for an alternation without u whose branches PCRE
+     * does not judge. A byte is a character there, and the complement of a
+     * class takes the bytes above ASCII it does not hold, which the ASCII
+     * read leaves out: "[^é]" takes 0x90. Where another locale's tables
+     * decide, "\w" or a case, the ASCII read of the branch stands: an
+     * overlap there goes unreported rather than one PCRE would not see.
+     *
+     * @param list<ByteCharSet> $ascii the sets of the ASCII read, branch by branch
+     *
+     * @return list<ByteCharSet>
+     */
+    private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): array
+    {
+        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, ownTables: 'C' === $context->target->locale);
+        $flagsAt = $context->flagsAtEachChild($node);
+        $sets = [];
+        foreach ($node->alternatives as $index => $alternative) {
+            $set = $analyzer->withFlags($flagsAt[$index] ?? $context->activeFlags())->firstChars($alternative);
+            $sets[] = $set->isUnknown() ? $ascii[$index] ?? $set : $set;
+        }
+
+        return $sets;
     }
 
     /**
