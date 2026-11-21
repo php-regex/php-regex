@@ -68,6 +68,9 @@ final class ImpossibleLookaroundRuleTest extends TestCase
         yield 'continuation through the enclosing group and its quantifier' => ['pattern' => '/(?:x(?=a))+b/'];
         yield 'case-sensitive' => ['pattern' => '/(?=a)A/'];
         yield 'dot without s cannot be a newline' => ['pattern' => '/(?=.)\n/'];
+        // A scoped option holds inside its group only: the "." after it
+        // reads no newline.
+        yield 'dotall group closed before the lookahead' => ['pattern' => '/(?s:x)(?=\n)./'];
         // Past its 24-byte budget the continuation is cut short: the "b"
         // kept already contradicts the lookahead.
         yield 'continuation cut short after the contradicting item' => ['pattern' => '/(?=a)b(?:cccccccccccccccccccccccccccccccc)/'];
@@ -126,6 +129,12 @@ final class ImpossibleLookaroundRuleTest extends TestCase
         yield 'the lookahead is all a group holds' => ['pattern' => '/(?:(?=a))/', 'subject' => 'a'];
         yield 'caseless' => ['pattern' => '/(?=a)A/i', 'subject' => 'A'];
         yield 'dot under s reads a newline' => ['pattern' => '/(?=.)\n/s', 'subject' => "\n"];
+        // The options in force at the lookahead are read down the groups
+        // around it, past the items before it in its sequence and the
+        // branches before its own.
+        yield 'dotall group around the lookahead' => ['pattern' => '/(?s:(?=\n).)/', 'subject' => "\n"];
+        yield 'dotall set before the lookahead' => ['pattern' => '/x(?s)(?=\n)./', 'subject' => "x\n"];
+        yield 'dotall carried into a later branch' => ['pattern' => '/(?:(?s)x|(?=\n).)/', 'subject' => "\n"];
         yield 'ASCII digit option under u' => ['pattern' => '/(?aD)(?!\d)٣/u', 'subject' => '٣'];
         yield 'caseless restrict keeps the Kelvin sign apart' => ['pattern' => '/(?r)(?!k)\x{212A}/iu', 'subject' => "\u{212A}"];
         // "(?^i)" turns "r" off with the other options.
@@ -293,6 +302,53 @@ final class ImpossibleLookaroundRuleTest extends TestCase
 
         $this->assertInstanceOf(RuleViolation::class, $this->violation('/(?=a)b{3}/'));
         $this->assertNull($this->violation('/(?=a)b{300}/'));
+    }
+
+    /**
+     * The continuation is read up to 24 bytes as written from the end of
+     * the lookahead: a "b" that ends on the 24th byte contradicts it, one
+     * on the 25th is past the cut, and the rule stays silent, though
+     * neither pattern ever matches.
+     */
+    #[Test]
+    public function test_the_continuation_is_read_up_to_its_budget_after_the_lookahead(): void
+    {
+        $within = '/(?=a)'.str_repeat('c?', 11).'bb/';
+        $past = '/(?=a)'.str_repeat('c?', 12).'b/';
+
+        // Oracle, PHP 8.4.28 / PCRE2 10.49: no subject matches either.
+        foreach ([...self::SUBJECTS, 'cb', 'cbb', 'acb'] as $subject) {
+            $this->assertSame(0, preg_match($within, $subject), var_export($subject, true));
+            $this->assertSame(0, preg_match($past, $subject), var_export($subject, true));
+        }
+
+        $this->assertInstanceOf(RuleViolation::class, $this->violation($within));
+        $this->assertNull($this->violation($past));
+    }
+
+    /**
+     * A linter keeps its rules from one pattern to the next: the flags the
+     * rule read at the nodes of a pattern are not those of the next one,
+     * whose nodes may take the object ids of a pattern freed one or two
+     * patterns before. The two patterns differ by their modifier alone, and
+     * each one is two patterns away from the other.
+     */
+    #[Test]
+    public function test_a_linter_reads_each_pattern_under_its_own_flags(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49.
+        $this->assertSame(1, preg_match('/(?=\n)./s', "\n"));
+        $this->assertSame(0, preg_match('/(?=\n)./', "\n"));
+
+        $linter = new PatternLinter();
+        for ($round = 0; $round < 20; $round++) {
+            foreach (['/(?=\n)./s', '/(?=\n)./s', '/(?=\n)./', '/(?=\n)./'] as $pattern) {
+                Regex::create(['cache' => null])->parse($pattern)->accept($linter);
+                $ids = array_map(static fn (RuleViolation $violation): string => $violation->id, $linter->getIssues());
+
+                $this->assertSame(!str_ends_with($pattern, 's'), \in_array(self::ID, $ids, true), $pattern.' in round '.$round);
+            }
+        }
     }
 
     private function violation(string $pattern): ?RuleViolation

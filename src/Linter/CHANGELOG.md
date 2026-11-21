@@ -196,6 +196,15 @@ CHANGELOG
    where a text comes right before the texts it starts. A quantified list of
    2,000 names that all start alike took over ten seconds to lint, it takes
    a fraction of one; the findings are the same.
+ * `regex.lint.lookaround.impossible`, `regex.lint.lookaround.edgeQuantifier`,
+   `regex.lint.quantifier.possessiveImpossible` and the
+   `regex.lint.anchor.impossible.*` rules read the option settings of a
+   pattern once, not again for each item they ask the automata about, and
+   the first reads the flags in force at each lookahead, and its place in
+   its sequence, once for the pattern. A pattern of 4,000 lookaheads,
+   possessive quantifiers or word boundaries took from 15 seconds to
+   almost a minute to lint, it takes a fraction of one; the findings are
+   the same.
  * The diff of a suggested rewrite skips the lines both sides share at the
    start and at the end before it looks for the longest run of kept lines:
    a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,
