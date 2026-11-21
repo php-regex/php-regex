@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Optimizer;
 
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -71,12 +72,13 @@ final class PossessiveRewrites
 
     /**
      * What follows each item the rewriter is in, the innermost last: the
-     * items of its sequence from the index given, or null at the end of an
-     * atomic group or a lookaround but a scan substring, which nothing
-     * after it backtracks into. What follows any other group is what
-     * follows the group.
+     * items of its sequence from the index given, a repeat that must run
+     * again, whose body then follows its own end, or null at the end of an
+     * atomic group or a lookaround but a scan substring or a non-atomic
+     * lookaround, which nothing after it backtracks into. What follows any
+     * other group is what follows the group.
      *
-     * @var list<array{list<NodeInterface>, int}|null>
+     * @var list<array{list<NodeInterface>, int}|QuantifierNode|null>
      */
     private array $after = [];
 
@@ -135,6 +137,28 @@ final class PossessiveRewrites
     }
 
     /**
+     * Records the repeat the rewriter enters, when its body must run again
+     * after a run: "(?:a+b?){2}c" gives an "a" back to its second run on
+     * "aac".
+     */
+    public function enterRepeat(QuantifierNode $node): void
+    {
+        if (self::repeatsAgain($node)) {
+            $this->after[] = $node;
+        }
+    }
+
+    /**
+     * Forgets the repeat the rewriter leaves.
+     */
+    public function leaveRepeat(QuantifierNode $node): void
+    {
+        if (self::repeatsAgain($node)) {
+            array_pop($this->after);
+        }
+    }
+
+    /**
      * The items of a sequence with each greedy repeat made possessive where
      * what follows it can never start with a character it gives back.
      *
@@ -149,28 +173,14 @@ final class PossessiveRewrites
             $suffix = array_slice($children, $i + 1);
 
             if ($current instanceof QuantifierNode && QuantifierType::Greedy === $current->type && $this->isPossessifyCandidate($current) && !empty($suffix)) {
-                if ($this->repeats->isCaptureSensitive($current->node) || $this->canMatchEmpty($current->node)) {
-                    continue;
-                }
-                // Compute disjointness against the FIRST-set of the suffix
-                $suffixNode = 1 === \count($suffix) ? $suffix[0] : new SequenceNode($suffix, $current->startPosition, $current->endPosition);
-
                 // The sets stop at 0x7F: above it nothing is known disjoint.
-                // A lookaround reads nothing, yet it looks at the characters
-                // the repetition would give back: "a+(?!b)" matches "a" in
-                // "aab", "a++(?!b)" nothing. Past items that may match
-                // nothing, it may stand after the group the sequence ends:
-                // "(a+b?)(?!c)" matches "a" in "aac".
-                if ($this->mayTakeAboveAscii($current->node) || $this->suffixMayStartAboveAscii($suffix) || ($this->suffixLooksAround($suffix) ?? $this->lookaroundFollows())) {
+                if ($this->repeats->isCaptureSensitive($current->node) || $this->canMatchEmpty($current->node) || $this->mayTakeAboveAscii($current->node)) {
                     continue;
                 }
-
-                $charSets = $this->state->charSets();
 
                 try {
-                    $currentLastChars = $charSets->lastChars($current->node);
-                    $suffixFirstChars = $charSets->firstChars($suffixNode);
-                    if (!$currentLastChars->intersects($suffixFirstChars)) {
+                    $followingChars = $this->charsAfter($suffix);
+                    if (null !== $followingChars && !$this->state->charSets()->lastChars($current->node)->intersects($followingChars)) {
                         $children[$i] = new QuantifierNode(
                             $current->node,
                             $current->quantifier,
@@ -269,80 +279,106 @@ final class PossessiveRewrites
     }
 
     /**
-     * Whether the items may start with a character above ASCII: the first
-     * that cannot match empty decides, with every optional one before it.
+     * The characters what follows a repetition may start with, the items
+     * after it in its sequence first, then, while all of them may match
+     * nothing, what follows the groups around it: "(a+b?)a" gives an "a"
+     * back to the "a" after the group on "aa". The walk stops at the end of
+     * the pattern, of an atomic group or of a lookaround, which nothing
+     * after it backtracks into; the body of a repeat that must run again
+     * follows the end of its body as well. Null when a lookaround may come
+     * first, which reads nothing yet looks at the characters the repetition
+     * would give back, "a+(?!b)" matching "a" in "aab" where "a++(?!b)"
+     * matches nothing, or a character above ASCII, which the sets, stopping
+     * at 0x7F, do not hold.
      *
-     * @param array<NodeInterface> $suffix
+     * @param list<NodeInterface> $suffix
      */
-    private function suffixMayStartAboveAscii(array $suffix): bool
+    private function charsAfter(array $suffix): ?ByteCharSet
     {
-        foreach ($suffix as $item) {
-            if ($this->mayTakeAboveAscii($item)) {
-                return true;
-            }
+        $chars = ByteCharSet::empty();
+        $read = $this->addFirstChars($suffix, $chars);
 
-            if (!$this->canMatchEmpty($item)) {
-                return false;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether a lookaround stands among the items the suffix may start
-     * with, up to the first that reads a character, or null when each of
-     * them may match nothing without one: what follows decides.
-     *
-     * @param array<NodeInterface> $suffix
-     */
-    private function suffixLooksAround(array $suffix): ?bool
-    {
-        foreach ($suffix as $item) {
-            if (self::holdsLookaround($item)) {
-                return true;
-            }
-
-            if (!$this->canMatchEmpty($item)) {
-                return false;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Whether a lookaround may follow the sequence the rewriter is in
-     * before anything reads a character: past the end of the groups around
-     * it, up to the end of the pattern, of an atomic group or of a
-     * lookaround.
-     */
-    private function lookaroundFollows(): bool
-    {
-        for ($level = \count($this->after) - 1; $level >= 0; $level--) {
+        for ($level = \count($this->after) - 1; false === $read && $level >= 0; $level--) {
             $after = $this->after[$level];
             if (null === $after) {
-                return false;
+                break;
             }
 
-            $looksAround = $this->suffixLooksAround(\array_slice($after[0], $after[1]));
-            if (null !== $looksAround) {
-                return $looksAround;
+            // Another run of the body, or what follows the repeat after
+            // its last run.
+            if ($after instanceof QuantifierNode) {
+                $read = null === $this->addFirstChars([$after->node], $chars) ? null : false;
+
+                continue;
+            }
+
+            $read = $this->addFirstChars(\array_slice($after[0], $after[1]), $chars);
+        }
+
+        return null === $read ? null : $chars;
+    }
+
+    /**
+     * Adds the characters the items may start with to the set, up to the
+     * first that cannot match empty: whether one cannot, or null when a
+     * lookaround or a character above ASCII may come first.
+     *
+     * @param array<NodeInterface> $items
+     *
+     * @param-out ByteCharSet $chars
+     */
+    private function addFirstChars(array $items, ByteCharSet &$chars): ?bool
+    {
+        foreach ($items as $item) {
+            if (self::holdsLookaround($item) || $this->mayTakeAboveAscii($item)) {
+                return null;
+            }
+
+            $chars = $chars->union($this->firstChars($item));
+            if (!$this->canMatchEmpty($item)) {
+                return true;
             }
         }
 
         return false;
+    }
+
+    /**
+     * The characters the item may start with. "$" and "\Z" read nothing,
+     * and hold only before a newline where a character follows: the bytes
+     * any newline convention starts with stand for them, "\n" under the
+     * default one, the line ends the repetition may have given back. "\z"
+     * holds where no character follows, and a comment reads nothing.
+     */
+    private function firstChars(NodeInterface $node): ByteCharSet
+    {
+        return match (true) {
+            $node instanceof AnchorNode && '$' === $node->value, $node instanceof AssertionNode && 'Z' === $node->value => ByteCharSet::fromChar("\0")->union(ByteCharSet::fromRange(0x0A, 0x0D)),
+            $node instanceof AssertionNode && 'z' === $node->value, $node instanceof CommentNode => ByteCharSet::empty(),
+            default => $this->state->charSets()->firstChars($node),
+        };
     }
 
     /**
      * Whether nothing after the group backtracks into it: an atomic group
      * or a lookaround, but a scan substring, which what follows backtracks
      * into: "^(aac)(*scs:(1)(a+b?))(?=\2ac)" matches "aac" in "aacaac"
-     * with group 2 given back to "a".
+     * with group 2 given back to "a". Nor does a non-atomic lookaround,
+     * "(*napla:" or "(?*", whose flags hold the "*": "^(*napla:(a+b?))\1\1"
+     * matches "aa" with group 1 given back to "a".
      */
     private static function closes(GroupNode $node): bool
     {
-        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && \in_array($node->type, self::LOOKAROUNDS, true));
+        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && '*' !== $node->flags && \in_array($node->type, self::LOOKAROUNDS, true));
+    }
+
+    /**
+     * Whether the body of the repeat must run again after a run, from a
+     * count of two on: "{2}" or "{2,}".
+     */
+    private static function repeatsAgain(QuantifierNode $node): bool
+    {
+        return ($node->bounds->min ?? 0) >= 2;
     }
 
     private static function holdsLookaround(NodeInterface $node): bool
