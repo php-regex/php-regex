@@ -54,7 +54,7 @@
     "analyze": {
         "protocol": 3,
         "library": {
-            "version": "2.0.0-DEV",
+            "version": "2.0.0-RC1",
             "jsonDumper": 1
         },
         "target": {

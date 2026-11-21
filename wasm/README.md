@@ -1,7 +1,8 @@
 # wasm/
 
-Native code the documentation site runs in the browser. Today it holds one
-module: the PCRE2 trace shim behind the playground's step debugger.
+Native code the documentation site runs in the browser. Today it holds the
+PCRE2 trace shim behind the playground's step debugger, built once per PCRE2
+release the playground's PHP engines bundle.
 
 ## pcre2-trace/
 
@@ -14,16 +15,34 @@ that way and records every callout into one JSON document.
 
 | file | role |
 |---|---|
-| `trace.h`, `trace.c` | the shim: `pcre2_trace_run()` returns the JSON, `pcre2_trace_free()` releases it, `pcre2_trace_version()` names the PCRE2 release linked. The same source compiles natively against a system pcre2 and to WebAssembly against the pinned release |
+| `trace.h`, `trace.c` | the shim: `pcre2_trace_run()` returns the JSON, `pcre2_trace_free()` releases it, `pcre2_trace_version()` names the PCRE2 release linked. The same source compiles natively against a system pcre2 and to WebAssembly against each pinned release |
 | `trace-cli.c` | the shim as a command, for the test that compares it with `pcre2test` and `preg_match()` on the host's PCRE2 |
-| `build.sh` | builds `build/pcre2-10.44.wasm` inside the pinned Emscripten container; `--write-manifest` records the build, `--check` verifies it |
-| `manifest.json` | the last build: PCRE2 tag and commit, Emscripten image and digest, the module's size, sha256, exports and imports |
+| `build.sh` | builds `build/pcre2-<release>.wasm` for one release inside the pinned Emscripten container; `--write-manifest` records the build, `--check` verifies it |
+| `manifest.json` | the last build of each release: PCRE2 tag and commit, patches, Emscripten image and digest, the module's size, sha256, exports and imports |
+| `patches/` | the patches php-src applies to its bundled copy of a release, applied by `build.sh` on top of the tag |
 | `pin-traces.sh` | pins `pcre2test`'s own trace of the test cases for one PCRE2 release |
 | `php-pcre-options/generate.php` | writes the table of options PHP passes to PCRE2 at each PHP version the playground offers |
 
-The module is not tracked: `bin/playground-bundle` embeds the bytes from
-`build/` into the playground's bundle, and the CI job rebuilds it from the
-same container and compares the sha256 with the manifest.
+The releases, by the playground's engines:
+
+| PCRE2 | engines | patches |
+|---|---|---|
+| 10.35 | PHP 8.0.30 | none |
+| 10.39 | PHP 8.1.28 | `gh-11374` |
+| 10.40 | PHP 8.2.11 | none |
+| 10.42 | PHP 8.3.11 | `gh-11374` |
+| 10.44 | PHP 8.4.1, 8.5.2 | none |
+
+`gh-11374` is php-src's backport of PCRE2 10.43's fix for the captures an
+interpreter restores after a recursion (php-src commit `83a505e85f9`),
+carried in php-src's bundled 10.39 from 8.1.26 and in its bundled 10.42 from
+8.3.0; with it, each module's library sources equal php-src's bundled copy
+byte for byte.
+
+The `build/` directory is not tracked: `bin/playground-bundle` copies each
+module from it to `docs/assets/playground/pcre2-<release>.wasm`, served
+beside the playground's bundle, and the CI job rebuilds every release from
+the same container and compares the sha256 with the manifest.
 
 ### The trace document
 
@@ -70,21 +89,25 @@ are the same on every machine. From the repository root:
 ```bash
 docker run --rm --platform linux/amd64 -v "$PWD:/work" -w /work \
   emscripten/emsdk@sha256:27bc6267cb285223b8aebb7627bfebae7cb3ad2aaa0d5923b8aa5321793033e8 \
-  wasm/pcre2-trace/build.sh --write-manifest
+  wasm/pcre2-trace/build.sh 10.44 --write-manifest
 ```
 
-The script clones PCRE2 at the pinned tag into a temporary directory
-outside the tree (or copies the checkout given with `--source <dir>`),
-checks the commit, uses the generic configuration (`config.h.generic`,
-`pcre2.h.generic`, `pcre2_chartables.c.dist`) after asserting the limits
-php-src's bundled copy ships with (heap 20000000, link size 2, match limit
-10000000, name size 128, newline LF, nesting 250), and compiles the 8-bit
-interpreter sources (no JIT, no DFA) with Unicode support plus `trace.c`
+The script clones PCRE2 at the release's pinned tag into a temporary
+directory outside the tree (or copies the checkout given with
+`--source <dir>`), checks the commit, applies the release's patches, uses
+the generic configuration (`config.h.generic`, `pcre2.h.generic`,
+`pcre2_chartables.c.dist`) after asserting the limits php-src's bundled
+copy ships with (heap 20000000, link size 2, match limit 10000000, name size
+32 up to 10.42 and 128 from 10.44, newline LF, nesting 250), and compiles
+the 8-bit interpreter sources (no JIT, no DFA; before 10.42,
+`pcre2_jit_compile.c` too, built without JIT for the stub
+`pcre2_code_free()` calls) with Unicode support plus `trace.c`
 as a standalone module whose only import is Emscripten's memory-growth
 notice (`env.emscripten_notify_memory_growth`, a no-op on the page); the
 memory grows on demand up to 1 GB. It prints the module's size and
 sha256. Run it twice: the sha256 must not move. `--check` exits 1 when the
-sha256 differs from `manifest.json`, which is what CI does.
+sha256 differs from the release's entry in `manifest.json`, which is what CI
+does, once per release.
 
 The module is a WASI reactor: a loader calls `_initialize()` once before
 any other export, writes the pattern and the subject into memory it takes
@@ -107,8 +130,12 @@ pinned verbatim per PCRE2 release as `<release>.txt`. Pinned releases:
 | release | pinned from |
 |---|---|
 | 10.49 | Homebrew's `pcre2test` on macOS |
-| 10.42 | Ubuntu 24.04's `pcre2-utils` package |
-| 10.44 | `pcre2test` built from the `pcre2-10.44` tag in `ubuntu:24.04` with `cmake -DPCRE2_BUILD_TESTS=ON -DPCRE2_SUPPORT_JIT=OFF` |
+| 10.35, 10.40, 10.44 | `pcre2test` built from the release's tag in `ubuntu:24.04` with `cmake -DPCRE2_BUILD_TESTS=ON -DPCRE2_SUPPORT_JIT=OFF` |
+| 10.39, 10.42 | the same, with `patches/gh-11374.patch` applied (10.42's matches Ubuntu 24.04's `pcre2-utils` package line for line) |
+
+Before 10.38 a `\K` in a lookaround needs no option and `pcre2test` knows
+no `allow_lookaround_bsk` modifier, so `pin-traces.sh` drops the modifier
+for those releases, which asks them for what it asks the later ones.
 
 To pin another release, with a `pcre2test` of that release at hand:
 
@@ -125,7 +152,8 @@ table.
 
 The debugger traces PCRE2 with the options PHP would pass, and PHP's
 wrapper changes between versions: `(?<=a\K)` is allowed from 8.1 to 8.4
-and refused in 8.5, the `n` modifier exists from 8.2, `r` from 8.4.
+and refused in 8.5 (8.0's bundled 10.35 predates the option and passes no
+bit), the `n` modifier exists from 8.2, `r` from 8.4.
 `docs/assets/js/php-pcre-options.js` holds one row per exact PHP version
 the playground's engines report, each read from `ext/pcre/php_pcre.c` at
 that version's tag and naming the commit. The generator writes only the
@@ -134,7 +162,7 @@ minor adds its tag, and an engine php-wasm upgrades (8.4.1 to 8.4.2)
 replaces its old tag, never beside it. With a php-src checkout at hand:
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.0.30 php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
 ```
 
 The rows are written in the order given. The script reads the modifier
