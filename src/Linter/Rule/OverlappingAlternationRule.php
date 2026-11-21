@@ -26,9 +26,11 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
@@ -57,6 +59,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
     public const ID_OVERLAP = 'regex.lint.alternation.overlap';
 
     public const ID_CHARSET = 'regex.lint.overlap.charset';
+
+    /**
+     * The ways through the lookaheads before an atom that are read, one
+     * per choice of lookaheads: past them the branch is not judged.
+     */
+    private const MAX_LOOKAHEAD_WAYS = 16;
 
     private int $comparisons = 0;
 
@@ -337,8 +345,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * branch is not judged: its first character is not one atom, it may
      * start with what follows it, or a lookahead before it cannot be read.
      *
-     * @param array<array{list<array{NodeInterface, list<GroupNode>|null}>, bool, list<GroupNode>|null}> $starts the first atoms of each branch, keyed as
-     *                                                                                                           the branches are
+     * @param array<array{list<array{NodeInterface, list<list<GroupNode>>|null}>, bool, list<list<GroupNode>>|null}> $starts the first atoms of each branch,
+     *                                                                                                                       keyed as the branches are
      *
      * @return ?list<CharSet>
      */
@@ -392,25 +400,32 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The characters the atoms may start with, each narrowed by the
-     * lookaheads before it; null when one of them is not judged.
+     * lookaheads before it, way by way; null when one of them is not
+     * judged.
      *
-     * @param list<array{NodeInterface, list<GroupNode>|null}> $leaves
-     * @param \Closure(NodeInterface): ?CharSet                $atomSet what PCRE gives an atom
+     * @param list<array{NodeInterface, list<list<GroupNode>>|null}> $leaves
+     * @param \Closure(NodeInterface): ?CharSet                      $atomSet what PCRE gives an atom
      */
     private static function startSet(array $leaves, \Closure $atomSet, bool $unicode): ?CharSet
     {
         $set = CharSet::empty();
-        foreach ($leaves as [$leaf, $lookaheads]) {
-            $read = null === $lookaheads ? null : $atomSet($leaf);
-            foreach ($lookaheads ?? [] as $lookahead) {
-                $read = null === $read ? null : self::narrowed($read, $lookahead, $atomSet, $unicode);
-            }
-
+        foreach ($leaves as [$leaf, $ways]) {
+            $read = null === $ways ? null : $atomSet($leaf);
             if (null === $read) {
                 return null;
             }
 
-            $set = $set->union($read);
+            foreach ($ways as $lookaheads) {
+                $passed = $read;
+                foreach ($lookaheads as $lookahead) {
+                    $passed = self::narrowed($passed, $lookahead, $atomSet, $unicode);
+                    if (null === $passed) {
+                        return null;
+                    }
+                }
+
+                $set = $set->union($passed);
+            }
         }
 
         return $set;
@@ -427,9 +442,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function narrowed(CharSet $set, GroupNode $lookahead, \Closure $atomSet, bool $unicode): ?CharSet
     {
         if (GroupType::LookaheadPositive === $lookahead->type) {
-            [$leaves, $empty, $emptyLookaheads] = self::firstAtoms($lookahead->child);
+            [$leaves, $empty, $emptyWays] = self::firstAtoms($lookahead->child);
             if ($empty) {
-                return [] === $emptyLookaheads ? $set : null;
+                return [[]] === $emptyWays ? $set : null;
             }
 
             $allowed = self::startSet($leaves, $atomSet, $unicode);
@@ -438,7 +453,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         $refused = self::refusedAtoms($lookahead->child, $unicode);
-        $refusedSet = null === $refused ? null : self::startSet(array_map(static fn (NodeInterface $atom): array => [$atom, []], $refused), $atomSet, $unicode);
+        $refusedSet = null === $refused ? null : self::startSet(array_map(static fn (NodeInterface $atom): array => [$atom, [[]]], $refused), $atomSet, $unicode);
 
         return null === $refusedSet ? null : $set->subtract($refusedSet);
     }
@@ -468,10 +483,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * what any branch does; a lookaround reads nothing, a sequence goes on
      * past an item that may read nothing, and a quantifier that may run no
      * time reads nothing. A lookahead narrows what the atoms after it in
-     * the sequence start with; a lookbehind looks before them. Null stands
-     * for lookaheads that differ by the way taken, "(?:(?=a)|(?=b))".
+     * the sequence start with; a lookbehind looks before them. The
+     * lookaheads are kept way by way: "(?:(?=a)|(?=b))" lets through what
+     * either one does, [[(?=a)], [(?=b)]], and a way without one, [[]],
+     * lets everything through. Null stands for more ways than are read.
      *
-     * @return array{list<array{NodeInterface, list<GroupNode>|null}>, bool, list<GroupNode>|null}
+     * @return array{list<array{NodeInterface, list<list<GroupNode>>|null}>, bool, list<list<GroupNode>>|null}
      */
     private static function firstAtoms(NodeInterface $node): array
     {
@@ -479,7 +496,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // A bare "(?i)" reads nothing: it sets the options of what
             // follows it, which flagsAt() reads.
             if (NodePredicates::isStandaloneInlineFlags($node)) {
-                return [[], true, []];
+                return [[], true, [[]]];
             }
 
             if (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true)) {
@@ -490,69 +507,65 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // branch takes its first character with what follows, among
             // those a lookahead lets through.
             if (GroupType::LookaheadPositive === $node->type || GroupType::LookaheadNegative === $node->type) {
-                return [[], true, [$node]];
+                return [[], true, [[$node]]];
             }
 
             // A lookbehind looks at what stands before, as the scan of a
             // captured substring does.
             if (\in_array($node->type, [GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring], true)) {
-                return [[], true, []];
+                return [[], true, [[]]];
             }
         }
 
         if ($node instanceof SequenceNode) {
             $atoms = [];
-            $lookaheads = [];
+            $ways = [[]];
             foreach ($node->children as $child) {
-                [$childAtoms, $childEmpty, $childLookaheads] = self::firstAtoms($child);
+                [$childAtoms, $childEmpty, $childWays] = self::firstAtoms($child);
                 foreach ($childAtoms as [$atom, $before]) {
-                    $atoms[] = [$atom, null === $lookaheads || null === $before ? null : [...$lookaheads, ...$before]];
+                    $atoms[] = [$atom, self::bothWays($ways, $before)];
                 }
 
                 if (!$childEmpty) {
-                    return [$atoms, false, []];
+                    return [$atoms, false, [[]]];
                 }
 
-                $lookaheads = null === $lookaheads || null === $childLookaheads ? null : [...$lookaheads, ...$childLookaheads];
+                $ways = self::bothWays($ways, $childWays);
             }
 
             // A sequence read to its end may read nothing.
-            return [$atoms, true, $lookaheads];
+            return [$atoms, true, $ways];
         }
 
         if ($node instanceof AlternationNode) {
             $atoms = [];
-            $empty = false;
-            $lookaheads = [];
+            $ways = [];
             foreach ($node->alternatives as $alternative) {
-                [$alternativeAtoms, $alternativeEmpty, $alternativeLookaheads] = self::firstAtoms($alternative);
+                [$alternativeAtoms, $alternativeEmpty, $alternativeWays] = self::firstAtoms($alternative);
                 $atoms = [...$atoms, ...$alternativeAtoms];
                 if ($alternativeEmpty) {
-                    // A way past the alternation that no lookahead narrows
-                    // leaves what follows free.
-                    $lookaheads = !$empty ? $alternativeLookaheads : ([] === $lookaheads || [] === $alternativeLookaheads ? [] : ($lookaheads === $alternativeLookaheads ? $lookaheads : null));
-                    $empty = true;
+                    $ways = self::eitherWay($ways, $alternativeWays);
                 }
             }
 
             // An alternation may read nothing when one of its branches may.
-            return [$atoms, $empty, $lookaheads];
+            return [$atoms, [] !== $ways, [] === $ways ? [[]] : $ways];
         }
 
         if ($node instanceof QuantifierNode) {
             [$min, $max] = QuantifierMath::parseRange($node);
             if (0 === $max) {
-                return [[], true, []];
+                return [[], true, [[]]];
             }
 
-            [$atoms, $empty, $lookaheads] = self::firstAtoms($node->node);
+            [$atoms, $empty, $ways] = self::firstAtoms($node->node);
 
             // A body that may run no time narrows nothing past it.
-            return [$atoms, $empty || 0 === $min, 0 === $min ? [] : $lookaheads];
+            return [$atoms, $empty || 0 === $min, 0 === $min ? [[]] : $ways];
         }
 
         if ($node instanceof LiteralNode && '' === $node->value) {
-            return [[], true, []];
+            return [[], true, [[]]];
         }
 
         // One character alone is always a run, and the engine enters the
@@ -561,17 +574,73 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return self::firstAtoms($node->content);
         }
 
-        return [[[$node, []]], false, []];
+        return [[[$node, [[]]]], false, [[]]];
+    }
+
+    /**
+     * The ways through one set of lookaheads then the other: each way of
+     * the first with each of the second. Null past the ways read.
+     *
+     * @param list<list<GroupNode>>|null $first
+     * @param list<list<GroupNode>>|null $then
+     *
+     * @return list<list<GroupNode>>|null
+     */
+    private static function bothWays(?array $first, ?array $then): ?array
+    {
+        if (null === $first || null === $then || \count($first) * \count($then) > self::MAX_LOOKAHEAD_WAYS) {
+            return null;
+        }
+
+        $ways = [];
+        foreach ($first as $way) {
+            foreach ($then as $next) {
+                $ways[] = [...$way, ...$next];
+            }
+        }
+
+        return $ways;
+    }
+
+    /**
+     * The ways through one set of lookaheads or the other. A way with no
+     * lookahead lets everything through, whatever the others let. Null
+     * past the ways read.
+     *
+     * @param list<list<GroupNode>>|null $ways
+     * @param list<list<GroupNode>>|null $other
+     *
+     * @return list<list<GroupNode>>|null
+     */
+    private static function eitherWay(?array $ways, ?array $other): ?array
+    {
+        if (\in_array([], $ways ?? [], true) || \in_array([], $other ?? [], true)) {
+            return [[]];
+        }
+
+        if (null === $ways || null === $other) {
+            return null;
+        }
+
+        $either = [...$ways];
+        foreach ($other as $way) {
+            if (!\in_array($way, $either, true)) {
+                $either[] = $way;
+            }
+        }
+
+        return \count($either) > self::MAX_LOOKAHEAD_WAYS ? null : $either;
     }
 
     /**
      * The atoms whose characters a negative lookahead's body refuses
      * whatever follows them: a body that may match that one character,
-     * "a", "[ab]", "a|\d" or "ab?". A body that goes on with a character
-     * it needs, "ab", refuses "a" only before "b": none. A first character
-     * followed by anything else, "a\b" or "a(?=b)", is taken as refused,
-     * which leaves fewer characters to meet. Null for a body that does not
-     * start with one character.
+     * "a", "[ab]", "a|\d", "ab?" or "a+", which matches as soon as one "a"
+     * stands there. A body that goes on with what must hold after the
+     * character, a character it needs, "ab" or "a{2}", or an assertion,
+     * "a$", "a\b" or "a(?=b)", refuses "a" only there: none. Null for a
+     * body that does not start with one character, or may match nothing,
+     * "a*".
      *
      * @return list<NodeInterface>|null
      */
@@ -606,36 +675,81 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return [];
         }
 
-        if (null === $first || !LanguageQuestions::isOneCharacter($first, $unicode)) {
+        // A character repeated reads it once, then as many more as the count
+        // asks: "a+" is "a" then "a*", "a{2}" is "a" then "a".
+        $atom = $first;
+        $more = 0;
+        if ($first instanceof QuantifierNode && LanguageQuestions::isOneCharacter($first->node, $unicode)) {
+            $more = QuantifierMath::parseRange($first)[0] - 1;
+            $atom = $first->node;
+        }
+
+        if (null === $atom || $more < 0 || !LanguageQuestions::isOneCharacter($atom, $unicode)) {
             return null;
         }
 
-        return isset($items[1]) && self::needsACharacter($items[1], $unicode) ? [] : [$first];
-    }
-
-    /**
-     * Whether the item reads a character before anything else can hold:
-     * a literal, an atom of one character, or one repeated at least once.
-     */
-    private static function needsACharacter(NodeInterface $node, bool $unicode): bool
-    {
-        if ($node instanceof QuantifierNode) {
-            return 0 < QuantifierMath::parseRange($node)[0] && self::needsACharacter($node->node, $unicode);
+        if ($more > 0) {
+            return [];
         }
 
-        return ($node instanceof LiteralNode && '' !== $node->value) || LanguageQuestions::isOneCharacter($node, $unicode);
+        foreach (\array_slice($items, 1) as $item) {
+            if (!self::matchesEmptyFreely($item)) {
+                return [];
+            }
+        }
+
+        return [$atom];
     }
 
     /**
-     * Whether a lookahead stands before one of the atoms, or before them
-     * in ways that differ.
+     * Whether the item may match the empty string wherever it stands, with
+     * no condition on what is around it: "b?", "(?:b|)" or "\K", not "$",
+     * "\b" or "(?=b)".
+     */
+    private static function matchesEmptyFreely(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode) {
+            return 0 === QuantifierMath::parseRange($node)[0] || self::matchesEmptyFreely($node->node);
+        }
+
+        if ($node instanceof GroupNode) {
+            return NodePredicates::isStandaloneInlineFlags($node)
+                || (\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true) && self::matchesEmptyFreely($node->child));
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!self::matchesEmptyFreely($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (self::matchesEmptyFreely($alternative)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return ($node instanceof LiteralNode && '' === $node->value) || $node instanceof KeepNode || $node instanceof CommentNode;
+    }
+
+    /**
+     * Whether a lookahead stands before one of the atoms, on any way, or
+     * before them in more ways than are read.
      *
-     * @param list<array{NodeInterface, list<GroupNode>|null}> $leaves
+     * @param list<array{NodeInterface, list<list<GroupNode>>|null}> $leaves
      */
     private static function holdsLookahead(array $leaves): bool
     {
-        foreach ($leaves as [, $lookaheads]) {
-            if ([] !== $lookaheads) {
+        foreach ($leaves as [, $ways]) {
+            if ([[]] !== $ways) {
                 return true;
             }
         }
