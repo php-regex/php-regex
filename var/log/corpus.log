@@ -10456,14 +10456,14 @@ corpus/freescout-help-desk/freescout/app/Http/Controllers/SystemController.php:2
        - #\| N    \| ([^\|]+)\|#
        + #\| N {4}\| ([^|]+)\|#
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:631:30
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:632:30
     → /\s+/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /\s+/mu
        + /\s+/u
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2032:41
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2035:41
     → /<!--(.|\s)*?-->/
    INFO  Quantified capturing group 1 "(.|\s)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -10471,19 +10471,19 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2032:41
        ↳ Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it
          changes match semantics.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2964:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2967:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group 1 "([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]…" with "+": only the last iteration's capture is
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2965:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2968:33
     → /([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}\ UT)+$/i
    INFO  Quantified capturing group 1 "([A-Z]{2,3}\,\ [0-9]{1,2}\ [A-…" with "+": only the last iteration's capture is
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2968:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2971:33
     → /([A-Z]{2,3}[\,|\ \,]\ [0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{4}\ [0-9]{1,2}\:[0-9]{1,2}\:[0-9]{1,2}.*)+$/i
    FAIL  Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.
        ↳ Attack: "AA, 0 AA 0000 0:0:00" x n . "\n!"
@@ -10518,13 +10518,13 @@ corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2968:33
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2971:33
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:2974:33
     → /([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]{2,4}\ [0-9]{2}\:[0-9]{2}\:[0-9]{2}\ [A-Z]{2}\ \-[0-9]{2}\:[0-9]{2}\ \([A-Z]{2,3}\ \-[0-9]{2}:[0-9]{2}\))+$/i
    INFO  Quantified capturing group 1 "([0-9]{1,2}\ [A-Z]{2,3}\ [0-9]…" with "+": only the last iteration's capture is
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/freescout-help-desk/freescout/app/Misc/Helper.php:3051:41
+corpus/freescout-help-desk/freescout/app/Misc/Helper.php:3054:41
     → /enable/m
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -11022,21 +11022,21 @@ corpus/getgrav/grav/system/src/Grav/Common/Page/Medium/VectorImageMedium.php:53:
        - /<!DOCTYPE\b[^>]*(?:\[[^\]]*\])?[^>]*>/is
        + /<!DOCTYPE\b[^>]*(?:\[[^\]]*\])?[^>]*>/i
 
-corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1241:18
+corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1245:18
     → /({#.*?#})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /({#.*?#})/mu
        + /({#.*?#})/u
 
-corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1241:35
+corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1245:35
     → /({{.*?}})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /({{.*?}})/mu
        + /({{.*?}})/u
 
-corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1241:52
+corpus/getgrav/grav/system/src/Grav/Common/Page/Page.php:1245:52
     → /({%.*?%})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -11057,7 +11057,7 @@ corpus/getgrav/grav/system/src/Grav/Common/Uri.php:1255:18
    WARN  Capturing group "(\d+)" never captures any text: it is empty or unset wherever the pattern matches.
        ↳ Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.
 
-corpus/getgrav/grav/system/src/Grav/Common/Utils.php:2158:13
+corpus/getgrav/grav/system/src/Grav/Common/Utils.php:2161:13
     → %[^:/@?&=#]+%usD
    WARN  Flag 'D' is useless: the pattern contains no $ anchor.
    WARN  Flag 's' is useless: the pattern contains no unescaped dot outside a character class.
@@ -11077,21 +11077,21 @@ corpus/getgrav/grav/system/src/Grav/Framework/File/Formatter/MarkdownFormatter.p
    ↳ via $headerRegex
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
-corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:958:18
+corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:954:18
     → /({#.*?#})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /({#.*?#})/mu
        + /({#.*?#})/u
 
-corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:958:35
+corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:954:35
     → /({{.*?}})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
        - /({{.*?}})/mu
        + /({{.*?}})/u
 
-corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:958:52
+corpus/getgrav/grav/system/src/Grav/Framework/Flex/Pages/Traits/PageContentTrait.php:954:52
     → /({%.*?%})/mu
    WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
    TIP 
@@ -22654,12 +22654,12 @@ corpus/roundcube/roundcubemail/program/actions/mail/headers.php:57:21
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/roundcube/roundcubemail/program/actions/mail/index.php:927:30
+corpus/roundcube/roundcubemail/program/actions/mail/index.php:946:30
     → /<meta[^>]+charset=[a-z0-9_"-]+[^>]*>/Ui
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
 
-corpus/roundcube/roundcubemail/program/actions/mail/index.php:1261:27
+corpus/roundcube/roundcubemail/program/actions/mail/index.php:1280:27
     → /\.([^.]+)$/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
@@ -28902,7 +28902,7 @@ corpus/woocommerce/woocommerce/plugins/woocommerce/src/Internal/ProductFilters/P
    INFO  Quantified capturing group 1 "(,[1-5])" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/woocommerce/woocommerce/plugins/woocommerce/src/StoreApi/Authentication.php:381:6
+corpus/woocommerce/woocommerce/plugins/woocommerce/src/StoreApi/Authentication.php:404:6
     → /(?<=\[).*(?=\])/i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
 
