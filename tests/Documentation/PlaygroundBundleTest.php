@@ -25,19 +25,19 @@ use PHPUnit\Framework\TestCase;
  * tests hold its shape and its self-sufficiency, not its freshness against
  * src/: the home runs the snapshot its manifest names, by design.
  *
- * @phpstan-type Module array{release: string, sha256: string, bytes: int, base64: string}
- * @phpstan-type Bundle array{manifest: array<string, mixed>, files: array<string, string>, modules?: array<string, Module>}
+ * @phpstan-type Pinned array{release: string, pcre2: array{tag: string, commit: string}, patches: list<string>, emscripten: array{image: string, digest: string}, module: string, sha256: string, bytes: int, exports: list<string>, imports: list<string>}
+ * @phpstan-type Bundle array{manifest: array<string, mixed>, files: array<string, string>, modules?: mixed}
  */
 #[Group('documentation')]
 final class PlaygroundBundleTest extends TestCase
 {
     /**
-     * The PCRE2 release the page's 8.4 and 8.5 engines bundle: the one trace
-     * module shipped at launch, named by it.
+     * The PCRE2 releases the page's engines bundle, one trace module each:
+     * 8.0 10.35, 8.1 10.39, 8.2 10.40, 8.3 10.42, 8.4 and 8.5 10.44.
      */
-    private const RELEASE = '10.44';
-    private const MODULE = 'pcre2-'.self::RELEASE;
+    private const RELEASES = ['10.35', '10.39', '10.40', '10.42', '10.44'];
     private const MANIFEST = PlaygroundDriver::ROOT.'/wasm/pcre2-trace/manifest.json';
+    private const MODULES = PlaygroundDriver::ROOT.'/docs/assets/playground';
 
     #[Test]
     public function test_the_manifest_is_complete(): void
@@ -62,55 +62,77 @@ final class PlaygroundBundleTest extends TestCase
     }
 
     /**
-     * The trace module rides in the bundle the way the library's sources
-     * do: base64 under a modules key, named by its PCRE2 release, with the
-     * sha256 and the size of the bytes it decodes to. The manifest repeats
-     * the release, the sha256 and the size, without the bytes.
+     * The trace modules sit beside the bundle, one file per PCRE2 release
+     * (pcre2-<release>.wasm), fetched only when the Step through tab traces
+     * on an engine of that release. The bundle names each one in its
+     * manifest, with the sha256 and the size the worker checks the fetched
+     * bytes against, and carries no module bytes itself.
      */
     #[Test]
-    public function test_the_bundle_embeds_the_trace_module(): void
+    public function test_the_bundle_names_a_trace_module_per_release_and_carries_none(): void
     {
         $bundle = self::rawBundle();
 
-        $this->assertArrayHasKey('modules', $bundle);
-        $modules = $bundle['modules'] ?? [];
-        $this->assertSame([self::MODULE], array_keys($modules));
-        $module = $modules[self::MODULE];
-        $this->assertSame(['release', 'sha256', 'bytes', 'base64'], array_keys($module));
-        $this->assertSame(self::RELEASE, $module['release']);
-        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $module['sha256']);
-        $this->assertIsInt($module['bytes']);
-        $this->assertGreaterThan(100000, $module['bytes']);
-
-        $bytes = base64_decode($module['base64'], true);
-        $this->assertIsString($bytes, 'The module is strict base64.');
-        $this->assertSame($module['bytes'], \strlen($bytes));
-        $this->assertSame($module['sha256'], hash('sha256', $bytes));
-        $this->assertStringStartsWith("\0asm", $bytes, 'The bytes are a WebAssembly module.');
-
+        $this->assertArrayNotHasKey('modules', $bundle, 'The module bytes are files of their own, never base64 in the bundle.');
         $manifest = $bundle['manifest']['modules'] ?? null;
-        $this->assertSame([self::MODULE => ['release' => $module['release'], 'sha256' => $module['sha256'], 'bytes' => $module['bytes']]], $manifest);
+        $this->assertIsArray($manifest);
+        $this->assertSame(array_map(static fn (string $release): string => 'pcre2-'.$release, self::RELEASES), array_keys($manifest));
+        foreach (self::RELEASES as $release) {
+            $entry = $manifest['pcre2-'.$release];
+            $this->assertIsArray($entry);
+            $this->assertSame(['release', 'sha256', 'bytes'], array_keys($entry));
+            $this->assertSame($release, $entry['release']);
+            $this->assertIsString($entry['sha256']);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $entry['sha256']);
+            $this->assertIsInt($entry['bytes']);
+            $this->assertGreaterThan(100000, $entry['bytes']);
+
+            $file = self::MODULES.'/pcre2-'.$release.'.wasm';
+            $this->assertFileExists($file, 'The bundle names pcre2-'.$release.' but no file serves it: regenerate the bundle.');
+            $bytes = (string) file_get_contents($file);
+            $this->assertSame($entry['bytes'], \strlen($bytes));
+            $this->assertSame($entry['sha256'], hash('sha256', $bytes));
+            $this->assertStringStartsWith("\0asm", $bytes, 'The bytes are a WebAssembly module.');
+        }
+        $served = array_map(basename(...), glob(self::MODULES.'/*.wasm') ?: []);
+        sort($served);
+        $this->assertSame(array_map(static fn (string $release): string => 'pcre2-'.$release.'.wasm', self::RELEASES), $served, 'Only the modules the bundle names are served.');
     }
 
     /**
-     * The module's checksum is pinned in the tree, where CI rebuilds the
-     * module and compares: the bundle carries the bytes that pin names.
+     * Each module's checksum is pinned in the tree, where CI rebuilds the
+     * module and compares: the page serves the bytes that pin names, built
+     * from the release's tag with php-src's patches to its bundled copy.
      */
     #[Test]
-    public function test_the_embedded_module_is_the_one_the_tree_pins(): void
+    public function test_the_served_modules_are_the_ones_the_tree_pins(): void
     {
         $this->assertFileExists(self::MANIFEST);
-        /** @var array<string, mixed> $pinned */
+        /** @var array<string, Pinned> $pinned */
         $pinned = json_decode((string) file_get_contents(self::MANIFEST), true, 512, \JSON_THROW_ON_ERROR);
-        $module = self::rawBundle()['modules'][self::MODULE] ?? null;
+        /** @var array<string, array{release: string, sha256: string, bytes: int}> $manifest */
+        $manifest = self::rawBundle()['manifest']['modules'] ?? [];
 
-        $this->assertIsArray($module, 'The bundle embeds no '.self::MODULE.' module.');
-        $this->assertSame(self::RELEASE, $pinned['release']);
-        $this->assertSame(self::MODULE.'.wasm', $pinned['module']);
-        $this->assertIsString($pinned['sha256']);
-        $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $pinned['sha256']);
-        $this->assertSame($pinned['sha256'], $module['sha256'], 'The bundle embeds other bytes than the tree pins: rebuild the module or regenerate the bundle.');
-        $this->assertSame($pinned['bytes'], $module['bytes']);
+        $this->assertSame(self::RELEASES, array_keys($pinned));
+        foreach (self::RELEASES as $release) {
+            $entry = $pinned[$release];
+            $this->assertSame(['release', 'pcre2', 'patches', 'emscripten', 'module', 'sha256', 'bytes', 'exports', 'imports'], array_keys($entry));
+            $this->assertSame($release, $entry['release']);
+            $this->assertSame('pcre2-'.$release, $entry['pcre2']['tag']);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{40}$/', $entry['pcre2']['commit']);
+            $this->assertSame('pcre2-'.$release.'.wasm', $entry['module']);
+            $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $entry['sha256']);
+            $this->assertSame(['env.emscripten_notify_memory_growth'], $entry['imports']);
+            foreach ($entry['patches'] as $patch) {
+                $this->assertFileExists(\dirname(self::MANIFEST).'/patches/'.$patch.'.patch');
+            }
+            $this->assertArrayHasKey('pcre2-'.$release, $manifest);
+            $this->assertSame($entry['sha256'], $manifest['pcre2-'.$release]['sha256'], 'The page serves other bytes than the tree pins for '.$release.': rebuild the module or regenerate the bundle.');
+            $this->assertSame($entry['bytes'], $manifest['pcre2-'.$release]['bytes']);
+        }
+        // php-src carries the GH-11374 backport in its bundled 10.39 (8.1.26
+        // and later) and 10.42 (8.3.0 and later), not in 8.2.11's 10.40.
+        $this->assertSame(['10.39', '10.42'], array_values(array_filter(self::RELEASES, static fn (string $release): bool => \in_array('gh-11374', $pinned[$release]['patches'], true))));
     }
 
     #[Test]

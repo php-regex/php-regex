@@ -1,17 +1,19 @@
 'use strict';
 
 // The step debugger's engine: PCRE2 itself — the upstream sources of one
-// release, unmodified, compiled to WebAssembly behind a small shim that
+// release, with the patches php-src carries in its bundled copy of it (the
+// sources then equal php-src's), compiled to WebAssembly behind a small shim that
 // runs one pcre2_match() with automatic callouts and records every step as
 // JSON. It lives in its own worker, apart from the PHP engines' one, so a
 // pattern that runs to the match limit with a callout per item holds this
 // worker alone; the page owns the watchdog and may terminate it at any
 // moment, at the price of the module's reload.
 //
-// The module rides in the playground's bundle (the same file the PHP
-// worker fetches, so the browser's cache serves it twice), base64 under a
-// "modules" key named by the PCRE2 release, with the sha256 of its bytes.
-// The bytes are checked against that sha256 before they are instantiated:
+// One module per PCRE2 release, served beside the playground's bundle as
+// pcre2-<release>.wasm and fetched only when a trace runs on that release.
+// The bundle's manifest (the same file the PHP worker fetches, so the
+// browser's cache serves it twice) names each module with the sha256 and
+// the size of its bytes, which are checked before they are instantiated:
 // a module that does not match its checksum is never run.
 //
 // Messages in:
@@ -46,15 +48,6 @@ async function loadBundle(url) {
   return bundle;
 }
 
-function fromBase64(text) {
-  const binary = atob(text);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return bytes;
-}
-
 async function sha256(bytes) {
   if (!self.crypto || !self.crypto.subtle) {
     throw new Error('the trace module could not be verified: this browser offers no SubtleCrypto in a worker');
@@ -73,22 +66,29 @@ async function sha256(bytes) {
 // below takes a fresh view of memory.buffer and keeps none.
 const IMPORTS = { env: { emscripten_notify_memory_growth: function () {} } };
 
-// The module of one release: fetched with the bundle, checked against its
-// recorded sha256, instantiated with its one import (the memory-growth
-// notice above), and initialised once — the module is a WASI reactor and
-// _initialize() must run before any other export.
+// The module of one release: named by the bundle's manifest, fetched from
+// beside the bundle (the sha256 in the address, so a rebuilt module never
+// meets a stale cache), checked against that sha256, instantiated with its
+// one import (the memory-growth notice above), and initialised once — the
+// module is a WASI reactor and _initialize() must run before any other
+// export.
 async function module(bundleUrl, release) {
   if (loading && loadedRelease === release) {
     return loading;
   }
   loadedRelease = release;
   loading = (async () => {
-    const modules = (await loadBundle(bundleUrl)).modules || {};
-    const entry = modules['pcre2-' + release] || modules[release];
-    if (!entry || typeof entry.base64 !== 'string') {
+    const manifest = (await loadBundle(bundleUrl)).manifest || {};
+    const entry = (manifest.modules || {})['pcre2-' + release];
+    if (!entry || typeof entry.sha256 !== 'string') {
       throw new Error('no trace module for PCRE2 ' + release);
     }
-    const bytes = fromBase64(entry.base64);
+    const url = new URL('pcre2-' + release + '.wasm?sha256=' + entry.sha256.slice(0, 16), new URL(bundleUrl, self.location.href));
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('the trace module could not be loaded (HTTP ' + response.status + ')');
+    }
+    const bytes = new Uint8Array(await response.arrayBuffer());
     if (typeof entry.bytes === 'number' && entry.bytes !== bytes.length) {
       throw new Error('the trace module does not match its checksum');
     }
