@@ -82,7 +82,7 @@ CHANGELOG
  * The heuristics read a character written as an escape, `\xC2`, `\x{C2}`,
    `\302`, `\o{302}`, `\N{U+C2}` or `\cA`, and a class of them, as the
    characters PCRE reads, above ASCII too, under PCRE2's own tables (under
-   another locale's, nothing above ASCII is read): a UTF-8 sequence spelled
+   another locale's, what those decide is left unknown): a UTF-8 sequence spelled
    byte by byte beside an ASCII class,
    `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
    TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
@@ -97,6 +97,16 @@ CHANGELOG
    Under u a character above ASCII ends a repeat as it starts the next
    one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
    `/^((?:a+a)+)\1$/` is.
+ * Under another locale's tables than PCRE2's own, where they read nothing
+   above ASCII, the heuristics read the bytes above ASCII a pattern writes
+   and those a negated class takes, as under C, and leave unknown what
+   those tables decide: `\d`, `\s` and `\w` without UCP, `(*UTF)` alone
+   included, and the other case of a character under i, of an ASCII one
+   under u too. Under fr_FR.ISO8859-1, `"/^(x)[^a]+\xC3+\\1$/"` with a raw
+   `\xC3`, `'/^(x)[^a]+é+\1$/u'`, `"/^(x)\\w+\xE9+\\1$/"` and
+   `"/^(x)\xC9+\xE9+\\1$/i"`, where the Latin-1 tables put `\xE9` in `\w`
+   and pair it with `\xC9`, were safe and are medium: PCRE takes 31, 123
+   and 499 steps on `x` then 8, 16 and 32 times the byte or the letter.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
    a letter meets its other case, and where `(?-i)` turns i off again it

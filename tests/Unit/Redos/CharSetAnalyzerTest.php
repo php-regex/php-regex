@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -25,6 +26,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -32,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 
 final class CharSetAnalyzerTest extends TestCase
 {
+    use InstalledLocales;
     use PcreGates;
 
     #[Test]
@@ -518,6 +521,106 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertSame(1, preg_match('/^\x41$/', 'A'));
         $this->assertTrue($analyzer->firstChars($node)->intersects(ByteCharSet::fromChar('A')));
         $this->assertFalse($analyzer->firstChars($node)->intersects(ByteCharSet::fromChar('a')));
+
+        // A byte above ASCII written as it is stays that byte, and the
+        // complement of a class that holds one stops at ASCII all the same.
+        [$analyzer, $node] = self::atom("/\x90/", false);
+        $this->assertSame([[0x90, 0x90]], $analyzer->firstChars($node)->ranges());
+
+        [$analyzer, $node] = self::atom("/[^\xE9]/", false);
+        $this->assertSame(1, preg_match("/^[^\xE9]$/", "\x90"), 'Oracle: the negated class takes a byte above ASCII.');
+        $this->assertSame([[0x00, 0x7F]], $analyzer->firstChars($node)->ranges());
+    }
+
+    /**
+     * Read for the ReDoS analysis under another locale's tables than
+     * PCRE2's own, a set holds the bytes above ASCII a literal or an escape
+     * writes, and those the complement of a class takes. What the tables
+     * do not decide is read as under PCRE2's own: "\h", "\v" and the dot,
+     * and under u the spaces and the other case of a character above
+     * ASCII, which Unicode gives. Under u a set knows a character by the
+     * byte it starts with.
+     */
+    #[Test]
+    #[DataProvider('provideReadsUnderAnotherLocalesTables')]
+    public function test_read_under_another_locales_tables_a_set_holds_the_bytes_the_pattern_writes(string $pattern, string $taken, string $refused): void
+    {
+        $this->assertSame(1, preg_match(self::anchored($pattern), $taken), \sprintf('Oracle: %s takes %s.', addcslashes($pattern, "\200..\377"), bin2hex($taken)));
+        $this->assertSame(0, preg_match(self::anchored($pattern), $refused), \sprintf('Oracle: %s refuses %s.', addcslashes($pattern, "\200..\377"), bin2hex($refused)));
+
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern);
+        $set = $analyzer->firstChars($node);
+
+        $this->assertFalse($set->isUnknown(), $pattern);
+        $this->assertTrue($set->intersects(ByteCharSet::fromChar($taken)), $pattern.' takes '.bin2hex($taken));
+        $this->assertFalse($set->intersects(ByteCharSet::fromChar($refused)), $pattern.' refuses '.bin2hex($refused));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, taken: string, refused: string}>
+     */
+    public static function provideReadsUnderAnotherLocalesTables(): iterable
+    {
+        yield 'a negated class' => ['pattern' => '/[^a]/', 'taken' => "\xC3", 'refused' => 'a'];
+        yield 'a byte written as it is' => ['pattern' => "/\xC3/", 'taken' => "\xC3", 'refused' => "\xC2"];
+        yield 'an escape above ASCII' => ['pattern' => '/\xC3/', 'taken' => "\xC3", 'refused' => "\xC2"];
+        yield 'a range above ASCII' => ['pattern' => '/[\xC2-\xDF]/', 'taken' => "\xDF", 'refused' => "\xE0"];
+        yield 'a negated byte above ASCII' => ['pattern' => "/[^\xE9]/", 'taken' => "\x90", 'refused' => "\xE9"];
+        yield 'a negated letter of two bytes, read in bytes' => ['pattern' => '/[^é]/', 'taken' => "\x90", 'refused' => "\xA9"];
+        yield 'a negated range' => ['pattern' => '/[^\x00-\x1F]/', 'taken' => "\x80", 'refused' => "\x1F"];
+        yield 'a letter in its own case' => ['pattern' => '/a/', 'taken' => 'a', 'refused' => 'A'];
+        yield 'the horizontal spaces' => ['pattern' => '/\h/', 'taken' => "\xA0", 'refused' => "\x85"];
+        yield 'the vertical spaces' => ['pattern' => '/\v/', 'taken' => "\x85", 'refused' => "\xA0"];
+        yield 'no horizontal space' => ['pattern' => '/\H/', 'taken' => "\xE9", 'refused' => "\xA0"];
+        yield 'the dot' => ['pattern' => '/./', 'taken' => "\xE9", 'refused' => "\n"];
+        yield 'a negated class under u' => ['pattern' => '/[^a]/u', 'taken' => 'é', 'refused' => 'a'];
+        yield 'the spaces under u' => ['pattern' => '/\s/u', 'taken' => ' ', 'refused' => 'é'];
+        yield 'a letter above ASCII under iu' => ['pattern' => '/é/iu', 'taken' => 'É', 'refused' => 'e'];
+    }
+
+    /**
+     * Read under another locale's tables, what they decide is not known:
+     * the types "\d", "\s" and "\w" without UCP, (*UTF) alone included,
+     * and the other case of a character, which the tables give a byte, and
+     * under u or (*UCP) an ASCII character (pcre2_compile.c reads Unicode's
+     * other case above ASCII alone). The oracle shows the Latin-1 tables
+     * putting 0xE9 in "\w", under (*UTF) too, and pairing it with 0xC9
+     * under i; "\d" and "\s" read the tables as "\w" does, which
+     * pcre2_maketables() builds from isdigit() and isspace().
+     */
+    #[Test]
+    public function test_read_under_another_locales_tables_what_they_decide_is_not_known(): void
+    {
+        $latin1 = 'fr_FR.ISO8859-1';
+        $this->requiresLocale($latin1, 'What the Latin-1 tables decide');
+
+        $read = static function (string $locale): array {
+            $matches = [];
+            CharacterTables::under($locale, static function () use (&$matches): void {
+                $matches = [
+                    preg_match('/^\w$/', "\xE9"),
+                    preg_match('/^\W$/', "\xE9"),
+                    preg_match("/^\xC9$/i", "\xE9"),
+                    preg_match('/(*UTF)^\w$/', 'é'),
+                ];
+            });
+
+            return $matches;
+        };
+        $this->assertSame([0, 1, 0, 0], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
+        $this->assertSame([1, 0, 1, 1], $read($latin1), 'Oracle: under the Latin-1 tables.');
+
+        foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[a-z]/i', '/[^a]/i', '/a/iu', '/(*UCP)a/i'] as $pattern) {
+            [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern);
+            $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
+            $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $pattern);
+        }
+
+        // Under PCRE2's own tables each is known.
+        foreach (['/\w/', '/\s/', '/\d/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[^a]/i', '/a/iu'] as $pattern) {
+            [$analyzer, $node] = self::atom($pattern);
+            $this->assertFalse($analyzer->firstChars($node)->isUnknown(), $pattern);
+        }
     }
 
     /**
@@ -644,6 +747,35 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'a match limit' => ['pattern' => '/(*LIMIT_MATCH=50)a/', 'first' => 'a'];
         yield 'a depth limit' => ['pattern' => '/(*LIMIT_DEPTH=50)a/', 'first' => 'a'];
         yield 'two optimizations turned off' => ['pattern' => '/(*NO_JIT)(*NO_START_OPT)b/', 'first' => 'b'];
+    }
+
+    /**
+     * The pattern matched whole: "/a|b/u" as "/^(?:a|b)$/u".
+     */
+    private static function anchored(string $pattern): string
+    {
+        $end = (int) strrpos($pattern, $pattern[0]);
+
+        return $pattern[0].'^(?:'.substr($pattern, 1, $end - 1).')$'.substr($pattern, $end);
+    }
+
+    /**
+     * The analyzer of the pattern read under another locale's tables, and
+     * its last atom.
+     *
+     * @return array{CharSetAnalyzer, NodeInterface}
+     */
+    private static function atomUnderAnotherLocalesTables(string $pattern): array
+    {
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $node = $regex->pattern;
+        if ($node instanceof SequenceNode) {
+            $node = $node->children[\count($node->children) - 1];
+        }
+
+        $inForce = CharSetAnalyzer::forRegex($regex, true, false)->inForce($regex);
+
+        return [$inForce[$node], $node];
     }
 
     /**
