@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Assert;
 use Psalm\Config;
@@ -188,6 +190,30 @@ final class PsalmRun
     public static function runningEngineCompiles(string $pattern): bool
     {
         return false !== @preg_match($pattern, '');
+    }
+
+    /**
+     * Whether the installed Psalm reads the condition a preg_match() call
+     * stands in from its cache of assertions alone, as 7.11 and later do
+     * (vimeo/psalm#14161): the assertions set on the call itself are not
+     * read there, and nothing is read where Psalm keeps no such cache, in
+     * the body of a switch. The plugin asks the running Psalm instead of
+     * reading its version: a release that reads the call's assertions again
+     * turns the expectations chosen here red, the signal to revisit them.
+     */
+    public static function readsPregMatchConditionFromCacheOnly(): bool
+    {
+        return InstalledVersions::satisfies(new VersionParser(), 'vimeo/psalm', '>=7.11');
+    }
+
+    /**
+     * Whether the installed Psalm reports every issue during a taint run:
+     * Psalm 6 keeps only the taints there (IssueBuffer::add()), so a type
+     * check is never reported.
+     */
+    public static function reportsTypesInTaintRun(): bool
+    {
+        return InstalledVersions::satisfies(new VersionParser(), 'vimeo/psalm', '>=7.0');
     }
 
     /**

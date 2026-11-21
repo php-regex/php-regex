@@ -191,6 +191,8 @@ function function_name_in_any_case(string $s): void
 {
     // PHP resolves function names case-insensitively:
     // PREG_MATCH('/(a)(b)?/', 'ab', $m) -> 1, $m = ['ab', 'a', 'b'] (PHP 8.4.26).
+    // Psalm 7.11 and later report the case of the name; the call is read all the same.
+    /** @psalm-suppress WrongCaseFunction */
     if (PREG_MATCH('/(a)(b)?/', $s, $m)) {
         /**
          * @psalm-check-type-exact $m = array{0: 'a'|'ab', 1: 'a', 2?: 'b'}

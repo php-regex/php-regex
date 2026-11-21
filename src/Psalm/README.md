@@ -244,8 +244,23 @@ branch, `$matches` keeps the type Psalm gives it, `array<array-key, string>`:
   plugin drops its condition from every comparison;
 * a silenced call, `@preg_match(…)`;
 * a result kept in a variable and tested later: `$ok = preg_match(…); if ($ok)`;
-* the condition of a `while` loop;
+* the condition of a `while`, `for` or `do … while` loop;
 * `$matches` that is not a variable, as `$this->matches`.
+
+Psalm 7.11 and later no longer read the condition a plugin sets on a
+`preg_match()` call: the plugin hands it to Psalm through the cache Psalm
+reads a condition from. Psalm reads a few forms without that cache, and
+there `$matches` keeps Psalm's type on 7.11 and later, where Psalm 7.10 and
+earlier narrow it:
+
+* a condition inside a `case` of a `switch`, or in a function written
+  there: Psalm keeps no such cache while it reads a `switch`;
+* a whole `||` or `&&` negated, as `if (!(!preg_match(…) || $x))`.
+
+Where the call returned 0, a pattern anchored at both ends from which Psalm
+itself learns which characters the subject holds, as `/^(\d+)$/D`, also
+leaves `$matches` with Psalm's type rather than `[]` on 7.11 and later: the
+condition then speaks of the subject too.
 
 The plugin reads a call only when it can tell what the pattern is:
 
