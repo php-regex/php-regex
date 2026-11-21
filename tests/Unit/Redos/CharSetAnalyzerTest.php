@@ -615,6 +615,9 @@ final class CharSetAnalyzerTest extends TestCase
     #[DataProvider('provideStartOptions')]
     public function test_an_option_the_pattern_opens_with_reads_nothing(string $pattern, string $first): void
     {
+        // PCRE2 reads "(*CASELESS_RESTRICT)" from 10.45.
+        $this->requiresPcre2For($pattern, ['10.45' => ['/(*CASELESS_RESTRICT)a/i']]);
+
         foreach (str_split('abx') as $char) {
             $this->assertSame(str_contains($first, $char) ? 1 : 0, preg_match($pattern, $char), \sprintf('Oracle: %s on "%s".', $pattern, $char));
         }
