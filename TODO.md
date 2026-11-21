@@ -145,26 +145,3 @@ request goes to `phpstan/phpstan-src`.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
-
-
-## Optimizer precision
-
-- The possessive rewrite (`possessive: true`) does not read the characters
-  after a group whose last items may match nothing: it offers `/(a+b?)a/` as `/(a++b?)a/`,
-  `/(?:a+b?)*a$/` as `/(?:a++b?)*a$/` and `(?:[0-9]+b?)1` as
-  `(?:\d++b?)1`, which the engine tells apart (`(a+b?)\1` and
-  `(*scs:(1)(a+b?))\2c` too). The result check refuses them, so nothing
-  wrong ships, but the refusal drops the pattern's other rewrites:
-  `/(a+b?)a[0-9]/` stays as written, while `/(a+b?)[0-9]/` becomes
-  `/(a++b?)\d/`. Reading past the group would also stop
-  `/^(\d+\s*)$/` → `/^(\d++\s*)$/`, which the solver proves today.
-- With `possessive: true`, the solver refuses every possessive in a
-  pattern that holds a lookaround or `\b`, wherever it stands:
-  `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s` come back unchanged, the
-  `s` the default options drop included. On a refusal, `Optimizer::optimize()` could
-  rewrite again without the possessive step: one more rewrite and check,
-  only when a refusal happens.
-- `PossessiveRewrites::closes()` counts the non-atomic `(*napla:` among
-  the groups nothing after them backtracks into. Harmless today: its `*`
-  reads as an inline flag, which keeps the possessive rewrite out of the
-  whole pattern.
