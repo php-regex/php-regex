@@ -49,6 +49,7 @@ use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
 use PHPRegex\Psalm\CallTypes;
 use PHPRegex\Psalm\PatternVerdicts;
+use PHPRegex\Psalm\PsalmInternals;
 use PHPRegex\Redos\Backtrack\AmbiguityFinder;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosWitness;
@@ -129,6 +130,7 @@ final class TypeAliasInventoryTest extends TestCase
         RegexPatternRule::class => ['ConfigArray'],
         CallTypes::class => ['CachedType'],
         PatternVerdicts::class => ['PatternVerdict'],
+        PsalmInternals::class => ['Assertions'],
         AmbiguityFinder::class => ['Verdict', 'Witness'],
         SecurityAnalyzer::class => ['SkippedFile'],
         SymfonyLintCommand::class => ['RegexOptions'],

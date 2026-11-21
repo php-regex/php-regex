@@ -18,9 +18,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The Psalm plugin reaches a few of Psalm's internal classes, which a
- * release may move: its tests run on the lowest Psalm the package admits
- * and on the newest release of each major it admits, whatever the other
- * cells resolve.
+ * release may move: its tests run on the lowest Psalm the package admits,
+ * on the newest release of each major it admits, and on the releases on
+ * either side of a change in how Psalm reads them, whatever the other cells
+ * resolve.
  */
 final class PsalmWorkflowTest extends TestCase
 {
@@ -43,6 +44,21 @@ final class PsalmWorkflowTest extends TestCase
         }
         $this->assertStringContainsString('composer update -d tools/phpunit vimeo/psalm --with "vimeo/psalm:$PSALM" --with-all-dependencies', $job);
         $this->assertStringContainsString('tools/phpunit/vendor/bin/phpunit tests/Integration/Bridge/Psalm', $job);
+    }
+
+    /**
+     * Psalm 7.10 is the last release that reads the assertions the plugin
+     * sets on a preg_match() call, 7.12 one that reads them only from the
+     * cache the plugin writes: each way stays tested whatever the newest
+     * Psalm 7 does.
+     */
+    #[Test]
+    public function test_psalm_job_runs_the_plugin_tests_on_either_side_of_psalm_7_11(): void
+    {
+        $job = self::job('psalm');
+
+        $this->assertStringContainsString("- { psalm: '7.10', constraint: '7.10.*' }", $job);
+        $this->assertStringContainsString("- { psalm: '7.12', constraint: '7.12.*' }", $job);
     }
 
     #[Test]

@@ -42,3 +42,13 @@ CHANGELOG
    sets on a `preg_match()` or `preg_match_all()` call reach the node data
    Psalm 7 reads, behind the view it hands a plugin, and the callback of
    `preg_replace_callback()` is typed with the constructor Psalm 7 keeps.
+ * Narrows `$matches` and the subject of `preg_match()` on Psalm 7.11 and
+   later, which answer the call with their own reading of its pattern and
+   no longer read the plugin's condition: the plugin writes its condition,
+   beside Psalm's, into the cache Psalm reads a condition from. Psalm reads
+   a few forms without that cache, and leaves `$matches` with its own type
+   there: a condition inside a `case` of a `switch`, and a whole `||` or
+   `&&` negated. Where a pattern anchored at both ends tells Psalm which
+   characters the subject holds, `$matches` keeps Psalm's type, not `[]`,
+   where the call returned 0. A baseline made on Psalm 7.11 or later should
+   be regenerated.

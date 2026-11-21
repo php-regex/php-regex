@@ -90,17 +90,37 @@ final class CallAssertions
     }
 
     /**
+     * As assertOnResult(), for a preg_match() call made inside the class
+     * $self names: Psalm 7.11 and later read its condition from their cache
+     * of assertions alone, where ConditionAssertions writes them too.
+     *
+     * @param list<Possibilities|null> $ifTrue
+     * @param list<Possibilities|null> $ifFalse
+     */
+    public static function assertOnMatch(StatementsSource $source, ?string $self, FuncCall $call, array $ifTrue, array $ifFalse): void
+    {
+        $ifTrue = array_values(array_filter($ifTrue));
+        $ifFalse = [] === $ifFalse ? null : array_values(array_filter($ifFalse));
+        if (PsalmInternals::assert($source, $call, $ifTrue, $ifFalse)) {
+            ConditionAssertions::cache($source, $self, $call, $ifTrue, $ifFalse);
+        }
+    }
+
+    /**
      * Psalm reads a call's assertions through a comparison as if the call
      * returned a boolean: "preg_match(…) !== false" would type $matches as
      * the shape where no match left [] (0 !== false). Where a preg_match()
      * call is an operand, its assertions go: Psalm analyses the comparison
-     * before it reads them. The stub asserts nothing on the call.
+     * before it reads them, and so does what the cache of assertions holds
+     * for the call, which Psalm reads through a loose comparison with a
+     * boolean. The stub asserts nothing on the call.
      */
     public static function dropAssertions(BinaryOp $comparison, StatementsSource $source): void
     {
         foreach ([$comparison->left, $comparison->right] as $operand) {
             if ($operand instanceof FuncCall && $operand->name instanceof Name && \in_array(CallArguments::globalFunction($operand->name, $source), ['preg_match', 'preg_match_all'], true)) {
                 PsalmInternals::assert($source, $operand, [], []);
+                PsalmInternals::cacheAssertions($source, $operand, null);
             }
         }
     }

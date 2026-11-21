@@ -228,7 +228,9 @@ jobs:
     # The Psalm plugin reaches a few of Psalm's internal classes, which a
     # release may move: its tests run on the lowest Psalm its manifest admits
     # and on the newest release of each major it admits, whatever the other
-    # cells happen to resolve.
+    # cells happen to resolve, and on 7.10 and 7.12, either side of the
+    # release from which Psalm reads a preg_match() condition from its cache
+    # alone.
     name: Psalm plugin (Psalm ${{ matrix.psalm }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -240,6 +242,8 @@ jobs:
         include:
           - { psalm: 'lowest', constraint: '6.19.0' }
           - { psalm: 'newest 6', constraint: '^6.19' }
+          - { psalm: '7.10', constraint: '7.10.*' }
+          - { psalm: '7.12', constraint: '7.12.*' }
           - { psalm: 'newest 7', constraint: '^7.0' }
 
     steps:

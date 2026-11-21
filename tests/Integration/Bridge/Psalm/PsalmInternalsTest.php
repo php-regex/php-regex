@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Psalm\CallbackParameters;
@@ -99,6 +100,10 @@ final class PsalmInternalsTest extends TestCase
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
+        $this->assertNull(PsalmInternals::scrapedAssertions($source, self::call(), null));
+        $this->assertNull(PsalmInternals::cachedAssertions($source, self::call()));
+        // Nothing to write to: the call is not even reached.
+        PsalmInternals::cacheAssertions($source, self::call(), [['$m' => [[new Truthy()]]]]);
     }
 
     #[Test]
@@ -115,6 +120,12 @@ final class PsalmInternalsTest extends TestCase
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
+        $this->assertNull(PsalmInternals::variableId(new Variable('m'), null, null));
+        $this->assertNull(PsalmInternals::scrapedAssertions($analyzer, $call, null));
+        PsalmInternals::cacheAssertions($analyzer, $call, [['$m' => [[new Truthy()]]]]);
+        $this->assertNull($analyzer->node_data->getAssertions($call));
+        $analyzer->node_data->setAssertions($call, [['$m' => [[new Truthy()]]]]);
+        $this->assertNull(PsalmInternals::cachedAssertions($analyzer, $call));
     }
 
     /**
