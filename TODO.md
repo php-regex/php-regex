@@ -32,14 +32,8 @@
   `if (!($found = preg_match(…))) { … return; }` type `$m` as the shape.
   Pin both forms on every Psalm row of the plugin's job.
 
-## Psalm 7.11
+## Psalm plugin in loops
 
-- Psalm 7.11.0 (vimeo/psalm#14161) and later no longer read the condition
-  the plugin sets on `preg_match()`. The branch
-  `psalm-711-preg-match-assertions` (not committed yet) writes that
-  condition into the assertion cache Psalm reads first, lifts the `<7.11`
-  pin in `tools/phpunit` and `tools/paratest`, and adds Psalm 7.10 and
-  7.12 rows to the plugin's job: open its pull request.
 - A loop that changes the pattern between two passes keeps the shape of
   the first: with `$p = '/(a)(b)?/'` before a `foreach` whose body runs
   `if (preg_match_all($p, $s, $n)) { … }` then `$p = '/(x)(y)(z)/'`, `$n`
