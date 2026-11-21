@@ -14,25 +14,6 @@
   fallback reads such a literal as its byte, and
   `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
   ASCII read: both move with it. Spec first. From the review of #407.
-- The Psalm plugin types `$matches` where nothing matched, on every Psalm
-  it narrows on. After
-  `if (preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)) { return; }`,
-  `$m` is `array<never, never>`, where PHP leaves `['ab', 'a', 'b']` for
-  `('x', 'ab')`: Psalm drops the left operand's clauses on a variable the
-  right one writes, and the plugin's conditions reach that formula; without
-  the plugin, `$m` stays `array<array-key, string>`. On Psalm 6, the `else`
-  of `if ($found = preg_match('/(a)(b)?/', $s, $m))` and the body of
-  `if (!($found = preg_match(…))) { … return; }` type `$m` as the shape.
-  Pin both forms on every Psalm row of the plugin's job.
-
-## Psalm plugin in loops
-
-- A loop that changes the pattern between two passes keeps the shape of
-  the first: with `$p = '/(a)(b)?/'` before a `foreach` whose body runs
-  `if (preg_match_all($p, $s, $n)) { … }` then `$p = '/(x)(y)(z)/'`, `$n`
-  is typed from `/(a)(b)?/` on every Psalm; `preg_match()` does the same
-  up to Psalm 7.10. Psalm clears the condition cache between the passes,
-  not the assertions set on the call.
 
 ## Playground on PHP 8.6
 
