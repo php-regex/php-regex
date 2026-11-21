@@ -46,6 +46,21 @@ final class PsalmPluginTaintTest extends TestCase
         $this->assertSame([], array_map(PsalmRun::describe(...), $checks), \sprintf('%s:%d expects %s = %s; Psalm traced %s.', $file, $from, $variable, $expected, $traces[0]->message));
     }
 
+    /**
+     * The fixtures read a pattern anchored at both ends as holding the
+     * subject to letters and digits where the call returned 1: the engine
+     * matches the whole subject there, and writes [] where it returned 0.
+     *
+     * @param list<string> $matches
+     */
+    #[Test]
+    #[DataProvider('provideFixturePatternRuns')]
+    public function test_plugin_taint_fixture_patterns_match_as_the_engine_writes(string $pattern, string $subject, int $expected, array $matches): void
+    {
+        $this->assertSame($expected, preg_match($pattern, $subject, $actual));
+        $this->assertSame($matches, $actual);
+    }
+
     #[Test]
     public function test_plugin_taint_reports_what_psalm_reports_without_the_plugin(): void
     {
@@ -63,6 +78,19 @@ final class PsalmPluginTaintTest extends TestCase
     public static function provideTypeChecks(): iterable
     {
         return PsalmRun::typeChecks(PsalmRun::filesIn(self::DIRECTORY));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, expected: int, matches: list<string>}>
+     */
+    public static function provideFixturePatternRuns(): iterable
+    {
+        yield 'letters and digits' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => 'ab12', 'expected' => 1, 'matches' => ['ab12']];
+        yield 'markup' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => '<b>', 'expected' => 0, 'matches' => []];
+        yield 'letters before a newline' => ['pattern' => '/^[a-z0-9]+$/D', 'subject' => "ab\n", 'expected' => 0, 'matches' => []];
+        yield 'letters and digits in a group' => ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => 'ab12', 'expected' => 1, 'matches' => ['ab12', 'ab12']];
+        yield 'markup against a group' => ['pattern' => '/^([a-z0-9]+)$/D', 'subject' => '<b>', 'expected' => 0, 'matches' => []];
+        yield 'markup against a pattern not anchored' => ['pattern' => '/[a-z0-9]+/', 'subject' => '<b>', 'expected' => 1, 'matches' => ['b']];
     }
 
     /**

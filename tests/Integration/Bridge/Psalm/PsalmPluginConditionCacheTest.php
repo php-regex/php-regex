@@ -48,6 +48,21 @@ final class PsalmPluginConditionCacheTest extends TestCase
         $this->assertSame([], array_map(PsalmRun::describe(...), $failures), \sprintf('%s:%d expects %s = %s; Psalm traced %s.', $file, $from, $variable, $expected, $traces[0]->message));
     }
 
+    /**
+     * The anchored_pattern_false_branch fixtures check $matches where the
+     * call returned 0: the engine writes [] there, and the subject with its
+     * group where the call returned 1.
+     *
+     * @param list<string> $matches
+     */
+    #[Test]
+    #[DataProvider('provideAnchoredPatternRuns')]
+    public function test_condition_cache_anchored_pattern_matches_as_the_engine_writes(string $pattern, string $subject, int $expected, array $matches): void
+    {
+        $this->assertSame($expected, preg_match($pattern, $subject, $actual));
+        $this->assertSame($matches, $actual);
+    }
+
     #[Test]
     public function test_condition_cache_fixtures_raise_no_other_issue(): void
     {
@@ -79,6 +94,16 @@ final class PsalmPluginConditionCacheTest extends TestCase
     public static function provideTypeChecks(): iterable
     {
         return PsalmRun::typeChecks(self::files());
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, expected: int, matches: list<string>}>
+     */
+    public static function provideAnchoredPatternRuns(): iterable
+    {
+        yield 'digits' => ['pattern' => '/^(\d+)$/D', 'subject' => '42', 'expected' => 1, 'matches' => ['42', '42']];
+        yield 'a letter' => ['pattern' => '/^(\d+)$/D', 'subject' => 'x', 'expected' => 0, 'matches' => []];
+        yield 'digits before a newline' => ['pattern' => '/^(\d+)$/D', 'subject' => "42\n", 'expected' => 0, 'matches' => []];
     }
 
     /**
