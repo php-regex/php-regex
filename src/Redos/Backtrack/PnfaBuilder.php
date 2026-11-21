@@ -69,10 +69,9 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * The options a pattern opens with read nothing. Every set is asked of the
  * engine under "(*UCP)", the dot and "\N" under the newline convention. Under
  * a convention other than LF an anchor that reads a newline, "$" but under D
- * alone, "\Z", and "^" and "$" under m, is outside the model, and so is a
- * "#" under x, a comment the parser ends at a line feed alone; under
- * "(*CRLF)" the dot and "\N" are too, as they take a carriage return unless a
- * line feed follows it. "(*CASELESS_RESTRICT)" is r. "(*UTF)" without u, under
+ * alone, "\Z", and "^" and "$" under m, is outside the model; under "(*CRLF)"
+ * the dot and "\N" are too, as they take a carriage return unless a line feed
+ * follows it. "(*CASELESS_RESTRICT)" is r. "(*UTF)" without u, under
  * which PHP hands the engine a subject it does not check, and caseless
  * matching under "(*TURKISH_CASING)" are outside the model. The other start
  * options change no match one attempt makes. Any other verb is outside the
@@ -278,12 +277,7 @@ final class PnfaBuilder
         $this->newline = 'LF' === $newline ? '' : '(*'.$newline.')';
         $this->caselessRestrict = \in_array('CASELESS_RESTRICT', $options, true);
         $this->turkishCasing = \in_array('TURKISH_CASING', $options, true);
-        $this->startLimit = match (true) {
-            !$this->unicode && StartOptions::turnUtfOn($this->source) => '(*UTF) without u',
-            '' !== $this->newline && str_contains(substr($this->source, $this->startEnd), '#')
-                && (str_contains($regex->flags, 'x') || self::setsExtended($regex->pattern)) => 'A comment under x and '.$this->newline,
-            default => null,
-        };
+        $this->startLimit = !$this->unicode && StartOptions::turnUtfOn($this->source) ? '(*UTF) without u' : null;
         $this->collectAbstractions($regex->pattern);
     }
 
@@ -345,24 +339,6 @@ final class PnfaBuilder
     public function hasApproximatedSets(): bool
     {
         return null !== $this->anyCharacter;
-    }
-
-    /**
-     * Whether an option setting may turn x on somewhere in the node.
-     */
-    private static function setsExtended(NodeInterface $node): bool
-    {
-        if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type && str_contains((string) $node->flags, 'x')) {
-            return true;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            if (self::setsExtended($child)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function node(NodeInterface $node, int $next, int $flags, Pnfa $pnfa, int $search): int

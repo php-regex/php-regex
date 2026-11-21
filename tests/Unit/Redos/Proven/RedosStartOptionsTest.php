@@ -35,8 +35,9 @@ use PHPUnit\Framework\TestCase;
  * (*LF), the convention the model reads anyway, (*UTF) under u, and
  * (*CASELESS_RESTRICT) and (*TURKISH_CASING) where nothing is caseless.
  * Another newline convention changes only the dot, "\N", the anchors that
- * read a newline and where a comment ends under x: the pattern keeps its
- * verdict when it holds none of them.
+ * read a newline and where a comment ends under x, which the parser reads
+ * as PCRE does: the pattern keeps its verdict when it holds none of the
+ * others.
  *
  * Under a newline convention the dot and "\N" are asked of the engine:
  * (*CR) leaves out a carriage return, (*NUL) a NUL, (*ANYCRLF) both CR and
@@ -48,13 +49,11 @@ use PHPUnit\Framework\TestCase;
  * Kept outside the model: the dot and "\N" under (*CRLF), which take a
  * carriage return unless a line feed follows it ("/(*CRLF)a..b/" finds no
  * match in "a\r\nb", one in "a\n\rb"); "$" but under D alone, "\Z", and
- * "^" and "$" under m, under a convention other than LF; a "#" under x
- * there, as the parser ends a comment at a line feed where PCRE ends it at
- * the convention's newline; (*UTF) without u, under which PHP hands the
- * engine the subject unchecked ('/(*UTF)./' matches "\xFF", where '/./u'
- * fails on it with PREG_BAD_UTF8_ERROR): the model reads code points only;
- * and caseless matching under (*TURKISH_CASING), which folds "i" with
- * U+0130.
+ * "^" and "$" under m, under a convention other than LF; (*UTF) without
+ * u, under which PHP hands the engine the subject unchecked ('/(*UTF)./'
+ * matches "\xFF", where '/./u' fails on it with PREG_BAD_UTF8_ERROR): the
+ * model reads code points only; and caseless matching under
+ * (*TURKISH_CASING), which folds "i" with U+0130.
  *
  * Each row carries its engine fact, measured in the same test: the steps
  * one match attempt needs in the interpreter, auto-possession and start
@@ -223,6 +222,11 @@ final class RedosStartOptionsTest extends TestCase
         yield 'a dollar under D reads no newline' => ['pattern' => '/(*CR)^(?:.|\n)+b$/D', 'unit' => "\n", 'complexity' => RedosComplexity::Exponential];
         yield 'a dollar under D, the dot leaving a carriage return' => ['pattern' => '/(*CR)^(?:.|\r)+b$/D', 'unit' => "\r", 'complexity' => RedosComplexity::Linear];
         yield 'a convention before a top-level alternation' => ['pattern' => '/(*CR)^(?:.|\r)+b|x/', 'unit' => "\r", 'complexity' => RedosComplexity::Linear];
+        // A comment under x ends at the convention's newline, as the parser
+        // reads it: the item after it counts.
+        yield 'a comment under x and (*CR), ended by a carriage return' => ['pattern' => "/(*CR)^(?:a|a)+#\r b/x", 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
+        yield 'a comment under an inline x and (*ANYCRLF)' => ['pattern' => "/(*ANYCRLF)^(?x)(?:a|a)+#\rb/", 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
+        yield 'a comment under x and (*CR), running past a line feed' => ['pattern' => "/(*CR)^(?:a|a)+#\nb/x", 'unit' => 'a', 'complexity' => RedosComplexity::Linear];
         yield 'the Kelvin sign stays apart from k under (*CASELESS_RESTRICT)' => ['pattern' => '/(*CASELESS_RESTRICT)^(?:k|\x{212A})+b/iu', 'unit' => "\u{212A}", 'complexity' => RedosComplexity::Linear];
         yield 'k still meets K under (*CASELESS_RESTRICT)' => ['pattern' => '/(*CASELESS_RESTRICT)^(?:k|K)+b/iu', 'unit' => 'K', 'complexity' => RedosComplexity::Exponential];
         yield '(?-r) takes (*CASELESS_RESTRICT) off' => ['pattern' => '/(*CASELESS_RESTRICT)^(?-r)(?:k|\x{212A})+b/iu', 'unit' => "\u{212A}", 'complexity' => RedosComplexity::Exponential];
@@ -304,8 +308,6 @@ final class RedosStartOptionsTest extends TestCase
         yield 'a dollar under m and (*NUL)' => ['pattern' => '/(*NUL)^(?:a|a)+$/m', 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
         yield 'a dollar under m and D, (*ANYCRLF)' => ['pattern' => '/(*ANYCRLF)^(?:a|a)+$/mD', 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
         yield 'a caret under an inline m and (*ANY)' => ['pattern' => '/(*ANY)(?m)^(?:a|a)+b/', 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
-        yield 'a comment under x and (*CR), ended by a carriage return' => ['pattern' => "/(*CR)^(?:a|a)+#\r b/x", 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
-        yield 'a comment under an inline x and (*ANYCRLF)' => ['pattern' => "/(*ANYCRLF)^(?x)(?:a|a)+#\rb/", 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
         yield '(*UTF) without u' => ['pattern' => '/(*UTF)^(?:a|a)+b/', 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
         yield '(*UTF) without u, branches a and ab' => ['pattern' => '/(*UTF)(?:a|ab)+c/', 'unit' => 'ab', 'complexity' => RedosComplexity::Linear];
         yield '(*UTF) and (*UCP) without u' => ['pattern' => '/(*UTF)(*UCP)(?:a|ab)+c/', 'unit' => 'ab', 'complexity' => RedosComplexity::Linear];

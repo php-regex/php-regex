@@ -21,10 +21,9 @@ CHANGELOG
    `/(*CR)^(?:.|\r)+b/` is safe (proven), `/(*CR)^(?:.|\n)+b/` exponential.
    `(*CASELESS_RESTRICT)` is read as r. Kept out of the proof: `(*UTF)`
    without u, under which PHP hands PCRE2 a subject it does not check; under
-   a convention other than LF, an anchor that reads a newline and a comment
-   under x, which the parser ends at a line feed alone; the dot and `\N`
-   under `(*CRLF)`, which take a carriage return unless a line feed follows
-   it; and caseless matching under `(*TURKISH_CASING)`. The search cost
+   a convention other than LF, an anchor that reads a newline; the dot and
+   `\N` under `(*CRLF)`, which take a carriage return unless a line feed
+   follows it; and caseless matching under `(*TURKISH_CASING)`. The search cost
    reads a leading `.*` after an option as PCRE2 does: `/(*UCP).*[xy]/s`,
    anchored, is no longer reported quadratic, while
    `/(*NO_DOTSTAR_ANCHOR).*[xy]/s` and `/(*NO_START_OPT).*[xy]/` are. The
