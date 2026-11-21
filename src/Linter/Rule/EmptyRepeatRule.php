@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 
 /**
@@ -160,6 +161,12 @@ final class EmptyRepeatRule extends AbstractLintRule
 
         if ($node instanceof ConditionalNode) {
             return self::matchesEmpty($node->yes, $outsideCaptures) || self::matchesEmpty($node->no, $outsideCaptures);
+        }
+
+        // A script run reads what its body reads: "(*sr:ö)" takes one
+        // character, "(*sr:a?)" may take none.
+        if ($node instanceof ScriptRunNode && null !== $node->content) {
+            return self::matchesEmpty($node->content, $outsideCaptures);
         }
 
         return $node instanceof DefineNode || NodePredicates::canBeEmpty($node);

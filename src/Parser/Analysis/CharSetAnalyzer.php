@@ -24,8 +24,10 @@ use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -249,6 +251,10 @@ final class CharSetAnalyzer
         // starts with "a", and "a(?=x)" ends with it.
         if ($node instanceof GroupNode) {
             return self::readsNothing($node) ? ByteCharSet::empty() : $this->inside($node)->walk($node->child, $fromStart);
+        }
+
+        if (self::isStartOption($node)) {
+            return ByteCharSet::empty();
         }
 
         // A script run matches what its body matches, in one script.
@@ -827,6 +833,16 @@ final class CharSetAnalyzer
             return true;
         }
 
-        return false;
+        return self::isStartOption($node);
+    }
+
+    /**
+     * Whether the node is an option of the run a pattern opens with,
+     * "(*UCP)" or "(*LIMIT_MATCH=5)": it reads nothing, and the analyzer
+     * reads its effect from that run.
+     */
+    private static function isStartOption(NodeInterface $node): bool
+    {
+        return $node instanceof LimitMatchNode || ($node instanceof PcreVerbNode && isset(StartOptions::NAMES[$node->name]));
     }
 }
