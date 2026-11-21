@@ -1,6 +1,6 @@
 {
     "repo": "cakephp/cakephp",
-    "sha": "949d7911a3a3f42bb5500fba3631765ee067fb01",
+    "sha": "62f8d3d8ef9ed971b19742b78f6a85537d87a7c8",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Console/CommandCollection.php#L75-L81",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Console/CommandCollection.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -216,7 +216,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Console/ConsoleOutput.php#L239-L245",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Console/ConsoleOutput.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -435,7 +435,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Core/StaticConfigTrait.php#L218-L224",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Core/StaticConfigTrait.php#L218-L224",
             "snippet": [
                 {
                     "number": 218,
@@ -535,7 +535,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Core/functions.php#L445-L451",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Core/functions.php#L445-L451",
             "snippet": [
                 {
                     "number": 445,
@@ -683,7 +683,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Core/functions.php#L486-L492",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Core/functions.php#L486-L492",
             "snippet": [
                 {
                     "number": 486,
@@ -826,7 +826,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Database/Driver/Mysql.php#L346-L352",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Database/Driver/Mysql.php#L346-L352",
             "snippet": [
                 {
                     "number": 346,
@@ -1041,7 +1041,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Database/Expression/QueryExpression.php#L881-L887",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Database/Expression/QueryExpression.php#L881-L887",
             "snippet": [
                 {
                     "number": 881,
@@ -1264,7 +1264,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Database/Schema/SqliteSchemaDialect.php#L709-L715",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Database/Schema/SqliteSchemaDialect.php#L709-L715",
             "snippet": [
                 {
                     "number": 709,
@@ -1535,7 +1535,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Http/HeaderUtility.php#L32-L38",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Http/HeaderUtility.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1730,7 +1730,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Http/HeaderUtility.php#L53-L59",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Http/HeaderUtility.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -1910,7 +1910,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Http/HeaderUtility.php#L114-L120",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Http/HeaderUtility.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2113,7 +2113,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Mailer/Message.php#L1663-L1669",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Mailer/Message.php#L1663-L1669",
             "snippet": [
                 {
                     "number": 1663,
@@ -2287,7 +2287,7 @@
                 "limit": 100000
             },
             "subject": "0::0/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-!",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Routing/Router.php#L824-L830",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Routing/Router.php#L824-L830",
             "snippet": [
                 {
                     "number": 824,
@@ -2387,7 +2387,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/TestSuite/TestCase.php#L804-L810",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/TestSuite/TestCase.php#L804-L810",
             "snippet": [
                 {
                     "number": 804,
@@ -2514,7 +2514,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Utility/Text.php#L623-L629",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Utility/Text.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -2721,7 +2721,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/Utility/Text.php#L637-L643",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/Utility/Text.php#L637-L643",
             "snippet": [
                 {
                     "number": 637,
@@ -2883,7 +2883,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/View/Helper/TextHelper.php#L111-L117",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/View/Helper/TextHelper.php#L111-L117",
             "snippet": [
                 {
                     "number": 111,
@@ -3126,7 +3126,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/949d7911a3a3f42bb5500fba3631765ee067fb01/src/View/Helper/TextHelper.php#L241-L247",
+            "permalink": "https://github.com/cakephp/cakephp/blob/62f8d3d8ef9ed971b19742b78f6a85537d87a7c8/src/View/Helper/TextHelper.php#L241-L247",
             "snippet": [
                 {
                     "number": 241,

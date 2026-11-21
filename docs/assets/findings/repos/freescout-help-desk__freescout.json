@@ -1,6 +1,6 @@
 {
     "repo": "freescout-help-desk/freescout",
-    "sha": "7769d477ef1e45275d3c0ee173648fce35719945",
+    "sha": "1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Console/Commands/FetchEmails.php#L1044-L1050",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1044-L1050",
             "snippet": [
                 {
                     "number": 1044,
@@ -195,7 +195,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Console/Commands/FetchEmails.php#L1108-L1114",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1108-L1114",
             "snippet": [
                 {
                     "number": 1108,
@@ -367,7 +367,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Console/Commands/FetchEmails.php#L1115-L1121",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1115-L1121",
             "snippet": [
                 {
                     "number": 1115,
@@ -467,7 +467,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Console/Commands/FetchEmails.php#L1138-L1144",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1138-L1144",
             "snippet": [
                 {
                     "number": 1138,
@@ -567,7 +567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Console/Commands/FetchEmails.php#L1335-L1341",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1335-L1341",
             "snippet": [
                 {
                     "number": 1335,
@@ -667,7 +667,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Http/Controllers/ConversationsController.php#L426-L432",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Http/Controllers/ConversationsController.php#L426-L432",
             "snippet": [
                 {
                     "number": 426,
@@ -843,7 +843,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Http/Controllers/SystemController.php#L59-L65",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Http/Controllers/SystemController.php#L59-L65",
             "snippet": [
                 {
                     "number": 59,
@@ -956,7 +956,7 @@
         {
             "id": "f-7f2f4dc12c",
             "file": "app/Misc/Helper.php",
-            "line": 631,
+            "line": 632,
             "column": 30,
             "pattern": "/\\s+/mu",
             "source": "preg_replace()",
@@ -979,10 +979,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Misc/Helper.php#L628-L634",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L629-L635",
             "snippet": [
                 {
-                    "number": 628,
+                    "number": 629,
                     "focus": false,
                     "runs": [
                         [
@@ -992,7 +992,7 @@
                     ]
                 },
                 {
-                    "number": 629,
+                    "number": 630,
                     "focus": false,
                     "runs": [
                         [
@@ -1002,7 +1002,7 @@
                     ]
                 },
                 {
-                    "number": 630,
+                    "number": 631,
                     "focus": false,
                     "runs": [
                         [
@@ -1012,7 +1012,7 @@
                     ]
                 },
                 {
-                    "number": 631,
+                    "number": 632,
                     "focus": true,
                     "runs": [
                         [
@@ -1054,7 +1054,7 @@
                     ]
                 },
                 {
-                    "number": 632,
+                    "number": 633,
                     "focus": false,
                     "runs": [
                         [
@@ -1064,7 +1064,7 @@
                     ]
                 },
                 {
-                    "number": 633,
+                    "number": 634,
                     "focus": false,
                     "runs": [
                         [
@@ -1074,7 +1074,7 @@
                     ]
                 },
                 {
-                    "number": 634,
+                    "number": 635,
                     "focus": false,
                     "runs": [
                         [
@@ -1088,7 +1088,7 @@
         {
             "id": "f-7a259bf246",
             "file": "app/Misc/Helper.php",
-            "line": 2032,
+            "line": 2035,
             "column": 41,
             "pattern": "/<!--(.|\\s)*?-->/",
             "source": "preg_replace()",
@@ -1106,10 +1106,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Misc/Helper.php#L2029-L2035",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L2032-L2038",
             "snippet": [
                 {
-                    "number": 2029,
+                    "number": 2032,
                     "focus": false,
                     "runs": [
                         [
@@ -1119,7 +1119,7 @@
                     ]
                 },
                 {
-                    "number": 2030,
+                    "number": 2033,
                     "focus": false,
                     "runs": [
                         [
@@ -1129,7 +1129,7 @@
                     ]
                 },
                 {
-                    "number": 2031,
+                    "number": 2034,
                     "focus": false,
                     "runs": [
                         [
@@ -1139,7 +1139,7 @@
                     ]
                 },
                 {
-                    "number": 2032,
+                    "number": 2035,
                     "focus": true,
                     "runs": [
                         [
@@ -1197,7 +1197,7 @@
                     ]
                 },
                 {
-                    "number": 2033,
+                    "number": 2036,
                     "focus": false,
                     "runs": [
                         [
@@ -1207,7 +1207,7 @@
                     ]
                 },
                 {
-                    "number": 2034,
+                    "number": 2037,
                     "focus": false,
                     "runs": [
                         [
@@ -1217,7 +1217,7 @@
                     ]
                 },
                 {
-                    "number": 2035,
+                    "number": 2038,
                     "focus": false,
                     "runs": [
                         [
@@ -1231,7 +1231,7 @@
         {
             "id": "f-f0bb6fbcf9",
             "file": "app/Misc/Helper.php",
-            "line": 2968,
+            "line": 2971,
             "column": 33,
             "pattern": "/([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}.*)+$/i",
             "source": "preg_match()",
@@ -1285,10 +1285,10 @@
                 "limit": 100000
             },
             "subject": "AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00\n!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Misc/Helper.php#L2965-L2971",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L2968-L2974",
             "snippet": [
                 {
-                    "number": 2965,
+                    "number": 2968,
                     "focus": false,
                     "runs": [
                         [
@@ -1298,7 +1298,7 @@
                     ]
                 },
                 {
-                    "number": 2966,
+                    "number": 2969,
                     "focus": false,
                     "runs": [
                         [
@@ -1308,7 +1308,7 @@
                     ]
                 },
                 {
-                    "number": 2967,
+                    "number": 2970,
                     "focus": false,
                     "runs": [
                         [
@@ -1318,7 +1318,7 @@
                     ]
                 },
                 {
-                    "number": 2968,
+                    "number": 2971,
                     "focus": true,
                     "runs": [
                         [
@@ -1580,7 +1580,7 @@
                     ]
                 },
                 {
-                    "number": 2969,
+                    "number": 2972,
                     "focus": false,
                     "runs": [
                         [
@@ -1590,7 +1590,7 @@
                     ]
                 },
                 {
-                    "number": 2970,
+                    "number": 2973,
                     "focus": false,
                     "runs": [
                         [
@@ -1600,7 +1600,7 @@
                     ]
                 },
                 {
-                    "number": 2971,
+                    "number": 2974,
                     "focus": false,
                     "runs": [
                         [
@@ -1614,7 +1614,7 @@
         {
             "id": "f-6e0358496d",
             "file": "app/Misc/Helper.php",
-            "line": 3051,
+            "line": 3054,
             "column": 41,
             "pattern": "/enable/m",
             "source": "preg_match()",
@@ -1637,10 +1637,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Misc/Helper.php#L3048-L3054",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L3051-L3057",
             "snippet": [
                 {
-                    "number": 3048,
+                    "number": 3051,
                     "focus": false,
                     "runs": [
                         [
@@ -1650,7 +1650,7 @@
                     ]
                 },
                 {
-                    "number": 3049,
+                    "number": 3052,
                     "focus": false,
                     "runs": [
                         [
@@ -1660,7 +1660,7 @@
                     ]
                 },
                 {
-                    "number": 3050,
+                    "number": 3053,
                     "focus": false,
                     "runs": [
                         [
@@ -1670,7 +1670,7 @@
                     ]
                 },
                 {
-                    "number": 3051,
+                    "number": 3054,
                     "focus": true,
                     "runs": [
                         [
@@ -1708,7 +1708,7 @@
                     ]
                 },
                 {
-                    "number": 3052,
+                    "number": 3055,
                     "focus": false,
                     "runs": [
                         [
@@ -1718,7 +1718,7 @@
                     ]
                 },
                 {
-                    "number": 3053,
+                    "number": 3056,
                     "focus": false,
                     "runs": [
                         [
@@ -1728,7 +1728,7 @@
                     ]
                 },
                 {
-                    "number": 3054,
+                    "number": 3057,
                     "focus": false,
                     "runs": [
                         [
@@ -1760,7 +1760,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Misc/Mail.php#L1409-L1415",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Mail.php#L1409-L1415",
             "snippet": [
                 {
                     "number": 1409,
@@ -1906,7 +1906,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/app/Thread.php#L389-L395",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Thread.php#L389-L395",
             "snippet": [
                 {
                     "number": 389,
@@ -2104,7 +2104,7 @@
                 "limit": 100000
             },
             "subject": "-................................................................................................)",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/barryvdh/laravel-translation-manager/src/Manager.php#L409-L415",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/barryvdh/laravel-translation-manager/src/Manager.php#L409-L415",
             "snippet": [
                 {
                     "number": 409,
@@ -2324,7 +2324,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/erusev/parsedown/Parsedown.php#L1334-L1340",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1334-L1340",
             "snippet": [
                 {
                     "number": 1334,
@@ -2500,7 +2500,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/erusev/parsedown/Parsedown.php#L1342-L1348",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1342-L1348",
             "snippet": [
                 {
                     "number": 1342,
@@ -2679,7 +2679,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/erusev/parsedown/Parsedown.php#L1429-L1435",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1429-L1435",
             "snippet": [
                 {
                     "number": 1429,
@@ -2864,7 +2864,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L87-L93",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -3186,7 +3186,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L222-L228",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L222-L228",
             "snippet": [
                 {
                     "number": 222,
@@ -3318,7 +3318,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/html2text/html2text/src/Html2Text.php#L459-L465",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/html2text/html2text/src/Html2Text.php#L459-L465",
             "snippet": [
                 {
                     "number": 459,
@@ -3486,7 +3486,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/html2text/html2text/src/Html2Text.php#L478-L484",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/html2text/html2text/src/Html2Text.php#L478-L484",
             "snippet": [
                 {
                     "number": 478,
@@ -3653,7 +3653,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/laravel/framework/src/Illuminate/Validation/Concerns/ValidatesAttributes.php#L1360-L1366",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/laravel/framework/src/Illuminate/Validation/Concerns/ValidatesAttributes.php#L1360-L1366",
             "snippet": [
                 {
                     "number": 1360,
@@ -3753,7 +3753,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/league/flysystem/src/Util.php#L344-L350",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/league/flysystem/src/Util.php#L344-L350",
             "snippet": [
                 {
                     "number": 344,
@@ -3921,7 +3921,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/league/flysystem/src/Util.php#L349-L355",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/league/flysystem/src/Util.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -4178,7 +4178,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/swiftmailer/swiftmailer/lib/classes/Swift/Mime/Headers/AbstractHeader.php#L206-L212",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/swiftmailer/swiftmailer/lib/classes/Swift/Mime/Headers/AbstractHeader.php#L206-L212",
             "snippet": [
                 {
                     "number": 206,
@@ -4273,7 +4273,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/symfony/console/Application.php#L560-L566",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/console/Application.php#L560-L566",
             "snippet": [
                 {
                     "number": 560,
@@ -4416,7 +4416,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/symfony/console/Application.php#L618-L624",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/console/Application.php#L618-L624",
             "snippet": [
                 {
                     "number": 618,
@@ -4559,7 +4559,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/symfony/routing/Generator/UrlGenerator.php#L142-L148",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/routing/Generator/UrlGenerator.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -4770,7 +4770,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/symfony/routing/Generator/UrlGenerator.php#L205-L211",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/routing/Generator/UrlGenerator.php#L205-L211",
             "snippet": [
                 {
                     "number": 205,
@@ -4996,7 +4996,7 @@
                 "limit": 100000
             },
             "subject": "\"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php#L295-L301",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php#L295-L301",
             "snippet": [
                 {
                     "number": 295,
@@ -5193,7 +5193,7 @@
                 "limit": 100000
             },
             "subject": "0000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.0000!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/webklex/php-imap/src/Header.php#L1016-L1022",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Header.php#L1016-L1022",
             "snippet": [
                 {
                     "number": 1016,
@@ -5524,7 +5524,7 @@
                 "limit": 100000
             },
             "subject": "AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00\n!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/7769d477ef1e45275d3c0ee173648fce35719945/overrides/webklex/php-imap/src/Header.php#L1058-L1064",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Header.php#L1058-L1064",
             "snippet": [
                 {
                     "number": 1058,

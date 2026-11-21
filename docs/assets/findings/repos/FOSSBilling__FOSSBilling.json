@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "de4b41491373d3266d05217ed0626e1d09c22be4",
+    "sha": "99ab75ffdf1b679f7632b1f62328015551f41613",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -190,7 +190,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -398,7 +398,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -606,7 +606,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -814,7 +814,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -1017,7 +1017,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1262,7 +1262,7 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/modules/Email/Service.php#L517-L523",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Email/Service.php#L517-L523",
             "snippet": [
                 {
                     "number": 517,
@@ -1466,7 +1466,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/modules/Email/Service.php#L523-L529",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Email/Service.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -1669,7 +1669,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/de4b41491373d3266d05217ed0626e1d09c22be4/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

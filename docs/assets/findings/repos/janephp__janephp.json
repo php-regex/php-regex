@@ -1,6 +1,6 @@
 {
     "repo": "janephp/janephp",
-    "sha": "9c2362d7da8d93007a670c46706424b0f83c7832",
+    "sha": "70eb17666a77bce8551a0b928719b5b3698294fa",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/JsonSchema/Generator/Naming.php#L11-L17",
+            "permalink": "https://github.com/janephp/janephp/blob/70eb17666a77bce8551a0b928719b5b3698294fa/src/Component/JsonSchema/Generator/Naming.php#L11-L17",
             "snippet": [
                 {
                     "number": 11,
@@ -128,7 +128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/JsonSchema/Registry/Schema.php#L228-L234",
+            "permalink": "https://github.com/janephp/janephp/blob/70eb17666a77bce8551a0b928719b5b3698294fa/src/Component/JsonSchema/Registry/Schema.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,
@@ -275,7 +275,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L53-L59",
+            "permalink": "https://github.com/janephp/janephp/blob/70eb17666a77bce8551a0b928719b5b3698294fa/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -502,7 +502,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/janephp/janephp/blob/9c2362d7da8d93007a670c46706424b0f83c7832/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L68-L74",
+            "permalink": "https://github.com/janephp/janephp/blob/70eb17666a77bce8551a0b928719b5b3698294fa/src/Component/OpenApiCommon/Naming/OperationUrlNaming.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,

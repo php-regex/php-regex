@@ -1,6 +1,6 @@
 {
     "repo": "DataDog/dd-trace-php",
-    "sha": "94c35b267e01acd09e85e31577a881f82a88ff60",
+    "sha": "144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/appsec/run-tests-internal.php#L3759-L3765",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/appsec/run-tests-internal.php#L3759-L3765",
             "snippet": [
                 {
                     "number": 3759,
@@ -251,7 +251,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/datadog-setup.php#L970-L976",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/datadog-setup.php#L970-L976",
             "snippet": [
                 {
                     "number": 970,
@@ -473,7 +473,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/ajax-actions.php#L4115-L4121",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/ajax-actions.php#L4115-L4121",
             "snippet": [
                 {
                     "number": 4115,
@@ -615,7 +615,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/ajax-actions.php#L4210-L4216",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/ajax-actions.php#L4210-L4216",
             "snippet": [
                 {
                     "number": 4210,
@@ -750,7 +750,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-ftp-pure.php#L106-L112",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-ftp-pure.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -1081,7 +1081,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-ftp-sockets.php#L127-L133",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-ftp-sockets.php#L127-L133",
             "snippet": [
                 {
                     "number": 127,
@@ -1417,7 +1417,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-wp-debug-data.php#L701-L707",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-wp-debug-data.php#L701-L707",
             "snippet": [
                 {
                     "number": 701,
@@ -1565,7 +1565,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-wp-filesystem-base.php#L213-L219",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/class-wp-filesystem-base.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -1729,7 +1729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/upgrade.php#L2655-L2661",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-admin/includes/upgrade.php#L2655-L2661",
             "snippet": [
                 {
                     "number": 2655,
@@ -1872,7 +1872,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.quicktime.php#L1553-L1559",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.quicktime.php#L1553-L1559",
             "snippet": [
                 {
                     "number": 1553,
@@ -2120,7 +2120,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.riff.php#L1550-L1556",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.riff.php#L1550-L1556",
             "snippet": [
                 {
                     "number": 1550,
@@ -2300,7 +2300,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.riff.php#L1632-L1638",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.audio-video.riff.php#L1632-L1638",
             "snippet": [
                 {
                     "number": 1632,
@@ -2475,7 +2475,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.tag.id3v1.php#L68-L74",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.tag.id3v1.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -2652,7 +2652,7 @@
                 "limit": 100000
             },
             "subject": "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\u0000",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.tag.id3v2.php#L2057-L2063",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/ID3/module.tag.id3v2.php#L2057-L2063",
             "snippet": [
                 {
                     "number": 2057,
@@ -2872,7 +2872,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/Requests/IDNAEncoder.php#L112-L118",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/Requests/IDNAEncoder.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -3027,7 +3027,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Item.php#L2901-L2907",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Item.php#L2901-L2907",
             "snippet": [
                 {
                     "number": 2901,
@@ -3318,7 +3318,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Item.php#L2933-L2939",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Item.php#L2933-L2939",
             "snippet": [
                 {
                     "number": 2933,
@@ -3609,7 +3609,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Source.php#L558-L564",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Source.php#L558-L564",
             "snippet": [
                 {
                     "number": 558,
@@ -3900,7 +3900,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Source.php#L578-L584",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/SimplePie/Source.php#L578-L584",
             "snippet": [
                 {
                     "number": 578,
@@ -4179,7 +4179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/canonical.php#L404-L410",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/canonical.php#L404-L410",
             "snippet": [
                 {
                     "number": 404,
@@ -4314,7 +4314,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/canonical.php#L494-L500",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/canonical.php#L494-L500",
             "snippet": [
                 {
                     "number": 494,
@@ -4449,7 +4449,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-json.php#L815-L821",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-json.php#L815-L821",
             "snippet": [
                 {
                     "number": 815,
@@ -4648,7 +4648,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-json.php#L824-L830",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-json.php#L824-L830",
             "snippet": [
                 {
                     "number": 824,
@@ -4819,7 +4819,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L737-L743",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L737-L743",
             "snippet": [
                 {
                     "number": 737,
@@ -4967,7 +4967,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1110-L1116",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1110-L1116",
             "snippet": [
                 {
                     "number": 1110,
@@ -5083,7 +5083,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1124-L1130",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1124-L1130",
             "snippet": [
                 {
                     "number": 1124,
@@ -5183,7 +5183,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1142-L1148",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L1142-L1148",
             "snippet": [
                 {
                     "number": 1142,
@@ -5285,7 +5285,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L3671-L3677",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L3671-L3677",
             "snippet": [
                 {
                     "number": 3671,
@@ -5532,7 +5532,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L3751-L3757",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php#L3751-L3757",
             "snippet": [
                 {
                     "number": 3751,
@@ -5679,7 +5679,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L664-L670",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L664-L670",
             "snippet": [
                 {
                     "number": 664,
@@ -5841,7 +5841,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L749-L755",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -6159,7 +6159,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L759-L765",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-requests.php#L759-L765",
             "snippet": [
                 {
                     "number": 759,
@@ -6462,7 +6462,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-simplepie.php#L2591-L2597",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-simplepie.php#L2591-L2597",
             "snippet": [
                 {
                     "number": 2591,
@@ -6753,7 +6753,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-simplepie.php#L2623-L2629",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-simplepie.php#L2623-L2629",
             "snippet": [
                 {
                     "number": 2623,
@@ -7044,7 +7044,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-smtp.php#L241-L247",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-smtp.php#L241-L247",
             "snippet": [
                 {
                     "number": 241,
@@ -7210,7 +7210,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-snoopy.php#L680-L686",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-snoopy.php#L680-L686",
             "snippet": [
                 {
                     "number": 680,
@@ -7369,7 +7369,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-snoopy.php#L753-L759",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-snoopy.php#L753-L759",
             "snippet": [
                 {
                     "number": 753,
@@ -7509,7 +7509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-wp-xmlrpc-server.php#L6895-L6901",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-wp-xmlrpc-server.php#L6895-L6901",
             "snippet": [
                 {
                     "number": 6895,
@@ -7665,7 +7665,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/comment.php#L2609-L2615",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/comment.php#L2609-L2615",
             "snippet": [
                 {
                     "number": 2609,
@@ -7829,7 +7829,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/embed.php#L885-L891",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/embed.php#L885-L891",
             "snippet": [
                 {
                     "number": 885,
@@ -8020,7 +8020,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2020-L2026",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2020-L2026",
             "snippet": [
                 {
                     "number": 2020,
@@ -8148,7 +8148,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2490-L2496",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2490-L2496",
             "snippet": [
                 {
                     "number": 2490,
@@ -8314,7 +8314,7 @@
                 "limit": 100000
             },
             "subject": "<a-------------------------------------------------------------!>",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2507-L2513",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2507-L2513",
             "snippet": [
                 {
                     "number": 2507,
@@ -8414,7 +8414,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2991-L2997",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L2991-L2997",
             "snippet": [
                 {
                     "number": 2991,
@@ -8609,7 +8609,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L4567-L4573",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/formatting.php#L4567-L4573",
             "snippet": [
                 {
                     "number": 4567,
@@ -8821,7 +8821,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L793-L799",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L793-L799",
             "snippet": [
                 {
                     "number": 793,
@@ -8916,7 +8916,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L5364-L5370",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L5364-L5370",
             "snippet": [
                 {
                     "number": 5364,
@@ -9059,7 +9059,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L5376-L5382",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/functions.php#L5376-L5382",
             "snippet": [
                 {
                     "number": 5376,
@@ -9207,7 +9207,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3278-L3284",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3278-L3284",
             "snippet": [
                 {
                     "number": 3278,
@@ -9377,7 +9377,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3282-L3288",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3282-L3288",
             "snippet": [
                 {
                     "number": 3282,
@@ -9472,7 +9472,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3307-L3313",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3307-L3313",
             "snippet": [
                 {
                     "number": 3307,
@@ -9865,7 +9865,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3313-L3319",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/dockerfiles/testing-environment/Wordpress5/app/wp-includes/wp-db.php#L3313-L3319",
             "snippet": [
                 {
                     "number": 3313,
@@ -9960,7 +9960,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/src/DDTrace/Integrations/PDO/PDOIntegration.php#L210-L216",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/src/DDTrace/Integrations/PDO/PDOIntegration.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -10055,7 +10055,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/DataDog/dd-trace-php/blob/94c35b267e01acd09e85e31577a881f82a88ff60/src/DDTrace/Integrations/PDO/PDOIntegration.php#L367-L373",
+            "permalink": "https://github.com/DataDog/dd-trace-php/blob/144f03a0abf37aabb1c7cd68eb40c7811b8a4d2a/src/DDTrace/Integrations/PDO/PDOIntegration.php#L367-L373",
             "snippet": [
                 {
                     "number": 367,
