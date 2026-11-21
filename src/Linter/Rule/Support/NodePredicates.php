@@ -136,7 +136,6 @@ final class NodePredicates
             || $node instanceof KeepNode
             || $node instanceof CommentNode
             || $node instanceof CalloutNode
-            || $node instanceof ScriptRunNode
             || $node instanceof DefineNode
             || $node instanceof PcreVerbNode
             || $node instanceof LimitMatchNode
@@ -146,6 +145,11 @@ final class NodePredicates
 
         if ($node instanceof LiteralNode) {
             return '' === $node->value;
+        }
+
+        // A script run reads what its body reads.
+        if ($node instanceof ScriptRunNode) {
+            return null === $node->content || self::canBeEmpty($node->content);
         }
 
         if ($node instanceof QuantifierNode) {
