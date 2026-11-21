@@ -274,4 +274,23 @@ final class CharSetTest extends TestCase
         $this->assertTrue(ByteCharSet::unknown()->complement(0xFF)->isUnknown());
         $this->assertFalse(ByteCharSet::fromRange(\ord('a'), \ord('z'))->complement()->intersects(ByteCharSet::fromChar("\x80")));
     }
+
+    /**
+     * The complement stops at its bound between the ranges of the set as
+     * well as after the last one: the bytes below a byte above ASCII the
+     * set holds are no gap of the ASCII complement.
+     */
+    #[Test]
+    public function test_the_complement_stops_at_its_bound_between_the_ranges_too(): void
+    {
+        $this->assertSame([[0x00, 0x7F]], ByteCharSet::fromBytes(0xC3, 0xC3)->complement()->ranges());
+        $this->assertSame([[0x00, 0x40], [0x42, 0x7F]], ByteCharSet::fromChar('A')->union(ByteCharSet::fromBytes(0xE9, 0xE9))->complement()->ranges());
+        $this->assertSame([[0x00, 0x7F]], ByteCharSet::fromBytes(0x90, 0xA0)->union(ByteCharSet::fromBytes(0xE9, 0xE9))->complement()->ranges());
+        $this->assertSame([[0x00, 0x7E]], ByteCharSet::fromBytes(0x7F, 0x90)->complement()->ranges());
+        $this->assertSame([[0x00, 0x7F]], ByteCharSet::fromBytes(0x80, 0xFF)->complement()->ranges());
+
+        // Asked for every byte, the gaps are the same as before.
+        $this->assertSame([[0x00, 0xC2], [0xC4, 0xFF]], ByteCharSet::fromBytes(0xC3, 0xC3)->complement(0xFF)->ranges());
+        $this->assertSame([[0x00, 0x40], [0x42, 0xE8], [0xEA, 0xFF]], ByteCharSet::fromChar('A')->union(ByteCharSet::fromBytes(0xE9, 0xE9))->complement(0xFF)->ranges());
+    }
 }

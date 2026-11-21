@@ -176,7 +176,8 @@ final class ByteCharSet
 
     /**
      * The characters outside the set up to $last: the ASCII ones, unless
-     * asked for every byte with 0xFF.
+     * asked for every byte with 0xFF. A gap between two ranges stops there
+     * too.
      */
     public function complement(int $last = self::ASCII_MAX): self
     {
@@ -192,8 +193,12 @@ final class ByteCharSet
         $cursor = 0;
 
         foreach ($this->ranges as [$start, $end]) {
+            if ($cursor > $last) {
+                break;
+            }
+
             if ($cursor < $start) {
-                $complement[] = [$cursor, $start - 1];
+                $complement[] = [$cursor, min($start - 1, $last)];
             }
             $cursor = $end + 1;
         }
