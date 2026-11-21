@@ -76,6 +76,15 @@ final class LanguageQuestions
      */
     private static ?InMemoryDfaCache $dfas = null;
 
+    /**
+     * The option settings written in each pattern a question was asked
+     * about, kept as long as its tree is: a rule asks for them at each node
+     * it checks, and reading them walks the whole pattern.
+     *
+     * @var \WeakMap<NodeInterface, list<string>>|null
+     */
+    private static ?\WeakMap $optionSettings = null;
+
     private function __construct() {}
 
     /**
@@ -109,7 +118,7 @@ final class LanguageQuestions
     public static function spelledFlags(LintContext $context, NodeInterface $node): ?string
     {
         $restricted = str_contains($context->pattern->flags, self::CASELESS_RESTRICT);
-        foreach (self::optionSettings($context->parents()[0] ?? $node) as $setting) {
+        foreach (self::patternOptionSettings($context->parents()[0] ?? $node) as $setting) {
             $set = explode('-', $setting, 2)[0];
             if (str_contains($setting, 'a') || str_contains($set, 'xx')) {
                 return null;
@@ -289,10 +298,23 @@ final class LanguageQuestions
     }
 
     /**
+     * The option settings of the inline flag groups of the pattern the root
+     * holds, read once for its tree.
+     *
+     * @return list<string>
+     */
+    private static function patternOptionSettings(NodeInterface $root): array
+    {
+        self::$optionSettings ??= new \WeakMap();
+
+        return self::$optionSettings[$root] ??= [...self::optionSettings($root)];
+    }
+
+    /**
      * The option settings of the inline flag groups under the node, as
      * written: "i-s", "^x", "aD".
      *
-     * @return iterable<string>
+     * @return iterable<int, string>
      */
     private static function optionSettings(NodeInterface $node): iterable
     {

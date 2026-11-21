@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuestionBudget;
@@ -67,6 +68,24 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
 
     private readonly QuestionBudget $questions;
 
+    /**
+     * The flags in force at the nodes of the pattern read so far, keyed by
+     * their object id. The children of a node are read all at once, so
+     * that the lookaheads of a long sequence read the items before them
+     * once, not once each.
+     *
+     * @var array<int, string>
+     */
+    private array $flagsInForce = [];
+
+    /**
+     * The index of each item of the sequences read so far, keyed by the
+     * sequence's object id, then the item's.
+     *
+     * @var array<int, array<int, int>>
+     */
+    private array $positions = [];
+
     public function __construct()
     {
         $this->questions = new QuestionBudget();
@@ -75,6 +94,8 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
     public function begin(LintContext $context): void
     {
         $this->questions->reset();
+        $this->flagsInForce = [];
+        $this->positions = [];
     }
 
     public function getRuleIds(): array
@@ -165,9 +186,8 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
             return null;
         }
 
-        $root = $parents[0];
-        $patternFlags = $context->pattern->flags;
-        $text = LanguageQuestions::scoped(LanguageQuestions::text($lookahead, $context), $context->flagsAt($lookahead, $root, $patternFlags), $spelled);
+        $this->readFlags([...$parents, $lookahead], $context->pattern->flags);
+        $text = LanguageQuestions::scoped(LanguageQuestions::text($lookahead, $context), $this->flagsAt($lookahead), $spelled);
         $continuation = [];
         $child = $lookahead;
 
@@ -175,15 +195,12 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         foreach (array_reverse($parents) as $parent) {
             if ($parent instanceof SequenceNode) {
                 $children = $parent->children;
-                $index = array_search($child, $children, true);
-                if (!\is_int($index)) {
-                    return null; // never taken: each parent on the stack holds the node walked before it
-                }
 
                 // Past the budget the continuation is cut short, and what
                 // it can match only grows: the answer stays sound.
                 $after = [];
-                foreach (\array_slice($children, $index + 1) as $next) {
+                for ($at = $this->indexIn($parent, $child) + 1, $count = \count($children); $at < $count; $at++) {
+                    $next = $children[$at];
                     $budget -= $next->getEndPosition() - $next->getStartPosition();
                     if ($budget < 0) {
                         break;
@@ -198,7 +215,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
                     $afterText = self::textWithoutLookaheads($child->getEndPosition(), $end, $after, $context);
                 }
 
-                $text = LanguageQuestions::scoped($text.$afterText, $context->flagsAt($child, $root, $patternFlags), $spelled);
+                $text = LanguageQuestions::scoped($text.$afterText, $this->flagsAt($child), $spelled);
             } elseif ($parent instanceof QuantifierNode) {
                 $bounds = $parent->bounds;
                 if (null === $bounds) {
@@ -220,7 +237,7 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
                     $continuation[] = $parent->node;
                     $repeat = null === $bounds->max ? '*' : '{0,'.($bounds->max - 1).'}';
                     $body = self::textWithoutLookaheads($parent->node->getStartPosition(), $parent->node->getEndPosition(), [$parent->node], $context);
-                    $text = LanguageQuestions::scoped($text.'(?:'.$body.')'.$repeat, $context->flagsAt($parent, $root, $patternFlags), $spelled);
+                    $text = LanguageQuestions::scoped($text.'(?:'.$body.')'.$repeat, $this->flagsAt($parent), $spelled);
                 }
             } elseif ($parent instanceof GroupNode) {
                 if (\in_array($parent->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative], true)) {
@@ -265,6 +282,58 @@ final class ImpossibleLookaroundRule extends AbstractLintRule
         $before = 1 === LibraryPcre::match('/\\\\[bB]/', $text) ? '(?s:.)?' : '';
 
         return LanguageQuestions::pattern($context, $before.$text.'(?s:.)*', '', $spelled);
+    }
+
+    /**
+     * Reads the flags in force at each node of the path and at the other
+     * children of the nodes along it, the root reading the pattern's
+     * flags: a group sets its own inside, a standalone "(?s)" sets them for
+     * the items and the branches after it, as FlagScope::flagsAt() reads
+     * them from the root.
+     *
+     * @param list<NodeInterface> $path the root first
+     */
+    private function readFlags(array $path, string $patternFlags): void
+    {
+        $parent = null;
+        foreach ($path as $node) {
+            if (!isset($this->flagsInForce[spl_object_id($node)])) {
+                if (null === $parent) {
+                    $this->flagsInForce[spl_object_id($node)] = $patternFlags;
+                } else {
+                    $flags = $this->flagsAt($parent);
+                    foreach ($parent->getChildren() as $child) {
+                        $this->flagsInForce[spl_object_id($child)] = $parent instanceof GroupNode ? FlagScope::flagsInside($parent, $flags) : $flags;
+                        $flags = FlagScope::flagsAfter($child, $flags);
+                    }
+                }
+            }
+
+            $parent = $node;
+        }
+    }
+
+    /**
+     * The flags in force at a node of a path read before.
+     */
+    private function flagsAt(NodeInterface $node): string
+    {
+        return $this->flagsInForce[spl_object_id($node)];
+    }
+
+    /**
+     * The index of the item among the children of the sequence holding it.
+     */
+    private function indexIn(SequenceNode $sequence, NodeInterface $item): int
+    {
+        $id = spl_object_id($sequence);
+        if (!isset($this->positions[$id])) {
+            foreach ($sequence->children as $index => $child) {
+                $this->positions[$id][spl_object_id($child)] = $index;
+            }
+        }
+
+        return $this->positions[$id][spl_object_id($item)];
     }
 
     /**
