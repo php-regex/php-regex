@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\OverlappingAlternationRule;
+use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -144,8 +145,15 @@ final class OverlappingAlternationPairwiseTest extends TestCase
             'pattern' => '/(?:\p{Lu}|(?=é)éa|\p{L})+/u',
             'expected' => [$charset('\\p{Lu}', '\\p{L}')],
         ];
-        yield 'a branch PCRE is not asked about, which leaves the others unjudged' => [
+        // A script run starts with what its body starts with: "(*sr:é)a"
+        // starts with "é", and the properties are judged.
+        yield 'a branch read through its script run' => [
             'pattern' => '/(?:\p{Lu}|(*sr:é)a|\p{L})+/u',
+            'expected' => [$charset('\\p{Lu}', '\\p{L}')],
+        ];
+        // No probe can be written for a class holding every delimiter.
+        yield 'a branch PCRE is not asked about, which leaves the others unjudged' => [
+            'pattern' => '{(?:\p{Lu}|'.ProbeDelimiters::classOfEveryOne('é').'a|\p{L})+}u',
             'expected' => [],
         ];
         yield 'no quantifier around the alternation' => ['pattern' => '/(?:a|ab|[ab]c)/', 'expected' => []];

@@ -65,6 +65,10 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         // with: an atomic group, or a group setting options for its body.
         yield 'an atomic group sharing a lead byte under u' => ['pattern' => '/(?:(?>ö)|è)+x/u', 'branches' => '(?>ö)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
         yield 'a caseless group sharing a lead byte under u' => ['pattern' => '/(?:(?i:ö)|è)+x/u', 'branches' => '(?i:ö)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
+        // A script run starts with what its body starts with: one character
+        // alone is always a run.
+        yield 'a script run sharing a lead byte under u' => ['pattern' => '/(?:(*sr:ö)|è)+/u', 'branches' => '(*sr:ö)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
+        yield 'an atomic script run sharing a lead byte under u' => ['pattern' => '/(?:(*atomic_script_run:ö+)|è)+x/u', 'branches' => '(*atomic_script_run:ö+)|è', 'flags' => 'u', 'firsts' => ['ö', 'è']];
     }
 
     #[Test]
@@ -142,23 +146,43 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'every option of a beside the pattern\'s /D, apart' => ['pattern' => '/(?:(?a:\w)x|éy)+z/uD', 'oracle' => [['(?a:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
         yield 'the digit option of a set before the alternation, beside the pattern\'s /D' => ['pattern' => '/(?aD)(?:\wx|éy)+z/uD', 'oracle' => [['(?aD)\wx', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
         yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
+        yield 'a script run, meeting the other branch' => ['pattern' => '/(?:(*sr:öa)|öb)+x/u', 'oracle' => [['(*sr:öa)', 'öa', 1], ['öb', 'öb', 1]], 'findings' => 1];
+        yield 'a script run of a class, apart' => ['pattern' => '/(?:(*sr:[öü]a)|èb)+x/u', 'oracle' => [['(*sr:[öü]a)', 'üa', 1], ['(*sr:[öü]a)', 'èa', 0], ['èb', 'öb', 0]], 'findings' => 0];
     }
 
     /**
      * Where no probe can be written for a branch, the first bytes are
-     * compared: under u two characters sharing a lead byte meet there. Not
-     * proven, kept: a repeated alternation PCRE cannot read stays reported.
-     * A class holding every delimiter the probe can be written with is one
-     * such branch.
+     * compared. Under u a byte past ASCII is a lead or a continuation byte,
+     * which two characters share: only the ASCII bytes are compared there,
+     * so no overlap is reported that PCRE would not see, and one past ASCII
+     * goes unreported. A class holding every delimiter the probe can be
+     * written with is one such branch.
      */
     #[Test]
-    public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes(): void
+    public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_ascii_bytes_under_u(): void
     {
         $class = ProbeDelimiters::classOfEveryOne('è');
+        $delimiter = ProbeDelimiters::all()[0];
         $this->assertSame(1, preg_match('{^'.$class.'$}u', 'è'));
         $this->assertSame(0, preg_match('{^'.$class.'$}u', 'ö'));
+        $this->assertSame(1, preg_match('{^'.$class.'$}u', $delimiter));
 
-        $this->assertCount(1, $this->charsetOverlapMessages('{(?:ö|'.$class.')+x}u'));
+        $this->assertSame([], $this->charsetOverlapMessages('{(?:ö|'.$class.')+x}u'));
+        $this->assertCount(1, $this->charsetOverlapMessages('{(?:'.preg_quote($delimiter, '{').'a|'.$class.')+x}u'));
+    }
+
+    /**
+     * Without u a byte is a character: the first bytes still meet past
+     * ASCII.
+     */
+    #[Test]
+    public function test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes_without_u(): void
+    {
+        $class = ProbeDelimiters::classOfEveryOne("\xE8");
+        $this->assertSame(1, preg_match('{^'.$class.'$}', "\xE8"));
+        $this->assertSame(1, preg_match("{^\xE8a$}", "\xE8a"));
+
+        $this->assertCount(1, $this->charsetOverlapMessages("{(?:\xE8a|".$class.')+x}'));
     }
 
     #[Test]

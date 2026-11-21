@@ -32,6 +32,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Printer\DisplayEscaper;
@@ -196,13 +197,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // included, which folds as the target's tables say: the sets are
         // asked of PCRE. Under u, and without it for a byte past ASCII, the
         // sets are asked of PCRE too, which reads characters under the
-        // target's tables; where it judges no branch, the bytes stand, two
-        // characters sharing a lead byte meeting there. A branch behind a
-        // lookahead is judged by PCRE alone: the bytes would take the
-        // characters the lookahead refuses.
+        // target's tables; where it judges no branch, the bytes stand, their
+        // ASCII part alone under u, where two characters share a lead byte.
+        // A branch behind a lookahead is judged by PCRE alone: the bytes
+        // would take the characters the lookahead refuses.
         $sets = match (true) {
             $anyUnknown, $guarded => $this->setsFromPcre($node, $starts, $context),
-            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? array_map(self::alphabetSet(...), $charSets),
+            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? array_map(self::alphabetSet(...), $context->pattern->unicodeMode ? array_map(self::asciiPart(...), $charSets) : $charSets),
             default => array_map(self::alphabetSet(...), $charSets),
         };
         if (null === $sets) {
@@ -248,6 +249,18 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function alphabetSet(ByteCharSet $set): CharSet
     {
         return $set->isUnknown() ? CharSet::universe(false) : CharSet::fromRanges($set->ranges());
+    }
+
+    /**
+     * The ASCII bytes of a known set. Under u a byte past ASCII is the lead
+     * or a continuation byte of a character, which "ö" and "è" share: where
+     * PCRE cannot be asked, those bytes tell nothing of the characters, and
+     * an overlap past ASCII goes unreported rather than one PCRE would not
+     * see.
+     */
+    private static function asciiPart(ByteCharSet $set): ByteCharSet
+    {
+        return $set->intersect(ByteCharSet::fromBytes(0x00, 0x7F));
     }
 
     /**
@@ -449,8 +462,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * The atoms a node may read its first character with, each with the
      * lookaheads that stand before it, whether it may read nothing, and
      * the lookaheads that hold past it when it does. An item the probe
-     * does not read (an anchor, a reference, a script run) is an atom of
-     * its own, which leaves the branch unjudged. Groups start with what
+     * does not read (an anchor, a reference) is an atom of its own, which
+     * leaves the branch unjudged. Groups and script runs start with what
      * their body starts with, a branch reset group and an alternation with
      * what any branch does; a lookaround reads nothing, a sequence goes on
      * past an item that may read nothing, and a quantifier that may run no
@@ -540,6 +553,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
         if ($node instanceof LiteralNode && '' === $node->value) {
             return [[], true, []];
+        }
+
+        // One character alone is always a run, and the engine enters the
+        // body before it checks the run.
+        if ($node instanceof ScriptRunNode && null !== $node->content) {
+            return self::firstAtoms($node->content);
         }
 
         return [[[$node, []]], false, []];

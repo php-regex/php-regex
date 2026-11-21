@@ -205,6 +205,16 @@ CHANGELOG
    possessive quantifiers or word boundaries took from 15 seconds to
    almost a minute to lint, it takes a fraction of one; the findings are
    the same.
+ * A script run reads what its body reads, where the rules took it for an
+   item that reads nothing: `regex.lint.quantifier.emptyRepeat` no longer
+   reports `/(?:(*sr:ö)|è)+/u`, and `regex.lint.anchor.impossible.start`
+   reports `/(*sr:a)^b/`, which never matches. `regex.lint.overlap.charset`
+   reads a branch through its script run, which starts with what its body
+   starts with, and asks the engine about it: `ö` and `è` no longer meet
+   there on their shared UTF-8 lead byte. Where the engine cannot be asked
+   about a branch, as a class holding every delimiter, the rule compares
+   the first bytes, under `u` the ASCII ones alone: a lead byte two
+   characters share is no overlap.
  * The diff of a suggested rewrite skips the lines both sides share at the
    start and at the end before it looks for the longest run of kept lines:
    a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,

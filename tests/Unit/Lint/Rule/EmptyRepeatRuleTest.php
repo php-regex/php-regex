@@ -127,6 +127,30 @@ final class EmptyRepeatRuleTest extends TestCase
         yield 'body that must read a character' => ['pattern' => '/(?:a*b)*/', 'issues' => []];
     }
 
+    /**
+     * A script run reads what its body reads: "(*sr:ö)" takes one
+     * character, "(*sr:a?)" may take none.
+     */
+    #[Test]
+    #[DataProvider('provideRepeatsOfAScriptRun')]
+    public function test_a_script_run_matches_empty_only_when_its_body_does(string $pattern, string $item, bool $reported): void
+    {
+        $this->assertSame($reported ? 1 : 0, preg_match($item, ''), $item);
+        $this->assertSame($reported, null !== $this->violation($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, item: string, reported: bool}>
+     */
+    public static function provideRepeatsOfAScriptRun(): iterable
+    {
+        yield 'script run of one character' => ['pattern' => '/(?:(*sr:ö)|è)+/u', 'item' => '/^(?:(*sr:ö)|è)$/u', 'reported' => false];
+        yield 'atomic script run of one character' => ['pattern' => '/(?:(*asr:ö))+/u', 'item' => '/^(*asr:ö)$/u', 'reported' => false];
+        yield 'long script run of a sequence' => ['pattern' => '/(?:(*script_run:\d+)x?)*/', 'item' => '/^(?:(*script_run:\d+)x?)$/', 'reported' => false];
+        yield 'script run of an optional' => ['pattern' => '/(?:(*sr:a?))+/', 'item' => '/^(*sr:a?)$/', 'reported' => true];
+        yield 'script run of a star beside a character' => ['pattern' => '/(?:(*sr:\d*)|x)+/', 'item' => '/^(?:(*sr:\d*)|x)$/', 'reported' => true];
+    }
+
     #[Test]
     public function test_a_capturing_group_is_said_to_change_the_capture(): void
     {
