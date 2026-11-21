@@ -205,21 +205,3 @@ request goes to `phpstan/phpstan-src`.
   the groups nothing after them backtracks into. Harmless today: its `*`
   reads as an inline flag, which keeps the possessive rewrite out of the
   whole pattern.
-
-
-## Counted benchmarks
-
-`tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
-`Benchmarks (counted)`, from #390 on; it has run green on the pull
-requests since.
-
-- Review and merge #414, which leaves the growth to the counted
-  benchmarks: `assertLinearTime()` keeps its budget alone, five reads get
-  a counted twin, and the advisory PHPBench table job goes.
-- `lookaround.impossible` reads a loop whose body opens with lookaheads in
-  quadratic time, alone of the lint rules: `(?:` then n times `(?=b)` then
-  `b?c+)+$` takes 89 ms for 250 and 297 ms for 500; Tally counts all the
-  rules at about 8 billion instructions for 1 000 and 32 billion for
-  2 000. A pull request of its own, with the run of every rule counted
-  beside `LinterGrowthBench::benchLookaheadsBeforeTheLoopsOfABody`, which
-  counts `quantifier.nested` alone. Found while writing #414.
