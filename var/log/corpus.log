@@ -6520,6 +6520,10 @@ corpus/akaunting/akaunting/app/Traits/Contacts.php:106:34
 Note: composer.json require.php allows PHP 5.3, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
 Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
+### corpus/antecedent/patchwork — Target: PHP 7.3, PCRE2 10.32 (composer.json require.php) — exit 0
+Note: composer.json require.php allows PHP 7.1, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.
+Note: PCRE2 10.32, 10.33 and 10.35 are judged with the PCRE2 10.39 rules, the oldest this library knows in full.
+
 ### corpus/anthropics/anthropic-sdk-php — Target: PHP 8.3, PCRE2 10.42 (composer.json config.platform.php) — exit 0
 corpus/anthropics/anthropic-sdk-php/src/Core/Util.php:26:39
     → /^application\/(:?x-(?:n|l)djson)|(:?(?:x-)?jsonl)/
@@ -8276,6 +8280,48 @@ corpus/concretecms/concretecms/concrete/src/Validation/SanitizeService.php:37:32
    TIP 
        - /<.*/ms
        + /<.*/s
+
+
+
+### corpus/consolidation/robo — Target: PHP 8.2.18, PCRE2 10.40 (composer.json config.platform.php) — exit 1
+corpus/consolidation/robo/src/Task/Assets/ImageMinify.php:544:41
+    → win/
+   FAIL  Invalid delimiter "w". Delimiters must not be alphanumeric, backslash, or NUL byte. Try #win/#.
+       ↳ Wrap the pattern in a pair of delimiters, such as "/.../" or "#...#".
+
+corpus/consolidation/robo/src/Task/Development/SemVer.php:25:26
+    → /^\-\-\-\r?\n:major:\s(0|[1-9]\d*)\r?\n:minor:\s(0|[1-9]\d*)\r?\n:patch:\s(0|[1-9]\d*)\r?\n:special:\s'([a-zA-z0-9]*\.?(?:0|[1-9]\d*)?)'\r?\n:metadata:\s'((?:[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*)?)'/
+   ↳ via self::REGEX
+   WARN  Redundant elements detected in character class.
+       ↳ Redundant elements: range 'a'-'z' (covered by range 'A'-'z')
+   WARN  Suspicious ASCII range "A-z" includes non-letters between "A" and "z" in ASCII order.
+       ↳ Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).
+
+corpus/consolidation/robo/src/Task/Development/SemVer.php:27:33
+    → /^(?<major>[0-9]+)\.(?<minor>[0-9]+)\.(?<patch>[0-9]+)(|-(?<special>[0-9a-zA-Z.]+))(|\+(?<metadata>[0-9a-zA-Z.]+))$/
+   ↳ via self::REGEX_STRING
+   WARN  Alternation contains an empty alternative.
+       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+   WARN  Alternation contains an empty alternative.
+       ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
+
+corpus/consolidation/robo/src/Task/Simulator.php:165:30
+    → #.*\n#ms
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - #.*\n#ms
+       + #.*\n#s
+
+corpus/consolidation/robo/src/Task/Simulator.php:166:30
+    → #\n.*#ms
+   WARN  Flag 'm' is useless: the pattern contains no ^ or $ anchor.
+   TIP 
+       - #\n.*#ms
+       + #\n.*#s
+
+corpus/consolidation/robo/src/TaskInfo.php:30:30
+    → ~Stack^~
+   WARN  Start anchor '^' appears after consuming characters, making it impossible to match.
 
 
 
