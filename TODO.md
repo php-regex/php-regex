@@ -1,12 +1,5 @@
 # TODO
 
-## Before merging #411
-
-- Review #411, which audits `Assert\Regex` and its `htmlPattern`
-  (`RegexConstraintAnalyzer`), then cover the mutants its diff leaves: the
-  `Coverage and Mutations` job stops at a covered MSI of 64%, under the
-  90% it requires.
-
 ## Before 2.0.0, a pull request of its own
 
 - The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
@@ -43,8 +36,6 @@
 
 ## Playground on PHP 8.6
 
-- Merge #418: the Step through tab on every engine of the select (one
-  PCRE2 trace module per bundled release, 10.35 to 10.44).
 - Offer PHP 8.6 in the playground and the Run buttons. php-wasm 0.2.0
   stops at 8.5.2 and its Makefile refuses 8.6, so the engine is built from
   php-wasm's v0.2.0 sources with 8.6.0 added (its php-src patch ported:
