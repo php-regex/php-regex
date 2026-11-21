@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Benchmark\Tally;
 
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Hir\HirTranslator;
@@ -195,6 +196,19 @@ final class ParserGrowthBench
         }
 
         (new CaptureShapeAnalyzer())->analyze(ColdStart::regex()->parser()->parse('/(?(DEFINE)'.$groups.')(?&g'.$size.')/'));
+    }
+
+    /**
+     * Option settings after a run of start options: the analyzer made for
+     * each setting read the start options again, 500 then 2 000 of each in
+     * 41 ms then 586 ms. The parse is not counted.
+     */
+    #[DataProvider('from250')]
+    #[Linear('size')]
+    public function benchSettingsAfterStartOptions(int $size): void
+    {
+        $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parser()->parse('/'.str_repeat('(*LF)', $size).str_repeat('(?s)a(?-s)b', $size).'/'));
+        CharSetAnalyzer::forRegex($tree, true)->inForce($tree);
     }
 
     private static function parse(string $pattern): void

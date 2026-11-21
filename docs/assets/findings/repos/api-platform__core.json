@@ -1,6 +1,6 @@
 {
     "repo": "api-platform/core",
-    "sha": "2b351672dfd717699d140cc301d7b90366bafb6c",
+    "sha": "42f5b4b0291b85bb4babd4f64abd84abb261cf56",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/2b351672dfd717699d140cc301d7b90366bafb6c/src/JsonApi/Serializer/ItemNormalizerTrait.php#L169-L175",
+            "permalink": "https://github.com/api-platform/core/blob/42f5b4b0291b85bb4babd4f64abd84abb261cf56/src/JsonApi/Serializer/ItemNormalizerTrait.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/2b351672dfd717699d140cc301d7b90366bafb6c/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
+            "permalink": "https://github.com/api-platform/core/blob/42f5b4b0291b85bb4babd4f64abd84abb261cf56/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -338,7 +338,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/2b351672dfd717699d140cc301d7b90366bafb6c/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
+            "permalink": "https://github.com/api-platform/core/blob/42f5b4b0291b85bb4babd4f64abd84abb261cf56/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,

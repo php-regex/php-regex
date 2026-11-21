@@ -20,7 +20,7 @@ namespace PHPRegex\Tests\Benchmark\Tally\Support;
  *
  * Counted instructions repeat from run to run, so the ladders stay far below
  * the sizes the timed tests read: four times the units counting more than
- * 4.4 times the instructions is a finding, where a timed ratio needs 8.
+ * 4.4 times the instructions is a finding.
  */
 trait Ladders
 {

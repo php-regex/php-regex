@@ -1,6 +1,6 @@
 {
     "repo": "shopware/shopware",
-    "sha": "0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2",
+    "sha": "551447a2dfd27526b8a1efd9cea90a26c1581a17",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -212,7 +212,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Content/Media/Util/PathHelper.php#L14-L20",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/Content/Media/Util/PathHelper.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -427,7 +427,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -590,7 +590,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -758,7 +758,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -906,7 +906,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -1054,7 +1054,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -1202,7 +1202,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -1360,7 +1360,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -1568,7 +1568,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Core/Test/FixtureLoader.php#L54-L60",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Core/Test/FixtureLoader.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1703,7 +1703,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1874,7 +1874,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/0f9405e6fe4aad4770e7b4c6decafdaa5baec6d2/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
+            "permalink": "https://github.com/shopware/shopware/blob/551447a2dfd27526b8a1efd9cea90a26c1581a17/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,

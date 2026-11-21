@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\DependencyInjection;
 
 use PHPRegex\Symfony\DependencyInjection\ValidatorMappingPass;
 use PHPRegex\Symfony\Extractor\ValidatorPatternSource;
+use PHPRegex\Symfony\Validator\ValidatedClassLocator;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -44,6 +45,19 @@ final class ValidatorMappingPassTest extends TestCase
             ['/app/config/validator/a.yaml', '/app/config/validator/b.yml', '/app/config/validator/c.xml', '/app/%%weird%%/d.xml'],
             $container->getDefinition(ValidatorMappingPass::SOURCE)->getArgument('$mappingFiles'),
         );
+    }
+
+    #[Test]
+    public function test_the_class_locator_of_regex_validator_is_handed_the_same_files(): void
+    {
+        $container = new ContainerBuilder();
+        $container->setDefinition(ValidatorMappingPass::LOCATOR, new Definition(ValidatedClassLocator::class));
+        $container->setDefinition('validator.builder', (new Definition())
+            ->addMethodCall('addYamlMappings', [['/app/config/validator/a.yaml']]));
+
+        (new ValidatorMappingPass())->process($container);
+
+        $this->assertSame(['/app/config/validator/a.yaml'], $container->getDefinition(ValidatorMappingPass::LOCATOR)->getArgument('$mappingFiles'));
     }
 
     #[Test]

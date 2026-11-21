@@ -1,6 +1,6 @@
 {
     "repo": "WordPress/Requests",
-    "sha": "1f033d73eb2cbe6e69b8891789107be234849778",
+    "sha": "94980d25a7c1fa1129ee1474c690476000bf8ba3",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/Requests/blob/1f033d73eb2cbe6e69b8891789107be234849778/src/IdnaEncoder.php#L148-L154",
+            "permalink": "https://github.com/WordPress/Requests/blob/94980d25a7c1fa1129ee1474c690476000bf8ba3/src/IdnaEncoder.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -176,7 +176,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/WordPress/Requests/blob/1f033d73eb2cbe6e69b8891789107be234849778/src/Requests.php#L764-L770",
+            "permalink": "https://github.com/WordPress/Requests/blob/94980d25a7c1fa1129ee1474c690476000bf8ba3/src/Requests.php#L764-L770",
             "snippet": [
                 {
                     "number": 764,
@@ -338,7 +338,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/Requests/blob/1f033d73eb2cbe6e69b8891789107be234849778/src/Requests.php#L852-L858",
+            "permalink": "https://github.com/WordPress/Requests/blob/94980d25a7c1fa1129ee1474c690476000bf8ba3/src/Requests.php#L852-L858",
             "snippet": [
                 {
                     "number": 852,
@@ -656,7 +656,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/WordPress/Requests/blob/1f033d73eb2cbe6e69b8891789107be234849778/src/Requests.php#L860-L866",
+            "permalink": "https://github.com/WordPress/Requests/blob/94980d25a7c1fa1129ee1474c690476000bf8ba3/src/Requests.php#L860-L866",
             "snippet": [
                 {
                     "number": 860,

@@ -1,6 +1,6 @@
 {
     "repo": "giggsey/libphonenumber-for-php",
-    "sha": "75a801c3dbf9a675e4bc83e0da2c2142fcc5344d",
+    "sha": "eca44f903c864ee423b4225e87bc737818913b23",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/75a801c3dbf9a675e4bc83e0da2c2142fcc5344d/src/AsYouTypeFormatter.php#L489-L495",
+            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/eca44f903c864ee423b4225e87bc737818913b23/src/AsYouTypeFormatter.php#L489-L495",
             "snippet": [
                 {
                     "number": 489,
@@ -123,7 +123,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/75a801c3dbf9a675e4bc83e0da2c2142fcc5344d/src/PhoneNumberMatcher.php#L329-L335",
+            "permalink": "https://github.com/giggsey/libphonenumber-for-php/blob/eca44f903c864ee423b4225e87bc737818913b23/src/PhoneNumberMatcher.php#L329-L335",
             "snippet": [
                 {
                     "number": 329,

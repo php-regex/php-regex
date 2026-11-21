@@ -52,6 +52,49 @@ final class JavaScriptProperties
     ];
 
     /**
+     * The long names of the general categories, and their other aliases.
+     */
+    private const CATEGORY_NAMES = [
+        'Cased_Letter', 'Close_Punctuation', 'Combining_Mark', 'Connector_Punctuation', 'Control', 'Currency_Symbol',
+        'Dash_Punctuation', 'Decimal_Number', 'Enclosing_Mark', 'Final_Punctuation', 'Format', 'Initial_Punctuation',
+        'Letter', 'Letter_Number', 'Line_Separator', 'Lowercase_Letter', 'Mark', 'Math_Symbol', 'Modifier_Letter',
+        'Modifier_Symbol', 'Nonspacing_Mark', 'Number', 'Open_Punctuation', 'Other', 'Other_Letter', 'Other_Number',
+        'Other_Punctuation', 'Other_Symbol', 'Paragraph_Separator', 'Private_Use', 'Punctuation', 'Separator',
+        'Space_Separator', 'Spacing_Mark', 'Surrogate', 'Symbol', 'Titlecase_Letter', 'Unassigned', 'Uppercase_Letter',
+        'cntrl', 'digit', 'punct',
+    ];
+
+    /**
+     * The properties of strings the v flag adds, which only "\p" takes.
+     */
+    private const STRING_PROPERTIES = [
+        'Basic_Emoji', 'Emoji_Keycap_Sequence', 'RGI_Emoji', 'RGI_Emoji_Flag_Sequence', 'RGI_Emoji_Modifier_Sequence',
+        'RGI_Emoji_Tag_Sequence', 'RGI_Emoji_ZWJ_Sequence',
+    ];
+
+    /**
+     * Whether JavaScript under v reads "\p{name}", or "\P{name}" when
+     * negated, as written: a general category, a binary property or, for
+     * "\p" alone, a property of strings, by its exact name or alias; or
+     * "gc=", "sc=", "scx=" or their long names with a value of their kind.
+     */
+    public static function readsAsWritten(string $name, bool $negated): bool
+    {
+        $separator = strcspn($name, '=');
+        if ($separator === \strlen($name)) {
+            return self::isCategory($name) || isset(self::BINARY[$name]) || \in_array($name, self::BINARY, true) || (!$negated && \in_array($name, self::STRING_PROPERTIES, true));
+        }
+
+        $value = substr($name, $separator + 1);
+
+        return match (substr($name, 0, $separator)) {
+            'General_Category', 'gc' => self::isCategory($value),
+            'Script', 'sc', 'Script_Extensions', 'scx' => ScriptNames::isWritten($value),
+            default => false,
+        };
+    }
+
+    /**
      * The JavaScript name of a general category or a binary property, or
      * null when the name is neither.
      */
@@ -80,5 +123,10 @@ final class JavaScriptProperties
         }
 
         return null;
+    }
+
+    private static function isCategory(string $name): bool
+    {
+        return \in_array($name, self::CATEGORIES, true) || \in_array($name, self::CATEGORY_NAMES, true);
     }
 }

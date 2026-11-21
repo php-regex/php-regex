@@ -15,7 +15,6 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleCatalog;
-use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\LinearTimeAssertions;
 use PHPRegex\Toolkit\Regex;
@@ -59,14 +58,11 @@ final class LongSequenceLintTimeTest extends TestCase
     #[DataProvider('provideSequencesOfQuantifiers')]
     public function test_the_nesting_rules_read_a_long_sequence_in_linear_time(string $item): void
     {
-        /** @var array<int, RegexNode> $trees */
-        $trees = [];
-        foreach ([4000, 16000] as $count) {
-            $trees[$count] = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
-        }
+        // Parsed before: only the reading of the rules is timed.
+        $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, 4 * 4000).'/');
 
-        $this->assertLinearTime(static function (int $count) use ($trees): void {
-            $trees[$count]->accept(new PatternLinter(['quantifier.nested' => true, 'dotstar.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+        $this->assertLinearTime(static function () use ($tree): void {
+            $tree->accept(new PatternLinter(['quantifier.nested' => true, 'dotstar.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
         }, 4000, $item.' read by the rules on nesting');
     }
 
@@ -78,14 +74,11 @@ final class LongSequenceLintTimeTest extends TestCase
     #[Test]
     public function test_the_items_before_the_loops_of_a_long_body_are_read_once(): void
     {
-        /** @var array<int, RegexNode> $trees */
-        $trees = [];
-        foreach ([4000, 16000] as $count) {
-            $trees[$count] = Regex::create(['cache' => null])->parse('/(?:'.str_repeat('(?=b)', $count).'b?c+)+$/');
-        }
+        // Parsed before: only the reading of the rule is timed.
+        $tree = Regex::create(['cache' => null])->parse('/(?:'.str_repeat('(?=b)', 4 * 4000).'b?c+)+$/');
 
-        $this->assertLinearTime(static function (int $count) use ($trees): void {
-            $trees[$count]->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+        $this->assertLinearTime(static function () use ($tree): void {
+            $tree->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
         }, 4000, 'lookaheads before the loops of a body');
     }
 

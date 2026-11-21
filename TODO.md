@@ -1,30 +1,11 @@
 # TODO
 
-## Before merging #408 to #411
+## Before merging #411
 
-- None of the four has been reviewed yet; read them through, in stack
-  order, before merging the first.
-- #410 reports a trailing-slash redirect that takes part of a later
-  route's paths: `/admin` declared before a catch-all is now an overlap
-  (`GET /admin/`), listed with `--show-overlaps`. #403 declined it because
-  it flags every static route declared before a catch-all. Keep it, or
-  restore the carve-out in `RouteConflictAnalyzer` before merging.
-- Review and merge #412, which refuses the lookbehinds JavaScript captures
-  otherwise: it settles the last thread left open on #408.
-- Once #410 is merged, drop the three entries it settles under "Left from
-  the second pass": the trimmed `access_control` path, the partial
-  trailing-slash redirect, and the `s` flag of symfony/http-foundation 6.4.
-
-## PHP 8.6.0
-
-- Merge #413: the workflows run PHP 8.6 from its release image, and the
-  demo moves to 8.6.
-- `docs/_articles/which-pcre2-ships-with-which-php.md` still reads 8.6 as a
-  candidate: its table row ("planned for 2026-11-19", "10.44 in 8.6.0RC3"),
-  the chart's label, the sentence on the 8.6.0 release candidate, and the
-  `8.6-rc` command with its output. 8.6.0 came out on 2026-11-19 with PCRE2
-  10.44: run the article's matrix script on `php:8.6-cli` and write what it
-  prints.
+- Review #411, which audits `Assert\Regex` and its `htmlPattern`
+  (`RegexConstraintAnalyzer`), then cover the mutants its diff leaves: the
+  `Coverage and Mutations` job stops at a covered MSI of 64%, under the
+  90% it requires.
 
 ## Before 2.0.0, a pull request of its own
 
@@ -40,42 +21,31 @@
   fallback reads such a literal as its byte, and
   `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
   ASCII read: both move with it. Spec first. From the review of #407.
+- The Psalm plugin types `$matches` where nothing matched, on every Psalm
+  it narrows on. After
+  `if (preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)) { return; }`,
+  `$m` is `array<never, never>`, where PHP leaves `['ab', 'a', 'b']` for
+  `('x', 'ab')`: Psalm drops the left operand's clauses on a variable the
+  right one writes, and the plugin's conditions reach that formula; without
+  the plugin, `$m` stays `array<array-key, string>`. On Psalm 6, the `else`
+  of `if ($found = preg_match('/(a)(b)?/', $s, $m))` and the body of
+  `if (!($found = preg_match(…))) { … return; }` type `$m` as the shape.
+  Pin both forms on every Psalm row of the plugin's job.
 
 ## Psalm 7.11
 
-- Psalm 7.11.0 (vimeo/psalm#14161) answers `preg_match()` in its
-  `AssertionFinder` with its own `MatchesPattern` assertion, and no longer
-  calls `processCustomAssertion()` for it: the assertions a plugin sets on
-  the call are dropped, and `php-regex/regex-psalm` types no `$matches`
-  (88 failures; users fall back to `array<array-key, string>`). The tests
-  stay on `vimeo/psalm` below 7.11 in `tools/phpunit` and
-  `tools/paratest` (#407). Fix upstream: merge the plugin's assertions with
-  `MatchesPattern` in the `preg_match` branch of `processFunctionCall()` and
-  in `scrapeComparisonAssertions()`, with a test. Lift the pin once the fix
-  is released; until then 2.x itself runs red on the newest Psalm.
-
-## Left from the second pass before 2.0.0
-
-The bugs of the second pass are fixed in #403; these were left out of it.
-
-- `SecurityPatternNormalizer` trims an `access_control` path, which Symfony
-  does not: `"^/a\\\n"` becomes an invalid pattern and is skipped.
-- A trailing-slash redirect that takes only part of a later route's paths,
-  while the two routes also share paths, is not reported: `/admin` before a
-  `.*` catch-all (GET `/admin/` is redirected). It needs a three-way
-  language operation the solver lacks, and would flag every static route
-  declared before a catch-all. On disjoint schemes the overlap is reported
-  only when the solver's shortest example lies outside the earlier route's
-  paths: https `/{x<a|a/|long>}` before http `/{y<a|a/|long/>}` loses
-  `/long/` unreported (example `/a/`). Both need a search over three
-  languages, (swapped(E) ∩ L) \ E, a new `LanguageSolver` operation
-  (declined on #403 by the maintainer, 2026-11-17). An earlier route ending
-  on a variable, beside shared paths on disjoint schemes, is counted among
-  the skipped pairs: its redirect is PCRE's ordered choice. One whose last
-  requirement cannot end on "/" (the default `[^/]++`) could be read.
-- symfony/http-foundation 6.4 compiles an `access_control` path as
-  `'{'.$regexp.'}'`, without `s`; 8.1 adds it. The analyzer always reads
-  with `s`, so on 6.4 it can disagree where `.` meets a decoded newline.
+- Psalm 7.11.0 (vimeo/psalm#14161) and later no longer read the condition
+  the plugin sets on `preg_match()`. The branch
+  `psalm-711-preg-match-assertions` (not committed yet) writes that
+  condition into the assertion cache Psalm reads first, lifts the `<7.11`
+  pin in `tools/phpunit` and `tools/paratest`, and adds Psalm 7.10 and
+  7.12 rows to the plugin's job: open its pull request.
+- A loop that changes the pattern between two passes keeps the shape of
+  the first: with `$p = '/(a)(b)?/'` before a `foreach` whose body runs
+  `if (preg_match_all($p, $s, $n)) { … }` then `$p = '/(x)(y)(z)/'`, `$n`
+  is typed from `/(a)(b)?/` on every Psalm; `preg_match()` does the same
+  up to Psalm 7.10. Psalm clears the condition cache between the passes,
+  not the assertions set on the call.
 
 ## Engine reports
 
@@ -137,13 +107,10 @@ In this order.
    needs the stable public URL the tag gives it.
 
 
-## PHP 7.4 twin
+## PHPStan proof of concept
 
-`build/php74` is committed, and `bin/split` publishes it as
-`php-regex/regex-parser-php74` with the packages (#387): its `2.x` follows
-every push, each release tags it, and `bin/status` checks it with the
-others. It carries the sure-match facts of #198. Nothing is left to do for
-it at the release.
+The proof of concept stays on the fork, as php-regex/phpstan-src#1: no pull
+request goes to `phpstan/phpstan-src`.
 
 - The PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on
   upstream 2.3.x) names `11e3725`, never published, in `composer.json`:
@@ -152,32 +119,25 @@ it at the release.
   the description of the fork's pull request (php-regex/phpstan-src#1) with
   the #14490 line (the return type of `preg_match()` on a pattern sure to
   match).
-
-
-## PHPStan proof of concept
-
-The proof of concept stays on the fork, as php-regex/phpstan-src#1: no pull
-request goes to `phpstan/phpstan-src`.
-
-In `~/projects/php-regex/phpstan-src`, branch `read-regex-shapes-through-phpregex`:
-`2fddb71bf` reads a quoted text in place (the shape, the return type and the
-validity rule) and the commit after it folds `preg_quote()` of a constant
-string to its literal; both sit on top of the PR commit, not pushed. Squash
-them into the PR commit or keep them apart, then push to the fork.
-
-State the parse cost in the description of the fork's pull request.
-Measured over the 395 distinct literal patterns of the `preg_*` calls in
-PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
-PHPStan ships: validating takes 97 ms and the capture shape 57 ms, against
-88 ms for everything with the parser PHPStan generates today; the first
-pattern of a process costs 30 ms against 10 ms, class loading included,
-and the peak memory is 6 MB higher; a second read of a pattern is free; a
-run over twelve regex-heavy files, those patterns included, takes the
-same time with either parser (3.7 s), and PHPStan's benchmark suite calls
-no `preg_*` function. The capture shape computes eight facts per group
-and per arm, and nothing cheaper was found: memoising the length
-calculator or the ACCEPT check, or walking the letter check once, each
-measured under 3 %.
+- In `~/projects/php-regex/phpstan-src`, branch
+  `read-regex-shapes-through-phpregex`: `2fddb71bf` reads a quoted text in
+  place (the shape, the return type and the validity rule) and the commit
+  after it folds `preg_quote()` of a constant string to its literal; both
+  sit on top of the PR commit, not pushed. Squash them into the PR commit
+  or keep them apart, then push to the fork.
+- State the parse cost in the description of the fork's pull request,
+  measured over the 395 distinct literal patterns of the `preg_*` calls in
+  PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
+  PHPStan ships: validating takes 97 ms and the capture shape 57 ms,
+  against 88 ms for everything with the parser PHPStan generates today;
+  the first pattern of a process costs 30 ms against 10 ms, class loading
+  included, and the peak memory is 6 MB higher; a second read of a pattern
+  is free; a run over twelve regex-heavy files, those patterns included,
+  takes the same time with either parser (3.7 s), and PHPStan's benchmark
+  suite calls no `preg_*` function. The capture shape computes eight facts
+  per group and per arm, and nothing cheaper was found: memoising the
+  length calculator or the ACCEPT check, or walking the letter check once,
+  each measured under 3 %.
 
 
 ## Linter precision
@@ -230,9 +190,16 @@ measured under 3 %.
 ## Counted benchmarks
 
 `tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
-`Benchmarks (counted)`, from #390 on.
+`Benchmarks (counted)`, from #390 on; it has run green on the pull
+requests since.
 
-- Once the counted job has run on a few pull requests: drop the ratio of
-  `assertLinearTime()` (the counted growth benchmarks are the measure)
-  and keep its budget as a tripwire on every host, which shortens the
-  suite. The same for the advisory table job of PHPBench.
+- Review and merge #414, which leaves the growth to the counted
+  benchmarks: `assertLinearTime()` keeps its budget alone, five reads get
+  a counted twin, and the advisory PHPBench table job goes.
+- `lookaround.impossible` reads a loop whose body opens with lookaheads in
+  quadratic time, alone of the lint rules: `(?:` then n times `(?=b)` then
+  `b?c+)+$` takes 89 ms for 250 and 297 ms for 500; Tally counts all the
+  rules at about 8 billion instructions for 1 000 and 32 billion for
+  2 000. A pull request of its own, with the run of every rule counted
+  beside `LinterGrowthBench::benchLookaheadsBeforeTheLoopsOfABody`, which
+  counts `quantifier.nested` alone. Found while writing #414.

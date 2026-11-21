@@ -108,10 +108,11 @@ final class ContainerSurfaceKernelTest extends TestCase
     }
 
     /**
-     * regex:analyze runs the routes analyzer, then the security one.
+     * regex:analyze runs the routes analyzer, then the security one, then
+     * the validator one.
      */
     #[Test]
-    public function test_regex_analyze_is_given_the_routes_and_the_security_analyzers(): void
+    public function test_regex_analyze_is_given_the_routes_the_security_and_the_validator_analyzers(): void
     {
         $kernel = new FrameworkKernel($this->makeProject(), $this->makeProject());
 
@@ -135,7 +136,7 @@ final class ContainerSurfaceKernelTest extends TestCase
         }
 
         $sections = JsonContract::asArray(JsonContract::decodeDocument($tester->getDisplay())['sections'] ?? null);
-        $this->assertSame(['routes', 'security'], array_values(array_unique(array_map(
+        $this->assertSame(['routes', 'security', 'validator'], array_values(array_unique(array_map(
             static function (mixed $section): string {
                 $id = JsonContract::asArray($section)['id'] ?? null;
 

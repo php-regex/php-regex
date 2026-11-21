@@ -1,6 +1,6 @@
 {
     "repo": "google/site-kit-wp",
-    "sha": "d45c7bcd3713245c387d65b5060ab9e39d3eb39f",
+    "sha": "e349af26d4d6f46ead5f251286c50dd1f12ac2ff",
     "target": {
         "php": "7.4.33",
         "pcre": "10.33",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/site-kit-wp/blob/d45c7bcd3713245c387d65b5060ab9e39d3eb39f/includes/Core/Authentication/Authentication.php#L1038-L1044",
+            "permalink": "https://github.com/google/site-kit-wp/blob/e349af26d4d6f46ead5f251286c50dd1f12ac2ff/includes/Core/Authentication/Authentication.php#L1038-L1044",
             "snippet": [
                 {
                     "number": 1038,
@@ -176,7 +176,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/site-kit-wp/blob/d45c7bcd3713245c387d65b5060ab9e39d3eb39f/includes/Core/Email_Reporting/Plain_Text_Formatter.php#L264-L270",
+            "permalink": "https://github.com/google/site-kit-wp/blob/e349af26d4d6f46ead5f251286c50dd1f12ac2ff/includes/Core/Email_Reporting/Plain_Text_Formatter.php#L264-L270",
             "snippet": [
                 {
                     "number": 264,
@@ -423,7 +423,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/site-kit-wp/blob/d45c7bcd3713245c387d65b5060ab9e39d3eb39f/includes/Core/Util/URL.php#L83-L89",
+            "permalink": "https://github.com/google/site-kit-wp/blob/e349af26d4d6f46ead5f251286c50dd1f12ac2ff/includes/Core/Util/URL.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -559,7 +559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/site-kit-wp/blob/d45c7bcd3713245c387d65b5060ab9e39d3eb39f/includes/Core/Util/URL.php#L145-L151",
+            "permalink": "https://github.com/google/site-kit-wp/blob/e349af26d4d6f46ead5f251286c50dd1f12ac2ff/includes/Core/Util/URL.php#L145-L151",
             "snippet": [
                 {
                     "number": 145,
@@ -707,7 +707,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/google/site-kit-wp/blob/d45c7bcd3713245c387d65b5060ab9e39d3eb39f/includes/Modules/Analytics_4/Web_Tag.php#L188-L194",
+            "permalink": "https://github.com/google/site-kit-wp/blob/e349af26d4d6f46ead5f251286c50dd1f12ac2ff/includes/Modules/Analytics_4/Web_Tag.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,

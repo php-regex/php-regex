@@ -1,6 +1,6 @@
 {
     "repo": "PHPMailer/PHPMailer",
-    "sha": "b08e68f9d009705bcc075a4f8b852027e01c589c",
+    "sha": "71cdf31cc5dd1f64b8a0d4b31e682692024ff84b",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L943-L949",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -185,7 +185,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L1541-L1547",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L1541-L1547",
             "snippet": [
                 {
                     "number": 1541,
@@ -285,7 +285,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L1559-L1565",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,
@@ -385,7 +385,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L1576-L1582",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L1576-L1582",
             "snippet": [
                 {
                     "number": 1576,
@@ -487,7 +487,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L2613-L2619",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L2613-L2619",
             "snippet": [
                 {
                     "number": 2613,
@@ -718,7 +718,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/PHPMailer.php#L5056-L5062",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/PHPMailer.php#L5056-L5062",
             "snippet": [
                 {
                     "number": 5056,
@@ -958,7 +958,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/src/SMTP.php#L328-L334",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/src/SMTP.php#L328-L334",
             "snippet": [
                 {
                     "number": 328,
@@ -1096,7 +1096,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/b08e68f9d009705bcc075a4f8b852027e01c589c/test/Language/TranslationCompletenessTest.php#L68-L74",
+            "permalink": "https://github.com/PHPMailer/PHPMailer/blob/71cdf31cc5dd1f64b8a0d4b31e682692024ff84b/test/Language/TranslationCompletenessTest.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,

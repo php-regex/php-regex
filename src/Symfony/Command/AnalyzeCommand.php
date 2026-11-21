@@ -38,7 +38,7 @@ use Symfony\Component\HttpKernel\KernelInterface;
  */
 #[AsCommand(
     name: 'regex:analyze',
-    description: 'Run PHPRegex Symfony bridge analyzers (routes, security).',
+    description: 'Run PHPRegex Symfony bridge analyzers (routes, security, validator).',
 )]
 final class AnalyzeCommand extends Command
 {
@@ -68,7 +68,7 @@ final class AnalyzeCommand extends Command
                 'only',
                 null,
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_REQUIRED,
-                'Run only these analyzers (routes, security).',
+                'Run only these analyzers (routes, security, validator).',
             )
             ->addOption('show-overlaps', null, InputOption::VALUE_NONE, 'Include partial overlaps in reports.')
             ->addOption(
@@ -97,11 +97,11 @@ final class AnalyzeCommand extends Command
                 'fail-on',
                 null,
                 InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL,
-                'Kinds that should fail the command (shadowed, overlap, redos, critical, any, none).',
+                'Kinds that should fail the command (shadowed, overlap, redos, validator, critical, any, none).',
                 self::DEFAULT_FAIL_ON,
             )
             ->setHelp(<<<'EOF'
-                The <info>%command.name%</info> command runs Symfony bridge analyzers (routes, security).
+                The <info>%command.name%</info> command runs Symfony bridge analyzers (routes, security, validator).
 
                 <info>php %command.full_name%</info>
                 <info>php %command.full_name% --only=routes</info>
@@ -113,6 +113,7 @@ final class AnalyzeCommand extends Command
                 Control CI failures:
                 <info>php %command.full_name% --fail-on=shadowed --fail-on=redos</info>
                 <info>php %command.full_name% --fail-on=any</info>
+                <info>php %command.full_name% --fail-on=validator</info>
                 <info>php %command.full_name% --fail-on=none</info>
                 EOF);
     }
@@ -285,11 +286,11 @@ final class AnalyzeCommand extends Command
             $failOn = self::DEFAULT_FAIL_ON;
         }
 
-        $allowed = ['shadowed', 'overlap', 'redos', 'critical', 'any', 'none'];
+        $allowed = ['shadowed', 'overlap', 'redos', 'validator', 'critical', 'any', 'none'];
         $invalid = array_diff($failOn, $allowed);
 
         if ([] !== $invalid) {
-            return 'The --fail-on values must be one of: shadowed, overlap, redos, critical, any, none.';
+            return 'The --fail-on values must be one of: shadowed, overlap, redos, validator, critical, any, none.';
         }
 
         if (\in_array('none', $failOn, true)) {

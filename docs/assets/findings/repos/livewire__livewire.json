@@ -1,6 +1,6 @@
 {
     "repo": "livewire/livewire",
-    "sha": "e03c29c8181804cdafe9d5819b7ab5cc93adbf12",
+    "sha": "845892afe2683b8590371f917060821cb7348676",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/.github/scripts/get-browser-test-shard.php#L18-L24",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/.github/scripts/get-browser-test-shard.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -173,7 +173,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Compiler/Parser/MultiFileParser.php#L153-L159",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Compiler/Parser/MultiFileParser.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -332,7 +332,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Compiler/Parser/Parser.php#L226-L232",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Compiler/Parser/Parser.php#L226-L232",
             "snippet": [
                 {
                     "number": 226,
@@ -432,7 +432,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php#L47-L53",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Features/SupportCompiledWireKeys/SupportCompiledWireKeys.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -587,7 +587,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php#L75-L81",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Features/SupportMorphAwareBladeCompilation/SupportMorphAwareBladeCompilation.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -737,7 +737,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Finder/Finder.php#L406-L412",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Finder/Finder.php#L406-L412",
             "snippet": [
                 {
                     "number": 406,
@@ -844,7 +844,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Mechanisms/ExtendBlade/UnitTest.php#L72-L78",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Mechanisms/ExtendBlade/UnitTest.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -972,7 +972,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/livewire/livewire/blob/e03c29c8181804cdafe9d5819b7ab5cc93adbf12/src/Mechanisms/FrontendAssets/FrontendAssets.php#L304-L310",
+            "permalink": "https://github.com/livewire/livewire/blob/845892afe2683b8590371f917060821cb7348676/src/Mechanisms/FrontendAssets/FrontendAssets.php#L304-L310",
             "snippet": [
                 {
                     "number": 304,
