@@ -23,6 +23,12 @@ CHANGELOG
    `#^(?:([=<>!]=?|<>)\s*)?((?:\d*\.)?\d+)\s*(K|M|G|)B?$#Di` stays greedy:
    the empty branch lets `B` or the end follow it, which the first
    characters of the other branches left out.
+ * Under the possessive option, a rewrite whose possessive quantifiers the
+   check of the result refuses is made again without them, and the other
+   rewrites ship: the solver proves no possessive in a pattern that holds a
+   lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
+   now lose their useless `s`, as they do without the option. The second
+   rewrite runs only on such a refusal.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.

@@ -73,18 +73,45 @@ final class Optimizer
     public function optimize(string $regex, ?OptimizerOptions $options = null): OptimizationResult
     {
         $options ??= new OptimizerOptions();
-        $verifyWithAutomata = $options->verifyWithAutomata;
-        $optimizer = new Rewriter(
+        $ast = $this->parser->parse($regex);
+        $optimizer = self::rewriter($options, $options->possessive);
+        $result = $this->rewrite($regex, $ast, $optimizer, $options, $options->possessive);
+
+        // The check proves a possessive quantifier less often than the
+        // other rewrites, none in a pattern that holds a lookaround or
+        // "\b": a rewrite it refuses with one is made again without the
+        // possessive step, and the others ship on their own, "/\d+x(?!y)/s"
+        // losing its "s".
+        if (null === $result && \in_array(Rewriter::POSSESSIVE, $optimizer->changes(), true)) {
+            $result = $this->rewrite($regex, $ast, self::rewriter($options, false), $options, false);
+        }
+
+        return $result ?? new OptimizationResult($regex, $regex, []);
+    }
+
+    private static function rewriter(OptimizerOptions $options, bool $possessive): Rewriter
+    {
+        return new Rewriter(
             optimizeDigits: $options->digits,
             optimizeWord: $options->word,
             ranges: $options->ranges,
             canonicalizeCharClasses: $options->canonicalizeCharClasses,
-            possessive: $options->possessive,
+            possessive: $possessive,
             factorize: $options->factorize,
             minQuantifierCount: $options->minQuantifierCount,
         );
+    }
 
-        $ast = $this->parser->parse($regex);
+    /**
+     * The rewrite of the pattern the rewriter makes, or null when PCRE or
+     * the check of the result refuses it.
+     *
+     * @param bool $possessive whether the rewriter may make a quantifier possessive
+     *
+     * @throws RegexException when the rewrite returns a tree that is not a pattern
+     */
+    private function rewrite(string $regex, RegexNode $ast, Rewriter $optimizer, OptimizerOptions $options, bool $possessive): ?OptimizationResult
+    {
         $optimizedAst = $ast->accept($optimizer);
 
         // A safety net: the optimizing visitor returns a tree for a tree.
@@ -126,11 +153,15 @@ final class Optimizer
         // "(?<=abc|abde)" factorized for a release that refuses a
         // lookbehind branch of two lengths.
         // Nor is one of a pattern PCRE refuses: it has no matches to keep.
-        if (!$this->parser->validate($regex)->isValid || !$this->parser->validate($optimizedPattern)->isValid) {
+        if (!$this->parser->validate($regex)->isValid) {
             return new OptimizationResult($regex, $regex, []);
         }
 
-        if ($optimizedPattern !== $regex && $this->mayIntroduceAtomicity($regex, $optimizedPattern, $options->possessive)) {
+        if (!$this->parser->validate($optimizedPattern)->isValid) {
+            return null;
+        }
+
+        if ($optimizedPattern !== $regex && $this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive)) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
             // possessive forms it cannot prove safe, and an unverified one can
@@ -138,13 +169,13 @@ final class Optimizer
             // only under verifyWithAutomata, because the rewrite rules that
             // possessify are on by default.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
-                return new OptimizationResult($regex, $regex, []);
+                return null;
             }
-        } elseif ($optimizedPattern !== $regex && $verifyWithAutomata) {
+        } elseif ($optimizedPattern !== $regex && $options->verifyWithAutomata) {
             // Only a proven rewrite ships: one the automata disprove, or
             // cannot prove, leaves the pattern as written.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
-                return new OptimizationResult($regex, $regex, []);
+                return null;
             }
         }
 
