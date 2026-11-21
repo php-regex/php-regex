@@ -247,6 +247,20 @@ branch, `$matches` keeps the type Psalm gives it, `array<array-key, string>`:
 * the condition of a `while`, `for` or `do … while` loop;
 * `$matches` that is not a variable, as `$this->matches`.
 
+Nor is a condition read where it would speak of another value than the one
+`$matches` holds:
+
+* a call on the left of a `&&` or a `||` whose right operand writes the
+  variable again: in `preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)`,
+  `$m` is typed from the right call alone: where the left one was false,
+  the right one never ran. The right operand writes what it assigns or
+  increments, and the `$matches` or `$count` of a `preg_*` call;
+* where `if ($found = preg_match(…))` is false, and in the body of
+  `if (!($found = preg_match(…)))`: there the call wrote `[]`, and `$matches`
+  keeps Psalm's type on every release, the shape where it is true;
+* a loop body read again with a pattern it changed: Psalm reads the body
+  more than once, and the pattern then holds either value.
+
 Psalm 7.11 and later no longer read the condition a plugin sets on a
 `preg_match()` call: the plugin hands it to Psalm through the cache Psalm
 reads a condition from. Psalm reads a few forms without that cache, and

@@ -13,7 +13,12 @@ declare(strict_types=1);
 
 namespace PHPRegex\Psalm;
 
+use PhpParser\Node\ArrayItem;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Array_;
+use PhpParser\Node\Expr\Assign;
+use PhpParser\Node\Expr\AssignOp;
+use PhpParser\Node\Expr\AssignRef;
 use PhpParser\Node\Expr\BinaryOp;
 use PhpParser\Node\Expr\BinaryOp\Equal;
 use PhpParser\Node\Expr\BinaryOp\Greater;
@@ -25,7 +30,13 @@ use PhpParser\Node\Expr\BinaryOp\Smaller;
 use PhpParser\Node\Expr\BinaryOp\SmallerOrEqual;
 use PhpParser\Node\Expr\BinaryOp\Spaceship;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\List_;
+use PhpParser\Node\Expr\PostDec;
+use PhpParser\Node\Expr\PostInc;
+use PhpParser\Node\Expr\PreDec;
+use PhpParser\Node\Expr\PreInc;
 use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 use Psalm\StatementsSource;
 use Psalm\Storage\Assertion\InArray;
 use Psalm\Storage\Assertion\IsType;
@@ -37,7 +48,9 @@ use Psalm\Type\Union;
  * What holds on a preg_* call's result: the type of $matches or of the
  * subject where the call returned 1, [] where it did not, and nothing
  * through a comparison, which Psalm would read as if the call returned a
- * boolean.
+ * boolean, nor where Psalm would read it of another value than the call
+ * left: on a later pass over a loop body, or beside a right operand that
+ * writes the variable again.
  *
  * @internal
  */
@@ -57,6 +70,14 @@ final class CallAssertions
         GreaterOrEqual::class,
         Spaceship::class,
     ];
+
+    /**
+     * The calls the plugin set assertions on, each with the arguments they
+     * speak of; null until it sets some.
+     *
+     * @var \WeakMap<FuncCall, list<Expr>>|null
+     */
+    private static ?\WeakMap $asserted = null;
 
     /**
      * The assertion that the argument holds the type, or null when the
@@ -86,7 +107,11 @@ final class CallAssertions
      */
     public static function assertOnResult(StatementsSource $source, FuncCall $call, array $ifTrue, array $ifFalse): void
     {
-        PsalmInternals::assert($source, $call, array_values(array_filter($ifTrue)), [] === $ifFalse ? null : array_values(array_filter($ifFalse)));
+        $ifTrue = array_values(array_filter($ifTrue));
+        $ifFalse = [] === $ifFalse ? null : array_values(array_filter($ifFalse));
+        if (PsalmInternals::assert($source, $call, $ifTrue, $ifFalse)) {
+            self::remember($call, [...$ifTrue, ...$ifFalse ?? []]);
+        }
     }
 
     /**
@@ -102,7 +127,52 @@ final class CallAssertions
         $ifTrue = array_values(array_filter($ifTrue));
         $ifFalse = [] === $ifFalse ? null : array_values(array_filter($ifFalse));
         if (PsalmInternals::assert($source, $call, $ifTrue, $ifFalse)) {
+            self::remember($call, [...$ifTrue, ...$ifFalse ?? []]);
             ConditionAssertions::cache($source, $self, $call, $ifTrue, $ifFalse);
+        }
+    }
+
+    /**
+     * Psalm reads a loop body more than once, and clears between two passes
+     * the cache it reads a condition from, never the assertions set on a
+     * call: what the plugin set on the call goes, before the call is read
+     * again, as on a pass where its pattern is no longer one constant.
+     */
+    public static function forget(StatementsSource $source, FuncCall $call): void
+    {
+        if (null !== self::$asserted && isset(self::$asserted[$call])) {
+            unset(self::$asserted[$call]);
+            PsalmInternals::assert($source, $call, [], []);
+            PsalmInternals::cacheAssertions($source, $call, null);
+        }
+    }
+
+    /**
+     * Psalm reads what the left operand of a && or a || asserts of a
+     * variable the right one writes as if it spoke of the value the right
+     * one leaves: where the left one is false, the right one never ran. A
+     * call of the left operand whose assertions speak of a variable the
+     * right one writes keeps none: the variable keeps Psalm's type there.
+     * The right one writes the target of an assignment or of an increment,
+     * and the $matches or $count of a preg_* call.
+     */
+    public static function dropOverwritten(BinaryOp $condition, StatementsSource $source, ?string $self): void
+    {
+        $asserted = self::$asserted;
+        $written = null === $asserted ? [] : self::writtenIds($condition->right, $source, $self);
+        if (null === $asserted || [] === $written) {
+            return;
+        }
+
+        foreach ((new NodeFinder())->findInstanceOf($condition->left, FuncCall::class) as $call) {
+            foreach ($asserted[$call] ?? [] as $argument) {
+                $id = PsalmInternals::variableId($argument, $self, $source);
+                if (null !== $id && self::overlaps($id, $written)) {
+                    self::forget($source, $call);
+
+                    break;
+                }
+            }
         }
     }
 
@@ -123,5 +193,77 @@ final class CallAssertions
                 PsalmInternals::cacheAssertions($source, $operand, null);
             }
         }
+    }
+
+    /**
+     * @param list<Possibilities> $possibilities
+     */
+    private static function remember(FuncCall $call, array $possibilities): void
+    {
+        $arguments = $call->getArgs();
+        $spoken = [];
+        foreach ($possibilities as $possibility) {
+            $index = $possibility->var_id;
+            if (\is_int($index) && isset($arguments[$index])) {
+                $spoken[] = $arguments[$index]->value;
+            }
+        }
+
+        $asserted = self::$asserted ??= new \WeakMap();
+        $asserted[$call] = $spoken;
+    }
+
+    /**
+     * The ids of what the expression writes, as Psalm names them.
+     *
+     * @return list<string>
+     */
+    private static function writtenIds(Expr $expr, StatementsSource $source, ?string $self): array
+    {
+        $targets = [];
+        foreach ((new NodeFinder())->findInstanceOf($expr, Expr::class) as $node) {
+            if ($node instanceof Assign || $node instanceof AssignRef || $node instanceof AssignOp || $node instanceof PreInc || $node instanceof PreDec || $node instanceof PostInc || $node instanceof PostDec) {
+                $targets[] = $node->var;
+            } elseif ($node instanceof FuncCall && $node->name instanceof Name && !$node->isFirstClassCallable()) {
+                $function = CallArguments::globalFunction($node->name, $source);
+                $arguments = null === $function ? null : CallArguments::bind(array_values($node->getArgs()), CallArguments::PARAMETERS[$function]);
+                array_push($targets, ...array_values(array_intersect_key($arguments ?? [], ['matches' => true, 'count' => true])));
+            }
+        }
+
+        $ids = [];
+        while ([] !== $targets) {
+            $target = array_shift($targets);
+            if ($target instanceof Array_ || $target instanceof List_) {
+                // A destructuring writes each of its elements.
+                foreach ($target->items as $item) {
+                    if ($item instanceof ArrayItem) {
+                        $targets[] = $item->value;
+                    }
+                }
+            } elseif (null !== $id = PsalmInternals::variableId($target, $self, $source)) {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * Whether a write of one of the ids changes the value the id names: the
+     * same, one that holds it ("$m" for "$m[1]"), or one it holds.
+     *
+     * @param list<string> $written
+     */
+    private static function overlaps(string $id, array $written): bool
+    {
+        foreach ($written as $other) {
+            [$short, $long] = \strlen($other) <= \strlen($id) ? [$other, $id] : [$id, $other];
+            if ($short === $long || str_starts_with($long, $short.'[') || str_starts_with($long, $short.'->')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -223,6 +223,12 @@ parameters:
 			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
 
 		-
+			rawMessage: 'Call to internal method Psalm\Context::__construct() from outside its root namespace Psalm.'
+			identifier: method.internal
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
 			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Analyzer\FileAnalyzer from outside its root namespace Psalm.'
 			identifier: method.internalClass
 			count: 1
@@ -238,6 +244,12 @@ parameters:
 			rawMessage: 'Call to method getAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
 			identifier: method.internalClass
 			count: 3
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method getNodeTypeProvider() of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
 			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
 
 		-
