@@ -145,3 +145,12 @@ request goes to `phpstan/phpstan-src`.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
+
+
+## Optimizer precision
+
+- The possessive rewrite reads a group called through a subroutine where
+  it stands, not where it is called: `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is
+  offered `a++b?`, which the result check refuses, so the rewrite is made
+  again without the possessive step. Nothing wrong ships; reading the call
+  sites would save that second rewrite and check.
