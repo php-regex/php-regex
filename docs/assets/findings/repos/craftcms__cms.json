@@ -1,6 +1,6 @@
 {
     "repo": "craftcms/cms",
-    "sha": "d21b714efad531d151885b50082f3857dc4f17f2",
+    "sha": "af8fced6a59b87e7752352d3b24e701273136ccb",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/db/mysql/Schema.php#L299-L305",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/db/mysql/Schema.php#L299-L305",
             "snippet": [
                 {
                     "number": 299,
@@ -261,7 +261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/db/mysql/Schema.php#L409-L415",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/db/mysql/Schema.php#L409-L415",
             "snippet": [
                 {
                     "number": 409,
@@ -584,7 +584,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/App.php#L337-L343",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/App.php#L337-L343",
             "snippet": [
                 {
                     "number": 337,
@@ -735,7 +735,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/ElementHelper.php#L254-L260",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/ElementHelper.php#L254-L260",
             "snippet": [
                 {
                     "number": 254,
@@ -902,7 +902,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/FileHelper.php#L256-L262",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/FileHelper.php#L256-L262",
             "snippet": [
                 {
                     "number": 256,
@@ -1025,7 +1025,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/Html.php#L898-L904",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/Html.php#L898-L904",
             "snippet": [
                 {
                     "number": 898,
@@ -1172,7 +1172,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/Json.php#L93-L99",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/Json.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -1370,7 +1370,7 @@
                 "limit": 100000
             },
             "subject": "<0 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\"!>",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/StringHelper.php#L1024-L1030",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/StringHelper.php#L1024-L1030",
             "snippet": [
                 {
                     "number": 1024,
@@ -1665,7 +1665,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/StringHelper.php#L1435-L1441",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/StringHelper.php#L1435-L1441",
             "snippet": [
                 {
                     "number": 1435,
@@ -1851,7 +1851,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/StringHelper.php#L1854-L1860",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/StringHelper.php#L1854-L1860",
             "snippet": [
                 {
                     "number": 1854,
@@ -2098,7 +2098,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/helpers/StringHelper.php#L2497-L2503",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/helpers/StringHelper.php#L2497-L2503",
             "snippet": [
                 {
                     "number": 2497,
@@ -2232,7 +2232,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/services/Composer.php#L318-L324",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/services/Composer.php#L318-L324",
             "snippet": [
                 {
                     "number": 318,
@@ -2583,7 +2583,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/web/RedirectRule.php#L71-L77",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/web/RedirectRule.php#L71-L77",
             "snippet": [
                 {
                     "number": 71,
@@ -2770,7 +2770,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/d21b714efad531d151885b50082f3857dc4f17f2/src/web/twig/variables/Cp.php#L398-L404",
+            "permalink": "https://github.com/craftcms/cms/blob/af8fced6a59b87e7752352d3b24e701273136ccb/src/web/twig/variables/Cp.php#L398-L404",
             "snippet": [
                 {
                     "number": 398,

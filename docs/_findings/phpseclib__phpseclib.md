@@ -11,7 +11,7 @@ findings_warn: 7
 findings_php: "8.1"
 findings_pcre: "10.39"
 findings_committed: 2026-11-20
-findings_rank: 180
+findings_rank: 179
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."
 ---

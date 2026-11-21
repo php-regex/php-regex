@@ -1,6 +1,6 @@
 {
     "repo": "filamentphp/filament",
-    "sha": "b8448de56f31d7341d3d7b612cd157625fcdd29f",
+    "sha": "87278047584706886182bd75753a52c0d0e6a91d",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/filamentphp/filament/blob/b8448de56f31d7341d3d7b612cd157625fcdd29f/packages/support/src/Commands/Concerns/CanConfigureVite.php#L22-L28",
+            "permalink": "https://github.com/filamentphp/filament/blob/87278047584706886182bd75753a52c0d0e6a91d/packages/support/src/Commands/Concerns/CanConfigureVite.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -225,7 +225,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/filamentphp/filament/blob/b8448de56f31d7341d3d7b612cd157625fcdd29f/packages/support/src/SupportServiceProvider.php#L209-L215",
+            "permalink": "https://github.com/filamentphp/filament/blob/87278047584706886182bd75753a52c0d0e6a91d/packages/support/src/SupportServiceProvider.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
