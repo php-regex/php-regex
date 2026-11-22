@@ -15,20 +15,24 @@
   confidence under C, where `\xE9` is no letter.
 - The overlap rule folds literal text in ASCII alone: under
   fr_FR.ISO8859-1, `"/(?:\xC9x|\xE9x)+/i"` goes unreported, though
-  `/\xC9x/i` matches `\xE9x` there. Reading the fold from the tables moves
-  `"/(?:\xC9|\xE9)+/i"` from `regex.lint.overlap.charset` to
-  `regex.lint.alternation.overlap`: decide which rule reports it.
+  `/\xC9x/i` matches `\xE9x` there. Read the fold from the tables, and
+  report branches that fold to the same text under
+  `regex.lint.alternation.overlap`, as `/(?:A|a)+/i` is in ASCII:
+  `"/(?:\xC9|\xE9)+/i"` moves there from `regex.lint.overlap.charset`
+  under fr_FR.ISO8859-1 and stays where it is under C.
 - `ImpossibleAnchorRule` reads every byte through PCRE2's own tables,
   whatever the target's locale. Check whether a locale whose ASCII case
   differs (glibc's tr_TR.ISO-8859-9) makes it report an anchor that holds.
-- Decide how to report the search of `preg_match_all()`, `preg_replace()`
-  and `preg_split()`: after an empty match PHP tries again at the same
-  offset with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match
-  empty searches in the square of the subject there while `preg_match()`
-  stays linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8
-  and 26 ms through `preg_match_all()`, under 0.1 ms through
-  `preg_match()` (PHP 8.4.28, PCRE2 10.49). A finding of its own, or a
-  flag on the search cost the caller reads.
+- Report the search of `preg_match_all()`, `preg_replace()` and
+  `preg_split()`: after an empty match PHP tries again at the same offset
+  with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match empty
+  searches in the square of the subject there while `preg_match()` stays
+  linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8 and
+  26 ms through `preg_match_all()`, under 0.1 ms through `preg_match()`
+  (PHP 8.4.28, PCRE2 10.49). Decided: a flag on the search cost, no rule
+  of its own; the linter and the PHPStan and Psalm extensions, which know
+  the function called, raise `regex.lint.redos` at those calls with a
+  message naming the retry, and `preg_match()` keeps its verdict.
 - The proof leaves undecided an ambiguous loop that no suffix makes fail,
   and a heuristic finding stands where the engine is linear:
   `/^(?:a|a)+./`, and since #436 `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
