@@ -30,9 +30,13 @@ use PHPUnit\Framework\TestCase;
  * call, and the body keeps the options it was written under: "/(a)(?i)(?1)/"
  * finds nothing in "aA".
  *
- * A call that may run its own group again, a call of the whole pattern, a
- * call of a group the normal form leaves out, as a DEFINE holds it, and a
- * call that returns groups stay refused.
+ * A group a "(?(DEFINE)...)" holds runs the same way, under the options in
+ * force where the DEFINE stands, never where the call does:
+ * "/(?i:(?(DEFINE)(?<n>a)))(?&n)/" finds "A". It runs nowhere else, yet
+ * takes its number and its name in $matches.
+ *
+ * A call that may run its own group again, a call of the whole pattern and
+ * a call that returns groups stay refused.
  *
  * Checked on PHP 8.4.28 with PCRE2 10.49.
  */
@@ -98,6 +102,18 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         // back what they held.
         yield 'a call of a group' => ['left' => '/(a|b)c(?1)/', 'right' => '/(a|b)c[ab]/', 'letters' => 'abc'];
         yield 'a call of a group holding another' => ['left' => '/((a)|b)c(?1)/', 'right' => '/((a)|b)c[ab]/', 'letters' => 'abc'];
+        // A group a DEFINE holds runs where a call runs it, and nowhere else.
+        yield 'a possessive in a group a DEFINE holds' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>a++b?))/', 'letters' => 'abc'];
+        yield 'a possessive in a group a DEFINE holds, called by number' => ['left' => '/(?1)c(?(DEFINE)(a+b?))/', 'right' => '/(?1)c(?(DEFINE)(a++b?))/', 'letters' => 'abc'];
+        yield 'a possessive in a group a DEFINE holds, called from another it holds' => ['left' => '/(?&o)c(?(DEFINE)(?<o>d(?&i))(?<i>a+b?))/', 'right' => '/(?&o)c(?(DEFINE)(?<o>d(?&i))(?<i>a++b?))/', 'letters' => 'abcd'];
+        yield 'a possessive in a group a DEFINE holds, inside a group another DEFINE holds' => ['left' => '/(?&b)c(?(DEFINE)(?<a>x(?(DEFINE)(?<b>a+b?))))/', 'right' => '/(?&b)c(?(DEFINE)(?<a>x(?(DEFINE)(?<b>a++b?))))/', 'letters' => 'abcx'];
+        yield 'a call the engine backtracks into, of a group a DEFINE holds' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a|ab))/', 'right' => '/(?:a|ab)c(?(DEFINE)(?<n>a|ab))/', 'letters' => 'abc'];
+        // It runs under the options in force where the DEFINE stands.
+        yield 'a group a DEFINE holds, under the options of the group around it' => ['left' => '/(?i:(?(DEFINE)(?<n>a)))(?&n)c/', 'right' => '/(?i:(?(DEFINE)(?<n>a)))[aA]c/', 'letters' => 'aAcC'];
+        yield 'a group a DEFINE holds, under an option set before the DEFINE' => ['left' => '/(?&n)(?i)c(?(DEFINE)(?<n>a))/', 'right' => '/[aA](?i)c(?(DEFINE)(?<n>a))/', 'letters' => 'aAcC'];
+        yield 'a group a DEFINE holds, under the extended option of the group around it' => ['left' => '/(?x:(?(DEFINE)(?<n>a b)))(?&n)/', 'right' => '/(?x:(?(DEFINE)(?<n>a b)))ab/', 'letters' => 'ab '];
+        yield 'a class a DEFINE holds, under the option of the group around it that skips spaces' => ['left' => '/(?xx:(?(DEFINE)(?<n>[a b])))(?&n)/', 'right' => '/(?xx:(?(DEFINE)(?<n>[a b])))[ab]/', 'letters' => 'ab '];
+        yield 'a dot a DEFINE holds, under the dotall option of the group around it' => ['left' => '/(?s:(?(DEFINE)(?<n>.)))(?&n)/', 'right' => '/(?s:(?(DEFINE)(?<n>.)))[\s\S]/', 'letters' => "a\n"];
     }
 
     #[Test]
@@ -120,6 +136,37 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a call that gives up a branch' => ['left' => '/(a|ab)(?1)c/', 'right' => '/(a|ab)ac/', 'shortest' => 'aabc'];
         yield 'a call against the group spelled again' => ['left' => '/(a)c(?1)/', 'right' => '/(a)c(a)/', 'shortest' => 'aca'];
         yield 'a call under the options of its group, not of where it stands' => ['left' => '/(a)(?i)(?1)/', 'right' => '/(a)(?i)a/', 'shortest' => 'aA'];
+        yield 'a call under the options around the DEFINE of its group' => ['left' => '/(?i:(?(DEFINE)(?<n>a)))(?&n)/', 'right' => '/(?i:(?(DEFINE)(?<n>a)))a/', 'shortest' => 'A'];
+        yield 'a call under an option set before the DEFINE of its group' => ['left' => '/(?&n)(?i)c(?(DEFINE)(?<n>a))/', 'right' => '/a(?i)c(?(DEFINE)(?<n>a))/', 'shortest' => 'AC'];
+        yield 'a call under the option around the DEFINE of its group that skips spaces' => ['left' => '/(?xx:(?(DEFINE)(?<n>[a b])))(?&n)/', 'right' => '/(?xx:(?(DEFINE)(?<n>[a b])))[a b]/', 'shortest' => ' '];
+        yield 'a call under the dotall option around the DEFINE of its group' => ['left' => '/(?s:(?(DEFINE)(?<n>.)))(?&n)/', 'right' => '/(?s:(?(DEFINE)(?<n>.)))./', 'shortest' => "\n"];
+    }
+
+    /**
+     * A group a DEFINE holds runs only where a call runs it, yet it takes
+     * its number and its name in $matches, unset, as a group repeated no
+     * time does.
+     */
+    #[Test]
+    #[DataProvider('provideGroupsADefineHolds')]
+    public function test_a_group_a_define_holds_takes_its_number_and_its_name(string $left, string $right, string $shortest): void
+    {
+        $this->assertNotSame(self::matchesOf($left, $shortest), self::matchesOf($right, $shortest), \sprintf('Oracle: %s and %s write the same matches on %s.', $left, $right, json_encode($shortest)));
+
+        $result = (new LanguageSolver())->matchEquivalent($left, $right);
+
+        $this->assertFalse($result->isEquivalent);
+        $this->assertSame($shortest, $result->counterExample);
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, shortest: string}>
+     */
+    public static function provideGroupsADefineHolds(): iterable
+    {
+        yield 'a group a DEFINE holds against none' => ['left' => '/(?(DEFINE)(?<n>x))a/', 'right' => '/a/', 'shortest' => 'a'];
+        yield 'a group a DEFINE holds against one of another name' => ['left' => '/(?(DEFINE)(?<n>x))(a)/', 'right' => '/(?(DEFINE)(?<m>x))(a)/', 'shortest' => 'a'];
+        yield 'a group a DEFINE holds inside a group repeated no time' => ['left' => '/(?:(?(DEFINE)(?<n>x))){0}a/', 'right' => '/a/', 'shortest' => 'a'];
     }
 
     /**
@@ -147,7 +194,7 @@ final class MatchEquivalenceOfCallsTest extends TestCase
      */
     public static function provideCallsNotRead(): iterable
     {
-        $call = 'A call that may run its own group again, of a group a DEFINE holds, or that returns groups';
+        $call = 'A call that may run its own group again, that returns groups, or whose group the match solver does not read';
         $possessive = 'Atomic groups and possessive quantifiers cut the paths PCRE would try';
 
         // The possessive gives nothing back where the group stands, before
@@ -164,7 +211,8 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'the whole pattern with \g' => ['left' => '/a\g<0>?b/', 'right' => '/a(?:ab)?b/', 'reason' => $call, 'witness' => 'aaabbb'];
         // "(?R)" calls the whole pattern even where a group is named R.
         yield 'the whole pattern beside a group named R' => ['left' => '/(?<R>x)?a(?R)?b/', 'right' => '/(?<R>x)?a(?:x)?b/', 'reason' => $call, 'witness' => 'aabb'];
-        yield 'a group a DEFINE holds' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'right' => '/a+b?c/', 'reason' => $call];
+        yield 'a group a DEFINE holds calling itself' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a(?&n)?b))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>a(?:ab)?b))/', 'reason' => $call, 'witness' => 'aaabbbc'];
+        yield 'two groups a DEFINE holds calling each other' => ['left' => '/(?&a)(?(DEFINE)(?<a>x(?&b)?)(?<b>y(?&a)))/', 'right' => '/(?&a)(?(DEFINE)(?<a>x(?:yx)?)(?<b>y(?&a)))/', 'reason' => $call, 'witness' => 'xyxyx'];
         // Group 2 keeps what the call matched: "a" at 2.
         yield 'a call that returns a group inside it' => ['left' => '/((a))c(?1(2))/', 'right' => '/((a))ca/', 'reason' => $call, 'witness' => 'aca'];
         // A call matches what the body of its group matches: one that may
@@ -175,6 +223,8 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         // A group a call runs is read where it stands too.
         yield 'a group holding a backreference' => ['left' => '/(a)(b\1)(?2)/', 'right' => '/(a)(b\1)ba/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
         yield 'a group inside a lookahead' => ['left' => '/(?=(a))a(?1)/', 'right' => '/(?=(a))aa/', 'reason' => 'Lookarounds'];
+        // The condition of a conditional stays as written, its groups unread.
+        yield 'a group the condition of a conditional holds' => ['left' => '/(?(?=(?<n>a))a|b)(?&n)/', 'right' => '/(?(?=(?<n>a))a|b)a/', 'reason' => $call];
     }
 
     /**

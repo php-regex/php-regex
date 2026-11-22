@@ -55,9 +55,17 @@ CHANGELOG
    group was written under. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
    proven to write the same `$matches`, while `/(a++b?)c(?1)a/` stays
    refused, as the call gives an `a` back to what follows it. A call that
-   may run its own group again, `(?R)` included, a call of a group a
-   `(?(DEFINE)...)` holds, and a call that returns groups, `(?1(2))`, stay
-   refused, with a message of their own.
+   may run its own group again, `(?R)` included, and a call that returns
+   groups, `(?1(2))`, stay refused, with a message of their own.
+ * `matchEquivalent()` runs a group a `(?(DEFINE)...)` holds where a call
+   of it stands, under the options in force where the DEFINE stands, not
+   where the call does: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` and
+   `/(?&n)c(?(DEFINE)(?<n>a++b?))/` are proven to write the same
+   `$matches`, and `/(?i:(?(DEFINE)(?<n>a)))(?&n)/` is told apart from
+   `/(?i:(?(DEFINE)(?<n>a)))a/` on `A`. Such a group takes its number and
+   its name, as a group repeated no time does: `/(?(DEFINE)(?<n>x))(a)/`
+   and `/(?(DEFINE)(?<m>x))(a)/`, proven to write the same `$matches`, are
+   told apart on `a`.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven
