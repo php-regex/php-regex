@@ -2,42 +2,105 @@
 
 ## ReDoS precision
 
-- Under another locale's tables, the ReDoS heuristics leave unknown what
-  those tables decide, a caseless item included even when it is ASCII
-  (PCRE2 takes the other case of every character from the tables): a
-  pattern read that way can only raise a low-confidence finding. Reading
-  the tables PHP compiled with would be more precise.
-- Under `(*NOTEMPTY)`, the search cost is not proven: a pattern whose
-  search grows with the square of the subject, such as `(?:a+\d)?`, gets
-  no search-cost finding behind it, though each attempt is judged right.
-- Since #419 to #423, the counted `benchRedos` cases run 1.4 to 1.7 %
-  above their expected instructions (bounded-alternation-200: 159.3M
-  against 156.8M), close to the ±2 % allowed: accept the new numbers from
-  a 2.x run, so the next small cost is not read as a regression.
-
-## Playground on PHP 8.6
-
-- Offer PHP 8.6 in the playground and the Run buttons. php-wasm 0.2.0
-  stops at 8.5.2 and its Makefile refuses 8.6, so the engine is built from
-  php-wasm's v0.2.0 sources with 8.6.0 added (its php-src patch ported:
-  six files moved, `zend_free_internal_arg_info()` takes a second
-  argument), with mbstring, and served from `docs/` beside a manifest of
-  sha256s. 8.6 cannot be stood in by 8.5: it refuses `\C` under u, keys
-  MARK once and fixes `preg_grep()`. The branch `php-86-playground-engine`
-  (on top of #418) has the 8.6.0 options row; the engine itself needs
-  Docker at 4 CPU and 8 GB or more.
+- The overlap rule reads a raw byte above ASCII from the target's tables
+  where PCRE judges no branch (#432, #434), but not the same byte written
+  as an escape, which its ASCII read leaves unknown: `'/(?:\W|\xE9|)+/'`
+  under C, `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'` under
+  fr_FR.ISO8859-1 go unreported.
+- `CharSetAnalyzer` never reads a POSIX class, under any tables, though
+  `CharacterTables::bytesOf()` holds every name: under fr_FR.ISO8859-1,
+  `[[:alpha:]]` takes `\xE9` and `"/(?:[[:alpha:]]|\xE9|)+/"` goes
+  unreported, as `"/(?:[[:^alpha:]]|\xD7|)+/"` does under C; the
+  heuristics rate `"/^(x)[[:alpha:]]+\xE9+\1$/"` medium with low
+  confidence under C, where `\xE9` is no letter.
+- The overlap rule folds literal text in ASCII alone: under
+  fr_FR.ISO8859-1, `"/(?:\xC9x|\xE9x)+/i"` goes unreported, though
+  `/\xC9x/i` matches `\xE9x` there. Read the fold from the tables, and
+  report branches that fold to the same text under
+  `regex.lint.alternation.overlap`, as `/(?:A|a)+/i` is in ASCII:
+  `"/(?:\xC9|\xE9)+/i"` moves there from `regex.lint.overlap.charset`
+  under fr_FR.ISO8859-1 and stays where it is under C.
+- Three rules fold ASCII letters by C's pairs whatever the target's
+  locale: `regex.lint.alternation.overlap` (`foldCharSet`),
+  `regex.lint.quantifier.nested` (`NestedQuantifierRule::fold()`) and
+  `regex.lint.quantifier.concatenation` (`foldByteSet()`), with
+  `LoopShape::mayTakeAboveAscii`, all through the analyzer
+  `PatternLinter` builds without the target. Under glibc's
+  tr_TR.ISO-8859-9, where `i` pairs with `\xDD` and `I` with `\xFD`,
+  `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are reported though their
+  parts are disjoint (the engine returns 0 at once, the analysis says
+  safe), and `/i+\xDD+$/i` is missed (medium). Read the pairs from the
+  target's tables, as #429 and #434 do, once the overlap rule's escape
+  and fold changes have landed.
+- The automata scan bytes through `(*NO_JIT)` (`ClassSetProvider::probe()`),
+  so where the JIT and the interpreter read a locale's case differently
+  they see only the interpreter's: under macOS's tr_TR.ISO8859-9,
+  `/(?=\xFD)i/i` is reported impossible, yet the JIT matches `I` (PHP
+  8.4.28, PCRE2 10.49). Let a byte `CharacterTables` marks unsettled be
+  taken either way, as `CharSetAnalyzer` holds what any path takes since
+  #432.
+- Under a locale other than C, `ImpossibleAnchorRule` counts every byte
+  above ASCII as both a word character and not one: `/\W$\b\n/` is
+  reported under C but not under glibc's tr_TR, and `/\xDD$\B\n/`, impossible
+  there, is not reported. Read `\w` from the target's tables in
+  `EndOfLineTail`. The rule gives no false verdict under tr_TR (20,740
+  patterns against PHP 8.2, 8.4 and 8.6, JIT on and off).
+- Report the search of `preg_match_all()`, `preg_replace()` and
+  `preg_split()`: after an empty match PHP tries again at the same offset
+  with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match empty
+  searches in the square of the subject there while `preg_match()` stays
+  linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8 and
+  26 ms through `preg_match_all()`, under 0.1 ms through `preg_match()`
+  (PHP 8.4.28, PCRE2 10.49). Decided: a flag on the search cost, no rule
+  of its own; the linter and the PHPStan and Psalm extensions, which know
+  the function called, raise `regex.lint.redos` at those calls with a
+  message naming the retry, and `preg_match()` keeps its verdict.
+- The proof leaves undecided an ambiguous loop that no suffix makes fail,
+  and a heuristic finding stands where the engine is linear:
+  `/^(?:a|a)+./`, and since #436 `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
+  `/(*NOTEMPTY)^(?:a\K|a)+/` (20 → 36 steps on 8 → 16 `a`s), reported
+  critical. Prove such a loop linear when every attempt succeeds at its
+  first try.
+- Under `(*NOTEMPTY)`, a possessive or atomic repeat before `\K` is
+  quadratic too, `(*NOTEMPTY)(?:a++\K)` and `(*NOTEMPTY)(?>a+\K)` at 1.1,
+  4.1 and 16.2 ms on 2,000, 4,000 and 8,000 `a`s with the JIT off, but
+  the replay cannot count inside such a run: the first is reported
+  unconfirmed, the second not at all.
 
 ## Engine reports
 
 Found while fixing the bugs of #400; each is PCRE2's, not the library's.
 
-- PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
-  without the JIT: report it to PCRE2.
-- PCRE2 10.49's JIT returns 0 for `/(?<=(?:a|bc)|\b)x/` on `x`, and 1
-  without the JIT; `/(?<!(?:a|bc)|\b)x/` gives the reverse.
-- `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)` are ignored under the JIT, PHP's
-  default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
-  returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
+- `pcre2_jit_match()`, which PHP calls when the JIT is on, ignores
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, where `pcre2_match()` honours
+  them, through the JIT too: `preg_match('/(*NOTEMPTY)a*/', 'b')` returns 1
+  with the JIT and 0 with `pcre.jit=0`, and `(*NOTEMPTY_ATSTART)a*` on `b`
+  matches at offset 0 with the JIT and at 1 without. pcre2pattern says the
+  items act as the options do for whichever function matches, and both
+  options work with `pcre2_jit_match()`. No issue or pull request names it
+  on 2026-11-22 (10.43 to master): report it to PCRE2, with the fix of
+  copying the two flags into the options as `pcre2_match()` does.
+- Under `(*UTF)` without UCP and another locale's tables, PCRE2's paths
+  disagree on whether a code point from 128 to 255 is in `\w`: under
+  fr_FR.ISO8859-1, on `é`, `/(*UTF)\w/` gives 0 and
+  `/(*NO_START_OPT)(*UTF)\w/` and `/(*UTF)[\w]/` give 1, with the JIT and
+  without, while `/(*UTF)^\w$/` gives 1 with the JIT and 0 with
+  `pcre.jit=0` (PHP 8.4.28, PCRE2 10.49; a separate process per JIT
+  setting, since PHP's cache keeps the first compile). pcre2pattern says
+  only that such characters "may be different" under locale tables; the
+  answer should not depend on the path. Search PCRE2's tracker, then
+  report it. `CharSetAnalyzer` holds what any path takes there (#432).
+- The same paths disagree on case under a locale whose case maps are not
+  inverse: macOS's tr_TR.ISO8859-9 gives `tolower(0xDD) = 'i'` and
+  `toupper(0xFD) = 'I'`, while `I` and `i` pair with each other.
+  `/\xFD/i` matches `I` with the JIT and not with `pcre.jit=0` (PHP 8.4.28,
+  PCRE2 10.49): the interpreter compares the lowercase forms (`lcc`), the
+  JIT the other case (`fcc`). Report it with the `\w` one.
+- PCRE2's open pull requests fix the JIT's two other wrong answers, found
+  on 10.49 and master: #1004 a zero-width branch of a variable-length
+  lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
+  scan (`/\x{100}.{2}|A/u` on `A`, since 10.45, so not in PHP's bundled
+  10.44). Nothing to report: check that a release ships them.
 
 
 ## PCRE2 10.50
@@ -112,45 +175,52 @@ In this order.
 The proof of concept stays on the fork, as php-regex/phpstan-src#1: no pull
 request goes to `phpstan/phpstan-src`.
 
-- The PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on
-  upstream 2.3.x) names `11e3725`, never published, in `composer.json`:
-  pin the twin's `v2.0.0-RC1` (`d8d59a12`) there, `composer update
-  php-regex/regex-parser-php74`, amend, force-push to the fork, and refresh
-  the description of the fork's pull request (php-regex/phpstan-src#1) with
-  the #14490 line (the return type of `preg_match()` on a pattern sure to
-  match).
 - In `~/projects/php-regex/phpstan-src`, branch
-  `read-regex-shapes-through-phpregex`: `2fddb71bf` reads a quoted text in
-  place (the shape, the return type and the validity rule) and the commit
-  after it folds `preg_quote()` of a constant string to its literal; both
-  sit on top of the PR commit, not pushed. Squash them into the PR commit
-  or keep them apart, then push to the fork.
-- State the parse cost in the description of the fork's pull request,
-  measured over the 395 distinct literal patterns of the `preg_*` calls in
-  PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
-  PHPStan ships: validating takes 97 ms and the capture shape 57 ms,
-  against 88 ms for everything with the parser PHPStan generates today;
-  the first pattern of a process costs 30 ms against 10 ms, class loading
-  included, and the peak memory is 6 MB higher; a second read of a pattern
-  is free; a run over twelve regex-heavy files, those patterns included,
-  takes the same time with either parser (3.7 s), and PHPStan's benchmark
-  suite calls no `preg_*` function. The capture shape computes eight facts
-  per group and per arm, and nothing cheaper was found: memoising the
-  length calculator or the ACCEPT check, or walking the letter check once,
-  each measured under 3 %.
+  `read-regex-shapes-through-phpregex` is one local commit, `da58ce923a`,
+  on the parent of the pushed `079eba6c9`: it pins the twin's `2.0.0-RC1`
+  (composer.json named `11e3725`, never published, and the lock another
+  commit) and folds in the two `preg_quote()` commits. The nsrt suite
+  (1,903), the regex, rule and engine tests (340 patterns) and `make
+  phpstan` pass with RC1. Before the force-push to the fork: run the full
+  suite (`make tests`), which the description says passes; merge the
+  second docblock of `RegexExpressionHelper::resolvePatternConcat()` into
+  upstream's above it; then refresh the description of
+  php-regex/phpstan-src#1: the RC1 line, the `preg_quote()` line, the
+  #14490 line (the return type of `preg_match()` on a pattern sure to
+  match; its own pattern keeps the 0) and the parse cost (395 literal
+  patterns of PHPStan and its vendor, PHP 8.4, median of five runs:
+  validating 97 ms and the capture shape 57 ms, against 88 ms for the
+  generated parser; 30 ms against 10 ms for the first pattern, 6 MB more
+  peak memory, a second read free, the same 3.7 s over twelve regex-heavy
+  files; memoising the length calculator or the ACCEPT check, or walking
+  the letter check once, each measured under 3 %).
 
 
 ## Linter precision
 
+- `regex.lint.flag.useless.i` reads a byte above ASCII without u as
+  caseless under C, but `(*UCP)` gives the bytes below 256 their Unicode
+  case: `/(*UCP)\xE9/i` matches `\xC9` (PHP 8.4.28, PCRE2 10.49, with and
+  without the JIT), yet the rule calls its i useless. Read those bytes as
+  the code points of the same value under UCP, from the target's tables
+  (`OtherCases`, as #430 does under u), with an oracle across releases.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
-  does not narrow a union of constant strings by `$v[0] === '|'`. A small
-  pull request to its type specifier, with an nsrt test, would fix it.
+  does not narrow a union of constant strings by `$v[0] === '|'`. The fix
+  is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
+  (branch `narrow-constant-string-offset`, `70e61331c` on upstream 2.3.x
+  `9c990f5dd`): `IdenticalNarrowingHelper` keeps the constant strings whose
+  byte at a constant offset is the literal, its `turbo-ext` mirror does
+  the same, and an nsrt test covers both branches, negative and out of
+  range offsets; `make tests` passes with and without the extension. Push
+  it to the fork and open the pull request to phpstan/phpstan-src.
+  phpstan-src#6614 (`substr()` or `$s[0]` against a longer string) is
+  related, not the same.
 
 
 ## Optimizer precision
 
-- The possessive rewrite reads a group called through a subroutine where
-  it stands, not where it is called: `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is
-  offered `a++b?`, which the result check refuses, so the rewrite is made
-  again without the possessive step. Nothing wrong ships; reading the call
-  sites would save that second rewrite and check.
+- The match solver runs a call where it stands (#435), but not a call of
+  a group a `(?(DEFINE)…)` holds, which the normal form leaves out:
+  `/(?&n)c(?(DEFINE)(?<n>a+b?))/` is offered its possessive, refused, and
+  rewritten again without it. Translate the DEFINE's groups under the
+  options in force there, and let `runsOfEveryCall` read inside it.

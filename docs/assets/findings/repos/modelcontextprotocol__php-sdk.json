@@ -1,6 +1,6 @@
 {
     "repo": "modelcontextprotocol/php-sdk",
-    "sha": "3d2e831494562581cf8f783f34df241f694ceb57",
+    "sha": "7155eaee31aff68cf1e388bcc558b05868a28834",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/3d2e831494562581cf8f783f34df241f694ceb57/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
             "snippet": [
                 {
                     "number": 864,
@@ -203,7 +203,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/3d2e831494562581cf8f783f34df241f694ceb57/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
             "snippet": [
                 {
                     "number": 911,
@@ -382,7 +382,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/3d2e831494562581cf8f783f34df241f694ceb57/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -561,7 +561,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/3d2e831494562581cf8f783f34df241f694ceb57/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
             "snippet": [
                 {
                     "number": 1032,
@@ -880,7 +880,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/3d2e831494562581cf8f783f34df241f694ceb57/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
             "snippet": [
                 {
                     "number": 1046,

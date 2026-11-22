@@ -3291,7 +3291,7 @@ corpus/PHPCSStandards/PHP_CodeSniffer/src/Standards/Squiz/Sniffs/Commenting/Func
        - /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?(?:\$|&)[^\s]+)(?:(\s+)(.*))?)?/
        + /((?:(?![$.]|&(?=\$)).)*)(?:((?:\.\.\.)?[$&][^\s]+)(?:(\s+)(.*))?)?/
 
-corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:1999:39
+corpus/PHPCSStandards/PHP_CodeSniffer/src/Tokenizers/PHP.php:2008:39
     → `^((?<!\.)_[0-9A-F][0-9A-F\.]*)+$`iD
    INFO  Quantified capturing group 1 "((?<!\.)_[0-9A-F][0-9A-F\.]*)" with "+": only the last iteration's capture is
        retained.
@@ -3638,25 +3638,25 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Helper/Sample.php:90:65
    WARN  Alternation contains an empty alternative.
        ↳ Use a quantifier (e.g., "?") if the empty string should be allowed.
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1179:51
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1188:51
     → /\d\d\d\d/
    TIP 
        - /\d\d\d\d/
        + /\d{4}/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1181:43
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1190:43
     → /^\d\d\d\d-\d\d-\d\d$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d$/
        + /^\d{4}-\d\d-\d\d$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1183:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1192:49
     → /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
    TIP 
        - /^\d\d\d\d-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
        + /^\d{4}-\d\d-\d\d \d\d:\d\d(:\d\d)?$/
 
-corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1185:49
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Reader/Ods.php:1194:49
     → /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
    TIP 
        - /^\d\d?-[a-zA-Z]+-\d\d\d\d$/
@@ -3814,6 +3814,11 @@ corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/ReferenceHelper.php:1034:13
    TIP 
        - /(\$?\d{1,7}):(\$?\d{1,7})/mui
        + /(\$?\d{1,7}):(\$?\d{1,7})/ui
+
+corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Shared/File.php:209:30
+    → /^([\w.]){2,}:/
+   INFO  Quantified capturing group 1 "([\w.])" with "{2,}": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 corpus/PHPOffice/PhpSpreadsheet/src/PhpSpreadsheet/Style/NumberFormat/DateFormatter.php:132:33
     → /^(\[DBNum\d\])*(\[\$[^\]]*\])/i
@@ -7678,12 +7683,6 @@ corpus/codeigniter4/CodeIgniter4/system/Helpers/inflector_helper.php:38:13
    WARN  Character class contains "|" which is literal inside []. It looks like an alternation typo.
        ↳ Did you mean an alternation like "(error|failure)" instead of a character class?
 
-corpus/codeigniter4/CodeIgniter4/system/Helpers/inflector_helper.php:95:13
-    → /(matr|vert|ind)ix|ex$/
-   ↳ via $rule
-   WARN  An anchor holds for its own alternative only: "(matr|vert|ind)ix" matches anywhere in the subject.
-       ↳ If the anchors are meant for every alternative, group them: "(?:(matr|vert|ind)ix|ex)$".
-
 corpus/codeigniter4/CodeIgniter4/system/Helpers/url_helper.php:159:81
     → #^(\w+:)?//#i
    WARN  Flag 'i' is useless: the pattern contains no case-sensitive characters.
@@ -7713,7 +7712,7 @@ corpus/codeigniter4/CodeIgniter4/system/ThirdParty/Kint/Parser/ColorPlugin.php:6
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ The first quantifier can match zero times already: consider dropping the whole quantified term.
 
-corpus/codeigniter4/CodeIgniter4/system/ThirdParty/Kint/Parser/FsPathPlugin.php:55:26
+corpus/codeigniter4/CodeIgniter4/system/ThirdParty/Kint/Parser/FsPathPlugin.php:56:26
     → /[\/\/]/
    WARN  Redundant elements detected in character class. Holds when DIRECTORY_SEPARATOR is "/".
        ↳ Redundant elements: '/' (duplicate)
@@ -19277,7 +19276,7 @@ corpus/phan/phan/src/Phan/BlockAnalysisVisitor.php:551:9
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/CLI.php:2443:40
+corpus/phan/phan/src/Phan/CLI.php:2499:40
     → @^(\.[/\\]+)+@
    INFO  Quantified capturing group 1 "(\.[/\\]+)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -19298,7 +19297,7 @@ corpus/phan/phan/src/Phan/Config/Initializer.php:549:61
    INFO  Quantified capturing group 1 "(/+\.)" with "+": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:140:9
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:148:9
     → /@(?:phan-|psalm-)?(param|var)\b\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)?(?:\s*(\.\.\.)?\s*&?(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)))?/
    ↳ via Builder::PARAM_COMMENT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 49 can cause catastrophic backtracking.
@@ -19384,7 +19383,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:140:9
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:144:9
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:152:9
     → /@(?:phan-)?unused-param\b\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)?(?:\s*(\.\.\.)?\s*&?(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)))/
    ↳ via self::UNUSED_PARAM_COMMENT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 43 can cause catastrophic backtracking.
@@ -19470,7 +19469,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:144:9
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:251:41
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:259:41
     → /@(?:phan-|psalm-)?(?:real-)?return\s+(&\s*)?((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*)/
    ↳ via Builder::RETURN_COMMENT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 60 can cause catastrophic backtracking.
@@ -19553,7 +19552,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:251:41
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:253:51
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:261:51
     → /@(?:phan-|psalm-)?(?:real-)?(?:return|throws)\s+(&\s*)?((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*)/
    ↳ via self::RETURN_OR_THROWS_COMMENT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 71 can cause catastrophic backtracking.
@@ -19636,14 +19635,14 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:253:51
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:306:51
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:314:51
     → /^[\s\/*]*@(?:phan-|psalm-)?return\s+(?=\(\s*\$)/
    ↳ via self::CONDITIONAL_RETURN_START_REGEX
    WARN  "*" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the
          class.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:308:44
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:316:44
     → /\G\(\s*\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s+is\s+(not\s+)?((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*)\s*\?\s*/
    ↳ via self::CONDITIONAL_HEAD_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 84 can cause catastrophic backtracking.
@@ -19729,7 +19728,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:308:44
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:309:44
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:317:44
     → /\G((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*)/
    ↳ via self::CONDITIONAL_LEAF_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 18 can cause catastrophic backtracking.
@@ -19812,18 +19811,18 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:309:44
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:465:38
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:473:38
     → /^\/?[*\s]+/
    WARN  "*" is a literal character inside a character class, not a quantifier.
        ↳ Inside [...], "*" matches a literal "*". If you meant to quantify a shorthand like \w, use \w* outside the
          class.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:549:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:563:25
     → /(?:^|{)@((?i)param|deprecated|var|return|throws|throw|returns|inherits|extends|implements|use|require-extends|require-implements|suppress|unused-param|no-named-arguments|phan-[a-z0-9_-]*|psalm-(?:template(?:-(?:co|contra)variant)?|param|var|return|require-extends|require-implements)(?-i)|method|property|property-read|property-write|abstract|template(?:-(?:co|contra)variant)?|PhanClosureScope|readonly|mixin|seal-(?:methods|properties))(?:[^a-zA-Z0-9_\x7f-\xff-]|$)/D
    WARN  Inline flag '-i' overrides a flag set by an earlier inline flag group.
        ↳ Consider removing the outer flag or limiting it to specific groups.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:741:42
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:755:42
     → /@phan-type\s+([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*=\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)/
    ↳ via Builder::PHAN_TYPE_ALIAS_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 77 can cause catastrophic backtracking.
@@ -19906,7 +19905,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:741:42
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:932:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:946:25
     → /@[\w-]+\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 25 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -19941,7 +19940,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:932:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:965:33
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:979:33
     → /@phan-assert(?:(-true-condition|-false-condition)|\s+(!?)(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))\s+\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)/
    ↳ via self::ASSERT_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 72 can cause catastrophic backtracking.
@@ -20027,7 +20026,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:965:33
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:999:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1013:25
     → /@[\w-]+\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 25 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20062,7 +20061,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:999:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1494:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1601:25
     → /@(?:phan-|psalm-)?template(?:-(?P<variance>co|contra)variant)?\s+(?P<identifier>([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))(?:\s+of\s+(?P<constraint>((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))?/i
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 163 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20151,7 +20150,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1494:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1552:40
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1659:40
     → /@(?:phan-)?suppress\s+(([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*)(,\s*([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(-[a-zA-Z0-9_\x7f-\xff]+)*))*)/
    ↳ via self::PHAN_SUPPRESS_REGEX
    INFO  Quantified capturing group 3 "(-[a-zA-Z0-9_\x7f-\xff]+)" with "*": only the last iteration's capture is
@@ -20164,7 +20163,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1552:40
        retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1572:38
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1679:38
     → /^(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*)?\s*(?:(\.\.\.)\s*)?(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*))?((?:\s*=.*)?)$/
    ↳ via self::MAGIC_PARAM_REGEX
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 16 can cause catastrophic backtracking.
@@ -20250,7 +20249,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1572:38
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1642:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1749:25
     → /@(?:phan-)?method(?:\s+(static))?(?:(?:\s+((((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*))(\s*[|&]\s*(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|numeric-string|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*|\$this))(?:<((?-6)(?:\s*[|&]\s*(?-6))*(?:\s*,\s*(?-6)(?:\s*[|&]\s*(?-6))*)*)>|(\{)((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-8)(?:\s*[|&]\s*(?-8))*=?)*)?\})?)(?:\[\])*)))*))?)\s+(&)?([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)\s*\(((?:[^()]|\([()]*\))*)\)\s*(.*)/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 58 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -20338,7 +20337,7 @@ corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1642:25
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
          need.
 
-corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1779:25
+corpus/phan/phan/src/Phan/Language/Element/Comment/Builder.php:1886:25
     → /@(?:phan-)?(property|property-read|property-write)(?:\s+(((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*)(\s*[|&]\s*((?:\??\((?-1)(?:\s*[|&]\s*(?-1))*\)|(?:\??(?:\\?Closure|callable)(\((?:[^()]|(?-1))*\))(?:\s*:\s*(?:\\?(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*)|\((?-2)(?:\s*[|&]\s*(?-2))*\)))?)|\??(?:-?(?:(?:0|[1-9][0-9]*)(?:\.[0-9]+)?)|'(?:[- ,.\/?:;"!#$%^&*_+=a-zA-Z0-9_\x80-\xff]|\\(?:['\\]|x[0-9a-fA-F]{2}))*')|((\??)(?:callable-(?:string|object|array)|array-key|associative-array|class-string|int-range|key-of|lowercase-string|negative-int|phan-intersection-type|positive-int|value-of|no-return|never-returns?|non-(?:zero-int|null-mixed|falsy-string|empty-(?:associative-array|array|list|string|lowercase-string|numeric-string|mixed))|\\?[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*(?:\\[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)*))(?:<((?-5)(?:\s*[|&]\s*(?-5))*(?:\s*,\s*(?-5)(?:\s*[|&]\s*(?-5))*)*)>|\{((?:(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?(?:,(?:\s*(?:[-.\/^;$%*+_a-zA-Z0-9\x7f-\xff]|\\(?:[nrt\\]|x[0-9a-fA-F]{2}))+\??\s*:)?\s*(?-6)(?:\s*[|&]\s*(?-6))*=?)*)?\})?)(?:\[\])*))*))?(?:\s+(?:\$([a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)))/
    WARN  Nested quantifiers in "(?:\s*[|&]\s*(?-1))" at offset 71 can cause catastrophic backtracking.
        ↳ Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you
@@ -21025,7 +21024,7 @@ corpus/php/php-src/Zend/zend_vm_gen.php:2833:35
        - /ZEND_VM_DISPATCH_TO_HANDLER\(\s*([A-Z_]*)\s*\)/m
        + /ZEND_VM_DISPATCH_TO_HANDLER\(\s*([A-Z_]*)\s*\)/
 
-corpus/php/php-src/build/gen_stub.php:4847:24
+corpus/php/php-src/build/gen_stub.php:4837:24
     → /^\s*(?<type>[\w\|\\]+(?<parens>\((?<inparens>(?:(?&parens)|[^(){}[\]<>]*+))++\)|\{(?&inparens)\}|\[(?&inparens)\]|<(?&inparens)>)*+(?::(?&type))?)\s*(\.\.\.)?\$(?<name>\w+).*$/
    WARN  Quantified named group "(?<parens>\((?<inparens>(?:(?&…" with "*": only the last iteration's capture is
        retained.
@@ -21036,12 +21035,12 @@ corpus/php/php-src/build/gen_stub.php:4847:24
    WARN  Quantifier "+" repeats a group that can match the empty string: the last, empty iteration is redundant, and
        changes the capture to "".
 
-corpus/php/php-src/build/gen_stub.php:5699:25
+corpus/php/php-src/build/gen_stub.php:5689:25
     → /(?:[\w\.]*constants[\w\._]*|tokens).xml$/i
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
 
-corpus/php/php-src/build/gen_stub.php:6045:13
+corpus/php/php-src/build/gen_stub.php:6035:13
     → /<(\/)*xi:([A-Za-z]+?)/
    INFO  Quantified capturing group 1 "(\/)" with "*": only the last iteration's capture is retained.
        ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
@@ -21166,7 +21165,7 @@ corpus/phpDocumentor/ReflectionDocBlock/src/DocBlockFactory.php:177:13
 ### corpus/phpDocumentor/TypeResolver — Target: PHP 7.4, PCRE2 10.33 (composer.json config.platform.php) — exit 0
 Note: PCRE2 10.33 is judged with the PCRE2 10.39 rules, the oldest this library knows in full.
 
-### corpus/phpDocumentor/phpDocumentor — Target: PHP 8.1.2, PCRE2 10.39 (composer.json config.platform.php) — exit 0
+### corpus/phpDocumentor/phpDocumentor — Target: PHP 8.2, PCRE2 10.40 (composer.json config.platform.php) — exit 0
 corpus/phpDocumentor/phpDocumentor/src/phpDocumentor/UriFactory.php:32:39
     → ~^(file:\/\/\/)?(?<root>[a-zA-Z][:|\|])~
    ↳ via UriFactory::WINDOWS_URI_FORMAT
@@ -23097,7 +23096,7 @@ corpus/roundcube/roundcubemail/program/lib/Roundcube/rcube_utils.php:928:29
        - #/\*.*\*/#Ums
        + #/\*.*\*/#Us
 
-corpus/roundcube/roundcubemail/program/lib/Roundcube/rcube_vcard.php:757:42
+corpus/roundcube/roundcubemail/program/lib/Roundcube/rcube_vcard.php:839:42
     → /[\s\t\n\r\0\x0B]/
    WARN  Character class contains duplicate elements that do not add new matches.
        ↳ Remove the redundant character class element.
@@ -26041,6 +26040,11 @@ corpus/symfony/ai/.github/affected-packages.php:142:20
     → /Symfony\\{1,2}(?:AI|McpBundle)\\{1,2}[\w\\]+/
    WARN  Concatenated quantifiers can be optimized when one character set is a subset of the other.
        ↳ Consider tightening the first quantifier to its minimum.
+
+corpus/symfony/ai/src/mate/src/Bridge/Symfony/Messenger/FailedMessageGrouper.php:150:33
+    → ~(/[\w.\-]+)+~
+   INFO  Quantified capturing group 1 "(/[\w.\-]+)" with "+": only the last iteration's capture is retained.
+       ↳ Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.
 
 corpus/symfony/ai/src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php:78:25
     → /^(?:\d+(?:\.\d+)?(?:ms|h|m|s))+$/

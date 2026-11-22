@@ -1,6 +1,6 @@
 {
     "repo": "phpstan/phpstan-src",
-    "sha": "043348bc4430eb897a5273fb1739fdcd58733c19",
+    "sha": "9c990f5dd9bf718d5942c6ada4a91f75c7692100",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/043348bc4430eb897a5273fb1739fdcd58733c19/src/Parser/RichParser.php#L182-L188",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/9c990f5dd9bf718d5942c6ada4a91f75c7692100/src/Parser/RichParser.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -133,7 +133,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/043348bc4430eb897a5273fb1739fdcd58733c19/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/9c990f5dd9bf718d5942c6ada4a91f75c7692100/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -233,7 +233,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/043348bc4430eb897a5273fb1739fdcd58733c19/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/9c990f5dd9bf718d5942c6ada4a91f75c7692100/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -333,7 +333,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/043348bc4430eb897a5273fb1739fdcd58733c19/src/Type/Constant/ConstantArrayType.php#L3813-L3819",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/9c990f5dd9bf718d5942c6ada4a91f75c7692100/src/Type/Constant/ConstantArrayType.php#L3813-L3819",
             "snippet": [
                 {
                     "number": 3813,
@@ -569,7 +569,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/043348bc4430eb897a5273fb1739fdcd58733c19/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/9c990f5dd9bf718d5942c6ada4a91f75c7692100/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
