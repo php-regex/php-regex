@@ -553,6 +553,73 @@ final class PlaygroundDriverTest extends TestCase
         $this->assertStringStartsWith('Compilation failed', (string) $broken['engineError']);
     }
 
+    /**
+     * @return iterable<string, array{driver: string, root: string, regex: string, subject: string, groups: int, names: array<int, string>, marks: list<?string>}>
+     */
+    public static function provideMarksOnDrivers(): iterable
+    {
+        foreach (PlaygroundDriver::drivers() as $driverLabel => $driver) {
+            foreach (self::provideMarks() as $label => $row) {
+                yield $label.' on the '.$driverLabel => $driver + $row;
+            }
+        }
+    }
+
+    /**
+     * The mark a match leaves: the name of a (*MARK:z) it passed, or of a
+     * (*PRUNE), (*THEN) or (*COMMIT) given one. A (*SKIP) given a name
+     * looks for a mark and sets none.
+     *
+     * @return iterable<string, array{regex: string, subject: string, groups: int, names: array<int, string>, marks: list<?string>}>
+     */
+    public static function provideMarks(): iterable
+    {
+        yield 'a mark after a numbered group' => ['regex' => '/(a)(*MARK:z)b/', 'subject' => 'ab', 'groups' => 1, 'names' => [], 'marks' => ['z']];
+        yield 'a group named MARK without a mark' => ['regex' => '/(?<MARK>a)b/', 'subject' => 'ab', 'groups' => 1, 'names' => ['1' => 'MARK'], 'marks' => [null]];
+        yield 'a mark beside a group named MARK' => ['regex' => '/(?<MARK>a)(*MARK:z)b/', 'subject' => 'ab', 'groups' => 1, 'names' => ['1' => 'MARK'], 'marks' => ['z']];
+        yield 'a mark before a group named MARK' => ['regex' => '/(?<x>a)(*MARK:z)(?<MARK>b)/', 'subject' => 'ab', 'groups' => 2, 'names' => ['1' => 'x', '2' => 'MARK'], 'marks' => ['z']];
+        yield 'a marked set, then one without' => ['regex' => '/(*MARK:x)a|b/', 'subject' => 'ab', 'groups' => 0, 'names' => [], 'marks' => ['x', null]];
+        yield 'a (*PRUNE) given a name' => ['regex' => '/a(*PRUNE:p)b/', 'subject' => 'ab', 'groups' => 0, 'names' => [], 'marks' => ['p']];
+        yield 'a (*THEN) given a name' => ['regex' => '/a(*THEN:t)b/', 'subject' => 'ab', 'groups' => 0, 'names' => [], 'marks' => ['t']];
+        yield 'a (*SKIP) given a name' => ['regex' => '/a(*SKIP:s)b/', 'subject' => 'ab', 'groups' => 0, 'names' => [], 'marks' => [null]];
+    }
+
+    /**
+     * PHP writes a set's mark under its "MARK" key, as a string where a
+     * group is a pair: after the last group, or beside a group named MARK.
+     * The driver reads it on its own, never as a group: the names are the
+     * engine's groups, and each set shown has its mark, or null.
+     *
+     * @param array<int, string> $names
+     * @param list<?string>      $marks
+     */
+    #[Test]
+    #[DataProvider('provideMarksOnDrivers')]
+    public function test_a_mark_reads_on_its_own_never_as_a_group(string $driver, string $root, string $regex, string $subject, int $groups, array $names, array $marks): void
+    {
+        $this->assertSame(\count($marks), preg_match_all($regex, $subject, $sets, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL));
+        $this->assertSame($marks, array_map(static fn (array $set): ?string => \is_string($set['MARK'] ?? null) ? $set['MARK'] : null, $sets), 'The engine writes each mark as a string under "MARK".');
+        foreach ($sets as $set) {
+            $this->assertSame(range(0, $groups), array_values(array_filter(array_keys($set), \is_int(...))), 'The engine numbers no group past the pattern\'s own.');
+        }
+
+        // The match op is the engine alone, as on the PHP 8.0 engine, where
+        // the names are the driver's only; the analysis reads them from the
+        // tree too, and both agree.
+        $match = PlaygroundDriver::match($driver, $root.'/does-not-exist', $regex, $subject);
+        $analysis = PlaygroundDriver::analyze($driver, $root, $regex, $subject);
+        $this->assertSame($names, $analysis['groupNames']);
+        foreach (['match' => $match, 'analysis' => $analysis] as $op => $payload) {
+            $this->assertSame([], $payload['notices'], $op.': a mark is no pair, and PHP 8.5 warns on reading one as a pair.');
+            $matches = self::matchesOf($payload);
+            $this->assertSame($names, $matches['names'], $op);
+            $this->assertSame($marks, $matches['marks'], $op);
+            foreach ($matches['sets'] as $set) {
+                $this->assertSame([], array_diff(array_keys($set), range(0, $groups)), $op.': a set holds groups only.');
+            }
+        }
+    }
+
     #[Test]
     #[DataProvider('provideDrivers')]
     public function test_an_unknown_op_and_a_missing_input_are_answered_not_fatal(string $driver, string $root): void

@@ -5683,6 +5683,18 @@ body.search-open {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
+/* The mark the match left: a name the pattern gave a verb, not a group,
+   on a line of its own under the groups. */
+.pg-match-verb {
+  margin: .35rem 0 0;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.pg-match-verb code {
+  color: var(--ink);
+}
 
 /* The editor: a textarea over a mirror that paints the marks. The two share
    every metric that moves a glyph (font, size, line height, padding,
