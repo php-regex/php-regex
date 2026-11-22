@@ -208,12 +208,17 @@ request goes to `phpstan/phpstan-src`.
 
 ## Linter precision
 
-- `regex.lint.flag.useless.i` reads a byte above ASCII without u as
-  caseless under C, but `(*UCP)` gives the bytes below 256 their Unicode
-  case: `/(*UCP)\xE9/i` matches `\xC9` (PHP 8.4.28, PCRE2 10.49, with and
-  without the JIT), yet the rule calls its i useless. Read those bytes as
-  the code points of the same value under UCP, from the target's tables
-  (`OtherCases`, as #430 does under u), with an oracle across releases.
+- `CharSetAnalyzer` reads `(*UCP)` without u as Unicode case past ASCII
+  on every release, where PCRE2 does so from 10.35 alone (#440): with a
+  target of PHP 7.4 and PCRE2 10.34, `regex.lint.overlap.charset` reports
+  `"/(*UCP)(?:\xC9|\xE9|)+/i"`, though `/(*UCP)\xC9/i` matches `\xC9`
+  alone there (php:7.4.10). Gate it on `UcpFoldsPastAsciiWithoutUtf`, as
+  `UselessIFlagRule` does.
+- `regex.lint.flag.useless.i` keeps an `i` the engine finds useless where
+  a class holds both cases, `/[aA]/i`, `/(*UCP)[\xC9\xE9]/i`,
+  `/(*UCP)[\xC0-\xFE]/i`, or an inline flag turns it off, `/(?-i)a/i`,
+  `/(*UCP)(?-i)\xE9/i`; and keeps it for `/(*UCP)(?i)\xE9/i`, where the
+  pattern's own `i` adds nothing.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. The fix
   is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
