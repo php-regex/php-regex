@@ -75,11 +75,18 @@
   `/(*NOTEMPTY)^(?:a\K|a)+/` (20 → 36 steps on 8 → 16 `a`s), reported
   critical. Prove such a loop linear when every attempt succeeds at its
   first try.
-- Under `(*NOTEMPTY)`, a possessive or atomic repeat before `\K` is
-  quadratic too, `(*NOTEMPTY)(?:a++\K)` and `(*NOTEMPTY)(?>a+\K)` at 1.1,
-  4.1 and 16.2 ms on 2,000, 4,000 and 8,000 `a`s with the JIT off, but
-  the replay cannot count inside such a run: the first is reported
-  unconfirmed, the second not at all.
+- The search cost keeps an atomic body other than one run with every way
+  through it, so only the replay (confirmed mode) reports
+  `/(*NOTEMPTY)(?>a+\K)/`, `/(*NOTEMPTY)(?>(?>a+)\K)/`,
+  `/(*NOTEMPTY)(?>a+\K|b)/` and `/(?>a+|c)b/` (1.1, 4.1 and 16 ms on
+  2,000, 4,000 and 8,000 `a`s with the JIT off); the theoretical mode
+  leaves `search_cost` null, though `(?>a+\K)` is `(?>a+)\K`. Read such a
+  body as the run it holds.
+- The replay counts a possessive run's reads by putting each repeated
+  character in a group of its own (#439), but not where the delimiter is
+  `?`, `:` or `)` or the body holds `\Q`: `?a++b?`, `:a++b:` and
+  `/\Qa\E++b/` stay unconfirmed. Replay those under a delimiter the body
+  does not hold, as `NoJit` does for `*`, `_` and `)`.
 
 ## Engine reports
 
