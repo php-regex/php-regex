@@ -111,6 +111,11 @@ final class PatternFunction
      *                                                             nette/utils does; anything but true or false leaves
      *                                                             the pattern unknown
      * @param string                          $patternSuffix       what the call appends to every pattern it reads
+     * @param string|null                     $everyMatch          the preg function the call runs its patterns in when
+     *                                                             that function looks for every match (PregFunctions::
+     *                                                             EVERY_MATCH); null when it stops at the first one
+     * @param array{int, string}|null         $limitArgument       with $everyMatch, the position and the name of the
+     *                                                             parameter bounding how many matches it makes
      */
     public function __construct(
         public readonly string $label,
@@ -126,6 +131,8 @@ final class PatternFunction
         public readonly ?array $filterArgument = null,
         public readonly ?array $utf8Argument = null,
         public readonly string $patternSuffix = '',
+        public readonly ?string $everyMatch = null,
+        public readonly ?array $limitArgument = null,
     ) {
         // Sorted and without duplicates: the order the declarations were
         // read in makes no other function.
@@ -173,6 +180,23 @@ final class PatternFunction
     public function readingTheItem(): self
     {
         return $this->with(optionPath: [], optionPathRequired: false);
+    }
+
+    /**
+     * The same function, a limit the call gives bounding how many matches
+     * it makes: its loop no longer goes on after every match.
+     */
+    public function bounded(): self
+    {
+        return $this->with(everyMatch: null);
+    }
+
+    /**
+     * Whether a limit the call gives bounds how many matches it makes.
+     */
+    public function boundedBy(int $limit): bool
+    {
+        return null !== $this->everyMatch && PregFunctions::bounds($this->everyMatch, $limit);
     }
 
     /**
@@ -237,6 +261,7 @@ final class PatternFunction
         ?string $patternSuffix = null,
         ?array $optionPath = null,
         ?bool $optionPathRequired = null,
+        string|false|null $everyMatch = false,
     ): self {
         return new self(
             $this->label,
@@ -252,6 +277,8 @@ final class PatternFunction
             $this->filterArgument,
             $this->utf8Argument,
             $patternSuffix ?? $this->patternSuffix,
+            false === $everyMatch ? $this->everyMatch : $everyMatch,
+            $this->limitArgument,
         );
     }
 }

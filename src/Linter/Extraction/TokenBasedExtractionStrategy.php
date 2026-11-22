@@ -835,6 +835,16 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             }
         }
 
+        // A literal limit bounds how many matches the call makes: its loop
+        // no longer goes on after every match.
+        if (null !== $patternFunction->limitArgument) {
+            $limit = CallArguments::find($tokens, $startIndex, $totalTokens, $patternFunction->limitArgument[0], [$patternFunction->limitArgument[1]], $closers);
+            $value = null === $limit ? null : CallArguments::integer($tokens, $limit[0], $limit[1]);
+            if (null !== $value && $patternFunction->boundedBy($value)) {
+                $patternFunction = $patternFunction->bounded();
+            }
+        }
+
         // filter_var() compiles the option only under FILTER_VALIDATE_REGEXP.
         if (null !== $patternFunction->filterArgument) {
             [$index, $parameter, $constant] = $patternFunction->filterArgument;
@@ -1098,6 +1108,7 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             $patternFunction->source(),
             column: $patternInfo['column'] ?? null,
             fileOffset: $patternInfo['offset'] ?? null,
+            everyMatch: $patternFunction->everyMatch,
         );
     }
 

@@ -43,6 +43,15 @@ final class PregFunctions
     public const PATTERN_LISTS = ['preg_replace', 'preg_replace_callback', 'preg_filter'];
 
     /**
+     * The functions that look for every match: after each match they go
+     * on from its end, and after an empty one PHP tries the same offset
+     * again with PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED before it moves
+     * one character on. preg_match() and preg_grep() stop at the first
+     * match.
+     */
+    public const EVERY_MATCH = ['preg_match_all', 'preg_replace', 'preg_filter', 'preg_replace_callback', 'preg_replace_callback_array', 'preg_split'];
+
+    /**
      * The position and name of the parameter holding what the pattern runs
      * on, preg_grep()'s array included; null for a function taking no
      * pattern.
@@ -58,5 +67,29 @@ final class PregFunctions
         }
 
         return null;
+    }
+
+    /**
+     * The position and name of the parameter that bounds how many matches
+     * the function makes; null for one without.
+     *
+     * @return array{int, string}|null
+     */
+    public static function limit(string $function): ?array
+    {
+        $position = array_search('limit', self::PARAMETERS[$function] ?? [], true);
+
+        return false === $position ? null : [$position, 'limit'];
+    }
+
+    /**
+     * Whether a limit the call gives bounds how many matches the function
+     * makes: any limit of zero or more for the replacing functions, which
+     * read it unsigned, -1 meaning none; for preg_split(), any but -1 and 0,
+     * which mean none, as a limit of 1 or less splits nothing.
+     */
+    public static function bounds(string $function, int $limit): bool
+    {
+        return 'preg_split' === $function ? -1 !== $limit && 0 !== $limit : $limit >= 0;
     }
 }

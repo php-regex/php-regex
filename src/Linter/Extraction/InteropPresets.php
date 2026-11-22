@@ -72,6 +72,26 @@ final class InteropPresets
     ];
 
     /**
+     * The methods of composer/pcre's Preg and Regex that run a function
+     * looking for every match, lowercase, with the position of their limit
+     * parameter: each calls that function with its arguments (composer/pcre
+     * 3.3, src/Preg.php and src/Regex.php).
+     */
+    private const COMPOSER_PCRE_LOOPS = [
+        'matchall' => ['preg_match_all', null],
+        'matchallstrictgroups' => ['preg_match_all', null],
+        'matchallwithoffsets' => ['preg_match_all', null],
+        'ismatchall' => ['preg_match_all', null],
+        'ismatchallstrictgroups' => ['preg_match_all', null],
+        'ismatchallwithoffsets' => ['preg_match_all', null],
+        'replace' => ['preg_replace', 3],
+        'replacecallback' => ['preg_replace_callback', 3],
+        'replacecallbackstrictgroups' => ['preg_replace_callback', 3],
+        'split' => ['preg_split', 2],
+        'splitwithoffsets' => ['preg_split', 2],
+    ];
+
+    /**
      * PHPUnit's assertions taking the pattern as $pattern, first: PHPUnit
      * 12.5 Assert, and assertRegExp()/assertNotRegExp() of PHPUnit 9 and
      * older.
@@ -190,8 +210,8 @@ final class InteropPresets
                     'replace', 'replaceCallback', 'replaceCallbackStrictGroups',
                 ]),
                 // The pattern lives in the array keys, as with preg_replace_callback_array().
-                'composer\pcre\preg::replacecallbackarray' => new PatternFunction('Preg::replaceCallbackArray', 0, keysArePatterns: true),
-                'composer\pcre\regex::replacecallbackarray' => new PatternFunction('Regex::replaceCallbackArray', 0, keysArePatterns: true),
+                'composer\pcre\preg::replacecallbackarray' => new PatternFunction('Preg::replaceCallbackArray', 0, keysArePatterns: true, everyMatch: 'preg_replace_callback_array', limitArgument: [2, 'limit']),
+                'composer\pcre\regex::replacecallbackarray' => new PatternFunction('Regex::replaceCallbackArray', 0, keysArePatterns: true, everyMatch: 'preg_replace_callback_array', limitArgument: [2, 'limit']),
             ],
             // Nette puts the subject first and takes an array of pattern =>
             // replacement; utf8: true appends "u" to every pattern.
@@ -429,7 +449,8 @@ final class InteropPresets
         $entries = [];
 
         foreach ($methods as $method) {
-            $entries[Ascii::lower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method);
+            [$everyMatch, $limit] = self::COMPOSER_PCRE_LOOPS[Ascii::lower($method)] ?? [null, null];
+            $entries[Ascii::lower($class.'::'.$method)] = new PatternFunction($shortClass.'::'.$method, everyMatch: $everyMatch, limitArgument: null === $limit ? null : [$limit, 'limit']);
         }
 
         return $entries;
