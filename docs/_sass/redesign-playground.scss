@@ -90,19 +90,6 @@
   padding-inline: var(--gutter);
 }
 
-/* The page names the tool before the tool shows it: one heading in the
-   site's own voice, one line under it, then the toolbar. The heading and
-   its lede take the documentation's own treatment (main h1, main h1 + p);
-   only their rhythm around the toolbar lives here. */
-.hero-playground h1 {
-  margin: 2.5rem 0 0;
-}
-
-.hero-playground .hero-lede {
-  margin: 0 0 2.5rem;
-  max-width: 62ch;
-}
-
 /* ---- Toolbar: the pattern and what runs it -------------------------------- */
 
 .pg-patternbar {

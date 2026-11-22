@@ -6,8 +6,7 @@ description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, the
 
 <div class="hero hero-playground">
   <div class="hero-inner">
-    <h1>See a PHP regex as a tree</h1>
-    <p class="hero-lede">A PCRE parser you can reason about — AST, visitors, proofs. The tool below runs the real PHP and PCRE2, in your browser.</p>
+    <h1 class="visually-hidden">See a PHP regex as a tree</h1>
     {% include playground.html %}
   </div>
 </div>
