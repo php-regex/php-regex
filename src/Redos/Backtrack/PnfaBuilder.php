@@ -247,6 +247,12 @@ final class PnfaBuilder
     private readonly bool $caselessRestrict;
 
     /**
+     * Whether every attempt refuses an empty match, "(*NOTEMPTY)": "\K" is
+     * then written as a state, since a match it leaves empty is refused.
+     */
+    private readonly bool $refusesEmpty;
+
+    /**
      * Why the options the pattern opens with keep it outside the model;
      * null when they do not.
      */
@@ -286,6 +292,7 @@ final class PnfaBuilder
         $this->startOptions = $this->newline.(\in_array('UCP', $options, true) ? '(*UCP)' : '');
         $this->outOfModelTypes = 'CRLF' === $newline ? [...self::OUT_OF_MODEL_TYPES, 'N'] : self::OUT_OF_MODEL_TYPES;
         $this->caselessRestrict = \in_array('CASELESS_RESTRICT', $options, true);
+        $this->refusesEmpty = \in_array('NOTEMPTY', $options, true);
         // "(*TURKISH_CASING)" folds "i" with U+0130 and "I" with U+0131.
         $this->startLimit = match (true) {
             !$this->unicode && (\in_array('UTF', $options, true) || \in_array('UTF8', $options, true)) => '(*UTF) without u',
@@ -385,6 +392,7 @@ final class PnfaBuilder
             $node instanceof QuantifierNode => $this->quantifier($node, $next, $flags, $pnfa, $search),
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
+            $this->refusesEmpty && $node instanceof KeepNode => $pnfa->keep($next),
             $node instanceof KeepNode, $node instanceof CommentNode => $next,
             // An option the pattern opens with, which reads nothing: no other
             // node ends inside their run.

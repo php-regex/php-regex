@@ -14,7 +14,13 @@ CHANGELOG
    search start refuses it: `/(*NOTEMPTY_ATSTART)(?:^|a+b)/`, whose empty
    match holds at the subject's start alone, is quadratic, while
    `/(*NOTEMPTY_ATSTART)(?:a+\d)?/`, which matches the empty string at the
-   next position, is not reported.
+   next position, is not reported. A match `\K` leaves empty is empty too:
+   `\K` sets the start of the match where it stands, so `/(*NOTEMPTY)a+\K/`
+   and `/(*NOTEMPTY)a+\Kb?/`, which give back every `a+` at every position
+   of a run of `a`, are reported quadratic, where `/a+\K/` matches the
+   empty string at the run's end at once. Under `(*NOTEMPTY_ATSTART)` that
+   empty match stands past the search start: `/(*NOTEMPTY_ATSTART)a+\K/`
+   is not reported.
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of
