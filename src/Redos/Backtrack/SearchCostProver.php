@@ -71,9 +71,12 @@ use PHPRegex\Redos\RedosSearchCost;
  * convention: reported only when the run word ends with one. The options a
  * pattern opens with read nothing; "(*NO_DOTSTAR_ANCHOR)" keeps PCRE2 from
  * tying a leading ".*" to the search start or to line starts, and
- * "(*NO_START_OPT)" from tying it to line starts. A possessive or atomic
- * repeat of any character moves to the end of the subject in one step: no
- * run is read through it.
+ * "(*NO_START_OPT)" from tying it to line starts. Under "(*NOTEMPTY)" no
+ * attempt succeeds before it reads a character, so one that the empty
+ * string would end reads on, as "(?:a+\d)?" does; under
+ * "(*NOTEMPTY_ATSTART)" only the attempt at the search start is held so. A
+ * possessive or atomic repeat of any character moves to the end of the
+ * subject in one step: no run is read through it.
  *
  * The model reads a bounded repeat above the unrolling cutoff as unbounded:
  * no run is read through it, the engine's attempts there stop at the bound.
@@ -109,6 +112,14 @@ final class SearchCostProver
     private const MAX_BREAKER_NODES = 64;
 
     private const MAX_BREAKER_LENGTH = 4;
+
+    /**
+     * The attempts that refuse an empty match (pcre2api, PCRE2_NOTEMPTY and
+     * PCRE2_NOTEMPTY_ATSTART): the one at the search start, the later ones.
+     */
+    private const EMPTY_REFUSED_AT_START = 1;
+
+    private const EMPTY_REFUSED_LATER = 2;
 
     /**
      * The characters of "\h" and of "\v" (pcre2pattern, "Generic character
@@ -192,9 +203,16 @@ final class SearchCostProver
         $lineStart = $start[1];
         $jumps = [];
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
+        // "(*NOTEMPTY)" refuses an empty match at every attempt,
+        // "(*NOTEMPTY_ATSTART)" at the one at the search start.
+        $refused = match (true) {
+            \in_array('NOTEMPTY', $startOptions, true) => self::EMPTY_REFUSED_AT_START | self::EMPTY_REFUSED_LATER,
+            \in_array('NOTEMPTY_ATSTART', $startOptions, true) => self::EMPTY_REFUSED_AT_START,
+            default => 0,
+        };
 
         try {
-            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
         } catch (ModelLimitException) {
             return null;
         }
@@ -613,12 +631,13 @@ final class SearchCostProver
      *                                            only at line starts; null when they start anywhere
      * @param array<int, true>      $jumps        where the repeats that jump to the end read
      * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
+     * @param int                   $refused      the attempts that refuse an empty match
      *
      * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>}|null
      */
-    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, ?CharSet $lineStart, array $jumps, bool $finalNewline): ?array
+    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, ?CharSet $lineStart, array $jumps, bool $finalNewline, int $refused): ?array
     {
         $prefixes = [[]];
         for ($class = 0; $class < $automaton->classCount() && \count($prefixes) <= self::MAX_PREFIXES; $class++) {
@@ -631,7 +650,7 @@ final class SearchCostProver
                 continue;
             }
 
-            $later = self::set($automaton->laterStart(self::contextOf($automaton, $last)));
+            $later = self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $last)), $refused, self::EMPTY_REFUSED_LATER);
             if (!$this->entersItself($automaton, $budget, $later, $word, $jumps)) {
                 continue;
             }
@@ -642,14 +661,14 @@ final class SearchCostProver
             // reads the run too, and no attempt succeeds inside it.
             foreach ($prefixes as $prefix) {
                 $first = [] === $prefix
-                    ? self::set($automaton->initials[0]['items'])
-                    : self::set($automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])));
-                $after = $this->entersItself($automaton, $budget, $first, $word, $jumps) ? $this->runEnd($automaton, $prefix, $word) : null;
+                    ? self::attempt($automaton, $automaton->initials[0]['items'], $refused, self::EMPTY_REFUSED_AT_START)
+                    : self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])), $refused, self::EMPTY_REFUSED_LATER);
+                $after = $this->entersItself($automaton, $budget, $first, $word, $jumps) ? $this->runEnd($automaton, $prefix, $word, $refused) : null;
                 if (null === $after) {
                     continue;
                 }
 
-                $breakers = $this->breakers($automaton, $budget, $after, $missing, $finalNewline ? $last : null);
+                $breakers = $this->breakers($automaton, $budget, $after, $missing, $finalNewline ? $last : null, $refused);
                 if ([] !== $breakers) {
                     return [
                         'prefix' => array_map(static fn (int $class): int => $automaton->representatives[$class], $prefix),
@@ -1040,21 +1059,22 @@ final class SearchCostProver
      * whatever the run's length (one word at least); null when one of them
      * succeeds before the run ends.
      *
-     * @param list<int>           $prefix classes
+     * @param list<int>           $prefix  classes
      * @param non-empty-list<int> $word
+     * @param int                 $refused the attempts that refuse an empty match
      *
      * @throws ModelLimitException
      *
      * @return array<int, true>|null
      */
-    private function runEnd(ItemAutomaton $automaton, array $prefix, array $word): ?array
+    private function runEnd(ItemAutomaton $automaton, array $prefix, array $word, int $refused): ?array
     {
         $later = [];
         foreach ($word as $index => $class) {
-            $later[$index + 1 === \count($word) ? 0 : $index + 1] = self::set($automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$class])));
+            $later[$index + 1 === \count($word) ? 0 : $index + 1] = self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$class])), $refused, self::EMPTY_REFUSED_LATER);
         }
 
-        $current = self::set($automaton->initials[0]['items']);
+        $current = self::attempt($automaton, $automaton->initials[0]['items'], $refused, self::EMPTY_REFUSED_AT_START);
         foreach ($prefix as $class) {
             $current = $automaton->stepSet($current, $class);
             if (null === $current) {
@@ -1063,7 +1083,7 @@ final class SearchCostProver
         }
 
         if ([] !== $prefix) {
-            $current += self::set($automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])));
+            $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])), $refused, self::EMPTY_REFUSED_LATER);
         }
 
         $seen = [];
@@ -1107,12 +1127,13 @@ final class SearchCostProver
      * @param array<int, true> $after
      * @param list<int>        $missing characters
      * @param int|null         $runEnd  the run's last character, when the witness must not end with a newline
+     * @param int              $refused the attempts that refuse an empty match
      *
      * @throws ModelLimitException
      *
      * @return list<list<int>>
      */
-    private function breakers(ItemAutomaton $automaton, Budget $budget, array $after, array $missing, ?int $runEnd): array
+    private function breakers(ItemAutomaton $automaton, Budget $budget, array $after, array $missing, ?int $runEnd, int $refused): array
     {
         $found = [];
         // The code unit with a character after it only when it fails last.
@@ -1122,7 +1143,7 @@ final class SearchCostProver
             for ($head = 0; $head < \count($queue) && $head < self::MAX_BREAKER_NODES && \count($found) < self::MAX_BREAKERS; $head++) {
                 $budget->step();
                 [$current, $path] = $queue[$head];
-                $this->collect($automaton, $after, $path, $missing, $runEnd, $trailing, $found);
+                $this->collect($automaton, $after, $path, $missing, $runEnd, $trailing, $refused, $found);
                 if (\count($path) >= self::MAX_BREAKER_LENGTH) {
                     continue;
                 }
@@ -1134,7 +1155,7 @@ final class SearchCostProver
                     }
 
                     if ([] === $next) {
-                        $this->collect($automaton, $after, [...$path, $class], $missing, $runEnd, $trailing, $found);
+                        $this->collect($automaton, $after, [...$path, $class], $missing, $runEnd, $trailing, $refused, $found);
 
                         continue;
                     }
@@ -1164,13 +1185,14 @@ final class SearchCostProver
      * @param list<int>        $path     classes
      * @param list<int>        $missing  characters
      * @param bool             $trailing whether a character comes after the missing code unit
+     * @param int              $refused  the attempts that refuse an empty match
      * @param list<list<int>>  $found
      *
      * @param-out list<list<int>> $found
      *
      * @throws ModelLimitException
      */
-    private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, bool $trailing, array &$found): void
+    private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, bool $trailing, int $refused, array &$found): void
     {
         $breaker = [...array_map(static fn (int $class): int => $automaton->representatives[$class], $path), ...$missing];
         $newline = null !== $runEnd && 0x0A === ([] === $breaker ? $runEnd : $breaker[\count($breaker) - 1]);
@@ -1186,7 +1208,7 @@ final class SearchCostProver
                 return;
             }
 
-            if ($this->rejects($automaton, $after, $candidate)) {
+            if ($this->rejects($automaton, $after, $candidate, $refused)) {
                 $found[] = $candidate;
 
                 return;
@@ -1200,16 +1222,17 @@ final class SearchCostProver
      *
      * @param array<int, true> $after
      * @param list<int>        $breaker characters
+     * @param int              $refused the attempts that refuse an empty match
      *
      * @throws ModelLimitException
      */
-    private function rejects(ItemAutomaton $automaton, array $after, array $breaker): bool
+    private function rejects(ItemAutomaton $automaton, array $after, array $breaker, int $refused): bool
     {
         $current = $after;
         $previous = null;
         foreach ($breaker as $character) {
             if (null !== $previous) {
-                $current += self::set($automaton->laterStart(self::contextOf($automaton, $previous)));
+                $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $previous)), $refused, self::EMPTY_REFUSED_LATER);
             }
 
             $current = $automaton->stepSet($current, $automaton->classOf($character));
@@ -1221,7 +1244,7 @@ final class SearchCostProver
         }
 
         if (null !== $previous) {
-            $current += self::set($automaton->laterStart(self::contextOf($automaton, $previous)));
+            $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $previous)), $refused, self::EMPTY_REFUSED_LATER);
         }
 
         return !$automaton->acceptsAtEnd($current);
@@ -1239,6 +1262,33 @@ final class SearchCostProver
             $pnfa->hasLineStart && 0x0A === $character => ItemAutomaton::CONTEXT_NEWLINE,
             default => ItemAutomaton::CONTEXT_OTHER,
         };
+    }
+
+    /**
+     * The items an attempt starts with, as a set; without the final ones
+     * when the attempt is among those that refuse an empty match: they
+     * succeed before it reads anything.
+     *
+     * @param list<int> $items
+     * @param int       $refused the attempts that refuse an empty match
+     * @param int       $which   the attempt: at the search start, or a later one
+     *
+     * @return array<int, true>
+     */
+    private static function attempt(ItemAutomaton $automaton, array $items, int $refused, int $which): array
+    {
+        $set = self::set($items);
+        if (0 === ($refused & $which)) {
+            return $set;
+        }
+
+        foreach ($set as $item => $_) {
+            if ($automaton->isFinal($item)) {
+                unset($set[$item]);
+            }
+        }
+
+        return $set;
     }
 
     /**
