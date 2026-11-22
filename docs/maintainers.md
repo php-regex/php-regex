@@ -631,7 +631,8 @@ none, and `bin/playground-check` prints the ones the browser engine raised.
 What the suite cannot see is the browser engine itself: the extensions it
 lacks, the way it runs a request. `bin/playground-check` runs the bundle
 inside that engine under Node (php-wasm and its mbstring extension are
-installed into a temporary directory for the run) and compares its answers
+installed into a temporary directory for the run; PHP 8.6 is the web build
+the site serves, run as the page's worker runs it) and compares its answers
 with the local driver's. The documentation workflow runs it on every change
 to the docs; run it by hand before regenerating:
 
@@ -640,7 +641,40 @@ bin/playground-check
 ```
 
 The engine and the extension are loaded from jsDelivr by version, without
-subresource integrity, as the tutorial's Run buttons already do.
+subresource integrity, as the tutorial's Run buttons already do. PHP 8.6 is
+the exception, described below: the site builds and serves it.
+
+### The PHP 8.6 engine
+
+php-wasm 0.2.0 publishes PHP 8.0 to 8.5.2 and its Makefile refuses 8.6, and
+nobody publishes an 8.6.0 build, so the 8.6 engine is built in the tree:
+`wasm/php-wasm/build.sh` takes php-wasm's v0.2.0 sources, adds 8.6.0 with
+three patches kept beside it (the php-src patch ported to 8.6.0, the
+version lists of php-wasm's Makefile, `PhpWeb.mjs` and mbstring, and vrzno,
+php-wasm's JavaScript bridge, ported to the 8.6 API), and runs
+php-wasm's own recipe inside php-wasm's own builder image, on the Emscripten
+image pinned by digest:
+
+```bash
+wasm/php-wasm/build.sh 8.6.0 --write-manifest
+```
+
+`wasm/php-wasm/manifest.json` pins the sources (php-src tag and commit,
+php-wasm tag and commit, each patch's sha256), the image, the build date
+stamped into PHP, and every file the site serves, by size and sha256.
+`bin/playground-bundle` copies the build into `docs/assets/php-wasm/` and
+`docs/assets/php-wasm-mbstring/`, the layout of the two npm packages, only
+when each file is the pinned one; without a build it requires the served
+files to be the pinned ones. The worker loads PHP 8.6 from there,
+same-origin, with the module API of 0.2.0, and every other version from
+jsDelivr. The engine reports PHP 8.6.0 and PCRE2 10.44, so the step debugger
+traces it with the `pcre2-10.44` module and the 8.6.0 options row. The
+`PHP Engine` workflow rebuilds the engine when its recipe or its served
+files change and compares every sha256 with the manifest;
+`bin/playground-check` runs the served build on every outcome, every probe
+witness, and three answers that tell 8.6.0 from the 8.5.2 engine (`\C`
+under `u`, one `MARK` key, `preg_grep()` on a malformed subject).
+`wasm/README.md` has the rest, the port of the patch included.
 
 ### The step debugger's modules
 
@@ -656,7 +690,7 @@ reaches. There is one module per release the page's engines bundle:
 | 8.1.28 | 10.39 | `gh-11374` |
 | 8.2.11 | 10.40 | none |
 | 8.3.11 | 10.42 | `gh-11374` |
-| 8.4.1, 8.5.2 | 10.44 | none |
+| 8.4.1, 8.5.2, 8.6.0 | 10.44 | none |
 
 Each module is built from the upstream tag plus the patches php-src applies
 to its bundled copy of that release, so its library sources equal
@@ -743,7 +777,7 @@ and 10.43): 8.0.30's row passes no BSK bit. The generator writes only the
 tags it is given, in that order:
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.0.30 php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.0.30 php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-8.6.0
 ```
 
 The row's excerpt of `php_pcre.c` goes beside the others under

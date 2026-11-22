@@ -7,8 +7,9 @@
 // parses, runs to a zero exit code, and prints something.
 //
 // The snippet runs in the visitor's browser, in a Web Worker, on a PHP
-// compiled to WebAssembly (loaded from jsDelivr on the first click, so a
-// reader who never runs anything pays nothing). Every runnable example
+// compiled to WebAssembly (loaded on the first click, from jsDelivr or, for
+// PHP 8.6, from this site, so a reader who never runs anything pays
+// nothing). Every runnable example
 // carries its own version select in its control band — changing the engine
 // never means scrolling away from the example — and the selects move
 // together: they are one choice, written beside every Run. Each output
@@ -29,7 +30,7 @@
   var BOOT_TIMEOUT_MS = 60000; // the first click also downloads the engine
   var RUN_TIMEOUT_MS = 4000;   // a snippet still running after this is stopped
 
-  var VERSIONS = ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'];
+  var VERSIONS = ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6'];
   var DEFAULT_VERSION = '8.4';
   var STORAGE_KEY = 'php-version';
 

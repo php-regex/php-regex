@@ -39,7 +39,7 @@
 
   // The same list, default and storage key as the tutorial's selects: one
   // choice across the site.
-  var VERSIONS = ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5'];
+  var VERSIONS = ['8.0', '8.1', '8.2', '8.3', '8.4', '8.5', '8.6'];
   var DEFAULT_VERSION = '8.4';
   var STORAGE_KEY = 'php-version';
 
@@ -592,7 +592,8 @@
     setState('Stopped', 'error');
     if (!wasBooted) {
       // Never got an engine: the network, the CDN or the browser, not the input.
-      setStatus('The PHP engine could not be loaded from cdn.jsdelivr.net (' + reason + '). The sample stays below; press Run to try again.', 'error');
+      // PHP 8.6 is served by this site, every other version by jsDelivr.
+      setStatus('The PHP engine could not be loaded from ' + (request.version === '8.6' ? 'this site' : 'cdn.jsdelivr.net') + ' (' + reason + '). The sample stays below; press Run to try again.', 'error');
       announce('The PHP engine could not be loaded.');
       return;
     }

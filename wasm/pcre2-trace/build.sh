@@ -33,7 +33,7 @@ PCRE2_SOURCES="pcre2_auto_possess pcre2_chartables pcre2_chkdint pcre2_compile p
 
 # The releases the playground's engines bundle, by php-src tag:
 #   10.35 php-8.0.30   10.39 php-8.1.28   10.40 php-8.2.11
-#   10.42 php-8.3.11   10.44 php-8.4.1, php-8.5.2
+#   10.42 php-8.3.11   10.44 php-8.4.1, php-8.5.2, php-8.6.0
 # Each pins the tag's commit, the patches php-src carries in its bundled
 # copy at those tags (the patched sources equal php-src's byte for byte),
 # and the name-size limit of the release's generic configuration, which

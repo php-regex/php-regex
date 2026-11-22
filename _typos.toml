@@ -1,6 +1,7 @@
 # The spelling check: the prose and the sources. The tests hold regex
 # subjects by the thousand ("ba", "abd", "tje"), the corpus and the PCRE2 test
-# data are not English, and the Unicode tables list script names.
+# data are not English, the Unicode tables list script names, and the patches
+# the PHP engine's build applies carry other projects' code and git hashes.
 [files]
 extend-exclude = [
     "tests/",
@@ -15,6 +16,7 @@ extend-exclude = [
     "docs/_findings/",
     "docs/_site/",
     "docs/_data/",
+    "wasm/php-wasm/patches/",
     "src/Parser/Syntax/NameCharacters.php",
     "src/Parser/Syntax/PropertyNames.php",
     "src/Parser/Syntax/PropertyNameTables.php",

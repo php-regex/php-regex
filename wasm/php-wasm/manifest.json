@@ -1,0 +1,134 @@
+{
+    "php": {
+        "version": "8.6.0",
+        "tag": "php-8.6.0",
+        "commit": "8aaada3f9605d81a38b8240f93c7389dfbc77ef9",
+        "pcre2": "10.44"
+    },
+    "phpWasm": {
+        "repository": "https://github.com/seanmorris/php-wasm",
+        "tag": "v0.2.0",
+        "commit": "1e1fb6703730759181e84c62bce35ee9129febb9"
+    },
+    "patches": {
+        "php8.6.patch": "8ad11b338db4d9e2d07bf5de9e4aa0f072a1b9566774c9f5af24c78eef50bc39",
+        "php-wasm-8.6.patch": "6abc12355b42cdda866674f1ffce3b31413f0ff0712eb05023b6ac36397b91dc",
+        "vrzno-8.6.patch": "95ec779da7dacdcf60ff8fc39421d0ba0b5854656af9b9fffff45ede65076844"
+    },
+    "emscripten": {
+        "image": "emscripten/emsdk:6.0.6",
+        "platform": "linux/amd64",
+        "digest": "sha256:e70c319784885fc4740761e3d473dbfa5bf092c5b55b6d08f41f7b2c9248c4a4"
+    },
+    "sourceDateEpoch": 1794925314,
+    "files": {
+        "php-wasm/1faca4c179decc31ebb82fed3a02dfaa161dad7f.wasm": {
+            "bytes": 17425986,
+            "sha256": "45a1f869b9489ce05c3024f556d57a598a1dd25a4c37eed71534fb47c08f3549"
+        },
+        "php-wasm/LICENSE": {
+            "bytes": 9144,
+            "sha256": "becde03a3c8b9b2e3d58c7b65ca7ffd9e18e98162396cc374052983c1faaa47c"
+        },
+        "php-wasm/LICENSE-GPL": {
+            "bytes": 17984,
+            "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+        },
+        "php-wasm/NOTICE": {
+            "bytes": 1279,
+            "sha256": "8bfd3338b7e408a48fa53f74a13a3bf71a553a70ada869c090e1a7d7070d32f8"
+        },
+        "php-wasm/OutputBuffer.mjs": {
+            "bytes": 1939,
+            "sha256": "fdf73a3e360c715bdc8f745b5aa148dbfdf2a9c5808c18cf2e422ecf97061785"
+        },
+        "php-wasm/PhpBase.mjs": {
+            "bytes": 16928,
+            "sha256": "2edb5379b4ebafe7e450021cd651cd92cb3022857d6be81de4a6e4f52fb96dc1"
+        },
+        "php-wasm/PhpWeb.mjs": {
+            "bytes": 1079,
+            "sha256": "5a4efcbf0f9bc27b7ae8972830d53a89c51ce4f3d4d2d20f2f7bc621e5bb1684"
+        },
+        "php-wasm/PhpWebBase.mjs": {
+            "bytes": 2595,
+            "sha256": "a8f1ecf318f851032d64c09429084a30e56e4d6fcbd00ae05f7a0d98f528eff0"
+        },
+        "php-wasm/_Event.mjs": {
+            "bytes": 432,
+            "sha256": "bbfd97aa6bfd6820733a2be211db73c8e7075ea5e2dbaa1ae29fba3d7a328d00"
+        },
+        "php-wasm/fsOps.mjs": {
+            "bytes": 5450,
+            "sha256": "bcc046e37c3d6cf1d39756b47c7d0dc31eec1f9dd7c901e160735bcb9b21b501"
+        },
+        "php-wasm/idbfsSync.mjs": {
+            "bytes": 11232,
+            "sha256": "9adb4a834ec26cafcdafc6c91b7d483c826ad79f270ab25015ba8a6d5dcbbd50"
+        },
+        "php-wasm/php8.6-web.mjs": {
+            "bytes": 1040665,
+            "sha256": "0ad28b47e49fa7130ff663bbdc01c39dcf86f6080164fd2738ade69da0e8f2c2"
+        },
+        "php-wasm/resolveDependencies.mjs": {
+            "bytes": 3089,
+            "sha256": "f70c7f469d6d47ee268421e976e0f3e536f418f6b1bc8988b0c77d1c912ed08b"
+        },
+        "php-wasm/webTransactions.mjs": {
+            "bytes": 4450,
+            "sha256": "6566f1fd7ab40b08b4b86f373b64f2e08b4afff33d0191fcd0530aea70b5f898"
+        },
+        "php-wasm-mbstring/8.0.mjs": {
+            "bytes": 574,
+            "sha256": "5f3de1455bba0c4cc3fac28358f88ad522d1dd89cd5d36ff4afa12196f38133a"
+        },
+        "php-wasm-mbstring/8.1.mjs": {
+            "bytes": 574,
+            "sha256": "80b93a4ce8720c98f02b5d3db78dbc01c68abdc40ec0b22dfc758809e8e7dab2"
+        },
+        "php-wasm-mbstring/8.2.mjs": {
+            "bytes": 574,
+            "sha256": "90e5841627aa1aa37fd0461e369706700c74b5a8c1fd57ea9e40b94712d840e3"
+        },
+        "php-wasm-mbstring/8.3.mjs": {
+            "bytes": 574,
+            "sha256": "629df1bda6e9ce3040730841c5be65866a3eeb22d37785a0b816929600045174"
+        },
+        "php-wasm-mbstring/8.4.mjs": {
+            "bytes": 574,
+            "sha256": "bc7b45075c7a23d7f188475d3b493a04da4a449c81d080b679e1ef240ce24450"
+        },
+        "php-wasm-mbstring/8.5.mjs": {
+            "bytes": 574,
+            "sha256": "380428fd00d8b789b07b7a58265def5565883c55d6f1a682331bf71a1e43d808"
+        },
+        "php-wasm-mbstring/8.6.mjs": {
+            "bytes": 574,
+            "sha256": "ede5f38eb3f486f65a524c6cd98771f38078e974cdd4bd4aabb6e49890eacd73"
+        },
+        "php-wasm-mbstring/LICENSE": {
+            "bytes": 9144,
+            "sha256": "becde03a3c8b9b2e3d58c7b65ca7ffd9e18e98162396cc374052983c1faaa47c"
+        },
+        "php-wasm-mbstring/LICENSE-GPL": {
+            "bytes": 17984,
+            "sha256": "edaef632cbb643e4e7a221717a6c441a4c1a7c918e6e4d56debc3d8739b233f6"
+        },
+        "php-wasm-mbstring/NOTICE": {
+            "bytes": 723,
+            "sha256": "29d5ce23fc58897010984f4833fb1f73f2c8a7a33d493c07fa60ba0ca33d0415"
+        },
+        "php-wasm-mbstring/index.mjs": {
+            "bytes": 784,
+            "sha256": "7623b37e2ecbfdbe1673e2c18517d00797e5524e67638d542e99711ba25bf7a1"
+        },
+        "php-wasm-mbstring/libonig.so": {
+            "bytes": 733835,
+            "sha256": "872c0b9e84748d4fe18967717c06ffbe1c994b382a570b1dfa44fb888c8cf924"
+        },
+        "php-wasm-mbstring/php8.6-mbstring.so": {
+            "bytes": 1310319,
+            "sha256": "0b70be14fc3a365ecda00dc253e362fe911bffa257e3bc710ece8f9948d00928"
+        }
+    }
+}
