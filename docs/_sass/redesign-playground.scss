@@ -90,6 +90,19 @@
   padding-inline: var(--gutter);
 }
 
+/* The page names the tool before the tool shows it: one heading in the
+   site's own voice, one line under it, then the toolbar. The heading and
+   its lede take the documentation's own treatment (main h1, main h1 + p);
+   only their rhythm around the toolbar lives here. */
+.hero-playground h1 {
+  margin: 2.5rem 0 0;
+}
+
+.hero-playground .hero-lede {
+  margin: 0 0 2.5rem;
+  max-width: 62ch;
+}
+
 /* ---- Toolbar: the pattern and what runs it -------------------------------- */
 
 .pg-patternbar {
@@ -698,11 +711,23 @@
   .pg-patternbar .pg-version,
   .pg-patternbar .pg-run,
   .pg-state {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
   }
 
   .pg-flags {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
+  }
+
+  /* A thumb meets these controls, not a pointer: the flag pills and the
+     example chips grow to the 44px target a touch expects, from the 34px
+     the pointer design settles for. */
+  .pg-flag,
+  .pg-flags-more > summary {
+    min-height: 2.75rem;
+  }
+
+  .pg-example {
+    min-height: 2.75rem;
   }
 }
 

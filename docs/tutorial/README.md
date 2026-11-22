@@ -35,7 +35,7 @@ Examples marked with a **Run** button execute right here in the page: pick a PHP
 {% assign c10 = site.pages | where: "url", "/tutorial/10-real-world-php/" | first %}
 {% assign m10 = c10.content | number_of_words | divided_by: 200 | at_least: 1 %}
 
-<div class="guide-grid">
+<div class="guide-grid" data-toc-skip>
 
 <div class="guide-entry">
 <h3><a href="/tutorial/01-basics/">1 &middot; Regex basics</a></h3>

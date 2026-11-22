@@ -1242,34 +1242,10 @@ main ul.support-legend li::before {
   box-shadow: none;
 }
 
-/* The install box is a terminal: one dark panel, its strip inside it. */
-.page-main main .install {
-  background: var(--block-bg);
-  box-shadow: inset 0 0 0 1px var(--block-ring), var(--shadow-1);
-}
-
-.page-main main .install pre {
-  padding-top: .25rem;
-  background: transparent;
-  box-shadow: none;
-}
-
-.page-main main div.install::before {
-  color: var(--block-soft);
-}
-
-.page-main main .install code {
-  color: var(--block-ink);
-}
-
-.page-main main div.install > .copy-btn {
-  color: var(--block-soft);
-}
-
-.page-main main div.install > .copy-btn:hover {
-  color: var(--block-ink);
-  background: var(--block-chip);
-}
+/* The install box rides the framed block every other fenced command
+   rides: the light rail with its strip, the dark panel inside it. It
+   kept a terminal look of its own — one dark panel, label inside — which
+   read as a second code-block design on pages that show both in a row. */
 
 /* A bare panel has no ground behind it to dissolve into: its scrollbar is
    the tell. */
