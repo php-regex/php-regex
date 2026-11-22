@@ -41,6 +41,9 @@ final class RegexOccurrence
      *                                                "Patterns::RE, written in src/Patterns.php on line 9". The
      *                                                occurrence then spans the argument naming it, which
      *                                                $literal holds as written, and nothing edits it
+     * @param string|null           $everyMatch       the preg function the call the extractor reads the literal at runs
+     *                                                the pattern in when it looks for every match, whose loop PHP
+     *                                                retries after an empty match; null when it stops at the first
      */
     public function __construct(
         public readonly string $pattern,
@@ -52,6 +55,7 @@ final class RegexOccurrence
         public readonly int $line = 0,
         public readonly ?TargetConstraint $guard = null,
         public readonly ?string $writtenElsewhere = null,
+        public readonly ?string $everyMatch = null,
     ) {}
 
     /**
