@@ -2,15 +2,25 @@
 
 ## ReDoS precision
 
-- Under another locale's tables, the ReDoS heuristics and the overlap rule
-  read the cases from them (#427) but leave `\d`, `\s` and `\w` without
-  UCP unknown: under fr_FR.ISO8859-1, `"/(?:\\w|\xE9|)+/"` goes unreported,
-  though the Latin-1 tables put `\xE9` in `\w`. Read them from
-  `CharacterTables::bytesOf()` as the cases are.
-- Where PCRE judges no branch, the overlap rule still reads a caseless
-  byte above ASCII through PCRE's own tables: under fr_FR.ISO8859-1,
-  `"/(?:\xC9|\xE9|)+/i"` goes unreported, though `/\xC9/i` matches `\xE9`
-  there.
+- The overlap rule reads a raw byte above ASCII from the target's tables
+  where PCRE judges no branch (#432, #434), but not the same byte written
+  as an escape, which its ASCII read leaves unknown: `'/(?:\W|\xE9|)+/'`
+  under C, `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'` under
+  fr_FR.ISO8859-1 go unreported.
+- `CharSetAnalyzer` never reads a POSIX class, under any tables, though
+  `CharacterTables::bytesOf()` holds every name: under fr_FR.ISO8859-1,
+  `[[:alpha:]]` takes `\xE9` and `"/(?:[[:alpha:]]|\xE9|)+/"` goes
+  unreported, as `"/(?:[[:^alpha:]]|\xD7|)+/"` does under C; the
+  heuristics rate `"/^(x)[[:alpha:]]+\xE9+\1$/"` medium with low
+  confidence under C, where `\xE9` is no letter.
+- The overlap rule folds literal text in ASCII alone: under
+  fr_FR.ISO8859-1, `"/(?:\xC9x|\xE9x)+/i"` goes unreported, though
+  `/\xC9x/i` matches `\xE9x` there. Reading the fold from the tables moves
+  `"/(?:\xC9|\xE9)+/i"` from `regex.lint.overlap.charset` to
+  `regex.lint.alternation.overlap`: decide which rule reports it.
+- `ImpossibleAnchorRule` reads every byte through PCRE2's own tables,
+  whatever the target's locale. Check whether a locale whose ASCII case
+  differs (glibc's tr_TR.ISO-8859-9) makes it report an anchor that holds.
 - Decide how to report the search of `preg_match_all()`, `preg_replace()`
   and `preg_split()`: after an empty match PHP tries again at the same
   offset with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match
@@ -45,6 +55,16 @@ Found while fixing the bugs of #400; each is PCRE2's, not the library's.
   options work with `pcre2_jit_match()`. No issue or pull request names it
   on 2026-11-22 (10.43 to master): report it to PCRE2, with the fix of
   copying the two flags into the options as `pcre2_match()` does.
+- Under `(*UTF)` without UCP and another locale's tables, PCRE2's paths
+  disagree on whether a code point from 128 to 255 is in `\w`: under
+  fr_FR.ISO8859-1, on `é`, `/(*UTF)\w/` gives 0 and
+  `/(*NO_START_OPT)(*UTF)\w/` and `/(*UTF)[\w]/` give 1, with the JIT and
+  without, while `/(*UTF)^\w$/` gives 1 with the JIT and 0 with
+  `pcre.jit=0` (PHP 8.4.28, PCRE2 10.49; a separate process per JIT
+  setting, since PHP's cache keeps the first compile). pcre2pattern says
+  only that such characters "may be different" under locale tables; the
+  answer should not depend on the path. Search PCRE2's tracker, then
+  report it. `CharSetAnalyzer` holds what any path takes there (#432).
 - PCRE2's open pull requests fix the JIT's two other wrong answers, found
   on 10.49 and master: #1004 a zero-width branch of a variable-length
   lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
