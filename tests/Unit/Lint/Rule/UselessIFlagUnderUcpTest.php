@@ -54,21 +54,14 @@ final class UselessIFlagUnderUcpTest extends TestCase
     private const GIVEN = 'xx_XX.GIVEN_UNDER_UCP';
 
     /**
-     * The rows verified against a newer release than the floor: the
-     * casing verbs come with 10.45.
-     */
-    private const RELEASES = [
-        '10.45' => ['/(*UCP)(*CASELESS_RESTRICT)\xE9/i'],
-    ];
-
-    /**
      * @param bool $useless what the engine says: no byte answers otherwise without i
      */
     #[Test]
     #[DataProvider('provideBytesUnderUcp')]
     public function test_flag_i_is_called_useless_under_ucp_only_where_the_engine_agrees(string $pattern, string $locale, bool $useless, bool $reported): void
     {
-        $this->requiresPcre2For($pattern, self::RELEASES);
+        // The casing verbs come with 10.45, which refuses none of the rows.
+        $this->requiresCompile($pattern);
         if (CharacterTables::BUILT_IN !== $locale) {
             $this->requiresLocale($locale, $pattern);
         }
