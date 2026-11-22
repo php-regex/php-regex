@@ -240,8 +240,15 @@ request goes to `phpstan/phpstan-src`.
 
 ## Optimizer precision
 
-- The match solver runs a call where it stands (#435), but not a call of
-  a group a `(?(DEFINE)…)` holds, which the normal form leaves out:
-  `/(?&n)c(?(DEFINE)(?<n>a+b?))/` is offered its possessive, refused, and
-  rewritten again without it. Translate the DEFINE's groups under the
-  options in force there, and let `runsOfEveryCall` read inside it.
+- The possessive rewrite is never offered in a pattern holding an inline
+  flag: `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` and
+  `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` stay greedy, though the engine
+  finds the possessive forms the same and `matchEquivalent()` proves them
+  so since #441.
+- Nor to a repeat that ends its sequence, `possessify()` asking for a
+  suffix: `/(a+)c/` stays greedy and `/(?&n)x(?(DEFINE)(?<n>[0-9]+))/`
+  ships `\d+`, not `\d++`, both proven the same.
+- A group that calls itself is still refused, in a DEFINE or not:
+  `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` is offered `ca++b?`, refused
+  with the call message, and ships unchanged, though the engine finds the
+  possessive form the same.
