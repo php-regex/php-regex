@@ -241,8 +241,8 @@ final class AnalysisServiceSearchCostTest extends TestCase
     /**
      * The hint says what the step replay found: nothing when none ran,
      * "replayed" when it counted the attempts growing, "not confirmed" when
-     * it could not count them (a possessive loop of one character, which the
-     * counter does not see inside).
+     * it could not count them (a pattern holding "\G", which holds wherever
+     * the replay pins an attempt).
      */
     #[Test]
     #[DataProvider('provideReplayOutcomes')]
@@ -274,7 +274,7 @@ final class AnalysisServiceSearchCostTest extends TestCase
     {
         yield 'no replay' => ['pattern' => '/\s+$/', 'mode' => RedosMode::Theoretical, 'replayed' => null, 'line' => null];
         yield 'replayed' => ['pattern' => '/\s+$/', 'mode' => RedosMode::Confirmed, 'replayed' => true, 'line' => 'Replayed on PCRE2'];
-        yield 'not confirmed' => ['pattern' => '/a++b/', 'mode' => RedosMode::Confirmed, 'replayed' => false, 'line' => 'Not confirmed by the step replay'];
+        yield 'not confirmed' => ['pattern' => '/\s+$|\Gx/', 'mode' => RedosMode::Confirmed, 'replayed' => false, 'line' => 'Not confirmed by the step replay'];
     }
 
     /**

@@ -46,10 +46,16 @@ CHANGELOG
    stands, and proves the possessive the rewrite offers there:
    `/(a+b?)c(?1)d/` now becomes `/(a++b?)c(?1)d/` with the first rewrite,
    where the check refused it and the rewrite made a second time without
-   the possessive step shipped the pattern unchanged. A group that calls
-   itself, a call of the whole pattern and a call of a group a DEFINE holds
-   are not run there: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` is still offered
-   `a++b?`, which the check refuses.
+   the possessive step shipped the pattern unchanged. A group a DEFINE
+   holds runs there too, under the options in force where the DEFINE
+   stands: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` now becomes
+   `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, and `/(?(DEFINE)(?<n>a|b))x(?&n)/`
+   becomes `/(?(DEFINE)(?<n>[ab]))x(?&n)/`, a rewrite the check left
+   unproven. The calls the check proves a rewrite in read what a DEFINE
+   holds: `^` in a group it holds asks for the search past the start of
+   the subject. A group that calls itself and a call of the whole pattern
+   are not run there: `/(x(?1)?ca+b?)c/` is still offered `ca++b?`, which
+   the check refuses.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a

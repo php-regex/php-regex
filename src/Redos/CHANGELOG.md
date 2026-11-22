@@ -44,6 +44,20 @@ CHANGELOG
    stretch, 1,024 ways: `/^(?:a|a)+.{20}/`, whose dots succeed only twenty
    characters back, is not proven either (PHP exhausts its backtrack limit
    on 60 `a` and a newline).
+ * The step replay of confirmed mode counts the characters a possessive or
+   atomic repeat of one character set reads, which PCRE2's step counter
+   does not see: it runs the pattern with each such character in a group of
+   its own, as `(?:a)++`, which changes no match. `/a++b/` and `/(?>a+)b/`
+   are replayed, no longer `replayed: false`, and so are
+   `/(*NOTEMPTY)a++\K/` and `/(*NOTEMPTY)(?:a++\K)/`, which read the rest
+   of the run at every attempt and give nothing back: 1.0, 4.0 then 15.9 ms
+   on 2,000, 4,000 then 8,000 `a` in the interpreter. A witness through an
+   atomic body the model keeps with every way through it,
+   `/(*NOTEMPTY)(?>a+\K)/` or `/(?>a+|c)b/`, is now reported in confirmed
+   mode. A repeat of a set of every character that PCRE2 may read as its
+   any character, and move to the end of the subject in one step, stays as
+   written: `/(?>.*+|a+)b/s`, whose atomic group commits to `.*+` at once,
+   is not reported.
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of
@@ -167,6 +181,15 @@ CHANGELOG
    point above ASCII the tables name is read by the byte it starts with,
    and taken where any of the engine's paths takes it: the JIT takes é in
    `\w+` under fr_FR.ISO8859-1, the interpreter does not.
+ * The heuristics read the POSIX classes without UCP as the tables of the
+   target's locale fill them, where they left them unknown, and under i
+   read `[:lower:]` and `[:upper:]` as every letter, as the engine does.
+   `"/^(x)[[:alpha:]]+\xE9+\\1$/"`, with a raw `\xE9`, which was medium
+   with low confidence under C and fr_FR.ISO8859-1 alike, is safe under
+   C, where PCRE takes 3 steps on `x` then 8, 16 or 32 times the byte, and
+   medium with medium confidence under fr_FR.ISO8859-1, where the Latin-1
+   tables put `\xE9` in `[:alpha:]` and PCRE takes 32, 124 and 500 steps;
+   `"/^(x)[[:^alpha:]]+\xE9+\\1$/"` is the other way round.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
    a letter meets its other case, and where `(?-i)` turns i off again it

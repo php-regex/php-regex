@@ -7874,9 +7874,7 @@
     },
     {
         "pattern": "#^(?:[[:alnum:]_]+/)+$#",
-        "issues": [
-            "regex.lint.quantifier.nested"
-        ]
+        "issues": []
     },
     {
         "pattern": "~^#(\\d)+$~",

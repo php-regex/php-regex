@@ -22,7 +22,7 @@ permalink: /blog/
 <article class="article-featured" data-toc-skip>
   <div class="article-featured-head">
     <p class="article-featured-kicker">
-      {% if featured.published == false %}<span class="draft-tag">Draft</span> {% endif %}Latest
+      {% if featured.published == false %}<span class="draft-tag">Draft</span>{% else %}Latest{% endif %}
     </p>
     <h2 class="article-featured-title"><a href="{{ featured.url }}">{{ featured.title }}</a></h2>
   </div>

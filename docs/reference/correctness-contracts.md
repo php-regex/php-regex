@@ -100,9 +100,12 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     above the unrolling cutoff (`\s{1,100}`, read as unbounded by the model, at most its bound per attempt on the
     engine); a start verb such as `(*NO_DOTSTAR_ANCHOR)` (the per-attempt verdict is then heuristic); and a search
     proof over the shared budget.
-  - **Atomic repeats**: the step replay counts nothing inside an atomic or possessive repeat of a single character
-    set (`/a++b/`) — that witness, read exactly by the model, is reported with `replayed: false` — while a repeat of
-    a longer word (`/(?:ab)++c/`, `/(?>a+b)+c/`) is counted.
+  - **Atomic repeats**: the engine's step counter sees nothing inside an atomic or possessive repeat of a single
+    character set (`/a++b/`), so the replay runs the pattern with each such character in a group of its own
+    (`/(?:a)++b/`), which changes no match and which the counter sees, as it sees a repeat of a longer word
+    (`/(?:ab)++c/`, `/(?>a+b)+c/`). A repeat of every character that PCRE2 moves to the end of the subject in one step
+    (`.*+` under `s`) stays as written, and so does a pattern where `\Q` may quote the group or whose delimiter is its
+    `?`, `:` or `)`: a witness through such a repeat, read exactly by the model, is reported with `replayed: false`.
   - **Errors**: a library failure inside the search proof leaves `search_cost` null and the per-attempt verdict as
     proven; any other error is a bug, and the analysis reports it as an error.
 

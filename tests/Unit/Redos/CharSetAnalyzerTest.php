@@ -315,7 +315,9 @@ final class CharSetAnalyzerTest extends TestCase
      * Read above ASCII, as the ReDoS analysis reads them, the sets hold the
      * characters PCRE reads. Without UTF a character is a byte: the set of
      * an atom is the set of bytes the engine matches with it, above ASCII
-     * as below, whether the atom is written with an escape or not.
+     * as below, whether the atom is written with an escape or not, and a
+     * POSIX class as PCRE2's own tables fill it, "[:lower:]" and
+     * "[:upper:]" taking every letter under i.
      */
     #[Test]
     #[DataProvider('provideAtomsReadOnBytes')]
@@ -388,6 +390,21 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'an extended class difference' => ['options' => '', 'atom' => '(?[ [\x80-\xFF] - [\xC0-\xFF] ])', 'flags' => ''];
         yield 'an extended class complement' => ['options' => '', 'atom' => '(?[ ![\x00-\x7F] ])', 'flags' => ''];
         yield 'an extended class symmetric difference' => ['options' => '', 'atom' => '(?[ [\x80-\xFF] ^ [\xC0-\xFF\x41] ])', 'flags' => ''];
+        yield 'an extended class difference of a POSIX class' => ['options' => '', 'atom' => '(?[ [[:alnum:]] - [[:digit:]] ])', 'flags' => ''];
+        // The POSIX classes, as PCRE2's own tables fill them.
+        foreach (['alpha', 'lower', 'upper', 'alnum', 'ascii', 'blank', 'cntrl', 'digit', 'graph', 'print', 'punct', 'space', 'word', 'xdigit'] as $name) {
+            yield 'the POSIX class '.$name => ['options' => '', 'atom' => '[[:'.$name.':]]', 'flags' => ''];
+            yield 'the negated POSIX class '.$name => ['options' => '', 'atom' => '[[:^'.$name.':]]', 'flags' => ''];
+            yield 'the POSIX class '.$name.' under i' => ['options' => '', 'atom' => '[[:'.$name.':]]', 'flags' => 'i'];
+        }
+        yield 'a negated class of a POSIX class' => ['options' => '', 'atom' => '[^[:alpha:]]', 'flags' => ''];
+        yield 'a POSIX class beside a letter' => ['options' => '', 'atom' => '[x[:digit:]]', 'flags' => ''];
+        yield 'a POSIX class beside a letter under i' => ['options' => '', 'atom' => '[x[:digit:]]', 'flags' => 'i'];
+        yield 'a POSIX class beside a byte above ASCII' => ['options' => '', 'atom' => '[\xE9[:punct:]]', 'flags' => ''];
+        yield 'two POSIX classes, one negated' => ['options' => '', 'atom' => '[[:digit:][:^alnum:]]', 'flags' => ''];
+        yield 'no POSIX small letter under i' => ['options' => '', 'atom' => '[[:^lower:]]', 'flags' => 'i'];
+        yield 'a negated class of POSIX capitals under i' => ['options' => '', 'atom' => '[^[:upper:]]', 'flags' => 'i'];
+        yield 'POSIX capitals in a group that sets i' => ['options' => '', 'atom' => '(?i:[[:upper:]])', 'flags' => ''];
     }
 
     /**
@@ -460,6 +477,11 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'an extended class complement' => ['options' => '', 'atom' => '(?[ ![\x00-\x7F] ])', 'flags' => 'u'];
         yield 'an extended class difference' => ['options' => '', 'atom' => '(?[ [\x{80}-\x{10FFFF}] - [\xC0-\xFF] ])', 'flags' => 'u'];
         yield 'an extended class symmetric difference' => ['options' => '', 'atom' => '(?[ [a-z] ^ [\x{E0}-\x{FF}] ])', 'flags' => 'u'];
+        // The POSIX classes under (*UTF) without UCP, which the tables fill.
+        yield 'a POSIX class under (*UTF)' => ['options' => '(*UTF)', 'atom' => '[[:alpha:]]', 'flags' => ''];
+        yield 'a negated POSIX class under (*UTF)' => ['options' => '(*UTF)', 'atom' => '[[:^alpha:]]', 'flags' => ''];
+        yield 'a negated class of a POSIX class under (*UTF)' => ['options' => '(*UTF)', 'atom' => '[^[:punct:]]', 'flags' => ''];
+        yield 'POSIX capitals under (*UTF) and i' => ['options' => '(*UTF)', 'atom' => '[[:upper:]]', 'flags' => 'i'];
     }
 
     /**
@@ -536,6 +558,16 @@ final class CharSetAnalyzerTest extends TestCase
         [$analyzer, $node] = self::atom("/[^\xE9]/", false);
         $this->assertSame(1, preg_match("/^[^\xE9]$/", "\x90"), 'Oracle: the negated class takes a byte above ASCII.');
         $this->assertSame([[0x00, 0x7F]], $analyzer->firstChars($node)->ranges());
+
+        // A POSIX class is read from PCRE2's own tables, which put no byte
+        // above ASCII in one, and its negation stops at ASCII as well.
+        [$analyzer, $node] = self::atom('/[[:alpha:]]/', false);
+        $this->assertSame([1, 1, 0], [preg_match('/^[[:alpha:]]$/', 'A'), preg_match('/^[[:alpha:]]$/', 'z'), preg_match('/^[[:alpha:]]$/', "\xE9")], 'Oracle: the letters of ASCII alone.');
+        $this->assertSame([[0x41, 0x5A], [0x61, 0x7A]], $analyzer->firstChars($node)->ranges());
+
+        [$analyzer, $node] = self::atom('/[[:^alpha:]]/', false);
+        $this->assertSame([0, 1, 1], [preg_match('/^[[:^alpha:]]$/', 'A'), preg_match('/^[[:^alpha:]]$/', '@'), preg_match('/^[[:^alpha:]]$/', "\xE9")], 'Oracle: every byte but the letters of ASCII.');
+        $this->assertSame([[0x00, 0x40], [0x5B, 0x60], [0x7B, 0x7F]], $analyzer->firstChars($node)->ranges());
     }
 
     /**
@@ -594,8 +626,9 @@ final class CharSetAnalyzerTest extends TestCase
      * "\w", under (*UTF) too, and pairing it with 0xC9 under i, where
      * PCRE2's own leave it out of both; "\d" and "\s" read the tables as
      * "\w" does, which pcre2_maketables() builds from isdigit() and
-     * isspace(). Read in ASCII alone, a type the tables give a byte above
-     * ASCII is not known either.
+     * isspace(), and the POSIX classes too, where the Latin-1 tables put
+     * 0xE9 in "[:alpha:]". Read in ASCII alone, a type or a POSIX class the
+     * tables give a byte above ASCII is not known either.
      */
     #[Test]
     public function test_read_where_another_locales_tables_are_not_known_what_they_decide_is_not_known(): void
@@ -612,16 +645,18 @@ final class CharSetAnalyzerTest extends TestCase
                     preg_match("/^\xC9$/i", "\xE9"),
                     preg_match('/(*UTF)^\w$/', 'é'),
                     preg_match_all('/\d/', implode('', array_map(\chr(...), range(0, 0xFF)))),
+                    preg_match('/^[[:alpha:]]$/', "\xE9"),
+                    preg_match('/^[[:^alpha:]]$/', "\xE9"),
                 ];
             });
 
             return $matches;
         };
-        $this->assertSame([0, 1, 0, 0, 10], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
-        $this->assertSame([1, 0, 1, 1, 10], $read($latin1), 'Oracle: under the Latin-1 tables.');
+        $this->assertSame([0, 1, 0, 0, 10, 0, 1], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
+        $this->assertSame([1, 0, 1, 1, 10, 1, 0], $read($latin1), 'Oracle: under the Latin-1 tables.');
 
         foreach ([null, 'xx_YY.NOWHERE'] as $locale) {
-            foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/'] as $pattern) {
+            foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/', '/[[:alpha:]]/', '/[[:^alpha:]]/', '/[^[:digit:]]/', '/(*UTF)[[:alpha:]]/'] as $pattern) {
                 [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
                 $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
                 $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $pattern);
@@ -649,9 +684,11 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertTrue((new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\w/')->pattern)->isUnknown());
         $this->assertSame([[0x30, 0x39]], (new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\d/')->pattern)->ranges());
         $this->assertSame([[0x00, 0x2F], [0x3A, 0x7F]], (new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\D/')->pattern)->ranges());
+        $this->assertTrue((new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/[[:alpha:]]/')->pattern)->isUnknown());
+        $this->assertSame([[0x30, 0x39]], (new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/[[:digit:]]/')->pattern)->ranges());
 
         // Under PCRE2's own tables each is known.
-        foreach (['/\w/', '/\s/', '/\d/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[^a]/i', '/a/iu'] as $pattern) {
+        foreach (['/\w/', '/\s/', '/\d/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[^a]/i', '/a/iu', '/[[:alpha:]]/', '/[[:^alpha:]]/', '/(*UTF)[[:alpha:]]/'] as $pattern) {
             [$analyzer, $node] = self::atom($pattern);
             $this->assertFalse($analyzer->firstChars($node)->isUnknown(), $pattern);
         }
@@ -751,18 +788,21 @@ final class CharSetAnalyzerTest extends TestCase
      * "\w" without UCP take the bytes those tables give, and their
      * complements the others: the set is what the engine matches, alone or
      * repeated, on the JIT as on the interpreter, in a class as outside it.
-     * Under (*UTF) the tables name the code points below 256, which the
-     * engine's paths read apart above ASCII: on macOS under the Latin-1
-     * tables a single "\w" takes é, the interpreter's repeat of it does not
-     * (pcre2_match.c), and its repeat of "\W" takes é. The set knows each
-     * character any of them takes by the byte it starts with, and ASCII
-     * ones exactly.
+     * A POSIX class takes the bytes the tables give its name, its negation
+     * the others, and under i "[:lower:]" and "[:upper:]" take every letter
+     * those tables give "[:alpha:]". Under (*UTF) the tables name the code
+     * points below 256, which the engine's paths read apart above ASCII:
+     * on macOS under the Latin-1 tables a single "\w" takes é, the
+     * interpreter's repeat of it does not (pcre2_match.c), and its repeat
+     * of "\W" takes é. The set knows each character any of them takes by
+     * the byte it starts with, and ASCII ones exactly.
      */
     #[Test]
     #[DataProvider('provideTypesUnderEachTables')]
-    public function test_read_under_a_locales_tables_a_type_takes_the_bytes_they_give(string $options, string $atom, string $flags, string $locale): void
+    #[DataProvider('providePosixClassesUnderEachTables')]
+    public function test_read_under_a_locales_tables_a_type_or_a_posix_class_takes_the_bytes_they_give(string $options, string $atom, string $flags, string $locale): void
     {
-        $this->requiresLocale($locale, 'The bytes a locale\'s tables give a type');
+        $this->requiresLocale($locale, 'The bytes a locale\'s tables give a type or a POSIX class');
 
         $utf = str_contains($options, '(*UTF)');
         $subjects = [];
@@ -842,6 +882,38 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * @return iterable<string, array{options: string, atom: string, flags: string, locale: string}>
+     */
+    public static function providePosixClassesUnderEachTables(): iterable
+    {
+        $items = [];
+        foreach (['alpha', 'lower', 'upper', 'alnum', 'ascii', 'blank', 'cntrl', 'digit', 'graph', 'print', 'punct', 'space', 'word', 'xdigit'] as $name) {
+            $items['the POSIX class '.$name] = ['', '[[:'.$name.':]]', ''];
+            $items['the negated POSIX class '.$name] = ['', '[[:^'.$name.':]]', ''];
+        }
+
+        $items += [
+            'a negated class of a POSIX class' => ['', '[^[:alpha:]]', ''],
+            'a POSIX class beside a digit' => ['', '[0[:alpha:]]', ''],
+            'two POSIX classes, one negated' => ['', '[[:digit:][:^alnum:]]', ''],
+            'POSIX small letters under i' => ['', '[[:lower:]]', 'i'],
+            'POSIX capitals under i' => ['', '[[:upper:]]', 'i'],
+            'no POSIX capital under i' => ['', '[[:^upper:]]', 'i'],
+            'a negated class of POSIX small letters under i' => ['', '[^[:lower:]]', 'i'],
+            'POSIX punctuation under i' => ['', '[[:punct:]]', 'i'],
+            'a POSIX class under (*UTF)' => ['(*UTF)', '[[:alpha:]]', ''],
+            'a negated POSIX class under (*UTF)' => ['(*UTF)', '[[:^alpha:]]', ''],
+            'POSIX capitals under (*UTF) and i' => ['(*UTF)', '[[:upper:]]', 'i'],
+        ];
+
+        foreach (['fr_FR.ISO8859-1', 'el_GR.ISO8859-7', 'ru_RU.KOI8-R', 'en_US.UTF-8'] as $locale) {
+            foreach ($items as $name => [$options, $atom, $flags]) {
+                yield $name.', '.$locale => ['options' => $options, 'atom' => $atom, 'flags' => $flags, 'locale' => $locale];
+            }
+        }
+    }
+
+    /**
      * Under tables a test gives, as no machine here builds them, "\d",
      * "\s" and "\w" without UCP take the bytes given, and their
      * complements every other byte, in a class as outside it, under i as
@@ -851,11 +923,19 @@ final class CharSetAnalyzerTest extends TestCase
      * not hold, and "\s" Unicode's spaces, the next line 0x85 among them,
      * which the tables leave out.
      *
+     * A POSIX class takes the bytes given its name, PCRE2's own where none
+     * are, and its negation every other byte; under i "[:lower:]" and
+     * "[:upper:]" take those of "[:alpha:]", and no POSIX class takes the
+     * other case of its bytes beyond. Under UCP several POSIX classes read
+     * Unicode's properties, which a set does not hold, and a name PCRE2
+     * does not give has no bytes to read.
+     *
      * @param list<array{0: int, 1: int}>|null $ranges the bytes of the set, null where it is not known
      */
     #[Test]
     #[DataProvider('provideTypesUnderGivenTables')]
-    public function test_read_under_given_tables_a_type_takes_the_bytes_they_give(string $pattern, ?array $ranges): void
+    #[DataProvider('providePosixClassesUnderGivenTables')]
+    public function test_read_under_given_tables_a_type_or_a_posix_class_takes_the_bytes_they_give(string $pattern, ?array $ranges): void
     {
         self::giveTables();
         [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, self::GIVEN);
@@ -894,6 +974,35 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'no word character under (*UCP)' => ['pattern' => '/(*UCP)\W/', 'ranges' => null];
         yield 'a digit under u' => ['pattern' => '/\d/u', 'ranges' => null];
         yield 'no digit under u' => ['pattern' => '/\D/u', 'ranges' => null];
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ranges: list<array{0: int, 1: int}>|null}>
+     */
+    public static function providePosixClassesUnderGivenTables(): iterable
+    {
+        $letters = [[0x41, 0x5A], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]];
+        $noLetter = [[0x00, 0x40], [0x5B, 0x60], [0x7B, 0xA9], [0xAB, 0xBF], [0xD7, 0xD7], [0xF7, 0xF7]];
+        yield 'a POSIX class' => ['pattern' => '/[[:alpha:]]/', 'ranges' => $letters];
+        yield 'a negated POSIX class' => ['pattern' => '/[[:^alpha:]]/', 'ranges' => $noLetter];
+        yield 'a negated class of a POSIX class' => ['pattern' => '/[^[:alpha:]]/', 'ranges' => $noLetter];
+        yield 'POSIX capitals' => ['pattern' => '/[[:upper:]]/', 'ranges' => [[0x41, 0x5A], [0xC0, 0xD6], [0xD8, 0xDE]]];
+        yield 'POSIX small letters' => ['pattern' => '/[[:lower:]]/', 'ranges' => [[0x61, 0x7A], [0xAA, 0xAA], [0xDF, 0xF6], [0xF8, 0xFF]]];
+        yield 'POSIX capitals under i, every letter' => ['pattern' => '/[[:upper:]]/i', 'ranges' => $letters];
+        yield 'POSIX small letters under i, every letter' => ['pattern' => '/[[:lower:]]/i', 'ranges' => $letters];
+        yield 'no POSIX small letter under i, no letter' => ['pattern' => '/[[:^lower:]]/i', 'ranges' => $noLetter];
+        yield 'POSIX capitals beside a digit under i' => ['pattern' => '/[1[:upper:]]/i', 'ranges' => [[0x31, 0x31], ...$letters]];
+        yield 'POSIX capitals in a group that sets i' => ['pattern' => '/(?i:[[:upper:]])/', 'ranges' => $letters];
+        yield 'POSIX capitals in a group that turns i off' => ['pattern' => '/(?-i:[[:upper:]])/i', 'ranges' => [[0x41, 0x5A], [0xC0, 0xD6], [0xD8, 0xDE]]];
+        yield 'a POSIX class the tables give no bytes for, read as PCRE2\'s own' => ['pattern' => '/[[:digit:]]/', 'ranges' => [[0x30, 0x39]]];
+        yield 'a POSIX class beside a byte above ASCII' => ['pattern' => '/[\xB5[:digit:]]/', 'ranges' => [[0x30, 0x39], [0xB5, 0xB5]]];
+        yield 'two POSIX classes' => ['pattern' => '/[[:digit:][:upper:]]/', 'ranges' => [[0x30, 0x39], [0x41, 0x5A], [0xC0, 0xD6], [0xD8, 0xDE]]];
+        yield 'a POSIX class under (*UTF)' => ['pattern' => '/(*UTF)[[:alpha:]]/', 'ranges' => [[0x41, 0x5A], [0x61, 0x7A], [0xC2, 0xC3]]];
+        yield 'a negated POSIX class under (*UTF)' => ['pattern' => '/(*UTF)[[:^alpha:]]/', 'ranges' => [[0x00, 0x40], [0x5B, 0x60], [0x7B, 0xFF]]];
+        yield 'a POSIX class under (*UCP)' => ['pattern' => '/(*UCP)[[:alpha:]]/', 'ranges' => null];
+        yield 'a negated POSIX class under (*UCP)' => ['pattern' => '/(*UCP)[[:^alpha:]]/', 'ranges' => null];
+        yield 'a POSIX class under u' => ['pattern' => '/[[:digit:]]/u', 'ranges' => null];
+        yield 'a name PCRE2 does not give' => ['pattern' => '/[[:letter:]]/', 'ranges' => null];
     }
 
     /**
@@ -1165,8 +1274,9 @@ final class CharSetAnalyzerTest extends TestCase
      * 0xDD, "I" with 0xFD, "x" with 0x7F and "q" with 0x80, and 0xE9 with
      * 0xC9, 0xF2 with 0xD3, 0xD3 with 0xF3; 0xB5 read otherwise by the
      * interpreter, 0xFF by the tables before 10.43. They put the Latin-1
-     * letters in "\w", 0xB2 and 0xB3 in "\d" and the no-break space 0xA0
-     * in "\s".
+     * letters in "\w" and "[:alpha:]", their capitals in "[:upper:]" and
+     * their small letters with 0xAA in "[:lower:]", 0xB2 and 0xB3 in "\d"
+     * and the no-break space 0xA0 in "\s".
      */
     private static function giveTables(): void
     {
@@ -1182,6 +1292,9 @@ final class CharSetAnalyzerTest extends TestCase
             'd' => [[0x30, 0x39], [0xB2, 0xB3]],
             's' => [[0x09, 0x0D], [0x20, 0x20], [0xA0, 0xA0]],
             'w' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]],
+            'alpha' => [[0x41, 0x5A], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]],
+            'upper' => [[0x41, 0x5A], [0xC0, 0xD6], [0xD8, 0xDE]],
+            'lower' => [[0x61, 0x7A], [0xAA, 0xAA], [0xDF, 0xF6], [0xF8, 0xFF]],
         ]);
     }
 
