@@ -2,6 +2,13 @@
 
 ## ReDoS precision
 
+- False "safe (proven)" since before RC1: `/^(?:a|a)+[^x]{0,20}(?:x|\z)/`
+  is proven linear, yet `preg_match()` on 20 `a` and 30 `b` exhausts the
+  backtrack limit, with the JIT on and off (PHP 8.4.28, PCRE2 10.49);
+  `{0,3}` is proven exponential. The model reads the bounded repeat as
+  unbounded, and the checks that take a success as sure trust it. Find
+  every part the model widens where a success is taken as sure, and
+  refuse it there.
 - The overlap rule reads an escape past ASCII under u as unknown where it
   reads the raw letter: under C, `/(?:[a-z]|\x{E9}|[a-c]|)+/u` goes
   unreported while `/(?:[a-z]|é|[a-c]|)+/u` is reported
