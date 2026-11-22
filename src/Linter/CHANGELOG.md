@@ -47,8 +47,10 @@ CHANGELOG
    negated class takes: `"/(?:[^a]|\xC3|)+/"` with a raw `\xC3` is
    reported, and so is `"/(?:\\W|\xE9|)+/"` under C, where `\W` takes
    every byte above ASCII; neither was. What another locale's tables
-   decide, `\w` or a case, is still read in ASCII: `"/(?:\\W|\xE9|)+/"`
-   is not reported under fr_FR.ISO8859-1, where `\xE9` is a letter.
+   decide of `\w` is still read in ASCII: `"/(?:\\W|\xE9|)+/"` is not
+   reported under fr_FR.ISO8859-1, where `\xE9` is a letter. A case is
+   read from those tables: `"/(?:(?i:[^a])|\xC3|)+/"` is reported there,
+   as under C, which it was not.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

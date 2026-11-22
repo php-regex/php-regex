@@ -100,13 +100,23 @@ CHANGELOG
  * Under another locale's tables than PCRE2's own, where they read nothing
    above ASCII, the heuristics read the bytes above ASCII a pattern writes
    and those a negated class takes, as under C, and leave unknown what
-   those tables decide: `\d`, `\s` and `\w` without UCP, `(*UTF)` alone
-   included, and the other case of a character under i, of an ASCII one
-   under u too. Under fr_FR.ISO8859-1, `"/^(x)[^a]+\xC3+\\1$/"` with a raw
+   those tables decide of `\d`, `\s` and `\w` without UCP, `(*UTF)` alone
+   included. Under fr_FR.ISO8859-1, `"/^(x)[^a]+\xC3+\\1$/"` with a raw
    `\xC3`, `'/^(x)[^a]+é+\1$/u'`, `"/^(x)\\w+\xE9+\\1$/"` and
    `"/^(x)\xC9+\xE9+\\1$/i"`, where the Latin-1 tables put `\xE9` in `\w`
    and pair it with `\xC9`, were safe and are medium: PCRE takes 31, 123
    and 499 steps on `x` then 8, 16 and 32 times the byte or the letter.
+ * Under another locale's tables than PCRE2's own, the heuristics read the
+   other case of a character under i as those tables give it, of an ASCII
+   one under u or (*UCP) too, where they left it unknown: the finding on
+   two loops that meet that way is no longer of low confidence, and
+   `/^(x)a+B+\1$/i`, `"/^(x)\xC9+\xEA+\\1$/i"` and `/^(x)[^a]+A+\1$/i`,
+   which were medium under fr_FR.ISO8859-1, are safe, as under C: PCRE
+   takes 3 steps on `x` then 8, 16 or 32 times the letter. A case stays
+   unknown where the tables of either side of PCRE2 10.43 hold it
+   otherwise, µ and ÿ under a UTF-8 locale on macOS, and where the
+   interpreter matches a character alone otherwise than a class of it
+   does, `i` and `I` under tr_TR.ISO8859-9 on macOS.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
    a letter meets its other case, and where `(?-i)` turns i off again it

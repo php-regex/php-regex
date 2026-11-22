@@ -932,9 +932,10 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * target's tables, for an alternation without u whose branches PCRE
      * does not judge. A byte is a character there, and the complement of a
      * class takes the bytes above ASCII it does not hold, which the ASCII
-     * read leaves out: "[^é]" takes 0x90. Where another locale's tables
-     * decide, "\w" or a case, the ASCII read of the branch stands: an
-     * overlap there goes unreported rather than one PCRE would not see.
+     * read leaves out: "[^é]" takes 0x90. A case is read from the target's
+     * tables, another locale's included; where those decide "\w", the
+     * ASCII read of the branch stands: an overlap there goes unreported
+     * rather than one PCRE would not see.
      *
      * @param list<ByteCharSet> $ascii the sets of the ASCII read, branch by branch
      *
@@ -942,7 +943,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): array
     {
-        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, ownTables: 'C' === $context->target->locale);
+        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale);
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
