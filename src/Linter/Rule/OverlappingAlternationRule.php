@@ -188,31 +188,33 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // later in the branch, which leaves the start case-sensitive.
             $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
             $caselessAt[] = $caseless;
-            $charSet = $caseless ? self::foldCharSet($charSet) : $charSet;
+            $folded = $caseless ? self::foldCharSet($charSet) : $charSet;
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
             // Without u it is a character the sets class in ASCII alone,
             // where "\W" or "[^a]" takes it under PCRE2's own tables and
-            // "\w" under a Latin-1 locale's.
-            if ($charSet->isUnknown()) {
+            // "\w" under a Latin-1 locale's, and which, read caselessly,
+            // folds as the target's tables say: the fold of ASCII leaves it
+            // unknown.
+            if ($charSet->isUnknown() || ($folded->isUnknown() && $context->pattern->unicodeMode)) {
                 $anyUnknown = true;
             } elseif ($context->pattern->unicodeMode || $charSet->intersects(ByteCharSet::fromBytes(0x80, 0xFF))) {
                 $pastAscii = true;
             }
-            $charSets[] = $charSet;
+            $charSets[] = $folded;
         }
 
-        // At least one charset is unknown, a byte past ASCII read caselessly
-        // included, which folds as the target's tables say: the sets are
-        // asked of PCRE. Under u, and without it for a byte past ASCII, the
-        // sets are asked of PCRE too, which reads characters under the
-        // target's tables; where it judges no branch, the bytes stand, their
-        // ASCII part alone under u, where two characters share a lead byte.
-        // A branch behind a lookahead is judged by PCRE alone: the bytes
-        // would take the characters the lookahead refuses.
+        // At least one charset is unknown: the sets are asked of PCRE. Under
+        // u, and without it for a byte past ASCII, a byte read caselessly
+        // included, the sets are asked of PCRE too, which reads characters
+        // under the target's tables; where it judges no branch, the bytes
+        // stand, read under those tables, their ASCII part alone under u,
+        // where two characters share a lead byte. A branch behind a
+        // lookahead is judged by PCRE alone: the bytes would take the
+        // characters the lookahead refuses.
         $sets = match (true) {
             $anyUnknown, $guarded => $this->setsFromPcre($node, $starts, $context),
-            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? array_map(self::alphabetSet(...), $context->pattern->unicodeMode ? array_map(self::asciiPart(...), $charSets) : self::everyByte($node, $charSets, $context)),
+            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? ($context->pattern->unicodeMode ? array_map(self::alphabetSet(...), array_map(self::asciiPart(...), $charSets)) : self::everyByte($node, $charSets, $context)),
             default => array_map(self::alphabetSet(...), $charSets),
         };
         if (null === $sets) {
@@ -932,23 +934,32 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * target's tables, for an alternation without u whose branches PCRE
      * does not judge. A byte is a character there, and the complement of a
      * class takes the bytes above ASCII it does not hold, which the ASCII
-     * read leaves out: "[^é]" takes 0x90. A case is read from the target's
-     * tables, another locale's included; where those decide "\w", the
-     * ASCII read of the branch stands: an overlap there goes unreported
-     * rather than one PCRE would not see.
+     * read leaves out: "[^é]" takes 0x90. What the target's tables decide
+     * is read from them, another locale's included: the bytes of "\d",
+     * "\s" and "\w", and the other case of a character, a byte's read
+     * caselessly included. Where they cannot tell, the ASCII read of the
+     * branch stands: an overlap there goes unreported rather than one PCRE
+     * would not see. A branch known neither way, a byte read caselessly
+     * whose case the engine's paths read otherwise, leaves the alternation
+     * unjudged.
      *
      * @param list<ByteCharSet> $ascii the sets of the ASCII read, branch by branch
      *
-     * @return list<ByteCharSet>
+     * @return ?list<CharSet>
      */
-    private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): array
+    private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): ?array
     {
         $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale);
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
             $set = $analyzer->withFlags($flagsAt[$index] ?? $context->activeFlags())->firstChars($alternative);
-            $sets[] = $set->isUnknown() ? $ascii[$index] ?? $set : $set;
+            $set = $set->isUnknown() ? $ascii[$index] ?? $set : $set;
+            if ($set->isUnknown()) {
+                return null;
+            }
+
+            $sets[] = self::alphabetSet($set);
         }
 
         return $sets;

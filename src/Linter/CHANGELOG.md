@@ -46,11 +46,24 @@ CHANGELOG
    above all, `regex.lint.overlap.charset` reads the bytes above ASCII a
    negated class takes: `"/(?:[^a]|\xC3|)+/"` with a raw `\xC3` is
    reported, and so is `"/(?:\\W|\xE9|)+/"` under C, where `\W` takes
-   every byte above ASCII; neither was. What another locale's tables
-   decide of `\w` is still read in ASCII: `"/(?:\\W|\xE9|)+/"` is not
+   every byte above ASCII; neither was. `"/(?:\\W|\xE9|)+/"` is not
    reported under fr_FR.ISO8859-1, where `\xE9` is a letter. A case is
-   read from those tables: `"/(?:(?i:[^a])|\xC3|)+/"` is reported there,
-   as under C, which it was not.
+   read from that locale's tables: `"/(?:(?i:[^a])|\xC3|)+/"` is
+   reported there, as under C, which it was not.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads the bytes of `\d`, `\s` and `\w`
+   from the tables of the target's locale, where it read them in ASCII:
+   `"/(?:\\w|\xE9|)+/"` and `"/(?:\\W|\xD7|)+/"`, with raw bytes, are
+   reported under fr_FR.ISO8859-1, where the Latin-1 tables put `\xE9` in
+   `\w` and leave `\xD7` out; neither was.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads the other case of a byte above ASCII
+   read caselessly from the tables of the target's locale, where it left
+   the branches unjudged: `"/(?:\xC9|\xE9|)+/i"`, with raw bytes, is
+   reported under fr_FR.ISO8859-1, where the Latin-1 tables pair `\xE9`
+   with `\xC9`, and so is `"/(?:\xC9|[\xC9\xCA]|)+/i"` under C, whose
+   branches both take `\xC9`; neither was. A byte whose case the engine's
+   paths read otherwise still leaves the branches unjudged.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
