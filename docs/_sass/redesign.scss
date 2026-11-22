@@ -1247,6 +1247,13 @@ main ul.support-legend li::before {
    kept a terminal look of its own — one dark panel, label inside — which
    read as a second code-block design on pages that show both in a row. */
 
+/* The base sheet still paints the install's own code with the palette
+   of the design before this one — a light panel's ink, near-black on
+   the dark panel the frame holds. The words ride the panel's ink. */
+.page-main main .install code {
+  color: var(--block-ink);
+}
+
 /* A bare panel has no ground behind it to dissolve into: its scrollbar is
    the tell. */
 .page-main main > pre[data-scroll],
