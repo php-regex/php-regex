@@ -80,7 +80,7 @@ final class ValidationBench
     #[ExpectedFor('escape-dense', instructions: '121.6M', cycles: '179.5M', memory: '626.7KiB')]
     #[ExpectedFor('extended-comments', instructions: '268.6M', cycles: '376.7M', memory: '1.812MiB')]
     #[ExpectedFor('long-literal', instructions: '98.41M', cycles: '105.1M', memory: '3.166MiB')]
-    #[ExpectedFor('quoted-run', instructions: '11.38M', cycles: '12.04M', memory: '118.1KiB')]
+    #[ExpectedFor('quoted-run', instructions: '11.50M', cycles: '12.20M', memory: '119.4KiB')]
     #[ExpectedFor('raw-high-bytes', instructions: '502.0K', cycles: '1.129M', memory: '12.85KiB')]
     public function benchTokenize(string $pattern): void
     {
@@ -102,7 +102,7 @@ final class ValidationBench
     #[DataProvider('validateCases')]
     #[ExpectedFor('counted-4500', instructions: '613.3K', cycles: '1.589M', memory: '12.31KiB')]
     #[ExpectedFor('lookbehind-alternatives', instructions: '57.68M', cycles: '65.03M', memory: '507.8KiB')]
-    #[ExpectedFor('many-backreferences', instructions: '20.94M', cycles: '28.65M', memory: '113.2KiB')]
+    #[ExpectedFor('many-backreferences', instructions: '21.19M', cycles: '29.09M', memory: '114.5KiB')]
     #[ExpectedFor('recursion-balanced', instructions: '1.166M', cycles: '2.574M', memory: '14.70KiB')]
     #[ExpectedFor('reversed-quantifier', instructions: '604.1K', cycles: '1.626M', memory: '24.12KiB')]
     #[ExpectedFor('unclosed-group', instructions: '925.3K', cycles: '1.888M', memory: '28.39KiB')]
