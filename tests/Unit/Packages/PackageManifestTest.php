@@ -222,9 +222,10 @@ final class PackageManifestTest extends TestCase
         // The modernizer reads (*UCP) among the opening verbs the parser
         // recognises as start options. The possessive rewrite joins the
         // character sets the analyzer answers with into what may follow a
-        // repetition.
+        // repetition, and finds the groups a call runs, which give back to
+        // what follows the call.
         'Optimizer' => [
-            'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
+            'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Analysis\GroupIndex', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\StartOptions', 'Parser\NodeWalker', 'Parser\TraversalAction',
         ],
         'PHPStan' => [
