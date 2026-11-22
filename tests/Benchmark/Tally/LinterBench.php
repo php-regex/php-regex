@@ -95,7 +95,7 @@ final class LinterBench
     }
 
     #[DataProvider('optimizerCases')]
-    #[ExpectedFor('common-prefix-words', instructions: '585.7M', cycles: '668.4M', memory: '2.223MiB')]
+    #[ExpectedFor('common-prefix-words', instructions: '593.2M', cycles: '669.2M', memory: '2.223MiB')]
     #[ExpectedFor('email-like', instructions: '20.62M', cycles: '27.67M', memory: '169.1KiB')]
     #[ExpectedFor('quantified-groups', instructions: '17.16M', cycles: '22.81M', memory: '181.3KiB')]
     #[ExpectedFor('redundant-classes', instructions: '1.697B', cycles: '2.285B', memory: '8.853MiB')]
