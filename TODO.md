@@ -148,11 +148,12 @@ request goes to `phpstan/phpstan-src`.
 
 ## Linter precision
 
-- `regex.lint.flag.useless.i` reads only the ends of a range under u: it
-  calls the flag of `/[×-÷]/iu` useless, though that range holds Ø to ö
-  and matches `ø` only with i (PHP 8.4.28, PCRE2 10.49, under C), so
-  dropping the flag changes the match. Read the characters between the
-  ends, or keep the flag for a range too wide to read.
+- `regex.lint.flag.useless.i` reads a byte above ASCII without u as
+  caseless under C, but `(*UCP)` gives the bytes below 256 their Unicode
+  case: `/(*UCP)\xE9/i` matches `\xC9` (PHP 8.4.28, PCRE2 10.49, with and
+  without the JIT), yet the rule calls its i useless. Read those bytes as
+  the code points of the same value under UCP, from the target's tables
+  (`OtherCases`, as #430 does under u), with an oracle across releases.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. The fix
   is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
