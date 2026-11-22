@@ -20,9 +20,31 @@
   `regex.lint.alternation.overlap`, as `/(?:A|a)+/i` is in ASCII:
   `"/(?:\xC9|\xE9)+/i"` moves there from `regex.lint.overlap.charset`
   under fr_FR.ISO8859-1 and stays where it is under C.
-- `ImpossibleAnchorRule` reads every byte through PCRE2's own tables,
-  whatever the target's locale. Check whether a locale whose ASCII case
-  differs (glibc's tr_TR.ISO-8859-9) makes it report an anchor that holds.
+- Three rules fold ASCII letters by C's pairs whatever the target's
+  locale: `regex.lint.alternation.overlap` (`foldCharSet`),
+  `regex.lint.quantifier.nested` (`NestedQuantifierRule::fold()`) and
+  `regex.lint.quantifier.concatenation` (`foldByteSet()`), with
+  `LoopShape::mayTakeAboveAscii`, all through the analyzer
+  `PatternLinter` builds without the target. Under glibc's
+  tr_TR.ISO-8859-9, where `i` pairs with `\xDD` and `I` with `\xFD`,
+  `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are reported though their
+  parts are disjoint (the engine returns 0 at once, the analysis says
+  safe), and `/i+\xDD+$/i` is missed (medium). Read the pairs from the
+  target's tables, as #429 and #434 do, once the overlap rule's escape
+  and fold changes have landed.
+- The automata scan bytes through `(*NO_JIT)` (`ClassSetProvider::probe()`),
+  so where the JIT and the interpreter read a locale's case differently
+  they see only the interpreter's: under macOS's tr_TR.ISO8859-9,
+  `/(?=\xFD)i/i` is reported impossible, yet the JIT matches `I` (PHP
+  8.4.28, PCRE2 10.49). Let a byte `CharacterTables` marks unsettled be
+  taken either way, as `CharSetAnalyzer` holds what any path takes since
+  #432.
+- Under a locale other than C, `ImpossibleAnchorRule` counts every byte
+  above ASCII as both a word character and not one: `/\W$\b\n/` is
+  reported under C but not under glibc's tr_TR, and `/\xDD$\B\n/`, impossible
+  there, is not reported. Read `\w` from the target's tables in
+  `EndOfLineTail`. The rule gives no false verdict under tr_TR (20,740
+  patterns against PHP 8.2, 8.4 and 8.6, JIT on and off).
 - Report the search of `preg_match_all()`, `preg_replace()` and
   `preg_split()`: after an empty match PHP tries again at the same offset
   with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match empty
@@ -68,6 +90,12 @@ Found while fixing the bugs of #400; each is PCRE2's, not the library's.
   only that such characters "may be different" under locale tables; the
   answer should not depend on the path. Search PCRE2's tracker, then
   report it. `CharSetAnalyzer` holds what any path takes there (#432).
+- The same paths disagree on case under a locale whose case maps are not
+  inverse: macOS's tr_TR.ISO8859-9 gives `tolower(0xDD) = 'i'` and
+  `toupper(0xFD) = 'I'`, while `I` and `i` pair with each other.
+  `/\xFD/i` matches `I` with the JIT and not with `pcre.jit=0` (PHP 8.4.28,
+  PCRE2 10.49): the interpreter compares the lowercase forms (`lcc`), the
+  JIT the other case (`fcc`). Report it with the `\w` one.
 - PCRE2's open pull requests fix the JIT's two other wrong answers, found
   on 10.49 and master: #1004 a zero-width branch of a variable-length
   lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
