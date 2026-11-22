@@ -1460,6 +1460,29 @@ vendor/bin/regex lint app --redos --redos-threshold=medium
 Its attack is in the analysis' `search_cost`; `--disable-rule=regex.lint.redos.search`,
 or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
+The same issue is raised at a call of `preg_match_all()`, `preg_replace()`,
+`preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()` or
+`preg_split()`, or a `Safe\` or composer/pcre form of one, that no literal limit
+bounds. The pattern is one whose `preg_match()` search stops at an empty match
+inside a run: these functions go on after it, and PHP's retry of each empty match
+reads to the end of the run (see the
+[ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).
+Its attack is in the analysis' `every_match_search_cost`:
+
+```
+  app/Fields.php:3:22
+      → /(?:[^,]*,)?/
+    WARN Quadratic search after an empty match: one attempt is linear (proven), but preg_split() finds an empty match at
+         each position of the run and, as PHP does after every empty match, tries that position again for a non-empty
+         one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit.
+         Severity: MEDIUM.
+         ↳ Attack: "!" x n.
+         ↳ pcre.backtrack_limit does not stop it: the limit counts each call apart.
+         ↳ preg_match() and preg_grep() stop at the first match and make no such retry.
+         ↳ Make every match read at least one character, or bound the length of the run; ^ or \A before every
+           alternative stops it, \G and the A modifier do not.
+```
+
 #### Twig templates
 
 Twig's `matches` operator is a `preg_match()`: {% raw %}`{% if slug matches '/^[a-z]+$/' %}`{% endraw %}

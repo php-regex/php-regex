@@ -211,6 +211,47 @@ final class RedosVerdict
     }
 
     /**
+     * What the search cost of the functions that look for every match
+     * means at a call of one of them: one attempt is linear, the search of
+     * preg_match() stops at the first empty match, and the loop of the call
+     * retries each position of the run, in PCRE2's interpreter whatever
+     * the JIT setting, as the JIT takes no PCRE2_ANCHORED at match time.
+     */
+    public static function everyMatchMessage(string $function): string
+    {
+        return \sprintf(
+            "Quadratic search after an empty match: one attempt is linear (proven), but %s() finds an empty match at each position of the run and, as PHP does after every empty match, tries that position again for a non-empty one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit. Severity: %s.",
+            $function,
+            Ascii::upper(self::searchSeverity()->value),
+        );
+    }
+
+    /**
+     * The attack, why pcre.backtrack_limit does not stop it, what the
+     * replay of the retry found, and how to remove it.
+     *
+     * @return list<string>
+     */
+    public static function everyMatchEvidence(RedosSearchCost $cost, string $pcreVersion): array
+    {
+        $lines = [
+            'Attack: '.$cost->render().'.',
+            'pcre.backtrack_limit does not stop it: the limit counts each call apart.',
+        ];
+
+        if (true === $cost->replayed) {
+            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: the retry at a position further from the end of the run takes more steps.', $pcreVersion);
+        } elseif (false === $cost->replayed) {
+            $lines[] = \sprintf('Not confirmed by the step replay on PCRE2 %s.', $pcreVersion);
+        }
+
+        $lines[] = 'preg_match() and preg_grep() stop at the first match and make no such retry.';
+        $lines[] = 'Make every match read at least one character, or bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.';
+
+        return $lines;
+    }
+
+    /**
      * "Replayed on PCRE2 10.49: preg_match fails from length 17
      * (backtrack_limit 100000, JIT off)", or "preg_match() without $matches
      * fails" when the replay ran that call: the length is the byte length of

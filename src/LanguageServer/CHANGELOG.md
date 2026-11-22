@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` is published at the calls that look for every
+   match, `preg_match_all()` or `preg_split()` for instance, on a pattern
+   whose search costs them n² through PHP's retry after an empty match, as
+   `regex lint` reports it.
  * A pattern holding bytes that are no UTF-8, `"/^\xff\xd8\xff/"`, is
    hovered and diagnosed, each such byte spelled `\xFF`: the hover was
    answered with an Internal Error (`-32603`, malformed UTF-8) and the

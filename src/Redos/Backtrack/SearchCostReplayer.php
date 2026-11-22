@@ -56,6 +56,8 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
     private const NO_AUTO_POSSESS = '(*NO_AUTO_POSSESS)';
 
+    private const NOTEMPTY_AT_START = '(*NOTEMPTY_ATSTART)';
+
     /**
      * Whether the engine, without its JIT, starts attempts inside the run
      * that each read what is left of it, and matches nowhere; null when the
@@ -89,6 +91,62 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         }
 
         return $far - $near >= $quarter;
+    }
+
+    /**
+     * Whether the engine, without its JIT, stops the search started a
+     * quarter and half-way through the run on an empty match within one run
+     * word, as each search of the loop of preg_match_all() and its kin then
+     * does, and whether the retry PHP makes there, pinned and refusing an
+     * empty match at its start (PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED),
+     * fails and takes one more step at least per run word left; null when
+     * the engine cannot count. The loop calls the engine afresh at each
+     * offset, so "\G" holds where the replay pins an attempt, as it does
+     * there.
+     */
+    #[\Override]
+    public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
+    {
+        $options ??= new ConfirmationOptions();
+        $counted = self::counted($pattern);
+        if (null === $counted) {
+            return false;
+        }
+
+        $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
+        $quarter = intdiv(self::WORDS, 4);
+        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1 + \strlen(NoJit::VERB.self::NO_AUTO_POSSESS), 0).'A';
+        $steps = [];
+        foreach ([1, 2] as $quarters) {
+            $start = \strlen($prefix) + $quarters * $quarter * \strlen($run);
+            $search = self::counts($counted, $subject, $start, self::MAX_STEPS, $options, \PREG_OFFSET_CAPTURE);
+            if (null === $search->matched) {
+                return null;
+            }
+
+            // The loop moves on past a match that reads the run; the empty
+            // match may stand one character on, where a pattern refusing it
+            // at the start of each call puts it.
+            $found = $search->groups[0] ?? null;
+            if (!$search->matched || !\is_array($found) || '' !== $found[0] || $found[1] > $start + \strlen($run)) {
+                return false;
+            }
+
+            // A retry that matches moves the loop on; one the limits stop
+            // cannot be counted either.
+            if (true === self::counts($retry, $subject, $found[1], self::MAX_STEPS, $options)->matched) {
+                return false;
+            }
+
+            $step = self::steps($retry, $subject, $found[1], $options);
+            if (null === $step) {
+                return null;
+            }
+
+            $steps[] = $step;
+        }
+
+        return $steps[0] - $steps[1] >= $quarter;
     }
 
     /**
@@ -135,11 +193,13 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
      * The engine's answer for the attempts from the offset, under the step
      * limit capped by the caller's policy and its recursion limit. The engine
      * leaves the ini as it found it and keeps a warning from the output.
+     *
+     * @param 0|256|512|768 $flags the preg_match() flags: PREG_OFFSET_CAPTURE for where a match stands
      */
-    private static function counts(string $counted, string $subject, int $offset, int $limit, ConfirmationOptions $options): PcreMatch
+    private static function counts(string $counted, string $subject, int $offset, int $limit, ConfirmationOptions $options, int $flags = 0): PcreMatch
     {
         $limits = new PcreLimits(min($limit, $options->backtrackLimit), $options->recursionLimit);
 
-        return (new PcreEngine())->match($counted, $subject, $limits, $offset);
+        return (new PcreEngine())->match($counted, $subject, $limits, $offset, $flags);
     }
 }

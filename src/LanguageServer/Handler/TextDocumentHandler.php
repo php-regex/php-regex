@@ -558,7 +558,7 @@ final class TextDocumentHandler
         }
 
         if (null !== $redos) {
-            array_push($diagnostics, ...$this->redosDiagnostics($redos, $span));
+            array_push($diagnostics, ...$this->redosDiagnostics($redos, $span, $occurrence->everyMatch));
         }
 
         return $diagnostics;
@@ -735,9 +735,12 @@ final class TextDocumentHandler
      * The verdict and the search cost `regex lint` reports for the analysis,
      * under the same ids, severities and words.
      *
+     * @param string|null $everyMatch the preg function the pattern runs in when a call reading it looks
+     *                                for every match
+     *
      * @return list<Diagnostic>
      */
-    private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span): array
+    private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span, ?string $everyMatch): array
     {
         $diagnostics = [];
 
@@ -754,15 +757,31 @@ final class TextDocumentHandler
             );
         }
 
-        // One attempt proven linear, the search retrying it is not.
+        // One attempt proven linear, the search retrying it is not; nor is
+        // the loop of a call that looks for every match, which PHP retries
+        // after each empty match.
+        if (!RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID)
+            || RedosVerdict::searchSeverity()->rank() < $this->redosThreshold->rank()) {
+            return $diagnostics;
+        }
+
         $searchCost = $redos->searchCost;
-        if (null !== $searchCost
-            && RuleCatalog::enables($this->lintRules, RedosVerdict::SEARCH_ISSUE_ID)
-            && RedosVerdict::searchSeverity()->rank() >= $this->redosThreshold->rank()) {
+        if (null !== $searchCost) {
             $diagnostics[] = $this->diagnosticConverter->fromRedos(
                 RedosVerdict::SEARCH_ISSUE_ID,
                 RedosVerdict::searchMessage($searchCost),
                 RedosVerdict::searchEvidence($searchCost, $redos->pcreVersion),
+                false,
+                $span,
+            );
+        }
+
+        $everyMatchCost = $redos->everyMatchSearchCost;
+        if (null !== $everyMatchCost && null !== $everyMatch) {
+            $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                RedosVerdict::SEARCH_ISSUE_ID,
+                RedosVerdict::everyMatchMessage($everyMatch),
+                RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion),
                 false,
                 $span,
             );

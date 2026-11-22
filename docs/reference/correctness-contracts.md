@@ -109,6 +109,32 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   - **Errors**: a library failure inside the search proof leaves `search_cost` null and the per-attempt verdict as
     proven; any other error is a bug, and the analysis reports it as an error.
 
+**Search cost of the functions that look for every match**
+- **Semantics:** For a pattern whose one attempt is proven linear and whose `search_cost` is null, a witness of the
+  same form, read as PHP's retry after an empty match runs: every attempt inside the run refuses an empty match at its
+  own start (`PCRE2_NOTEMPTY_ATSTART`), reads to the end of the run without matching, then fails; and the pattern
+  matches the empty string inside the run, where `preg_match()` stops. `preg_match_all()`, `preg_replace()`,
+  `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()` and `preg_split()` go on after each
+  match and, after an empty one, retry the same offset with `PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED`
+  (`ext/pcre/php_pcre.c`, since PHP 5.6.13), then move one character on: about n² steps. Each search of the loop
+  starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing; `^` without `m` and
+  `\A` do. It is reported as `every_match_search_cost`, and as the lint issue `regex.lint.redos.search` and the
+  PHPStan identifier `regex.redos.search` at the calls of those functions that no literal limit bounds, at severity
+  `medium`, a warning. Measured with PHP 8.4.28 and PCRE2 10.49, `/(?:a+\d)?/` on `"a" x n`, n = 2,000 / 4,000 /
+  8,000 / 16,000: `preg_match_all()` 2.3 / 8.6 / 34 / 131 ms with `pcre.jit=0`, 1.8 / 6.8 / 27 / 106 ms with
+  `pcre.jit=1`; `preg_match()` 0.01 ms.
+- **Guarantee:** None in the other direction, as for `search_cost`. Confirmed mode replays the retry pinned at two
+  offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`).
+- **Limits:**
+  - **The JIT** does not avoid it: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the retry always runs in
+    the interpreter.
+  - **A match that is short but not empty** after a long read (`/a(?:a+\d)?/`, `/a*b|a/`) costs the same loop the
+    same way and is not reported.
+  - **A pattern several calls read**, through a constant or a variable, is reported at its first call, and its cost
+    follows that call.
+  - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
+    call of the loop starts at that offset.
+
 ## Automata Solver
 
 **Compare / Equivalence / Subset / Intersection**

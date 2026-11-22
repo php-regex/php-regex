@@ -67,7 +67,7 @@ final class RedosAnalysisConstructionTest extends TestCase
             $kept++;
         }
 
-        $this->assertSame(21, $kept, 'Every field but the four a replay sets.');
+        $this->assertSame(22, $kept, 'Every field but the four a replay sets.');
     }
 
     /**
@@ -203,6 +203,7 @@ final class RedosAnalysisConstructionTest extends TestCase
             analysisVersion: '0',
             upperBoundDegree: 4,
             searchCost: new RedosSearchCost(2, '', 'a', '!', false),
+            everyMatchSearchCost: new RedosSearchCost(2, '', 'b', '', false),
         );
     }
 }

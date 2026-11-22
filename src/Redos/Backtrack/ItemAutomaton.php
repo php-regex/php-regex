@@ -238,6 +238,25 @@ final class ItemAutomaton
     }
 
     /**
+     * The items of an attempt that starts a search of its own after a
+     * character that leaves the context, as each call of PHP's loop over
+     * every match does: "\G" holds there. A search that looks at no
+     * character before its attempt starts the same way everywhere.
+     *
+     * @return list<int>
+     */
+    public function searchStart(int $context): array
+    {
+        foreach ($this->initials as $initial) {
+            if ($context === $initial['context']) {
+                return $initial['items'];
+            }
+        }
+
+        return $this->initials[0]['items'];
+    }
+
+    /**
      * Where the pattern writes the character the item reads.
      */
     public function offsetOf(int $item): int

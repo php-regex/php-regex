@@ -112,6 +112,42 @@ final class CallArguments
     }
 
     /**
+     * The integer an argument in [$start, $end) writes as a literal, under
+     * its signs and parentheses: 2, -1, (+3); null for anything else.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    public static function integer(array $tokens, int $start, int $end): ?int
+    {
+        [$slice] = StringExpressionReader::stripParentheses(...PhpTokens::slice($tokens, $start, $end));
+        $negative = false;
+        $number = null;
+        foreach ($slice as $token) {
+            if (PhpTokens::isIgnorable($token)) {
+                continue;
+            }
+
+            if (null !== $number) {
+                return null;
+            }
+
+            if ('-' === $token || '+' === $token) {
+                $negative = $negative !== ('-' === $token);
+
+                continue;
+            }
+
+            if (!\is_array($token) || \T_LNUMBER !== $token[0]) {
+                return null;
+            }
+
+            $number = PhpTokens::integerValue($token[1]);
+        }
+
+        return null === $number || !$negative ? $number : -$number;
+    }
+
+    /**
      * Whether a call is a partial application: one of its arguments, by
      * position or by name, is only a placeholder, "?" or "...".
      *
