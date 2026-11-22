@@ -211,7 +211,7 @@ final class PriorityNfaBuilder
 
     /**
      * The group the call runs, or null for a call of the whole pattern, of
-     * a group neither the form nor its DEFINEs hold, as a condition holds
+     * a group neither the form nor a DEFINE holds, as a condition holds
      * it, or one that returns groups, which writes them.
      */
     private function calledGroup(SubroutineNode $call): ?CaptureHir
@@ -232,7 +232,7 @@ final class PriorityNfaBuilder
     }
 
     /**
-     * The groups of the form and of its DEFINEs, by the offset each starts
+     * The groups of the form and of each DEFINE, by the offset each starts
      * at.
      *
      * @return array<int, CaptureHir>

@@ -106,6 +106,7 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a possessive in a group a DEFINE holds' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>a++b?))/', 'letters' => 'abc'];
         yield 'a possessive in a group a DEFINE holds, called by number' => ['left' => '/(?1)c(?(DEFINE)(a+b?))/', 'right' => '/(?1)c(?(DEFINE)(a++b?))/', 'letters' => 'abc'];
         yield 'a possessive in a group a DEFINE holds, called from another it holds' => ['left' => '/(?&o)c(?(DEFINE)(?<o>d(?&i))(?<i>a+b?))/', 'right' => '/(?&o)c(?(DEFINE)(?<o>d(?&i))(?<i>a++b?))/', 'letters' => 'abcd'];
+        yield 'a possessive in a group a DEFINE holds, inside a group another DEFINE holds' => ['left' => '/(?&b)c(?(DEFINE)(?<a>x(?(DEFINE)(?<b>a+b?))))/', 'right' => '/(?&b)c(?(DEFINE)(?<a>x(?(DEFINE)(?<b>a++b?))))/', 'letters' => 'abcx'];
         yield 'a call the engine backtracks into, of a group a DEFINE holds' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a|ab))/', 'right' => '/(?:a|ab)c(?(DEFINE)(?<n>a|ab))/', 'letters' => 'abc'];
         // It runs under the options in force where the DEFINE stands.
         yield 'a group a DEFINE holds, under the options of the group around it' => ['left' => '/(?i:(?(DEFINE)(?<n>a)))(?&n)c/', 'right' => '/(?i:(?(DEFINE)(?<n>a)))[aA]c/', 'letters' => 'aAcC'];
