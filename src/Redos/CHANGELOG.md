@@ -21,6 +21,14 @@ CHANGELOG
    empty string at the run's end at once. Under `(*NOTEMPTY_ATSTART)` that
    empty match stands past the search start: `/(*NOTEMPTY_ATSTART)a+\K/`
    is not reported.
+ * One attempt reads that refusal too. `/(*NOTEMPTY)^(?:a|a)+\K/` and
+   `/(*NOTEMPTY)(?:a|a)+\K/`, which give back every way through
+   `(?:a|a)+` before they fail, are exponential, no longer safe (proven):
+   PHP exhausts its backtrack limit on 2,000 `a` in the interpreter, where
+   `/^(?:a|a)+\K/` matches the empty string at once. When the attempt
+   succeeds only once the loop gives a character back to read after `\K`,
+   as `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, no verdict is proven, as for
+   `/^(?:a|a)+./`.
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of

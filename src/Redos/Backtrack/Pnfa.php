@@ -86,7 +86,9 @@ final class Pnfa
     public const CONTINUATION = 10;
 
     /**
-     * "\K": goes on, the reported match starting where it stands.
+     * "\K": goes on, the reported match starting where it stands. Written in
+     * the pattern's own search under "(*NOTEMPTY)" alone, where the engine
+     * refuses the success right after it: the match it reports is empty.
      */
     public const KEEP = 11;
 
@@ -191,12 +193,6 @@ final class Pnfa
      * not end with a newline is read exactly.
      */
     public bool $readsFinalNewline = false;
-
-    /**
-     * Whether the search holds "\K" as a state, which it does under
-     * "(*NOTEMPTY)" alone.
-     */
-    public bool $holdsKeep = false;
 
     /**
      * @param int|null $parent     the search this one is a lookaround of, and the
@@ -366,7 +362,6 @@ final class Pnfa
 
     public function keep(int $next): int
     {
-        $this->holdsKeep = true;
         $state = $this->add(self::KEEP);
         $this->next[$state] = $next;
 
