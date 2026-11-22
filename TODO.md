@@ -19,9 +19,15 @@
   six files moved, `zend_free_internal_arg_info()` takes a second
   argument), with mbstring, and served from `docs/` beside a manifest of
   sha256s. 8.6 cannot be stood in by 8.5: it refuses `\C` under u, keys
-  MARK once and fixes `preg_grep()`. The branch `php-86-playground-engine`
-  (on top of #418) has the 8.6.0 options row; the engine itself needs
-  Docker at 4 CPU and 8 GB or more.
+  MARK once and fixes `preg_grep()`. #428 serves it: merge it once its
+  engine job, the first rebuild on a native amd64 runner, matches the
+  manifest, then remove the local builder image
+  (`phpregex/php-wasm-builder:v0.2.0-emsdk-6.0.6`, 4.25 GB).
+- The playground's driver (`docs/assets/playground/driver.php`) reads the
+  `MARK` key PHP adds for `(*MARK)` as a group: on `/(a)(*MARK:z)b/` its
+  names give group 2 the name `MARK`, and its match shows the mark as a
+  group that did not take part. Skip a key whose value is not a pair, and
+  show the mark on its own.
 
 ## Engine reports
 
