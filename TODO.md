@@ -143,8 +143,16 @@ request goes to `phpstan/phpstan-src`.
 ## Linter precision
 
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
-  does not narrow a union of constant strings by `$v[0] === '|'`. A small
-  pull request to its type specifier, with an nsrt test, would fix it.
+  does not narrow a union of constant strings by `$v[0] === '|'`. The fix
+  is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
+  (branch `narrow-constant-string-offset`, `70e61331c` on upstream 2.3.x
+  `9c990f5dd`): `IdenticalNarrowingHelper` keeps the constant strings whose
+  byte at a constant offset is the literal, its `turbo-ext` mirror does
+  the same, and an nsrt test covers both branches, negative and out of
+  range offsets; `make tests` passes with and without the extension. Push
+  it to the fork and open the pull request to phpstan/phpstan-src.
+  phpstan-src#6614 (`substr()` or `$s[0]` against a longer string) is
+  related, not the same.
 
 
 ## Optimizer precision
