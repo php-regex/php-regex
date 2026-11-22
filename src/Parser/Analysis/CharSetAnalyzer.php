@@ -30,6 +30,7 @@ use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
@@ -55,15 +56,20 @@ use PHPRegex\Parser\Text\Utf8;
  * is 0xC3 at either end, so a node that ends with it meets one that starts
  * with it. Under another locale's tables than PCRE2's own, a set still
  * holds the bytes a literal writes and those a complement takes, and what
- * those tables decide, read from the engine: the bytes of "\d", "\s" and
- * "\w" without UCP, and the other case of a character. Neither is known
- * where the tables cannot be read, nor a case the engine's paths read
- * otherwise.
+ * those tables decide, read from the engine: the bytes of "\d", "\s",
+ * "\w" and the POSIX classes without UCP, and the other case of a
+ * character. Neither is known where the tables cannot be read, nor a case
+ * the engine's paths read otherwise.
  *
  * @internal
  */
 final class CharSetAnalyzer
 {
+    /**
+     * The POSIX names PCRE2 gives, whose bytes the tables hold.
+     */
+    private const POSIX_NAMES = ['alpha', 'lower', 'upper', 'alnum', 'ascii', 'blank', 'cntrl', 'digit', 'graph', 'print', 'punct', 'space', 'word', 'xdigit'];
+
     private readonly string $flags;
 
     /**
@@ -236,6 +242,10 @@ final class CharSetAnalyzer
             return $this->fromCharType($node->value);
         }
 
+        if ($node instanceof PosixClassNode) {
+            return $this->fromPosixClass($node->class);
+        }
+
         if ($node instanceof DotNode) {
             return $this->dot;
         }
@@ -383,16 +393,51 @@ final class CharSetAnalyzer
      */
     private function typeInTables(string $type): ByteCharSet
     {
-        if (null === $this->tables) {
+        $set = $this->inTables(Ascii::lower($type));
+
+        return Ascii::lower($type) === $type ? $set : $this->complement($set);
+    }
+
+    /**
+     * A POSIX class, "[:alpha:]", as the tables fill it without UCP, and
+     * its negation, "[:^alpha:]", as the bytes it leaves out. Under i
+     * "[:lower:]" and "[:upper:]" take every letter, as "[:alpha:]" does,
+     * and no class takes the other case of its bytes beyond
+     * (pcre2_compile_class.c). Under UCP several read Unicode's
+     * properties, which the sets do not hold: not known, as a name PCRE2
+     * does not give.
+     */
+    private function fromPosixClass(string $class): ByteCharSet
+    {
+        $negated = str_starts_with($class, '^');
+        $name = $negated ? substr($class, 1) : $class;
+        if ($this->unicodeMode || !\in_array($name, self::POSIX_NAMES, true)) {
+            return ByteCharSet::unknown();
+        }
+
+        $set = $this->inTables($this->caseless && \in_array($name, ['lower', 'upper'], true) ? 'alpha' : $name);
+
+        return $negated ? $this->complement($set) : $set;
+    }
+
+    /**
+     * The bytes the tables give a type or a POSIX name: PCRE2's own, or
+     * another locale's, not known where those are not. Under UTF they name
+     * code points, known by the byte each starts with.
+     */
+    private function inTables(string $name): ByteCharSet
+    {
+        $tables = $this->ownTables ? CharacterTables::builtIn() : $this->tables;
+        if (null === $tables) {
             return ByteCharSet::unknown();
         }
 
         $set = ByteCharSet::empty();
-        foreach ($this->tables->bytesOf(Ascii::lower($type)) as [$low, $high]) {
+        foreach ($tables->bytesOf($name) as [$low, $high]) {
             $set = $set->union($this->characters($low, $high));
         }
 
-        return Ascii::lower($type) === $type ? $set : $this->complement($set);
+        return $set;
     }
 
     private static function wordCharacters(): ByteCharSet

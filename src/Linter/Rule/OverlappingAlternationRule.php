@@ -209,12 +209,14 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // included, the sets are asked of PCRE too, which reads characters
         // under the target's tables; where it judges no branch, the bytes
         // stand, read under those tables, their ASCII part alone under u,
-        // where two characters share a lead byte. A branch behind a
-        // lookahead is judged by PCRE alone: the bytes would take the
-        // characters the lookahead refuses.
+        // where two characters share a lead byte. Without u the bytes stand
+        // for a set the ASCII read leaves unknown as well: an escape past
+        // ASCII, "\xE9", is the byte it names, as the same byte written as
+        // it is. A branch behind a lookahead is judged by PCRE alone: the
+        // bytes would take the characters the lookahead refuses.
         $sets = match (true) {
-            $anyUnknown, $guarded => $this->setsFromPcre($node, $starts, $context),
-            $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? ($context->pattern->unicodeMode ? array_map(self::alphabetSet(...), array_map(self::asciiPart(...), $charSets)) : self::everyByte($node, $charSets, $context)),
+            $guarded, $anyUnknown && $context->pattern->unicodeMode => $this->setsFromPcre($node, $starts, $context),
+            $anyUnknown, $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? ($context->pattern->unicodeMode ? array_map(self::alphabetSet(...), array_map(self::asciiPart(...), $charSets)) : self::everyByte($node, $charSets, $context)),
             default => array_map(self::alphabetSet(...), $charSets),
         };
         if (null === $sets) {
@@ -932,16 +934,17 @@ final class OverlappingAlternationRule extends AbstractLintRule
     /**
      * The bytes each branch starts with, read above ASCII under the
      * target's tables, for an alternation without u whose branches PCRE
-     * does not judge. A byte is a character there, and the complement of a
-     * class takes the bytes above ASCII it does not hold, which the ASCII
-     * read leaves out: "[^é]" takes 0x90. What the target's tables decide
-     * is read from them, another locale's included: the bytes of "\d",
-     * "\s" and "\w", and the other case of a character, a byte's read
-     * caselessly included. Where they cannot tell, the ASCII read of the
-     * branch stands: an overlap there goes unreported rather than one PCRE
-     * would not see. A branch known neither way, a byte read caselessly
-     * whose case the engine's paths read otherwise, leaves the alternation
-     * unjudged.
+     * does not judge. A byte is a character there, written as it is or as
+     * an escape, and the complement of a class takes the bytes above ASCII
+     * it does not hold, which the ASCII read leaves out: "[^é]" takes 0x90.
+     * What the target's tables decide is read from them, another locale's
+     * included: the bytes of "\d", "\s", "\w" and the POSIX classes, and
+     * the other case of a character, a byte's read caselessly included.
+     * Where they cannot tell, the ASCII read of the branch stands: an
+     * overlap there goes unreported rather than one PCRE would not see. A
+     * branch known neither way, a byte read caselessly whose case the
+     * engine's paths read otherwise, or an item the sets do not read, a
+     * back-reference, leaves the alternation unjudged.
      *
      * @param list<ByteCharSet> $ascii the sets of the ASCII read, branch by branch
      *
