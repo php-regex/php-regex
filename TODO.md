@@ -11,9 +11,19 @@
   byte above ASCII through PCRE's own tables: under fr_FR.ISO8859-1,
   `"/(?:\xC9|\xE9|)+/i"` goes unreported, though `/\xC9/i` matches `\xE9`
   there.
-- Under `(*NOTEMPTY)`, the search cost is not proven: a pattern whose
-  search grows with the square of the subject, such as `(?:a+\d)?`, gets
-  no search-cost finding behind it, though each attempt is judged right.
+- Decide how to report the search of `preg_match_all()`, `preg_replace()`
+  and `preg_split()`: after an empty match PHP tries again at the same
+  offset with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match
+  empty searches in the square of the subject there while `preg_match()`
+  stays linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8
+  and 26 ms through `preg_match_all()`, under 0.1 ms through
+  `preg_match()` (PHP 8.4.28, PCRE2 10.49). A finding of its own, or a
+  flag on the search cost the caller reads.
+- `\K` at the end of a match under `(*NOTEMPTY)` is not read: the match it
+  leaves empty is refused, so `/(*NOTEMPTY)a+\K/` gives back every `a+` at
+  every offset, 29, 115 and 458 ms on 2,000, 4,000 and 8,000 `a`s with the
+  JIT off, and gets no search-cost finding. The JIT, which ignores
+  `(*NOTEMPTY)` (see Engine reports), answers at once there.
 
 ## Playground
 
