@@ -61,12 +61,12 @@ final class AnalysisBench
     }
 
     #[DataProvider('redosCases')]
-    #[ExpectedFor('bounded-alternation-200', instructions: '156.8M', cycles: '210.7M', memory: '748.8KiB')]
-    #[ExpectedFor('email-exponential', instructions: '13.85M', cycles: '20.54M', memory: '117.3KiB')]
-    #[ExpectedFor('nested-bounded-repeats', instructions: '38.39M', cycles: '49.12M', memory: '527.5KiB')]
-    #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.29M', cycles: '50.71M', memory: '532.0KiB')]
-    #[ExpectedFor('nested-plus', instructions: '2.020M', cycles: '4.342M', memory: '44.16KiB')]
-    #[ExpectedFor('same-alternation-star', instructions: '2.307M', cycles: '4.615M', memory: '46.16KiB')]
+    #[ExpectedFor('bounded-alternation-200', instructions: '159.3M', cycles: '214.3M', memory: '749.3KiB')]
+    #[ExpectedFor('email-exponential', instructions: '14.08M', cycles: '20.92M', memory: '117.4KiB')]
+    #[ExpectedFor('nested-bounded-repeats', instructions: '38.86M', cycles: '50.11M', memory: '528.0KiB')]
+    #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.87M', cycles: '52.56M', memory: '532.5KiB')]
+    #[ExpectedFor('nested-plus', instructions: '2.050M', cycles: '4.436M', memory: '44.26KiB')]
+    #[ExpectedFor('same-alternation-star', instructions: '2.348M', cycles: '4.724M', memory: '46.65KiB')]
     #[ExpectedFor('unicode-scripts', instructions: '723.1M', cycles: '778.6M', memory: '6.422MiB')]
     public function benchRedos(string $group, string $pattern, string $expected): void
     {

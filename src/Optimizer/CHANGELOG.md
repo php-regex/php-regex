@@ -32,6 +32,16 @@ CHANGELOG
    and `\Z` read as the newline they may stand before, so `/^(\d+\s*)$/`
    still becomes `/^(\d++\s*)$/`, and `/[0-9]+\s*$/` now becomes
    `/\d++\s*$/`.
+ * The possessive rewrite reads what follows a group at every place it
+   runs: where it stands, and after each call that runs it, `(?1)`,
+   `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)`, `\g<n>`, or `(?R)` for the whole
+   pattern, which gives back to what follows the call.
+   `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is no longer offered `a++b?`, which the
+   check of the result refused before the rewrite was made a second time
+   without the possessive step. A group in a DEFINE runs only where it is
+   called: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
+   `/(?(DEFINE)(?<n>a++b?))a/`. A group called inside a script run stays
+   greedy, as the check of the run reads what the call matched.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a
