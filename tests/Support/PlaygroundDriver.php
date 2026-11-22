@@ -29,11 +29,11 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type Delimited array{delimiter: string, flags: string, bodyStart: int, bodyEnd: int}
  * @phpstan-type Node array{type: string, start: int, end: int}
  * @phpstan-type Capture array{string, int, int}
- * @phpstan-type Matches array{count: int, error: string, shown: int, cap: int, names: array<string, string>, sets: list<array<int, Capture>>}
+ * @phpstan-type Matches array{count: int, error: string, shown: int, cap: int, names: array<int, string>, sets: list<array<int, Capture>>, marks: list<?string>}
  * @phpstan-type Fault array{source: string, class: ?string, message: string, position: ?int, code: ?string, hint: ?string}
  * @phpstan-type Finding array{id: string, message: string, offset: ?int, end: ?int, severity: string, hint: ?string}
  * @phpstan-type Token list{int, int, string}
- * @phpstan-type Analysis array{protocol: int, notices: list<string>, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, tokens: list<Token>|null, groupNames: array<string, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
+ * @phpstan-type Analysis array{protocol: int, notices: list<string>, engine: Engine, library: array{version: string, jsonDumper: int}, target: Target, input: Input, delimited: Delimited|null, unitOf: list<int>, ast: array<string, mixed>|null, tokens: list<Token>|null, groupNames: array<int, string>, explain: ?string, errors: list<Fault>, engineError: ?string, matches: Matches|null, timing: array{analyzeMs: float, matchMs: float|null}}
  * @phpstan-type Match array{protocol: int, notices: list<string>, engine: Engine, input: Input, engineError: ?string, matches: Matches|null, timing: array{matchMs: float}}
  * @phpstan-type Lint array{protocol: int, notices: list<string>, lint: list<Finding>|null, timing: array{lintMs: float}}
  * @phpstan-type Description array{protocol: int, notices: list<string>, index: int, start: ?int, end: ?int, text: ?string}
@@ -45,7 +45,7 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type TranspileDocument array{target: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: list<string>, notes: list<string>}
  * @phpstan-type Transpile array{protocol: int, notices: list<string>, transpile: TranspileDocument|null, refusal: array{message: string}|null, error: Fault|null, timing: array{transpileMs: float}}
  * @phpstan-type Samples array{protocol: int, notices: list<string>, samples: array{matching: list<string>, nonMatching: list<string>, seed: int, dropped: int}|null, error: Fault|null, timing: array{samplesMs: float}}
- * @phpstan-type Check array{matched: ?int, error: ?string, groups: array<string, array{string, int}|null>|null}
+ * @phpstan-type Check array{matched: ?int, error: ?string, groups: array<int|string, array{string, int}|null>|null}
  * @phpstan-type Checks array{protocol: int, notices: list<string>, engine: Engine, checks: list<Check>, timing: array{checkMs: float}}
  * @phpstan-type Export array{protocol: int, notices: list<string>, export: array{method: string, class: string, assertions: int, linear: bool, refused: int}|null, error: Fault|null, timing: array{exportMs: float}}
  */

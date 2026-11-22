@@ -1201,11 +1201,14 @@
     clear(el.subjectMatches);
     if (done) {
       var names = Object.assign({}, matches.names || {}, payload.groupNames || {});
+      // The mark each match left, or null, beside the sets: a mark is no
+      // group, so no set holds it.
+      var verbMarks = matches.marks || [];
       matches.sets.forEach(function (set, i) {
         var whole = set['0'];
         if (whole) {
           ranges.push({ start: whole[2], end: whole[2] + whole[0].length, className: 'pg-mark-match' + (i % 2 ? ' is-alt' : ''), index: i });
-          el.subjectMatches.appendChild(matchItem(set, i, subject, names));
+          el.subjectMatches.appendChild(matchItem(set, i, subject, names, verbMarks[i]));
         }
       });
     }
@@ -1256,11 +1259,12 @@
 
   // One match: its number, its text, where it starts and ends in the field,
   // then one row per group that took part — the group by its name and its
-  // number (or its number alone), what it caught, where. Positions count
-  // characters: the driver's offsets are UTF-16 units, the marks' measure,
-  // and a reader counts an emoji as one. Pointing at a match lights its
-  // mark in the field.
-  function matchItem(set, i, subject, names) {
+  // number (or its number alone), what it caught, where — and the mark the
+  // match left, the name of a (*MARK:z) it passed, on a line of its own.
+  // Positions count characters: the driver's offsets are UTF-16 units, the
+  // marks' measure, and a reader counts an emoji as one. Pointing at a
+  // match lights its mark in the field.
+  function matchItem(set, i, subject, names, mark) {
     var whole = set['0'];
     var item = text('li', 'pg-match');
     var head = text('div', 'pg-match-head');
@@ -1283,6 +1287,11 @@
         list.appendChild(text('dd', 'pg-group-at pg-match-at', 'at ' + Array.from(subject.slice(0, capture[2])).length));
       });
       item.appendChild(list);
+    }
+    if (typeof mark === 'string') {
+      var verb = text('p', 'pg-match-verb', 'mark: ');
+      verb.appendChild(text('code', null, mark));
+      item.appendChild(verb);
     }
     item.addEventListener('mouseenter', function () {
       lightMatch(i, true);

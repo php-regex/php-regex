@@ -74,9 +74,14 @@ use PHPRegex\Redos\RedosSearchCost;
  * "(*NO_START_OPT)" from tying it to line starts. Under "(*NOTEMPTY)" no
  * attempt succeeds before it reads a character, so one that the empty
  * string would end reads on, as "(?:a+\d)?" does; under
- * "(*NOTEMPTY_ATSTART)" only the attempt at the search start is held so. A
- * possessive or atomic repeat of any character moves to the end of the
- * subject in one step: no run is read through it.
+ * "(*NOTEMPTY_ATSTART)" only the attempt at the search start is held so.
+ * "\K" sets the start of the match it reports where it stands, so under
+ * "(*NOTEMPTY)" no attempt succeeds right after it either, before it reads
+ * a character more: "a+\K" gives back every "a+". Under
+ * "(*NOTEMPTY_ATSTART)" a "\K" past the search start moves the empty match
+ * past it, and the attempt succeeds. A possessive or atomic repeat of any
+ * character moves to the end of the subject in one step: no run is read
+ * through it.
  *
  * The model reads a bounded repeat above the unrolling cutoff as unbounded:
  * no run is read through it, the engine's attempts there stop at the bound.
@@ -212,7 +217,9 @@ final class SearchCostProver
         };
 
         try {
-            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
+            // Under "(*NOTEMPTY)" a success right after "\K" is refused too:
+            // the search is read on the automaton without them.
+            $found = $this->witness($automaton->refusingKept(), $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
         } catch (ModelLimitException) {
             return null;
         }

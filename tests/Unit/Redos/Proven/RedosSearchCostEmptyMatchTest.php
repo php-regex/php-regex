@@ -20,6 +20,7 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,6 +39,13 @@ use PHPUnit\Framework\TestCase;
  * the empty match holds at the subject's start alone, as in "(?:^|a+b)". A
  * pattern that cannot match empty runs the same way under both.
  *
+ * A match is empty where it ends where it starts, and "\K" sets its start
+ * where it stands (pcre2api, PCRE2_NOTEMPTY): under (*NOTEMPTY), a match
+ * that reads "a+" and then "\K" is refused too, so "a+\K" gives back every
+ * "a+" at every position. Under (*NOTEMPTY_ATSTART), the start "\K" sets
+ * past the search start is not the search start: the attempt there
+ * matches.
+ *
  * The JIT ignores both options: every engine fact is read in the
  * interpreter, "(*NO_JIT)". PHP 8.4.28, PCRE2 10.49, on the run repeated
  * 1 000 times then "!": the attempt pinned 1 000 / 750 / 500 / 250 run
@@ -45,10 +53,13 @@ use PHPUnit\Framework\TestCase;
  * "(*NOTEMPTY)(?:a+\d)?" (auto-possession off, PcreAttemptSteps), and the
  * search takes 4.2 then 16.4 ms on 4 000 then 8 000 run words, where the
  * bare pattern matches "" at 0. "(*NOTEMPTY_ATSTART)(?:a+\d)?" matches ""
- * at 1 in no time.
+ * at 1 in no time. "(*NOTEMPTY)a+\K" takes 29, 115 then 458 ms on 2 000,
+ * 4 000 then 8 000 "a", where "a+\K" matches "" at the run's end at once.
  */
 final class RedosSearchCostEmptyMatchTest extends TestCase
 {
+    use PcreGates;
+
     private const QUARTER = 250;
 
     /**
@@ -62,6 +73,8 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
     #[DataProvider('provideSearchesRefusingTheEmptyMatch')]
     public function test_search_cost_is_reported_when_the_attempts_refuse_an_empty_match(string $pattern, string $prefix, string $run, string $breaker, bool $exact): void
     {
+        // PHP 8.5 refuses "\K" in a lookaround.
+        $this->requiresCompile($pattern);
         $interpreted = PcreInterpreter::pattern($pattern);
         foreach ([1, 2, 3, 100] as $words) {
             $subject = $prefix.str_repeat($run, $words).$breaker;
@@ -123,6 +136,18 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         // character it fails on.
         yield 'optional trim regex' => ['pattern' => '/(*NOTEMPTY)(?:^\s+|\s+$)?/', 'prefix' => '!', 'run' => ' ', 'breaker' => '!', 'exact' => true];
         yield 'lookahead in an optional group' => ['pattern' => '/(*NOTEMPTY)(?:[a-z]+(?=\d))?/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => false];
+        // "\K" with nothing read after it leaves the match empty: the bare
+        // pattern matches "" at the run's end.
+        yield '\K at the end' => ['pattern' => '/(*NOTEMPTY)a+\K/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K before an optional item' => ['pattern' => '/(*NOTEMPTY)a+\Kb?/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K before a word boundary' => ['pattern' => '/(*NOTEMPTY)\w+\K\b/', 'prefix' => '', 'run' => '0', 'breaker' => '!', 'exact' => true];
+        yield '\K in a capturing group' => ['pattern' => '/(*NOTEMPTY)(a+\K)/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K in an optional group' => ['pattern' => '/(*NOTEMPTY)(?:a+\K)?/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K in a loop' => ['pattern' => '/(*NOTEMPTY)(?:a\K)+/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K in the first branch' => ['pattern' => '/(*NOTEMPTY)a+\K|b/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => true];
+        yield '\K under u' => ['pattern' => '/(*NOTEMPTY)é+\K/u', 'prefix' => '', 'run' => 'é', 'breaker' => '!', 'exact' => true];
+        // "\K" in a lookahead sets the start where the lookahead stands.
+        yield '\K in a lookahead' => ['pattern' => '/(*NOTEMPTY)a+(?=\K)/', 'prefix' => '', 'run' => 'a', 'breaker' => '!', 'exact' => false];
     }
 
     /**
@@ -153,6 +178,43 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         yield 'empty branch, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?:|a+\d)/', 'run' => 'a', 'breaker' => '!'];
         yield 'star loop' => ['pattern' => '/(*NOTEMPTY)a*/', 'run' => 'a', 'breaker' => '!'];
         yield 'optional group with a one-character branch' => ['pattern' => '/(*NOTEMPTY)(?:a+\d|a)?/', 'run' => 'a', 'breaker' => '!'];
+    }
+
+    /**
+     * The attempt at the search start matches past "\K", so the search ends
+     * there, though the match it reports may stand at the run's end: "\K"
+     * leaves it empty past the search start, which (*NOTEMPTY_ATSTART) and
+     * a pattern without the options accept, or the match reads a character
+     * after the last "\K" it passed. Nothing is reported.
+     */
+    #[Test]
+    #[DataProvider('provideSearchesMatchingPastKeepAtOnce')]
+    public function test_search_cost_is_not_reported_when_the_first_attempt_matches_past_keep(string $pattern, string $run, string $breaker): void
+    {
+        $first = PcreInterpreter::pattern($pattern).'A';
+        foreach ([1, 2, 3, 100] as $words) {
+            $this->assertSame(1, preg_match($first, str_repeat($run, $words).$breaker), \sprintf('Oracle: the attempt of %s at the search start fails on %d run words.', $pattern, $words));
+        }
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
+        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, run: string, breaker: string}>
+     */
+    public static function provideSearchesMatchingPastKeepAtOnce(): iterable
+    {
+        yield '\K at the end, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)a+\K/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K before an optional item, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)a+\Kb?/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K at the end, no option' => ['pattern' => '/a+\K/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K before the run' => ['pattern' => '/(*NOTEMPTY)\Ka+/', 'run' => 'a', 'breaker' => '!'];
+        // The second branch matches the character the first one read last.
+        yield '\K in one branch, a character in the other' => ['pattern' => '/(*NOTEMPTY)a+\K|a/', 'run' => 'a', 'breaker' => '!'];
+        // The last iteration takes the empty branch: the "\K" of the one
+        // before stands before the last character.
+        yield '\K or nothing after each character' => ['pattern' => '/(*NOTEMPTY)(?:a(?:\K|))+/', 'run' => 'a', 'breaker' => '!'];
     }
 
     /**

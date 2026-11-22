@@ -126,9 +126,8 @@ final class RedosAnalyzer
                 // The sets hold the bytes above ASCII the pattern writes and
                 // those a complement takes. Another locale's tables than
                 // PCRE2's own may put any byte in a type or a case: the sets
-                // read the cases from them, and leave the types unknown.
-                // Without a proof, a loop whose branches start alike is put
-                // to the proof alone.
+                // read both from them. Without a proof, a loop whose branches
+                // start alike is put to the proof alone.
                 $profiler = new RedosProfiler(
                     CharSetAnalyzer::forRegex($ast, true, $parser->target()->locale),
                     null === $proof ? $this->provenLinearAlone($ast, $parser) : null,

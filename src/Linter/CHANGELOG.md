@@ -46,17 +46,39 @@ CHANGELOG
    above all, `regex.lint.overlap.charset` reads the bytes above ASCII a
    negated class takes: `"/(?:[^a]|\xC3|)+/"` with a raw `\xC3` is
    reported, and so is `"/(?:\\W|\xE9|)+/"` under C, where `\W` takes
-   every byte above ASCII; neither was. What another locale's tables
-   decide of `\w` is still read in ASCII: `"/(?:\\W|\xE9|)+/"` is not
+   every byte above ASCII; neither was. `"/(?:\\W|\xE9|)+/"` is not
    reported under fr_FR.ISO8859-1, where `\xE9` is a letter. A case is
-   read from those tables: `"/(?:(?i:[^a])|\xC3|)+/"` is reported there,
-   as under C, which it was not.
+   read from that locale's tables: `"/(?:(?i:[^a])|\xC3|)+/"` is
+   reported there, as under C, which it was not.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads the bytes of `\d`, `\s` and `\w`
+   from the tables of the target's locale, where it read them in ASCII:
+   `"/(?:\\w|\xE9|)+/"` and `"/(?:\\W|\xD7|)+/"`, with raw bytes, are
+   reported under fr_FR.ISO8859-1, where the Latin-1 tables put `\xE9` in
+   `\w` and leave `\xD7` out; neither was.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads the other case of a byte above ASCII
+   read caselessly from the tables of the target's locale, where it left
+   the branches unjudged: `"/(?:\xC9|\xE9|)+/i"`, with raw bytes, is
+   reported under fr_FR.ISO8859-1, where the Latin-1 tables pair `\xE9`
+   with `\xC9`, and so is `"/(?:\xC9|[\xC9\xCA]|)+/i"` under C, whose
+   branches both take `\xC9`; neither was. A byte whose case the engine's
+   paths read otherwise still leaves the branches unjudged.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
    longer called useless, which dropping it would have changed. A byte
    whose case the engine's paths or releases read otherwise keeps the
    flag too. Under C, only ASCII letters have a case without u, as before.
+ * Under u, `regex.lint.flag.useless.i` reads every character of a range,
+   where it read its two ends: `/[×-÷]/iu`, which holds `Ø` to `ö` and
+   matches `ø` only with i, is no longer reported, nor is
+   `/[\x{2000}-\x{2BFF}]/iu`, which holds the Roman numerals and the
+   circled letters. A character has a case where PCRE2's tables of the
+   target's release give it another, as well as where mbstring does:
+   `/\x{A7CE}/iu`, which PCRE2 10.48 pairs with `\x{A7CF}` and the
+   mbstring of PHP 8.4 does not, keeps its flag. A wide range is read from
+   those tables at once, so `/[\x{4E00}-\x{9FFF}]/iu` is still reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

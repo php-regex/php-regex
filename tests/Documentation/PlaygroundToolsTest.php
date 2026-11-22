@@ -529,6 +529,36 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertStringStartsWith('Compilation failed', (string) $broken['checks'][0]['error']);
     }
 
+    /**
+     * The mark a match leaves is a string under "MARK", no group: the check
+     * leaves it out of the groups rather than answer a group that did not
+     * take part. Beside a group named MARK, PHP 8.5 writes the group's pair
+     * under the name too, and the check keeps that pair.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_check_leaves_the_mark_out_of_the_groups(string $driver, string $root): void
+    {
+        $this->assertSame(1, preg_match('/(a)(*MARK:z)b/', 'ab', $engine, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL));
+        $this->assertSame([0 => ['ab', 0], 1 => ['a', 0], 'MARK' => 'z'], $engine);
+
+        $payload = self::check($driver, $root.'/does-not-exist', '/(a)(*MARK:z)b/', ['ab']);
+        $this->assertSame([], $payload['notices'], 'A mark is no pair, and PHP 8.5 warns on reading one as a pair.');
+        $this->assertSame(['matched' => 1, 'error' => null, 'groups' => ['0' => ['ab', 0], '1' => ['a', 0]]], $payload['checks'][0]);
+
+        $this->assertSame(1, preg_match('/(?<MARK>a)(*MARK:z)b/', 'ab', $named, \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL));
+        $this->assertSame('z', $named['MARK']);
+        $this->assertSame(['a', 0], $named[1]);
+
+        $beside = self::check($driver, $root.'/does-not-exist', '/(?<MARK>a)(*MARK:z)b/', ['ab']);
+        $this->assertSame([], $beside['notices']);
+        $groups = $beside['checks'][0]['groups'];
+        $this->assertIsArray($groups);
+        $this->assertSame(['a', 0], $groups['1']);
+        $this->assertSame([], array_diff_key($groups, ['0' => true, '1' => true, 'MARK' => true]));
+        $this->assertContains(array_intersect_key($groups, ['MARK' => true]), [[], ['MARK' => ['a', 0]]], 'Under the name, nothing, or the group\'s own pair.');
+    }
+
     // --- export --------------------------------------------------------------
 
     #[Test]

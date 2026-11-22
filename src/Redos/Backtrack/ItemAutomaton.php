@@ -56,6 +56,8 @@ final class ItemAutomaton
 
     public const EDGE_LOOKAROUND = 4;
 
+    public const EDGE_KEEP = 8;
+
     /**
      * @var list<int> the item's state in the pNFA
      */
@@ -97,7 +99,8 @@ final class ItemAutomaton
      * What the epsilon path to each successor went through, one entry per
      * successor: EDGE_LOOP when it went back into a loop of the pattern,
      * EDGE_ABSTRACTED back into a loop the model abstracted (a bounded repeat
-     * read as unbounded), EDGE_LOOKAROUND past a lookaround.
+     * read as unbounded), EDGE_LOOKAROUND past a lookaround, EDGE_KEEP past
+     * "\K".
      *
      * @var array<int, list<int>>
      */
@@ -161,12 +164,17 @@ final class ItemAutomaton
      * @param list<int> $startContexts the contexts the search's attempts start in
      * @param list<int> $held          the sub-searches whose lookaround is taken
      *                                 to hold: a success after one is counted
+     * @param bool      $refusesKept   whether a success right after "\K", with
+     *                                 nothing read after it, is left out: the
+     *                                 match it reports is empty, which
+     *                                 "(*NOTEMPTY)" refuses
      */
     public function __construct(
         public readonly Pnfa $pnfa,
         private readonly Budget $budget,
         array $startContexts,
         private readonly array $held = [],
+        private readonly bool $refusesKept = false,
     ) {
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
@@ -188,6 +196,18 @@ final class ItemAutomaton
         }
 
         $this->partition();
+    }
+
+    /**
+     * The automaton of the same search without the successes right after
+     * "\K", which "(*NOTEMPTY)" refuses; this one when the search holds no
+     * "\K" under that option.
+     *
+     * @throws ModelLimitException
+     */
+    public function refusingKept(): self
+    {
+        return $this->pnfa->holdsKeep ? new self($this->pnfa, $this->budget, array_column($this->initials, 'context'), $this->held, true) : $this;
     }
 
     /**
@@ -678,7 +698,18 @@ final class ItemAutomaton
 
                     break;
 
+                case Pnfa::KEEP:
+                    $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge | self::EDGE_KEEP];
+
+                    break;
+
                 default:
+                    // Right after "\K" the match is empty: under "(*NOTEMPTY)"
+                    // the engine refuses that success and backtracks.
+                    if ($this->refusesKept && 0 !== ($edge & self::EDGE_KEEP)) {
+                        break;
+                    }
+
                     $item = $this->item($current, null, $peek, $end, false, self::CONTEXT_OTHER, $undecided);
                     $seen[$item] = ($seen[$item] ?? 0) + 1;
                     if ($seen[$item] <= 2) {
