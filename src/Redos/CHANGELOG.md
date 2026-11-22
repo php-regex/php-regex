@@ -26,9 +26,24 @@ CHANGELOG
    `(?:a|a)+` before they fail, are exponential, no longer safe (proven):
    PHP exhausts its backtrack limit on 2,000 `a` in the interpreter, where
    `/^(?:a|a)+\K/` matches the empty string at once. When the attempt
-   succeeds only once the loop gives a character back to read after `\K`,
-   as `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, no verdict is proven, as for
-   `/^(?:a|a)+./`.
+   succeeds once the loop gives a character back to read after `\K`, as
+   `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, it is safe (proven), as
+   `/^(?:a|a)+./` is.
+ * A loop read in two ways that no suffix makes fail is proven linear. In
+   `/^(?:a|a)+./` the dot reads whatever character the loop can go on with,
+   once the loop gives it back: the engine abandons no run inside the loop
+   longer than a character, and the attempt takes the steps `/^(?:a|b)+./`
+   takes, 35 then 67 on 16 then 32 `a` and a `!` in the interpreter.
+   `/^(?:a|aa)+./`, `/^(?:a|a)*./`, `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
+   `/(*NOTEMPTY)^(?:a\K|a)+/`, critical by the heuristics, are safe
+   (proven). `/^(?:a|a)+$/` and `/^(?:a|a)+.$/`, which a suffix makes fail
+   after every way out of the loop, stay exponential, and
+   `/^(?:a|a|ab)+(?:[ab]*c|a)/`, which reads `[ab]*` again from each
+   position of the loop before it fails, quadratic, is not proven linear.
+   The run abandoned inside the loop is held to the margin of an acyclic
+   stretch, 1,024 ways: `/^(?:a|a)+.{20}/`, whose dots succeed only twenty
+   characters back, is not proven either (PHP exhausts its backtrack limit
+   on 60 `a` and a newline).
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of

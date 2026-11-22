@@ -50,9 +50,28 @@ final class AmbiguityFinder
 
     /**
      * The most ways an acyclic stretch may read one input: a margin under
-     * the default backtrack limit of 1,000,000.
+     * the default backtrack limit of 1,000,000. A run abandoned inside a
+     * loop is held to it too.
      */
     private const MAX_ACYCLIC_AMBIGUITY = 1024;
+
+    /**
+     * The most sets of items read to bound the runs abandoned inside one
+     * loop: the reading stays cheap, and past it no bound is proven.
+     */
+    private const MAX_ABANDONED_RUN_SETS = 64;
+
+    /**
+     * @var array<int, bool> whether every run abandoned inside a strongly
+     *                       connected component is short, by its first item
+     */
+    private array $boundedRuns = [];
+
+    /**
+     * @var array<int, true> the items of the components whose abandoned runs
+     *                       are short
+     */
+    private array $shortRuns = [];
 
     /**
      * @var array<int, int> the cyclic component of each reading item in one
@@ -277,7 +296,9 @@ final class AmbiguityFinder
 
                 $witness = $this->witness($state, $this->pumps($labels));
                 if (null === $witness) {
-                    $unwitnessed ??= $state;
+                    if (!$this->abandonsShortRuns($state)) {
+                        $unwitnessed ??= $state;
+                    }
 
                     continue;
                 }
@@ -616,14 +637,167 @@ final class AmbiguityFinder
 
     /**
      * Whether no witness can exist for an ambiguity of the item: after it
-     * reads, every continuation is accepted.
+     * reads, every continuation is accepted, or every run abandoned inside
+     * its loop is bounded (abandonsShortRuns()).
      */
     private function disproved(int $state): bool
     {
+        if (isset($this->shortRuns[$state])) {
+            return true;
+        }
+
         $after = array_fill_keys($this->automaton->successors[$state], true);
         ksort($after);
 
         return null === $this->rejectingSuffix($after);
+    }
+
+    /**
+     * Whether every run the engine tries and abandons inside the loop of the
+     * item is short: whatever character the loop goes on with, a success is
+     * sure a few characters later. "^(?:a|a)+." is such a loop: once it can
+     * read an "a", the dot can too.
+     *
+     * The engine never backtracks out of a node that holds a success: it
+     * returns from inside it. A run it abandons holds none, so its paths
+     * stand, after each character, at a set of items some continuation
+     * rejects (rejectingSuffix()). Those sets are read from what follows
+     * each item of the loop, on every class, as long as one of their items
+     * is in the loop: when no cycle of them exists, an abandoned run reads a
+     * bounded number of characters inside the loop, and the paths through
+     * the loop's items over that many characters bound the ways it reads
+     * them. Held to the margin an acyclic stretch has, they cost a bounded
+     * number of steps per character, however many ways the loop has around
+     * it. A run abandoned past the loop is read by the links out of it.
+     *
+     * The model must count no success the engine may refuse: a search with
+     * a lookaround or inside one, an atomic body kept with every way through
+     * it, a bounded repeat read as unbounded, or a "$" read with the final
+     * newline is not read.
+     *
+     * @throws ModelLimitException
+     */
+    private function abandonsShortRuns(int $item): bool
+    {
+        $pnfa = $this->automaton->pnfa;
+        if (null !== $pnfa->parent || [] !== $pnfa->marks || [] !== $pnfa->approximated || [] !== $pnfa->abstractedLoops || $pnfa->readsFinalNewline) {
+            return false;
+        }
+
+        $members = [$item];
+        foreach ($this->fullComponents ?? [] as $component) {
+            if (\in_array($item, $component, true)) {
+                $members = $component;
+
+                break;
+            }
+        }
+
+        $first = min([$item, ...$members]);
+        if (!isset($this->boundedRuns[$first])) {
+            $this->boundedRuns[$first] = $this->runsShortInside($members);
+            if ($this->boundedRuns[$first]) {
+                $this->shortRuns += array_fill_keys($members, true);
+            }
+        }
+
+        return $this->boundedRuns[$first];
+    }
+
+    /**
+     * Whether every run abandoned after an item of the strongly connected
+     * component reads it on a bounded stretch, in no more ways than an
+     * acyclic stretch may.
+     *
+     * @param list<int> $members
+     *
+     * @throws ModelLimitException
+     */
+    private function runsShortInside(array $members): bool
+    {
+        $inside = array_fill_keys($members, true);
+        $heights = [];
+        foreach ($members as $member) {
+            $after = array_fill_keys($this->automaton->successors[$member], true);
+            ksort($after);
+            $height = $this->runInside($after, $inside, $heights);
+            if (null === $height || $this->waysInside($member, $inside, $height) > self::MAX_ACYCLIC_AMBIGUITY) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The most characters a run some continuation rejects reads inside the
+     * loop after the set, -1 when it is not such a run; null when a cycle of
+     * such sets keeps it inside, or when more sets than the reading allows
+     * would tell. Depth first, each set met kept with its answer, null while
+     * it is on the way to the current one.
+     *
+     * @param array<int, true>        $items
+     * @param array<int, true>        $inside  the items of the loop
+     * @param array<string, int|null> $heights
+     *
+     * @throws ModelLimitException
+     */
+    private function runInside(array $items, array $inside, array &$heights): ?int
+    {
+        $key = self::key($items);
+        if (\array_key_exists($key, $heights)) {
+            return $heights[$key];
+        }
+
+        if (\count($heights) >= self::MAX_ABANDONED_RUN_SETS) {
+            return null;
+        }
+
+        if ([] === array_intersect_key($items, $inside) || null === $this->rejectingSuffix($items)) {
+            return $heights[$key] = -1;
+        }
+
+        $heights[$key] = null;
+        $height = 0;
+        for ($class = 0; $class < $this->automaton->classCount(); $class++) {
+            $next = $this->automaton->stepSet($items, $class);
+            $below = null === $next ? -1 : $this->runInside($next, $inside, $heights);
+            if (null === $below) {
+                return null;
+            }
+
+            $height = max($height, $below + 1);
+        }
+
+        return $heights[$key] = $height;
+    }
+
+    /**
+     * The paths through the items of the loop from what follows the item,
+     * over at most that many characters: the ways a run abandoned there
+     * reads them, at most.
+     *
+     * @param array<int, true> $inside the items of the loop
+     */
+    private function waysInside(int $item, array $inside, int $characters): int
+    {
+        $paths = [$item => 1];
+        $ways = 0;
+        for ($read = 0; $read <= $characters; $read++) {
+            $next = [];
+            foreach ($paths as $from => $count) {
+                foreach ($this->automaton->successors[$from] as $successor) {
+                    if (isset($inside[$successor])) {
+                        $next[$successor] = ($next[$successor] ?? 0) + $count;
+                    }
+                }
+            }
+
+            $paths = $next;
+            $ways += array_sum($paths);
+        }
+
+        return $ways;
     }
 
     /**
@@ -870,6 +1044,10 @@ final class AmbiguityFinder
                 if (null !== $witness) {
                     $best = $this->verdict(RedosComplexity::Polynomial, $witnessed, $witness, $inexact);
                     $bestDegree = $witnessed;
+                } elseif ($this->abandonsShortRuns($end)) {
+                    // The runs tried and abandoned in the second loop are
+                    // bounded: the link costs nothing.
+                    continue;
                 }
 
                 if ($witnessed < $degree && (null === $unwitnessed || $degree > $unwitnessed[0])) {
