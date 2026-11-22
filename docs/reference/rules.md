@@ -125,7 +125,7 @@ preg_match('/search_term/', $text);
 
 **Identifier:** `regex.lint.flag.useless.i`
 
-**When it triggers:** The pattern sets the `i` (case-insensitive) modifier but contains no case-sensitive characters.
+**When it triggers:** The pattern sets the `i` (case-insensitive) modifier but contains no case-sensitive characters. Without `u`, a byte above ASCII has a case only under another locale's tables, the target's `locale`: under `fr_FR.ISO8859-1`, `"/\xE9/i"` matches `\xC9`, so its `i` is kept.
 
 **Message:** `Flag 'i' is useless: the pattern contains no case-sensitive characters.`
 

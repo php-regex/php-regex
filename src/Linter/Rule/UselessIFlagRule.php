@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
@@ -26,6 +27,7 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no case-sensitive
@@ -47,6 +49,13 @@ final class UselessIFlagRule extends AbstractLintRule
     private bool $trackCaseSensitivity = false;
 
     private bool $unicodeMode = false;
+
+    /**
+     * Under another locale's tables than PCRE2's own, those tables, which
+     * give the other case of each byte, "\xE9" and "\xC9" under Latin-1's:
+     * null under PCRE2's own.
+     */
+    private ?CharacterTables $tables = null;
 
     public function getRuleIds(): array
     {
@@ -70,6 +79,8 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->hasBackreferences = false;
         $this->trackCaseSensitivity = $context->pattern->hasFlag('i');
         $this->unicodeMode = $context->pattern->unicodeMode;
+        // The target read the tables of its locale when it was made.
+        $this->tables = CharacterTables::BUILT_IN === $context->target->locale ? null : CharacterTables::forLocale($context->target->locale);
     }
 
     public function check(NodeInterface $node, LintContext $context): array
@@ -182,6 +193,14 @@ final class UselessIFlagRule extends AbstractLintRule
             return true;
         }
 
+        // Another locale's tables may give a byte of the range a case, or
+        // under UTF an ASCII character.
+        for ($codePoint = $min; $codePoint <= $max && $this->tablesDecide($codePoint); $codePoint++) {
+            if ($this->codePointHasCase($codePoint)) {
+                return true;
+            }
+        }
+
         if (!$this->unicodeMode) {
             return false;
         }
@@ -214,6 +233,15 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         if (!$this->unicodeMode) {
+            // Another locale's tables may give a byte above ASCII a case.
+            if (null !== $this->tables) {
+                foreach (Bytes::split($value) as $byte) {
+                    if ($this->codePointHasCase(\ord($byte))) {
+                        return true;
+                    }
+                }
+            }
+
             return false;
         }
 
@@ -256,6 +284,12 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
+        // A character they decide has a case where they pair it with
+        // another, or where the engine's paths or releases read it otherwise.
+        if ($this->tablesDecide($codePoint)) {
+            return $codePoint !== $this->tables->settledOtherCase($codePoint);
+        }
+
         // Without UTF mode PCRE folds the case of ASCII letters only; with
         // it, of every character Unicode gives another case, a circled
         // letter or a Roman numeral included.
@@ -271,6 +305,18 @@ final class UselessIFlagRule extends AbstractLintRule
 
         return mb_strtoupper($char, 'UTF-8') !== $char
             || mb_strtolower($char, 'UTF-8') !== $char;
+    }
+
+    /**
+     * Whether another locale's tables decide the case of the character: a
+     * byte without UTF, an ASCII character with it, where one above ASCII
+     * takes Unicode's case.
+     *
+     * @phpstan-assert-if-true CharacterTables $this->tables
+     */
+    private function tablesDecide(int $codePoint): bool
+    {
+        return null !== $this->tables && $codePoint <= ($this->unicodeMode ? 0x7F : 0xFF);
     }
 
     private function unicodePropIsCaseSensitive(string $prop): bool
