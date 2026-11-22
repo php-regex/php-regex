@@ -19,11 +19,18 @@
   and 26 ms through `preg_match_all()`, under 0.1 ms through
   `preg_match()` (PHP 8.4.28, PCRE2 10.49). A finding of its own, or a
   flag on the search cost the caller reads.
-- `\K` at the end of a match under `(*NOTEMPTY)` is not read: the match it
-  leaves empty is refused, so `/(*NOTEMPTY)a+\K/` gives back every `a+` at
-  every offset, 29, 115 and 458 ms on 2,000, 4,000 and 8,000 `a`s with the
-  JIT off, and gets no search-cost finding. The JIT, which ignores
-  `(*NOTEMPTY)` (see Engine reports), answers at once there.
+- The search cost refuses a match `\K` leaves empty under `(*NOTEMPTY)`
+  (#433), but the proof of one attempt still reads `\K` as reading
+  nothing: `/(*NOTEMPTY)^(?:a|a)+\K/` and `/(*NOTEMPTY)(?:a|a)+\K/` hit
+  the backtrack limit on 2,000 `a`s with the JIT off (about 22 ms), yet
+  are called safe (proven). Build that automaton refusing them too
+  (`refusesKept`, as `SearchCostProver` reads it): a change of verdict, so
+  check the fixtures.
+- Under `(*NOTEMPTY)`, a possessive or atomic repeat before `\K` is
+  quadratic too, `(*NOTEMPTY)(?:a++\K)` and `(*NOTEMPTY)(?>a+\K)` at 1.1,
+  4.1 and 16.2 ms on 2,000, 4,000 and 8,000 `a`s with the JIT off, but
+  the replay cannot count inside such a run: the first is reported
+  unconfirmed, the second not at all.
 
 ## Engine reports
 
