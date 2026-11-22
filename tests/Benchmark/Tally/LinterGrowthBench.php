@@ -149,6 +149,20 @@ final class LinterGrowthBench
     }
 
     /**
+     * Every lint rule on the same loop: the rule on impossible lookaheads
+     * reads the flags in force at each lookahead and its place in the body
+     * once for the body. About 8 billion instructions for 1 000 when each
+     * lookahead read the pattern again from its start.
+     */
+    #[DataProvider('from500')]
+    #[Linear('size')]
+    public function benchRulesOnLookaheadsBeforeTheLoopsOfABody(int $size): void
+    {
+        $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/(?:'.str_repeat('(?=b)', $size).'b?c+)+$/'));
+        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+    }
+
+    /**
      * Every lint rule on optional groups: each group asked whether its
      * pattern may match nothing, and what follows it. 4 000 took about 17 s
      * when each read the pattern again.

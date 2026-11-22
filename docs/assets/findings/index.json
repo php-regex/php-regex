@@ -4,9 +4,9 @@
     },
     "totals": {
         "repos": 234,
-        "findings": 2779,
-        "fail": 178,
-        "warn": 2601
+        "findings": 2783,
+        "fail": 179,
+        "warn": 2604
     },
     "owners": {
         "10up": {
@@ -232,6 +232,10 @@
         "concretecms": {
             "avatar": "/assets/findings/avatars/concretecms.png",
             "profile": "https://github.com/concretecms"
+        },
+        "consolidation": {
+            "avatar": "/assets/findings/avatars/consolidation.png",
+            "profile": "https://github.com/consolidation"
         },
         "contao": {
             "avatar": "/assets/findings/avatars/contao.png",
@@ -1149,8 +1153,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "d21b714efad531d151885b50082f3857dc4f17f2",
-            "committed": "2026-11-20",
+            "sha": "22de8ed1f1f3aab6796e7af5310799436a519252",
+            "committed": "2026-11-21",
             "findings": 14,
             "fail": 3,
             "warn": 11,
@@ -1515,8 +1519,8 @@
                 "pcre": "10.39",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "9babb0c7868eabea82d34447e6e157fa92a4e2fb",
-            "committed": "2026-11-20",
+            "sha": "4cc2fa000b20f3c11eb0138fa782de89a3e5485e",
+            "committed": "2026-11-21",
             "findings": 18,
             "fail": 2,
             "warn": 16,
@@ -1858,6 +1862,29 @@
             ]
         },
         {
+            "repo": "consolidation/robo",
+            "owner": "consolidation",
+            "slug": "consolidation__robo",
+            "target": {
+                "php": "8.2.18",
+                "pcre": "10.40",
+                "source": "composer.json config.platform.php"
+            },
+            "sha": "3a51c1dcb39ebfbebcc8f46dc7710ec6d0358500",
+            "committed": "2026-11-20",
+            "findings": 6,
+            "fail": 1,
+            "warn": 5,
+            "rules": [
+                "regex.delimiter.invalid",
+                "regex.lint.alternation.empty",
+                "regex.lint.anchor.impossible.start",
+                "regex.lint.charclass.redundant",
+                "regex.lint.charclass.suspiciousRange",
+                "regex.lint.flag.useless.m"
+            ]
+        },
+        {
             "repo": "deployphp/deployer",
             "owner": "deployphp",
             "slug": "deployphp__deployer",
@@ -2177,8 +2204,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "95bca157ab9fbdcc1de8dad61c6201c5dcf0f852",
-            "committed": "2026-11-20",
+            "sha": "28fd5ef6b97bdd2922102da96f3288828f9528b6",
+            "committed": "2026-11-21",
             "findings": 22,
             "fail": 1,
             "warn": 21,
@@ -2223,8 +2250,8 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "0a2263d82c19dcb3b16ba42082cc772328e0835f",
-            "committed": "2026-11-20",
+            "sha": "1965cb8199a76a48a58d5d7d4adf385d2a10a5ea",
+            "committed": "2026-11-21",
             "findings": 50,
             "fail": 1,
             "warn": 49,
@@ -3048,7 +3075,7 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "fe58b51d213b4a568ad33f9f06a0ed79333726fe",
+            "sha": "69ec5d7660de71a3ef40b0cbf86f174fa500e8d8",
             "committed": "2026-11-21",
             "findings": 1,
             "fail": 0,
@@ -3374,7 +3401,7 @@
                 "pcre": "10.40",
                 "source": "composer.json require.php"
             },
-            "sha": "b8448de56f31d7341d3d7b612cd157625fcdd29f",
+            "sha": "87278047584706886182bd75753a52c0d0e6a91d",
             "committed": "2026-11-21",
             "findings": 2,
             "fail": 0,
@@ -4132,7 +4159,7 @@
                 "pcre": "10.42",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "f39b13aba7a81309b171906a001143dde11c34b1",
+            "sha": "45aaca0caf6ca8dcf1525e36a721d03cd23c930e",
             "committed": "2026-11-21",
             "findings": 18,
             "fail": 0,
@@ -4292,8 +4319,8 @@
                 "pcre": "10.39",
                 "source": "composer.json require.php"
             },
-            "sha": "17fe34ddf918f6e222d948d0b6bc19238258d6b6",
-            "committed": "2026-11-20",
+            "sha": "abe9810e683470b1009c59b885ce9be4265de154",
+            "committed": "2026-11-21",
             "findings": 36,
             "fail": 0,
             "warn": 36,
@@ -4426,24 +4453,6 @@
             ]
         },
         {
-            "repo": "php/web-php",
-            "owner": "php",
-            "slug": "php__web-php",
-            "target": {
-                "php": "8.4",
-                "pcre": "10.49",
-                "source": "composer.json config.platform.php"
-            },
-            "sha": "9ba151b5ea11c4ac0ddfd99a6289d5342f6e3cb2",
-            "committed": "2026-11-20",
-            "findings": 2,
-            "fail": 0,
-            "warn": 2,
-            "rules": [
-                "regex.lint.flag.useless.m"
-            ]
-        },
-        {
             "repo": "PhpCodeArcheology/PhpCodeArcheology",
             "owner": "PhpCodeArcheology",
             "slug": "PhpCodeArcheology__PhpCodeArcheology",
@@ -4510,8 +4519,8 @@
                 "pcre": "10.33",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "e2d144a52eabe38ff423ac97a15c40e38ae16f45",
-            "committed": "2026-11-19",
+            "sha": "a4e44e921d7cdd6f329017a562a2a15c269d1a38",
+            "committed": "2026-11-21",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -4687,8 +4696,8 @@
                 "pcre": "10.40",
                 "source": "composer.json config.platform.php"
             },
-            "sha": "28494e56db7a9efb4d3fe52c991575284aaa8de9",
-            "committed": "2026-11-20",
+            "sha": "043348bc4430eb897a5273fb1739fdcd58733c19",
+            "committed": "2026-11-21",
             "findings": 5,
             "fail": 0,
             "warn": 5,
@@ -5626,7 +5635,7 @@
                 "pcre": "10.39",
                 "source": "fallback: no require.php"
             },
-            "sha": "c261e6ca31d1698758872da6db9043053239d315",
+            "sha": "e12cf3281bd8683cd49b008299f1280c6e3e29f0",
             "committed": "2026-11-21",
             "findings": 60,
             "fail": 0,

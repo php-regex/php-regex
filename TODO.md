@@ -1,51 +1,31 @@
 # TODO
 
-## Before merging #411
+## ReDoS precision
 
-- Review #411, which audits `Assert\Regex` and its `htmlPattern`
-  (`RegexConstraintAnalyzer`), then cover the mutants its diff leaves: the
-  `Coverage and Mutations` job stops at a covered MSI of 64%, under the
-  90% it requires.
+- Under another locale's tables, the ReDoS heuristics leave unknown what
+  those tables decide, a caseless item included even when it is ASCII
+  (PCRE2 takes the other case of every character from the tables): a
+  pattern read that way can only raise a low-confidence finding. Reading
+  the tables PHP compiled with would be more precise.
+- Under `(*NOTEMPTY)`, the search cost is not proven: a pattern whose
+  search grows with the square of the subject, such as `(?:a+\d)?`, gets
+  no search-cost finding behind it, though each attempt is judged right.
+- Since #419 to #423, the counted `benchRedos` cases run 1.4 to 1.7 %
+  above their expected instructions (bounded-alternation-200: 159.3M
+  against 156.8M), close to the ±2 % allowed: accept the new numbers from
+  a 2.x run, so the next small cost is not read as a regression.
 
-## Before 2.0.0, a pull request of its own
+## Playground on PHP 8.6
 
-- The ReDoS analysis under another locale's tables (an `LC_CTYPE` other
-  than C) reads a negated class in ASCII only, and misses quadratic
-  patterns: `"/^(x)[^a]+\xC3+\1$/"` (a raw 0xC3) is rated safe under
-  fr_FR.ISO8859-1, where PCRE takes 32, 124 and 500 steps on `x` then 8,
-  16 and 32 0xC3; `"/^(x)[^é]+\x90+\1$/"` the same. Under those tables,
-  read the bytes above ASCII of literals and complements, and leave unknown
-  what the tables decide (`\w`, the cases). Clip the gaps of
-  `ByteCharSet::complement()` to its bound in the same change, not before:
-  alone, that makes the second pattern safe too. The linter's overlap
-  fallback reads such a literal as its byte, and
-  `CharSetAnalyzerTest::test_read_in_ascii_a_set_stops_there` pins the
-  ASCII read: both move with it. Spec first. From the review of #407.
-- The Psalm plugin types `$matches` where nothing matched, on every Psalm
-  it narrows on. After
-  `if (preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)) { return; }`,
-  `$m` is `array<never, never>`, where PHP leaves `['ab', 'a', 'b']` for
-  `('x', 'ab')`: Psalm drops the left operand's clauses on a variable the
-  right one writes, and the plugin's conditions reach that formula; without
-  the plugin, `$m` stays `array<array-key, string>`. On Psalm 6, the `else`
-  of `if ($found = preg_match('/(a)(b)?/', $s, $m))` and the body of
-  `if (!($found = preg_match(…))) { … return; }` type `$m` as the shape.
-  Pin both forms on every Psalm row of the plugin's job.
-
-## Psalm 7.11
-
-- Psalm 7.11.0 (vimeo/psalm#14161) and later no longer read the condition
-  the plugin sets on `preg_match()`. The branch
-  `psalm-711-preg-match-assertions` (not committed yet) writes that
-  condition into the assertion cache Psalm reads first, lifts the `<7.11`
-  pin in `tools/phpunit` and `tools/paratest`, and adds Psalm 7.10 and
-  7.12 rows to the plugin's job: open its pull request.
-- A loop that changes the pattern between two passes keeps the shape of
-  the first: with `$p = '/(a)(b)?/'` before a `foreach` whose body runs
-  `if (preg_match_all($p, $s, $n)) { … }` then `$p = '/(x)(y)(z)/'`, `$n`
-  is typed from `/(a)(b)?/` on every Psalm; `preg_match()` does the same
-  up to Psalm 7.10. Psalm clears the condition cache between the passes,
-  not the assertions set on the call.
+- Offer PHP 8.6 in the playground and the Run buttons. php-wasm 0.2.0
+  stops at 8.5.2 and its Makefile refuses 8.6, so the engine is built from
+  php-wasm's v0.2.0 sources with 8.6.0 added (its php-src patch ported:
+  six files moved, `zend_free_internal_arg_info()` takes a second
+  argument), with mbstring, and served from `docs/` beside a manifest of
+  sha256s. 8.6 cannot be stood in by 8.5: it refuses `\C` under u, keys
+  MARK once and fixes `preg_grep()`. The branch `php-86-playground-engine`
+  (on top of #418) has the 8.6.0 options row; the engine itself needs
+  Docker at 4 CPU and 8 GB or more.
 
 ## Engine reports
 
@@ -59,6 +39,26 @@ Found while fixing the bugs of #400; each is PCRE2's, not the library's.
   default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
   returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
 
+
+## PCRE2 10.50
+
+10.50 is due on 2026-11-30. On 2026-11-21, 10.49 is the newest release, and
+the 140 patterns PCRE2's development branch added to `testinput2` and
+`testinput5` since then all get from the library the verdict 10.49 gives.
+
+- Once 10.50 is out, move the vendored suite to it
+  (`tests/Fixtures/Pcre2/README.md`), and add 10.50 to
+  `release-outcomes.json` and to the `pcre2test` builds of `engines.yml`.
+  Error 204 reads "requires" where 10.49 writes "require", the wording
+  `Pcre2TestdataExtractorTest` quotes.
+- PCRE2#1072, in the 10.50 milestone: `/(?<=a(?(DEFINE)(?<=b+)))x/`
+  compiles on 10.49, and the library agrees (`DefineSkippedInLookbehind`,
+  from 10.35). Should 10.50 measure a lookbehind inside a DEFINE inside a
+  lookbehind, it refuses that pattern with error 125, and the feature needs
+  a last release.
+- PCRE2#549, in the 10.51 milestone (due 2027-01-31), points every compile
+  error offset at the failing character. The library gives PCRE2's offsets
+  release by release: expect offset gates.
 
 ## Release 2.0.0
 
@@ -145,61 +145,12 @@ request goes to `phpstan/phpstan-src`.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. A small
   pull request to its type specifier, with an nsrt test, would fix it.
-- `/(?:(*sr:ö)|è)+/u` raises `regex.lint.quantifier.emptyRepeat`, though
-  `(*sr:ö)` cannot match empty.
-- Where no PCRE probe can be written for a branch (a script run, a class
-  holding every delimiter), `OverlappingAlternationRule` compares first
-  bytes, so under `u` a shared UTF-8 lead byte reads as an overlap:
-  `/(?:(*sr:ö)|è)+/u` is reported. Keeping only the ASCII part of the byte
-  sets in that fallback under `u` drops it; the fallback is kept today, as
-  `AlternationOverlapPastAsciiTest::test_a_branch_pcre_cannot_be_asked_about_is_read_by_its_bytes`
-  pins it. Decide.
-- The same rule leaves unjudged a branch behind lookaheads that differ by
-  the way taken, `(?:(?=a)|(?=b))x`, or a negative lookahead of a repeated
-  atom, `(?!a+)`; it takes `(?!a$)` to refuse `a` outright. Each can only
-  hide an overlap.
-- `CharSetAnalyzer::firstChars()` reads a start-of-pattern verb,
-  `(*CASELESS_RESTRICT)`, `(*UTF)` or `(*UCP)`, as an item of unknown set,
-  so the characters a whole pattern starts with come back unknown behind
-  it: `/(*UCP)a/` against `/a/`.
 
 
 ## Optimizer precision
 
-- The possessive rewrite (`possessive: true`) does not read the characters
-  after a group whose last items may match nothing: it offers `/(a+b?)a/` as `/(a++b?)a/`,
-  `/(?:a+b?)*a$/` as `/(?:a++b?)*a$/` and `(?:[0-9]+b?)1` as
-  `(?:\d++b?)1`, which the engine tells apart (`(a+b?)\1` and
-  `(*scs:(1)(a+b?))\2c` too). The result check refuses them, so nothing
-  wrong ships, but the refusal drops the pattern's other rewrites:
-  `/(a+b?)a[0-9]/` stays as written, while `/(a+b?)[0-9]/` becomes
-  `/(a++b?)\d/`. Reading past the group would also stop
-  `/^(\d+\s*)$/` → `/^(\d++\s*)$/`, which the solver proves today.
-- With `possessive: true`, the solver refuses every possessive in a
-  pattern that holds a lookaround or `\b`, wherever it stands:
-  `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s` come back unchanged, the
-  `s` the default options drop included. On a refusal, `Optimizer::optimize()` could
-  rewrite again without the possessive step: one more rewrite and check,
-  only when a refusal happens.
-- `PossessiveRewrites::closes()` counts the non-atomic `(*napla:` among
-  the groups nothing after them backtracks into. Harmless today: its `*`
-  reads as an inline flag, which keeps the possessive rewrite out of the
-  whole pattern.
-
-
-## Counted benchmarks
-
-`tests/Benchmark/Tally/` is counted by Tally in CI, in the gating job
-`Benchmarks (counted)`, from #390 on; it has run green on the pull
-requests since.
-
-- Review and merge #414, which leaves the growth to the counted
-  benchmarks: `assertLinearTime()` keeps its budget alone, five reads get
-  a counted twin, and the advisory PHPBench table job goes.
-- `lookaround.impossible` reads a loop whose body opens with lookaheads in
-  quadratic time, alone of the lint rules: `(?:` then n times `(?=b)` then
-  `b?c+)+$` takes 89 ms for 250 and 297 ms for 500; Tally counts all the
-  rules at about 8 billion instructions for 1 000 and 32 billion for
-  2 000. A pull request of its own, with the run of every rule counted
-  beside `LinterGrowthBench::benchLookaheadsBeforeTheLoopsOfABody`, which
-  counts `quantifier.nested` alone. Found while writing #414.
+- The possessive rewrite reads a group called through a subroutine where
+  it stands, not where it is called: `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is
+  offered `a++b?`, which the result check refuses, so the rewrite is made
+  again without the possessive step. Nothing wrong ships; reading the call
+  sites would save that second rewrite and check.

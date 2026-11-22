@@ -83,6 +83,44 @@ final class LongSequenceLintTimeTest extends TestCase
     }
 
     /**
+     * The rules that ask the automata about an item read the inline flags
+     * of the whole pattern once, and the rule on impossible lookaheads the
+     * flags in force at each lookahead and its place in its sequence:
+     * 4 000 items took between 15 and 55 s, every rule on, when each one
+     * read the pattern again from its start.
+     */
+    #[Test]
+    #[DataProvider('provideItemsTheAutomataAreAskedAbout')]
+    public function test_the_rules_asking_the_automata_read_a_long_pattern_in_linear_time(string $pattern): void
+    {
+        // Parsed before: only the reading of the rules is timed.
+        $tree = Regex::create(['cache' => null])->parse($pattern);
+
+        $this->assertLinearTime(static function () use ($tree): void {
+            $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+        }, 1000, 'every rule on '.substr($pattern, 0, 20).'...');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideItemsTheAutomataAreAskedAbout(): iterable
+    {
+        $count = 4 * 1000;
+
+        // lookaround.impossible
+        yield 'lookaheads before the loops of a body' => ['pattern' => '/(?:'.str_repeat('(?=b)', $count).'b?c+)+$/'];
+        yield 'lookaheads before letters' => ['pattern' => '/'.str_repeat('(?=a)a', $count).'/'];
+        yield 'branches ending with a lookahead' => ['pattern' => '/(?:'.implode('|', array_fill(0, $count, 'a(?=b)')).')/'];
+        // lookaround.edgeQuantifier
+        yield 'lookaheads ending with a loop' => ['pattern' => '/'.str_repeat('(?=a+)b', $count).'/'];
+        // quantifier.possessiveImpossible
+        yield 'branches of possessive letters' => ['pattern' => '/(?:'.implode('|', array_fill(0, $count, 'a++a')).')/'];
+        // anchor.impossible
+        yield 'branches of word boundaries' => ['pattern' => '/(?:'.implode('|', array_fill(0, $count, 'a\ba')).')/'];
+    }
+
+    /**
      * @return iterable<string, array{item: string}>
      */
     public static function provideSequencesOfQuantifiers(): iterable

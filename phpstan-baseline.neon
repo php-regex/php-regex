@@ -19,6 +19,18 @@ parameters:
 			path: src/Psalm/PsalmInternals.php
 
 		-
+			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\Statements\Expression\AssertionFinder.
+			identifier: classConstant.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
+			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\Statements\Expression\ExpressionIdentifier.
+			identifier: classConstant.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
 			rawMessage: Access to constant on internal class Psalm\Internal\Codebase\Functions.
 			identifier: classConstant.internalClass
 			count: 1
@@ -33,13 +45,13 @@ parameters:
 		-
 			rawMessage: Access to constant on internal class Psalm\Internal\Provider\NodeDataProvider.
 			identifier: classConstant.internalClass
-			count: 1
+			count: 2
 			path: src/Psalm/PsalmInternals.php
 
 		-
 			rawMessage: Access to property $node_data of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 2
+			count: 4
 			path: src/Psalm/PsalmInternals.php
 
 		-
@@ -49,9 +61,21 @@ parameters:
 			path: src/Psalm/PsalmInternals.php
 
 		-
+			rawMessage: 'Call to method getAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
 			rawMessage: 'Call to method getCodebase() of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.'
 			identifier: method.internalClass
-			count: 2
+			count: 3
+			path: src/Psalm/PsalmInternals.php
+
+		-
+			rawMessage: 'Call to method setAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
 			path: src/Psalm/PsalmInternals.php
 
 		-
@@ -73,9 +97,21 @@ parameters:
 			path: src/Psalm/PsalmInternals.php
 
 		-
+			rawMessage: 'Call to static method getExtendedVarId() of internal class Psalm\Internal\Analyzer\Statements\Expression\ExpressionIdentifier from outside its root namespace Psalm.'
+			identifier: staticMethod.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
+			rawMessage: 'Call to static method scrapeAssertions() of internal class Psalm\Internal\Analyzer\Statements\Expression\AssertionFinder from outside its root namespace Psalm.'
+			identifier: staticMethod.internalClass
+			count: 1
+			path: src/Psalm/PsalmInternals.php
+
+		-
 			rawMessage: Instanceof references internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: instanceof.internalClass
-			count: 4
+			count: 7
 			path: src/Psalm/PsalmInternals.php
 
 		-
@@ -151,6 +187,102 @@ parameters:
 			path: tests/Unit/Lint/Extraction/MemoryBudgetTest.php
 
 		-
+			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
+			identifier: parameter.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\ConditionAssertionsTest::trace() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: parameter.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
+			identifier: classConstant.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Access to property $node_data of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 4
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to internal method Psalm\Context::__construct() from outside its root namespace Psalm.'
+			identifier: method.internal
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Analyzer\FileAnalyzer from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method __construct() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method getAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 3
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method getNodeTypeProvider() of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to method setAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Call to static method getInstance() of internal class Psalm\Internal\Analyzer\ProjectAnalyzer from outside its root namespace Psalm.'
+			identifier: staticMethod.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Instantiation of internal class Psalm\Internal\Analyzer\FileAnalyzer.
+			identifier: new.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: Instantiation of internal class Psalm\Internal\Provider\NodeDataProvider.
+			identifier: new.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
+			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\ConditionAssertionsTest::analyzer() has typehint with internal class Psalm\Internal\Analyzer\StatementsAnalyzer.'
+			identifier: return.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/ConditionAssertionsTest.php
+
+		-
 			rawMessage: Access to constant on internal class Psalm\Internal\Analyzer\StatementsAnalyzer.
 			identifier: classConstant.internalClass
 			count: 2
@@ -165,7 +297,19 @@ parameters:
 		-
 			rawMessage: Access to property $node_data of internal class Psalm\Internal\Analyzer\StatementsAnalyzer from outside its root namespace Psalm.
 			identifier: property.internalClass
-			count: 5
+			count: 7
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
+			rawMessage: 'Call to method getAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
+
+		-
+			rawMessage: 'Call to method setAssertions() of internal class Psalm\Internal\Provider\NodeDataProvider from outside its root namespace Psalm.'
+			identifier: method.internalClass
+			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmInternalsTest.php
 
 		-
@@ -263,6 +407,42 @@ parameters:
 			identifier: parameter.internalClass
 			count: 8
 			path: tests/Integration/Bridge/Psalm/PsalmPluginBudgetTest.php
+
+		-
+			rawMessage: Access to property $file_path of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
+
+		-
+			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
+
+		-
+			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
+
+		-
+			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 3
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
+
+		-
+			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
+			identifier: parameter.internalClass
+			count: 5
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
+
+		-
+			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginConditionCacheTest::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: return.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmPluginConditionCacheTest.php
 
 		-
 			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
@@ -377,6 +557,42 @@ parameters:
 			identifier: parameter.internalClass
 			count: 1
 			path: tests/Integration/Bridge/Psalm/PsalmPluginParityTest.php
+
+		-
+			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 3
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
+
+		-
+			rawMessage: Access to property $message of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 2
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
+
+		-
+			rawMessage: Access to property $type of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.
+			identifier: property.internalClass
+			count: 4
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
+
+		-
+			rawMessage: Parameter $issue of anonymous function has typehint with internal class Psalm\Internal\Analyzer\IssueData.
+			identifier: parameter.internalClass
+			count: 3
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
+
+		-
+			rawMessage: 'Parameter $issues of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginTaintTest::flows() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: parameter.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
+
+		-
+			rawMessage: 'Return type of method PHPRegex\Tests\Integration\Bridge\Psalm\PsalmPluginTaintTest::issues() has typehint with internal class Psalm\Internal\Analyzer\IssueData.'
+			identifier: return.internalClass
+			count: 1
+			path: tests/Integration/Bridge/Psalm/PsalmPluginTaintTest.php
 
 		-
 			rawMessage: Access to property $line_from of internal class Psalm\Internal\Analyzer\IssueData from outside its root namespace Psalm.

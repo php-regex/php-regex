@@ -36,10 +36,10 @@ final class ExtendedModeSuggestionTest extends TestCase
      * "[0-9]+" made possessive in "(?:[0-9]+b?)1" gives nothing back where
      * the "1" after the group needs it: on "11" the pattern matches and the
      * rewrite does not. With verification off, the optimizer still checks a
-     * rewrite that adds a possessive quantifier, and withdraws this one.
-     * Before "(?!b)", which looks at what the repetition gives back, it
-     * offers none: on "12b" the pattern matches "1" and "\d++(?!b)" nothing,
-     * and the rest of the rewrite is suggested.
+     * rewrite that adds a possessive quantifier, and the rest of the rewrite
+     * is suggested without it. Before "(?!b)", which looks at what the
+     * repetition gives back, it offers none: on "12b" the pattern matches
+     * "1" and "\d++(?!b)" nothing, and the rest of the rewrite is suggested.
      */
     #[Test]
     public function test_an_unproven_possessive_is_not_suggested_under_x_with_verification_off(): void
@@ -52,10 +52,11 @@ final class ExtendedModeSuggestionTest extends TestCase
         // what they match included.
         $rewrites = [
             ['/ [0-9]+(?!b) /x', '/ \d+(?!b) /x'],
+            ['/ (?:[0-9]+b?)1 /x', '/ (?:\d+b?)1 /x'],
             ["/\n  a+(?!b)  # a run\n  [0-9]\n/x", "/\n  a+(?!b)  # a run\n  \\d\n/x"],
         ];
         foreach ($rewrites as [$pattern, $rewrite]) {
-            foreach (['12b', '1', 'aa1', 'aab1', 'ab1', 'a1b'] as $subject) {
+            foreach (['12b', '1', '11', '1b1', '12b1', 'aa1', 'aab1', 'ab1', 'a1b'] as $subject) {
                 $this->assertSame(
                     [preg_match($pattern, $subject, $original, \PREG_OFFSET_CAPTURE), $original],
                     [preg_match($rewrite, $subject, $rewritten, \PREG_OFFSET_CAPTURE), $rewritten],
@@ -66,7 +67,7 @@ final class ExtendedModeSuggestionTest extends TestCase
 
         $options = new OptimizerOptions(possessive: true, verifyWithAutomata: false);
         $optimized = static fn (array $suggestions): array => array_map(static fn (OptimizationResult $suggestion): string => $suggestion->optimized, $suggestions);
-        $this->assertSame([], $this->suggestions('/ (?:[0-9]+b?)1 /x', $options));
+        $this->assertSame(['/ (?:\d+b?)1 /x'], $optimized($this->suggestions('/ (?:[0-9]+b?)1 /x', $options)));
         $this->assertSame(['/ \d+(?!b) /x'], $optimized($this->suggestions('/ [0-9]+(?!b) /x', $options)));
         $this->assertSame(["/\n  a+(?!b)  # a run\n  \\d\n/x"], $optimized($this->suggestions("/\n  a+(?!b)  # a run\n  [0-9]\n/x", $options)));
     }

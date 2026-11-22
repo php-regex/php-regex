@@ -15,8 +15,13 @@ namespace PHPRegex\Psalm;
 
 use PhpParser\Node\Arg;
 use PhpParser\Node\Expr;
+use PhpParser\Node\Expr\Assign;
 use PhpParser\Node\Expr\BinaryOp;
+use PhpParser\Node\Expr\BinaryOp\BooleanAnd;
+use PhpParser\Node\Expr\BinaryOp\BooleanOr;
 use PhpParser\Node\Expr\BinaryOp\Concat;
+use PhpParser\Node\Expr\BinaryOp\LogicalAnd;
+use PhpParser\Node\Expr\BinaryOp\LogicalOr;
 use PhpParser\Node\Expr\FuncCall;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
@@ -58,6 +63,11 @@ use Psalm\Type\Union;
  * CallTypes writes the types and CallAssertions what holds on the call's
  * result, through Psalm's internal node data, reached through
  * PsalmInternals: should it move, the calls are left to the stubs.
+ * ConditionAssertions writes it where Psalm 7.11 and later read the
+ * condition a preg_match() call stands in, its own assignment included.
+ * What holds on a call goes where Psalm would read it of another value:
+ * before the call is read again, on a later pass over a loop body, and on
+ * the left of a && or a || whose right operand writes the variable again.
  *
  * @internal
  *
@@ -80,11 +90,28 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             return null;
         }
 
+        if ($call instanceof BooleanAnd || $call instanceof BooleanOr || $call instanceof LogicalAnd || $call instanceof LogicalOr) {
+            CallAssertions::dropOverwritten($call, $source, $event->getContext()->self);
+
+            return null;
+        }
+
+        if ($call instanceof Assign) {
+            ConditionAssertions::cacheAssignment($source, $event->getContext(), $call);
+
+            return null;
+        }
+
         if (!$call instanceof FuncCall || !$call->name instanceof Name || $call->isFirstClassCallable()) {
             return null;
         }
 
         $function = CallArguments::globalFunction($call->name, $source);
+        if (null !== $function) {
+            // A loop body is read more than once: what the last pass read of the call goes.
+            CallAssertions::forget($source, $call);
+        }
+
         $arguments = null === $function ? null : CallArguments::bind(array_values($call->getArgs()), CallArguments::PARAMETERS[$function]);
         if ('preg_quote' === $function && null !== $arguments) {
             CallTypes::quote($call, $arguments, $source->getNodeTypeProvider());
@@ -181,7 +208,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             // A pattern built around preg_quote() of a text not known types $matches from its groups.
             $quoted = 'preg_match' === $function ? self::patternAroundQuotes($arguments['pattern'], $source, $parser) : null;
             if (null !== $quoted) {
-                self::typeAroundQuotes($call, $quoted, $arguments, $source, $parser, $codebase);
+                self::typeAroundQuotes($call, $quoted, $arguments, $source, $event->getContext()->self, $parser, $codebase);
             }
 
             return;
@@ -222,15 +249,16 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
         // is true: on two variables that negation says nothing of either, and
         // $matches would lose its [] where nothing matched. A call that types
         // $matches leaves its subject as it is.
+        $self = $event->getContext()->self;
         if (null !== $type && null !== $matches && $type->isSingle()) {
-            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], [CallAssertions::assertion($call, $matches, Type::getEmptyArrayAtomic())]);
+            CallAssertions::assertOnMatch($source, $self, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], [CallAssertions::assertion($call, $matches, Type::getEmptyArrayAtomic())]);
 
             return;
         }
 
         $subject = CallTypes::subjectType($pattern, $verdict, $arguments, $nodeTypes, $parser, $codebase);
         if (null !== $subject && isset($arguments['subject'])) {
-            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $arguments['subject'], $subject)], []);
+            CallAssertions::assertOnMatch($source, $self, $call, [CallAssertions::assertion($call, $arguments['subject'], $subject)], []);
         }
     }
 
@@ -268,7 +296,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
      *
      * @param array<string, Expr> $arguments
      */
-    private static function typeAroundQuotes(FuncCall $call, string $pattern, array $arguments, StatementsSource $source, RegexParser $parser, Codebase $codebase): void
+    private static function typeAroundQuotes(FuncCall $call, string $pattern, array $arguments, StatementsSource $source, ?string $self, RegexParser $parser, Codebase $codebase): void
     {
         $nodeTypes = $source->getNodeTypeProvider();
         $verdict = PatternVerdicts::verdict($parser, $pattern);
@@ -280,7 +308,7 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
 
         $type = CallTypes::matchesType($parser, $pattern, $verdict, 'preg_match', $arguments, $nodeTypes, $codebase);
         if (null !== $type && $type->isSingle()) {
-            CallAssertions::assertOnResult($source, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], []);
+            CallAssertions::assertOnMatch($source, $self, $call, [CallAssertions::assertion($call, $matches, $type->getSingleAtomic())], []);
         }
     }
 }

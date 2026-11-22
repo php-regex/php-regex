@@ -573,7 +573,9 @@ a rewrite that reads as the pattern does (`[0-9]` for `\d`), or whose changed pa
 and the original pattern is returned. The rewrite must hold in `preg_match_all()`, `preg_replace()`, `preg_split()` and from an offset
 too: a pattern with `^` or `\A`, or that may match empty, is checked in those runs as well, and one that reads the
 text before where the search starts (a lookbehind, `\b`, `\B`, `^` under `m`, `\K`) keeps only a rewrite that reads
-as it does or whose changed parts are each proven alone (see [the logic solver](logic-solver.md)).
+as it does or whose changed parts are each proven alone (see [the logic solver](logic-solver.md)). Under `possessive`, a
+rewrite refused for its possessive quantifiers is made again without them, and the other rewrites ship:
+`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`.
 
 ---
 

@@ -42,6 +42,13 @@ CHANGELOG
    with such a byte is compared with the others by the engine under the
    target's locale: `"/(?:\\W|\xE9)+/"` overlaps under C and
    `"/(?:\\w|\xE9)+/"` under fr_FR.ISO8859-1, which were not reported.
+ * Without u, where the engine judges no branch, one that matches empty
+   above all, `regex.lint.overlap.charset` reads the bytes above ASCII a
+   negated class takes: `"/(?:[^a]|\xC3|)+/"` with a raw `\xC3` is
+   reported, and so is `"/(?:\\W|\xE9|)+/"` under C, where `\W` takes
+   every byte above ASCII; neither was. What another locale's tables
+   decide, `\w` or a case, is still read in ASCII: `"/(?:\\W|\xE9|)+/"`
+   is not reported under fr_FR.ISO8859-1, where `\xE9` is a letter.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
@@ -196,6 +203,33 @@ CHANGELOG
    where a text comes right before the texts it starts. A quantified list of
    2,000 names that all start alike took over ten seconds to lint, it takes
    a fraction of one; the findings are the same.
+ * `regex.lint.lookaround.impossible`, `regex.lint.lookaround.edgeQuantifier`,
+   `regex.lint.quantifier.possessiveImpossible` and the
+   `regex.lint.anchor.impossible.*` rules read the option settings of a
+   pattern once, not again for each item they ask the automata about, and
+   the first reads the flags in force at each lookahead, and its place in
+   its sequence, once for the pattern. A pattern of 4,000 lookaheads,
+   possessive quantifiers or word boundaries took from 15 seconds to
+   almost a minute to lint, it takes a fraction of one; the findings are
+   the same.
+ * A script run reads what its body reads, where the rules took it for an
+   item that reads nothing: `regex.lint.quantifier.emptyRepeat` no longer
+   reports `/(?:(*sr:ö)|è)+/u`, and `regex.lint.anchor.impossible.start`
+   reports `/(*sr:a)^b/`, which never matches. `regex.lint.overlap.charset`
+   reads a branch through its script run, which starts with what its body
+   starts with, and asks the engine about it: `ö` and `è` no longer meet
+   there on their shared UTF-8 lead byte. Where the engine cannot be asked
+   about a branch, as a class holding every delimiter, the rule compares
+   the first bytes, under `u` the ASCII ones alone: a lead byte two
+   characters share is no overlap.
+ * `regex.lint.overlap.charset` reads a negative lookahead of a repeated
+   character, `(?!a+)`, as refusing `a`, where it left the branch
+   unjudged, and one whose character needs what follows it to hold,
+   `(?!a$)`, `(?!a\b)` or `(?!a(?=b))`, as refusing nothing, where it took
+   `a` as refused: `/\A(?:(?!a$)[ab]|a)+\z/` is reported. Lookaheads that
+   differ by the way taken, `(?:(?=a)|(?=b))[ab]`, let through what either
+   way does, where the branch was left unjudged; past sixteen ways it still
+   is.
  * The diff of a suggested rewrite skips the lines both sides share at the
    start and at the end before it looks for the longest run of kept lines:
    a 10,000-line pattern with one line changed took 15 seconds and 2.6 GB,

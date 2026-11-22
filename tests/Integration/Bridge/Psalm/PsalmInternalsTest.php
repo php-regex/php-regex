@@ -13,7 +13,10 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use PhpParser\Node\Expr\FuncCall;
+use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Psalm\CallbackParameters;
@@ -63,6 +66,17 @@ final class PsalmInternalsTest extends TestCase
     }
 
     /**
+     * Psalm 6 reads a nested assertion where the condition it stands for is
+     * false as it stands, as where the condition is true; 7.2 and later
+     * negate it there.
+     */
+    #[Test]
+    public function test_psalm_internals_negate_nested_assertions_from_psalm_7_2_on(): void
+    {
+        $this->assertSame(InstalledVersions::satisfies(new VersionParser(), 'vimeo/psalm', '>=7.2'), PsalmInternals::negatesNestedAssertions());
+    }
+
+    /**
      * Psalm 7 hands a plugin a view of the analyser's node data, not the
      * node data itself: an assertion set on the view would be lost. The
      * assertion is set on the node data the analyser reads.
@@ -99,6 +113,10 @@ final class PsalmInternalsTest extends TestCase
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
+        $this->assertNull(PsalmInternals::scrapedAssertions($source, self::call(), null));
+        $this->assertNull(PsalmInternals::cachedAssertions($source, self::call()));
+        // Nothing to write to: the call is not even reached.
+        PsalmInternals::cacheAssertions($source, self::call(), [['$m' => [[new Truthy()]]]]);
     }
 
     #[Test]
@@ -115,6 +133,12 @@ final class PsalmInternalsTest extends TestCase
         $this->assertFalse(PsalmInternals::analyse(new String_('/a/'), $source, new Context()));
         $this->assertTrue(PsalmInternals::functionExists($source, 'preg_match'));
         $this->assertNull(PsalmInternals::parameters($source, 'preg_replace_callback'));
+        $this->assertNull(PsalmInternals::variableId(new Variable('m'), null, null));
+        $this->assertNull(PsalmInternals::scrapedAssertions($analyzer, $call, null));
+        PsalmInternals::cacheAssertions($analyzer, $call, [['$m' => [[new Truthy()]]]]);
+        $this->assertNull($analyzer->node_data->getAssertions($call));
+        $analyzer->node_data->setAssertions($call, [['$m' => [[new Truthy()]]]]);
+        $this->assertNull(PsalmInternals::cachedAssertions($analyzer, $call));
     }
 
     /**

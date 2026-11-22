@@ -16,14 +16,20 @@ namespace PHPRegex\Psalm;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\FuncCall;
 use Psalm\Context;
+use Psalm\FileSource;
+use Psalm\Internal\Analyzer\Statements\Expression\AssertionFinder;
+use Psalm\Internal\Analyzer\Statements\Expression\ExpressionIdentifier;
 use Psalm\Internal\Analyzer\Statements\ExpressionAnalyzer;
 use Psalm\Internal\Analyzer\StatementsAnalyzer;
 use Psalm\Internal\Codebase\Functions;
 use Psalm\Internal\Provider\FunctionParamsProvider;
 use Psalm\Internal\Provider\NodeDataProvider;
 use Psalm\StatementsSource;
+use Psalm\Storage\Assertion;
+use Psalm\Storage\Assertion\NestedAssertions;
 use Psalm\Storage\FunctionLikeParameter;
 use Psalm\Storage\Possibilities;
+use Psalm\Type\Reconciler;
 
 /**
  * Every use the plugin makes of Psalm's internal classes, which Psalm keeps
@@ -31,11 +37,18 @@ use Psalm\Storage\Possibilities;
  * asserting on a call's result, analysing an argument before Psalm does,
  * asking whether a function exists and reading a function's parameters.
  *
- * One check stands for the whole set: each method and property Psalm 6.19
- * and later have is still there. Should a release move one, every call is
- * left to Psalm's stubs, as a call the plugin cannot read is: no assertion,
- * no callback type, and a namespaced call that may reach a function of the
- * namespace is not read.
+ * One check stands for all of them but the cache below: each method and
+ * property Psalm 6.19 and later have is still there. Should a release move
+ * one, every call is left to Psalm's stubs, as a call the plugin cannot
+ * read is: no assertion, no callback type, and a namespaced call that may
+ * reach a function of the namespace is not read.
+ *
+ * The cache of assertions Psalm reads a condition from, which the plugin
+ * writes for the releases that read nothing else of a preg_match() call,
+ * stands behind a check of its own: should a release move what it needs,
+ * that cache alone is no longer written.
+ *
+ * @phpstan-type Assertions list<non-empty-array<string, non-empty-list<non-empty-list<Assertion>>>>
  *
  * @internal
  */
@@ -60,7 +73,20 @@ final class PsalmInternals
         StatementsAnalyzer::class => ['node_data'],
     ];
 
+    /**
+     * The internal methods the cache of assertions needs, by class.
+     */
+    private const CACHE_METHODS = [
+        NodeDataProvider::class => ['setAssertions', 'getAssertions'],
+        AssertionFinder::class => ['scrapeAssertions'],
+        ExpressionIdentifier::class => ['getExtendedVarId'],
+    ];
+
     private static ?bool $available = null;
+
+    private static ?bool $cachesAssertions = null;
+
+    private static ?bool $negatesNestedAssertions = null;
 
     /**
      * Whether the running Psalm has every internal method the plugin calls
@@ -84,6 +110,125 @@ final class PsalmInternals
         }
 
         return self::$available;
+    }
+
+    /**
+     * Whether the running Psalm has every internal method the cache of
+     * assertions needs, and the assertion that nests what holds of a value
+     * under the variable it is assigned to.
+     */
+    public static function cachesAssertions(): bool
+    {
+        if (null === self::$cachesAssertions) {
+            $caches = class_exists(NestedAssertions::class);
+            foreach (self::CACHE_METHODS as $class => $methods) {
+                foreach ($methods as $method) {
+                    $caches = $caches && method_exists($class, $method);
+                }
+            }
+            self::$cachesAssertions = $caches;
+        }
+
+        return self::$cachesAssertions;
+    }
+
+    /**
+     * Whether the running Psalm negates what a nested assertion holds where
+     * the condition it stands for is false, as 7.2 and later do in a
+     * private method of their reconciler: Psalm 6 reads it there as it
+     * stands, as where the condition is true. A release that moves the
+     * method is read as Psalm 6, which costs precision, never soundness.
+     */
+    public static function negatesNestedAssertions(): bool
+    {
+        return self::$negatesNestedAssertions ??= (new \ReflectionClass(Reconciler::class))->hasMethod('negateNestedAssertions');
+    }
+
+    /**
+     * The result of a call into Psalm's internals, or null when the call
+     * does not fit their signature, which a release may change where
+     * method_exists() does not see it. An \ArgumentCountError is a
+     * \TypeError; any other error goes on.
+     *
+     * @template T of array|string|bool|null
+     *
+     * @param \Closure(): T $call
+     *
+     * @return T|null
+     */
+    public static function guarded(\Closure $call): array|string|bool|null
+    {
+        try {
+            return $call();
+        } catch (\TypeError) {
+            return null;
+        }
+    }
+
+    /**
+     * The id Psalm names the expression by, as "$m" or "$a['s']", read
+     * inside the class $self names; null for an expression that is neither
+     * a variable, a property nor an element of one, and where Psalm cannot
+     * be asked.
+     */
+    public static function variableId(Expr $expr, ?string $self, ?FileSource $source): ?string
+    {
+        if (!self::available() || !self::cachesAssertions()) {
+            return null;
+        }
+
+        return self::guarded(static fn (): ?string => ExpressionIdentifier::getExtendedVarId($expr, $self, $source));
+    }
+
+    /**
+     * What Psalm itself reads of the expression where it is a condition,
+     * inside the class $self names; null where it cannot be asked.
+     *
+     * @return Assertions|null
+     */
+    public static function scrapedAssertions(StatementsSource $source, Expr $condition, ?string $self): ?array
+    {
+        if (!self::available() || !self::cachesAssertions() || !$source instanceof StatementsAnalyzer) {
+            return null;
+        }
+
+        return self::guarded(static fn (): array => AssertionFinder::scrapeAssertions($condition, $self, $source, $source->getCodebase()));
+    }
+
+    /**
+     * What the cache of assertions holds for the expression; null where it
+     * holds nothing, Psalm keeps no such cache, or it cannot be read.
+     *
+     * @return Assertions|null
+     */
+    public static function cachedAssertions(StatementsSource $source, Expr $condition): ?array
+    {
+        if (!self::available() || !self::cachesAssertions() || !$source instanceof StatementsAnalyzer) {
+            return null;
+        }
+
+        return self::guarded(static fn (): ?array => $source->node_data->getAssertions($condition));
+    }
+
+    /**
+     * Writes, in the cache of assertions Psalm reads a condition from
+     * before it reads the expression itself, what holds where the
+     * expression is true, or null to have Psalm read the expression again.
+     * Psalm keeps no such cache in the body of a switch: nothing is written
+     * there.
+     *
+     * @param Assertions|null $assertions
+     */
+    public static function cacheAssertions(StatementsSource $source, Expr $condition, ?array $assertions): void
+    {
+        if (self::available() && self::cachesAssertions() && $source instanceof StatementsAnalyzer) {
+            self::guarded(static function () use ($source, $condition, $assertions): bool {
+                $source->node_data->setAssertions($condition, $assertions);
+
+                // guarded() hands back what the call returns: the write returns nothing.
+                return true;
+            });
+        }
     }
 
     /**

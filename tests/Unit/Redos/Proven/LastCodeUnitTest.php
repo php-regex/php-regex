@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
  * The last code unit PCRE2 requires in the subject before it tries an
  * attempt, read as its compiler reads it. Every row is pcre2test 10.49's
  * "Last code unit" for the pattern (utf and ucp for u, caseless_restrict for
- * r); the expected character is the one a witness carries, whose last code
+ * r and "(*CASELESS_RESTRICT)"); the expected character is the one a witness carries, whose last code
  * unit it is.
  */
 final class LastCodeUnitTest extends TestCase
@@ -41,6 +41,11 @@ final class LastCodeUnitTest extends TestCase
         if ('/xk/iur' === $pattern) {
             $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
             $this->requiresPcre2('10.43', $pattern);
+        }
+
+        // (*CASELESS_RESTRICT) is read by recent PCRE2 releases only.
+        if ('/(*CASELESS_RESTRICT)xk/iu' === $pattern) {
+            $this->requiresCompile($pattern);
         }
 
         $regex = RegexParser::create()->parse($pattern);
@@ -118,6 +123,7 @@ final class LastCodeUnitTest extends TestCase
         yield 'caseless k repeated under u' => ['pattern' => '/xk{2}/iu', 'expected' => null];
         yield 'caseless alternatives ending with a k under u' => ['pattern' => '/[a-z]+k|\d+k/iu', 'expected' => null];
         yield 'caseless k under u and r' => ['pattern' => '/xk/iur', 'expected' => 'k'];
+        yield 'caseless k under u and (*CASELESS_RESTRICT)' => ['pattern' => '/(*CASELESS_RESTRICT)xk/iu', 'expected' => 'k'];
         // Under u, the last code unit of a character of several.
         yield 'two-byte character under u' => ['pattern' => '/xé/u', 'expected' => 'é'];
         yield 'caseless two-byte character under u' => ['pattern' => '/xé/iu', 'expected' => null];
@@ -138,6 +144,11 @@ final class LastCodeUnitTest extends TestCase
         if ('/xk/iur' === $pattern) {
             $this->requiresPhp('8.4', $pattern, 'does not read the r modifier');
             $this->requiresPcre2('10.43', $pattern);
+        }
+
+        // (*CASELESS_RESTRICT) is read by recent PCRE2 releases only.
+        if ('/(*CASELESS_RESTRICT)xk/iu' === $pattern) {
+            $this->requiresCompile($pattern);
         }
 
         $regex = RegexParser::create()->parse($pattern);
@@ -173,6 +184,7 @@ final class LastCodeUnitTest extends TestCase
         yield 'caseless z' => ['pattern' => '/xz/i', 'expected' => 'z', 'caseless' => true];
         yield 'caseless opening brace' => ['pattern' => '/x\\{/i', 'expected' => '{', 'caseless' => false];
         yield 'caseless k under u and r' => ['pattern' => '/xk/iur', 'expected' => 'k', 'caseless' => true];
+        yield 'caseless k under u and (*CASELESS_RESTRICT)' => ['pattern' => '/(*CASELESS_RESTRICT)xk/iu', 'expected' => 'k', 'caseless' => true];
         yield 'case-sensitive alternatives' => ['pattern' => '/a+b|b$/', 'expected' => 'b', 'caseless' => false];
         yield 'two-byte character under u' => ['pattern' => '/xé/u', 'expected' => 'é', 'caseless' => false];
     }

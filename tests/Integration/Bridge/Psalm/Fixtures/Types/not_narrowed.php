@@ -200,3 +200,31 @@ function call_on_the_left_of_a_comparison(string $s): void
          */
     }
 }
+
+function loosely_equal_to_false_with_an_early_exit(string $s): void
+{
+    // Psalm reads "== false" as the negation of the call, yet the plugin reads
+    // no comparison, a loose one included: preg_match('/(a)(b)?/', 'x', $m) -> 0,
+    // 0 == false; on 'ab' -> 1, $m = ['ab', 'a', 'b'] (PHP 8.4.28).
+    if (preg_match('/(a)(b)?/', $s, $m) == false) {
+        return;
+    }
+
+    /**
+     * @psalm-check-type-exact $m = array<array-key, string>
+     * @psalm-trace $m
+     */
+}
+
+function loosely_not_equal_to_true_with_an_early_exit(string $s): void
+{
+    // preg_match('/(a)(b)?/', 'x', $m) -> 0, 0 != true; on 'ab' -> 1, 1 == true (PHP 8.4.28).
+    if (preg_match('/(a)(b)?/', $s, $m) != true) {
+        return;
+    }
+
+    /**
+     * @psalm-check-type-exact $m = array<array-key, string>
+     * @psalm-trace $m
+     */
+}

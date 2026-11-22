@@ -172,14 +172,37 @@ does not change what an unchecked read of `$matches` costs.
 No branch is read from these, and `$matches` keeps Psalm's own type in them:
 a call compared with anything (`1 === preg_match(…)`,
 `preg_match(…) !== false`, `false === preg_match(…)`, `preg_match(…) > 0`),
-`@preg_match(…)`, `$ok = preg_match(…); if ($ok)`, a `while` condition, and a
-`$matches` that is not a variable, as `$this->matches`. Psalm reads a
+`@preg_match(…)`, `$ok = preg_match(…); if ($ok)`, the condition of a
+`while`, `for` or `do … while` loop, and a `$matches` that is not a
+variable, as `$this->matches`. Psalm reads a
 plugin's condition only from a call that is the condition itself or its
 negation: this is a limit of Psalm. It also reads it through a comparison
 with `true` or `false`, as if the call returned a boolean; `preg_match()`
 returns `0` when nothing matches, so `preg_match(…) !== false` holds on a
 call that left `[]`, and the plugin drops its condition from every
 comparison.
+
+Nor is a branch read where it would speak of another value than the one
+`$matches` holds. A call on the left of a `&&` or a `||` whose right operand
+writes the variable again keeps no condition: in
+`preg_match('/(x)/', $s, $m) && !preg_match('/(a)(b)?/', $t, $m)`, `$m` is
+typed from the right call alone, since the right one never ran where the
+left one was false. Where `if ($found = preg_match(…))` is false, and in the
+body of `if (!($found = preg_match(…)))`, `$matches` keeps Psalm's type on
+every release. A loop body that changes its pattern is read again by Psalm
+with the pattern holding either value: `$matches` keeps Psalm's type there.
+
+Psalm 7.11 and later no longer read the condition a plugin sets on a
+`preg_match()` call, so the plugin hands it to Psalm through the cache Psalm
+reads a condition from. Psalm reads a few forms without that cache, and
+there `$matches` keeps Psalm's type on 7.11 and later, where Psalm 7.10 and
+earlier narrow it: a condition inside a `case` of a `switch`, or in a
+function written there, since Psalm keeps no such cache while it reads a
+`switch`; and a whole `||` or `&&` negated, as
+`if (!(!preg_match(…) || $x))`. Where the call returned 0, a pattern
+anchored at both ends from which Psalm itself learns which characters the
+subject holds, as `/^(\d+)$/D`, also leaves `$matches` with Psalm's type
+rather than `[]` on 7.11 and later.
 
 ### The subject of `preg_match()`
 

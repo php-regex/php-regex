@@ -77,7 +77,11 @@ original pattern returned. The proof builds automata for both patterns: on some
 and a half times as slow on average, about a second for the slowest, and
 withdrew none of the rewrites. Turned off, the rewrites ship as the rewriter
 writes them, but one that adds a possessive quantifier or an atomic group,
-which is proven whatever the option says.
+which is proven whatever the option says. A rewrite whose possessive
+quantifiers are not proven is made again without them, and the other rewrites
+ship: the proof reads no possessive quantifier in a pattern that holds a
+lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
+`/\d+x(?!y)/`.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

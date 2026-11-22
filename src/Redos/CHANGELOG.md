@@ -6,6 +6,30 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The options a pattern opens with are read by what each changes, and no
+   longer keep every pattern but one opening with `(*UCP)` alone out of the
+   proof. Those that change no match one attempt makes keep the verdict of
+   the bare pattern: `(*NO_JIT)`, the limits, `(*NOTEMPTY)`,
+   `(*NOTEMPTY_ATSTART)`, `(*NO_AUTO_POSSESS)`, `(*NO_START_OPT)`,
+   `(*NO_DOTSTAR_ANCHOR)`, `(*BSR_ANYCRLF)`, `(*BSR_UNICODE)`, `(*LF)` and
+   `(*UTF)` under u. `/(*NO_JIT)(?:a|ab)+c/`, `/(*LIMIT_MATCH=100)(?:a|ab)+c/`
+   and `/(*CR)(?:a|ab)+c/`, critical by the heuristics, are safe (proven), as
+   `/(?:a|ab)+c/` is, and so is `/(*UCP)\w+|b/`, an option before a
+   top-level alternation. A limit the pattern sets does not reach the checks
+   the proof asks of the engine, which run under PHP's default limits. Under
+   a newline convention the dot and `\N` are read as PCRE2 reads them:
+   `/(*CR)^(?:.|\r)+b/` is safe (proven), `/(*CR)^(?:.|\n)+b/` exponential.
+   `(*CASELESS_RESTRICT)` is read as r. Kept out of the proof: `(*UTF)`
+   without u, under which PHP hands PCRE2 a subject it does not check; under
+   a convention other than LF, an anchor that reads a newline; the dot and
+   `\N` under `(*CRLF)`, which take a carriage return unless a line feed
+   follows it; and caseless matching under `(*TURKISH_CASING)`. The search cost
+   reads a leading `.*` after an option as PCRE2 does: `/(*UCP).*[xy]/s`,
+   anchored, is no longer reported quadratic, while
+   `/(*NO_DOTSTAR_ANCHOR).*[xy]/s` and `/(*NO_START_OPT).*[xy]/` are. The
+   heuristics read a limit before a recursion as reading nothing:
+   `/(*LIMIT_MATCH=1000000)(?R)?a/` is reported as the recursion loop PCRE
+   stops at.
  * An atomic group or a possessive repeat over greedy unbounded repeats of
    one run, each taken at most once at least, is read as the longest run it
    commits to: `/^(?:a+)++$/` is proven linear where its body was kept with
@@ -58,7 +82,7 @@ CHANGELOG
  * The heuristics read a character written as an escape, `\xC2`, `\x{C2}`,
    `\302`, `\o{302}`, `\N{U+C2}` or `\cA`, and a class of them, as the
    characters PCRE reads, above ASCII too, under PCRE2's own tables (under
-   another locale's, nothing above ASCII is read): a UTF-8 sequence spelled
+   another locale's, what those decide is left unknown): a UTF-8 sequence spelled
    byte by byte beside an ASCII class,
    `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
    TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
@@ -73,6 +97,16 @@ CHANGELOG
    Under u a character above ASCII ends a repeat as it starts the next
    one: `/^((?:é+é)+)\1$/u`, which was medium, is critical, as
    `/^((?:a+a)+)\1$/` is.
+ * Under another locale's tables than PCRE2's own, where they read nothing
+   above ASCII, the heuristics read the bytes above ASCII a pattern writes
+   and those a negated class takes, as under C, and leave unknown what
+   those tables decide: `\d`, `\s` and `\w` without UCP, `(*UTF)` alone
+   included, and the other case of a character under i, of an ASCII one
+   under u too. Under fr_FR.ISO8859-1, `"/^(x)[^a]+\xC3+\\1$/"` with a raw
+   `\xC3`, `'/^(x)[^a]+é+\1$/u'`, `"/^(x)\\w+\xE9+\\1$/"` and
+   `"/^(x)\xC9+\xE9+\\1$/i"`, where the Latin-1 tables put `\xE9` in `\w`
+   and pair it with `\xC9`, were safe and are medium: PCRE takes 31, 123
+   and 499 steps on `x` then 8, 16 and 32 times the byte or the letter.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
    a letter meets its other case, and where `(?-i)` turns i off again it
