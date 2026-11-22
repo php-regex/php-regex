@@ -2,17 +2,6 @@
 
 ## ReDoS precision
 
-- The overlap rule reads a raw byte above ASCII from the target's tables
-  where PCRE judges no branch (#432, #434), but not the same byte written
-  as an escape, which its ASCII read leaves unknown: `'/(?:\W|\xE9|)+/'`
-  under C, `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'` under
-  fr_FR.ISO8859-1 go unreported.
-- `CharSetAnalyzer` never reads a POSIX class, under any tables, though
-  `CharacterTables::bytesOf()` holds every name: under fr_FR.ISO8859-1,
-  `[[:alpha:]]` takes `\xE9` and `"/(?:[[:alpha:]]|\xE9|)+/"` goes
-  unreported, as `"/(?:[[:^alpha:]]|\xD7|)+/"` does under C; the
-  heuristics rate `"/^(x)[[:alpha:]]+\xE9+\1$/"` medium with low
-  confidence under C, where `\xE9` is no letter.
 - The overlap rule folds literal text in ASCII alone: under
   fr_FR.ISO8859-1, `"/(?:\xC9x|\xE9x)+/i"` goes unreported, though
   `/\xC9x/i` matches `\xE9x` there. Read the fold from the tables, and
