@@ -275,7 +275,9 @@ final class LanguageSolver
      * reads what follows, but for "^" and "\A", which never hold past the
      * start of the subject: a pattern with one needs that search too. A
      * pattern that may match empty needs the retry calls such as
-     * preg_match_all() make after an empty match.
+     * preg_match_all() make after an empty match. What a "(?(DEFINE)...)"
+     * holds is read too, as a call runs it: "/(?&n)|a(?(DEFINE)(?<n>^.))/"
+     * needs the search past the start.
      *
      * Two patterns that read alike (see readAlike()) run alike everywhere:
      * no run is needed.
@@ -289,7 +291,10 @@ final class LanguageSolver
         $translator = new HirTranslator($this->parser->target());
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
-        $hirs = [$translator->translate($leftAst), $translator->translate($rightAst)];
+        $hirs = [$translator->translate($leftAst)];
+        $defined = [$translator->defined()];
+        $hirs[] = $translator->translate($rightAst);
+        $defined[] = $translator->defined();
 
         if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
             return [];
@@ -297,9 +302,10 @@ final class LanguageSolver
 
         $startAnchored = false;
         $empty = false;
-        foreach ($hirs as $hir) {
+        foreach ($hirs as $side => $hir) {
             $empty = $empty || false !== $hir->properties->nullable;
-            $pending = [$hir];
+            // What a DEFINE holds runs where a call runs it.
+            $pending = [$hir, ...$defined[$side]];
             while (null !== $node = array_pop($pending)) {
                 if ($node instanceof LookHir && \in_array($node->kind, [LookKind::Behind, LookKind::NegativeBehind], true)) {
                     return null;
@@ -783,7 +789,10 @@ final class LanguageSolver
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser->target()))->translate($ast), $ast->isUnicode(), $ast->pattern);
+        $translator = new HirTranslator($this->parser->target());
+        $form = $translator->translate($ast);
+
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined());
     }
 
     /**
