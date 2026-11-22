@@ -124,6 +124,12 @@ final class HirTranslator
     private array $groupNumbers = [];
 
     /**
+     * @var list<Hir> what each "(?(DEFINE)...)" of the pattern holds, in the
+     *                order they end
+     */
+    private array $defined = [];
+
+    /**
      * The locale whose character tables the sets without /u are read
      * under, the target's; the one PHP compiles under when null.
      */
@@ -148,6 +154,7 @@ final class HirTranslator
         $this->unicodeFlag = str_contains($regex->flags, 'u');
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->groupNumbers = $this->numberGroups($regex);
+        $this->defined = [];
 
         $flags = 0;
         foreach (['i' => self::CASELESS, 's' => self::DOT_ALL, 'm' => self::MULTILINE, 'x' => self::EXTENDED, 'U' => self::UNGREEDY, 'r' => self::RESTRICT] as $letter => $bit) {
@@ -157,6 +164,20 @@ final class HirTranslator
         }
 
         return $this->node($regex->pattern, $flags);
+    }
+
+    /**
+     * What each "(?(DEFINE)...)" of the pattern translate() last read holds,
+     * in the order they end, read under the options in force where the
+     * DEFINE stands: a call runs a group it holds under them. The form
+     * matches the empty string there, as the engine never runs what a
+     * DEFINE holds where it stands.
+     *
+     * @return list<Hir>
+     */
+    public function defined(): array
+    {
+        return $this->defined;
     }
 
     /**
@@ -182,7 +203,8 @@ final class HirTranslator
             $node instanceof PosixClassNode, $node instanceof ExtendedCharClassNode => $this->characterClass($node, $flags),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->assertion($node, $flags),
             $node instanceof KeepNode => new AssertionHir(AssertionKind::ResetMatchStart, $node->getStartPosition(), $node->getEndPosition()),
-            $node instanceof CommentNode, $node instanceof DefineNode, $node instanceof LimitMatchNode => new EmptyHir($node->getStartPosition(), $node->getEndPosition()),
+            $node instanceof DefineNode => $this->define($node, $flags),
+            $node instanceof CommentNode, $node instanceof LimitMatchNode => new EmptyHir($node->getStartPosition(), $node->getEndPosition()),
             // An option the pattern opens with is applied to the sets already.
             $node instanceof PcreVerbNode => $node->getEndPosition() <= \strlen($this->startVerbs)
                 ? new EmptyHir($node->getStartPosition(), $node->getEndPosition())
@@ -203,6 +225,13 @@ final class HirTranslator
             // A backreference, a subroutine call, a range outside a class.
             default => $this->opaque($node, Properties::unknown(self::capturesIn($node))),
         };
+    }
+
+    private function define(DefineNode $node, int $flags): EmptyHir
+    {
+        $this->defined[] = $this->node($node->content, $flags);
+
+        return new EmptyHir($node->getStartPosition(), $node->getEndPosition());
     }
 
     private function sequence(SequenceNode $node, int $flags): Hir

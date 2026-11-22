@@ -437,6 +437,41 @@ final class HirTranslatorTest extends TestCase
         $this->assertInstanceOf(EmptyHir::class, $this->translate('/(?#note)(?i)(?(DEFINE)(?<x>a))/'));
     }
 
+    /**
+     * What a "(?(DEFINE)...)" holds runs only where a call runs it, under
+     * the options in force where the DEFINE stands: the form leaves it out,
+     * and the translator reads it apart, each DEFINE of the pattern last
+     * translated in the order written.
+     */
+    #[Test]
+    public function test_what_a_define_holds_is_read_apart_under_the_options_in_force_there(): void
+    {
+        $pattern = '/(?i:(?(DEFINE)(?<n>a)))(?(DEFINE)(?<m>b))(?&n)(?&m)/';
+        // Oracle: the first group runs caseless, the second not.
+        $this->assertSame(1, preg_match($pattern, 'Ab'));
+        $this->assertSame(0, preg_match($pattern, 'aB'));
+
+        $translator = new HirTranslator();
+        $translator->translate(Regex::create(['cache' => null])->parse($pattern));
+        $defined = $translator->defined();
+
+        $this->assertCount(2, $defined);
+        [$caseless, $plain] = $defined;
+        $this->assertInstanceOf(CaptureHir::class, $caseless);
+        $this->assertSame([1, 'n'], [$caseless->index, $caseless->name]);
+        $this->assertInstanceOf(ClassHir::class, $caseless->body);
+        $this->assertTrue($caseless->body->set->contains(0x41));
+        $this->assertTrue($caseless->body->set->contains(0x61));
+        $this->assertInstanceOf(CaptureHir::class, $plain);
+        $this->assertSame([2, 'm'], [$plain->index, $plain->name]);
+        $this->assertInstanceOf(LiteralHir::class, $plain->body);
+        $this->assertSame([0x62], $plain->body->codePoints);
+
+        $translator->translate(Regex::create(['cache' => null])->parse('/a/'));
+
+        $this->assertSame([], $translator->defined());
+    }
+
     #[Test]
     public function test_start_of_pattern_options_reach_the_sets(): void
     {

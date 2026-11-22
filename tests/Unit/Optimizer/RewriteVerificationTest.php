@@ -283,7 +283,6 @@ final class RewriteVerificationTest extends TestCase
         yield 'branches of a lookbehind merged, a later part changed' => ['original' => '/(?<=a|bc|d)y(?<!x)z/', 'rewrite' => '/(?<=[ad]|bc)y(?<!x)w/', 'verdict' => false];
         yield 'branches of a lookbehind merged into one branch of two lengths' => ['original' => '/(?<=ab|a)x/', 'rewrite' => '/(?<=ab?)x/', 'verdict' => false];
         yield 'a rewritten part beside a backtracking verb' => ['original' => '/(?<!x)(?:_|%)(*PRUNE)a/', 'rewrite' => '/(?<!x)[_%](*PRUNE)a/', 'verdict' => false];
-        yield 'a rewritten part of a group only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>a|b))x(?&n)/', 'rewrite' => '/(?(DEFINE)(?<n>[ab]))x(?&n)/', 'verdict' => false];
         // The condition of a conditional stays as written in the normal
         // form: what it reads is not proven there.
         yield 'a class for an alternation in the condition of a conditional' => ['original' => '/url\(\s*(?(?=\'|").)(.+?)\)/', 'rewrite' => '/url\(\s*(?(?=[\'"]).)(.+?)\)/', 'verdict' => false];
@@ -571,6 +570,11 @@ final class RewriteVerificationTest extends TestCase
         yield 'a word boundary before' => ['original' => '/\ba/', 'rewrite' => '/a/', 'call' => 'preg_match', 'subject' => 'xa'];
         yield 'a word boundary after' => ['original' => '/a\b/', 'rewrite' => '/a/', 'call' => 'preg_match', 'subject' => 'ab'];
         yield 'the start of a line' => ['original' => '/^[\s\S]|a/m', 'rewrite' => '/^[\s\S]|b/m', 'call' => 'preg_match_all', 'subject' => 'xa'];
+        // What a DEFINE holds runs where a call runs it.
+        yield 'the start of the subject in a group a DEFINE holds, past it' => ['original' => '/(?&n)|a(?(DEFINE)(?<n>^[\s\S]))/', 'rewrite' => '/(?&n)|b(?(DEFINE)(?<n>^[\s\S]))/', 'call' => 'preg_match_all', 'subject' => 'xa'];
+        yield 'the start of the subject in a group a DEFINE holds, from an offset' => ['original' => '/(?&n)|a(?(DEFINE)(?<n>^[\s\S]))/', 'rewrite' => '/(?&n)|b(?(DEFINE)(?<n>^[\s\S]))/', 'call' => 'preg_match', 'subject' => 'xa', 'offset' => 1];
+        yield 'the start of the subject dropped from a group a DEFINE holds' => ['original' => '/(?&n)|a(?(DEFINE)(?<n>^[\s\S]))/', 'rewrite' => '/(?&n)|a(?(DEFINE)(?<n>[\s\S]))/', 'call' => 'preg_match_all', 'subject' => 'xb'];
+        yield 'the start of the subject added to a group a DEFINE holds' => ['original' => '/(?&n)|a(?(DEFINE)(?<n>[\s\S]))/', 'rewrite' => '/(?&n)|a(?(DEFINE)(?<n>^[\s\S]))/', 'call' => 'preg_match_all', 'subject' => 'xb'];
     }
 
     /**
@@ -582,6 +586,8 @@ final class RewriteVerificationTest extends TestCase
         yield 'a shorthand for a class, matching empty' => ['original' => '/[0-9]*/', 'rewrite' => '/\d*/', 'letters' => '0a'];
         yield 'a class for an alternation, anchored and matching empty' => ['original' => '/^(?:a|b)*/', 'rewrite' => '/^[ab]*/', 'letters' => 'abc'];
         yield 'a class for an alternation' => ['original' => '/(?:a|b)c/', 'rewrite' => '/[ab]c/', 'letters' => 'abc'];
+        // The match check runs a group a DEFINE holds where the call stands.
+        yield 'a class for an alternation in a group a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>a|b))x(?&n)/', 'rewrite' => '/(?(DEFINE)(?<n>[ab]))x(?&n)/', 'letters' => 'abx'];
     }
 
     /**

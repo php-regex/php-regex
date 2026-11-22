@@ -170,8 +170,9 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
 
     /**
      * The check of the result runs the body of a group wherever a call runs
-     * it, and proves the possessive the rewrite offers there: the rewrite
-     * ships as first made, the possessive with the other rewrites.
+     * it, a group a DEFINE holds included, and proves the possessive the
+     * rewrite offers there: the rewrite ships as first made, the possessive
+     * with the other rewrites.
      *
      * @param list<string> $changes
      */
@@ -199,14 +200,20 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
         yield 'a call of a group named R' => ['pattern' => '/(?<R>a+b?)c(?&R)d/', 'optimized' => '/(?<R>a++b?)c(?&R)d/', 'changes' => [Rewriter::POSSESSIVE]];
         yield 'a call at the end of the pattern' => ['pattern' => '/(a+b?)c(?1)/', 'optimized' => '/(a++b?)c(?1)/', 'changes' => [Rewriter::POSSESSIVE]];
         yield 'a call beside another rewrite' => ['pattern' => '/(a+b?)c(?1)(?:d)/', 'optimized' => '/(a++b?)c(?1)d/', 'changes' => [Rewriter::POSSESSIVE, Rewriter::GROUP_REMOVED]];
+        // A group a DEFINE holds runs where a call runs it, and nowhere
+        // else.
+        yield 'a call of a group a DEFINE holds' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a call by number of a group a DEFINE holds' => ['pattern' => '/(?1)c(?(DEFINE)(a+b?))/', 'optimized' => '/(?1)c(?(DEFINE)(a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a call of a group a DEFINE holds, beside another rewrite' => ['pattern' => '/(?&n)c(?:d)(?(DEFINE)(?<n>a+b?))/', 'optimized' => '/(?&n)cd(?(DEFINE)(?<n>a++b?))/', 'changes' => [Rewriter::GROUP_REMOVED, Rewriter::POSSESSIVE]];
+        yield 'a call of a group a DEFINE holds, from another it holds' => ['pattern' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a+b?))/', 'optimized' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a group a DEFINE holds, never called' => ['pattern' => '/(?(DEFINE)(?<n>a+b?))a/', 'optimized' => '/(?(DEFINE)(?<n>a++b?))a/', 'changes' => [Rewriter::POSSESSIVE]];
     }
 
     /**
      * A call the check does not run in place leaves its proof to the
      * rewrite without the possessive step, though the possessive gives
-     * nothing back: a group that calls itself, a call of the whole pattern,
-     * and a call of a group a DEFINE holds, which the normal form the check
-     * reads leaves out.
+     * nothing back: a group that calls itself, a DEFINE holding it or not,
+     * and a call of the whole pattern.
      *
      * @param list<string> $changes
      */
@@ -229,8 +236,7 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
      */
     public static function provideGroupsTheCheckDoesNotRunWhereTheyAreCalled(): iterable
     {
-        yield 'a group a DEFINE holds' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>a++b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'changes' => []];
-        yield 'a group a DEFINE holds, beside another rewrite' => ['pattern' => '/(?&n)c(?:d)(?(DEFINE)(?<n>a+b?))/', 'possessive' => '/(?&n)cd(?(DEFINE)(?<n>a++b?))/', 'optimized' => '/(?&n)cd(?(DEFINE)(?<n>a+b?))/', 'changes' => [Rewriter::GROUP_REMOVED]];
+        yield 'a group a DEFINE holds calling itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
         yield 'a group calling itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'possessive' => '/(x(?1)?ca++b?)c/', 'optimized' => '/(x(?1)?ca+b?)c/', 'changes' => []];
         yield 'the whole pattern recursed' => ['pattern' => '/x(?R)?ca+b?()/', 'possessive' => '/x(?R)?ca++b?()/', 'optimized' => '/x(?R)?ca+b?()/', 'changes' => []];
     }

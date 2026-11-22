@@ -82,9 +82,10 @@ quantifiers are not proven is made again without them, and the other rewrites
 ship: the proof reads no possessive quantifier in a pattern that holds a
 lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
 `/\d+x(?!y)/`. A call of a group is read as the body of the group run where
-the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`; a recursive
-call and a call of a group a DEFINE holds are not, and leave the group
-greedy.
+the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
+DEFINE holds is read there under the options in force where the DEFINE stands:
+`/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
+recursive call is not, and leaves the group greedy.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

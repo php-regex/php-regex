@@ -45,7 +45,8 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * A call of a group runs the body of the group where the call stands: from
  * PCRE2 10.30 the engine backtracks into it, the groups inside it are given
  * back the values they held before it, and the body keeps the options it
- * was written under, as its form already does.
+ * was written under, as its form already does. A group a DEFINE holds runs
+ * nowhere else, yet takes its number and its name.
  *
  * @internal
  */
@@ -53,7 +54,7 @@ final class PriorityNfaBuilder
 {
     public const BACKREFERENCE_MESSAGE = 'Backreferences, subroutines, conditionals, callouts and control verbs carry match state the match solver cannot read.';
 
-    public const CALL_MESSAGE = 'A call that may run its own group again, of a group a DEFINE holds, or that returns groups is not one the match solver runs where it stands.';
+    public const CALL_MESSAGE = 'A call that may run its own group again, that returns groups, or whose group the match solver does not read is not one it runs where it stands.';
 
     public const LOOKAROUND_MESSAGE = 'Lookarounds look past the match, which the match solver does not read.';
 
@@ -97,8 +98,15 @@ final class PriorityNfaBuilder
     private NodeInterface $tree;
 
     /**
+     * @var list<Hir> what each DEFINE of the tree holds, which only a call
+     *                runs
+     */
+    private array $defined = [];
+
+    /**
      * The groups of the tree as PCRE numbers them, and the group of the
-     * form that starts at each offset: read once the build meets a call.
+     * form or of a DEFINE that starts at each offset: read once the build
+     * meets a call.
      *
      * @var array{GroupIndex, array<int, CaptureHir>}|null
      */
@@ -121,19 +129,28 @@ final class PriorityNfaBuilder
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
-     * @param NodeInterface $tree the tree the form was translated from, the
-     *                            pattern a RegexNode holds
+     * @param NodeInterface $tree    the tree the form was translated from, the
+     *                               pattern a RegexNode holds
+     * @param list<Hir>     $defined what each DEFINE of the tree holds, which
+     *                               the form leaves out, read under the
+     *                               options in force where it stands
      *
      * @throws ComplexityException
      */
-    public function build(Hir $hir, bool $unicode, NodeInterface $tree): PriorityNfa
+    public function build(Hir $hir, bool $unicode, NodeInterface $tree, array $defined): PriorityNfa
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
         $this->endAnchors = [];
         $this->form = $hir;
+        $this->defined = $defined;
         $this->tree = $tree;
         $this->groups = null;
+        // A group a DEFINE holds runs only where a call runs it, and writes
+        // nothing there, yet takes its number and its name.
+        foreach ($this->groupsIn($defined) as $group) {
+            $this->countGroup($group);
+        }
         $match = $this->add(PriorityNfa::MATCH);
         $this->nfa->start = $this->state($hir, $match);
         ksort($this->nfa->names);
@@ -194,8 +211,8 @@ final class PriorityNfaBuilder
 
     /**
      * The group the call runs, or null for a call of the whole pattern, of
-     * a group the form leaves out, as a DEFINE holds it, or one that
-     * returns groups, which writes them.
+     * a group neither the form nor its DEFINEs hold, as a condition holds
+     * it, or one that returns groups, which writes them.
      */
     private function calledGroup(SubroutineNode $call): ?CaptureHir
     {
@@ -215,17 +232,33 @@ final class PriorityNfaBuilder
     }
 
     /**
-     * The groups of the form, by the offset each starts at.
+     * The groups of the form and of its DEFINEs, by the offset each starts
+     * at.
      *
      * @return array<int, CaptureHir>
      */
     private function groupsByStart(): array
     {
         $groups = [];
-        $pending = [$this->form];
+        foreach ($this->groupsIn([$this->form, ...$this->defined]) as $group) {
+            $groups[$group->startPosition] = $group;
+        }
+
+        return $groups;
+    }
+
+    /**
+     * @param list<Hir> $forms
+     *
+     * @return list<CaptureHir>
+     */
+    private function groupsIn(array $forms): array
+    {
+        $groups = [];
+        $pending = $forms;
         while (null !== $node = array_pop($pending)) {
             if ($node instanceof CaptureHir) {
-                $groups[$node->startPosition] = $node;
+                $groups[] = $node;
             }
 
             array_push($pending, ...$node->children());
