@@ -722,10 +722,11 @@ final class PlaygroundLayoutTest extends TestCase
      * after the field's label counts the matches in sight, and says how
      * many of them the marks show when the sets were capped. Under the
      * field, a folded disclosure holds every match one by one — its text,
-     * where it sits, and each group's name or number, value and position —
-     * in sight once opened, and in reach of a screen reader the aria-hidden
-     * mirror cannot serve. Neither is live: the live line keeps to the
-     * count.
+     * where it sits, each group's name or number, value and position, and
+     * the mark the match left on a line of its own, since a mark is no
+     * group — in sight once opened, and in reach of a screen reader the
+     * aria-hidden mirror cannot serve. Neither is live: the live line keeps
+     * to the count.
      */
     #[Test]
     public function test_the_matches_are_counted_and_detailed_beside_the_text_field(): void
@@ -755,13 +756,17 @@ final class PlaygroundLayoutTest extends TestCase
         $this->assertStringContainsString("[0] === ''", $summary, 'An empty match is counted in words.');
         $this->assertStringContainsString("' of them empty'", $summary, 'Capped, the empty ones are counted among the underlined only, and say so.');
 
-        $item = self::between($script, 'function matchItem(set, i, subject, names) {', "\n  }\n");
+        $item = self::between($script, 'function matchItem(set, i, subject, names, mark) {', "\n  }\n");
         $this->assertStringContainsString('Array.from(subject.slice(0, whole[2])).length', $item, 'The driver gives UTF-16 offsets; the item counts characters, so "😀a" puts the a at 1.');
         $this->assertStringContainsString('Array.from(whole[0]).length', $item, 'Each item says where the match ends, in characters too.');
         $this->assertStringContainsString("names[key] ? names[key] + ' (#' + key + ')' : '#' + key", $item, 'A group reads by its name and its number, or by its number alone.');
         $this->assertStringContainsString('Array.from(subject.slice(0, capture[2])).length', $item, 'A group says where it sits, in characters.');
         $this->assertStringContainsString("text('dl', 'pg-groups')", $item, 'The groups of a match are listed under it.');
-        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(set, i, subject, names));', $marks);
+        $this->assertStringContainsString("text('p', 'pg-match-verb', 'mark: ')", $item, 'The mark the match left reads on a line of its own.');
+        $this->assertGreaterThan((int) strpos($item, "text('dl', 'pg-groups')"), (int) strpos($item, "'pg-match-verb'"), 'The mark reads after the groups, never as one of them.');
+        $this->assertStringContainsString('var verbMarks = matches.marks || [];', $marks, 'Each set\'s mark comes beside the sets, never inside one.');
+        $this->assertStringContainsString('el.subjectMatches.appendChild(matchItem(set, i, subject, names, verbMarks[i]));', $marks);
+        $this->assertStringContainsString("\n.pg-match-verb {", self::source(self::STYLESHEET));
         $this->assertStringContainsString('el.matchDetails.hidden = ', $marks, 'No match, no disclosure.');
 
         // A keystroke in either field makes the answer stale: the count, the

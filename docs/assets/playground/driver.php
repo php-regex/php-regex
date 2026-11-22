@@ -613,7 +613,8 @@ if (!\function_exists('phpregex_playground_run')) {
 
     /**
      * The engine's own answer: its compile message when the pattern does not
-     * compile, otherwise every match with its groups, offsets in both counts.
+     * compile, otherwise every match with its groups, offsets in both counts,
+     * and beside the sets, the mark each match left, or null.
      *
      * @return array{engineError: ?string, matches: ?array<string, mixed>, ms: float}
      */
@@ -645,25 +646,24 @@ if (!\function_exists('phpregex_playground_run')) {
             $sets = [];
         }
         $unitOf = phpregex_playground_unit_of($subject);
-        $names = [];
+        $names = null;
         $shown = [];
+        $marks = [];
         foreach ($sets as $set) {
-            if ([] === $names) {
-                $number = -1;
-                foreach (array_keys($set) as $key) {
-                    if (\is_string($key)) {
-                        $names[(string) ($number + 1)] = $key;
-                    } else {
-                        $number = $key;
-                    }
-                }
-            }
             if (\count($shown) >= PHPREGEX_PLAYGROUND_SETS_CAP) {
-                continue;
+                break;
             }
+            $keys = phpregex_playground_set_keys($set);
+            $names ??= $keys['names'];
+            $marks[] = $keys['mark'];
             $sparse = [];
-            foreach ($set as $key => [$text, $offset]) {
-                if (\is_string($key) || null === $text || -1 === $offset) {
+            foreach ($set as $key => $capture) {
+                // The names and the mark sit beside the numbers.
+                if (\is_string($key)) {
+                    continue;
+                }
+                [$text, $offset] = $capture;
+                if (null === $text || -1 === $offset) {
                     continue;
                 }
                 $sparse[(string) $key] = [$text, $offset, $unitOf[$offset]];
@@ -678,11 +678,51 @@ if (!\function_exists('phpregex_playground_run')) {
                 'error' => $error,
                 'shown' => \count($shown),
                 'cap' => PHPREGEX_PLAYGROUND_SETS_CAP,
-                'names' => (object) $names,
+                'names' => (object) ($names ?? []),
                 'sets' => $shown,
+                'marks' => $marks,
             ],
             'ms' => round((hrtime(true) - $started) / 1e6, 2),
         ];
+    }
+
+    /**
+     * What the string keys of one match set say: the group names, by
+     * number, and the mark the match left (the name of a (*MARK:z) it
+     * passed, or of a (*PRUNE), (*THEN) or (*COMMIT) given one), else null.
+     *
+     * PHP writes a group's name just before its number, and the mark, a
+     * string where a group is a pair, under "MARK" after the last group.
+     * Beside a group named MARK, PHP 8.5 writes that key twice, the group's
+     * pair and then the mark; the other releases write it once, the mark in
+     * the group's place. A name is therefore read from where it stands,
+     * whatever it holds: the key right before a number names that group.
+     *
+     * @param iterable<int|string, mixed> $set
+     *
+     * @return array{names: array<int, string>, mark: ?string}
+     */
+    function phpregex_playground_set_keys(iterable $set): array
+    {
+        $names = [];
+        $mark = null;
+        $name = null;
+        foreach ($set as $key => $value) {
+            if (\is_string($key)) {
+                $name = $key;
+                if ('MARK' === $key && \is_string($value)) {
+                    $mark = $value;
+                }
+
+                continue;
+            }
+            if (null !== $name) {
+                $names[(string) $key] = $name;
+                $name = null;
+            }
+        }
+
+        return ['names' => $names, 'mark' => $mark];
     }
 
     /**
@@ -1341,7 +1381,8 @@ if (!\function_exists('phpregex_playground_run')) {
      * One preg_match() without the JIT: matched (1, 0, or null when the engine
      * refused or gave up), the engine's message, and the first match's groups
      * as PHP writes them, by name and by number, a group that did not
-     * participate as null.
+     * participate as null. The mark the match left is no group, and is not
+     * among them.
      *
      * @return array{matched: ?int, error: ?string, groups: ?object}
      */
@@ -1382,7 +1423,12 @@ if (!\function_exists('phpregex_playground_run')) {
             return ['matched' => 0, 'error' => null, 'groups' => null];
         }
         $shape = [];
-        foreach ($groups as $key => [$text, $offset]) {
+        foreach ($groups as $key => $capture) {
+            // The mark the match left is a string under "MARK", no group.
+            if (!\is_array($capture)) {
+                continue;
+            }
+            [$text, $offset] = $capture;
             if (null === $text || -1 === $offset) {
                 $shape[(string) $key] = null;
 
