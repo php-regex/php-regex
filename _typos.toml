@@ -54,3 +54,5 @@ Symplify = "Symplify"
 VERSIONx = "VERSIONx"
 # The character class of the escapes \p, \P and \N.
 pPN = "pPN"
+# The PCRE2 opcode of a caseless character, which a comment names.
+OP_CHARI = "OP_CHARI"
