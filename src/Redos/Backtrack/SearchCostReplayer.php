@@ -31,10 +31,11 @@ use PHPRegex\Redos\ConfirmationOptions;
  * The witness replays when the search on it matches nowhere and an attempt
  * started further from the breaker takes at least one more step per run
  * word. The counter sees nothing inside an atomic or possessive repeat of a
- * single character set ("a++", "(?>a+)"): such a witness does not replay,
- * whatever it costs, and neither does a pattern that leaves no delimiter
- * for the counting verbs. A repeat of a longer word, "(?:ab)++" or
- * "(?>a+b)+", is counted. The subject holds 256 run words: a bounded repeat
+ * single character set ("a++", "(?>a+)"), and counts a repeat of a group,
+ * "(?:a)++" or "(?>a+b)+", at each pass: the search proof hands over the
+ * pattern with each such character in a group of its own, which changes no
+ * match. A pattern that leaves no delimiter for the counting verbs does not
+ * replay, whatever it costs. The subject holds 256 run words: a bounded repeat
  * above that would look unbounded to it, so the prover never brings a run
  * read through a bounded repeat it reads as unbounded.
  *

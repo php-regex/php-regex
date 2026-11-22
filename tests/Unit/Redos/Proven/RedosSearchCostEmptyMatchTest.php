@@ -55,6 +55,13 @@ use PHPUnit\Framework\TestCase;
  * bare pattern matches "" at 0. "(*NOTEMPTY_ATSTART)(?:a+\d)?" matches ""
  * at 1 in no time. "(*NOTEMPTY)a+\K" takes 29, 115 then 458 ms on 2 000,
  * 4 000 then 8 000 "a", where "a+\K" matches "" at the run's end at once.
+ * A run that gives nothing back reads the rest of the run all the same:
+ * "(*NOTEMPTY)a++\K" takes 1.0, 4.0 then 15.7 ms there, "(*NOTEMPTY)(?:a++\K)"
+ * 1.1, 4.0 then 15.9, "(*NOTEMPTY)(?>a+\K)" 1.1, 4.2 then 16.1,
+ * "(*NOTEMPTY)(?>a+)\K" 1.1, 4.1 then 16.0, and the atomic groups nested,
+ * "(*NOTEMPTY)(?>(?>a+)\K)" and "(*NOTEMPTY)(?>(?>a+\K))", 1.1, 4.1 then
+ * 15.9; "(*NOTEMPTY)(?>a+?\K)", whose attempts read one "a" each, 0.1, 0.2
+ * then 0.4 ms.
  */
 final class RedosSearchCostEmptyMatchTest extends TestCase
 {
@@ -151,6 +158,106 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
     }
 
     /**
+     * A possessive or atomic run of one character set reads what is left of
+     * the run in one go and gives nothing back: the attempt passes "\K" at
+     * the run's end, the match it reports there is empty and refused, and
+     * the attempt fails. The search is quadratic all the same, where the
+     * bare pattern matches "" at the run's end at once. The engine's step
+     * counter sees none of those reads, which leave no backtracking frame:
+     * the attempts take as many steps wherever they start. Read through a
+     * group of its own, "(?:a)++", each character is counted once, and the
+     * group changes no match: the replay counts the run that way, and
+     * confirms the witness. The model keeps an atomic body other than one
+     * run with every way through it: that witness is reported once the
+     * replay confirms it.
+     */
+    #[Test]
+    #[DataProvider('provideRunsGivingNothingBackBeforeKeep')]
+    public function test_search_cost_is_replayed_through_a_run_that_gives_nothing_back_before_keep(string $pattern, string $counted, string $run, bool $exact): void
+    {
+        $subject = str_repeat($run, 4 * self::QUARTER).'!';
+        foreach ([1, 2, 3, 100] as $words) {
+            $witness = str_repeat($run, $words).'!';
+            $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $witness), \sprintf('Oracle: %s matches %d run words.', $pattern, $words));
+            $this->assertSame(0, preg_match(PcreInterpreter::pattern($counted), $witness), \sprintf('Oracle: %s matches %d run words.', $counted, $words));
+        }
+
+        $bare = self::bare($pattern);
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern($bare), $subject, $matches), 'Oracle: '.$bare.' finds no match.');
+        $this->assertSame('', $matches[0], 'Oracle: '.$bare.' finds a non-empty match.');
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $steps = [];
+        foreach ([1, 2, 3] as $quarters) {
+            $steps[] = PcreAttemptSteps::steps($pinned, $subject, (4 - $quarters) * self::QUARTER * \strlen($run));
+        }
+        $this->assertSame([$steps[0], $steps[0], $steps[0]], $steps, 'Oracle: the step counter sees the run '.$pattern.' reads.');
+        $this->assertAttemptsGrowWithTheRestOfTheRun($counted, '', $run, '!');
+
+        $analyzer = new RedosAnalyzer();
+        $analysis = $analyzer->analyze($pattern);
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity], $pattern);
+
+        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
+        $this->assertSame([2, $run, true], [$confirmed->degree, $confirmed->run, $confirmed->replayed], $pattern);
+
+        $cost = $analysis->searchCost;
+        if (!$exact) {
+            $this->assertNull($cost, $pattern.' is reported before the engine replay.');
+
+            return;
+        }
+
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame([2, $run, null], [$cost->degree, $cost->run, $cost->replayed], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, counted: string, run: string, exact: bool}>
+     */
+    public static function provideRunsGivingNothingBackBeforeKeep(): iterable
+    {
+        yield '\K after a possessive run' => ['pattern' => '/(*NOTEMPTY)a++\K/', 'counted' => '/(*NOTEMPTY)(?:a)++\K/', 'run' => 'a', 'exact' => true];
+        yield '\K after a possessive run, in a group' => ['pattern' => '/(*NOTEMPTY)(?:a++\K)/', 'counted' => '/(*NOTEMPTY)(?:(?:a)++\K)/', 'run' => 'a', 'exact' => true];
+        yield '\K after a possessive run of a class' => ['pattern' => '/(*NOTEMPTY)[a-z]++\K/', 'counted' => '/(*NOTEMPTY)(?:[a-z])++\K/', 'run' => 'a', 'exact' => true];
+        yield '\K after a possessive counted run' => ['pattern' => '/(*NOTEMPTY)a{2,}+\K/', 'counted' => '/(*NOTEMPTY)(?:a){2,}+\K/', 'run' => 'a', 'exact' => true];
+        yield '\K after a possessive run under u' => ['pattern' => '/(*NOTEMPTY)é++\K/u', 'counted' => '/(*NOTEMPTY)(?:é)++\K/u', 'run' => 'é', 'exact' => true];
+        yield '\K after an atomic run' => ['pattern' => '/(*NOTEMPTY)(?>a+)\K/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+)\K/', 'run' => 'a', 'exact' => true];
+        yield '\K inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>a+\K)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K)/', 'run' => 'a', 'exact' => false];
+        yield '\K after an atomic run, inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+)\K)/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+)\K)/', 'run' => 'a', 'exact' => false];
+        yield '\K inside nested atomic groups' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+\K))/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+\K))/', 'run' => 'a', 'exact' => false];
+        yield '\K inside an atomic group, before another branch' => ['pattern' => '/(*NOTEMPTY)(?>a+\K|b)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K|b)/', 'run' => 'a', 'exact' => false];
+    }
+
+    /**
+     * A lazy run inside an atomic group commits to its first character:
+     * each attempt reads one "a", passes "\K", and the match it reports
+     * there is refused with nothing to give back. The search is linear, and
+     * though the model keeps the atomic body with every way through it, the
+     * replay, which counts each character read, does not confirm a witness:
+     * nothing is reported.
+     */
+    #[Test]
+    public function test_search_cost_is_not_reported_when_each_attempt_commits_to_one_character_before_keep(): void
+    {
+        $pattern = '/(*NOTEMPTY)(?>a+?\K)/';
+        $counted = '/(*NOTEMPTY)(?>(?:a)+?\K)/';
+        $subject = str_repeat('a', 4 * self::QUARTER).'!';
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the run.');
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($counted), $subject), 'Oracle: '.$counted.' matches the run.');
+        $pinned = PcreAttemptSteps::pinned($counted);
+        $steps = [];
+        foreach ([1, 2, 3] as $quarters) {
+            $steps[] = PcreAttemptSteps::steps($pinned, $subject, (4 - $quarters) * self::QUARTER);
+        }
+        $this->assertSame([$steps[0], $steps[0], $steps[0]], $steps, 'Oracle: the attempts of '.$counted.' read the rest of the run.');
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
+        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+    }
+
+    /**
      * An attempt at or right after the search start matches, an empty
      * match past the search start included under (*NOTEMPTY_ATSTART): the
      * search makes two attempts at most, and nothing is reported.
@@ -178,6 +285,8 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         yield 'empty branch, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?:|a+\d)/', 'run' => 'a', 'breaker' => '!'];
         yield 'star loop' => ['pattern' => '/(*NOTEMPTY)a*/', 'run' => 'a', 'breaker' => '!'];
         yield 'optional group with a one-character branch' => ['pattern' => '/(*NOTEMPTY)(?:a+\d|a)?/', 'run' => 'a', 'breaker' => '!'];
+        yield 'possessive run' => ['pattern' => '/(*NOTEMPTY)a++/', 'run' => 'a', 'breaker' => '!'];
+        yield 'atomic run' => ['pattern' => '/(*NOTEMPTY)(?>a+)/', 'run' => 'a', 'breaker' => '!'];
     }
 
     /**
@@ -215,6 +324,11 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         // The last iteration takes the empty branch: the "\K" of the one
         // before stands before the last character.
         yield '\K or nothing after each character' => ['pattern' => '/(*NOTEMPTY)(?:a(?:\K|))+/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K after a possessive run, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)a++\K/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K inside an atomic group, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?>a+\K)/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K inside nested atomic groups, empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?>(?>a+)\K)/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K after a possessive run, no option' => ['pattern' => '/a++\K/', 'run' => 'a', 'breaker' => '!'];
+        yield '\K inside an atomic group, no option' => ['pattern' => '/(?>a+\K)/', 'run' => 'a', 'breaker' => '!'];
     }
 
     /**

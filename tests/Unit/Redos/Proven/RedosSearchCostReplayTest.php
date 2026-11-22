@@ -22,6 +22,8 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\LibrarySource;
+use PHPRegex\Tests\Support\PcreAttemptSteps;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -112,14 +114,100 @@ final class RedosSearchCostReplayTest extends TestCase
     }
 
     /**
+     * A possessive or atomic repeat of one character set reads the run
+     * without a backtracking frame, so the step counter sees none of its
+     * reads: the attempts of the pattern as written take as many steps
+     * wherever they start. Each character read through a group of its own,
+     * "(?:a)++", is counted once, and the group changes no match: the replay
+     * counts the run that way and confirms the witness. The model keeps an
+     * atomic body other than one run with every way through it, so that
+     * witness is reported once the replay confirms it. Under u, PCRE2 reads
+     * a class of every character one character at a time: it is counted
+     * too.
+     *
+     * Oracle, pcre.jit=0, PHP 8.4.28, PCRE2 10.49, on the run word repeated
+     * 2k/4k/8k times then the breaker: /a++b/ 1.0 / 4.1 / 17.0 ms,
+     * /(?>a+)b/ 1.1 / 4.2 / 16.8 ms, /(?>a+|c)b/ 1.1 / 4.2 / 17.7 ms,
+     * /a[\s\S]*+b/u 17.0 / 65.6 / 254.9 ms, /(?>.*)[xy]/ 2.7 / 10.9 /
+     * 45.1 ms, /^\s++x/m 1.1 / 4.2 / 16.5 ms.
+     */
+    #[Test]
+    #[DataProvider('provideRunsGivingNothingBack')]
+    public function test_confirmed_mode_counts_the_reads_of_a_run_that_gives_nothing_back(string $pattern, string $counted, string $run, string $breaker, bool $exact): void
+    {
+        $subject = str_repeat($run, 1000).$breaker;
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the witness.');
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($counted), $subject), 'Oracle: '.$counted.' matches the witness.');
+        $steps = [];
+        $growth = [];
+        foreach ([750, 500, 250] as $words) {
+            $offset = (1000 - $words) * \strlen($run);
+            $steps[] = PcreAttemptSteps::steps(PcreAttemptSteps::pinned($pattern), $subject, $offset);
+            $growth[] = PcreAttemptSteps::steps(PcreAttemptSteps::pinned($counted), $subject, $offset);
+        }
+        $this->assertSame([$steps[0], $steps[0], $steps[0]], $steps, 'Oracle: the step counter sees the run '.$pattern.' reads.');
+        $this->assertGreaterThanOrEqual(250, $growth[0] - $growth[1], 'Oracle: the attempts of '.$counted.' do not grow with the rest of the run.');
+        $this->assertSame($growth[0] - $growth[1], $growth[1] - $growth[2], 'Oracle: the attempts of '.$counted.' are not linear in the rest of the run.');
+
+        $analyzer = new RedosAnalyzer();
+        $cost = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame([2, $run, true], [$cost->degree, $cost->run, $cost->replayed], $pattern);
+        $this->assertSame($exact, $analyzer->analyze($pattern)->searchCost instanceof RedosSearchCost, $pattern.' before the replay');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, counted: string, run: string, breaker: string, exact: bool}>
+     */
+    public static function provideRunsGivingNothingBack(): iterable
+    {
+        yield 'possessive loop' => ['pattern' => '/a++b/', 'counted' => '/(?:a)++b/', 'run' => 'a', 'breaker' => '!b', 'exact' => true];
+        yield 'atomic loop' => ['pattern' => '/(?>a+)b/', 'counted' => '/(?>(?:a)+)b/', 'run' => 'a', 'breaker' => '!b', 'exact' => true];
+        yield 'atomic loop before another branch' => ['pattern' => '/(?>a+|c)b/', 'counted' => '/(?>(?:a)+|c)b/', 'run' => 'a', 'breaker' => '!b', 'exact' => false];
+        yield 'possessive [\s\S]* under u' => ['pattern' => '/a[\s\S]*+b/u', 'counted' => '/a(?:[\s\S])*+b/u', 'run' => 'a', 'breaker' => 'b', 'exact' => true];
+        yield 'atomic dot-star without s' => ['pattern' => '/(?>.*)[xy]/', 'counted' => '/(?>(?:.)*)[xy]/', 'run' => '!', 'breaker' => '', 'exact' => true];
+        // Under m each line starts an attempt; without it only the first one
+        // reads the run.
+        yield 'possessive loop at line starts' => ['pattern' => '/^\s++x/m', 'counted' => '/^(?:\s)++x/m', 'run' => "\n", 'breaker' => '!x', 'exact' => true];
+    }
+
+    /**
+     * A possessive or atomic repeat of any character, which PCRE2 moves to
+     * the end of the subject in one step, is replayed as written: through a
+     * group, each character it skips would be counted. Here the atomic group
+     * commits to ".*+" at once, so no attempt reads the run of "a": 0.1 /
+     * 0.2 / 0.3 ms on "a"x2k/4k/8k."!b" (pcre.jit=0, PHP 8.4.28, PCRE2
+     * 10.49), and the attempts take as many steps with each "a" counted.
+     * The model keeps the atomic body with every way through it, and the
+     * replay confirms no witness: nothing is reported.
+     */
+    #[Test]
+    public function test_confirmed_mode_does_not_count_a_repeat_of_any_character_as_reads(): void
+    {
+        $pattern = '/(?>.*+|a+)b/s';
+        $counted = '/(?>.*+|(?:a)+)b/s';
+        $subject = str_repeat('a', 1000).'!b';
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the run.');
+        $steps = [];
+        foreach ([250, 500, 750] as $offset) {
+            $steps[] = PcreAttemptSteps::steps(PcreAttemptSteps::pinned($counted), $subject, $offset);
+        }
+        $this->assertSame([$steps[0], $steps[0], $steps[0]], $steps, 'Oracle: the attempts of '.$counted.' read the rest of the run.');
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
+        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+    }
+
+    /**
      * The model reads these witnesses exactly, so they stay reported when the
      * replay cannot count them: replayed false.
      *
-     * The step counter does not see inside a possessive loop: /a++b/ costs
-     * 6.1 / 23.8 ms on "a"x5k/10k."!b" with pcre.jit=0, yet 6 steps per
-     * attempt. The "_" delimiter and a body holding every other delimiter
-     * leave no place for the counting verbs (the pattern itself costs 23.8 /
-     * 94.2 ms on "a"x10k/20k, pcre.jit=0).
+     * The "_" delimiter and a body holding every other delimiter leave no
+     * place for the counting verbs (the pattern itself costs 23.8 / 94.2 ms
+     * on "a"x10k/20k, pcre.jit=0). A group cannot go where its "?", ":" or
+     * ")" is the delimiter: the possessive run is replayed as written there,
+     * and the step counter sees none of its reads.
      */
     #[Test]
     #[DataProvider('provideWitnessesTheReplayCannotCount')]
@@ -131,6 +219,11 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertSame(2, $cost->degree, $pattern);
         $this->assertFalse($cost->replayed, $pattern);
         $this->assertArrayNotHasKey('jit_linear', $cost->toArray(), $pattern);
+        if ('_' !== $pattern[0]) {
+            $subject = str_repeat('a', 1000).'!b';
+            $pinned = PcreAttemptSteps::pinned($pattern);
+            $this->assertSame(PcreAttemptSteps::steps($pinned, $subject, 250), PcreAttemptSteps::steps($pinned, $subject, 750), 'Oracle: the step counter sees the run '.$pattern.' reads.');
+        }
     }
 
     /**
@@ -138,8 +231,39 @@ final class RedosSearchCostReplayTest extends TestCase
      */
     public static function provideWitnessesTheReplayCannotCount(): iterable
     {
-        yield 'possessive loop' => ['pattern' => '/a++b/'];
         yield 'no place for the counting verbs' => ['pattern' => "_a+b|[\x01#~%!@;,)}>[]_"];
+        yield 'possessive loop, "?" as the delimiter' => ['pattern' => '?a++b?'];
+        yield 'possessive loop, ":" as the delimiter' => ['pattern' => ':a++b:'];
+    }
+
+    /**
+     * A repeat after "\E" repeats the last character "\Q" quoted, and a
+     * group put around it would be quoted too: the pattern is replayed as
+     * written. The step counter then counts a greedy repeat, which gives
+     * the run back, and sees none of the reads of a possessive one, which
+     * gives nothing back: the replay confirms the first witness alone.
+     */
+    #[Test]
+    #[DataProvider('provideQuotedRepeats')]
+    public function test_replay_keeps_a_quoted_repeat_as_written(string $pattern): void
+    {
+        $subject = str_repeat('a', 1000).'!b';
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the witness.');
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $counted = PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500) >= 250;
+
+        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame(['a', $counted], [$cost->run, $cost->replayed], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideQuotedRepeats(): iterable
+    {
+        yield 'greedy' => ['pattern' => '/\Qa\E+b/'];
+        yield 'possessive' => ['pattern' => '/\Qa\E++b/'];
     }
 
     /**
