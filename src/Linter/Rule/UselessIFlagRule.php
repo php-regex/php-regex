@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no case-sensitive
@@ -236,7 +237,7 @@ final class UselessIFlagRule extends AbstractLintRule
         if (!$this->unicodeMode) {
             // Another locale's tables may give a byte above ASCII a case.
             if (null !== $this->tables) {
-                foreach (str_split($value) as $byte) {
+                foreach (Bytes::split($value) as $byte) {
                     if ($this->codePointHasCase(\ord($byte))) {
                         return true;
                     }

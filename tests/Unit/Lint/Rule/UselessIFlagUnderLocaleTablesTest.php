@@ -105,6 +105,8 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
     {
         yield 'a byte they pair' => ['pattern' => '/\xE9/i', 'reported' => false];
         yield 'a byte they leave without a case' => ['pattern' => '/\xD7/i', 'reported' => true];
+        yield 'raw bytes, the second one they pair' => ['pattern' => "/\xD7\xE9/i", 'reported' => false];
+        yield 'raw bytes they leave without a case' => ['pattern' => "/\xD7\xF7/i", 'reported' => true];
         yield 'an ASCII sign they pair' => ['pattern' => '/\x7F/i', 'reported' => false];
         yield 'an ASCII sign they pair, under u' => ['pattern' => '/\x7F/iu', 'reported' => false];
         yield 'a Latin-1 letter under u, whose case Unicode gives' => ['pattern' => '/\x{E9}/iu', 'reported' => false];
