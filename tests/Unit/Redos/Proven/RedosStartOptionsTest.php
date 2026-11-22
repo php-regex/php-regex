@@ -15,7 +15,9 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
@@ -34,6 +36,9 @@ use PHPUnit\Framework\TestCase;
  * costs), (*BSR_ANYCRLF) and (*BSR_UNICODE) ("\R" is outside the model),
  * (*LF), the convention the model reads anyway, (*UTF) under u, and
  * (*CASELESS_RESTRICT) and (*TURKISH_CASING) where nothing is caseless.
+ * (*NOTEMPTY) changes one with "\K", which sets the start of the match the
+ * engine reports: a match that reads "(?:a|a)+" then "\K" is empty and
+ * refused, and the attempt gives back every way through the loop.
  * Another newline convention changes only the dot, "\N", the anchors that
  * read a newline and where a comment ends under x, which the parser reads
  * as PCRE does: the pattern keeps its verdict when it holds none of the
@@ -174,6 +179,63 @@ final class RedosStartOptionsTest extends TestCase
             yield $options.', an optional loop tried last' => ['options' => $options, 'shape' => '(?:(?:a|a)*b)??', 'unit' => 'a', 'complexity' => RedosComplexity::Exponential];
             yield $options.', a lazy loop' => ['options' => $options, 'shape' => '(?:a|ab)*?', 'unit' => 'ab', 'complexity' => RedosComplexity::Linear];
         }
+    }
+
+    /**
+     * Under (*NOTEMPTY) a match that reads nothing after its last "\K" is
+     * empty and refused: the attempt gives back every way through the loop
+     * before it, where the bare pattern matches at once. A character read
+     * after the last "\K" leaves the match non-empty, and under
+     * (*NOTEMPTY_ATSTART) the start "\K" sets past the search start is not
+     * the search start: those attempts succeed.
+     *
+     * When the attempt succeeds only once the loop gives a character back
+     * to read after "\K", the proof does not tell the loop from one a
+     * suffix makes fail, as with "^(?:a|a)+.": no verdict is proven, where
+     * the empty match it took to succeed at once used to prove it linear.
+     */
+    #[Test]
+    #[DataProvider('provideKeepUnderEmptyMatchRefusals')]
+    public function test_a_start_option_refusing_the_empty_match_refuses_the_match_keep_leaves_empty(string $options, string $shape, RedosComplexity $complexity, bool $proven): void
+    {
+        $pattern = '/'.$options.$shape.'/';
+        $bare = '/'.$shape.'/';
+        $this->assertSame($complexity, self::engineClass($pattern, 'a'), 'Oracle disagrees with the row '.$pattern);
+        $this->assertSame(RedosComplexity::Linear, self::engineClass($bare, 'a'), 'Oracle: '.$bare.' is not linear.');
+
+        $analyzer = new RedosAnalyzer();
+        $analysis = $analyzer->analyze($pattern);
+        $message = \sprintf('%s is "%s", the engine says %s', $pattern, $analysis->headline(), $complexity->value);
+        if ($proven) {
+            $this->assertSame([RedosProof::Proven, $complexity], [$analysis->proof, $analysis->complexity], $message);
+            if (RedosComplexity::Linear !== $complexity) {
+                $this->assertTrue($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->replayed, $pattern.': the engine does not replay the witness.');
+            }
+        } else {
+            $this->assertSame([RedosProof::Heuristic, RedosComplexity::Unknown], [$analysis->proof, $analysis->complexity], $message);
+        }
+
+        $bareAnalysis = $analyzer->analyze($bare);
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$bareAnalysis->proof, $bareAnalysis->complexity], $bare);
+    }
+
+    /**
+     * @return iterable<string, array{options: string, shape: string, complexity: RedosComplexity, proven: bool}>
+     */
+    public static function provideKeepUnderEmptyMatchRefusals(): iterable
+    {
+        yield '\K at the end' => ['options' => '(*NOTEMPTY)', 'shape' => '^(?:a|a)+\K', 'complexity' => RedosComplexity::Exponential, 'proven' => true];
+        yield '\K at the end, unanchored' => ['options' => '(*NOTEMPTY)', 'shape' => '(?:a|a)+\K', 'complexity' => RedosComplexity::Exponential, 'proven' => true];
+        yield '\K before an optional item' => ['options' => '(*NOTEMPTY)', 'shape' => '^(?:a|a)+\Kb?', 'complexity' => RedosComplexity::Exponential, 'proven' => true];
+        yield '\K before the loop' => ['options' => '(*NOTEMPTY)', 'shape' => '^\K(?:a|a)+', 'complexity' => RedosComplexity::Linear, 'proven' => true];
+        yield '\K at the end, empty match refused at the search start' => ['options' => '(*NOTEMPTY_ATSTART)', 'shape' => '^(?:a|a)+\K', 'complexity' => RedosComplexity::Linear, 'proven' => true];
+        // The character after "\K" reads the "!", or the last "a" once the
+        // loop gives it back.
+        yield 'a character read after \K' => ['options' => '(*NOTEMPTY)', 'shape' => '^(?:a|a)+\K.?', 'complexity' => RedosComplexity::Linear, 'proven' => false];
+        // The last iteration takes the branch without "\K" once the loop
+        // gives one back: the "\K" of the iteration before stands before the
+        // last character.
+        yield '\K in one branch of the loop' => ['options' => '(*NOTEMPTY)', 'shape' => '^(?:a\K|a)+', 'complexity' => RedosComplexity::Linear, 'proven' => false];
     }
 
     /**

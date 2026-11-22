@@ -248,7 +248,9 @@ final class PnfaBuilder
 
     /**
      * Whether every attempt refuses an empty match, "(*NOTEMPTY)": "\K" is
-     * then written as a state, since a match it leaves empty is refused.
+     * then written as a state in the pattern's own search, since a match it
+     * leaves empty is refused. In a lookaround it sets the start where the
+     * lookaround stands, and the lookaround holds: it reads nothing there.
      */
     private readonly bool $refusesEmpty;
 
@@ -392,7 +394,7 @@ final class PnfaBuilder
             $node instanceof QuantifierNode => $this->quantifier($node, $next, $flags, $pnfa, $search),
             $node instanceof LiteralNode => $this->literal($node, $next, $flags, $pnfa),
             $node instanceof AnchorNode, $node instanceof AssertionNode => $this->anchor($node, $next, $flags, $pnfa),
-            $this->refusesEmpty && $node instanceof KeepNode => $pnfa->keep($next),
+            $this->refusesEmpty && 0 === $search && $node instanceof KeepNode => $pnfa->keep($next),
             $node instanceof KeepNode, $node instanceof CommentNode => $next,
             // An option the pattern opens with, which reads nothing: no other
             // node ends inside their run.

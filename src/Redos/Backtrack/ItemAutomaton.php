@@ -164,17 +164,12 @@ final class ItemAutomaton
      * @param list<int> $startContexts the contexts the search's attempts start in
      * @param list<int> $held          the sub-searches whose lookaround is taken
      *                                 to hold: a success after one is counted
-     * @param bool      $refusesKept   whether a success right after "\K", with
-     *                                 nothing read after it, is left out: the
-     *                                 match it reports is empty, which
-     *                                 "(*NOTEMPTY)" refuses
      */
     public function __construct(
         public readonly Pnfa $pnfa,
         private readonly Budget $budget,
         array $startContexts,
         private readonly array $held = [],
-        private readonly bool $refusesKept = false,
     ) {
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
@@ -196,18 +191,6 @@ final class ItemAutomaton
         }
 
         $this->partition();
-    }
-
-    /**
-     * The automaton of the same search without the successes right after
-     * "\K", which "(*NOTEMPTY)" refuses; this one when the search holds no
-     * "\K" under that option.
-     *
-     * @throws ModelLimitException
-     */
-    public function refusingKept(): self
-    {
-        return $this->pnfa->holdsKeep ? new self($this->pnfa, $this->budget, array_column($this->initials, 'context'), $this->held, true) : $this;
     }
 
     /**
@@ -704,9 +687,10 @@ final class ItemAutomaton
                     break;
 
                 default:
-                    // Right after "\K" the match is empty: under "(*NOTEMPTY)"
-                    // the engine refuses that success and backtracks.
-                    if ($this->refusesKept && 0 !== ($edge & self::EDGE_KEEP)) {
+                    // Right after "\K" the match is empty: under "(*NOTEMPTY)",
+                    // the one option the search holds "\K" under, the engine
+                    // refuses that success and backtracks.
+                    if (0 !== ($edge & self::EDGE_KEEP)) {
                         break;
                     }
 

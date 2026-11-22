@@ -217,9 +217,7 @@ final class SearchCostProver
         };
 
         try {
-            // Under "(*NOTEMPTY)" a success right after "\K" is refused too:
-            // the search is read on the automaton without them.
-            $found = $this->witness($automaton->refusingKept(), $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
+            $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
         } catch (ModelLimitException) {
             return null;
         }
