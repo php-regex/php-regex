@@ -127,6 +127,13 @@ final class SearchCostProver
     private const EMPTY_REFUSED_LATER = 2;
 
     /**
+     * Each attempt starts a search of its own, as in the loop of the
+     * functions that look for every match, which calls the engine afresh
+     * at each offset: "\G" holds there.
+     */
+    private const EVERY_CALL = 4;
+
+    /**
      * The characters of "\h" and of "\v" (pcre2pattern, "Generic character
      * types"), whatever u.
      */
@@ -167,16 +174,46 @@ final class SearchCostProver
     public function find(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null, ?ConfirmationOptions $options = null): ?RedosSearchCost
     {
         try {
-            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime(), $options);
+            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime(), $options, false);
         } catch (ExceptionInterface) {
             return null;
         }
     }
 
-    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target, ?ConfirmationOptions $options): ?RedosSearchCost
+    /**
+     * The witness of a search quadratic only in the functions that look for
+     * every match (preg_match_all(), preg_replace(), preg_split(), ...),
+     * for the pattern whose own search find() gave none: the pattern
+     * matches the empty string inside the run, where preg_match() stops,
+     * and after each empty match PHP tries the same offset again with
+     * PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED, which reads what is left of
+     * the run then fails, before it moves one character on. Every offset
+     * the loop stops at starts a call of its own: "\G" and the A modifier
+     * hold at each, and so does a leading ".*", which PCRE2 tries at the
+     * offset it is given; "^" without m and "\A" hold at the subject's
+     * start alone. The retry runs in PCRE2's interpreter whatever
+     * pcre.jit, as the JIT takes no PCRE2_ANCHORED at match time. Under
+     * "(*NOTEMPTY)" no match is empty, and PHP never retries.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for; the
+     *                                running engine's when null
+     */
+    public function findEveryMatch(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null, ?ConfirmationOptions $options = null): ?RedosSearchCost
+    {
+        try {
+            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime(), $options, true);
+        } catch (ExceptionInterface) {
+            return null;
+        }
+    }
+
+    /**
+     * @param bool $everyMatch whether the witness is the one of the loop of every match
+     */
+    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target, ?ConfirmationOptions $options, bool $everyMatch): ?RedosSearchCost
     {
         $search = $proof->search;
-        if (null === $search || str_contains($regex->flags, 'A')) {
+        if (null === $search || (!$everyMatch && str_contains($regex->flags, 'A'))) {
             return null;
         }
 
@@ -200,7 +237,7 @@ final class SearchCostProver
         $lineEnds = CharSet::fromRanges(self::LINE_ENDS[[] === $startOptions ? 'LF' : StartOptions::newline($source)] ?? self::LINE_ENDS['LF']);
         $anchorsDotStar = !\in_array('NO_DOTSTAR_ANCHOR', $startOptions, true);
         $startsAtLines = $anchorsDotStar && !\in_array('NO_START_OPT', $startOptions, true);
-        $start = self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false, $anchorsDotStar, $startsAtLines ? $lineEnds : null);
+        $start = self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false, $anchorsDotStar, $startsAtLines ? $lineEnds : null, $everyMatch);
         if (null === $start || $start[0]) {
             return null;
         }
@@ -210,11 +247,16 @@ final class SearchCostProver
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
         // "(*NOTEMPTY)" refuses an empty match at every attempt,
         // "(*NOTEMPTY_ATSTART)" at the one at the search start.
+        // The retries of the loop of every match refuse it at each start.
         $refused = match (true) {
-            \in_array('NOTEMPTY', $startOptions, true) => self::EMPTY_REFUSED_AT_START | self::EMPTY_REFUSED_LATER,
+            \in_array('NOTEMPTY', $startOptions, true) => $everyMatch ? null : self::EMPTY_REFUSED_AT_START | self::EMPTY_REFUSED_LATER,
+            $everyMatch => self::EMPTY_REFUSED_AT_START | self::EMPTY_REFUSED_LATER | self::EVERY_CALL,
             \in_array('NOTEMPTY_ATSTART', $startOptions, true) => self::EMPTY_REFUSED_AT_START,
             default => 0,
         };
+        if (null === $refused) {
+            return null;
+        }
 
         try {
             $found = $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
@@ -222,7 +264,9 @@ final class SearchCostProver
             return null;
         }
 
-        if (null === $found) {
+        // preg_match() stops at an empty match inside the run, where the
+        // loop of every match retries: without one, every call pays the run.
+        if (null === $found || ($everyMatch && !self::matchesEmptyInside($automaton, $found['run']))) {
             return null;
         }
 
@@ -237,12 +281,16 @@ final class SearchCostProver
 
         // Replayed under the tables of the target's locale, as the pattern
         // runs there.
-        $pinnable = !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
+        // "\G" holds where a replay pins an attempt, as it does at each call
+        // of the loop of every match, never at a later attempt of a search.
+        $pinnable = $everyMatch || !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
         $replayed = null;
         $measured = true;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, &$replayed, &$measured): void {
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, $everyMatch, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
-                $replays = $this->replayer->replays($pattern, $prefix, $run, $breaker, $options);
+                $replays = $everyMatch
+                    ? $this->replayer->replaysEveryMatch($pattern, $prefix, $run, $breaker, $options)
+                    : $this->replayer->replays($pattern, $prefix, $run, $breaker, $options);
                 if (true === $replays) {
                     $replayed = $breaker;
 
@@ -312,17 +360,20 @@ final class SearchCostProver
      * @param bool                $anchorsDotStar whether PCRE2 ties a leading ".*" under s to the search start
      * @param CharSet|null        $lineEnds       the characters a line starts after, where PCRE2 starts a
      *                                            leading ".*" without s; null when it starts it anywhere
+     * @param bool                $everyCall      whether each attempt starts a call of its own, as in the
+     *                                            loop of every match: "\G" and a leading ".*" then tie
+     *                                            nothing, PCRE2 tries them at the offset it is given
      *
      * @return array{bool, bool}|null
      */
-    private static function start(NodeInterface $node, array $sets, bool $multiline, bool $unicode, bool $caseless, bool $atomic, bool $anchorsDotStar, ?CharSet $lineEnds): ?array
+    private static function start(NodeInterface $node, array $sets, bool $multiline, bool $unicode, bool $caseless, bool $atomic, bool $anchorsDotStar, ?CharSet $lineEnds, bool $everyCall = false): ?array
     {
         if ($node instanceof SequenceNode) {
             foreach ($node->children as $child) {
                 if (self::isOptionSetting($child)) {
                     $multiline = self::multilineUnder((string) $child->flags, $multiline);
                 } elseif (!$child instanceof CommentNode && !$child instanceof PcreVerbNode && !$child instanceof LimitMatchNode && !($child instanceof LiteralNode && '' === $child->value)) {
-                    return self::start($child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds);
+                    return self::start($child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds, $everyCall);
                 }
             }
 
@@ -333,7 +384,7 @@ final class SearchCostProver
             $anchored = true;
             $lineStart = true;
             foreach ($node->alternatives as $alternative) {
-                $start = self::start($alternative, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds);
+                $start = self::start($alternative, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds, $everyCall);
                 if (null === $start) {
                     return null;
                 }
@@ -350,9 +401,9 @@ final class SearchCostProver
 
         if ($node instanceof GroupNode) {
             return match ($node->type) {
-                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds),
-                GroupType::InlineFlags => self::start($node->child, $sets, self::multilineUnder((string) $node->flags, $multiline), $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds),
-                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true, $anchorsDotStar, $lineEnds),
+                GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset => self::start($node->child, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds, $everyCall),
+                GroupType::InlineFlags => self::start($node->child, $sets, self::multilineUnder((string) $node->flags, $multiline), $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds, $everyCall),
+                GroupType::Atomic => self::start($node->child, $sets, $multiline, $unicode, $caseless, true, $anchorsDotStar, $lineEnds, $everyCall),
                 default => [false, false],
             };
         }
@@ -361,7 +412,8 @@ final class SearchCostProver
             return match ($node->value) {
                 // "^" without m holds where a line starts too; "\A" and "\G" are no line start for PCRE2.
                 '^' => [!$multiline, true],
-                'A', 'G' => [true, false],
+                'A' => [true, false],
+                'G' => [!$everyCall, false],
                 default => [false, false],
             };
         }
@@ -372,13 +424,13 @@ final class SearchCostProver
 
         $bounds = $node->bounds;
         if (null !== $bounds && $bounds->min > 0) {
-            return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds);
+            return self::start($node->node, $sets, $multiline, $unicode, $caseless, $atomic, $anchorsDotStar, $lineEnds, $everyCall);
         }
 
         // A leading ".*": PCRE2 anchors it under s, and starts it after a
         // newline without s; inside an atomic group, or under
         // "(*NO_DOTSTAR_ANCHOR)", it does neither.
-        if ($atomic || !$anchorsDotStar || null === $bounds || null !== $bounds->max) {
+        if ($everyCall || $atomic || !$anchorsDotStar || null === $bounds || null !== $bounds->max) {
             return [false, false];
         }
 
@@ -655,7 +707,7 @@ final class SearchCostProver
                 continue;
             }
 
-            $later = self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $last)), $refused, self::EMPTY_REFUSED_LATER);
+            $later = self::later($automaton, $last, $refused);
             if (!$this->entersItself($automaton, $budget, $later, $word, $jumps)) {
                 continue;
             }
@@ -667,7 +719,7 @@ final class SearchCostProver
             foreach ($prefixes as $prefix) {
                 $first = [] === $prefix
                     ? self::attempt($automaton, $automaton->initials[0]['items'], $refused, self::EMPTY_REFUSED_AT_START)
-                    : self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])), $refused, self::EMPTY_REFUSED_LATER);
+                    : self::later($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]], $refused);
                 $after = $this->entersItself($automaton, $budget, $first, $word, $jumps) ? $this->runEnd($automaton, $prefix, $word, $refused) : null;
                 if (null === $after) {
                     continue;
@@ -1076,7 +1128,7 @@ final class SearchCostProver
     {
         $later = [];
         foreach ($word as $index => $class) {
-            $later[$index + 1 === \count($word) ? 0 : $index + 1] = self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$class])), $refused, self::EMPTY_REFUSED_LATER);
+            $later[$index + 1 === \count($word) ? 0 : $index + 1] = self::later($automaton, $automaton->representatives[$class], $refused);
         }
 
         $current = self::attempt($automaton, $automaton->initials[0]['items'], $refused, self::EMPTY_REFUSED_AT_START);
@@ -1088,7 +1140,7 @@ final class SearchCostProver
         }
 
         if ([] !== $prefix) {
-            $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]])), $refused, self::EMPTY_REFUSED_LATER);
+            $current += self::later($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]], $refused);
         }
 
         $seen = [];
@@ -1237,7 +1289,7 @@ final class SearchCostProver
         $previous = null;
         foreach ($breaker as $character) {
             if (null !== $previous) {
-                $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $previous)), $refused, self::EMPTY_REFUSED_LATER);
+                $current += self::later($automaton, $previous, $refused);
             }
 
             $current = $automaton->stepSet($current, $automaton->classOf($character));
@@ -1249,7 +1301,7 @@ final class SearchCostProver
         }
 
         if (null !== $previous) {
-            $current += self::attempt($automaton, $automaton->laterStart(self::contextOf($automaton, $previous)), $refused, self::EMPTY_REFUSED_LATER);
+            $current += self::later($automaton, $previous, $refused);
         }
 
         return !$automaton->acceptsAtEnd($current);
@@ -1267,6 +1319,49 @@ final class SearchCostProver
             $pnfa->hasLineStart && 0x0A === $character => ItemAutomaton::CONTEXT_NEWLINE,
             default => ItemAutomaton::CONTEXT_OTHER,
         };
+    }
+
+    /**
+     * The items of an attempt started after the character, as a set: a
+     * later attempt of the search, or the start of a call of its own in the
+     * loop of every match.
+     *
+     * @param int $refused the attempts that refuse an empty match, and whether each starts a call
+     *
+     * @throws ModelLimitException
+     *
+     * @return array<int, true>
+     */
+    private static function later(ItemAutomaton $automaton, int $character, int $refused): array
+    {
+        $context = self::contextOf($automaton, $character);
+        $items = 0 === ($refused & self::EVERY_CALL) ? $automaton->laterStart($context) : $automaton->searchStart($context);
+
+        return self::attempt($automaton, $items, $refused, self::EMPTY_REFUSED_LATER);
+    }
+
+    /**
+     * Whether an attempt started inside the run, after the run character
+     * before it, may succeed on the empty string before the run character
+     * after it, as a call of the loop of every match starts it: an empty
+     * match at the subject's end alone does not stop preg_match() before
+     * the run.
+     *
+     * @param list<int> $run characters
+     */
+    private static function matchesEmptyInside(ItemAutomaton $automaton, array $run): bool
+    {
+        foreach ($run as $index => $character) {
+            $before = $run[(0 === $index ? \count($run) : $index) - 1];
+            $class = $automaton->classOf($character);
+            foreach ($automaton->searchStart(self::contextOf($automaton, $before)) as $item) {
+                if ($automaton->isFinal($item) && $automaton->accepts($item, $class)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

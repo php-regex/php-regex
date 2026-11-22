@@ -48,12 +48,13 @@ final class RedosAnalysis implements \JsonSerializable
      * @param array<string>        $recommendations
      * @param array<Finding>       $findings
      * @param array<Hotspot>       $hotspots
-     * @param int|null             $degree           the degree of a polynomial verdict, 2 or more; null otherwise
-     * @param bool|null            $replayed         whether the witness made the running engine fail; null when no replay was attempted
-     * @param list<string>         $abstractions     what the model analysed differently from the pattern as written
-     * @param string|null          $pcreVersion      the PCRE2 release; the running one when null
-     * @param int|null             $upperBoundDegree the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
-     * @param RedosSearchCost|null $searchCost       the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
+     * @param int|null             $degree               the degree of a polynomial verdict, 2 or more; null otherwise
+     * @param bool|null            $replayed             whether the witness made the running engine fail; null when no replay was attempted
+     * @param list<string>         $abstractions         what the model analysed differently from the pattern as written
+     * @param string|null          $pcreVersion          the PCRE2 release; the running one when null
+     * @param int|null             $upperBoundDegree     the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
+     * @param RedosSearchCost|null $searchCost           the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
+     * @param RedosSearchCost|null $everyMatchSearchCost the witness of a search quadratic only in the functions that look for every match, through PHP's retry after an empty match, looked for only when one attempt is proven linear and $searchCost is null; null when none was found
      */
     public function __construct(
         public readonly RedosSeverity $severity,
@@ -80,6 +81,7 @@ final class RedosAnalysis implements \JsonSerializable
         public readonly string $analysisVersion = RedosAnalyzer::ANALYSIS_VERSION,
         public readonly ?int $upperBoundDegree = null,
         public readonly ?RedosSearchCost $searchCost = null,
+        public readonly ?RedosSearchCost $everyMatchSearchCost = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
         $this->phpVersion = \PHP_VERSION;
@@ -151,6 +153,7 @@ final class RedosAnalysis implements \JsonSerializable
             $this->analysisVersion,
             $this->upperBoundDegree,
             $this->searchCost,
+            $this->everyMatchSearchCost,
         );
     }
 
@@ -176,7 +179,8 @@ final class RedosAnalysis implements \JsonSerializable
     /**
      * The verdict of one match attempt in a few words, the same for every
      * consumer: whether it was proven, the class, or why there is none. The
-     * cost of the search that retries the attempt is $searchCost.
+     * cost of the search that retries the attempt is $searchCost, and that
+     * of the functions that look for every match $everyMatchSearchCost.
      */
     public function headline(): string
     {
@@ -238,7 +242,7 @@ final class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null, upper_bound_degree: int|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null, upper_bound_degree: int|null, every_match_search_cost: SearchCostArray|null}
      */
     public function jsonSerialize(): array
     {
@@ -268,6 +272,7 @@ final class RedosAnalysis implements \JsonSerializable
             'analysis_version' => $this->analysisVersion,
             'search_cost' => $this->searchCost?->toArray(),
             'upper_bound_degree' => $this->upperBoundDegree,
+            'every_match_search_cost' => $this->everyMatchSearchCost?->toArray(),
         ];
     }
 }

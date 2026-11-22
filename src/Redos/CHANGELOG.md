@@ -6,6 +6,17 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosAnalysis::$everyMatchSearchCost`, and `every_match_search_cost` in
+   its JSON: the search cost of the functions that look for every match.
+   After an empty match PHP tries the same offset again with
+   `PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED`, in PCRE2's interpreter whatever
+   `pcre.jit`, so a pattern that matches the empty string at each position
+   of a run and whose retry reads to its end, as `/(?:a+\d)?/`, `/(?:a+b)?/`
+   or `/\G(?:a+\d)?/`, costs `preg_match_all()` and its kin n² there, while
+   `preg_match()` stops at once: 2.3, 8.6, 34 and 131 ms on 2,000 to 16,000
+   `a` with `pcre.jit=0`. Looked for only when one attempt is proven linear
+   and `$searchCost` is null, which keeps its meaning; confirmed mode replays
+   the retry. Severity `medium`, hidden at the default `high` threshold.
  * The search cost reads the options that refuse an empty match. Under
    `(*NOTEMPTY)` no attempt ends on the empty string, so
    `/(*NOTEMPTY)(?:a+\d)?/`, which tries `a+\d` at every position of a run
