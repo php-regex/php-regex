@@ -551,10 +551,7 @@ final class CharSetAnalyzer
     {
         $set = ByteCharSet::empty();
         if (!$this->ownTables) {
-            if ($start <= 0x7F || !$this->utf && !$this->unicodeMode) {
-                $set = $this->casesInTables($start, $this->utf || $this->unicodeMode ? min($end, 0x7F) : $end);
-            }
-
+            $set = $this->casesInTables($start, $this->utf || $this->unicodeMode ? min($end, 0x7F) : $end);
             if ($set->isUnknown()) {
                 return $set;
             }
@@ -622,16 +619,21 @@ final class CharSetAnalyzer
 
     /**
      * The other case of each character from $start to $end, a byte or an
-     * ASCII character, as another locale's tables give it. Under UTF the
-     * case of an ASCII character is a code point to a class, and a byte to
-     * the interpreter, which compares the first byte of a character with
-     * it: the set holds both. Not known where the tables are not, where the
-     * engine's paths or its releases read a case otherwise, under Turkish
-     * casing, which reads "i" and "I" apart from the tables, and in ASCII
-     * alone, where a case above it has no place.
+     * ASCII character, as another locale's tables give it: none where the
+     * range holds no such character. Under UTF the case of an ASCII
+     * character is a code point to a class, and a byte to the interpreter,
+     * which compares the first byte of a character with it: the set holds
+     * both. Not known where the tables are not, where the engine's paths or
+     * its releases read a case otherwise, under Turkish casing, which reads
+     * "i" and "I" apart from the tables, and in ASCII alone, where a case
+     * above it has no place.
      */
     private function casesInTables(int $start, int $end): ByteCharSet
     {
+        if ($start > $end) {
+            return ByteCharSet::empty();
+        }
+
         if (null === $this->tables || $this->turkish || !$this->readsAboveAscii) {
             return ByteCharSet::unknown();
         }

@@ -26,6 +26,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,6 +37,11 @@ final class CharSetAnalyzerTest extends TestCase
 {
     use InstalledLocales;
     use PcreGates;
+
+    /**
+     * The locale of the tables a test gives.
+     */
+    private const GIVEN = 'xx_XX.GIVEN';
 
     #[Test]
     public function test_empty_literal_returns_empty_charset(): void
@@ -768,6 +774,98 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * Under tables a test gives, as no machine here builds them, the sets
+     * read each case where pcre2_compile_class.c and pcre2_match.c put it.
+     * Without UTF a case is a byte. Under UTF or UCP the tables give the
+     * case of an ASCII character alone, Unicode that of the others: a class
+     * holds the code point the tables give, which under UTF is known by the
+     * byte it starts with, while the interpreter compares the first byte of
+     * a character with it, and the set holds both. A byte the interpreter
+     * or a release reads otherwise is not known, and nor is an ASCII
+     * character under Turkish casing, which reads "i" and "I" apart from
+     * the tables. The tables pair "i" with 0xDD and "I" with 0xFD as glibc
+     * does under tr_TR.ISO-8859-9, 0xF2 with 0xD3 as Greek's final sigma,
+     * 0xE9 with 0xC9, and, at the bounds of ASCII, "x" with 0x7F and "q"
+     * with 0x80; 0xB5 is read otherwise by the interpreter, and 0xFF by
+     * the tables before 10.43.
+     *
+     * @param list<array{0: int, 1: int}>|null $ranges the bytes of the set, null where it is not known
+     */
+    #[Test]
+    #[DataProvider('provideReadsUnderGivenTables')]
+    public function test_read_under_given_tables_a_caseless_item_takes_the_cases_they_give(string $pattern, ?array $ranges): void
+    {
+        self::giveTables();
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, self::GIVEN);
+        $set = $analyzer->firstChars($node);
+
+        if (null === $ranges) {
+            $this->assertTrue($set->isUnknown(), $pattern);
+
+            return;
+        }
+
+        $this->assertSame($ranges, $set->ranges(), $pattern);
+        $this->assertSame($ranges, $analyzer->lastChars($node)->ranges(), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ranges: list<array{0: int, 1: int}>|null}>
+     */
+    public static function provideReadsUnderGivenTables(): iterable
+    {
+        yield 'an ASCII letter paired as in ASCII' => ['pattern' => '/a/i', 'ranges' => [[0x41, 0x41], [0x61, 0x61]]];
+        yield 'an ASCII letter paired with a byte above ASCII' => ['pattern' => '/i/i', 'ranges' => [[0x69, 0x69], [0xDD, 0xDD]]];
+        yield 'the capital of another pair' => ['pattern' => '/I/i', 'ranges' => [[0x49, 0x49], [0xFD, 0xFD]]];
+        yield 'a byte paired with an ASCII letter' => ['pattern' => '/\xDD/i', 'ranges' => [[0x69, 0x69], [0xDD, 0xDD]]];
+        yield 'a byte paired with another' => ['pattern' => '/\xF2/i', 'ranges' => [[0xD3, 0xD3], [0xF2, 0xF2]]];
+        yield 'a range above ASCII' => ['pattern' => '/[\xC0-\xDE]/i', 'ranges' => [[0x69, 0x69], [0xC0, 0xDE], [0xE9, 0xE9], [0xF3, 0xF3]]];
+        yield 'a negated ASCII letter' => ['pattern' => '/[^i]/i', 'ranges' => [[0x00, 0x68], [0x6A, 0xDC], [0xDE, 0xFF]]];
+        yield 'the last ASCII character' => ['pattern' => '/x/i', 'ranges' => [[0x78, 0x78], [0x7F, 0x7F]]];
+        yield 'the first byte above ASCII' => ['pattern' => '/q/i', 'ranges' => [[0x71, 0x71], [0x80, 0x80]]];
+        yield 'a byte the interpreter reads otherwise' => ['pattern' => '/\xB5/i', 'ranges' => null];
+        yield 'a byte a release reads otherwise' => ['pattern' => '/\xFF/i', 'ranges' => null];
+        yield 'a range that holds one' => ['pattern' => '/[\xF0-\xFF]/i', 'ranges' => null];
+        yield 'an ASCII letter under UCP' => ['pattern' => '/(*UCP)i/i', 'ranges' => [[0x69, 0x69], [0xDD, 0xDD]]];
+        yield 'a byte above ASCII under UCP, which Unicode pairs' => ['pattern' => '/(*UCP)\xF2/i', 'ranges' => [[0xD2, 0xD2], [0xF2, 0xF2]]];
+        yield 'a range across the bound of ASCII under UCP' => ['pattern' => '/(*UCP)[\x7F-\x80]/i', 'ranges' => [[0x78, 0x78], [0x7F, 0x80]]];
+        yield 'an ASCII letter under u' => ['pattern' => '/i/iu', 'ranges' => [[0x69, 0x69], [0xC3, 0xC3], [0xDD, 0xDD]]];
+        yield 'an ASCII letter paired with the first byte above ASCII under u' => ['pattern' => '/q/iu', 'ranges' => [[0x71, 0x71], [0x80, 0x80], [0xC2, 0xC2]]];
+        yield 'the last ASCII character under u' => ['pattern' => '/\x7F/iu', 'ranges' => [[0x78, 0x78], [0x7F, 0x7F]]];
+        yield 'an ASCII letter paired with the last ASCII character under u' => ['pattern' => '/x/iu', 'ranges' => [[0x78, 0x78], [0x7F, 0x7F]]];
+        yield 'a range across the bound of ASCII under u' => ['pattern' => '/[\x7F-\x{80}]/iu', 'ranges' => [[0x78, 0x78], [0x7F, 0xFF]]];
+        yield 'a letter above ASCII under u' => ['pattern' => '/é/iu', 'ranges' => [[0x80, 0xFF]]];
+        yield 'a byte the interpreter reads otherwise, a character under u' => ['pattern' => '/\xB5/iu', 'ranges' => [[0x80, 0xFF]]];
+        yield 'an ASCII letter under Turkish casing' => ['pattern' => '/(*TURKISH_CASING)a/iu', 'ranges' => null];
+        yield 'a letter above ASCII under Turkish casing' => ['pattern' => '/(*TURKISH_CASING)é/iu', 'ranges' => [[0x80, 0xFF]]];
+    }
+
+    /**
+     * Where the tables are not known, the locale not named or one the
+     * machine cannot set, a case is not known; nor is it in ASCII alone,
+     * where a case above ASCII has no place, under tables a test gives.
+     */
+    #[Test]
+    public function test_read_where_the_tables_are_not_known_a_case_is_not_known(): void
+    {
+        foreach ([null, 'xx_YY.NOWHERE'] as $locale) {
+            foreach (['/a/i', "/\xC9/i", '/[^a]/i', '/a/iu', '/(*UCP)a/i'] as $pattern) {
+                [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
+                $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
+            }
+
+            // A character above ASCII under u takes Unicode's case all the same.
+            [$analyzer, $node] = self::atomUnderAnotherLocalesTables('/é/iu', $locale);
+            $this->assertSame([[0x80, 0xFF]], $analyzer->firstChars($node)->ranges());
+        }
+
+        self::giveTables();
+        $regex = RegexParser::create(['cache' => null])->parse('/a/i');
+        $this->assertTrue((new CharSetAnalyzer('i', '', false, locale: self::GIVEN))->firstChars($regex->pattern)->isUnknown());
+        $this->assertSame([[0x41, 0x41], [0x61, 0x61]], (new CharSetAnalyzer('i', '', true, locale: self::GIVEN))->firstChars($regex->pattern)->ranges());
+    }
+
+    /**
      * An option setting holds for the items after it, read from either end
      * of the sequence, and in ASCII as above it: in "(?i)a(?-i)b" the "a"
      * takes "A" and the "b" does not take "B".
@@ -901,6 +999,25 @@ final class CharSetAnalyzerTest extends TestCase
         $end = (int) strrpos($pattern, $pattern[0]);
 
         return $pattern[0].'^(?:'.substr($pattern, 1, $end - 1).')$'.substr($pattern, $end);
+    }
+
+    /**
+     * Gives the tables of GIVEN: ASCII's cases but for "i", paired with
+     * 0xDD, "I" with 0xFD, "x" with 0x7F and "q" with 0x80, and 0xE9 with
+     * 0xC9, 0xF2 with 0xD3, 0xD3 with 0xF3; 0xB5 read otherwise by the
+     * interpreter, 0xFF by the tables before 10.43.
+     */
+    private static function giveTables(): void
+    {
+        $others = [0x69 => 0xDD, 0xDD => 0x69, 0x49 => 0xFD, 0xFD => 0x49, 0x78 => 0x7F, 0x7F => 0x78, 0x71 => 0x80, 0x80 => 0x71, 0xE9 => 0xC9, 0xC9 => 0xE9, 0xF2 => 0xD3, 0xD3 => 0xF3, 0xF3 => 0xD3];
+        $cases = '';
+        for ($byte = 0; $byte < 256; $byte++) {
+            $cases .= \chr($others[$byte] ?? (Ascii::isAlpha(\chr($byte)) ? $byte ^ 0x20 : $byte));
+        }
+
+        $before = $cases;
+        $before[0xFF] = 'x';
+        CharacterTables::useTables(self::GIVEN, $cases, [0xB5], $before);
     }
 
     /**

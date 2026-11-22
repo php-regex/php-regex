@@ -143,6 +143,37 @@ final class CharacterTablesTest extends TestCase
         }
     }
 
+    /**
+     * Tables a test gives stand for their locale, as a machine that cannot
+     * set it would read them: the other case of a byte is settled, but for
+     * a byte the interpreter reads otherwise and one the tables of either
+     * side of 10.43 hold apart.
+     */
+    #[Test]
+    public function test_given_tables_settle_a_case_neither_the_interpreter_nor_a_release_reads_otherwise(): void
+    {
+        $from1043 = self::cases([0xE9 => 0xC9, 0xC9 => 0xE9, 0x49 => 0x69, 0x69 => 0x49, 0xDD => 0x69]);
+        CharacterTables::useTables('xx_XX.GIVEN', $from1043, [0xDD], self::cases([0xE9 => 0xC9, 0xC9 => 0xE9, 0x49 => 0x69, 0x69 => 0x49, 0xDD => 0x69, 0xFF => 0x78]));
+        $tables = CharacterTables::forLocale('xx_XX.GIVEN');
+
+        $this->assertSame('xx_XX.GIVEN', $tables->locale);
+        $this->assertSame(0xC9, $tables->settledOtherCase(0xE9));
+        $this->assertSame(0xE9, $tables->settledOtherCase(0xC9));
+        $this->assertSame(0x49, $tables->settledOtherCase(0x69));
+        $this->assertSame(0x31, $tables->settledOtherCase(0x31));
+        $this->assertNull($tables->settledOtherCase(0xDD));
+        $this->assertNull($tables->settledOtherCase(0xFF));
+        $this->assertSame(0x78, $tables->otherCase(0xFF, new PcreTarget(80400, '10.42', 'C')));
+        $this->assertSame(0xFF, $tables->otherCase(0xFF, new PcreTarget(80400, '10.43', 'C')));
+
+        // Given one table alone, both sides of 10.43 read it.
+        CharacterTables::useTables('xx_XX.GIVEN', $from1043);
+        $tables = CharacterTables::forLocale('xx_XX.GIVEN');
+        $this->assertSame(0xFF, $tables->settledOtherCase(0xFF));
+        $this->assertSame(0x69, $tables->settledOtherCase(0xDD));
+        $this->assertSame(0x69, $tables->otherCase(0xDD, new PcreTarget(80400, '10.42', 'C')));
+    }
+
     #[Test]
     public function test_a_latin9_locale_reads_the_tables_its_c_library_gives(): void
     {
@@ -303,6 +334,22 @@ final class CharacterTablesTest extends TestCase
         $this->assertSame('fr_FR.ISO8859-15', PcreTarget::runtime()->locale);
         $this->assertSame(0xA8, CharacterTables::forLocale(CharacterTables::current())->otherCase(0xA6, PcreTarget::runtime()));
         $this->assertSame('fr_FR.ISO8859-15', setlocale(\LC_CTYPE, '0'));
+    }
+
+    /**
+     * The other case of each byte, one byte each: the byte itself but for
+     * those given.
+     *
+     * @param array<int, int> $others
+     */
+    private static function cases(array $others): string
+    {
+        $cases = '';
+        for ($byte = 0; $byte < 256; $byte++) {
+            $cases .= \chr($others[$byte] ?? $byte);
+        }
+
+        return $cases;
     }
 
     /**
