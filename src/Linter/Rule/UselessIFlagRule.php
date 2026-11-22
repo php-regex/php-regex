@@ -26,8 +26,10 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
+use PHPRegex\Parser\Validation\OtherCases;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no case-sensitive
@@ -57,6 +59,18 @@ final class UselessIFlagRule extends AbstractLintRule
      */
     private ?CharacterTables $tables = null;
 
+    /**
+     * The PHP, PCRE2 and locale the pattern is read for.
+     */
+    private PcreTarget $target;
+
+    /**
+     * The other case PCRE2's Unicode tables of the target's release give
+     * each character, read at the first character past ASCII under UTF:
+     * null until then.
+     */
+    private ?OtherCases $otherCases = null;
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -81,6 +95,8 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->unicodeMode = $context->pattern->unicodeMode;
         // The target read the tables of its locale when it was made.
         $this->tables = CharacterTables::BUILT_IN === $context->target->locale ? null : CharacterTables::forLocale($context->target->locale);
+        $this->target = $context->target;
+        $this->otherCases = null;
     }
 
     public function check(NodeInterface $node, LintContext $context): array
@@ -205,7 +221,13 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        return $this->codePointHasCase($start) || $this->codePointHasCase($end);
+        // Under UTF every character of the range is read from PCRE2's
+        // tables, not its ends alone: "[×-÷]" holds Ø to ö. mbstring reads
+        // the ends, as it reads a character on its own: past an end, the
+        // long s and the Kelvin sign come with "ž" and "Å", which the
+        // tables give another case.
+        return $this->tablesGiveCase($min, $max)
+            || self::mapsToAnotherCase($start) || self::mapsToAnotherCase($end);
     }
 
     /**
@@ -298,6 +320,36 @@ final class UselessIFlagRule extends AbstractLintRule
                 || ($codePoint >= \ord('a') && $codePoint <= \ord('z'));
         }
 
+        return $this->tablesGiveCase($codePoint, $codePoint) || self::mapsToAnotherCase($codePoint);
+    }
+
+    /**
+     * Whether PCRE2's own Unicode tables of the target's release give a
+     * character from $low to $high another case: U+A7CE has one from
+     * 10.48, which the mbstring of PHP 8.4 does not give it. They are not
+     * read for ASCII alone, where they give the letters alone a case, which
+     * the checks read without them.
+     */
+    private function tablesGiveCase(int $low, int $high): bool
+    {
+        if ($high < 0x80) {
+            return false;
+        }
+
+        $this->otherCases ??= OtherCases::of($this->target);
+
+        return [] !== $this->otherCases->between($low, $high);
+    }
+
+    /**
+     * Whether mbstring maps the character to another case, by a full
+     * mapping too: "ŉ" to "ʼN", which PCRE2 does not fold. It maps the long
+     * s and the Kelvin sign, which PCRE2 folds with "s" and "k" though its
+     * tables give them no other case from 10.43, and "İ" and "ı", which it
+     * folds with "i" and "I" under Turkish rules.
+     */
+    private static function mapsToAnotherCase(int $codePoint): bool
+    {
         $char = mb_chr($codePoint, 'UTF-8');
         if (false === $char) {
             return false;

@@ -315,13 +315,14 @@ running PHP and is refused with a target that is not that engine.
 
 #### Verdicts that depend on the running PHP
 
-Case folding is not read from PCRE2, but for the size of a pattern, which
-the other cases of the target's Unicode tables decide. Where another verdict
-needs a character's other case under `iu`, it asks the running PHP's
-mbstring, whose Unicode tables ship with the PHP release, not with the
-target's PCRE2:
+Case folding is not read from PCRE2, but for the size of a pattern and for
+`regex.lint.flag.useless.i`, which the other cases of the target's Unicode
+tables decide. Where another verdict needs a character's other case under
+`iu`, it asks the running PHP's mbstring, whose Unicode tables ship with the
+PHP release, not with the target's PCRE2:
 
-- `regex.lint.flag.useless.i`: whether a letter has another case at all;
+- `regex.lint.flag.useless.i`, besides the target's tables: a character
+  mbstring gives another case keeps the flag, though the tables give it none;
 - `regex.lint.alternation.overlap`: two branches compared caseless under `u`;
 - the ReDoS search-cost witness (`search_cost`): the other case a class may
   read under `iu`;
