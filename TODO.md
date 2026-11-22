@@ -148,6 +148,11 @@ request goes to `phpstan/phpstan-src`.
 
 ## Linter precision
 
+- `regex.lint.flag.useless.i` reads only the ends of a range under u: it
+  calls the flag of `/[×-÷]/iu` useless, though that range holds Ø to ö
+  and matches `ø` only with i (PHP 8.4.28, PCRE2 10.49, under C), so
+  dropping the flag changes the match. Read the characters between the
+  ends, or keep the flag for a range too wide to read.
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. The fix
   is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
