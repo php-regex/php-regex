@@ -86,6 +86,11 @@ final class Pnfa
     public const CONTINUATION = 10;
 
     /**
+     * "\K": goes on, the reported match starting where it stands.
+     */
+    public const KEEP = 11;
+
+    /**
      * @var list<int>
      */
     public array $kinds = [];
@@ -186,6 +191,12 @@ final class Pnfa
      * not end with a newline is read exactly.
      */
     public bool $readsFinalNewline = false;
+
+    /**
+     * Whether the search holds "\K" as a state, which it does under
+     * "(*NOTEMPTY)" alone.
+     */
+    public bool $holdsKeep = false;
 
     /**
      * @param int|null $parent     the search this one is a lookaround of, and the
@@ -348,6 +359,15 @@ final class Pnfa
     {
         $this->looksBehindStart = true;
         $state = $this->add(self::CONTINUATION);
+        $this->next[$state] = $next;
+
+        return $state;
+    }
+
+    public function keep(int $next): int
+    {
+        $this->holdsKeep = true;
+        $state = $this->add(self::KEEP);
         $this->next[$state] = $next;
 
         return $state;
