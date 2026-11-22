@@ -15,18 +15,8 @@
   search grows with the square of the subject, such as `(?:a+\d)?`, gets
   no search-cost finding behind it, though each attempt is judged right.
 
-## Playground on PHP 8.6
+## Playground
 
-- Offer PHP 8.6 in the playground and the Run buttons. php-wasm 0.2.0
-  stops at 8.5.2 and its Makefile refuses 8.6, so the engine is built from
-  php-wasm's v0.2.0 sources with 8.6.0 added (its php-src patch ported:
-  six files moved, `zend_free_internal_arg_info()` takes a second
-  argument), with mbstring, and served from `docs/` beside a manifest of
-  sha256s. 8.6 cannot be stood in by 8.5: it refuses `\C` under u, keys
-  MARK once and fixes `preg_grep()`. #428 serves it: merge it once its
-  engine job, the first rebuild on a native amd64 runner, matches the
-  manifest, then remove the local builder image
-  (`phpregex/php-wasm-builder:v0.2.0-emsdk-6.0.6`, 4.25 GB).
 - The playground's driver (`docs/assets/playground/driver.php`) reads the
   `MARK` key PHP adds for `(*MARK)` as a group: on `/(a)(*MARK:z)b/` its
   names give group 2 the name `MARK`, and its match shows the mark as a
