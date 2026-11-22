@@ -925,10 +925,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * The text with its letters in one case, as PCRE folds them: every
      * letter under u; without it the ASCII ones under PCRE2's own tables,
      * and under another locale's each byte those tables pair with another
-     * both ways, on every path of the engine: "\xC9" with "\xE9" under
-     * fr_FR.ISO8859-1. A byte paired one way alone, Greek's final sigma
-     * with the capital whose other case is the small sigma, stays itself,
-     * so that two texts that fold alike always match a text in common.
+     * both ways, as the target's release reads them and the JIT compares
+     * them: "\xC9" with "\xE9" under fr_FR.ISO8859-1. A byte paired one way
+     * alone, Greek's final sigma with the capital whose other case is the
+     * small sigma, stays itself, so that two texts that fold alike always
+     * match a text in common.
      */
     private static function fold(string $text, LintContext $context): string
     {
@@ -946,8 +947,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $folded = $text;
         for ($at = 0, $length = \strlen($text); $at < $length; $at++) {
             $byte = \ord($text[$at]);
-            $other = $tables->settledOtherCase($byte);
-            if (null !== $other && $byte === $tables->settledOtherCase($other)) {
+            $other = $tables->otherCase($byte, $context->target);
+            if ($byte === $tables->otherCase($other, $context->target)) {
                 $folded[$at] = \chr(min($byte, $other));
             }
         }

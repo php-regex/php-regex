@@ -32,13 +32,17 @@ use PHPUnit\Framework\TestCase;
  * stay apart. Branches that start with something else than literal text,
  * an escape among them, are still compared by their characters, and the
  * texts they start with fold the same way. A byte joins its other case
- * only where each is the other's, on every path of the engine: Greek's
- * final sigma 0xF2 matches the capital 0xD3, whose other case is 0xF3.
+ * where each is the other's, as the tables of the target's release pair
+ * them and the JIT reads them, even where the interpreter matches a third
+ * byte as well: "i" with "I" under tr_TR.ISO8859-9 on macOS, where
+ * "/(?:ix|Ix)+/i" is reported. Greek's final sigma 0xF2 matches the
+ * capital 0xD3, whose other case is 0xF3: the sigma keeps its own case.
  *
  * Engine: PHP 8.4.28 / PCRE2 10.49 on macOS, with and without the JIT:
  * preg_match("/^\xC9x$/i", "\xE9x") is 1 under fr_FR.ISO8859-1 and 0 under
  * C; under el_GR.ISO8859-7 preg_match("/^(?i:\xD3)$/", "\xF2") is 0 and
- * preg_match("/^\xF2$/i", "\xD3") 1 on the JIT, 0 on the interpreter.
+ * preg_match("/^\xF2$/i", "\xD3") 1 on the JIT, 0 on the interpreter;
+ * under tr_TR.ISO8859-9 preg_match('/^i$/i', 'I') is 1 on both.
  */
 final class AlternationOverlapLiteralFoldTest extends TestCase
 {
@@ -108,29 +112,35 @@ final class AlternationOverlapLiteralFoldTest extends TestCase
     /**
      * Under tables a test gives, as no machine here builds them, the texts
      * fold as they pair the bytes: 0xC9 with 0xE9 and 0xD3 with 0xF3 each
-     * way, the final sigma 0xF2 with 0xD3 alone, and 0xB5 read otherwise
-     * by the interpreter. Each pattern opens with an empty branch, which
+     * way, the final sigma 0xF2 with 0xD3 alone, 0xC0 with 0xE0, which the
+     * interpreter reads otherwise, and 0xDE with 0xFE from PCRE2 10.43 on,
+     * which the tables of the releases before leave apart: PHP 8.4 bundles
+     * 10.44, PHP 8.2 10.40. Each pattern opens with an empty branch, which
      * leaves the branches the text does not join to their bytes.
      *
      * @param string|null $rule the rule that reports the alternation, none for null
+     * @param string      $php  the PHP version of the target, whose bundled PCRE2 reads the tables
      */
     #[Test]
     #[DataProvider('provideRowsUnderGivenTables')]
-    public function test_literal_branches_fold_as_given_tables_pair_their_bytes(string $pattern, ?string $rule): void
+    public function test_literal_branches_fold_as_given_tables_pair_their_bytes(string $pattern, ?string $rule, string $php = '8.4'): void
     {
-        $others = [0xC9 => 0xE9, 0xE9 => 0xC9, 0xD3 => 0xF3, 0xF3 => 0xD3, 0xF2 => 0xD3];
+        $others = [0xC9 => 0xE9, 0xE9 => 0xC9, 0xD3 => 0xF3, 0xF3 => 0xD3, 0xF2 => 0xD3, 0xC0 => 0xE0, 0xE0 => 0xC0, 0xDE => 0xFE, 0xFE => 0xDE];
         $cases = '';
         for ($byte = 0; $byte < 256; $byte++) {
             $cases .= \chr($others[$byte] ?? (Ascii::isAlpha(\chr($byte)) ? $byte ^ 0x20 : $byte));
         }
 
-        CharacterTables::useTables(self::GIVEN, $cases, [0xB5]);
+        $before = $cases;
+        $before[0xDE] = "\xDE";
+        $before[0xFE] = "\xFE";
+        CharacterTables::useTables(self::GIVEN, $cases, [0xE0], $before);
 
-        $this->assertSame(null === $rule ? [] : [$rule], self::overlapRules($pattern, self::GIVEN), addcslashes($pattern, "\200..\377"));
+        $this->assertSame(null === $rule ? [] : [$rule], self::overlapRules($pattern, self::GIVEN, $php), \sprintf('%s for PHP %s', addcslashes($pattern, "\200..\377"), $php));
     }
 
     /**
-     * @return iterable<string, array{pattern: string, rule: string|null}>
+     * @return iterable<string, array{pattern: string, rule: string|null, php?: string}>
      */
     public static function provideRowsUnderGivenTables(): iterable
     {
@@ -140,7 +150,10 @@ final class AlternationOverlapLiteralFoldTest extends TestCase
         yield 'a small letter and its capital' => ['pattern' => "/(?:|\xF3|\xD3)+/i", 'rule' => $text];
         yield 'two texts the case does not join' => ['pattern' => "/(?:|\xC9x|\xEAx)+/i", 'rule' => null];
         yield 'a capital read caselessly, then a byte paired with it one way' => ['pattern' => "/(?:|(?i:\xD3)|\xF2)+/", 'rule' => null];
-        yield 'a byte the interpreter reads otherwise' => ['pattern' => "/(?:|\xB5x|\xC9x)+/i", 'rule' => null];
+        yield 'a byte the interpreter reads otherwise, paired both ways' => ['pattern' => "/(?:|\xC0x|\xE0x)+/i", 'rule' => $text];
+        yield 'a byte paired both ways from 10.43 on, for PHP 8.4' => ['pattern' => "/(?:|\xDEx|\xFEx)+/i", 'rule' => $text];
+        yield 'a byte paired both ways from 10.43 on, for PHP 8.2' => ['pattern' => "/(?:|\xDEx|\xFEx)+/i", 'rule' => null, 'php' => '8.2'];
+        yield 'a byte without another case' => ['pattern' => "/(?:|\xB5x|\xC9x)+/i", 'rule' => null];
         yield 'two ASCII texts that differ by case' => ['pattern' => '/(?:|Ax|ax)+/i', 'rule' => $text];
         yield 'two texts in their own case' => ['pattern' => "/(?:|\xC9x|\xE9x)+/", 'rule' => null];
         // Under u the case of a letter is Unicode's, whatever the tables.
@@ -154,9 +167,9 @@ final class AlternationOverlapLiteralFoldTest extends TestCase
      *
      * @return list<string>
      */
-    private static function overlapRules(string $pattern, string $locale): array
+    private static function overlapRules(string $pattern, string $locale, string $php = '8.4'): array
     {
-        $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
+        $regex = Regex::create(['cache' => null, 'php_version' => $php, 'locale' => $locale]);
         $linter = new PatternLinter([], $regex->target());
         $regex->parse($pattern)->accept($linter);
 

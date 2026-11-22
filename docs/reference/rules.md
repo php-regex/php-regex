@@ -853,7 +853,7 @@ preg_match('/a?/', $input);
 
 **Identifier:** `regex.lint.alternation.overlap`
 
-**When it triggers:** One literal alternative is a prefix of another. Under `i` the texts are compared in one case: every letter under `/u`, and without it the letters the tables of the target's locale pair, the ASCII ones under `C`. In PHP, `"/(?:\xC9x|\xE9x)+/i"`, with raw bytes, is reported under `fr_FR.ISO8859-1`, where the Latin-1 tables pair `\xC9` with `\xE9`, and not under `C`. A byte the tables pair one way alone, or whose case the engine's paths read otherwise, keeps its own case.
+**When it triggers:** One literal alternative is a prefix of another. Under `i` the texts are compared in one case: every letter under `/u`, and without it the letters the tables of the target's locale pair, the ASCII ones under `C`. In PHP, `"/(?:\xC9x|\xE9x)+/i"`, with raw bytes, is reported under `fr_FR.ISO8859-1`, where the Latin-1 tables pair `\xC9` with `\xE9`, and not under `C`. A byte is paired as the target's PCRE2 release reads the tables, and one they pair one way alone keeps its own case.
 
 **Visual Explanation:**
 ```

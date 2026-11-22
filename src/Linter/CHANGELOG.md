@@ -90,8 +90,8 @@ CHANGELOG
    changes under C. The texts
    `regex.lint.overlap.charset` tells branches apart by are read the same
    way: `"/(?:\xC9x\\d|\xE9x\\w)+/i"` is reported under fr_FR.ISO8859-1,
-   which it was not. A byte the tables pair one way alone, or whose case
-   the engine's paths read otherwise, keeps its own case.
+   which it was not. A byte is paired as the target's release reads the
+   tables, and one they pair one way alone keeps its own case.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
