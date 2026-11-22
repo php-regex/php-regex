@@ -585,18 +585,20 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
-     * Read under another locale's tables, what they decide of the types is
-     * not known: "\d", "\s" and "\w" without UCP, (*UTF) alone included.
-     * Where those tables are not known, or the machine cannot set their
-     * locale, nor is the other case of a character, which the tables give
-     * a byte, and under u or (*UCP) an ASCII character (pcre2_compile.c
-     * reads Unicode's other case above ASCII alone). The oracle shows the
-     * Latin-1 tables putting 0xE9 in "\w", under (*UTF) too, and pairing it
-     * with 0xC9 under i; "\d" and "\s" read the tables as "\w" does, which
-     * pcre2_maketables() builds from isdigit() and isspace().
+     * Where another locale's tables are not known, or the machine cannot
+     * set their locale, what they decide is not known: the bytes of "\d",
+     * "\s" and "\w" without UCP, (*UTF) alone included, and the other case
+     * of a character, which the tables give a byte, and under u or (*UCP)
+     * an ASCII character (pcre2_compile.c reads Unicode's other case above
+     * ASCII alone). The oracle shows the Latin-1 tables putting 0xE9 in
+     * "\w", under (*UTF) too, and pairing it with 0xC9 under i, where
+     * PCRE2's own leave it out of both; "\d" and "\s" read the tables as
+     * "\w" does, which pcre2_maketables() builds from isdigit() and
+     * isspace(). Read in ASCII alone, a type the tables give a byte above
+     * ASCII is not known either.
      */
     #[Test]
-    public function test_read_under_another_locales_tables_what_they_decide_is_not_known(): void
+    public function test_read_where_another_locales_tables_are_not_known_what_they_decide_is_not_known(): void
     {
         $latin1 = 'fr_FR.ISO8859-1';
         $this->requiresLocale($latin1, 'What the Latin-1 tables decide');
@@ -609,15 +611,16 @@ final class CharSetAnalyzerTest extends TestCase
                     preg_match('/^\W$/', "\xE9"),
                     preg_match("/^\xC9$/i", "\xE9"),
                     preg_match('/(*UTF)^\w$/', 'é'),
+                    preg_match_all('/\d/', implode('', array_map(\chr(...), range(0, 0xFF)))),
                 ];
             });
 
             return $matches;
         };
-        $this->assertSame([0, 1, 0, 0], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
-        $this->assertSame([1, 0, 1, 1], $read($latin1), 'Oracle: under the Latin-1 tables.');
+        $this->assertSame([0, 1, 0, 0, 10], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
+        $this->assertSame([1, 0, 1, 1, 10], $read($latin1), 'Oracle: under the Latin-1 tables.');
 
-        foreach ([null, $latin1] as $locale) {
+        foreach ([null, 'xx_YY.NOWHERE'] as $locale) {
             foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/'] as $pattern) {
                 [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
                 $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
@@ -640,6 +643,12 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertFalse((new CharSetAnalyzer('i', '', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
         $this->assertTrue((new CharSetAnalyzer('iu', '(*TURKISH_CASING)', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
         $this->assertFalse((new CharSetAnalyzer('iu', '', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
+
+        // Read in ASCII alone, "\w" holds 0xE9 under the Latin-1 tables,
+        // which a set has no place for, and "\d" the ASCII digits alone.
+        $this->assertTrue((new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\w/')->pattern)->isUnknown());
+        $this->assertSame([[0x30, 0x39]], (new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\d/')->pattern)->ranges());
+        $this->assertSame([[0x00, 0x2F], [0x3A, 0x7F]], (new CharSetAnalyzer('', '', false, locale: $latin1))->firstChars(RegexParser::create(['cache' => null])->parse('/\D/')->pattern)->ranges());
 
         // Under PCRE2's own tables each is known.
         foreach (['/\w/', '/\s/', '/\d/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[^a]/i', '/a/iu'] as $pattern) {
@@ -735,6 +744,156 @@ final class CharSetAnalyzerTest extends TestCase
                 yield $name.', '.$locale => ['options' => $options, 'atom' => $atom, 'flags' => $flags, 'locale' => $locale];
             }
         }
+    }
+
+    /**
+     * Read under the tables of a locale the machine sets, "\d", "\s" and
+     * "\w" without UCP take the bytes those tables give, and their
+     * complements the others: the set is what the engine matches, alone or
+     * repeated, on the JIT as on the interpreter, in a class as outside it.
+     * Under (*UTF) the tables name the code points below 256, which the
+     * engine's paths read apart above ASCII: on macOS under the Latin-1
+     * tables a single "\w" takes é, the interpreter's repeat of it does not
+     * (pcre2_match.c), and its repeat of "\W" takes é. The set knows each
+     * character any of them takes by the byte it starts with, and ASCII
+     * ones exactly.
+     */
+    #[Test]
+    #[DataProvider('provideTypesUnderEachTables')]
+    public function test_read_under_a_locales_tables_a_type_takes_the_bytes_they_give(string $options, string $atom, string $flags, string $locale): void
+    {
+        $this->requiresLocale($locale, 'The bytes a locale\'s tables give a type');
+
+        $utf = str_contains($options, '(*UTF)');
+        $subjects = [];
+        foreach ($utf ? [...range(0, 0x24F), 0x2028, 0x3000] : range(0, 0xFF) as $codePoint) {
+            $subjects[] = $utf ? (string) mb_chr($codePoint, 'UTF-8') : \chr($codePoint);
+        }
+
+        // Oracle: the characters the item matches under the locale, alone
+        // and twice in a row, on the JIT and on the interpreter, with and
+        // without the start optimizations, by the byte each starts with.
+        $taken = [];
+        CharacterTables::under($locale, static function () use ($options, $atom, $flags, $subjects, &$taken): void {
+            foreach ($subjects as $subject) {
+                foreach (['', '(*NO_JIT)', '(*NO_JIT)(*NO_START_OPT)'] as $engine) {
+                    foreach (['' => $subject, '{2}' => $subject.$subject] as $count => $text) {
+                        if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')'.$count.'$/'.$flags, $text)) {
+                            $taken[\ord($subject[0])] = true;
+                        }
+                    }
+                }
+            }
+        });
+        ksort($taken);
+        $expected = ByteCharSet::empty();
+        foreach (array_keys($taken) as $byte) {
+            $expected = $expected->union(ByteCharSet::fromBytes($byte, $byte));
+        }
+
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables('/'.$options.$atom.'/'.$flags, $locale);
+        $set = $analyzer->firstChars($node);
+        $label = \sprintf('/%s%s/%s under %s', $options, $atom, $flags, $locale);
+
+        $this->assertFalse($set->isUnknown(), $label);
+        $this->assertSame($set->ranges(), $analyzer->lastChars($node)->ranges(), $label);
+        if (!$utf) {
+            $this->assertSame($expected->ranges(), $set->ranges(), $label);
+
+            return;
+        }
+
+        // Under UTF a byte above ASCII stands for every character it starts.
+        $ascii = ByteCharSet::fromRange(0, 0x7F);
+        $this->assertSame($expected->intersect($ascii)->ranges(), $set->intersect($ascii)->ranges(), $label);
+        $this->assertSame($expected->ranges(), $expected->intersect($set)->ranges(), $label);
+    }
+
+    /**
+     * @return iterable<string, array{options: string, atom: string, flags: string, locale: string}>
+     */
+    public static function provideTypesUnderEachTables(): iterable
+    {
+        $items = [
+            'a digit' => ['', '\d', ''],
+            'no digit' => ['', '\D', ''],
+            'a space' => ['', '\s', ''],
+            'no space' => ['', '\S', ''],
+            'a word character' => ['', '\w', ''],
+            'no word character' => ['', '\W', ''],
+            'a word character in a class' => ['', '[\w]', ''],
+            'a negated class of word characters' => ['', '[^\w]', ''],
+            'a class of digits and spaces' => ['', '[\d\s]', ''],
+            'a negated class of digits and spaces' => ['', '[^\d\s]', ''],
+            'a word character under i' => ['', '\w', 'i'],
+            'no word character under i' => ['', '\W', 'i'],
+            'a word character under (*UTF)' => ['(*UTF)', '\w', ''],
+            'no word character under (*UTF)' => ['(*UTF)', '\W', ''],
+            'a space under (*UTF)' => ['(*UTF)', '\s', ''],
+            'no space under (*UTF)' => ['(*UTF)', '\S', ''],
+            'a digit under (*UTF)' => ['(*UTF)', '\d', ''],
+        ];
+
+        foreach (['fr_FR.ISO8859-1', 'el_GR.ISO8859-7', 'ru_RU.KOI8-R', 'en_US.UTF-8'] as $locale) {
+            foreach ($items as $name => [$options, $atom, $flags]) {
+                yield $name.', '.$locale => ['options' => $options, 'atom' => $atom, 'flags' => $flags, 'locale' => $locale];
+            }
+        }
+    }
+
+    /**
+     * Under tables a test gives, as no machine here builds them, "\d",
+     * "\s" and "\w" without UCP take the bytes given, and their
+     * complements every other byte, in a class as outside it, under i as
+     * without it: a type has no case. Under (*UTF) the bytes are code
+     * points, known by the byte each starts with. Under UCP the tables do
+     * not decide: "\d" and "\w" take Unicode's characters, which a set does
+     * not hold, and "\s" Unicode's spaces, the next line 0x85 among them,
+     * which the tables leave out.
+     *
+     * @param list<array{0: int, 1: int}>|null $ranges the bytes of the set, null where it is not known
+     */
+    #[Test]
+    #[DataProvider('provideTypesUnderGivenTables')]
+    public function test_read_under_given_tables_a_type_takes_the_bytes_they_give(string $pattern, ?array $ranges): void
+    {
+        self::giveTables();
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, self::GIVEN);
+        $set = $analyzer->firstChars($node);
+
+        if (null === $ranges) {
+            $this->assertTrue($set->isUnknown(), $pattern);
+
+            return;
+        }
+
+        $this->assertSame($ranges, $set->ranges(), $pattern);
+        $this->assertSame($ranges, $analyzer->lastChars($node)->ranges(), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ranges: list<array{0: int, 1: int}>|null}>
+     */
+    public static function provideTypesUnderGivenTables(): iterable
+    {
+        yield 'a digit' => ['pattern' => '/\d/', 'ranges' => [[0x30, 0x39], [0xB2, 0xB3]]];
+        yield 'no digit' => ['pattern' => '/\D/', 'ranges' => [[0x00, 0x2F], [0x3A, 0xB1], [0xB4, 0xFF]]];
+        yield 'a space' => ['pattern' => '/\s/', 'ranges' => [[0x09, 0x0D], [0x20, 0x20], [0xA0, 0xA0]]];
+        yield 'no space' => ['pattern' => '/\S/', 'ranges' => [[0x00, 0x08], [0x0E, 0x1F], [0x21, 0x9F], [0xA1, 0xFF]]];
+        yield 'a word character' => ['pattern' => '/\w/', 'ranges' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]]];
+        yield 'no word character' => ['pattern' => '/\W/', 'ranges' => [[0x00, 0x2F], [0x3A, 0x40], [0x5B, 0x5E], [0x60, 0x60], [0x7B, 0xA9], [0xAB, 0xBF], [0xD7, 0xD7], [0xF7, 0xF7]]];
+        yield 'a class of digits and spaces' => ['pattern' => '/[\d\s]/', 'ranges' => [[0x09, 0x0D], [0x20, 0x20], [0x30, 0x39], [0xA0, 0xA0], [0xB2, 0xB3]]];
+        yield 'a negated class of digits and spaces' => ['pattern' => '/[^\d\s]/', 'ranges' => [[0x00, 0x08], [0x0E, 0x1F], [0x21, 0x2F], [0x3A, 0x9F], [0xA1, 0xB1], [0xB4, 0xFF]]];
+        yield 'a word character under i, which takes no case' => ['pattern' => '/\w/i', 'ranges' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]]];
+        yield 'a word character under (*UTF)' => ['pattern' => '/(*UTF)\w/', 'ranges' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xC2, 0xC3]]];
+        yield 'no word character under (*UTF)' => ['pattern' => '/(*UTF)\W/', 'ranges' => [[0x00, 0x2F], [0x3A, 0x40], [0x5B, 0x5E], [0x60, 0x60], [0x7B, 0xFF]]];
+        yield 'a digit under (*UTF)' => ['pattern' => '/(*UTF)\d/', 'ranges' => [[0x30, 0x39], [0xC2, 0xC2]]];
+        yield 'a space under (*UTF)' => ['pattern' => '/(*UTF)\s/', 'ranges' => [[0x09, 0x0D], [0x20, 0x20], [0xC2, 0xC2]]];
+        yield 'a space under (*UCP)' => ['pattern' => '/(*UCP)\s/', 'ranges' => [[0x09, 0x0D], [0x20, 0x20], [0x85, 0x85], [0xA0, 0xA0]]];
+        yield 'a word character under (*UCP)' => ['pattern' => '/(*UCP)\w/', 'ranges' => null];
+        yield 'no word character under (*UCP)' => ['pattern' => '/(*UCP)\W/', 'ranges' => null];
+        yield 'a digit under u' => ['pattern' => '/\d/u', 'ranges' => null];
+        yield 'no digit under u' => ['pattern' => '/\D/u', 'ranges' => null];
     }
 
     /**
@@ -1005,7 +1164,9 @@ final class CharSetAnalyzerTest extends TestCase
      * Gives the tables of GIVEN: ASCII's cases but for "i", paired with
      * 0xDD, "I" with 0xFD, "x" with 0x7F and "q" with 0x80, and 0xE9 with
      * 0xC9, 0xF2 with 0xD3, 0xD3 with 0xF3; 0xB5 read otherwise by the
-     * interpreter, 0xFF by the tables before 10.43.
+     * interpreter, 0xFF by the tables before 10.43. They put the Latin-1
+     * letters in "\w", 0xB2 and 0xB3 in "\d" and the no-break space 0xA0
+     * in "\s".
      */
     private static function giveTables(): void
     {
@@ -1017,7 +1178,11 @@ final class CharSetAnalyzerTest extends TestCase
 
         $before = $cases;
         $before[0xFF] = 'x';
-        CharacterTables::useTables(self::GIVEN, $cases, [0xB5], $before);
+        CharacterTables::useTables(self::GIVEN, $cases, [0xB5], $before, [
+            'd' => [[0x30, 0x39], [0xB2, 0xB3]],
+            's' => [[0x09, 0x0D], [0x20, 0x20], [0xA0, 0xA0]],
+            'w' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]],
+        ]);
     }
 
     /**

@@ -54,11 +54,11 @@ use PHPRegex\Parser\Text\Utf8;
  * the byte it starts with, the last character of a node as its first: "é"
  * is 0xC3 at either end, so a node that ends with it meets one that starts
  * with it. Under another locale's tables than PCRE2's own, a set still
- * holds the bytes a literal writes and those a complement takes, and the
- * other case of a character those tables give, read from the engine. What
- * else they decide is not known, "\d", "\s" and "\w" without UCP, and nor
- * is a case where the tables cannot be read, or the engine's paths read
- * it otherwise.
+ * holds the bytes a literal writes and those a complement takes, and what
+ * those tables decide, read from the engine: the bytes of "\d", "\s" and
+ * "\w" without UCP, and the other case of a character. Neither is known
+ * where the tables cannot be read, nor a case the engine's paths read
+ * otherwise.
  *
  * @internal
  */
@@ -72,8 +72,9 @@ final class CharSetAnalyzer
     private readonly bool $ownTables;
 
     /**
-     * Under another locale's tables, those read: they give the other case
-     * of each byte. Null where they are not known.
+     * Under another locale's tables, those read: they give the bytes of
+     * each type and the other case of each byte. Null where they are not
+     * known.
      */
     private readonly ?CharacterTables $tables;
 
@@ -121,9 +122,10 @@ final class CharSetAnalyzer
      * @param string|null $locale          the LC_CTYPE locale whose tables the
      *                                     engine compiles with, "C" for PCRE2's
      *                                     own: another locale's are read for the
-     *                                     other case of a character, which is not
-     *                                     known where the machine cannot set it,
-     *                                     nor under tables not known, null
+     *                                     bytes of a type and the other case of a
+     *                                     character, which are not known where
+     *                                     the machine cannot set it, nor under
+     *                                     tables not known, null
      */
     public function __construct(
         string $flags = '',
@@ -347,12 +349,12 @@ final class CharSetAnalyzer
      */
     private function fromCharType(string $type): ByteCharSet
     {
-        if (($this->unicodeMode || !$this->ownTables) && \in_array($type, ['d', 'D', 'w', 'W'], true)) {
+        if ($this->unicodeMode && \in_array($type, ['d', 'D', 'w', 'W'], true)) {
             return ByteCharSet::unknown();
         }
 
-        if (!$this->ownTables && !$this->unicodeMode && \in_array($type, ['s', 'S'], true)) {
-            return ByteCharSet::unknown();
+        if (!$this->ownTables && !$this->unicodeMode && \in_array($type, ['d', 'D', 's', 'S', 'w', 'W'], true)) {
+            return $this->typeInTables($type);
         }
 
         return match ($type) {
@@ -369,6 +371,28 @@ final class CharSetAnalyzer
             'H' => $this->complement($this->horizontalSpaces()),
             default => ByteCharSet::unknown(),
         };
+    }
+
+    /**
+     * "\d", "\s" or "\w" as another locale's tables fill it, and "\D",
+     * "\S" or "\W" as the bytes they leave out: not known where the tables
+     * are not. Under UTF the tables name the code points below 256, which
+     * the engine's paths read apart above ASCII: a single "\w" takes those
+     * the tables hold, the interpreter's repeat of it none (pcre2_match.c),
+     * and its repeat of "\W" every one. The set holds what any path takes.
+     */
+    private function typeInTables(string $type): ByteCharSet
+    {
+        if (null === $this->tables) {
+            return ByteCharSet::unknown();
+        }
+
+        $set = ByteCharSet::empty();
+        foreach ($this->tables->bytesOf(Ascii::lower($type)) as [$low, $high]) {
+            $set = $set->union($this->characters($low, $high));
+        }
+
+        return Ascii::lower($type) === $type ? $set : $this->complement($set);
     }
 
     private static function wordCharacters(): ByteCharSet
@@ -456,13 +480,22 @@ final class CharSetAnalyzer
     }
 
     /**
-     * The characters from $start to $end, and under i their other case;
-     * above ASCII, not known unless the analyzer reads there. Without UTF a
-     * character is a byte, and a code point above 0xFF none. Under UTF one
-     * above ASCII is known by the byte it starts with, which UTF-8 orders as
-     * the code points.
+     * The characters from $start to $end, and under i their other case.
      */
     private function fromCodePoints(int $start, int $end): ByteCharSet
+    {
+        $set = $this->characters($start, $end);
+
+        return $this->caseless && !$set->isUnknown() ? $set->union($this->otherCases($start, $end)) : $set;
+    }
+
+    /**
+     * The characters from $start to $end; above ASCII, not known unless
+     * the analyzer reads there. Without UTF a character is a byte, and a
+     * code point above 0xFF none. Under UTF one above ASCII is known by the
+     * byte it starts with, which UTF-8 orders as the code points.
+     */
+    private function characters(int $start, int $end): ByteCharSet
     {
         if ($end <= 0x7F) {
             $set = ByteCharSet::fromRange($start, $end);
@@ -475,7 +508,7 @@ final class CharSetAnalyzer
             $set = $ascii->union(ByteCharSet::fromBytes(self::leadByte(max($start, 0x80)), self::leadByte($end)));
         }
 
-        return $this->caseless && !$set->isUnknown() ? $set->union($this->otherCases($start, $end)) : $set;
+        return $set;
     }
 
     /**
