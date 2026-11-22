@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -38,6 +39,8 @@ use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
@@ -51,8 +54,9 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  *
  * It shares the rewriter's RewriteState, and reads the items the rewriter
  * has already rewritten. It remembers the repeats whose group the rewriter
- * dropped, for as long as the rewriter lives, and what follows the item the
- * rewriter is in, for as long as it is in it.
+ * dropped, for as long as the rewriter lives, what follows the item the
+ * rewriter is in, for as long as it is in it, and what follows each call of
+ * the pattern visited whole, read once a repetition needs it.
  *
  * @internal
  */
@@ -73,18 +77,45 @@ final class PossessiveRewrites
     /**
      * What follows each item the rewriter is in, the innermost last: the
      * items of its sequence from the index given, a repeat that must run
-     * again, whose body then follows its own end, or null at the end of an
-     * atomic group or a lookaround but a scan substring or a non-atomic
-     * lookaround, which nothing after it backtracks into. What follows any
-     * other group is what follows the group.
+     * again, whose body then follows its own end, a capturing group, which
+     * a call may run elsewhere, a DEFINE, which runs nothing where it
+     * stands, or null at the end of an atomic group or a lookaround but a
+     * scan substring or a non-atomic lookaround, which nothing after it
+     * backtracks into. What follows any other group is what follows the
+     * group. Where a call stands in a script run, false stands for it: the
+     * check of the run reads what the call matched.
      *
-     * @var list<array{list<NodeInterface>, int}|QuantifierNode|null>
+     * @var list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null>
      */
     private array $after = [];
+
+    /**
+     * The pattern visited whole, whose calls are read, or null.
+     */
+    private ?RegexNode $pattern = null;
+
+    /**
+     * What follows each call of the pattern visited, as $after holds it
+     * where the call stands, by the object id of the group the call runs,
+     * of the pattern for "(?R)": null until a repetition needs it.
+     *
+     * @var array<int, list<list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null>>>|null
+     */
+    private ?array $calls = null;
 
     public function __construct(private readonly RewriteState $state, private readonly RepeatRewrites $repeats)
     {
         $this->ungroupedRepeats = new \WeakMap();
+    }
+
+    /**
+     * Reads the pattern about to be rewritten, and forgets the calls of
+     * the one before.
+     */
+    public function start(RegexNode $node): void
+    {
+        $this->pattern = $node;
+        $this->calls = null;
     }
 
     /**
@@ -117,13 +148,11 @@ final class PossessiveRewrites
 
     /**
      * Records the group the rewriter enters, when nothing after it
-     * backtracks into it.
+     * backtracks into it, or when a call may run it elsewhere.
      */
     public function enterGroup(GroupNode $node): void
     {
-        if (self::closes($node)) {
-            $this->after[] = null;
-        }
+        array_push($this->after, ...self::frames($node));
     }
 
     /**
@@ -131,9 +160,7 @@ final class PossessiveRewrites
      */
     public function leaveGroup(GroupNode $node): void
     {
-        if (self::closes($node)) {
-            array_pop($this->after);
-        }
+        $this->leaveNode($node);
     }
 
     /**
@@ -143,9 +170,7 @@ final class PossessiveRewrites
      */
     public function enterRepeat(QuantifierNode $node): void
     {
-        if (self::repeatsAgain($node)) {
-            $this->after[] = $node;
-        }
+        array_push($this->after, ...self::frames($node));
     }
 
     /**
@@ -153,9 +178,24 @@ final class PossessiveRewrites
      */
     public function leaveRepeat(QuantifierNode $node): void
     {
-        if (self::repeatsAgain($node)) {
-            array_pop($this->after);
-        }
+        $this->leaveNode($node);
+    }
+
+    /**
+     * Records the DEFINE the rewriter enters, whose groups run where a call
+     * runs them only.
+     */
+    public function enterDefine(DefineNode $node): void
+    {
+        array_push($this->after, ...self::frames($node));
+    }
+
+    /**
+     * Forgets the DEFINE the rewriter leaves.
+     */
+    public function leaveDefine(DefineNode $node): void
+    {
+        $this->leaveNode($node);
     }
 
     /**
@@ -285,7 +325,9 @@ final class PossessiveRewrites
      * back to the "a" after the group on "aa". The walk stops at the end of
      * the pattern, of an atomic group or of a lookaround, which nothing
      * after it backtracks into; the body of a repeat that must run again
-     * follows the end of its body as well. Null when a lookaround may come
+     * follows the end of its body as well. A group runs wherever a call
+     * runs it, and gives back to what follows the call: "(?&n)a" after
+     * "(?<n>a+b?)" in a DEFINE matches "aa". Null when a lookaround may come
      * first, which reads nothing yet looks at the characters the repetition
      * would give back, "a+(?!b)" matching "a" in "aab" where "a++(?!b)"
      * matches nothing, or a character above ASCII, which the sets, stopping
@@ -296,26 +338,224 @@ final class PossessiveRewrites
     private function charsAfter(array $suffix): ?ByteCharSet
     {
         $chars = ByteCharSet::empty();
-        $read = $this->addFirstChars($suffix, $chars);
+        $read = [];
 
-        for ($level = \count($this->after) - 1; false === $read && $level >= 0; $level--) {
-            $after = $this->after[$level];
-            if (null === $after) {
-                break;
+        return $this->addCharsAfter($suffix, $this->after, $chars, $read) ? $chars : null;
+    }
+
+    /**
+     * Adds the characters what follows the items may start with to the
+     * set: the items, then, while all of them may match nothing, what
+     * follows the items the frames stand for, the innermost last, as
+     * PossessiveRewrites::$after holds them. Past the end of a group comes
+     * what follows each call that runs it, then what follows the group
+     * where it stands, unless a DEFINE holds it there; past the end of the
+     * pattern comes what follows each call of the whole pattern. Whether
+     * the set holds them all, false when a lookaround or a character above
+     * ASCII may come first, or when a call stands in a script run.
+     *
+     * @param array<NodeInterface>                                                                 $items
+     * @param list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null> $frames
+     * @param array<int, true>                                                                     $read   the groups and the pattern whose calls the walk read, by object id
+     *
+     * @param-out ByteCharSet $chars
+     */
+    private function addCharsAfter(array $items, array $frames, ByteCharSet &$chars, array &$read): bool
+    {
+        $readAll = $this->addFirstChars($items, $chars);
+
+        for ($level = \count($frames) - 1; false === $readAll && $level >= 0; $level--) {
+            $frame = $frames[$level];
+            // Nothing past the end of an atomic group or a lookaround
+            // backtracks into it, and nothing past the end of a DEFINE runs.
+            if (null === $frame || $frame instanceof DefineNode) {
+                return true;
+            }
+
+            if (false === $frame) {
+                return false;
             }
 
             // Another run of the body, or what follows the repeat after
             // its last run.
-            if ($after instanceof QuantifierNode) {
-                $read = null === $this->addFirstChars([$after->node], $chars) ? null : false;
+            if ($frame instanceof QuantifierNode) {
+                $readAll = null === $this->addFirstChars([$frame->node], $chars) ? null : false;
 
                 continue;
             }
 
-            $read = $this->addFirstChars(\array_slice($after[0], $after[1]), $chars);
+            if ($frame instanceof GroupNode) {
+                // What follows the group the walk has met is read: every
+                // way out of it leads to the same frames.
+                if (isset($read[spl_object_id($frame)])) {
+                    return true;
+                }
+
+                if (!$this->addCharsAfterCalls($frame, $chars, $read)) {
+                    return false;
+                }
+
+                if (!$this->runsInPlace($frames, $level)) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            $readAll = $this->addFirstChars(\array_slice($frame[0], $frame[1]), $chars);
         }
 
-        return null === $read ? null : $chars;
+        if (null === $readAll) {
+            return false;
+        }
+
+        return $readAll || null === $this->pattern || isset($read[spl_object_id($this->pattern)]) || $this->addCharsAfterCalls($this->pattern, $chars, $read);
+    }
+
+    /**
+     * Adds what follows each call of the group, or of the whole pattern,
+     * to the set: whether the set holds it all.
+     *
+     * @param array<int, true> $read the groups and the pattern whose calls the walk read, by object id
+     *
+     * @param-out ByteCharSet $chars
+     */
+    private function addCharsAfterCalls(GroupNode|RegexNode $called, ByteCharSet &$chars, array &$read): bool
+    {
+        $read[spl_object_id($called)] = true;
+        foreach ($this->calls()[spl_object_id($called)] ?? [] as $frames) {
+            if (!$this->addCharsAfter([], $frames, $chars, $read)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the group the frame at the level stands for runs where it
+     * stands: not in a DEFINE, unless inside a group a call runs there.
+     *
+     * @param list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null> $frames
+     */
+    private function runsInPlace(array $frames, int $level): bool
+    {
+        while (--$level >= 0) {
+            $frame = $frames[$level];
+            if ($frame instanceof DefineNode) {
+                return false;
+            }
+
+            if ($frame instanceof GroupNode && isset($this->calls()[spl_object_id($frame)])) {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * What follows each call of the pattern visited whole, by the object id
+     * of the group the call runs, of the pattern for "(?R)", "(?0)" and
+     * "\g<0>"; a recursion test, "(?(R1)", calls nothing.
+     *
+     * @return array<int, list<list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null>>>
+     */
+    private function calls(): array
+    {
+        if (null !== $this->calls) {
+            return $this->calls;
+        }
+
+        $this->calls = [];
+        if (null === $this->pattern) {
+            return [];
+        }
+
+        $found = [];
+        $frames = [];
+        self::findCalls($this->pattern->pattern, $frames, $found);
+        // Most patterns call nothing: the groups are numbered only for one
+        // that does.
+        if ([] === $found) {
+            return [];
+        }
+
+        $groups = GroupIndex::of($this->pattern->pattern);
+        foreach ($found as [$call, $at]) {
+            // "(?&R)" calls a group named "R", "(?R)" the whole pattern.
+            $called = '0' === $call->reference || ('R' === $call->reference && '' === $call->syntax) ? [$this->pattern] : $groups->groupsCalledBy($call);
+            foreach ($called as $node) {
+                $this->calls[spl_object_id($node)][] = $at;
+            }
+        }
+
+        return $this->calls;
+    }
+
+    /**
+     * Collects each call under the node with the frames that stand where
+     * it stands, as the rewriter records them.
+     *
+     * @param list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null>                              $frames
+     * @param list<array{SubroutineNode, list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null>}> $found
+     */
+    private static function findCalls(NodeInterface $node, array &$frames, array &$found): void
+    {
+        if ($node instanceof SubroutineNode) {
+            $found[] = [$node, $frames];
+
+            return;
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $i => $child) {
+                $frames[] = [$node->children, $i + 1];
+                self::findCalls($child, $frames, $found);
+                array_pop($frames);
+            }
+
+            return;
+        }
+
+        $opened = self::frames($node);
+        array_push($frames, ...$opened);
+        // A recursion test reads where the match stands.
+        foreach ($node instanceof ConditionalNode && $node->condition instanceof SubroutineNode ? [$node->yes, $node->no] : $node->getChildren() as $child) {
+            self::findCalls($child, $frames, $found);
+        }
+
+        if ([] !== $opened) {
+            array_pop($frames);
+        }
+    }
+
+    /**
+     * The frame the node opens for what stands inside it, as
+     * PossessiveRewrites::$after holds it, alone in the list, or none.
+     *
+     * @return list<QuantifierNode|GroupNode|DefineNode|false|null>
+     */
+    private static function frames(NodeInterface $node): array
+    {
+        return match (true) {
+            $node instanceof GroupNode && self::closes($node) => [null],
+            $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type) => [$node],
+            $node instanceof QuantifierNode && self::repeatsAgain($node) => [$node],
+            $node instanceof DefineNode => [$node],
+            $node instanceof ScriptRunNode => [false],
+            default => [],
+        };
+    }
+
+    /**
+     * Forgets the frame the node opened, if any.
+     */
+    private function leaveNode(NodeInterface $node): void
+    {
+        if ([] !== self::frames($node)) {
+            array_pop($this->after);
+        }
     }
 
     /**

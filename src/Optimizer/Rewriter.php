@@ -152,6 +152,7 @@ final class Rewriter extends AbstractNodeVisitor
     public function visitRegex(RegexNode $node): NodeInterface
     {
         $this->state->start($node, $this->flagRewrites->containsInlineFlags($node->pattern));
+        $this->possessiveRewrites->start($node);
         $this->possessify = $this->possessive && !$this->state->lazyByDefault && !$this->state->inlineFlags;
         $optimizedPattern = $node->pattern->accept($this);
 
@@ -604,7 +605,15 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitDefine(DefineNode $node): NodeInterface
     {
-        $content = $node->content->accept($this);
+        // Its groups run where a call runs them, not where they stand.
+        $this->possessiveRewrites->enterDefine($node);
+
+        try {
+            $content = $node->content->accept($this);
+        } finally {
+            $this->possessiveRewrites->leaveDefine($node);
+        }
+
         if ($content === $node->content) {
             return $node;
         }
