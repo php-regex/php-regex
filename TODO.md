@@ -29,13 +29,12 @@
   and 26 ms through `preg_match_all()`, under 0.1 ms through
   `preg_match()` (PHP 8.4.28, PCRE2 10.49). A finding of its own, or a
   flag on the search cost the caller reads.
-- The search cost refuses a match `\K` leaves empty under `(*NOTEMPTY)`
-  (#433), but the proof of one attempt still reads `\K` as reading
-  nothing: `/(*NOTEMPTY)^(?:a|a)+\K/` and `/(*NOTEMPTY)(?:a|a)+\K/` hit
-  the backtrack limit on 2,000 `a`s with the JIT off (about 22 ms), yet
-  are called safe (proven). Build that automaton refusing them too
-  (`refusesKept`, as `SearchCostProver` reads it): a change of verdict, so
-  check the fixtures.
+- The proof leaves undecided an ambiguous loop that no suffix makes fail,
+  and a heuristic finding stands where the engine is linear:
+  `/^(?:a|a)+./`, and since #436 `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
+  `/(*NOTEMPTY)^(?:a\K|a)+/` (20 → 36 steps on 8 → 16 `a`s), reported
+  critical. Prove such a loop linear when every attempt succeeds at its
+  first try.
 - Under `(*NOTEMPTY)`, a possessive or atomic repeat before `\K` is
   quadratic too, `(*NOTEMPTY)(?:a++\K)` and `(*NOTEMPTY)(?>a+\K)` at 1.1,
   4.1 and 16.2 ms on 2,000, 4,000 and 8,000 `a`s with the JIT off, but
