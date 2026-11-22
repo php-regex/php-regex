@@ -6,6 +6,15 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The search cost reads the options that refuse an empty match. Under
+   `(*NOTEMPTY)` no attempt ends on the empty string, so
+   `/(*NOTEMPTY)(?:a+\d)?/`, which tries `a+\d` at every position of a run
+   of `a`, is reported quadratic, where `/(?:a+\d)?/` matches the empty
+   string at once. Under `(*NOTEMPTY_ATSTART)` only the attempt at the
+   search start refuses it: `/(*NOTEMPTY_ATSTART)(?:^|a+b)/`, whose empty
+   match holds at the subject's start alone, is quadratic, while
+   `/(*NOTEMPTY_ATSTART)(?:a+\d)?/`, which matches the empty string at the
+   next position, is not reported.
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of
