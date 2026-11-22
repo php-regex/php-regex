@@ -153,8 +153,9 @@ request goes to `phpstan/phpstan-src`.
 
 ## Optimizer precision
 
-- The possessive rewrite reads a group called through a subroutine where
-  it stands, not where it is called: `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is
-  offered `a++b?`, which the result check refuses, so the rewrite is made
-  again without the possessive step. Nothing wrong ships; reading the call
-  sites would save that second rewrite and check.
+- The result check proves no possessive in a pattern that holds a call
+  (`LanguageSolver::enters`): `/(a+b?)c(?1)d/`, whose possessive the
+  rewrite now reads as safe wherever the group runs, is offered
+  `a++b?`, refused, and rewritten again without the possessive step, so it
+  ships unchanged. A check that reads calls would ship `/(a++b?)c(?1)d/`
+  and save that second rewrite.
