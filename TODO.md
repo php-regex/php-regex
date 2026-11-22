@@ -2,11 +2,15 @@
 
 ## ReDoS precision
 
-- Under another locale's tables, the ReDoS heuristics leave unknown what
-  those tables decide, a caseless item included even when it is ASCII
-  (PCRE2 takes the other case of every character from the tables): a
-  pattern read that way can only raise a low-confidence finding. Reading
-  the tables PHP compiled with would be more precise.
+- Under another locale's tables, the ReDoS heuristics and the overlap rule
+  read the cases from them (#427) but leave `\d`, `\s` and `\w` without
+  UCP unknown: under fr_FR.ISO8859-1, `"/(?:\\w|\xE9|)+/"` goes unreported,
+  though the Latin-1 tables put `\xE9` in `\w`. Read them from
+  `CharacterTables::bytesOf()` as the cases are.
+- Where PCRE judges no branch, the overlap rule still reads a caseless
+  byte above ASCII through PCRE's own tables: under fr_FR.ISO8859-1,
+  `"/(?:\xC9|\xE9|)+/i"` goes unreported, though `/\xC9/i` matches `\xE9`
+  there.
 - Under `(*NOTEMPTY)`, the search cost is not proven: a pattern whose
   search grows with the square of the subject, such as `(?:a+\d)?`, gets
   no search-cost finding behind it, though each attempt is judged right.
