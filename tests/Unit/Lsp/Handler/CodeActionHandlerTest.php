@@ -143,9 +143,10 @@ final class CodeActionHandlerTest extends TestCase
      * The quick fix offers a rewrite only once the automata prove it, as the
      * lint checks the rewrites it suggests: a class respelled reads as the
      * pattern does, a run spelled as a repeat beside a back reference, which
-     * the match solver does not read, is proven alone, while the same run
-     * beside a subroutine call, which may run any group again, is not
-     * proven.
+     * the match solver does not read, is proven alone, the same run beside a
+     * call of a group is proven by the match solver, which runs the body of
+     * the group where the call stands, while beside a group that calls
+     * itself it is not proven.
      */
     #[Test]
     #[DataProvider('provideOptimizationsToProve')]
@@ -161,6 +162,11 @@ final class CodeActionHandlerTest extends TestCase
             return;
         }
 
+        foreach (self::subjects('a0b', 6) as $subject) {
+            $this->assertSame(preg_match($pattern, $subject, $expected, \PREG_OFFSET_CAPTURE), preg_match($offered, $subject, $actual, \PREG_OFFSET_CAPTURE), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $offered, $subject));
+            $this->assertSame($expected, $actual, \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $offered, $subject));
+        }
+
         $this->assertNotNull($action);
         $this->assertSame(var_export($offered, true), self::singleEdit($action)['newText']);
     }
@@ -173,7 +179,8 @@ final class CodeActionHandlerTest extends TestCase
         yield 'a class respelled' => ['pattern' => '/[0-9]+/', 'offered' => '/\d+/'];
         yield 'a class respelled beside a back reference' => ['pattern' => '/(a)\1[0-9]/', 'offered' => '/(a)\1\d/'];
         yield 'a run spelled as a repeat beside a back reference' => ['pattern' => '/(a)\1[0-9]aaaa/', 'offered' => '/(a)\1\da{4}/'];
-        yield 'a run spelled as a repeat beside a subroutine call' => ['pattern' => '/(a)(?1)[0-9]aaaa/', 'offered' => null];
+        yield 'a run spelled as a repeat beside a subroutine call' => ['pattern' => '/(a)(?1)[0-9]aaaa/', 'offered' => '/(a)(?1)\da{4}/'];
+        yield 'a run spelled as a repeat beside a group calling itself' => ['pattern' => '/(a(?1)?b)[0-9]aaaa/', 'offered' => null];
     }
 
     /**
@@ -1090,5 +1097,28 @@ final class CodeActionHandlerTest extends TestCase
         $end = $offset($edit['range']['end']);
 
         return substr($source, 0, $start).$edit['newText'].substr($source, $end);
+    }
+
+    /**
+     * Every string over the letters, up to the length.
+     *
+     * @return list<string>
+     */
+    private static function subjects(string $letters, int $length): array
+    {
+        $all = [''];
+        $layer = [''];
+        for ($size = 1; $size <= $length; $size++) {
+            $next = [];
+            foreach ($layer as $prefix) {
+                foreach (str_split($letters) as $letter) {
+                    $next[] = $prefix.$letter;
+                }
+            }
+            $all = [...$all, ...$next];
+            $layer = $next;
+        }
+
+        return $all;
     }
 }

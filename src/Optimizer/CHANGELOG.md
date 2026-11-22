@@ -42,6 +42,14 @@ CHANGELOG
    called: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
    `/(?(DEFINE)(?<n>a++b?))a/`. A group called inside a script run stays
    greedy, as the check of the run reads what the call matched.
+ * The check of the result runs the body of a group where each call of it
+   stands, and proves the possessive the rewrite offers there:
+   `/(a+b?)c(?1)d/` now becomes `/(a++b?)c(?1)d/` with the first rewrite,
+   where the check refused it and the rewrite made a second time without
+   the possessive step shipped the pattern unchanged. A group that calls
+   itself, a call of the whole pattern and a call of a group a DEFINE holds
+   are not run there: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` is still offered
+   `a++b?`, which the check refuses.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a

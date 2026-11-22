@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Match;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -30,6 +31,8 @@ use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
+use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\SubroutineNode;
 
 /**
  * Builds the priority NFA of a pattern, for the fragment where trying the
@@ -39,11 +42,18 @@ use PHPRegex\Parser\Hir\RepetitionHir;
  * that can match empty, anchors only where they test the edges of the
  * subject.
  *
+ * A call of a group runs the body of the group where the call stands: from
+ * PCRE2 10.30 the engine backtracks into it, the groups inside it are given
+ * back the values they held before it, and the body keeps the options it
+ * was written under, as its form already does.
+ *
  * @internal
  */
 final class PriorityNfaBuilder
 {
     public const BACKREFERENCE_MESSAGE = 'Backreferences, subroutines, conditionals, callouts and control verbs carry match state the match solver cannot read.';
+
+    public const CALL_MESSAGE = 'A call that may run its own group again, of a group a DEFINE holds, or that returns groups is not one the match solver runs where it stands.';
 
     public const LOOKAROUND_MESSAGE = 'Lookarounds look past the match, which the match solver does not read.';
 
@@ -78,16 +88,52 @@ final class PriorityNfaBuilder
      */
     private array $endAnchors = [];
 
+    /**
+     * The form being built and the tree it was translated from, which
+     * numbers the groups a call runs.
+     */
+    private Hir $form;
+
+    private NodeInterface $tree;
+
+    /**
+     * The groups of the tree as PCRE numbers them, and the group of the
+     * form that starts at each offset: read once the build meets a call.
+     *
+     * @var array{GroupIndex, array<int, CaptureHir>}|null
+     */
+    private ?array $groups = null;
+
+    /**
+     * The groups whose body is being built, by object id: a call of one of
+     * them runs it inside itself.
+     *
+     * @var array<int, true>
+     */
+    private array $running = [];
+
+    /**
+     * How many calls the body being built runs inside: there the groups
+     * write nothing.
+     */
+    private int $calls = 0;
+
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
+     * @param NodeInterface $tree the tree the form was translated from, the
+     *                            pattern a RegexNode holds
+     *
      * @throws ComplexityException
      */
-    public function build(Hir $hir, bool $unicode): PriorityNfa
+    public function build(Hir $hir, bool $unicode, NodeInterface $tree): PriorityNfa
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
         $this->endAnchors = [];
+        $this->form = $hir;
+        $this->tree = $tree;
+        $this->groups = null;
         $match = $this->add(PriorityNfa::MATCH);
         $this->nfa->start = $this->state($hir, $match);
         ksort($this->nfa->names);
@@ -122,8 +168,70 @@ final class PriorityNfaBuilder
             $hir instanceof AssertionHir => $this->assertion($hir, $next),
             $hir instanceof LookHir => throw new ComplexityException(self::LOOKAROUND_MESSAGE, $hir->startPosition, $this->pattern),
             $hir instanceof AtomicHir => throw new ComplexityException(self::ATOMIC_MESSAGE, $hir->startPosition, $this->pattern),
+            $hir instanceof OpaqueHir && $hir->node instanceof SubroutineNode => $this->call($hir->node, $next),
             default => throw new ComplexityException(self::BACKREFERENCE_MESSAGE, $hir->startPosition, $this->pattern),
         };
+    }
+
+    /**
+     * The body of the group the call runs, built where the call stands.
+     *
+     * @throws ComplexityException
+     */
+    private function call(SubroutineNode $call, int $next): int
+    {
+        $group = $this->calledGroup($call);
+        if (null === $group || isset($this->running[spl_object_id($group)])) {
+            throw new ComplexityException(self::CALL_MESSAGE, $call->getStartPosition(), $this->pattern);
+        }
+
+        $this->calls++;
+        $state = $this->capture($group, $next);
+        $this->calls--;
+
+        return $state;
+    }
+
+    /**
+     * The group the call runs, or null for a call of the whole pattern, of
+     * a group the form leaves out, as a DEFINE holds it, or one that
+     * returns groups, which writes them.
+     */
+    private function calledGroup(SubroutineNode $call): ?CaptureHir
+    {
+        // "(?R)" calls the whole pattern, "(?&R)" a group named R.
+        if ([] !== $call->returnedGroups || ('R' === $call->reference && '' === $call->syntax)) {
+            return null;
+        }
+
+        [$index, $groups] = $this->groups ??= [GroupIndex::of($this->tree), $this->groupsByStart()];
+        foreach ($index->groupsCalledBy($call) as $group) {
+            if (isset($groups[$group->getStartPosition()])) {
+                return $groups[$group->getStartPosition()];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * The groups of the form, by the offset each starts at.
+     *
+     * @return array<int, CaptureHir>
+     */
+    private function groupsByStart(): array
+    {
+        $groups = [];
+        $pending = [$this->form];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof CaptureHir) {
+                $groups[$node->startPosition] = $node;
+            }
+
+            array_push($pending, ...$node->children());
+        }
+
+        return $groups;
     }
 
     private function add(int $kind): int
@@ -185,7 +293,10 @@ final class PriorityNfaBuilder
             $this->possessives[] = ['first' => $first, 'next' => $next, 'position' => $hir->startPosition];
         }
 
-        if ((null === $hir->max || $hir->max > 1) && 0 === $hir->body->properties->minLength) {
+        // A call matches what the body of its group matches, which its own
+        // form does not say.
+        $body = $hir->body instanceof OpaqueHir && $hir->body->node instanceof SubroutineNode ? $this->calledGroup($hir->body->node) ?? $hir->body : $hir->body;
+        if ((null === $hir->max || $hir->max > 1) && 0 === $body->properties->minLength) {
             throw new ComplexityException(self::NULLABLE_LOOP_MESSAGE, $hir->startPosition, $this->pattern);
         }
 
@@ -225,11 +336,20 @@ final class PriorityNfaBuilder
      */
     private function capture(CaptureHir $hir, int $next): int
     {
-        $this->countGroup($hir);
+        $this->running[spl_object_id($hir)] = true;
+        // Inside a call the group writes nothing: PCRE2 gives it back the
+        // value it held before the call.
+        if ($this->calls > 0) {
+            $state = $this->state($hir->body, $next);
+        } else {
+            $this->countGroup($hir);
+            $close = $this->tag(2 * $hir->index + 1, $next);
+            $state = $this->tag(2 * $hir->index, $this->state($hir->body, $close));
+        }
 
-        $close = $this->tag(2 * $hir->index + 1, $next);
+        unset($this->running[spl_object_id($hir)]);
 
-        return $this->tag(2 * $hir->index, $this->state($hir->body, $close));
+        return $state;
     }
 
     private function countGroup(CaptureHir $hir): void
