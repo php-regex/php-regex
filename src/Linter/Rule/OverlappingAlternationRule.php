@@ -21,6 +21,7 @@ use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Linter\Rule\Support\SourceQuote;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -922,13 +923,36 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The text with its letters in one case, as PCRE folds them: every
-     * letter under u, ASCII ones without.
+     * letter under u; without it the ASCII ones under PCRE2's own tables,
+     * and under another locale's each byte those tables pair with another
+     * both ways, on every path of the engine: "\xC9" with "\xE9" under
+     * fr_FR.ISO8859-1. A byte paired one way alone, Greek's final sigma
+     * with the capital whose other case is the small sigma, stays itself,
+     * so that two texts that fold alike always match a text in common.
      */
     private static function fold(string $text, LintContext $context): string
     {
         // The simple case folding, as PCRE compares caselessly: a final
         // sigma folds to the sigma, "ß" stays itself.
-        return $context->pattern->unicodeMode ? mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8') : Ascii::lower($text);
+        if ($context->pattern->unicodeMode) {
+            return mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+        }
+
+        if (CharacterTables::BUILT_IN === $context->target->locale) {
+            return Ascii::lower($text);
+        }
+
+        $tables = CharacterTables::forLocale($context->target->locale);
+        $folded = $text;
+        for ($at = 0, $length = \strlen($text); $at < $length; $at++) {
+            $byte = \ord($text[$at]);
+            $other = $tables->settledOtherCase($byte);
+            if (null !== $other && $byte === $tables->settledOtherCase($other)) {
+                $folded[$at] = \chr(min($byte, $other));
+            }
+        }
+
+        return $folded;
     }
 
     /**
