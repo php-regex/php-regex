@@ -51,6 +51,12 @@ CHANGELOG
    reported under fr_FR.ISO8859-1, where `\xE9` is a letter. A case is
    read from those tables: `"/(?:(?i:[^a])|\xC3|)+/"` is reported there,
    as under C, which it was not.
+ * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
+   under u of an ASCII character, from the tables of the target's locale:
+   under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
+   longer called useless, which dropping it would have changed. A byte
+   whose case the engine's paths or releases read otherwise keeps the
+   flag too. Under C, only ASCII letters have a case without u, as before.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
