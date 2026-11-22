@@ -26,7 +26,9 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Validation\OtherCases;
@@ -53,6 +55,14 @@ final class UselessIFlagRule extends AbstractLintRule
     private bool $unicodeMode = false;
 
     /**
+     * Whether a character past ASCII has Unicode's case: under UTF, and
+     * without it under (*UCP), which from PCRE2 10.35 gives a byte the case
+     * of the character of the same value whatever the locale:
+     * "/(*UCP)\xE9/i" matches "\xC9".
+     */
+    private bool $unicodeCase = false;
+
+    /**
      * Under another locale's tables than PCRE2's own, those tables, which
      * give the other case of each byte, "\xE9" and "\xC9" under Latin-1's:
      * null under PCRE2's own.
@@ -66,8 +76,8 @@ final class UselessIFlagRule extends AbstractLintRule
 
     /**
      * The other case PCRE2's Unicode tables of the target's release give
-     * each character, read at the first character past ASCII under UTF:
-     * null until then.
+     * each character, read at the first character past ASCII under UTF or
+     * (*UCP): null until then.
      */
     private ?OtherCases $otherCases = null;
 
@@ -93,6 +103,8 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->hasBackreferences = false;
         $this->trackCaseSensitivity = $context->pattern->hasFlag('i');
         $this->unicodeMode = $context->pattern->unicodeMode;
+        $this->unicodeCase = $this->unicodeMode
+            || (str_contains(StartOptions::of($context->pattern->source), '(*UCP)') && $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
         // The target read the tables of its locale when it was made.
         $this->tables = CharacterTables::BUILT_IN === $context->target->locale ? null : CharacterTables::forLocale($context->target->locale);
         $this->target = $context->target;
@@ -210,15 +222,17 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         // Another locale's tables may give a byte of the range a case, or
-        // under UTF an ASCII character.
+        // under UTF or (*UCP) an ASCII character.
         for ($codePoint = $min; $codePoint <= $max && $this->tablesDecide($codePoint); $codePoint++) {
             if ($this->codePointHasCase($codePoint)) {
                 return true;
             }
         }
 
+        // Without UTF, (*UCP) reads every byte of the range past ASCII from
+        // PCRE2's tables: "[\xD7-\xF7]" holds "\xD8" to "\xF6".
         if (!$this->unicodeMode) {
-            return false;
+            return $this->unicodeCase && $this->tablesGiveCase($min, $max);
         }
 
         // Under UTF every character of the range is read from PCRE2's
@@ -255,8 +269,9 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         if (!$this->unicodeMode) {
-            // Another locale's tables may give a byte above ASCII a case.
-            if (null !== $this->tables) {
+            // Another locale's tables may give a byte above ASCII a case,
+            // and (*UCP) Unicode's.
+            if (null !== $this->tables || $this->unicodeCase) {
                 foreach (Bytes::split($value) as $byte) {
                     if ($this->codePointHasCase(\ord($byte))) {
                         return true;
@@ -312,12 +327,14 @@ final class UselessIFlagRule extends AbstractLintRule
             return $codePoint !== $this->tables->settledOtherCase($codePoint);
         }
 
-        // Without UTF mode PCRE folds the case of ASCII letters only; with
-        // it, of every character Unicode gives another case, a circled
-        // letter or a Roman numeral included.
+        // Without UTF mode PCRE folds the case of ASCII letters only, and
+        // under (*UCP) of a byte past ASCII PCRE2's tables pair with another
+        // byte; with it, of every character Unicode gives another case, a
+        // circled letter or a Roman numeral included.
         if (!$this->unicodeMode) {
             return ($codePoint >= \ord('A') && $codePoint <= \ord('Z'))
-                || ($codePoint >= \ord('a') && $codePoint <= \ord('z'));
+                || ($codePoint >= \ord('a') && $codePoint <= \ord('z'))
+                || ($this->unicodeCase && $this->tablesGiveCase($codePoint, $codePoint));
         }
 
         return $this->tablesGiveCase($codePoint, $codePoint) || self::mapsToAnotherCase($codePoint);
@@ -329,6 +346,10 @@ final class UselessIFlagRule extends AbstractLintRule
      * 10.48, which the mbstring of PHP 8.4 does not give it. They are not
      * read for ASCII alone, where they give the letters alone a case, which
      * the checks read without them.
+     *
+     * Without UTF, under (*UCP), the other case is a byte too: a subject
+     * holds bytes alone, and "\xB5", "\xDF" and "\xFF", whose other cases
+     * are U+039C, U+1E9E and U+0178, match no other byte.
      */
     private function tablesGiveCase(int $low, int $high): bool
     {
@@ -337,8 +358,10 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         $this->otherCases ??= OtherCases::of($this->target);
+        $otherCases = $this->otherCases->between($low, $high);
 
-        return [] !== $this->otherCases->between($low, $high);
+        // The least other case is a byte where any is.
+        return [] !== $otherCases && ($this->unicodeMode || 0 === min($otherCases) >> 8);
     }
 
     /**
@@ -361,14 +384,14 @@ final class UselessIFlagRule extends AbstractLintRule
 
     /**
      * Whether another locale's tables decide the case of the character: a
-     * byte without UTF, an ASCII character with it, where one above ASCII
-     * takes Unicode's case.
+     * byte without UTF or (*UCP), an ASCII character with either, where one
+     * above ASCII takes Unicode's case.
      *
      * @phpstan-assert-if-true CharacterTables $this->tables
      */
     private function tablesDecide(int $codePoint): bool
     {
-        return null !== $this->tables && $codePoint <= ($this->unicodeMode ? 0x7F : 0xFF);
+        return null !== $this->tables && $codePoint <= ($this->unicodeCase ? 0x7F : 0xFF);
     }
 
     private function unicodePropIsCaseSensitive(string $prop): bool

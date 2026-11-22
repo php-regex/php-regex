@@ -79,6 +79,17 @@ CHANGELOG
    `/\x{A7CE}/iu`, which PCRE2 10.48 pairs with `\x{A7CF}` and the
    mbstring of PHP 8.4 does not, keeps its flag. A wide range is read from
    those tables at once, so `/[\x{4E00}-\x{9FFF}]/iu` is still reported.
+ * Without u, `regex.lint.flag.useless.i` reads a byte above ASCII under
+   `(*UCP)` as the character of the same value, from PCRE2's tables of the
+   target's release, as PCRE2 does from 10.35 under any locale:
+   `/(*UCP)\xE9/i`, which matches `\xC9` only with i, is no longer
+   reported, nor is `/(*UCP)[\xD7-\xF7]/i`, which holds `\xD8` to `\xF6`.
+   A byte whose other case is no byte matches no other one, and
+   `/(*UCP)\xB5/i` is still reported. The tables of another locale give
+   the case of ASCII alone there: `/(*UCP)\xD7/i` is reported under
+   ru_RU.KOI8-R, whose tables pair `\xD7` with `\xF7`, which it was not.
+   Before 10.35, (*UCP) leaves the case of a byte to those tables, as
+   before.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
