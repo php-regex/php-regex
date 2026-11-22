@@ -24,6 +24,11 @@ declare(strict_types=1);
  *                                        step debugger, one per release the
  *                                        engines bundle, fetched only when a
  *                                        trace runs on that release
+ *   docs/assets/php-wasm/, docs/assets/php-wasm-mbstring/
+ *                                        the PHP engine the site builds for a
+ *                                        version php-wasm does not publish
+ *                                        (8.6), loaded by the worker instead
+ *                                        of jsDelivr for that version
  *   docs/_data/playground.json           the driver's answers (analysis, lint,
  *                                        ReDoS verdict, samples) for the
  *                                        default pattern and subject, judged
@@ -44,6 +49,14 @@ declare(strict_types=1);
  * sha256 are the ones wasm/pcre2-trace/manifest.json pins for their release:
  * a module from another build, or a pinned release not built, stops the
  * script. A module file of a release the manifest no longer pins is removed.
+ *
+ * The engine's files are pinned the same way, by wasm/php-wasm/manifest.json.
+ * When wasm/php-wasm/build/ holds a build (wasm/php-wasm/build.sh writes it),
+ * every pinned file is copied from there, and only when its size and sha256
+ * are the manifest's; without a build, the files already served must be the
+ * pinned ones, so the bundle can be regenerated without the hour-long engine
+ * build. A pinned file neither built nor served as pinned stops the script; a
+ * served file the manifest does not pin is removed.
  *
  * Usage:
  *   bin/playground-bundle            write both files
@@ -68,6 +81,10 @@ const DRIVER = ROOT.'/docs/assets/playground/driver.php';
 const MODULE_MANIFEST = ROOT.'/wasm/pcre2-trace/manifest.json';
 const MODULE_BUILD = ROOT.'/wasm/pcre2-trace/build';
 const MODULE_DIR = ROOT.'/docs/assets/playground';
+const ENGINE_MANIFEST = ROOT.'/wasm/php-wasm/manifest.json';
+const ENGINE_BUILD = ROOT.'/wasm/php-wasm/build';
+const ENGINE_DIR = ROOT.'/docs/assets';
+const ENGINE_DIRECTORIES = ['php-wasm', 'php-wasm-mbstring'];
 
 // The library's packages: everything under src/ but the surfaces a web page
 // has no use for. Tests, resources and executables of the kept packages are
@@ -93,6 +110,7 @@ if (!\function_exists('mb_strlen')) {
 $files = collectFiles();
 $files['driver.php'] = php_strip_whitespace(DRIVER);
 $modules = collectModules();
+$engine = collectEngine();
 
 $manifest = [
     'version' => Regex::VERSION,
@@ -109,13 +127,18 @@ $bundle = encode(['manifest' => $manifest, 'files' => $files], 0);
 $default = encode(defaultData($files), \JSON_PRETTY_PRINT | \JSON_HEX_TAG);
 $served = array_map(static fn (string $name): string => MODULE_DIR.'/'.$name.'.wasm', array_keys($modules));
 $stale = array_values(array_diff(glob(MODULE_DIR.'/pcre2-*.wasm') ?: [], $served));
+$staleEngine = array_values(array_diff(servedEngineFiles(), array_keys($engine['files'])));
 
 if ($check) {
     $same = sameButStamp((string) @file_get_contents(BUNDLE), $bundle) && (string) @file_get_contents(DEFAULT_DATA) === $default && [] === $stale;
     foreach ($modules as $name => $module) {
         $same = $same && @file_get_contents(MODULE_DIR.'/'.$name.'.wasm') === $module['wasm'];
     }
-    echo $same ? "The playground bundle, its trace modules and the default data are current.\n" : "The playground bundle, its trace modules or the default data are stale: run bin/playground-bundle.\n";
+    $same = $same && [] === $staleEngine;
+    foreach ($engine['files'] as $path => $bytes) {
+        $same = $same && @file_get_contents(ENGINE_DIR.'/'.$path) === $bytes;
+    }
+    echo $same ? "The playground bundle, its trace modules, its PHP engine and the default data are current.\n" : "The playground bundle, its trace modules, its PHP engine or the default data are stale: run bin/playground-bundle.\n";
     exit($same ? 0 : 1);
 }
 
@@ -126,6 +149,17 @@ foreach ($modules as $name => $module) {
 }
 foreach ($stale as $file) {
     unlink($file);
+}
+foreach ($engine['files'] as $path => $bytes) {
+    if (@file_get_contents(ENGINE_DIR.'/'.$path) !== $bytes) {
+        if (!is_dir(\dirname(ENGINE_DIR.'/'.$path))) {
+            mkdir(\dirname(ENGINE_DIR.'/'.$path), 0o777, true);
+        }
+        file_put_contents(ENGINE_DIR.'/'.$path, $bytes);
+    }
+}
+foreach ($staleEngine as $path) {
+    unlink(ENGINE_DIR.'/'.$path);
 }
 printf(
     "bundle.json: %d files, %s stripped, %s on disk (PHPRegex %s, %s, %s)\nplayground.json: %s\n",
@@ -140,6 +174,7 @@ printf(
 foreach ($modules as $name => $module) {
     printf("%s: PCRE2 %s, %s, sha256 %s\n", $name, $module['release'], human($module['bytes']), $module['sha256']);
 }
+printf("PHP %s engine: %d files, %s, %s\n", $engine['php'], \count($engine['files']), human(array_sum(array_map('strlen', $engine['files']))), $engine['built'] ? 'copied from wasm/php-wasm/build/' : 'as served');
 
 /**
  * @return array<string, string> path relative to the repository → stripped source
@@ -207,6 +242,74 @@ function collectModules(): array
     }
 
     return $modules;
+}
+
+/**
+ * The engine's files the manifest pins, from the build directory when it
+ * holds a build, else as the site already serves them, each checked
+ * against its pin byte for byte.
+ *
+ * @return array{php: string, built: bool, files: array<string, string>} the files: path under docs/assets → bytes
+ */
+function collectEngine(): array
+{
+    $json = @file_get_contents(ENGINE_MANIFEST);
+    if (false === $json) {
+        fwrite(\STDERR, \sprintf("The engine manifest %s is missing.\n", ENGINE_MANIFEST));
+        exit(1);
+    }
+    $manifest = json_decode($json, true, 16, \JSON_THROW_ON_ERROR);
+    if (!\is_array($manifest) || !\is_string($manifest['php']['version'] ?? null) || !\is_array($manifest['files'] ?? null) || [] === $manifest['files']) {
+        fwrite(\STDERR, \sprintf("The engine manifest %s names no PHP version or no file.\n", ENGINE_MANIFEST));
+        exit(1);
+    }
+    $built = is_dir(ENGINE_BUILD);
+    $files = [];
+    foreach ($manifest['files'] as $path => $pinned) {
+        if (!\is_string($path) || 1 !== preg_match('~^(?:'.implode('|', ENGINE_DIRECTORIES).')/[^/]+$~', $path) || !\is_array($pinned) || !\is_int($pinned['bytes'] ?? null) || !\is_string($pinned['sha256'] ?? null)) {
+            fwrite(\STDERR, \sprintf("The engine manifest %s does not name a served path, a size and a sha256 for %s.\n", ENGINE_MANIFEST, $path));
+            exit(1);
+        }
+        $source = $built ? ENGINE_BUILD.'/'.$path : ENGINE_DIR.'/'.$path;
+        $bytes = @file_get_contents($source);
+        if (false === $bytes) {
+            fwrite(\STDERR, $built
+                ? \sprintf("The engine build in %s has no %s: run wasm/php-wasm/build.sh %s again (see wasm/README.md).\n", ENGINE_BUILD, $path, $manifest['php']['version'])
+                : \sprintf("The engine file %s is not served and %s holds no build: run wasm/php-wasm/build.sh %s (see wasm/README.md).\n", $source, ENGINE_BUILD, $manifest['php']['version']));
+            exit(1);
+        }
+        $sha256 = hash('sha256', $bytes);
+        if (\strlen($bytes) !== $pinned['bytes'] || $sha256 !== $pinned['sha256']) {
+            fwrite(\STDERR, \sprintf("The engine file %s is not the one the manifest pins: %d bytes, sha256 %s, against %d bytes, sha256 %s. Rebuild it, or rewrite the manifest with wasm/php-wasm/build.sh %s --write-manifest.\n", $source, \strlen($bytes), $sha256, $pinned['bytes'], $pinned['sha256'], $manifest['php']['version']));
+            exit(1);
+        }
+        $files[$path] = $bytes;
+    }
+
+    return ['php' => $manifest['php']['version'], 'built' => $built, 'files' => $files];
+}
+
+/**
+ * Every file the engine's served directories hold, as paths under
+ * docs/assets.
+ *
+ * @return list<string>
+ */
+function servedEngineFiles(): array
+{
+    $served = [];
+    foreach (ENGINE_DIRECTORIES as $directory) {
+        if (!is_dir(ENGINE_DIR.'/'.$directory)) {
+            continue;
+        }
+        foreach (scandir(ENGINE_DIR.'/'.$directory) ?: [] as $name) {
+            if (is_file(ENGINE_DIR.'/'.$directory.'/'.$name)) {
+                $served[] = $directory.'/'.$name;
+            }
+        }
+    }
+
+    return $served;
 }
 
 function commit(): string

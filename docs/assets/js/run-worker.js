@@ -3,6 +3,8 @@
 // The PHP engine behind the tutorial's Run buttons and the home page's
 // playground: a PHP compiled to WebAssembly (php-wasm 0.2.0, Apache-2.0),
 // pinned and loaded from jsDelivr the first time a visitor asks for a run.
+// PHP 8.6, which php-wasm 0.2.0 does not publish, is built from its sources
+// with 8.6.0 added (wasm/php-wasm/) and served by this site, same-origin.
 // It lives in this dedicated worker so a runaway snippet (catastrophic
 // backtracking, a stray while (true)) hangs only itself — the page owns the
 // watchdog and may terminate this worker at any moment.
@@ -46,6 +48,14 @@ const RUNTIME = 'https://cdn.jsdelivr.net/npm/php-wasm@0.2.0/PhpWeb.mjs';
 // The real mbstring, which the library requires and the engine does not
 // ship: one shared object per PHP version, pinned with the engine.
 const MBSTRING = 'https://cdn.jsdelivr.net/npm/php-wasm-mbstring@0.2.0/index.mjs';
+// The versions built here, beside the page: the same two packages, the same
+// module API, every file pinned by wasm/php-wasm/manifest.json.
+const BUILT_HERE = {
+  '8.6': {
+    runtime: new URL('../php-wasm/PhpWeb.mjs', import.meta.url).href,
+    mbstring: new URL('../php-wasm-mbstring/index.mjs', import.meta.url).href,
+  },
+};
 // The oldest engine the library itself runs on: a request for an older PHP
 // is analysed here, judged for the older engine, and matched there.
 const ANALYSIS_FLOOR = '8.1';
@@ -56,8 +66,8 @@ const LIBRARY_DIR = '/lib';
 const INPUT_FILE = '/tmp/in.json';
 const ENVELOPE = /\x1e([\s\S]*)\x1e/;
 
-let PhpWeb = null;
-let mbstring = null;
+const runtimes = new Map();     // PhpWeb.mjs URL -> the PhpWeb class it exports
+const mbstrings = new Map();    // index.mjs URL -> the mbstring extension it exports
 let bundle = null;             // the parsed bundle, fetched once
 const instances = new Map();   // "run:8.4" | "play:8.4" -> runtime instance
 const engines = new Map();     // PHP version -> { php, pcre } caption
@@ -83,17 +93,28 @@ function attach(php) {
   });
 }
 
-async function runtime() {
-  if (!PhpWeb) {
-    PhpWeb = (await import(RUNTIME)).PhpWeb;
+// The engine of one version: from this site when it is built here, from
+// jsDelivr otherwise.
+async function runtime(version) {
+  const url = BUILT_HERE[version] ? BUILT_HERE[version].runtime : RUNTIME;
+  if (!runtimes.has(url)) {
+    runtimes.set(url, (await import(url)).PhpWeb);
   }
-  return PhpWeb;
+  return runtimes.get(url);
+}
+
+async function mbstringFor(version) {
+  const url = BUILT_HERE[version] ? BUILT_HERE[version].mbstring : MBSTRING;
+  if (!mbstrings.has(url)) {
+    mbstrings.set(url, (await import(url)).default);
+  }
+  return mbstrings.get(url);
 }
 
 async function instance(version) {
   const key = 'run:' + version;
   if (!instances.has(key)) {
-    const Web = await runtime();
+    const Web = await runtime(version);
     const php = new Web({ version: version });
     attach(php);
     instances.set(key, php);
@@ -169,10 +190,8 @@ async function playground(version, bundleUrl, id) {
   }
 
   progress(id, 'engine');
-  const Web = await runtime();
-  if (!mbstring) {
-    mbstring = (await import(MBSTRING)).default;
-  }
+  const Web = await runtime(version);
+  const mbstring = await mbstringFor(version);
   const php = new Web({
     version: version,
     sharedLibs: [mbstring],

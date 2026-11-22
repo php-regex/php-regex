@@ -84,8 +84,8 @@ final class PullRequestScopeTest extends TestCase
     /**
      * The workflows that run on a pull request for what it changes, each
      * scoped by its own list: the prose readers, the demo applications, the
-     * workflow checks, and the workflow that reports CI for a pull request
-     * ci.yml stays out of.
+     * workflow checks, the playground's PHP engine rebuild, and the workflow
+     * that reports CI for a pull request ci.yml stays out of.
      */
     private const SCOPED = [
         'ci-prose.yml',
@@ -94,6 +94,7 @@ final class PullRequestScopeTest extends TestCase
         'spelling.yml',
         'demo.yml',
         'workflows.yml',
+        'php-engine.yml',
     ];
 
     /**
@@ -182,6 +183,30 @@ final class PullRequestScopeTest extends TestCase
             self::listUnder('paths', $block),
             'The checks read the workflows and the local actions: the community files under .github/ do not start them.',
         );
+    }
+
+    /**
+     * The playground's PHP engine takes about an hour to rebuild: it is
+     * rebuilt when its recipe, its served files or the workflow change, and
+     * the documentation tests compare the served files with the manifest on
+     * every other change to the site.
+     */
+    #[Test]
+    public function test_the_php_engine_is_rebuilt_when_its_recipe_or_its_files_change(): void
+    {
+        $workflow = self::workflow('php-engine.yml');
+        $block = self::pullRequestBlock('php-engine.yml');
+
+        $this->assertMatchesRegularExpression('~^    branches: \[ 2\.x \]$~m', $block);
+        $this->assertSame(
+            ['wasm/php-wasm/**', 'docs/assets/php-wasm/**', 'docs/assets/php-wasm-mbstring/**', '.github/workflows/php-engine.yml'],
+            self::listUnder('paths', $block),
+            'The rebuild reads the recipe, the served files and itself.',
+        );
+        $this->assertStringContainsString("\n  workflow_dispatch:\n", $workflow);
+        $this->assertStringContainsString("permissions:\n  contents: read\n", $workflow);
+        $this->assertStringNotContainsString(': write', $workflow);
+        $this->assertStringContainsString('run: wasm/php-wasm/build.sh 8.6.0 --check', $workflow);
     }
 
     #[Test]

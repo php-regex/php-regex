@@ -1,8 +1,9 @@
 # wasm/
 
-Native code the documentation site runs in the browser. Today it holds the
-PCRE2 trace shim behind the playground's step debugger, built once per PCRE2
-release the playground's PHP engines bundle.
+Native code the documentation site runs in the browser: the PCRE2 trace
+shim behind the playground's step debugger, built once per PCRE2 release the
+playground's PHP engines bundle, and the PHP 8.6 engine itself, which
+php-wasm does not publish yet.
 
 ## pcre2-trace/
 
@@ -31,7 +32,7 @@ The releases, by the playground's engines:
 | 10.39 | PHP 8.1.28 | `gh-11374` |
 | 10.40 | PHP 8.2.11 | none |
 | 10.42 | PHP 8.3.11 | `gh-11374` |
-| 10.44 | PHP 8.4.1, 8.5.2 | none |
+| 10.44 | PHP 8.4.1, 8.5.2, 8.6.0 | none |
 
 `gh-11374` is php-src's backport of PCRE2 10.43's fix for the captures an
 interpreter restores after a recursion (php-src commit `83a505e85f9`),
@@ -162,7 +163,7 @@ minor adds its tag, and an engine php-wasm upgrades (8.4.1 to 8.4.2)
 replaces its old tag, never beside it. With a php-src checkout at hand:
 
 ```bash
-php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.0.30 php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-<new version>
+php wasm/pcre2-trace/php-pcre-options/generate.php /path/to/php-src php-8.0.30 php-8.1.28 php-8.2.11 php-8.3.11 php-8.4.1 php-8.5.2 php-8.6.0 php-<new version>
 ```
 
 The rows are written in the order given. The script reads the modifier
@@ -175,3 +176,85 @@ tag and the commit, so the test re-reads them and compares with the
 tracked table without cloning php-src: a new row needs its excerpt too.
 Without a checkout, `--from-file <version>=<path>:<commit>:<pcre2>` reads
 a saved `php_pcre.c`.
+
+## php-wasm/
+
+The playground and the Run buttons run PHP compiled to WebAssembly by
+[php-wasm](https://github.com/seanmorris/php-wasm). Its 0.2.0 packages stop
+at PHP 8.5.2 and its Makefile refuses 8.6, so the PHP 8.6 engine is built
+here from php-wasm's v0.2.0 sources with 8.6.0 added, and the site serves
+it beside the page. Every other version still loads from jsDelivr.
+
+| file | role |
+|---|---|
+| `build.sh` | builds the engine of one PHP version into `build/` inside php-wasm's own builder image; `--write-manifest` records the build, `--check` verifies it |
+| `patches/php8.6.patch` | php-wasm's `patch/php8.5.patch` ported to php-src 8.6.0, applied by php-wasm's own patch step |
+| `patches/php-wasm-8.6.patch` | the v0.2.0 tree with 8.6 added: the Makefile's version lists and 8.6.0 tag, `PhpWeb.mjs`'s `8.6` case, mbstring's `8.6.mjs` |
+| `patches/vrzno-8.6.patch` | vrzno, php-wasm's JavaScript bridge at the commit php-wasm pins, ported to 8.6: `offsetof()` for the removed `XtOffsetOf()`, and `php_stream_wrapper_log_error()`'s new arguments as php-src's `UPGRADING.INTERNALS` gives them |
+| `manifest.json` | the last build: php-src tag and commit, the PCRE2 release it bundles, php-wasm tag and commit, each of the three patches' sha256, the Emscripten image and digest, the build date stamped into PHP, and every served file's size and sha256 |
+
+The port of the php-src patch differs from 8.5's in what php-src 8.6.0
+moved: `zend_free_internal_arg_info()` takes a second argument, `persistent`
+(`true` for an internal class's methods), the CLI's `main()` moved to
+`sapi/cli/php_cli_main.c` and returns its status, so php-wasm's
+`wasm_sapi_cli_main()` calls `do_php_cli()` and the `#ifdef __EMSCRIPTEN__`
+around `exit()` is gone, and the hunks of `zend_API.h`, `credits_ext.h`,
+`tokenizer.c` and `phpdbg_io.c` apply at new places (the new licence headers,
+the new credits). Every other hunk applies as it is. vrzno, which
+`PhpBase.mjs` calls for the values a page shares with PHP, is compiled from
+the commit php-wasm pins with its port applied, handed to php-wasm's import
+step as a development checkout (`VRZNO_DEV_PATH`).
+
+### Building the engine
+
+Docker is the only requirement; the build runs in containers only. From the
+repository root:
+
+```bash
+wasm/php-wasm/build.sh 8.6.0 --write-manifest
+```
+
+The script builds php-wasm's builder image from its
+`emscripten-builder.dockerfile` at the pinned tag, on the Emscripten 6.0.6
+image pinned by digest (`linux/amd64`), then runs inside it: it clones
+php-wasm, php-src and oniguruma at their tags and vrzno at the commit
+php-wasm pins, checks each commit, applies the patches, and runs php-wasm's
+own recipe with the configuration
+its CI publishes the packages from (`.github/.env_8.5.dynamic.ci`, with the
+version changed): the libraries PHP's configure links against, the web
+loader `php8.6-web.mjs` and its module, mbstring and oniguruma as shared
+objects, then php-wasm's compress step, which names the module after its
+sha1. PHP stamps its build date and the build machine's `uname` into the
+binary: the date is the php-src tag commit's (`SOURCE_DATE_EPOCH`) and the
+`uname` a fixed string, so a rebuild gives the same bytes. Run it twice; the
+sha256s must not move. On Apple silicon the image is emulated, and the
+builder image and the engine take about an hour each.
+
+`build/` is not tracked: `bin/playground-bundle` copies each file from it,
+only when its size and sha256 are the manifest's, to `docs/assets/php-wasm/`
+and `docs/assets/php-wasm-mbstring/`, the layout of the two npm packages, so
+`PhpWeb.mjs` and mbstring's `index.mjs` load as they do from jsDelivr, with
+the same module API. Without a build, the bundle requires the served files
+to be the pinned ones, and changes nothing. The served files are marked
+`-text` in `.gitattributes`, so git never rewrites them, and Jekyll is told
+to keep `_Event.mjs`, which `PhpBase.mjs` imports.
+
+php-wasm is Apache-2.0 (or GPL-2.0): its `LICENSE`, `LICENSE-GPL` and
+`NOTICE` travel in both served directories, and the playground's footer
+credits it.
+
+### Checking the engine
+
+`tests/Documentation/PlaygroundPhpEngineTest.php` holds the served files to
+the manifest, the manifest to `build.sh` and to the options table's 8.6.0
+row (the same php-src commit, the same PCRE2 release), and the worker to its
+split. `bin/playground-check` runs the served web build under Node as the
+worker runs it, on every outcome and probe witness the other engines answer,
+and asks it three questions PHP 8.6.0 and the 8.5.2 engine answer apart, as
+the native `php:8.6.0-cli` and `php:8.5.2-cli` images do: `/\C/u` does not
+compile (8.6 adds `PCRE2_NEVER_BACKSLASH_C` under `u`), a group named `MARK`
+beside a `(*MARK:x)` leaves one `MARK` key, and `preg_grep()` over a
+malformed subject under `u` returns `false` instead of the entries before
+it. The engine's PCRE2 is 10.44, so the step debugger traces it with the
+`pcre2-10.44` module the 8.4 and 8.5 engines already use, with the 8.6.0
+row's options.

@@ -1,0 +1,47 @@
+name: PHP Engine
+
+# The PHP 8.6 engine the playground and the Run buttons load from the site
+# (docs/assets/php-wasm/ and docs/assets/php-wasm-mbstring/), which php-wasm
+# does not publish: rebuilt here from php-wasm's v0.2.0 sources, the
+# patches beside the build script and the Emscripten image the manifest pins
+# by digest, then compared with wasm/php-wasm/manifest.json file by file, so
+# the site never serves an engine nobody can rebuild.
+#
+# The rebuild takes about an hour, so it runs when the recipe, the served
+# files or this workflow change; on every other change to the site, the
+# documentation tests compare the served files with the manifest.
+
+on:
+  pull_request:
+    branches: [ 2.x ]
+    paths:
+      - 'wasm/php-wasm/**'
+      - 'docs/assets/php-wasm/**'
+      - 'docs/assets/php-wasm-mbstring/**'
+      - '.github/workflows/php-engine.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  php-engine:
+    name: PHP 8.6.0 engine (php-wasm v0.2.0, Emscripten 6.0.6, pinned)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Build the engine and compare it with the manifest
+        # The script builds php-wasm's builder image, clones php-wasm,
+        # php-src and oniguruma at their pinned commits, and exits 1, file
+        # named, when a sha256 is not the manifest's.
+        run: wasm/php-wasm/build.sh 8.6.0 --check

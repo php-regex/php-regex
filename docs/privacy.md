@@ -23,6 +23,6 @@ None of them carries a pattern, a text or anything else you typed.
 
 **Retention and the rest.** Google Analytics keeps event-level data 14 months, then deletes it; its aggregated reports (how many visits, how many runs) are not bound by that setting. Google Signals is off, so nothing is joined to a Google account. The site has no account, no form and no newsletter.
 
-The playground downloads PHP, compiled to WebAssembly, from cdn.jsdelivr.net the first time you ask it for an answer: typing a pattern or a text, pressing Run, opening an example or a finding. The step trace downloads PCRE2's own module when you open its tab. jsDelivr sees those requests like any download.
+The playground downloads PHP, compiled to WebAssembly, from cdn.jsdelivr.net the first time you ask it for an answer: typing a pattern or a text, pressing Run, opening an example or a finding. PHP 8.6 comes from this site instead. The step trace downloads PCRE2's own module when you open its tab. jsDelivr sees those requests like any download.
 
 Questions: [open an issue](https://github.com/php-regex/php-regex/issues).

@@ -1,0 +1,101 @@
+diff --git a/Makefile b/Makefile
+index ba38eebe..5ee836f8 100755
+--- a/Makefile
++++ b/Makefile
+@@ -140,8 +140,8 @@ ifeq ($(filter ${BROTLI},0 1),)
+ $(error BROTLI MUST BE 0, 1. PLEASE CHECK YOUR SETTINGS FILE: $(abspath ${ENV_FILE}))
+ endif
+ 
+-ifeq ($(filter ${PHP_VERSION},8.5 8.4 8.3 8.2 8.1 8.0),)
+-$(error PHP_VERSION MUST BE 8.5, 8.4, 8.3, 8.2, 8.1 or 8.0. (got ${PHP_VERSION}) PLEASE CHECK YOUR SETTINGS FILE: $(abspath ${ENV_FILE}))
++ifeq ($(filter ${PHP_VERSION},8.6 8.5 8.4 8.3 8.2 8.1 8.0),)
++$(error PHP_VERSION MUST BE 8.6, 8.5, 8.4, 8.3, 8.2, 8.1 or 8.0. (got ${PHP_VERSION}) PLEASE CHECK YOUR SETTINGS FILE: $(abspath ${ENV_FILE}))
+ endif
+ 
+ EXTRA_MODULES=
+@@ -219,6 +219,12 @@ PRE_JS_FILES+= ${EXTRA_PRE_JS_FILES}
+ 
+ TEST_LIST?=
+ 
++ifeq (${PHP_VERSION},8.6)
++PHP_VERSION_FULL=8.6.0
++PHP_BRANCH=php-${PHP_VERSION_FULL}
++PHP_AR=libphp
++endif
++
+ ifeq (${PHP_VERSION},8.5)
+ PHP_VERSION_FULL=8.5.2
+ PHP_BRANCH=php-${PHP_VERSION_FULL}
+@@ -491,7 +497,7 @@ endif
+ # Zend Fibers use Emscripten's native fiber API for PHP 8.1 and newer. The
+ # implementation switches stacks through Asyncify and cannot operate in a
+ # non-Asyncify main module.
+-ifneq ($(filter ${PHP_VERSION},8.5 8.4 8.3 8.2 8.1),)
++ifneq ($(filter ${PHP_VERSION},8.6 8.5 8.4 8.3 8.2 8.1),)
+ ifeq (${ASYNCIFY},0)
+ $(error PHP ${PHP_VERSION} Zend Fibers require ASYNCIFY=1)
+ endif
+diff --git a/packages/mbstring/8.6.mjs b/packages/mbstring/8.6.mjs
+new file mode 100644
+index 00000000..757d56d3
+--- /dev/null
++++ b/packages/mbstring/8.6.mjs
+@@ -0,0 +1,14 @@
++const importMeta = import.meta;
++const url = new URL(importMeta.url ?? 'http://example.com#this-is-an-error-supression-hack');
++const ini = !!(Number( url.searchParams.get('ini') ?? true ));
++
++/**
++ * Returns the shared library definitions for this package build.
++ * @returns {Array<object>} Shared library definitions for the current package version.
++ */
++export const getLibs = () => [
++	{name: 'php8.6-mbstring.so', url: new URL('./php8.6-mbstring.so', import.meta.url), ini}
++	, {name: 'libonig.so', url: new URL('./libonig.so', import.meta.url)}
++];
++
++export default {getLibs};
+diff --git a/packages/mbstring/index.d.ts b/packages/mbstring/index.d.ts
+index 07797875..e54ff278 100644
+--- a/packages/mbstring/index.d.ts
++++ b/packages/mbstring/index.d.ts
+@@ -1,4 +1,4 @@
+-export type PhpRuntimeVersion = '8.0' | '8.1' | '8.2' | '8.3' | '8.4' | '8.5';
++export type PhpRuntimeVersion = '8.0' | '8.1' | '8.2' | '8.3' | '8.4' | '8.5' | '8.6';
+ export interface PhpVersionedRuntime { phpVersion?: PhpRuntimeVersion; }
+ export interface PhpPreloadFile { url: string | URL; path?: string; parent?: string; name?: string; }
+ export interface PhpSharedLibrary { name?: string; url: string | URL; ini?: boolean; getLibs?: () => PhpSharedLibrary[]; getFiles?: () => PhpPreloadFile[]; }
+diff --git a/packages/mbstring/index.mjs b/packages/mbstring/index.mjs
+index 42a11b15..be2a40ae 100644
+--- a/packages/mbstring/index.mjs
++++ b/packages/mbstring/index.mjs
+@@ -1,3 +1,4 @@
++import mbstring8_6 from './8.6.mjs';
+ import mbstring8_5 from './8.5.mjs';
+ import mbstring8_4 from './8.4.mjs';
+ import mbstring8_3 from './8.3.mjs';
+@@ -6,7 +7,8 @@ import mbstring8_1 from './8.1.mjs';
+ import mbstring8_0 from './8.0.mjs';
+ 
+ const versionTable = {
+-	'8.5': mbstring8_5
++	'8.6': mbstring8_6
++	, '8.5': mbstring8_5
+ 	, '8.4': mbstring8_4
+ 	, '8.3': mbstring8_3
+ 	, '8.2': mbstring8_2
+diff --git a/source/PhpWeb.mjs b/source/PhpWeb.mjs
+index 585e56da..33e63973 100644
+--- a/source/PhpWeb.mjs
++++ b/source/PhpWeb.mjs
+@@ -19,6 +19,10 @@ export class PhpWeb extends PhpWebBase
+ 
+ 		switch(version)
+ 		{
++			case '8.6':
++				super(import(`./php8.6-web.mjs`), constructorArgs);
++				break;
++
+ 			case '8.5':
+ 				super(import(`./php8.5-web.mjs`), constructorArgs);
+ 				break;

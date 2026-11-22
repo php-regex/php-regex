@@ -44,6 +44,17 @@
  * installed into a temporary directory for the run: the repository carries
  * no package.json.
  *
+ * PHP 8.6, which php-wasm 0.2.0 does not publish, is the engine the site
+ * builds (wasm/php-wasm/) and serves from docs/assets/php-wasm/ and
+ * docs/assets/php-wasm-mbstring/. Those files are checked against
+ * wasm/php-wasm/manifest.json (size, sha256, and the built file when
+ * wasm/php-wasm/build/ has it), and the served web build itself is the 8.6
+ * engine here, run under Node as the page's worker runs it. Three answers
+ * PHP 8.6.0 gives and the 8.5.2 engine does not, read from the native
+ * php:8.6.0-cli and php:8.5.2-cli images, prove it is 8.6: u refuses \C,
+ * a group named MARK and a (*MARK) leave one MARK key, and preg_grep()
+ * returns false on a malformed subject instead of the entries before it.
+ *
  * Usage: bin/playground-check
  */
 
@@ -65,6 +76,10 @@ const OPTIONS_TABLE = path.join(ROOT, 'docs/assets/js/php-pcre-options.js');
 const FIXTURES = path.join(ROOT, 'tests/Documentation/Fixtures/pcre2-trace');
 const PHP_WASM = 'php-wasm@0.2.0';
 const MBSTRING = 'php-wasm-mbstring@0.2.0';
+const ENGINE_MANIFEST = path.join(ROOT, 'wasm/php-wasm/manifest.json');
+const ENGINE_BUILD = path.join(ROOT, 'wasm/php-wasm/build');
+const ENGINE_ASSETS = path.join(ROOT, 'docs/assets');
+const ENGINE_DIRECTORIES = ['php-wasm', 'php-wasm-mbstring'];
 const LIBRARY_DIR = '/lib';
 
 // The page's limits: the worker's ini and the recording cap.
@@ -130,6 +145,34 @@ const WITNESSES = [
   { name: 'lookbehind-bsk', regex: '/(?<=a\\K)bc/', subject: 'abc' },
   { name: 'nest-limit', regex: '/' + '('.repeat(251) + 'a' + ')'.repeat(251) + '/', subject: 'a' },
 ];
+
+// What PHP 8.6.0 and 8.5.2 print for the same three questions, each read
+// from the native php:<version>-cli image: \C under u, a group named MARK
+// beside a (*MARK), preg_grep() over a malformed subject. The 8.6 answers
+// are the engine's proof that it is 8.6, the 8.5.2 ones that the question
+// tells the two apart. The warning is read from "Compilation failed" on:
+// the browser engines frame it "PHP Request Startup:", where the native
+// ones frame it "preg_match():".
+const VERSION_WITNESSES_SOURCE = `<?php
+error_clear_last();
+$c = @preg_match('/\\C/u', 'a');
+$warning = error_get_last();
+preg_match('/(?<MARK>a)(*MARK:x)/', 'a', $m);
+$grep = @preg_grep('/./u', ['a', "\\xff", 'b']);
+$message = $warning ? $warning['message'] : null;
+echo json_encode(['backslashC' => [$c, $message === null ? null : substr($message, (int) strpos($message, 'Compilation failed'))], 'mark' => [count($m), json_encode($m)], 'grep' => [json_encode($grep), preg_last_error_msg()]]);`;
+const VERSION_WITNESSES = {
+  '8.5.2': {
+    backslashC: [1, null],
+    mark: [4, '{"0":"a","MARK":"a","1":"a","MARK":"x"}'],
+    grep: ['["a"]', 'Malformed UTF-8 characters, possibly incorrectly encoded'],
+  },
+  '8.6.0': {
+    backslashC: [false, "Compilation failed: using \\C is incompatible with the 'u' modifier at offset 2"],
+    mark: [3, '{"0":"a","MARK":"x","1":"a"}'],
+    grep: ['false', 'Malformed UTF-8 characters, possibly incorrectly encoded'],
+  },
+};
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder('utf-8', { fatal: true });
@@ -249,6 +292,69 @@ function servedModules(bundle, expect) {
     served[release] = { name, release, module, bytes };
   });
   return served;
+}
+
+// The engine the site builds, checked against its manifest: every file the
+// two served directories hold is pinned (size, sha256), every pinned file
+// is served, and each one equals the built file when wasm/php-wasm/build/
+// has it. Returns the manifest.
+function servedEngine(expect) {
+  const manifest = JSON.parse(fs.readFileSync(ENGINE_MANIFEST, 'utf8'));
+  const pinned = Object.keys(manifest.files).sort();
+  const served = [];
+  ENGINE_DIRECTORIES.forEach((directory) => {
+    const dir = path.join(ENGINE_ASSETS, directory);
+    if (fs.existsSync(dir)) {
+      fs.readdirSync(dir).forEach((name) => served.push(`${directory}/${name}`));
+    }
+  });
+  served.sort();
+  expect(sameList(served, pinned), `docs/assets serves ${JSON.stringify(served)}, wasm/php-wasm/manifest.json pins ${JSON.stringify(pinned)}: run bin/playground-bundle.`);
+  let bytesServed = 0;
+  let built = 0;
+  pinned.forEach((file) => {
+    const target = path.join(ENGINE_ASSETS, file);
+    if (!expect(fs.existsSync(target), `No docs/assets/${file}: run bin/playground-bundle.`)) {
+      return;
+    }
+    const bytes = fs.readFileSync(target);
+    bytesServed += bytes.length;
+    const pin = manifest.files[file];
+    expect(bytes.length === pin.bytes && sha256(bytes) === pin.sha256, `docs/assets/${file} holds ${bytes.length} bytes, sha256 ${sha256(bytes)}; the manifest pins ${pin.bytes} bytes, sha256 ${pin.sha256}.`);
+    const fresh = path.join(ENGINE_BUILD, file);
+    if (fs.existsSync(fresh)) {
+      built++;
+      expect(sameBytes(fs.readFileSync(fresh), bytes), `docs/assets/${file} differs from the built ${path.relative(ROOT, fresh)}: run bin/playground-bundle.`);
+    }
+  });
+  say(`The page serves the PHP ${manifest.php.version} engine as wasm/php-wasm/manifest.json pins it: ${pinned.length} files, ${(bytesServed / 1048576).toFixed(1)} MB, php-wasm ${manifest.phpWasm.tag} with ${Object.keys(manifest.patches).join(' and ')}, ${built ? `${built} byte-equal to wasm/php-wasm/build/` : 'no built files to compare with'}.`);
+  return manifest;
+}
+
+// The served web build of the engine, run under Node the way the page's
+// worker runs it: the worker's stand-ins for document and window, and a
+// fetch that reads the file: URLs the loader asks for (its module, its
+// shared objects) from the disk. Returns { PhpWeb, mbstring }.
+async function servedWebEngine() {
+  if (typeof globalThis.document === 'undefined') {
+    globalThis.document = { addEventListener() {}, removeEventListener() {}, getElementById() { return null; }, getElementsByTagName() { return []; }, currentScript: null };
+  }
+  if (typeof globalThis.window === 'undefined') {
+    globalThis.window = globalThis;
+  }
+  const networkFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input instanceof URL ? input.href : (input && input.url) || input);
+    if (url.startsWith('file:')) {
+      const file = new URL(url);
+      const bytes = fs.readFileSync(file);
+      return new Response(bytes, { status: 200, headers: { 'Content-Type': file.pathname.endsWith('.wasm') ? 'application/wasm' : 'application/octet-stream' } });
+    }
+    return networkFetch(input, init);
+  };
+  const { PhpWeb } = await import(pathToFileURL(path.join(ENGINE_ASSETS, 'php-wasm/PhpWeb.mjs')).href);
+  const mbstring = (await import(pathToFileURL(path.join(ENGINE_ASSETS, 'php-wasm-mbstring/index.mjs')).href)).default;
+  return { PhpWeb, mbstring };
 }
 
 // The module instantiated the way the page does it, the memory-growth
@@ -741,6 +847,8 @@ async function main() {
   // The module first: a bundle that embeds other bytes than the tree pins
   // is said before any engine boots.
   const served = servedModules(bundle, expect);
+  const engineManifest = servedEngine(expect);
+  const builtHere = engineManifest.php.version.split('.').slice(0, 2).join('.');
   const table = optionsTable();
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'phpregex-playground-check-'));
@@ -751,8 +859,15 @@ async function main() {
   const mbstring = (await import(pathToFileURL(path.join(dir, 'node_modules/php-wasm-mbstring/index.mjs')).href)).default;
 
   let output = '';
-  const engine = (version, withLibrary) => {
-    const php = new PhpNode({ version, sharedLibs: [mbstring], ini: 'pcre.backtrack_limit=1000000' });
+  let web = null;
+  const engine = async (version, withLibrary) => {
+    let php;
+    if (version === builtHere) {
+      web = web || await servedWebEngine();
+      php = new web.PhpWeb({ version, sharedLibs: [web.mbstring], ini: 'pcre.backtrack_limit=1000000' });
+    } else {
+      php = new PhpNode({ version, sharedLibs: [mbstring], ini: 'pcre.backtrack_limit=1000000' });
+    }
     php.addEventListener('output', (event) => { output += Array.isArray(event.detail) ? event.detail.join('') : String(event.detail || ''); });
     php.addEventListener('error', (event) => { output += Array.isArray(event.detail) ? event.detail.join('') : String(event.detail || ''); });
     return php.binary.then(async (binary) => {
@@ -1034,7 +1149,28 @@ async function main() {
       words.push(`${witness.name} ${word.module}${word.module === word.engine ? '' : ` (engine: ${word.engine})`}`);
     }
     say(`Probe on PHP ${version} (pcre2-${row.pcre2}): ${words.join(', ')} — ${agreed ? 'the engine agrees' : 'the engine disagrees'}.`);
+
+    // The answers that tell 8.6.0 from 8.5.2, asked of both.
+    if (version in VERSION_WITNESSES) {
+      output = '';
+      await instance.php.run(VERSION_WITNESSES_SOURCE);
+      let answered = null;
+      try {
+        answered = JSON.parse(output.trim());
+      } catch (error) {
+        expect(false, `PHP ${version} printed no witness answers: ${output.slice(0, 300)}`);
+      }
+      if (answered) {
+        const before = problems.length;
+        Object.keys(VERSION_WITNESSES[version]).forEach((name) => {
+          const difference = firstDifference(answered[name], VERSION_WITNESSES[version][name]);
+          expect(difference === null, `Witness ${name} on PHP ${version}: the engine answers ${JSON.stringify(answered[name])}, native PHP ${version} ${JSON.stringify(VERSION_WITNESSES[version][name])}.`);
+        });
+        say(`PHP ${version} answers as native PHP ${version} on \\C under u (${JSON.stringify(answered.backslashC[0])}), MARK (${answered.mark[0]} keys) and preg_grep() on a malformed subject (${answered.grep[0]})${problems.length === before ? '' : ': it does not'}.`);
+      }
+    }
   }
+  Object.keys(VERSION_WITNESSES).forEach((version) => expect(version in table, `The witnesses name PHP ${version}, which the options table has no row for.`));
 
   fs.rmSync(dir, { recursive: true, force: true });
 

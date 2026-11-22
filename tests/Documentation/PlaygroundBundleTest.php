@@ -33,7 +33,7 @@ final class PlaygroundBundleTest extends TestCase
 {
     /**
      * The PCRE2 releases the page's engines bundle, one trace module each:
-     * 8.0 10.35, 8.1 10.39, 8.2 10.40, 8.3 10.42, 8.4 and 8.5 10.44.
+     * 8.0 10.35, 8.1 10.39, 8.2 10.40, 8.3 10.42, 8.4, 8.5 and 8.6 10.44.
      */
     private const RELEASES = ['10.35', '10.39', '10.40', '10.42', '10.44'];
     private const MANIFEST = PlaygroundDriver::ROOT.'/wasm/pcre2-trace/manifest.json';

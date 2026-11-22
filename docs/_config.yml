@@ -2,6 +2,11 @@ title: PHPRegex
 description: "Static analysis, linter & logic solver for PHP regular expressions."
 url: https://php-regex.com
 
+# php-wasm's PhpBase.mjs imports ./_Event.mjs: a file Jekyll would otherwise
+# drop as private for its leading underscore.
+include:
+  - _Event.mjs
+
 # Keep every existing docs URL in its directory form (/guides/cli/), the
 # style GitHub Pages serves; plain Jekyll 3 would emit .html URLs instead.
 permalink: pretty
