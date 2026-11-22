@@ -90,6 +90,18 @@ CHANGELOG
    raw `\xE9`, is reported under fr_FR.ISO8859-1, where the Latin-1
    tables put `\xE9` in `[:alpha:]`, and `"/(?:[[:^alpha:]]|\xD7|)+/"`
    under C as there; neither was.
+ * Without u, `regex.lint.alternation.overlap` reads the text of a branch
+   read caselessly in one case as the tables of the target's locale give
+   it, where it folded the ASCII letters alone: `"/(?:\xC9x|\xE9x)+/i"`,
+   with raw bytes, is reported under fr_FR.ISO8859-1, where the Latin-1
+   tables pair `\xC9` with `\xE9` and PCRE matches `\xE9x` with `\xC9x`,
+   and `"/(?:\xC9|\xE9)+/i"` and `"/(?:\xC9|\xE9|)+/i"` are reported there
+   by that rule rather than by `regex.lint.overlap.charset`; nothing
+   changes under C. The texts
+   `regex.lint.overlap.charset` tells branches apart by are read the same
+   way: `"/(?:\xC9x\\d|\xE9x\\w)+/i"` is reported under fr_FR.ISO8859-1,
+   which it was not. A byte is paired as the target's release reads the
+   tables, and one they pair one way alone keeps its own case.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
