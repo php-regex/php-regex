@@ -579,13 +579,14 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
-     * Read under another locale's tables, what they decide is not known:
-     * the types "\d", "\s" and "\w" without UCP, (*UTF) alone included,
-     * and the other case of a character, which the tables give a byte, and
-     * under u or (*UCP) an ASCII character (pcre2_compile.c reads Unicode's
-     * other case above ASCII alone). The oracle shows the Latin-1 tables
-     * putting 0xE9 in "\w", under (*UTF) too, and pairing it with 0xC9
-     * under i; "\d" and "\s" read the tables as "\w" does, which
+     * Read under another locale's tables, what they decide of the types is
+     * not known: "\d", "\s" and "\w" without UCP, (*UTF) alone included.
+     * Where those tables are not known, or the machine cannot set their
+     * locale, nor is the other case of a character, which the tables give
+     * a byte, and under u or (*UCP) an ASCII character (pcre2_compile.c
+     * reads Unicode's other case above ASCII alone). The oracle shows the
+     * Latin-1 tables putting 0xE9 in "\w", under (*UTF) too, and pairing it
+     * with 0xC9 under i; "\d" and "\s" read the tables as "\w" does, which
      * pcre2_maketables() builds from isdigit() and isspace().
      */
     #[Test]
@@ -610,17 +611,160 @@ final class CharSetAnalyzerTest extends TestCase
         $this->assertSame([0, 1, 0, 0], $read(CharacterTables::BUILT_IN), 'Oracle: under PCRE2\'s own tables.');
         $this->assertSame([1, 0, 1, 1], $read($latin1), 'Oracle: under the Latin-1 tables.');
 
-        foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[a-z]/i', '/[^a]/i', '/a/iu', '/(*UCP)a/i'] as $pattern) {
-            [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern);
-            $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
-            $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $pattern);
+        foreach ([null, $latin1] as $locale) {
+            foreach (['/\w/', '/\W/', '/\s/', '/\S/', '/\d/', '/\D/', '/[^\w]/', '/(*UTF)\w/', '/(*UTF)\s/'] as $pattern) {
+                [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
+                $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
+                $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $pattern);
+            }
         }
+
+        foreach ([null, 'xx_YY.NOWHERE'] as $locale) {
+            foreach (['/a/i', "/\xC9/i", '/[a-z]/i', '/[^a]/i', '/a/iu', '/(*UCP)a/i'] as $pattern) {
+                [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
+                $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $pattern);
+                $this->assertTrue($analyzer->lastChars($node)->isUnknown(), $pattern);
+            }
+        }
+
+        // Read in ASCII alone, or under Turkish casing, a case stays unknown
+        // under the Latin-1 tables too.
+        $regex = RegexParser::create(['cache' => null])->parse('/a/i');
+        $this->assertTrue((new CharSetAnalyzer('i', '', false, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
+        $this->assertFalse((new CharSetAnalyzer('i', '', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
+        $this->assertTrue((new CharSetAnalyzer('iu', '(*TURKISH_CASING)', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
+        $this->assertFalse((new CharSetAnalyzer('iu', '', true, locale: $latin1))->firstChars($regex->pattern)->isUnknown());
 
         // Under PCRE2's own tables each is known.
         foreach (['/\w/', '/\s/', '/\d/', '/(*UTF)\s/', '/a/i', "/\xC9/i", '/[^a]/i', '/a/iu'] as $pattern) {
             [$analyzer, $node] = self::atom($pattern);
             $this->assertFalse($analyzer->firstChars($node)->isUnknown(), $pattern);
         }
+    }
+
+    /**
+     * Read under the tables of a locale the machine sets, a caseless item
+     * takes the other case those tables give each byte, and under u or
+     * (*UCP) each ASCII character: the set is what the engine matches, on
+     * the JIT as on the interpreter, ASCII letters included, and the
+     * complement of a class leaves out the pair alone. Above ASCII under u
+     * or (*UCP) the case is Unicode's: el_GR.ISO8859-7 pairs ς (0xF2) with
+     * Σ (0xD3), (*UCP) with Ò (0xD2). Under u a set knows a character by
+     * the byte it starts with.
+     */
+    #[Test]
+    #[DataProvider('provideCaselessItemsUnderEachTables')]
+    public function test_read_under_a_locales_tables_a_caseless_item_takes_the_cases_they_give(string $options, string $atom, string $flags, string $locale): void
+    {
+        $this->requiresLocale($locale, 'The cases a locale\'s tables give');
+
+        $utf = str_contains($flags, 'u');
+        $subjects = [];
+        foreach ($utf ? [...range(0, 0x24F), 0x37E, 0x3A3, 0x3C2, 0x1E9E, 0x212A] : range(0, 0xFF) as $codePoint) {
+            $subjects[] = $utf ? (string) mb_chr($codePoint, 'UTF-8') : \chr($codePoint);
+        }
+
+        // Oracle: the characters the item matches under the locale, on the
+        // JIT and on the interpreter, by the byte each starts with.
+        $taken = [];
+        CharacterTables::under($locale, static function () use ($options, $atom, $flags, $subjects, &$taken): void {
+            foreach ($subjects as $subject) {
+                foreach (['', '(*NO_JIT)(*NO_START_OPT)'] as $engine) {
+                    if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')$/'.$flags, $subject)) {
+                        $taken[\ord($subject[0])] = true;
+                    }
+                }
+            }
+        });
+        ksort($taken);
+        $expected = ByteCharSet::empty();
+        foreach (array_keys($taken) as $byte) {
+            $expected = $expected->union(ByteCharSet::fromBytes($byte, $byte));
+        }
+
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables('/'.$options.$atom.'/'.$flags, $locale);
+        $set = $analyzer->firstChars($node);
+        $label = \sprintf('/%s%s/%s under %s', $options, addcslashes($atom, "\200..\377"), $flags, $locale);
+
+        $this->assertFalse($set->isUnknown(), $label);
+        $this->assertSame($set->ranges(), $analyzer->lastChars($node)->ranges(), $label);
+        if (!$utf) {
+            $this->assertSame($expected->ranges(), $set->ranges(), $label);
+
+            return;
+        }
+
+        // Under u a byte above ASCII stands for every character it starts.
+        $ascii = ByteCharSet::fromRange(0, 0x7F);
+        $this->assertSame($expected->intersect($ascii)->ranges(), $set->intersect($ascii)->ranges(), $label);
+        $this->assertSame($expected->ranges(), $expected->intersect($set)->ranges(), $label);
+    }
+
+    /**
+     * @return iterable<string, array{options: string, atom: string, flags: string, locale: string}>
+     */
+    public static function provideCaselessItemsUnderEachTables(): iterable
+    {
+        $items = [
+            'an ASCII letter' => ['', 'a', 'i'],
+            'an ASCII letter written as an escape' => ['', '\x41', 'i'],
+            'a byte above ASCII written as it is' => ['', "\xE9", 'i'],
+            'a byte above ASCII written as an escape' => ['', '\xC9', 'i'],
+            'the final sigma of Greek' => ['', '\xF2', 'i'],
+            'a range of ASCII letters' => ['', '[a-z]', 'i'],
+            'a range above ASCII' => ['', '[\xC0-\xDE]', 'i'],
+            'a class of bytes written as they are' => ['', "[\xE0\xF2]", 'i'],
+            'a negated ASCII letter' => ['', '[^a]', 'i'],
+            'a negated byte above ASCII' => ['', "[^\xE9]", 'i'],
+            'an ASCII letter under UCP' => ['(*UCP)', 'a', 'i'],
+            'a byte above ASCII under UCP' => ['(*UCP)', '\xF2', 'i'],
+            'an ASCII letter under u' => ['', 'a', 'iu'],
+            'the letter k under u' => ['', 'k', 'iu'],
+            'a range of ASCII letters under u' => ['', '[a-z]', 'iu'],
+            'a negated ASCII letter under u' => ['', '[^a]', 'iu'],
+        ];
+
+        foreach (['fr_FR.ISO8859-1', 'el_GR.ISO8859-7', 'ru_RU.KOI8-R', 'en_US.UTF-8'] as $locale) {
+            foreach ($items as $name => [$options, $atom, $flags]) {
+                yield $name.', '.$locale => ['options' => $options, 'atom' => $atom, 'flags' => $flags, 'locale' => $locale];
+            }
+        }
+    }
+
+    /**
+     * Where the engine's paths read the other case of a byte otherwise, a
+     * caseless item of it is not known: under tr_TR.ISO8859-9 on macOS the
+     * interpreter matches 0xDD for "i" alone, which a class of "i" leaves
+     * out, and 0xDD matches "I" there. A byte they agree on is known.
+     */
+    #[Test]
+    public function test_read_under_a_locales_tables_a_case_the_engine_paths_read_otherwise_is_not_known(): void
+    {
+        $locale = 'tr_TR.ISO8859-9';
+        $this->requiresLocale($locale, 'A case the engine\'s paths read otherwise');
+
+        $subject = '';
+        for ($byte = 0; $byte < 256; $byte++) {
+            $subject .= \chr($byte);
+        }
+
+        $characters = ['i', 'I', "\xDD", "\xFD", 'a', "\xDE"];
+        $reads = [];
+        CharacterTables::under($locale, static function () use ($characters, $subject, &$reads): void {
+            foreach ($characters as $character) {
+                preg_match_all('/['.$character.']/i', $subject, $inClass);
+                preg_match_all('/(*NO_JIT)(*NO_START_OPT)'.$character.'/i', $subject, $alone);
+                $reads[$character] = ['class' => $inClass[0], 'alone' => $alone[0]];
+            }
+        });
+
+        foreach ($characters as $character) {
+            $agreed = [] === array_diff($reads[$character]['alone'], $reads[$character]['class']);
+            [$analyzer, $node] = self::atomUnderAnotherLocalesTables('/'.$character.'/i', $locale);
+            $this->assertSame(!$agreed, $analyzer->firstChars($node)->isUnknown(), \sprintf('Oracle: 0x%02X alone matches %s, a class of it %s.', \ord($character), bin2hex(implode('', $reads[$character]['alone'])), bin2hex(implode('', $reads[$character]['class']))));
+        }
+
+        $this->assertSame(\PHP_OS_FAMILY === 'Darwin', [] !== array_diff($reads['i']['alone'], $reads['i']['class']), 'Oracle: "i" alone under tr_TR.ISO8859-9.');
     }
 
     /**
@@ -760,12 +904,12 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
-     * The analyzer of the pattern read under another locale's tables, and
-     * its last atom.
+     * The analyzer of the pattern read under another locale's tables, those
+     * of $locale, or tables not known for null, and its last atom.
      *
      * @return array{CharSetAnalyzer, NodeInterface}
      */
-    private static function atomUnderAnotherLocalesTables(string $pattern): array
+    private static function atomUnderAnotherLocalesTables(string $pattern, ?string $locale = null): array
     {
         $regex = RegexParser::create(['cache' => null])->parse($pattern);
         $node = $regex->pattern;
@@ -773,7 +917,7 @@ final class CharSetAnalyzerTest extends TestCase
             $node = $node->children[\count($node->children) - 1];
         }
 
-        $inForce = CharSetAnalyzer::forRegex($regex, true, false)->inForce($regex);
+        $inForce = CharSetAnalyzer::forRegex($regex, true, $locale)->inForce($regex);
 
         return [$inForce[$node], $node];
     }

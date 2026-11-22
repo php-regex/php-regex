@@ -26,12 +26,15 @@ use PHPUnit\Framework\TestCase;
  * bytes the branches start with decide: the complement of a class takes
  * the bytes above ASCII it does not hold, so "[^\xE9]" meets a raw 0x90,
  * and "\W" a raw 0xE9 under PCRE2's own tables. Under another locale's,
- * what the tables decide stays read in ASCII: "\W" leaves 0xE9 out under
- * fr_FR.ISO8859-1, as the engine does.
+ * what the tables decide of "\W" stays read in ASCII: it leaves 0xE9 out
+ * under fr_FR.ISO8859-1, as the engine does. A case is read from the
+ * tables of either: a caseless "[^a]" takes 0xC3 under both, and leaves
+ * "A" out.
  *
  * Engine: PHP 8.4.28 / PCRE2 10.49 on macOS, under C and fr_FR.ISO8859-1:
  * preg_match("/^[^\xE9]$/", "\x90") and preg_match('/^\W$/', "\xE9") are 1
- * under C, and the second 0 under the Latin-1 locale.
+ * under C, and the second 0 under the Latin-1 locale;
+ * preg_match("/^[^a]$/i", "\xC3") is 1 under both.
  */
 final class AlternationOverlapComplementBytesTest extends TestCase
 {
@@ -85,5 +88,9 @@ final class AlternationOverlapComplementBytesTest extends TestCase
 
         yield 'no word character, then a Latin-1 letter, C' => ['pattern' => "/(?:\\W|\xE9|)+/", 'branches' => ['\W', "\xE9"], 'byte' => "\xE9", 'locale' => CharacterTables::BUILT_IN, 'reported' => true];
         yield 'no word character, then a Latin-1 letter, '.self::LATIN1 => ['pattern' => "/(?:\\W|\xE9|)+/", 'branches' => ['\W', "\xE9"], 'byte' => "\xE9", 'locale' => self::LATIN1, 'reported' => false];
+        foreach ([CharacterTables::BUILT_IN, self::LATIN1] as $locale) {
+            yield 'a negated ASCII letter read caselessly, then a byte above ASCII, '.$locale => ['pattern' => "/(?:(?i:[^a])|\xC3|)+/", 'branches' => ['(?i:[^a])', "\xC3"], 'byte' => "\xC3", 'locale' => $locale, 'reported' => true];
+            yield 'a negated ASCII letter read caselessly, then its capital, '.$locale => ['pattern' => '/(?:(?i:[^a])|A|)+/', 'branches' => ['(?i:[^a])', 'A'], 'byte' => 'A', 'locale' => $locale, 'reported' => false];
+        }
     }
 }

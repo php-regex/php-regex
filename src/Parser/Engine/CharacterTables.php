@@ -113,12 +113,15 @@ final class CharacterTables
      *                                                                   pcre2_maketables() before 10.43 writes it
      * @param string                                     $casesFrom1043  the same, as 10.43 and later write it
      * @param array<string, list<array{0: int, 1: int}>> $bytes          the bytes of each name, as ranges
+     * @param array<int, true>                           $unsettled      the bytes whose other case the interpreter
+     *                                                                   reads otherwise than a class
      */
     private function __construct(
         public readonly string $locale,
         private readonly string $casesBefore143,
         private readonly string $casesFrom1043,
         private readonly array $bytes,
+        private readonly array $unsettled = [],
     ) {}
 
     /**
@@ -190,6 +193,18 @@ final class CharacterTables
     }
 
     /**
+     * The other case of a byte, or the byte itself, where every caseless
+     * item reads it alike on every release: null where the tables of
+     * either side of 10.43 hold it otherwise, or where the interpreter,
+     * which compares a character matched alone by the small letters of the
+     * tables, takes a byte a class of it leaves out.
+     */
+    public function settledOtherCase(int $byte): ?int
+    {
+        return isset($this->unsettled[$byte]) || $this->casesBefore143[$byte] !== $this->casesFrom1043[$byte] ? null : \ord($this->casesFrom1043[$byte]);
+    }
+
+    /**
      * The bytes a type ("d", "s", "w") or a POSIX name holds, as ranges.
      *
      * @return list<array{0: int, 1: int}>
@@ -230,7 +245,7 @@ final class CharacterTables
         $tables = self::builtIn();
         self::withLocale($locale, static function (string $set) use (&$tables): void {
             if (self::BUILT_IN !== $set) {
-                $tables = self::probe($set, self::readsOneByteACharacter());
+                $tables = self::probe($set, self::readsOneByteACharacter(), true);
             }
         });
 
@@ -292,8 +307,10 @@ final class CharacterTables
      *
      * @param bool $oneByte whether the C library reads the locale one byte a
      *                      character, where the case of a byte is a byte
+     * @param bool $settles whether to read too which bytes the interpreter
+     *                      matches for a letter alone
      */
-    private static function probe(string $locale = self::BUILT_IN, bool $oneByte = true): self
+    private static function probe(string $locale = self::BUILT_IN, bool $oneByte = true, bool $settles = false): self
     {
         $subject = '';
         for ($byte = 0; $byte < 256; $byte++) {
@@ -306,6 +323,7 @@ final class CharacterTables
         }
 
         $otherCases = $subject;
+        $unsettled = [];
         foreach ([...$bytes['upper'] ?? [], ...$bytes['lower'] ?? []] as [$low, $high]) {
             for ($byte = $low; $byte <= $high; $byte++) {
                 // The class holds the byte, its other case, and the NUL byte
@@ -313,6 +331,14 @@ final class CharacterTables
                 $held = (string) LibraryPcre::replace(\sprintf('/[^\x00\x%02x]/i', $byte), '', $subject);
                 $other = trim(str_replace(\chr($byte), '', $held), "\0");
                 $otherCases[$byte] = '' === $other ? \chr($byte) : $other[0];
+
+                // The interpreter compares a letter matched alone by the
+                // small letters of the tables (OP_CHARI), which may lower a
+                // third byte to the same one: "\xDD" with "I" to "i" under
+                // tr_TR.ISO8859-9 on macOS.
+                if ($settles && '' !== str_replace([\chr($byte), $otherCases[$byte]], '', (string) LibraryPcre::replace(\sprintf('/(*NO_JIT)(*NO_START_OPT)(?!\x%02x)[\x00-\xff]/i', $byte), '', $subject))) {
+                    $unsettled[$byte] = true;
+                }
             }
         }
 
@@ -340,7 +366,7 @@ final class CharacterTables
             }
         }
 
-        return new self($locale, $before, $from, $bytes);
+        return new self($locale, $before, $from, $bytes, $unsettled);
     }
 
     /**

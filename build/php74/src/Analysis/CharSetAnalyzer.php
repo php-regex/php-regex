@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Parser\Analysis;
 
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
@@ -52,9 +54,11 @@ use PHPRegex\Parser\Text\Utf8;
  * the byte it starts with, the last character of a node as its first: "é"
  * is 0xC3 at either end, so a node that ends with it meets one that starts
  * with it. Under another locale's tables than PCRE2's own, a set still
- * holds the bytes a literal writes and those a complement takes, and what
- * the tables decide is not known: "\d", "\s" and "\w" without UCP, and the
- * other case of a character.
+ * holds the bytes a literal writes and those a complement takes, and the
+ * other case of a character those tables give, read from the engine. What
+ * else they decide is not known, "\d", "\s" and "\w" without UCP, and nor
+ * is a case where the tables cannot be read, or the engine's paths read
+ * it otherwise.
  *
  * @internal
  */
@@ -63,6 +67,19 @@ final class CharSetAnalyzer
     /**
      */
     private string $flags;
+
+    /**
+     * Whether the engine compiles with PCRE2's own tables, as under "C".
+     *
+     */
+    private bool $ownTables;
+
+    /**
+     * Under another locale's tables, those read: they give the other case
+     * of each byte. Null where they are not known.
+     *
+     */
+    private ?CharacterTables $tables;
 
     /**
      * What the start options set, read once for the pattern: the newline
@@ -112,25 +129,25 @@ final class CharSetAnalyzer
     /**
      */
     private bool $asciiSpaces = false;
-    /**
-     */
-    private bool $ownTables = true;
 
     /**
-     * @param string    $startOptions    the options the pattern opens with, such
-     *                                   as "(*CR)(*UTF)": the newline convention
-     *                                   they set decides where the dot stops
-     * @param bool      $readsAboveAscii whether the sets hold the characters above
-     *                                   ASCII, read under PCRE2's own tables
-     * @param self|null $samePattern     an analyzer of the same pattern, whose
-     *                                   reading of the start options this one
-     *                                   takes rather than read them again
-     * @param bool      $asciiSpaces     whether "(?aS)" or "(?a)" holds "\s" to
-     *                                   ASCII under (*UCP), and "\S" takes the
-     *                                   spaces above it
-     * @param bool      $ownTables       whether the engine compiles with PCRE2's
-     *                                   own tables, as under "C": under another
-     *                                   locale's, what they decide is not known
+     * @param string      $startOptions    the options the pattern opens with, such
+     *                                     as "(*CR)(*UTF)": the newline convention
+     *                                     they set decides where the dot stops
+     * @param bool        $readsAboveAscii whether the sets hold the characters above
+     *                                     ASCII, read under the tables of $locale
+     * @param self|null   $samePattern     an analyzer of the same pattern, whose
+     *                                     reading of the start options this one
+     *                                     takes rather than read them again
+     * @param bool        $asciiSpaces     whether "(?aS)" or "(?a)" holds "\s" to
+     *                                     ASCII under (*UCP), and "\S" takes the
+     *                                     spaces above it
+     * @param string|null $locale          the LC_CTYPE locale whose tables the
+     *                                     engine compiles with, "C" for PCRE2's
+     *                                     own: another locale's are read for the
+     *                                     other case of a character, which is not
+     *                                     known where the machine cannot set it,
+     *                                     nor under tables not known, null
      */
     public function __construct(
         string $flags = '',
@@ -138,12 +155,13 @@ final class CharSetAnalyzer
         bool $readsAboveAscii = false,
         ?self $samePattern = null,
         bool $asciiSpaces = false,
-        bool $ownTables = true
+        ?string $locale = CharacterTables::BUILT_IN
     ) {
         $this->startOptions = $startOptions;
         $this->readsAboveAscii = $readsAboveAscii;
         $this->asciiSpaces = $asciiSpaces;
-        $this->ownTables = $ownTables;
+        $this->ownTables = $samePattern->ownTables ?? CharacterTables::BUILT_IN === $locale;
+        $this->tables = null === $samePattern ? self::tablesOf($locale) : $samePattern->tables;
         $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
         $this->flags = null === $samePattern ? $this->flagsAtTheStart($flags) : $flags;
         $this->unicodeMode = false !== strpos($flags, 'u') || $this->options['ucp'];
@@ -158,9 +176,9 @@ final class CharSetAnalyzer
      * An analyzer for the pattern as a whole: its flags and the newline
      * convention its start options set.
      */
-    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false, bool $ownTables = true): self
+    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false, ?string $locale = CharacterTables::BUILT_IN): self
     {
-        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii, null, false, $ownTables);
+        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii, null, false, $locale);
     }
 
     /**
@@ -187,7 +205,7 @@ final class CharSetAnalyzer
      */
     public function withFlags(string $flags): self
     {
-        return new self($flags, $this->startOptions, $this->readsAboveAscii, $this, false, $this->ownTables);
+        return new self($flags, $this->startOptions, $this->readsAboveAscii, $this);
     }
 
     public function firstChars(NodeInterface $node): ByteCharSet
@@ -527,16 +545,20 @@ final class CharSetAnalyzer
      * casing "i" and "I" are no pair: "i" matches the capital dotted I,
      * U+0130, and "I" the small dotless i, U+0131, both ways. The tables
      * give the other case of a byte, and under UTF or UCP of an ASCII
-     * character: another locale's are not read.
+     * character: another locale's give it as casesInTables() reads them.
      */
     private function otherCases(int $start, int $end): ByteCharSet
     {
-        if (!$this->ownTables && ($start <= 0x7F || !$this->utf && !$this->unicodeMode)) {
-            return ByteCharSet::unknown();
-        }
-
         $set = ByteCharSet::empty();
-        if ($start === $end && $end <= 0x7F) {
+        if (!$this->ownTables) {
+            if ($start <= 0x7F || !$this->utf && !$this->unicodeMode) {
+                $set = $this->casesInTables($start, $this->utf || $this->unicodeMode ? min($end, 0x7F) : $end);
+            }
+
+            if ($set->isUnknown()) {
+                return $set;
+            }
+        } elseif ($start === $end && $end <= 0x7F) {
             // One ASCII character, the case of most literals.
             $set = Ascii::isAlpha(\chr($start)) ? ByteCharSet::fromChar(\chr($start ^ 0x20)) : $set;
         } else {
@@ -593,6 +615,35 @@ final class CharSetAnalyzer
                     }
                 }
             }
+        }
+
+        return $set;
+    }
+
+    /**
+     * The other case of each character from $start to $end, a byte or an
+     * ASCII character, as another locale's tables give it. Under UTF the
+     * case of an ASCII character is a code point to a class, and a byte to
+     * the interpreter, which compares the first byte of a character with
+     * it: the set holds both. Not known where the tables are not, where the
+     * engine's paths or its releases read a case otherwise, under Turkish
+     * casing, which reads "i" and "I" apart from the tables, and in ASCII
+     * alone, where a case above it has no place.
+     */
+    private function casesInTables(int $start, int $end): ByteCharSet
+    {
+        if (null === $this->tables || $this->turkish || !$this->readsAboveAscii) {
+            return ByteCharSet::unknown();
+        }
+
+        $set = ByteCharSet::empty();
+        for ($byte = $start; $byte <= $end; ++$byte) {
+            $other = $this->tables->settledOtherCase($byte);
+            if (null === $other) {
+                return ByteCharSet::unknown();
+            }
+
+            $set = $set->union(ByteCharSet::fromBytes($other, $other))->union($this->utf && $other > 0x7F ? ByteCharSet::fromBytes(self::leadByte($other), self::leadByte($other)) : ByteCharSet::empty());
         }
 
         return $set;
@@ -745,7 +796,7 @@ final class CharSetAnalyzer
             return $this;
         }
 
-        return new self((($nullsafeVariable1 = $setting) ? $nullsafeVariable1->applyTo($this->flags) : null) ?? $this->flags, $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces, $this->ownTables);
+        return new self((($nullsafeVariable1 = $setting) ? $nullsafeVariable1->applyTo($this->flags) : null) ?? $this->flags, $this->startOptions, $this->readsAboveAscii, $this, $asciiSpaces);
     }
 
     /**
@@ -762,6 +813,24 @@ final class CharSetAnalyzer
         }
 
         return false;
+    }
+
+    /**
+     * The tables of another locale than "C", as the engine compiles with
+     * them: null for tables not known, and where the machine cannot set the
+     * locale.
+     */
+    private static function tablesOf(?string $locale): ?CharacterTables
+    {
+        if (null === $locale || CharacterTables::BUILT_IN === $locale) {
+            return null;
+        }
+
+        try {
+            return CharacterTables::forLocale($locale);
+        } catch (InvalidRegexOptionException $exception) {
+            return null;
+        }
     }
 
     /**
