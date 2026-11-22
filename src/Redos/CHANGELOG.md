@@ -91,7 +91,7 @@ CHANGELOG
  * The heuristics read a character written as an escape, `\xC2`, `\x{C2}`,
    `\302`, `\o{302}`, `\N{U+C2}` or `\cA`, and a class of them, as the
    characters PCRE reads, above ASCII too, under PCRE2's own tables (under
-   another locale's, what those decide is left unknown): a UTF-8 sequence spelled
+   another locale's, as those tables say): a UTF-8 sequence spelled
    byte by byte beside an ASCII class,
    `/^((?:[a-z]|[\xC2-\xDF][\x80-\xBF])+)%?\1/` and WordPress's `SHOW
    TABLES LIKE` pattern, which were critical, are medium: PCRE reads the
@@ -108,13 +108,12 @@ CHANGELOG
    `/^((?:a+a)+)\1$/` is.
  * Under another locale's tables than PCRE2's own, where they read nothing
    above ASCII, the heuristics read the bytes above ASCII a pattern writes
-   and those a negated class takes, as under C, and leave unknown what
-   those tables decide of `\d`, `\s` and `\w` without UCP, `(*UTF)` alone
-   included. Under fr_FR.ISO8859-1, `"/^(x)[^a]+\xC3+\\1$/"` with a raw
-   `\xC3`, `'/^(x)[^a]+é+\1$/u'`, `"/^(x)\\w+\xE9+\\1$/"` and
-   `"/^(x)\xC9+\xE9+\\1$/i"`, where the Latin-1 tables put `\xE9` in `\w`
-   and pair it with `\xC9`, were safe and are medium: PCRE takes 31, 123
-   and 499 steps on `x` then 8, 16 and 32 times the byte or the letter.
+   and those a negated class takes, as under C. Under fr_FR.ISO8859-1,
+   `"/^(x)[^a]+\xC3+\\1$/"` with a raw `\xC3`, `'/^(x)[^a]+é+\1$/u'`,
+   `"/^(x)\\w+\xE9+\\1$/"` and `"/^(x)\xC9+\xE9+\\1$/i"`, where the
+   Latin-1 tables put `\xE9` in `\w` and pair it with `\xC9`, were safe
+   and are medium: PCRE takes 31, 123 and 499 steps on `x` then 8, 16 and
+   32 times the byte or the letter.
  * Under another locale's tables than PCRE2's own, the heuristics read the
    other case of a character under i as those tables give it, of an ASCII
    one under u or (*UCP) too, where they left it unknown: the finding on
@@ -126,6 +125,19 @@ CHANGELOG
    otherwise, µ and ÿ under a UTF-8 locale on macOS, and where the
    interpreter matches a character alone otherwise than a class of it
    does, `i` and `I` under tr_TR.ISO8859-9 on macOS.
+ * Under another locale's tables than PCRE2's own, the heuristics read the
+   bytes of `\d`, `\s` and `\w` without UCP as those tables give them,
+   `(*UTF)` alone included, where they left them unknown: the finding on
+   two loops that meet that way is no longer of low confidence, and
+   `"/^(x)\\W+\xE9+\\1$/"`, `"/^(x)\\s+\xA0+\\1$/"` and
+   `"/^(x)\\d+\xB2+\\1$/"`, with raw bytes, which were medium under
+   fr_FR.ISO8859-1, are safe: PCRE takes 3 steps on `x` then 8, 16 or 32
+   times the byte. Two loops bounded below 1,000 that meet are low there
+   as under C: `"/^(x)\\w{1,999}\xE9{1,999}\\1$/"`, which was safe, is
+   low, where PCRE takes 31, 123 and 499 steps. Under `(*UTF)` a code
+   point above ASCII the tables name is read by the byte it starts with,
+   and taken where any of the engine's paths takes it: the JIT takes é in
+   `\w+` under fr_FR.ISO8859-1, the interpreter does not.
  * The heuristics compare first and last characters in the case the engine
    reads them: under i, set by the modifier, an option setting or a group,
    a letter meets its other case, and where `(?-i)` turns i off again it

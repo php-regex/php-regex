@@ -174,6 +174,26 @@ final class CharacterTablesTest extends TestCase
         $this->assertSame(0x69, $tables->otherCase(0xDD, new PcreTarget(80400, '10.42', 'C')));
     }
 
+    /**
+     * Tables a test gives hold the bytes given for a name, and PCRE2's own
+     * for the names not given.
+     */
+    #[Test]
+    public function test_given_tables_hold_the_bytes_given_for_a_name(): void
+    {
+        CharacterTables::useTables('xx_XX.GIVEN', self::cases([]), bytes: ['w' => [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xC0, 0xFF]], 's' => [[0x09, 0x0D], [0x20, 0x20], [0xA0, 0xA0]]]);
+        $tables = CharacterTables::forLocale('xx_XX.GIVEN');
+
+        $this->assertSame([[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A], [0xC0, 0xFF]], $tables->bytesOf('w'));
+        $this->assertSame([[0x09, 0x0D], [0x20, 0x20], [0xA0, 0xA0]], $tables->bytesOf('s'));
+        $this->assertSame(CharacterTables::builtIn()->bytesOf('d'), $tables->bytesOf('d'));
+        $this->assertSame(CharacterTables::builtIn()->bytesOf('alpha'), $tables->bytesOf('alpha'));
+
+        // Given no bytes, every name holds PCRE2's own.
+        CharacterTables::useTables('xx_XX.GIVEN', self::cases([]));
+        $this->assertSame(CharacterTables::builtIn()->bytesOf('w'), CharacterTables::forLocale('xx_XX.GIVEN')->bytesOf('w'));
+    }
+
     #[Test]
     public function test_a_latin9_locale_reads_the_tables_its_c_library_gives(): void
     {

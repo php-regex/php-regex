@@ -932,10 +932,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * target's tables, for an alternation without u whose branches PCRE
      * does not judge. A byte is a character there, and the complement of a
      * class takes the bytes above ASCII it does not hold, which the ASCII
-     * read leaves out: "[^é]" takes 0x90. A case is read from the target's
-     * tables, another locale's included; where those decide "\w", the
-     * ASCII read of the branch stands: an overlap there goes unreported
-     * rather than one PCRE would not see.
+     * read leaves out: "[^é]" takes 0x90. What the target's tables decide
+     * is read from them, another locale's included: the bytes of "\d",
+     * "\s" and "\w", and a case. Where they cannot tell, the ASCII read of
+     * the branch stands: an overlap there goes unreported rather than one
+     * PCRE would not see.
      *
      * @param list<ByteCharSet> $ascii the sets of the ASCII read, branch by branch
      *

@@ -174,16 +174,17 @@ final class CharacterTables
      * Tables given for a locale, which forLocale() answers in place of
      * those the engine would build under it: the other case of each byte,
      * one byte each, as 10.43 and later write it, and before 10.43 when it
-     * differs; the bytes of each name are PCRE2's own.
+     * differs; the bytes of each name given, PCRE2's own for the others.
      *
      * @internal a test asks for tables this machine cannot build
      *
-     * @param list<int> $unsettled the bytes whose other case the interpreter
-     *                             reads otherwise than a class
+     * @param list<int>                                  $unsettled the bytes whose other case the interpreter
+     *                                                              reads otherwise than a class
+     * @param array<string, list<array{0: int, 1: int}>> $bytes     the bytes of a name, as ranges
      */
-    public static function useTables(string $locale, string $casesFrom1043, array $unsettled = [], ?string $casesBefore143 = null): void
+    public static function useTables(string $locale, string $casesFrom1043, array $unsettled = [], ?string $casesBefore143 = null, array $bytes = []): void
     {
-        self::$read[$locale] = new self($locale, $casesBefore143 ?? $casesFrom1043, $casesFrom1043, self::BUILT_IN_BYTES, array_fill_keys($unsettled, true));
+        self::$read[$locale] = new self($locale, $casesBefore143 ?? $casesFrom1043, $casesFrom1043, $bytes + self::BUILT_IN_BYTES, array_fill_keys($unsettled, true));
     }
 
     /**
