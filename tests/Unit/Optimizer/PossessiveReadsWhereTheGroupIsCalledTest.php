@@ -18,6 +18,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -35,6 +36,16 @@ use PHPUnit\Framework\TestCase;
  */
 final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
 {
+    use PcreGates;
+
+    /**
+     * The rows that hold from a PCRE2 newer than the floor: the interpreter
+     * of PCRE2 10.42 and before backtracks into no call of the whole
+     * pattern, where the JIT and later releases do. The rewrite stays greedy
+     * on every engine.
+     */
+    private const NEWER_RELEASES = ['10.44' => ['/x(?R)?a+b?()/', '/x(?0)?a+b?()/']];
+
     /**
      * The characters of the subjects each pair is run on, every string of
      * them up to five long.
@@ -45,6 +56,8 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
     #[DataProvider('provideGroupsCalledWhereWhatFollowsTakesBack')]
     public function test_a_group_called_where_what_follows_takes_back_what_it_matched_stays_greedy(string $pattern, string $possessive, string $subject, string $rewritten): void
     {
+        $this->requiresPcre2For($pattern, self::NEWER_RELEASES);
+
         $this->assertNotSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s match alike on "%s".', $pattern, $possessive, $subject));
         $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($rewritten), \sprintf('Oracle: %s and %s differ.', $pattern, $rewritten));
 
