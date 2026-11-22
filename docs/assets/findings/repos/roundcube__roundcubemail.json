@@ -1,6 +1,6 @@
 {
     "repo": "roundcube/roundcubemail",
-    "sha": "1093b9c41e1ccb12ee0c6bad61eacf69f5754c16",
+    "sha": "069b89eceb1a80f83d5a8b8814622cbb0912424d",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/archive/archive.php#L490-L496",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/archive/archive.php#L490-L496",
             "snippet": [
                 {
                     "number": 490,
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/enigma/lib/enigma_engine.php#L608-L614",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/enigma/lib/enigma_engine.php#L608-L614",
             "snippet": [
                 {
                     "number": 608,
@@ -345,7 +345,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/identity_select/identity_select.php#L86-L92",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/identity_select/identity_select.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -532,7 +532,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -691,7 +691,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
             "snippet": [
                 {
                     "number": 1112,
@@ -842,7 +842,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -989,7 +989,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/headers.php#L54-L60",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/headers.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1128,7 +1128,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/index.php#L943-L949",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/index.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -1323,7 +1323,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/index.php#L1277-L1283",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/index.php#L1277-L1283",
             "snippet": [
                 {
                     "number": 1277,
@@ -1474,7 +1474,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/search.php#L252-L258",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/search.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -1665,7 +1665,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/search.php#L381-L387",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/search.php#L381-L387",
             "snippet": [
                 {
                     "number": 381,
@@ -1912,7 +1912,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/send.php#L107-L113",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/send.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -2075,7 +2075,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/mail/sendmdn.php#L122-L128",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/sendmdn.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -2206,7 +2206,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/actions/settings/index.php#L1782-L1788",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/settings/index.php#L1782-L1788",
             "snippet": [
                 {
                     "number": 1782,
@@ -2446,7 +2446,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_output_html.php#L1091-L1097",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1091-L1097",
             "snippet": [
                 {
                     "number": 1091,
@@ -2610,7 +2610,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_output_html.php#L1092-L1098",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1092-L1098",
             "snippet": [
                 {
                     "number": 1092,
@@ -2805,7 +2805,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_output_html.php#L1309-L1315",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1309-L1315",
             "snippet": [
                 {
                     "number": 1309,
@@ -3012,7 +3012,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_output_html.php#L2401-L2407",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L2401-L2407",
             "snippet": [
                 {
                     "number": 2401,
@@ -3143,7 +3143,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_sendmail.php#L243-L249",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -3298,7 +3298,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_sendmail.php#L266-L272",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -3429,7 +3429,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3529,7 +3529,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3624,7 +3624,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/include/rcmail_sendmail.php#L786-L792",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -3724,7 +3724,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_charset.php#L580-L586",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_charset.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -3819,7 +3819,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_db.php#L1470-L1476",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_db.php#L1470-L1476",
             "snippet": [
                 {
                     "number": 1470,
@@ -3991,7 +3991,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_enriched.php#L70-L76",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_enriched.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -4191,7 +4191,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_enriched.php#L81-L87",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_enriched.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -4391,7 +4391,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_html2text.php#L649-L655",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_html2text.php#L649-L655",
             "snippet": [
                 {
                     "number": 649,
@@ -4559,7 +4559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_html2text.php#L661-L667",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_html2text.php#L661-L667",
             "snippet": [
                 {
                     "number": 661,
@@ -4719,7 +4719,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -4878,7 +4878,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_imap_generic.php#L1304-L1310",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L1304-L1310",
             "snippet": [
                 {
                     "number": 1304,
@@ -5026,7 +5026,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_imap_generic.php#L2203-L2209",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2203-L2209",
             "snippet": [
                 {
                     "number": 2203,
@@ -5157,7 +5157,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_imap_generic.php#L2612-L2618",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2612-L2618",
             "snippet": [
                 {
                     "number": 2612,
@@ -5296,7 +5296,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_imap_generic.php#L2675-L2681",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2675-L2681",
             "snippet": [
                 {
                     "number": 2675,
@@ -5444,7 +5444,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_message.php#L1274-L1280",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message.php#L1274-L1280",
             "snippet": [
                 {
                     "number": 1274,
@@ -5636,7 +5636,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_message.php#L1275-L1281",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message.php#L1275-L1281",
             "snippet": [
                 {
                     "number": 1275,
@@ -5803,7 +5803,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_message_part.php#L158-L164",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message_part.php#L158-L164",
             "snippet": [
                 {
                     "number": 158,
@@ -5942,7 +5942,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_message_part.php#L210-L216",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message_part.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -6103,7 +6103,7 @@
                 "limit": 100000
             },
             "subject": "<\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_mime.php#L349-L355",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -6220,7 +6220,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_mime.php#L355-L361",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -6337,7 +6337,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_mime.php#L363-L369",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L363-L369",
             "snippet": [
                 {
                     "number": 363,
@@ -6439,7 +6439,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_smtp.php#L506-L512",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_smtp.php#L506-L512",
             "snippet": [
                 {
                     "number": 506,
@@ -6582,7 +6582,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_utils.php#L297-L303",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_utils.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -6714,7 +6714,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_utils.php#L925-L931",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_utils.php#L925-L931",
             "snippet": [
                 {
                     "number": 925,
@@ -6831,7 +6831,7 @@
         {
             "id": "f-00ba1c4d03",
             "file": "program/lib/Roundcube/rcube_vcard.php",
-            "line": 757,
+            "line": 839,
             "column": 42,
             "pattern": "/[\\s\\t\\n\\r\\0\\x0B]/",
             "source": "preg_replace()",
@@ -6849,10 +6849,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_vcard.php#L754-L760",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_vcard.php#L836-L842",
             "snippet": [
                 {
-                    "number": 754,
+                    "number": 836,
                     "focus": false,
                     "runs": [
                         [
@@ -6862,7 +6862,7 @@
                     ]
                 },
                 {
-                    "number": 755,
+                    "number": 837,
                     "focus": false,
                     "runs": [
                         [
@@ -6872,7 +6872,7 @@
                     ]
                 },
                 {
-                    "number": 756,
+                    "number": 838,
                     "focus": false,
                     "runs": [
                         [
@@ -6882,7 +6882,7 @@
                     ]
                 },
                 {
-                    "number": 757,
+                    "number": 839,
                     "focus": true,
                     "runs": [
                         [
@@ -6924,7 +6924,7 @@
                     ]
                 },
                 {
-                    "number": 758,
+                    "number": 840,
                     "focus": false,
                     "runs": [
                         [
@@ -6934,7 +6934,7 @@
                     ]
                 },
                 {
-                    "number": 759,
+                    "number": 841,
                     "focus": false,
                     "runs": [
                         [
@@ -6944,7 +6944,7 @@
                     ]
                 },
                 {
-                    "number": 760,
+                    "number": 842,
                     "focus": false,
                     "runs": [
                         [
@@ -6981,7 +6981,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_washtml.php#L761-L767",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_washtml.php#L761-L767",
             "snippet": [
                 {
                     "number": 761,
@@ -7161,7 +7161,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/1093b9c41e1ccb12ee0c6bad61eacf69f5754c16/program/lib/Roundcube/rcube_washtml.php#L841-L847",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_washtml.php#L841-L847",
             "snippet": [
                 {
                     "number": 841,
