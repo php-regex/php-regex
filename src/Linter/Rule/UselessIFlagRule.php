@@ -195,11 +195,9 @@ final class UselessIFlagRule extends AbstractLintRule
 
         // Another locale's tables may give a byte of the range a case, or
         // under UTF an ASCII character.
-        if (null !== $this->tables) {
-            for ($codePoint = $min; $codePoint <= min($max, $this->unicodeMode ? 0x7F : 0xFF); $codePoint++) {
-                if ($this->codePointHasCase($codePoint)) {
-                    return true;
-                }
+        for ($codePoint = $min; $codePoint <= $max && $this->tablesDecide($codePoint); $codePoint++) {
+            if ($this->codePointHasCase($codePoint)) {
+                return true;
             }
         }
 
@@ -286,10 +284,9 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        // Another locale's tables give the case of a byte, and under UTF of
-        // an ASCII character: one they pair with another, or whose case the
-        // engine's paths or releases read otherwise.
-        if (null !== $this->tables && $codePoint <= ($this->unicodeMode ? 0x7F : 0xFF)) {
+        // A character they decide has a case where they pair it with
+        // another, or where the engine's paths or releases read it otherwise.
+        if ($this->tablesDecide($codePoint)) {
             return $codePoint !== $this->tables->settledOtherCase($codePoint);
         }
 
@@ -308,6 +305,18 @@ final class UselessIFlagRule extends AbstractLintRule
 
         return mb_strtoupper($char, 'UTF-8') !== $char
             || mb_strtolower($char, 'UTF-8') !== $char;
+    }
+
+    /**
+     * Whether another locale's tables decide the case of the character: a
+     * byte without UTF, an ASCII character with it, where one above ASCII
+     * takes Unicode's case.
+     *
+     * @phpstan-assert-if-true CharacterTables $this->tables
+     */
+    private function tablesDecide(int $codePoint): bool
+    {
+        return null !== $this->tables && $codePoint <= ($this->unicodeMode ? 0x7F : 0xFF);
     }
 
     private function unicodePropIsCaseSensitive(string $prop): bool

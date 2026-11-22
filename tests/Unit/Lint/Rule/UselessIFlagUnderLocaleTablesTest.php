@@ -86,8 +86,9 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
 
     /**
      * Tables no machine here builds: what the rule reads from them, which
-     * no engine can check. They pair 0xE9 with 0xC9, "x" with 0x7F, and
-     * read 0xB5 otherwise in the interpreter, 0xFF otherwise before 10.43.
+     * no engine can check. They pair 0xE9 with 0xC9, "x" with 0x7F, "q"
+     * with 0x80, and read 0xB5 otherwise in the interpreter, 0xFF otherwise
+     * before 10.43. Under u, a character above ASCII takes Unicode's case.
      */
     #[Test]
     #[DataProvider('provideReadsUnderGivenTables')]
@@ -115,6 +116,12 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
         yield 'a byte the releases read otherwise' => ['pattern' => '/\xFF/i', 'reported' => false];
         yield 'a range holding a byte they pair' => ['pattern' => '/[\xE0-\xEF]/i', 'reported' => false];
         yield 'a range of bytes they leave without a case' => ['pattern' => '/[\xD7-\xD8]/i', 'reported' => true];
+        yield 'a range whose last byte alone the releases read otherwise' => ['pattern' => '/[\xF7-\xFF]/i', 'reported' => false];
+        yield 'a range of ASCII signs, under u, ending at one they pair' => ['pattern' => '/[\x{7B}-\x{7F}]/iu', 'reported' => false];
+        yield 'a range of ASCII signs, under u, stopping before one they pair' => ['pattern' => '/[\x{7B}-\x{7C}]/iu', 'reported' => true];
+        yield 'the first character above ASCII, under u, which they pair and Unicode does not' => ['pattern' => '/\x{80}/iu', 'reported' => true];
+        yield 'a range of ASCII signs, under u, past one they pair' => ['pattern' => '/[\x{7B}-\x{80}]/iu', 'reported' => false];
+        yield 'a code point above a byte without u, beyond the tables' => ['pattern' => '/\x{100}/i', 'reported' => true];
         yield 'an ASCII digit' => ['pattern' => '/7/i', 'reported' => true];
     }
 
@@ -129,12 +136,12 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
 
     /**
      * Gives the tables of GIVEN: ASCII's cases but for "x", paired with
-     * 0x7F, and 0xE9 with 0xC9; 0xB5 read otherwise by the interpreter,
-     * 0xFF by the tables before 10.43.
+     * 0x7F, and "q" with 0x80, and 0xE9 with 0xC9; 0xB5 read otherwise by
+     * the interpreter, 0xFF by the tables before 10.43.
      */
     private static function giveTables(): void
     {
-        $others = [0x78 => 0x7F, 0x7F => 0x78, 0xE9 => 0xC9, 0xC9 => 0xE9];
+        $others = [0x78 => 0x7F, 0x7F => 0x78, 0x71 => 0x80, 0x80 => 0x71, 0xE9 => 0xC9, 0xC9 => 0xE9];
         $cases = '';
         for ($byte = 0; $byte < 256; $byte++) {
             $cases .= \chr($others[$byte] ?? (Ascii::isAlpha(\chr($byte)) ? $byte ^ 0x20 : $byte));
