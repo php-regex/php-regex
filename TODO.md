@@ -31,13 +31,20 @@
 
 Found while fixing the bugs of #400; each is PCRE2's, not the library's.
 
-- PCRE2 10.49's JIT returns 0 for `/é.{2,}é|(?<=x)A/u` on `xA`, and 1
-  without the JIT: report it to PCRE2.
-- PCRE2 10.49's JIT returns 0 for `/(?<=(?:a|bc)|\b)x/` on `x`, and 1
-  without the JIT; `/(?<!(?:a|bc)|\b)x/` gives the reverse.
-- `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)` are ignored under the JIT, PHP's
-  default, and honoured without it: `preg_match('/(*NOTEMPTY)a*/', 'b')`
-  returns 1 with the JIT and 0 with `pcre.jit=0`. Report it to PCRE2.
+- `pcre2_jit_match()`, which PHP calls when the JIT is on, ignores
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, where `pcre2_match()` honours
+  them, through the JIT too: `preg_match('/(*NOTEMPTY)a*/', 'b')` returns 1
+  with the JIT and 0 with `pcre.jit=0`, and `(*NOTEMPTY_ATSTART)a*` on `b`
+  matches at offset 0 with the JIT and at 1 without. pcre2pattern says the
+  items act as the options do for whichever function matches, and both
+  options work with `pcre2_jit_match()`. No issue or pull request names it
+  on 2026-11-22 (10.43 to master): report it to PCRE2, with the fix of
+  copying the two flags into the options as `pcre2_match()` does.
+- PCRE2's open pull requests fix the JIT's two other wrong answers, found
+  on 10.49 and master: #1004 a zero-width branch of a variable-length
+  lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
+  scan (`/\x{100}.{2}|A/u` on `A`, since 10.45, so not in PHP's bundled
+  10.44). Nothing to report: check that a release ships them.
 
 
 ## PCRE2 10.50
@@ -112,32 +119,25 @@ In this order.
 The proof of concept stays on the fork, as php-regex/phpstan-src#1: no pull
 request goes to `phpstan/phpstan-src`.
 
-- The PHPStan fork (`read-regex-shapes-through-phpregex`, one commit on
-  upstream 2.3.x) names `11e3725`, never published, in `composer.json`:
-  pin the twin's `v2.0.0-RC1` (`d8d59a12`) there, `composer update
-  php-regex/regex-parser-php74`, amend, force-push to the fork, and refresh
-  the description of the fork's pull request (php-regex/phpstan-src#1) with
-  the #14490 line (the return type of `preg_match()` on a pattern sure to
-  match).
 - In `~/projects/php-regex/phpstan-src`, branch
-  `read-regex-shapes-through-phpregex`: `2fddb71bf` reads a quoted text in
-  place (the shape, the return type and the validity rule) and the commit
-  after it folds `preg_quote()` of a constant string to its literal; both
-  sit on top of the PR commit, not pushed. Squash them into the PR commit
-  or keep them apart, then push to the fork.
-- State the parse cost in the description of the fork's pull request,
-  measured over the 395 distinct literal patterns of the `preg_*` calls in
-  PHPStan and its vendor (PHP 8.4, median of five runs), with the twin
-  PHPStan ships: validating takes 97 ms and the capture shape 57 ms,
-  against 88 ms for everything with the parser PHPStan generates today;
-  the first pattern of a process costs 30 ms against 10 ms, class loading
-  included, and the peak memory is 6 MB higher; a second read of a pattern
-  is free; a run over twelve regex-heavy files, those patterns included,
-  takes the same time with either parser (3.7 s), and PHPStan's benchmark
-  suite calls no `preg_*` function. The capture shape computes eight facts
-  per group and per arm, and nothing cheaper was found: memoising the
-  length calculator or the ACCEPT check, or walking the letter check once,
-  each measured under 3 %.
+  `read-regex-shapes-through-phpregex` is one local commit, `da58ce923a`,
+  on the parent of the pushed `079eba6c9`: it pins the twin's `2.0.0-RC1`
+  (composer.json named `11e3725`, never published, and the lock another
+  commit) and folds in the two `preg_quote()` commits. The nsrt suite
+  (1,903), the regex, rule and engine tests (340 patterns) and `make
+  phpstan` pass with RC1. Before the force-push to the fork: run the full
+  suite (`make tests`), which the description says passes; merge the
+  second docblock of `RegexExpressionHelper::resolvePatternConcat()` into
+  upstream's above it; then refresh the description of
+  php-regex/phpstan-src#1: the RC1 line, the `preg_quote()` line, the
+  #14490 line (the return type of `preg_match()` on a pattern sure to
+  match; its own pattern keeps the 0) and the parse cost (395 literal
+  patterns of PHPStan and its vendor, PHP 8.4, median of five runs:
+  validating 97 ms and the capture shape 57 ms, against 88 ms for the
+  generated parser; 30 ms against 10 ms for the first pattern, 6 MB more
+  peak memory, a second read free, the same 3.7 s over twelve regex-heavy
+  files; memoising the length calculator or the ACCEPT check, or walking
+  the letter check once, each measured under 3 %).
 
 
 ## Linter precision
