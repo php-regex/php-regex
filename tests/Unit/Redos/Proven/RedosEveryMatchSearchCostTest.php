@@ -66,7 +66,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideEveryMatchSearches')]
-    public function test_every_match_search_cost_is_reported_when_each_retry_reads_the_run(string $pattern, string $run, bool $exact, bool $counted): void
+    public function test_every_match_search_cost_is_reported_when_each_retry_reads_the_run(string $pattern, string $run, bool $exact, ?string $counting = null): void
     {
         $interpreted = PcreInterpreter::pattern($pattern);
         foreach ([1, 2, 3, 100] as $words) {
@@ -80,7 +80,12 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         // refuses an empty match at the start of each call of the loop.
         $this->assertGreaterThanOrEqual(50, preg_match_all($interpreted, str_repeat($run, 100).'!'), 'Oracle: preg_match_all() skips most positions of 100 run words with '.$pattern.'.');
 
-        $this->assertRetriesGrowWithTheRestOfTheRun($pattern, $run, $counted);
+        $this->assertRetriesGrowWithTheRestOfTheRun($pattern, $run, null === $counting);
+        if (null !== $counting) {
+            // The replay counts the run where each character it reads stands
+            // in a group of its own, which the counter sees.
+            $this->assertRetriesGrowWithTheRestOfTheRun($counting, $run, true);
+        }
 
         $analyzer = new RedosAnalyzer();
         $analysis = $analyzer->analyze($pattern);
@@ -90,7 +95,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
 
         $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
-        $this->assertSame($counted, $confirmed->replayed, $pattern);
+        $this->assertTrue($confirmed->replayed, $pattern);
 
         $cost = $analysis->everyMatchSearchCost;
         if (!$exact) {
@@ -107,28 +112,28 @@ final class RedosEveryMatchSearchCostTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{pattern: string, run: string, exact: bool, counted: bool}>
+     * @return iterable<string, array{pattern: string, run: string, exact: bool, counting?: string}>
      */
     public static function provideEveryMatchSearches(): iterable
     {
-        yield 'optional group' => ['pattern' => '/(?:a+\d)?/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'optional group ending with a literal' => ['pattern' => '/(?:a+b)?/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'lazy optional group' => ['pattern' => '/(?:a+\d)??/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'empty branch first' => ['pattern' => '/(?:|a+\d)/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'empty branch last' => ['pattern' => '/(?:a+\d|)/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'capturing group' => ['pattern' => '/((?:a+\d)?)/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'optional group under u' => ['pattern' => '/(?:é+\d)?/u', 'run' => 'é', 'exact' => true, 'counted' => true];
-        yield 'A modifier' => ['pattern' => '/(?:a+\d)?/A', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield '\G' => ['pattern' => '/\G(?:a+\d)?/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield 'caret under m on a run of newlines' => ['pattern' => '/^(?:\n+\d)?/m', 'run' => "\n", 'exact' => true, 'counted' => true];
-        yield 'empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?:a+\d)?/', 'run' => 'a', 'exact' => true, 'counted' => true];
-        yield '\K before an item that fails' => ['pattern' => '/(?:a+\K\d)?/', 'run' => 'a', 'exact' => true, 'counted' => true];
+        yield 'optional group' => ['pattern' => '/(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'optional group ending with a literal' => ['pattern' => '/(?:a+b)?/', 'run' => 'a', 'exact' => true];
+        yield 'lazy optional group' => ['pattern' => '/(?:a+\d)??/', 'run' => 'a', 'exact' => true];
+        yield 'empty branch first' => ['pattern' => '/(?:|a+\d)/', 'run' => 'a', 'exact' => true];
+        yield 'empty branch last' => ['pattern' => '/(?:a+\d|)/', 'run' => 'a', 'exact' => true];
+        yield 'capturing group' => ['pattern' => '/((?:a+\d)?)/', 'run' => 'a', 'exact' => true];
+        yield 'optional group under u' => ['pattern' => '/(?:é+\d)?/u', 'run' => 'é', 'exact' => true];
+        yield 'A modifier' => ['pattern' => '/(?:a+\d)?/A', 'run' => 'a', 'exact' => true];
+        yield '\G' => ['pattern' => '/\G(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'caret under m on a run of newlines' => ['pattern' => '/^(?:\n+\d)?/m', 'run' => "\n", 'exact' => true];
+        yield 'empty match refused at the search start' => ['pattern' => '/(*NOTEMPTY_ATSTART)(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield '\K before an item that fails' => ['pattern' => '/(?:a+\K\d)?/', 'run' => 'a', 'exact' => true];
         // The step counter sees nothing inside a possessive repeat of one
         // set, though the retry reads the run: 2.22, 8.42, 32.72 and
         // 129.50 ms through preg_match_all() on 2 000 to 16 000 "a" with
         // pcre.jit=0.
-        yield 'possessive run' => ['pattern' => '/(?:a++\d)?/', 'run' => 'a', 'exact' => true, 'counted' => false];
-        yield 'lookahead after the run' => ['pattern' => '/(?:[a-z]+(?=\d))?/', 'run' => 'a', 'exact' => false, 'counted' => true];
+        yield 'possessive run' => ['pattern' => '/(?:a++\d)?/', 'run' => 'a', 'exact' => true, 'counting' => '/(?:(?:a)++\d)?/'];
+        yield 'lookahead after the run' => ['pattern' => '/(?:[a-z]+(?=\d))?/', 'run' => 'a', 'exact' => false];
     }
 
     /**

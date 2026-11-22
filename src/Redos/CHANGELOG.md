@@ -40,6 +40,20 @@ CHANGELOG
    succeeds only once the loop gives a character back to read after `\K`,
    as `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, no verdict is proven, as for
    `/^(?:a|a)+./`.
+ * The step replay of confirmed mode counts the characters a possessive or
+   atomic repeat of one character set reads, which PCRE2's step counter
+   does not see: it runs the pattern with each such character in a group of
+   its own, as `(?:a)++`, which changes no match. `/a++b/` and `/(?>a+)b/`
+   are replayed, no longer `replayed: false`, and so are
+   `/(*NOTEMPTY)a++\K/` and `/(*NOTEMPTY)(?:a++\K)/`, which read the rest
+   of the run at every attempt and give nothing back: 1.0, 4.0 then 15.9 ms
+   on 2,000, 4,000 then 8,000 `a` in the interpreter. A witness through an
+   atomic body the model keeps with every way through it,
+   `/(*NOTEMPTY)(?>a+\K)/` or `/(?>a+|c)b/`, is now reported in confirmed
+   mode. A repeat of a set of every character that PCRE2 may read as its
+   any character, and move to the end of the subject in one step, stays as
+   written: `/(?>.*+|a+)b/s`, whose atomic group commits to `.*+` at once,
+   is not reported.
  * The options a pattern opens with are read by what each changes, and no
    longer keep every pattern but one opening with `(*UCP)` alone out of the
    proof. Those that change no match one attempt makes keep the verdict of

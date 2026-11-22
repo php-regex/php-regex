@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos\Backtrack;
 
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\Utf8;
@@ -88,7 +89,11 @@ use PHPRegex\Redos\RedosSearchCost;
  * It does not keep a lookaround's condition and keeps an atomic body with
  * every way through it: such a witness is reported only when the engine
  * replay confirms it. A pinned replay cannot confirm a pattern holding "\G",
- * which holds at every pinned offset.
+ * which holds at every pinned offset. The replay runs the pattern with each
+ * character a repeat reads in a group of its own, which the engine's step
+ * counter sees inside a possessive or atomic repeat too: "(*NOTEMPTY)a++\K"
+ * and "(*NOTEMPTY)(?>a+\K)" read the rest of the run at every attempt and
+ * give nothing back.
  *
  * @internal
  */
@@ -284,13 +289,14 @@ final class SearchCostProver
         // "\G" holds where a replay pins an attempt, as it does at each call
         // of the loop of every match, never at a later attempt of a search.
         $pinnable = $everyMatch || !self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof AssertionNode && 'G' === $node->value);
+        $counted = self::countingReads($pattern, $regex, $sets, $unicode, $caseless);
         $replayed = null;
         $measured = true;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $pattern, $prefix, $run, $options, $everyMatch, &$replayed, &$measured): void {
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $counted, $prefix, $run, $options, $everyMatch, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
                 $replays = $everyMatch
-                    ? $this->replayer->replaysEveryMatch($pattern, $prefix, $run, $breaker, $options)
-                    : $this->replayer->replays($pattern, $prefix, $run, $breaker, $options);
+                    ? $this->replayer->replaysEveryMatch($counted, $prefix, $run, $breaker, $options)
+                    : $this->replayer->replays($counted, $prefix, $run, $breaker, $options);
                 if (true === $replays) {
                     $replayed = $breaker;
 
@@ -307,6 +313,66 @@ final class SearchCostProver
         // Under limits too low to count, the replay neither confirms nor
         // refutes the witness: "replayed" is null, as for a skipped replay.
         return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, $measured ? false : null) : null;
+    }
+
+    /**
+     * The pattern with each character a repeat reads put in a group of its
+     * own, "a++" read as "(?:a)++": the engine's step counter sees nothing
+     * inside a possessive or atomic repeat of one character set, which
+     * reads the run without a backtracking frame, and counts each pass
+     * through a repeated group, once per character. The group changes no
+     * match, and a repeat the counter already sees takes as many steps
+     * through it. A character of a set of every character that PCRE2 may
+     * read as its any character stays as written: a possessive or atomic
+     * repeat of it moves to the end of the subject in one step, which the
+     * group would count as a read of each character. So does the whole
+     * pattern where "\Q" may quote a group, or where the group's "?", ":"
+     * or ")" is the delimiter.
+     *
+     * @param array<int, CharSet> $sets the set the automaton reads for the atom at each offset
+     */
+    private static function countingReads(string $pattern, RegexNode $regex, array $sets, bool $unicode, bool $caseless): string
+    {
+        $parts = NoJit::split($pattern);
+        if (null === $parts || str_contains('?:)', $parts[0]) || str_contains($parts[1], '\Q')) {
+            return $pattern;
+        }
+
+        [$open, $body, $close, $flags] = $parts;
+        $universe = CharSet::universe($unicode);
+        $atoms = [];
+        self::repeatedCharacters($regex->pattern, $sets, $universe, $unicode, $caseless, $atoms);
+        krsort($atoms);
+        foreach ($atoms as $start => $end) {
+            $body = substr($body, 0, $start).'(?:'.substr($body, $start, $end - $start).')'.substr($body, $end);
+        }
+
+        return $open.$body.$close.$flags;
+    }
+
+    /**
+     * Where the characters repeats read one at a time stand: the atom of
+     * each repeat the automaton reads as one set, but a set of every
+     * character PCRE2 may read as its any character.
+     *
+     * @param array<int, CharSet> $sets
+     * @param array<int, int>     $atoms the end of each such atom, by its start
+     *
+     * @param-out array<int, int> $atoms
+     */
+    private static function repeatedCharacters(NodeInterface $node, array $sets, CharSet $universe, bool $unicode, bool $caseless, array &$atoms): void
+    {
+        if ($node instanceof QuantifierNode) {
+            $atom = $node->node;
+            $set = $sets[$atom->getStartPosition()] ?? null;
+            if (null !== $set && (!$universe->subtract($set)->isEmpty() || false === self::isAnyCharacter($atom, $unicode, $caseless))) {
+                $atoms[$atom->getStartPosition()] = $atom->getEndPosition();
+            }
+        }
+
+        foreach ($node->getChildren() as $child) {
+            self::repeatedCharacters($child, $sets, $universe, $unicode, $caseless, $atoms);
+        }
     }
 
     /**
