@@ -188,9 +188,8 @@ request goes to `phpstan/phpstan-src`.
 
 ## Optimizer precision
 
-- The result check proves no possessive in a pattern that holds a call
-  (`LanguageSolver::enters`): `/(a+b?)c(?1)d/`, whose possessive the
-  rewrite now reads as safe wherever the group runs, is offered
-  `a++b?`, refused, and rewritten again without the possessive step, so it
-  ships unchanged. A check that reads calls would ship `/(a++b?)c(?1)d/`
-  and save that second rewrite.
+- The match solver runs a call where it stands (#435), but not a call of
+  a group a `(?(DEFINE)…)` holds, which the normal form leaves out:
+  `/(?&n)c(?(DEFINE)(?<n>a+b?))/` is offered its possessive, refused, and
+  rewritten again without it. Translate the DEFINE's groups under the
+  options in force there, and let `runsOfEveryCall` read inside it.
