@@ -34,25 +34,21 @@
   there, is not reported. Read `\w` from the target's tables in
   `EndOfLineTail`. The rule gives no false verdict under tr_TR (20,740
   patterns against PHP 8.2, 8.4 and 8.6, JIT on and off).
-- Report the search of `preg_match_all()`, `preg_replace()` and
-  `preg_split()`: after an empty match PHP tries again at the same offset
-  with `NOTEMPTY_ATSTART | ANCHORED`, so a pattern that may match empty
-  searches in the square of the subject there while `preg_match()` stays
-  linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8 and
-  26 ms through `preg_match_all()`, under 0.1 ms through `preg_match()`
-  (PHP 8.4.28, PCRE2 10.49). Decided: no rule of its own; a cost of its
-  own beside the search cost (`RedosAnalysis::$everyMatchSearchCost`,
-  `search_cost` keeping its meaning), which the linter, the PHPStan
-  extension and the language server, knowing the function called, report
-  as `regex.lint.redos.search` at those calls, with a message naming the
-  retry; `preg_match()` keeps its verdict. Native functions, `Safe\` and
-  composer/pcre; a literal `limit` that bounds the call is not reported.
-- A short match that is not empty is as quadratic through the same
-  functions, without any retry: each match reads to the end of the run
-  before the next starts one character later. `/a(?:a+\d)?/`, `/a*b|a/`
-  and `/a\K(?:a+\d)?/` take about 63 ms on 16,000 `a`s through
-  `preg_match_all()` (PHP 8.4.28, PCRE2 10.49). Report them through the
-  every-match cost once the retry's has landed.
+- A short match that is not empty is as quadratic through the functions
+  that look for every match, without any retry: each match reads to the
+  end of the run before the next starts one character later.
+  `/a(?:a+\d)?/`, `/a*b|a/` and `/a\K(?:a+\d)?/` take about 63 ms on
+  16,000 `a`s through `preg_match_all()` (PHP 8.4.28, PCRE2 10.49).
+  Report them through `RedosAnalysis::$everyMatchSearchCost` (#444).
+- The every-match cost is reported once per literal, at its first call: a
+  `$p` that `preg_match()` reads before `preg_match_all()` is not
+  reported. Report it at each looping call of the literal.
+- The every-match cost reads the native functions, `Safe\` and
+  composer/pcre alone: Nette's `Strings`, Spatie's `Regex` and Laravel's
+  `Str` methods that loop, and the `RegexIterator` modes that do, are not
+  read yet; read their sources first.
+- Psalm reports no ReDoS finding at all, the search cost included, where
+  the linter and PHPStan do.
 - The search cost misses a pattern whose attempt may match empty only
   where the subject ends: `/(?:a+\d)?$/` through `preg_match()` alone
   takes 1.5, 29, 70 and 356 ms on 2,000, 4,000, 8,000 and 16,000 `a`s
