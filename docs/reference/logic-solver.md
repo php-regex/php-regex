@@ -111,8 +111,9 @@ as far as their equality goes, so the search over every subject ends, and the fi
 subject on which the two differ is the shortest.
 
 It reads the fragment where that run picks the match PCRE's backtracking picks. It refuses,
-each with its reason: backreferences, subroutines, conditionals and control verbs;
-lookarounds; atomic groups, and a possessive quantifier that could have to give back what
+each with its reason: backreferences, conditionals and control verbs; a call that may run
+its own group again (`(?R)`, `/(a(?1)?b)/`), a call of a group a `(?(DEFINE)...)` holds, and
+a call that returns groups (`(?1(2))`); lookarounds; atomic groups, and a possessive quantifier that could have to give back what
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
@@ -126,6 +127,15 @@ finds no match in `"\tb"`, where `/\w/` finds `b`); and two patterns of which on
 reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/` and `/(a)/`
 write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
 still takes its number.
+
+Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
+body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
+release PHP bundles: the engine backtracks into the call (`/(a|ab)(?1)c/` matches `aabc`),
+the groups inside it are given back the values they held before it, and the body keeps the
+options the group was written under (`/(a)(?i)(?1)/` finds nothing in `aA`). A possessive
+quantifier in a called group is read wherever the group runs: `/(a+b?)c(?1)d/` and
+`/(a++b?)c(?1)d/` write the same `$matches`, while `/(a++b?)c(?1)a/` is refused, as the call
+gives an `a` back to what follows it.
 
 Neither question answers the other. The same `$matches` on every subject is the same
 answer on every subject, so the two patterns find a match in the same subjects; it is not

@@ -114,6 +114,9 @@ final class PackageManifestTest extends TestCase
             // An inline "m" turns "^" multiline under a newline convention
             // the solvers refuse, read as the parser reads its letters.
             'Parser\Syntax\InlineFlags',
+            // The match solver runs the body of the group a call names
+            // where the call stands, found as PCRE numbers the groups.
+            'Parser\Analysis\GroupIndex',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
         // where the class sets PCRE2 answered are kept between runs. The

@@ -48,6 +48,16 @@ CHANGELOG
    apart on `Ã©`, which neither matches; `/(*UTF).*(?:^\/admin\/users).*/` is
    a subset of `/.*(?:^\/admin).*/`. A string that is not valid UTF-8 is not
    compared.
+ * `matchEquivalent()` reads a call of a group, `(?1)`, `(?-1)`, `(?+1)`,
+   `(?&n)`, `(?P>n)` or `\g<n>`, as the body of the group run where the
+   call stands: the engine backtracks into it, the groups inside it are
+   given back the values they held before it, and it keeps the options the
+   group was written under. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
+   proven to write the same `$matches`, while `/(a++b?)c(?1)a/` stays
+   refused, as the call gives an `a` back to what follows it. A call that
+   may run its own group again, `(?R)` included, a call of a group a
+   `(?(DEFINE)...)` holds, and a call that returns groups, `(?1(2))`, stay
+   refused, with a message of their own.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

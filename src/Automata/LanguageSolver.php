@@ -783,7 +783,7 @@ final class LanguageSolver
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser->target()))->translate($ast), $ast->isUnicode());
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build((new HirTranslator($this->parser->target()))->translate($ast), $ast->isUnicode(), $ast->pattern);
     }
 
     /**
