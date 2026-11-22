@@ -51,10 +51,24 @@
   searches in the square of the subject there while `preg_match()` stays
   linear. `/(?:a+\d)?/` on 2,000, 4,000 and 8,000 `a`s: 1.7, 6.8 and
   26 ms through `preg_match_all()`, under 0.1 ms through `preg_match()`
-  (PHP 8.4.28, PCRE2 10.49). Decided: a flag on the search cost, no rule
-  of its own; the linter and the PHPStan and Psalm extensions, which know
-  the function called, raise `regex.lint.redos` at those calls with a
-  message naming the retry, and `preg_match()` keeps its verdict.
+  (PHP 8.4.28, PCRE2 10.49). Decided: no rule of its own; a cost of its
+  own beside the search cost (`RedosAnalysis::$everyMatchSearchCost`,
+  `search_cost` keeping its meaning), which the linter, the PHPStan
+  extension and the language server, knowing the function called, report
+  as `regex.lint.redos.search` at those calls, with a message naming the
+  retry; `preg_match()` keeps its verdict. Native functions, `Safe\` and
+  composer/pcre; a literal `limit` that bounds the call is not reported.
+- A short match that is not empty is as quadratic through the same
+  functions, without any retry: each match reads to the end of the run
+  before the next starts one character later. `/a(?:a+\d)?/`, `/a*b|a/`
+  and `/a\K(?:a+\d)?/` take about 63 ms on 16,000 `a`s through
+  `preg_match_all()` (PHP 8.4.28, PCRE2 10.49). Report them through the
+  every-match cost once the retry's has landed.
+- The search cost misses a pattern whose attempt may match empty only
+  where the subject ends: `/(?:a+\d)?$/` through `preg_match()` alone
+  takes 1.5, 29, 70 and 356 ms on 2,000, 4,000, 8,000 and 16,000 `a`s
+  with the JIT off (PHP 8.4.28, PCRE2 10.49), each attempt reading the
+  run to its end, and `regex lint --redos` reports nothing.
 - The proof leaves undecided an ambiguous loop that no suffix makes fail,
   and a heuristic finding stands where the engine is linear:
   `/^(?:a|a)+./`, and since #436 `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
