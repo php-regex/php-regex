@@ -10,10 +10,6 @@
 - Under `(*NOTEMPTY)`, the search cost is not proven: a pattern whose
   search grows with the square of the subject, such as `(?:a+\d)?`, gets
   no search-cost finding behind it, though each attempt is judged right.
-- Since #419 to #423, the counted `benchRedos` cases run 1.4 to 1.7 %
-  above their expected instructions (bounded-alternation-200: 159.3M
-  against 156.8M), close to the ±2 % allowed: accept the new numbers from
-  a 2.x run, so the next small cost is not read as a regression.
 
 ## Playground on PHP 8.6
 
