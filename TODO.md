@@ -25,14 +25,6 @@
   JIT off, and gets no search-cost finding. The JIT, which ignores
   `(*NOTEMPTY)` (see Engine reports), answers at once there.
 
-## Playground
-
-- The playground's driver (`docs/assets/playground/driver.php`) reads the
-  `MARK` key PHP adds for `(*MARK)` as a group: on `/(a)(*MARK:z)b/` its
-  names give group 2 the name `MARK`, and its match shows the mark as a
-  group that did not take part. Skip a key whose value is not a pair, and
-  show the mark on its own.
-
 ## Engine reports
 
 Found while fixing the bugs of #400; each is PCRE2's, not the library's.
