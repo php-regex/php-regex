@@ -50,6 +50,9 @@ final class CharacterTables
      */
     private string $casesBefore143;
     /**
+     */
+    private string $casesFrom1043;
+    /**
      * The locale whose tables are PCRE2's own.
      */
     public const BUILT_IN = 'C';
@@ -112,14 +115,16 @@ final class CharacterTables
     private const MAX_NAME_LENGTH = 254;
 
     /**
-     */
-    private string $casesFrom1043;
-
-    /**
      * @var array<string, list<array{0: int, 1: int}>>
      *
      */
     private array $bytes;
+
+    /**
+     * @var array<int, true>
+     *
+     */
+    private array $unsettled = [];
 
     /**
      * @param string                                     $locale         the name the C library gives the locale
@@ -127,13 +132,16 @@ final class CharacterTables
      *                                                                   pcre2_maketables() before 10.43 writes it
      * @param string                                     $casesFrom1043  the same, as 10.43 and later write it
      * @param array<string, list<array{0: int, 1: int}>> $bytes          the bytes of each name, as ranges
+     * @param array<int, true>                           $unsettled      the bytes whose other case the interpreter
+     *                                                                   reads otherwise than a class
      */
-    private function __construct(string $locale, string $casesBefore143, string $casesFrom1043, array $bytes)
+    private function __construct(string $locale, string $casesBefore143, string $casesFrom1043, array $bytes, array $unsettled = [])
     {
         $this->locale = $locale;
         $this->casesBefore143 = $casesBefore143;
         $this->casesFrom1043 = $casesFrom1043;
         $this->bytes = $bytes;
+        $this->unsettled = $unsettled;
     }
 
     /**
@@ -188,6 +196,22 @@ final class CharacterTables
     }
 
     /**
+     * Tables given for a locale, which forLocale() answers in place of
+     * those the engine would build under it: the other case of each byte,
+     * one byte each, as 10.43 and later write it, and before 10.43 when it
+     * differs; the bytes of each name are PCRE2's own.
+     *
+     * @internal a test asks for tables this machine cannot build
+     *
+     * @param list<int> $unsettled the bytes whose other case the interpreter
+     *                             reads otherwise than a class
+     */
+    public static function useTables(string $locale, string $casesFrom1043, array $unsettled = [], ?string $casesBefore143 = null): void
+    {
+        self::$read[$locale] = new self($locale, $casesBefore143 ?? $casesFrom1043, $casesFrom1043, self::BUILT_IN_BYTES, array_fill_keys($unsettled, true));
+    }
+
+    /**
      * The locale PHP compiles under now, as the C library names it: "C"
      * where PHP uses PCRE2's own tables, as it does from its start.
      */
@@ -207,6 +231,18 @@ final class CharacterTables
         $other = $this->casesFrom1043[$byte];
 
         return \ord($other === $this->casesBefore143[$byte] || $target->pcreAtLeast('10.43') ? $other : $this->casesBefore143[$byte]);
+    }
+
+    /**
+     * The other case of a byte, or the byte itself, where every caseless
+     * item reads it alike on every release: null where the tables of
+     * either side of 10.43 hold it otherwise, or where the interpreter,
+     * which compares a character matched alone by the small letters of the
+     * tables, takes a byte a class of it leaves out.
+     */
+    public function settledOtherCase(int $byte): ?int
+    {
+        return isset($this->unsettled[$byte]) || $this->casesBefore143[$byte] !== $this->casesFrom1043[$byte] ? null : \ord($this->casesFrom1043[$byte]);
     }
 
     /**
@@ -310,7 +346,9 @@ final class CharacterTables
      * The tables the engine compiles with now: the bytes each name holds,
      * matched in a subject of every byte, and the other case of each byte
      * a caseless class of it adds. A byte that is neither a capital nor a
-     * small letter is its own other case.
+     * small letter is its own other case. The tables of a locale named
+     * know too the letters the interpreter reads otherwise than a class;
+     * those in force, read under "C" to be set back, need not.
      *
      * @param bool $oneByte whether the C library reads the locale one byte a
      *                      character, where the case of a byte is a byte
@@ -328,6 +366,7 @@ final class CharacterTables
         }
 
         $otherCases = $subject;
+        $unsettled = [];
         foreach (array_merge($bytes['upper'] ?? [], $bytes['lower'] ?? []) as [$low, $high]) {
             for ($byte = $low; $byte <= $high; ++$byte) {
                 // The class holds the byte, its other case, and the NUL byte
@@ -335,6 +374,14 @@ final class CharacterTables
                 $held = (string) LibraryPcre::replace(\sprintf('/[^\x00\x%02x]/i', $byte), '', $subject);
                 $other = trim(str_replace(\chr($byte), '', $held), "\0");
                 $otherCases[$byte] = '' === $other ? \chr($byte) : $other[0];
+
+                // The interpreter compares a letter matched alone by the
+                // small letters of the tables (pcre2_match.c), which may
+                // lower a third byte to the same one: "\xDD" with "I" to "i"
+                // under tr_TR.ISO8859-9 on macOS.
+                if (self::BUILT_IN !== $locale && '' !== str_replace([\chr($byte), $otherCases[$byte]], '', (string) LibraryPcre::replace(\sprintf('/(*NO_JIT)(*NO_START_OPT)(?!\x%02x)[\x00-\xff]/i', $byte), '', $subject))) {
+                    $unsettled[$byte] = true;
+                }
             }
         }
 
@@ -362,7 +409,7 @@ final class CharacterTables
             }
         }
 
-        return new self($locale, $before, $from, $bytes);
+        return new self($locale, $before, $from, $bytes, $unsettled);
     }
 
     /**

@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
@@ -83,6 +84,64 @@ final class RedosLocaleTablesTest extends TestCase
         foreach ($rows as $name => [$pattern, $unit, $meetUnderC, $meetUnderLatin1]) {
             yield $name.', C' => ['pattern' => $pattern, 'unit' => $unit, 'locale' => CharacterTables::BUILT_IN, 'meet' => $meetUnderC];
             yield $name.', '.self::LATIN1 => ['pattern' => $pattern, 'unit' => $unit, 'locale' => self::LATIN1, 'meet' => $meetUnderLatin1];
+        }
+    }
+
+    /**
+     * Under a locale's tables the machine reads, a caseless item takes the
+     * other case those tables give, an ASCII letter's included: two loops
+     * meet as the engine runs them under that locale, and the finding of
+     * two that meet is no longer one of low confidence, the overlap being
+     * known. The engine is run as above, and decides whether the loops
+     * meet; the analysis must agree with it.
+     */
+    #[Test]
+    #[DataProvider('provideCaselessLoopsUnderEachTables')]
+    public function test_caseless_loops_meet_as_the_cases_of_the_target_locale_say(string $pattern, string $unit, string $locale): void
+    {
+        if (CharacterTables::BUILT_IN !== $locale) {
+            $this->requiresLocale($locale, $pattern);
+        }
+
+        $steps = [];
+        CharacterTables::under($locale, static function () use ($pattern, $unit, &$steps): void {
+            foreach ([8, 16, 32] as $units) {
+                $steps[] = PcreAttemptSteps::steps(PcreAttemptSteps::pinned($pattern), 'x'.str_repeat($unit, $units));
+            }
+        });
+        $meet = $steps[2] >= 3 * $steps[1] && $steps[1] >= 3 * $steps[0];
+        $this->assertTrue($meet || $steps[0] === $steps[2], \sprintf('Oracle: %s under %s takes %s steps.', addcslashes($pattern, "\200..\377"), $locale, implode(', ', $steps)));
+
+        $analysis = Regex::create(['cache' => null, 'locale' => $locale])->redos($pattern);
+        $label = \sprintf('%s under %s, where the engine takes %s steps', addcslashes($pattern, "\200..\377"), $locale, implode(', ', $steps));
+        $this->assertSame($meet ? RedosSeverity::Medium : RedosSeverity::Safe, $analysis->severity, $label);
+        if ($meet) {
+            $this->assertSame(RedosConfidence::Medium, $analysis->confidence, $label);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, unit: string, locale: string}>
+     */
+    public static function provideCaselessLoopsUnderEachTables(): iterable
+    {
+        $rows = [
+            'a raw small letter after its capital' => ["/^(x)\xC9+\xE9+\\1$/i", "\xE9"],
+            'a raw small letter after another capital' => ["/^(x)\xC9+\xEA+\\1$/i", "\xEA"],
+            'a capital after its small letter, written as escapes' => ['/^(x)\xE9+\xC9+\1$/i', "\xC9"],
+            'an ASCII capital after its small letter' => ['/^(x)a+A+\1$/i', 'A'],
+            'an ASCII capital after another small letter' => ['/^(x)a+B+\1$/i', 'B'],
+            'an ASCII capital after its small letter under u' => ['/^(x)a+A+\1$/iu', 'A'],
+            'an ASCII capital after another small letter under u' => ['/^(x)a+B+\1$/iu', 'B'],
+            'an ASCII capital after another small letter under UCP' => ['/(*UCP)^(x)a+B+\1$/i', 'B'],
+            'an ASCII capital after the class that leaves its pair out' => ['/^(x)[^a]+A+\1$/i', 'A'],
+            'a raw capital after the class that leaves its small letter out' => ["/^(x)[^\xE9]+\xC9+\\1$/i", "\xC9"],
+        ];
+
+        foreach ([CharacterTables::BUILT_IN, self::LATIN1, 'el_GR.ISO8859-7', 'en_US.UTF-8'] as $locale) {
+            foreach ($rows as $name => [$pattern, $unit]) {
+                yield $name.', '.$locale => ['pattern' => $pattern, 'unit' => $unit, 'locale' => $locale];
+            }
         }
     }
 }
