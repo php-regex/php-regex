@@ -2,13 +2,20 @@
 
 ## ReDoS precision
 
-- The overlap rule folds literal text in ASCII alone: under
-  fr_FR.ISO8859-1, `"/(?:\xC9x|\xE9x)+/i"` goes unreported, though
-  `/\xC9x/i` matches `\xE9x` there. Read the fold from the tables, and
-  report branches that fold to the same text under
-  `regex.lint.alternation.overlap`, as `/(?:A|a)+/i` is in ASCII:
-  `"/(?:\xC9|\xE9)+/i"` moves there from `regex.lint.overlap.charset`
-  under fr_FR.ISO8859-1 and stays where it is under C.
+- The overlap rule reads an escape past ASCII under u as unknown where it
+  reads the raw letter: under C, `/(?:[a-z]|\x{E9}|[a-c]|)+/u` goes
+  unreported while `/(?:[a-z]|é|[a-c]|)+/u` is reported
+  (`regex.lint.overlap.charset`).
+- `regex.lint.alternation.overlap` reads a `(?-i)` at the start of a
+  branch as caseless: `/(?:(?-i)Ax|(?-i)ax)+/i` under C and
+  `/(?:(?-i)\xC9x|(?-i)\xE9x)+/i` under fr_FR.ISO8859-1 are reported,
+  though `/^(?:(?-i)Ax)$/i` does not match `ax` (PHP 8.4.28, PCRE2 10.49,
+  JIT on and off).
+- Decide whether an escape is literal text for the overlap rules: under
+  fr_FR.ISO8859-1 the raw `"/(?:\xC9x|\xE9x)+/i"` is reported by
+  `regex.lint.alternation.overlap` since #442 and the escaped
+  `'/(?:\xC9x|\xE9x)+/i'` by `regex.lint.overlap.charset`, as
+  `/(?:Ax|ax)+/i` and `/(?:\x41x|ax)+/i` split in ASCII.
 - Three rules fold ASCII letters by C's pairs whatever the target's
   locale: `regex.lint.alternation.overlap` (`foldCharSet`),
   `regex.lint.quantifier.nested` (`NestedQuantifierRule::fold()`) and
@@ -19,15 +26,22 @@
   `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are reported though their
   parts are disjoint (the engine returns 0 at once, the analysis says
   safe), and `/i+\xDD+$/i` is missed (medium). Read the pairs from the
-  target's tables, as #429 and #434 do, once the overlap rule's escape
-  and fold changes have landed.
+  target's tables, as #429, #434 and #442 do; the literal fold already
+  does, and reports `/(?:i|I)+$/i` under macOS's tr_TR, where the engine
+  matches `i` with both.
 - The automata scan bytes through `(*NO_JIT)` (`ClassSetProvider::probe()`),
   so where the JIT and the interpreter read a locale's case differently
   they see only the interpreter's: under macOS's tr_TR.ISO8859-9,
   `/(?=\xFD)i/i` is reported impossible, yet the JIT matches `I` (PHP
   8.4.28, PCRE2 10.49). Let a byte `CharacterTables` marks unsettled be
   taken either way, as `CharSetAnalyzer` holds what any path takes since
-  #432.
+  #432. The same probe misses `/(?:\xF2|\xD3)+/i` under el_GR, where the
+  JIT matches `\xD3` with `/\xF2/i` and the interpreter does not.
+- Two oracles of `CharSetAnalyzerTest` fail with `pcre.jit=0` where the
+  locales are installed: `preg_match('/(*UTF)^\w$/', 'é')` gives 0 under
+  fr_FR.ISO8859-1 in the interpreter, and the Greek final sigma row holds
+  `\xD3`, which the interpreter does not take. Assert what either path
+  takes there, as the analyzer does.
 - Under a locale other than C, `ImpossibleAnchorRule` counts every byte
   above ASCII as both a word character and not one: `/\W$\b\n/` is
   reported under C but not under glibc's tr_TR, and `/\xDD$\B\n/`, impossible
