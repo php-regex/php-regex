@@ -57,6 +57,15 @@ CHANGELOG
    longer called useless, which dropping it would have changed. A byte
    whose case the engine's paths or releases read otherwise keeps the
    flag too. Under C, only ASCII letters have a case without u, as before.
+ * Under u, `regex.lint.flag.useless.i` reads every character of a range,
+   where it read its two ends: `/[×-÷]/iu`, which holds `Ø` to `ö` and
+   matches `ø` only with i, is no longer reported, nor is
+   `/[\x{2000}-\x{2BFF}]/iu`, which holds the Roman numerals and the
+   circled letters. A character has a case where PCRE2's tables of the
+   target's release give it another, as well as where mbstring does:
+   `/\x{A7CE}/iu`, which PCRE2 10.48 pairs with `\x{A7CF}` and the
+   mbstring of PHP 8.4 does not, keeps its flag. A wide range is read from
+   those tables at once, so `/[\x{4E00}-\x{9FFF}]/iu` is still reported.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
