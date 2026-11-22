@@ -56,6 +56,14 @@ CHANGELOG
    `"/(?:\\w|\xE9|)+/"` and `"/(?:\\W|\xD7|)+/"`, with raw bytes, are
    reported under fr_FR.ISO8859-1, where the Latin-1 tables put `\xE9` in
    `\w` and leave `\xD7` out; neither was.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads the other case of a byte above ASCII
+   read caselessly from the tables of the target's locale, where it left
+   the branches unjudged: `"/(?:\xC9|\xE9|)+/i"`, with raw bytes, is
+   reported under fr_FR.ISO8859-1, where the Latin-1 tables pair `\xE9`
+   with `\xC9`, and so is `"/(?:\xC9|[\xC9\xCA]|)+/i"` under C, whose
+   branches both take `\xC9`; neither was. A byte whose case the engine's
+   paths read otherwise still leaves the branches unjudged.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no
