@@ -289,6 +289,54 @@ The result is `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`degree` 2, the
 
 In confirmed mode, when the threshold is `medium` or lower, the witness is replayed without the JIT: `replayed` says whether an attempt started further from the end of the run takes more steps. The JIT is not measured: some pattern and subject pairs crash PHP under it (PCRE2 10.40 to 10.49), so the analysis never runs your pattern with it; the table above is how it fared on these probes, not a verdict. The step counter sees nothing inside an atomic or possessive repeat of a single character set, such as `/a++b/`: that witness, which the model reads exactly, stays reported with `replayed: false`. A witness that crosses a lookaround is reported only once that replay confirms it, and a pattern holding `\G`, which holds wherever the replay pins an attempt, is never confirmed that way. The replay counts under the `backtrackLimit` and `recursionLimit` of the `ConfirmationOptions` you pass, and leaves your settings as it found them: where those limits stop the count before it ends, or `ini_set()` is disabled, a witness the model reads exactly stays reported with `replayed: null`, and one that crosses a lookaround, which needs the replay, is not reported.
 
+### The search of the functions that look for every match
+
+`preg_match_all()`, `preg_replace()`, `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()` and `preg_split()` go on after each match. After an empty match PHP tries the same offset again with `PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED`, then moves one character on. A pattern that matches the empty string at each position of a run, and whose retry there reads to the end of the run, then costs those functions a number of steps quadratic in the run, where `preg_match()` stops at the first empty match. `/(?:a+\d)?/` is the type. Measured with PHP 8.4.28 and PCRE2 10.49 on `"a" x n`:
+
+| call | `pcre.jit=0`, n = 2,000 / 4,000 / 8,000 / 16,000 | `pcre.jit=1` |
+|---|---|---|
+| `preg_match()` | 0.01 ms | 0.01 ms |
+| `preg_match_all()` | 2.3, 8.6, 34, 131 ms | 1.8, 6.8, 27, 106 ms |
+| `preg_replace()` | 2.2, 8.8, 35, 131 ms | 1.8, 6.8, 28, 109 ms |
+| `preg_split()` | 2.3, 8.9, 33, 127 ms | 1.8, 7.1, 28, 106 ms |
+| `preg_replace()` with a limit of 1 | 0.02 ms | 0.02 ms |
+
+The JIT does not avoid it. PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the retry always runs in the interpreter, and each call of the loop starts afresh. `preg_grep()` makes no retry, and `PREG_SPLIT_NO_EMPTY` does not change the matching. A limit argument bounds the loop. An offset argument only shortens the part of the subject the loop reads.
+
+When the search of `preg_match()` has no witness, the analysis looks for this one. It is `RedosAnalysis::$everyMatchSearchCost`, a `RedosSearchCost`, and `every_match_search_cost` in the JSON output. The analysis reads the pattern as each retry runs it: every attempt refuses an empty match at its own start. The pattern must also match the empty string inside the run, so that `preg_match()` stops there.
+
+Each search of the loop starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing there. `/\G(?:a+\d)?/` and `/(?:a+\d)?/A` are quadratic in `preg_match_all()`: 2.5, 9.5, 37, 144 ms and 2.3, 8.8, 35, 136 ms. `^` without `m` and `\A` hold at the subject's start alone, and protect.
+
+The patterns that stay linear are those whose retry does one of these:
+
+- takes the rest of the run at once, as `/a*/` does;
+- reads one character at most, as `/x?/`, `/(?=a)/`, `/\b/` and `/$/` do;
+- reads a bounded run, as `/(?:a{1,50}\d)?/` does.
+
+`regex lint` and PHPStan report it as the search cost: `regex.lint.redos.search`, and `regex.redos.search` in PHPStan with the same message, `Quadratic search (ReDoS): <pattern>`. They report it at the calls that run such a loop: the six functions, their `Safe\` drop-ins and the composer/pcre methods that call them, unless a literal limit bounds the call. The language server does the same.
+
+A `preg_match()` call, and a pattern analysed with no call, keep the verdict of one search. The severity, the threshold, the switches and confirmed mode are those of the search cost above. In confirmed mode the step replay pins the retry, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT.
+
+`vendor/bin/regex lint app --redos --redos-threshold=medium` on `$fields = preg_split('/(?:[^,]*,)?/', $line);` prints:
+
+```
+  app/Fields.php:3:22
+      → /(?:[^,]*,)?/
+    WARN Quadratic search after an empty match: one attempt is linear (proven), but preg_split() finds an empty match at
+         each position of the run and, as PHP does after every empty match, tries that position again for a non-empty
+         one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit.
+         Severity: MEDIUM.
+         ↳ Attack: "!" x n.
+         ↳ pcre.backtrack_limit does not stop it: the limit counts each call apart.
+         ↳ preg_match() and preg_grep() stop at the first match and make no such retry.
+         ↳ Make every match read at least one character, or bound the length of the run; ^ or \A before every
+           alternative stops it, \G and the A modifier do not.
+```
+
+The extractor reports a pattern that several calls read, as a constant or a variable, once, at its first call, and the cost follows that call.
+
+A match that is short but not empty costs the same loop the same way and is not reported, as in `/a*b|a/` above or `/a(?:a+\d)?/`.
+
 ## Outside the model: heuristics and budget
 
 A pattern holding a construct the model does not cover is judged by the structural heuristics, and says so:
