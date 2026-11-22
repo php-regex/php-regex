@@ -1,6 +1,6 @@
 {
     "repo": "PHP-FFMpeg/PHP-FFMpeg",
-    "sha": "41fa00949ea2758cd34f076a8030df7198d57759",
+    "sha": "e0c44467b2a67c739f9dce2500ec8096e8f622db",
     "target": {
         "php": "8.0",
         "pcre": "10.35",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-FFMpeg/PHP-FFMpeg/blob/41fa00949ea2758cd34f076a8030df7198d57759/src/FFMpeg/Media/AbstractVideo.php#L233-L239",
+            "permalink": "https://github.com/PHP-FFMpeg/PHP-FFMpeg/blob/e0c44467b2a67c739f9dce2500ec8096e8f622db/src/FFMpeg/Media/AbstractVideo.php#L233-L239",
             "snippet": [
                 {
                     "number": 233,

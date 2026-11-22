@@ -1,6 +1,6 @@
 {
     "repo": "php/php-src",
-    "sha": "28fd5ef6b97bdd2922102da96f3288828f9528b6",
+    "sha": "7e82120249b8a92d9188797251fe3ec2806c36e7",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L799-L805",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L799-L805",
             "snippet": [
                 {
                     "number": 799,
@@ -181,7 +181,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L800-L806",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L800-L806",
             "snippet": [
                 {
                     "number": 800,
@@ -361,7 +361,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L801-L807",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L801-L807",
             "snippet": [
                 {
                     "number": 801,
@@ -581,7 +581,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L836-L842",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L836-L842",
             "snippet": [
                 {
                     "number": 836,
@@ -729,7 +729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L837-L843",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -909,7 +909,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L838-L844",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L838-L844",
             "snippet": [
                 {
                     "number": 838,
@@ -1129,7 +1129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L874-L880",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L874-L880",
             "snippet": [
                 {
                     "number": 874,
@@ -1277,7 +1277,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L875-L881",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L875-L881",
             "snippet": [
                 {
                     "number": 875,
@@ -1457,7 +1457,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L876-L882",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L876-L882",
             "snippet": [
                 {
                     "number": 876,
@@ -1677,7 +1677,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L898-L904",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L898-L904",
             "snippet": [
                 {
                     "number": 898,
@@ -1825,7 +1825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L899-L905",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L899-L905",
             "snippet": [
                 {
                     "number": 899,
@@ -2005,7 +2005,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L900-L906",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L900-L906",
             "snippet": [
                 {
                     "number": 900,
@@ -2220,7 +2220,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L2679-L2685",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L2679-L2685",
             "snippet": [
                 {
                     "number": 2679,
@@ -2320,7 +2320,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/Zend/zend_vm_gen.php#L2830-L2836",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/Zend/zend_vm_gen.php#L2830-L2836",
             "snippet": [
                 {
                     "number": 2830,
@@ -2477,7 +2477,7 @@
         {
             "id": "f-4f29a38e8a",
             "file": "build/gen_stub.php",
-            "line": 4847,
+            "line": 4837,
             "column": 24,
             "pattern": "/^\\s*(?<type>[\\w\\|\\\\]+(?<parens>\\((?<inparens>(?:(?&parens)|[^(){}[\\]<>]*+))++\\)|\\{(?&inparens)\\}|\\[(?&inparens)\\]|<(?&inparens)>)*+(?::(?&type))?)\\s*(\\.\\.\\.)?\\$(?<name>\\w+).*$/",
             "source": "preg_match()",
@@ -2509,10 +2509,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/build/gen_stub.php#L4844-L4850",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/build/gen_stub.php#L4834-L4840",
             "snippet": [
                 {
-                    "number": 4844,
+                    "number": 4834,
                     "focus": false,
                     "runs": [
                         [
@@ -2522,7 +2522,7 @@
                     ]
                 },
                 {
-                    "number": 4845,
+                    "number": 4835,
                     "focus": false,
                     "runs": [
                         [
@@ -2532,7 +2532,7 @@
                     ]
                 },
                 {
-                    "number": 4846,
+                    "number": 4836,
                     "focus": false,
                     "runs": [
                         [
@@ -2542,7 +2542,7 @@
                     ]
                 },
                 {
-                    "number": 4847,
+                    "number": 4837,
                     "focus": true,
                     "runs": [
                         [
@@ -2820,7 +2820,7 @@
                     ]
                 },
                 {
-                    "number": 4848,
+                    "number": 4838,
                     "focus": false,
                     "runs": [
                         [
@@ -2830,7 +2830,7 @@
                     ]
                 },
                 {
-                    "number": 4849,
+                    "number": 4839,
                     "focus": false,
                     "runs": [
                         [
@@ -2840,7 +2840,7 @@
                     ]
                 },
                 {
-                    "number": 4850,
+                    "number": 4840,
                     "focus": false,
                     "runs": [
                         [
@@ -2854,7 +2854,7 @@
         {
             "id": "f-f8558169dc",
             "file": "build/gen_stub.php",
-            "line": 5699,
+            "line": 5689,
             "column": 25,
             "pattern": "/(?:[\\w\\.]*constants[\\w\\._]*|tokens).xml$/i",
             "source": "preg_match()",
@@ -2872,10 +2872,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/build/gen_stub.php#L5696-L5702",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/build/gen_stub.php#L5686-L5692",
             "snippet": [
                 {
-                    "number": 5696,
+                    "number": 5686,
                     "focus": false,
                     "runs": [
                         [
@@ -2885,7 +2885,7 @@
                     ]
                 },
                 {
-                    "number": 5697,
+                    "number": 5687,
                     "focus": false,
                     "runs": [
                         [
@@ -2895,7 +2895,7 @@
                     ]
                 },
                 {
-                    "number": 5698,
+                    "number": 5688,
                     "focus": false,
                     "runs": [
                         [
@@ -2905,7 +2905,7 @@
                     ]
                 },
                 {
-                    "number": 5699,
+                    "number": 5689,
                     "focus": true,
                     "runs": [
                         [
@@ -3011,7 +3011,7 @@
                     ]
                 },
                 {
-                    "number": 5700,
+                    "number": 5690,
                     "focus": false,
                     "runs": [
                         [
@@ -3021,7 +3021,7 @@
                     ]
                 },
                 {
-                    "number": 5701,
+                    "number": 5691,
                     "focus": false,
                     "runs": [
                         [
@@ -3031,7 +3031,7 @@
                     ]
                 },
                 {
-                    "number": 5702,
+                    "number": 5692,
                     "focus": false,
                     "runs": [
                         [
@@ -3045,7 +3045,7 @@
         {
             "id": "f-195c81528b",
             "file": "build/gen_stub.php",
-            "line": 6045,
+            "line": 6035,
             "column": 13,
             "pattern": "/<(\\/)*xi:([A-Za-z]+?)/",
             "source": "preg_replace()",
@@ -3063,10 +3063,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/build/gen_stub.php#L6042-L6048",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/build/gen_stub.php#L6032-L6038",
             "snippet": [
                 {
-                    "number": 6042,
+                    "number": 6032,
                     "focus": false,
                     "runs": [
                         [
@@ -3076,7 +3076,7 @@
                     ]
                 },
                 {
-                    "number": 6043,
+                    "number": 6033,
                     "focus": false,
                     "runs": [
                         [
@@ -3086,7 +3086,7 @@
                     ]
                 },
                 {
-                    "number": 6044,
+                    "number": 6034,
                     "focus": false,
                     "runs": [
                         [
@@ -3096,7 +3096,7 @@
                     ]
                 },
                 {
-                    "number": 6045,
+                    "number": 6035,
                     "focus": true,
                     "runs": [
                         [
@@ -3186,7 +3186,7 @@
                     ]
                 },
                 {
-                    "number": 6046,
+                    "number": 6036,
                     "focus": false,
                     "runs": [
                         [
@@ -3196,7 +3196,7 @@
                     ]
                 },
                 {
-                    "number": 6047,
+                    "number": 6037,
                     "focus": false,
                     "runs": [
                         [
@@ -3206,7 +3206,7 @@
                     ]
                 },
                 {
-                    "number": 6048,
+                    "number": 6038,
                     "focus": false,
                     "runs": [
                         [
@@ -3243,7 +3243,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/ext/curl/sync-constants.php#L246-L252",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/ext/curl/sync-constants.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -3722,7 +3722,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/run-tests.php#L3980-L3986",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/run-tests.php#L3980-L3986",
             "snippet": [
                 {
                     "number": 3980,
@@ -3950,7 +3950,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/scripts/dev/bless_tests.php#L62-L68",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/scripts/dev/bless_tests.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -4134,7 +4134,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/scripts/dev/bless_tests.php#L63-L69",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/scripts/dev/bless_tests.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -4328,7 +4328,7 @@
                 "limit": 100000
             },
             "subject": "0 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0!;",
-            "permalink": "https://github.com/php/php-src/blob/28fd5ef6b97bdd2922102da96f3288828f9528b6/scripts/dev/check_parameters.php#L97-L103",
+            "permalink": "https://github.com/php/php-src/blob/7e82120249b8a92d9188797251fe3ec2806c36e7/scripts/dev/check_parameters.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,

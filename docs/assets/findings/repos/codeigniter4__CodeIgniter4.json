@@ -1,6 +1,6 @@
 {
     "repo": "codeigniter4/CodeIgniter4",
-    "sha": "ff76fcff31df4873b6ed1295017b5479f3062d2c",
+    "sha": "08039be97f2aa258f9bf19e733bdfbd708cfc790",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/preload.php#L89-L95",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/preload.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -179,7 +179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Commands/Encryption/GenerateKey.php#L184-L190",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Commands/Encryption/GenerateKey.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -402,7 +402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Database/OCI8/Connection.php#L257-L263",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Database/OCI8/Connection.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -554,7 +554,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Debug/Toolbar.php#L524-L530",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Debug/Toolbar.php#L524-L530",
             "snippet": [
                 {
                     "number": 524,
@@ -693,7 +693,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/HTTP/RequestTrait.php#L320-L326",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/HTTP/RequestTrait.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -871,14 +871,14 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Helpers/inflector_helper.php#L35-L41",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Helpers/inflector_helper.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
                     "focus": false,
                     "runs": [
                         [
-                            "            '/(vert|ind)ices$/'                                               => '\\1ex',",
+                            "            '/(vert|ind|vort|cort|cod|lat|mur|ap)ices$/'                      => '\\1ex',",
                             ""
                         ]
                     ]
@@ -994,165 +994,6 @@
             ]
         },
         {
-            "id": "f-2d1621cc25",
-            "file": "system/Helpers/inflector_helper.php",
-            "line": 95,
-            "column": 13,
-            "pattern": "/(matr|vert|ind)ix|ex$/",
-            "source": "preg_match()",
-            "location": "via $rule",
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.anchor.alternationPrecedence",
-                    "message": "An anchor holds for its own alternative only: \"(matr|vert|ind)ix\" matches anywhere in the subject.",
-                    "hint": "If the anchors are meant for every alternative, group them: \"(?:(matr|vert|ind)ix|ex)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Helpers/inflector_helper.php#L92-L98",
-            "snippet": [
-                {
-                    "number": 92,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/(quiz)$/'               => '\\1zes',    // quizzes",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 93,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/^(ox)$/'                => '\\1\\2en', // ox",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 94,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/([m|l])ouse$/'          => '\\1ice', // mouse, louse",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 95,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "            ",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "matr",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "vert",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ind",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "ix",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ex",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            " => '\\1ices', // matrix, vertex, index",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 96,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/(x|ch|ss|sh)$/'         => '\\1es', // search, switch, fix, box, process, address",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 97,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/([^aeiouy]|qu)y$/'      => '\\1ies', // query, ability, agency",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 98,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            '/(hive)$/'               => '\\1s', // archive, hive",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-6327f3163a",
             "file": "system/Helpers/url_helper.php",
             "line": 159,
@@ -1173,7 +1014,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Helpers/url_helper.php#L156-L162",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Helpers/url_helper.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -1324,7 +1165,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Helpers/url_helper.php#L189-L195",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Helpers/url_helper.php#L189-L195",
             "snippet": [
                 {
                     "number": 189,
@@ -1475,7 +1316,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -1672,7 +1513,7 @@
         {
             "id": "f-07698b2510",
             "file": "system/ThirdParty/Kint/Parser/FsPathPlugin.php",
-            "line": 55,
+            "line": 56,
             "column": 26,
             "pattern": "/[\\/\\/]/",
             "source": "preg_match()",
@@ -1690,24 +1531,14 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L52-L58",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L53-L59",
             "snippet": [
-                {
-                    "number": 52,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            return $v;",
-                            ""
-                        ]
-                    ]
-                },
                 {
                     "number": 53,
                     "focus": false,
                     "runs": [
                         [
-                            "        }",
+                            "            return $v;",
                             ""
                         ]
                     ]
@@ -1717,13 +1548,23 @@
                     "focus": false,
                     "runs": [
                         [
-                            "",
+                            "        }",
                             ""
                         ]
                     ]
                 },
                 {
                     "number": 55,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 56,
                     "focus": true,
                     "runs": [
                         [
@@ -1733,7 +1574,7 @@
                     ]
                 },
                 {
-                    "number": 56,
+                    "number": 57,
                     "focus": false,
                     "runs": [
                         [
@@ -1743,7 +1584,7 @@
                     ]
                 },
                 {
-                    "number": 57,
+                    "number": 58,
                     "focus": false,
                     "runs": [
                         [
@@ -1753,7 +1594,7 @@
                     ]
                 },
                 {
-                    "number": 58,
+                    "number": 59,
                     "focus": false,
                     "runs": [
                         [
@@ -1790,7 +1631,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -1949,7 +1790,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Typography/Typography.php#L108-L114",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Typography/Typography.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -2084,7 +1925,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Typography/Typography.php#L112-L118",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Typography/Typography.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2234,7 +2075,7 @@
                 "limit": 100000
             },
             "subject": "<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!<>",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/Typography/Typography.php#L130-L136",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/Typography/Typography.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -2462,7 +2303,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/ff76fcff31df4873b6ed1295017b5479f3062d2c/system/View/Parser.php#L463-L469",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/08039be97f2aa258f9bf19e733bdfbd708cfc790/system/View/Parser.php#L463-L469",
             "snippet": [
                 {
                     "number": 463,
