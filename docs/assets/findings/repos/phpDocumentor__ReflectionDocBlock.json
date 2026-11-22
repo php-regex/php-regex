@@ -1,6 +1,6 @@
 {
     "repo": "phpDocumentor/ReflectionDocBlock",
-    "sha": "a4e44e921d7cdd6f329017a562a2a15c269d1a38",
+    "sha": "4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/a4e44e921d7cdd6f329017a562a2a15c269d1a38/src/DocBlock/StandardTagFactory.php#L227-L233",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254/src/DocBlock/StandardTagFactory.php#L227-L233",
             "snippet": [
                 {
                     "number": 227,
@@ -128,7 +128,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/a4e44e921d7cdd6f329017a562a2a15c269d1a38/src/DocBlock/Tags/Example.php#L88-L94",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254/src/DocBlock/Tags/Example.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -343,7 +343,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/a4e44e921d7cdd6f329017a562a2a15c269d1a38/src/DocBlock/Tags/Example.php#L108-L114",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254/src/DocBlock/Tags/Example.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -558,7 +558,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/a4e44e921d7cdd6f329017a562a2a15c269d1a38/src/DocBlock/Tags/Source.php#L60-L66",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254/src/DocBlock/Tags/Source.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -773,7 +773,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/a4e44e921d7cdd6f329017a562a2a15c269d1a38/src/DocBlockFactory.php#L174-L180",
+            "permalink": "https://github.com/phpDocumentor/ReflectionDocBlock/blob/4c7c7b1561dd86fc1937439b5f2a9e11ddc1e254/src/DocBlockFactory.php#L174-L180",
             "snippet": [
                 {
                     "number": 174,
