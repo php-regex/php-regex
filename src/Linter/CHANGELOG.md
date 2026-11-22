@@ -64,6 +64,22 @@ CHANGELOG
    with `\xC9`, and so is `"/(?:\xC9|[\xC9\xCA]|)+/i"` under C, whose
    branches both take `\xC9`; neither was. A byte whose case the engine's
    paths read otherwise still leaves the branches unjudged.
+ * Without u, where the engine judges no branch,
+   `regex.lint.overlap.charset` reads a byte above ASCII written as an
+   escape, `\xE9`, `\x{E9}`, `\351` or `\o{351}`, as the byte written as
+   it is, where it left the branches unjudged: `'/(?:\W|\xE9|)+/'` is
+   reported under C, and `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'`
+   under fr_FR.ISO8859-1; none was.
+ * The rules that compare first and last characters read a POSIX class
+   without u, `[[:alpha:]]` or `[[:^alpha:]]`, where they left it unknown:
+   in ASCII as they read `\w`, so `#^(?:[[:alnum:]_]+/)+$#`, which PCRE
+   reads in 26, 50, 98 and 194 steps on 8 to 64 times `ab/` then `!`, no
+   longer reports nested quantifiers; and where the engine judges no
+   branch, `regex.lint.overlap.charset` reads its bytes above ASCII from
+   the tables of the target's locale: `"/(?:[[:alpha:]]|\xE9|)+/"`, with a
+   raw `\xE9`, is reported under fr_FR.ISO8859-1, where the Latin-1
+   tables put `\xE9` in `[:alpha:]`, and `"/(?:[[:^alpha:]]|\xD7|)+/"`
+   under C as there; neither was.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no

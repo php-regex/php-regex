@@ -40,7 +40,9 @@ use PHPUnit\Framework\TestCase;
  * "\w" leaves 0xE9 out, and grows the same way under the Latin-1 tables,
  * where "/^(x)\W+\xE9+\1$/" takes 3 steps whatever the run; the same loops
  * bounded at 999, "/^(x)\w{1,999}\xE9{1,999}\1$/", take 31, 123 and 499
- * steps there too.
+ * steps there too. A POSIX class reads the same tables: under C
+ * "/^(x)[[:alpha:]]+\xE9+\1$/" takes a few steps, and grows the same way
+ * under the Latin-1 tables, which put 0xE9 in "[:alpha:]".
  */
 final class RedosLocaleTablesTest extends TestCase
 {
@@ -111,6 +113,8 @@ final class RedosLocaleTablesTest extends TestCase
             'a raw sign after no word character' => ["/^(x)\\W{0,999}\xD7{0,999}\\1$/", "\xD7", true, true],
             'a raw no-break space after no space' => ["/^(x)\\S{0,999}\xA0{0,999}\\1$/", "\xA0", true, true],
             'a raw superscript after a digit' => ["/^(x)\\d{1,999}\xB2{1,999}\\1$/", "\xB2", false, false],
+            'a raw letter after a POSIX class of letters' => ["/^(x)[[:alpha:]]{1,999}\xE9{1,999}\\1$/", "\xE9", false, true],
+            'a raw letter after a negated POSIX class of letters' => ["/^(x)[[:^alpha:]]{0,999}\xE9{0,999}\\1$/", "\xE9", true, false],
         ];
 
         foreach ($rows as $name => [$pattern, $unit, $meetUnderC, $meetUnderLatin1]) {
@@ -142,6 +146,14 @@ final class RedosLocaleTablesTest extends TestCase
             'a raw no-break space after no space' => ["/^(x)\\S+\xA0+\\1$/", "\xA0", true, true],
             'a raw superscript after a digit' => ["/^(x)\\d+\xB2+\\1$/", "\xB2", false, false],
             'a raw superscript after no digit' => ["/^(x)\\D+\xB2+\\1$/", "\xB2", true, true],
+            'a raw letter after a POSIX class of letters' => ["/^(x)[[:alpha:]]+\xE9+\\1$/", "\xE9", false, true],
+            'an escape after a POSIX class of letters' => ['/^(x)[[:alpha:]]+\xE9+\1$/', "\xE9", false, true],
+            'a raw letter after a negated POSIX class of letters' => ["/^(x)[[:^alpha:]]+\xE9+\\1$/", "\xE9", true, false],
+            'a raw sign after a negated POSIX class of letters' => ["/^(x)[[:^alpha:]]+\xD7+\\1$/", "\xD7", true, true],
+            'a raw letter after a negated class of a POSIX class' => ["/^(x)[^[:alpha:]]+\xE9+\\1$/", "\xE9", true, false],
+            'a raw letter after a POSIX class in a larger class' => ["/^(x)[\\d[:alpha:]]+\xE9+\\1$/", "\xE9", false, true],
+            'a raw small letter after the POSIX capitals' => ["/^(x)[[:upper:]]+\xE9+\\1$/", "\xE9", false, false],
+            'a raw small letter after the POSIX capitals, caseless' => ["/^(x)[[:upper:]]+\xE9+\\1$/i", "\xE9", false, true],
         ];
 
         foreach ($rows as $name => [$pattern, $unit, $meetUnderC, $meetUnderLatin1]) {
