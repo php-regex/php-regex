@@ -698,11 +698,23 @@
   .pg-patternbar .pg-version,
   .pg-patternbar .pg-run,
   .pg-state {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
   }
 
   .pg-flags {
-    min-height: 2.5rem;
+    min-height: 2.75rem;
+  }
+
+  /* A thumb meets these controls, not a pointer: the flag pills and the
+     example chips grow to the 44px target a touch expects, from the 34px
+     the pointer design settles for. */
+  .pg-flag,
+  .pg-flags-more > summary {
+    min-height: 2.75rem;
+  }
+
+  .pg-example {
+    min-height: 2.75rem;
   }
 }
 
