@@ -911,8 +911,8 @@ final class RedosSearchCostTest extends TestCase
     /**
      * The search proof spends what the per-attempt proof left of the budget
      * and never takes from it: the smallest maxSteps that proves one attempt
-     * linear is the one measured before the search cost existed
-     * (2026-10-07), and an exhausted budget gives no witness, never an error.
+     * linear is the one the per-attempt proof needs alone (measured
+     * 2026-11-23), and an exhausted budget gives no witness, never an error.
      */
     #[Test]
     #[DataProvider('provideBudgetThresholds')]
@@ -935,14 +935,14 @@ final class RedosSearchCostTest extends TestCase
      */
     public static function provideBudgetThresholds(): iterable
     {
-        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstProvenAt' => 73];
-        yield 'literal run' => ['pattern' => '/a+b/', 'firstProvenAt' => 40];
-        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstProvenAt' => 56];
+        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstProvenAt' => 76];
+        yield 'literal run' => ['pattern' => '/a+b/', 'firstProvenAt' => 43];
+        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstProvenAt' => 60];
     }
 
     /**
      * The search proof pays its own steps out of the shared budget: one step
-     * short of what it needs (measured 2026-10-07), one attempt stays proven
+     * short of what it needs (measured 2026-11-23), one attempt stays proven
      * linear and no witness comes, never an error; with them, the witness.
      */
     #[Test]
@@ -963,9 +963,9 @@ final class RedosSearchCostTest extends TestCase
      */
     public static function provideSearchBudgetThresholds(): iterable
     {
-        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstFoundAt' => 109];
-        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 79];
-        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 114];
+        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstFoundAt' => 112];
+        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 82];
+        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 118];
     }
 
     /**

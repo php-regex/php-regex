@@ -163,6 +163,11 @@ final class BacktrackProver
         $automata = [];
         /** @var array<int, list<int>|null> $reach */
         $reach = [];
+        /** @var array<int, array<int, int>> $marks */
+        $marks = [];
+        // Whether a search tries more paths at once than the margin allows:
+        // then no attempt is proven linear.
+        $beyond = false;
         $best = null;
         /** @var list<list<int>> $lookaroundPumps */
         $lookaroundPumps = [];
@@ -192,15 +197,27 @@ final class BacktrackProver
             if (isset($parents[$index])) {
                 $automata[$index] = $automaton;
             }
+
+            // A lookaround's body runs once for each path through its mark:
+            // the paths of the search around it multiply its own.
+            $finder = new AmbiguityFinder($automaton, $budget);
+            if (\count($searches) > 1) {
+                $marks[$index] = $finder->checkWays(null === $pnfa->parent || null === $pnfa->mark ? 1 : max(1, $marks[$pnfa->parent][$pnfa->mark] ?? 1));
+            }
+
             $bound = null === $bound ? null : $this->boundOf($automaton, $bound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);
             $verdict = null === $pnfa->parent && null !== $pattern && [] !== $pnfa->marks
-                ? self::throughLookarounds($pattern, $searches, $index, $automaton, $contexts, $budget, $literals, $target?->locale)
-                : (new AmbiguityFinder($automaton, $budget))->find($literals);
+                ? self::throughLookarounds($pattern, $searches, $index, $finder, $contexts, $budget, $literals, $target?->locale)
+                : $finder->find($literals);
             if (null === $pnfa->parent) {
                 $search = [$automaton, $budget];
             }
-            unset($automaton);
+
+            // Past the margin of the paths tried at once, a search found
+            // linear is not proven so; an ambiguity found stands.
+            $beyond = $beyond || ((null === $verdict || null === $reach[$index]) && $finder->beyondMargin());
+            unset($automaton, $finder);
             if (null === $verdict || null === $reach[$index]) {
                 continue;
             }
@@ -215,8 +232,10 @@ final class BacktrackProver
             }
         }
 
-        // Known before any verdict is refused: a ceiling needs no witness.
-        $stepBound = $bound;
+        // Known before any verdict is refused: a ceiling needs no witness,
+        // but its factor is out of the model past the margin of the paths
+        // tried at once.
+        $stepBound = $beyond ? null : $bound;
 
         if (null !== $best && null !== $best['unwitnessed']) {
             throw ModelLimitException::unwitnessed($best['unwitnessed']);
@@ -235,6 +254,10 @@ final class BacktrackProver
             // proves where the body fails all over its witness.
             $best = $this->throughFailingLookaheads($regex, $searches, $target, null, $lookaroundPumps);
             if (null === $best) {
+                if ($beyond) {
+                    throw ModelLimitException::outOfModel(\sprintf('One attempt tried more than %d paths at once', AmbiguityFinder::MAX_ACYCLIC_AMBIGUITY));
+                }
+
                 $this->rereadLookarounds($regex, $searches, $target);
 
                 return new ProofResult(RedosComplexity::Linear, null, null, null, null, [], $unicode);
@@ -290,8 +313,9 @@ final class BacktrackProver
      *
      * @return Verdict|null
      */
-    private static function throughLookarounds(string $pattern, array $searches, int $index, ItemAutomaton $automaton, array $contexts, Budget $budget, array $literals, ?string $locale): ?array
+    private static function throughLookarounds(string $pattern, array $searches, int $index, AmbiguityFinder $finder, array $contexts, Budget $budget, array $literals, ?string $locale): ?array
     {
+        $automaton = $finder->automaton;
         $pnfa = $automaton->pnfa;
         $check = new WitnessCheck($pattern, new PcreEngine(), $locale);
         $leads = [];
@@ -318,7 +342,6 @@ final class BacktrackProver
             }
         }
 
-        $finder = new AmbiguityFinder($automaton, $budget);
         $verdict = $finder->find($literals, $check, $leads, $ahead);
         $item = null === $verdict || null === $verdict['unwitnessed'] ? null : $finder->unwitnessedItem($verdict['unwitnessed']);
         if (null === $verdict || null === $item) {

@@ -34,6 +34,13 @@ use PHPRegex\Redos\RedosComplexity;
 final class AmbiguityFinder
 {
     /**
+     * The most paths one attempt may try at once on one input, the ways an
+     * acyclic stretch reads it multiplied along the attempt: a margin under
+     * the default backtrack limit of 1,000,000.
+     */
+    public const MAX_ACYCLIC_AMBIGUITY = 1024;
+
+    /**
      * The most pumps and prefixes a witness search tries for one ambiguity.
      */
     private const MAX_PUMPS = 8;
@@ -49,10 +56,13 @@ final class AmbiguityFinder
     private const MAX_CONTINUATION_SETS = 64;
 
     /**
-     * The most ways an acyclic stretch may read one input: a margin under
-     * the default backtrack limit of 1,000,000.
+     * The slots of what an attempt tries at once, besides the classes: what
+     * stands in every class, and what stands at the attempt start, before
+     * any character.
      */
-    private const MAX_ACYCLIC_AMBIGUITY = 1024;
+    private const SLOT_ANY = -1;
+
+    private const SLOT_START = -2;
 
     /**
      * @var array<int, int> the cyclic component of each reading item in one
@@ -118,6 +128,46 @@ final class AmbiguityFinder
      */
     private array $usable = [];
 
+    /**
+     * What checkWays() read, to count again sharper (sharpen()): the paths
+     * that reach the search, the most routes round each loop, the stretches
+     * from each attempt start and out of each item of a loop, and the items
+     * of every loop; with what each stretch tries, as sharp as counted yet.
+     *
+     * @var array{int, array<int, int>, list<array{array<int, int>, int, array<int, int>, list<int>, array<int, true>|null}>, array<int, list<array{array<int, int>, int, array<int, int>, list<int>, array<int, true>|null}>>, array<int, int>}|null
+     */
+    private ?array $stretches = null;
+
+    /**
+     * @var array{list<array{array<int, int>, array<int, array<int, array<int, int>>>}>, array<int, list<array{array<int, int>, array<int, array<int, array<int, int>>>}>>}|null
+     */
+    private ?array $counts = null;
+
+    /**
+     * How the stretches are counted yet: whatever they read (0), one way at
+     * most (1), on one input (2).
+     */
+    private int $sharpness = 0;
+
+    /**
+     * @var array{array<int, int>, array<int, int>, array<int, array<int, int>>} the leaves and the nodes under each acyclic item, and the routes from it to each item of a loop and through each mark
+     */
+    private array $whateverPaths = [[], [], []];
+
+    /**
+     * Whether the paths one attempt tries at once were counted, and whether
+     * they go past the margin: then no attempt is proven linear.
+     */
+    private bool $counted = false;
+
+    private bool $beyond = false;
+
+    /**
+     * @var array<int, list<int>> the classes each item of a loop reads, once
+     *                            read
+     */
+    private array $entries = [];
+
     private readonly int $size;
 
     /**
@@ -127,7 +177,7 @@ final class AmbiguityFinder
      */
     private readonly bool $widens;
 
-    public function __construct(private readonly ItemAutomaton $automaton, private readonly Budget $budget)
+    public function __construct(public readonly ItemAutomaton $automaton, private readonly Budget $budget)
     {
         $this->size = $automaton->count();
         $this->widens = [] !== $automaton->pnfa->abstractedLoops || [] !== $automaton->pnfa->keptWhole;
@@ -341,6 +391,881 @@ final class AmbiguityFinder
     public function unwitnessedItem(int $offset): ?int
     {
         return $this->unwitnessedItems[$offset] ?? null;
+    }
+
+    /**
+     * Whether one attempt tries more paths at once than the margin allows
+     * (checkWays()): no attempt of the search is then proven linear, its cost
+     * out of the model, whose classes speak of growth with the input. An
+     * ambiguity found stands: the paths only add to its cost, and they are
+     * counted only for a search found linear.
+     *
+     * @throws ModelLimitException
+     */
+    public function beyondMargin(): bool
+    {
+        if (!$this->counted) {
+            $this->checkWays();
+        }
+
+        return $this->beyond;
+    }
+
+    /**
+     * Counts the paths an attempt tries at once on one input, against the
+     * margin of an acyclic stretch, the paths the attempt reaches the search
+     * by included: a lookaround's body runs once for each path through its
+     * mark. Past the margin, no attempt is proven linear (beyondMargin()).
+     * An attempt that fails tries every path: every epsilon route, every way
+     * an input is read, and every route that dies, at "\b" between two word
+     * characters or at a success "(*NOTEMPTY)" refuses, which the engine
+     * walks as it walks one that goes on. The paths of one stretch multiply
+     * those of the next: a stretch that ends at a loop or at a lookaround
+     * does not start the count again. Ten groups "(?:b{0}|)" on each side
+     * of "a+" give one attempt 2^20 routes, and ten copies "(?:a|[a])"
+     * before "x+" with ten groups after it 2^20 ways to read ten "a", an
+     * "x" and a newline, each stretch within the margin. A loop is entered
+     * by the ways that reach it at once, its routes round it counted once:
+     * going round again is its own ambiguity.
+     *
+     * Paths that leave a loop at different times meet at one position: the
+     * stretches out of a loop count every step they stand at at once, one
+     * for each time the loop was left. "a+a{0,15}" gives "b+" after it
+     * sixteen ways at once. Paths that enter a loop at different times go on
+     * in it together, where it reads what brought the later ones. Paths
+     * from stretches apart stand at once only after one character: what each
+     * tries is counted by the class of the character read last (slots). Each
+     * stretch is counted first whatever it reads, then, past the margin, by
+     * the ways it reads one input: one way at most when no two items any
+     * list holds read one class, or class by class.
+     *
+     * @param int $before the paths through the mark of the search, when it is a lookaround's body
+     *
+     * @throws ModelLimitException when the budget runs out
+     *
+     * @return array<int, int> the most paths through each sub-search's mark at once, for its body to start from
+     */
+    public function checkWays(int $before = 1): array
+    {
+        if (null === $this->fullComponents) {
+            $this->components(false);
+        }
+
+        $this->counted = true;
+        // An automaton that reads every input one way at most tries one list
+        // at once: nothing to count further.
+        $oneList = $this->oneListAtOnce();
+        if (null !== $oneList) {
+            $this->beyond = $before * $oneList > self::MAX_ACYCLIC_AMBIGUITY;
+
+            return [];
+        }
+
+        $automaton = $this->automaton;
+        $loops = $this->loopItems();
+        // The stretches, with the routes to their first items, the routes
+        // that die and those through each mark, the slots their first paths
+        // stand in, and whether they start again at each step: from each
+        // attempt start, once, and out of each item of a loop, after the
+        // character it reads, each time the loop is left.
+        $starts = [];
+        foreach ($automaton->initials as $index => $start) {
+            $starts[] = [self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $automaton->initialDead[$index] ?? 0, $automaton->initialMarkRoutes[$index] ?? [], [self::SLOT_START], null];
+        }
+
+        $exits = [];
+        $rounds = [];
+        $reads = [];
+        foreach ($loops as $item => $loop) {
+            $reads[$loop] = ($reads[$loop] ?? []) + array_fill_keys($this->slotsOf($item, false), true);
+        }
+
+        foreach ($loops as $item => $loop) {
+            $own = array_fill_keys($this->fullComponents[$loop] ?? [], true);
+            $routes = $this->routesOf($item);
+            $exits[$loop][] = [array_diff_key($routes, $own), $automaton->dead[$item] ?? 0, $automaton->markRoutes[$item] ?? [], $this->slotsOf($item), $reads[$loop]];
+            foreach (array_intersect_key($routes, $own) as $round) {
+                $rounds[$loop] = max($rounds[$loop] ?? 1, $round);
+            }
+        }
+
+        ksort($exits);
+        $this->stretches = [$before, $rounds, $starts, $exits, $loops];
+        $this->whateverPaths = $this->paths($loops);
+        $this->counts = $this->each(null);
+        $this->sharpness = 0;
+        do {
+            [$marks, $most] = $this->multiply($before, $rounds, ...$this->counts);
+            $within = $most <= self::MAX_ACYCLIC_AMBIGUITY;
+        } while (!$within && $this->sharpen());
+
+        $this->beyond = !$within;
+
+        return $marks;
+    }
+
+    /**
+     * The most items one list holds, when every list, from an attempt start
+     * or after an item, loops included, holds each item once, no two that
+     * read one class, and no route that dies or goes through a mark: every
+     * input is then read one way at most, and one list is tried at once.
+     * Null otherwise.
+     *
+     * @throws ModelLimitException
+     */
+    private function oneListAtOnce(): ?int
+    {
+        $automaton = $this->automaton;
+        if ([] !== $automaton->routes || [] !== $automaton->initialRoutes || [] !== $automaton->dead || [] !== $automaton->initialDead
+            || [] !== $automaton->markRoutes || [] !== $automaton->initialMarkRoutes) {
+            return null;
+        }
+
+        $most = 0;
+        foreach ([...array_column($automaton->initials, 'items'), ...$automaton->successors] as $list) {
+            $this->budget->step();
+            $union = null;
+            $met = [];
+            foreach ($list as $item) {
+                if (isset($met[$item])) {
+                    return null;
+                }
+
+                $met[$item] = true;
+                if ($automaton->isFinal($item)) {
+                    continue;
+                }
+
+                $mask = $automaton->masks[$item];
+                if (null !== $union && !ItemAutomaton::isEmpty($union & $mask)) {
+                    return null;
+                }
+
+                $union = null === $union ? $mask : $union | $mask;
+            }
+
+            $most = max($most, \count($list));
+        }
+
+        return $most;
+    }
+
+    /**
+     * Counts the stretches more sharply, when they can be: one way at most
+     * when no list reads an input two ways (oneWay()), otherwise on one
+     * input. False once counted on one input.
+     *
+     * @throws ModelLimitException
+     */
+    private function sharpen(): bool
+    {
+        if (null === $this->stretches || null === $this->counts || $this->sharpness >= 2) {
+            return false;
+        }
+
+        $automaton = $this->automaton;
+        [, , $starts, , $loops] = $this->stretches;
+        [$tree] = $this->whateverPaths;
+        if (0 === $this->sharpness) {
+            $this->sharpness = 1;
+            $lists = $starts;
+            foreach ($loops as $item => $_) {
+                $lists[] = [$this->routesOf($item), $automaton->dead[$item] ?? 0, $automaton->markRoutes[$item] ?? [], [], null];
+            }
+
+            foreach ($tree as $item => $_) {
+                $lists[] = [$this->routesOf($item), $automaton->dead[$item] ?? 0, $automaton->markRoutes[$item] ?? [], [], null];
+            }
+
+            $oneWay = $this->oneWay($lists, $loops);
+            if (null !== $oneWay) {
+                [$fromStarts, $fromLoops] = $this->counts;
+                foreach ($fromStarts as $index => $count) {
+                    $fromStarts[$index] = self::within($count, $oneWay);
+                }
+
+                foreach ($fromLoops as $loop => $counts) {
+                    foreach ($counts as $index => $count) {
+                        $fromLoops[$loop][$index] = self::within($count, $oneWay);
+                    }
+                }
+
+                $this->counts = [$fromStarts, $fromLoops];
+
+                return true;
+            }
+        }
+
+        $this->sharpness = 2;
+        $reading = [];
+        foreach ($tree as $item => $_) {
+            $reading[$item] = $this->slotsOf($item, false);
+        }
+
+        $this->counts = $this->each($reading);
+
+        return true;
+    }
+
+    /**
+     * The slots the paths after a reading item stand in: the classes it
+     * reads, or every class at once.
+     *
+     * @return list<int>
+     */
+    private function slotsOf(int $item, bool $any = true): array
+    {
+        $classes = [];
+        for ($class = 0; $class < $this->automaton->classCount(); $class++) {
+            if (ItemAutomaton::has($this->automaton->masks[$item], $class)) {
+                $classes[] = $class;
+            }
+        }
+
+        return $any && \count($classes) === $this->automaton->classCount() ? [self::SLOT_ANY] : $classes;
+    }
+
+    /**
+     * What each stretch tries: whatever it reads, or on one input when the
+     * classes each acyclic item reads are given.
+     *
+     * @param array<int, list<int>>|null $reading
+     *
+     * @throws ModelLimitException
+     *
+     * @return array{list<array{array<int, int>, array<int, array<int, array<int, int>>>}>, array<int, list<array{array<int, int>, array<int, array<int, array<int, int>>>}>>}
+     */
+    private function each(?array $reading): array
+    {
+        [, , $starts, $exits, $loops] = $this->stretches ?? [1, [], [], [], []];
+        $fromStarts = [];
+        foreach ($starts as $stretch) {
+            $fromStarts[] = null === $reading ? $this->whatever($stretch, $loops) : $this->readOneInput($stretch, $loops, $reading);
+        }
+
+        $fromLoops = [];
+        foreach ($exits as $loop => $stretches) {
+            $fromLoops[$loop] = [];
+            foreach ($stretches as $stretch) {
+                $fromLoops[$loop][] = null === $reading ? $this->whatever($stretch, $loops) : $this->readOneInput($stretch, $loops, $reading);
+            }
+        }
+
+        return [$fromStarts, $fromLoops];
+    }
+
+    /**
+     * What a stretch tries whatever it reads, held to what one list tries
+     * when every input is read one way at most (oneWay()).
+     *
+     * @param array{array<int, int>, array<int, array<int, array<int, int>>>} $count
+     * @param array{int, array<int, int>}                                     $oneWay
+     *
+     * @return array{array<int, int>, array<int, array<int, array<int, int>>>}
+     */
+    private static function within(array $count, array $oneWay): array
+    {
+        [$paths, $arrivals] = $count;
+        foreach ($paths as $slot => $ways) {
+            $paths[$slot] = min($ways, $oneWay[0]);
+        }
+
+        foreach ($arrivals as $key => $groups) {
+            foreach ($groups as $group => $slots) {
+                foreach ($slots as $slot => $ways) {
+                    $arrivals[$key][$group][$slot] = min($ways, $oneWay[1][$key] ?? $ways);
+                }
+            }
+        }
+
+        return [$paths, $arrivals];
+    }
+
+    /**
+     * The most paths through each sub-search's mark at once, and the most
+     * paths the attempt tries at once: what the stretches try in one slot,
+     * each times the ways the attempt enters at once the loop it leaves, the
+     * routes round that loop counted once, add up. Each start is an attempt
+     * of its own.
+     *
+     * @param array<int, int>                                                                   $rounds the most routes round each loop
+     * @param list<array{array<int, int>, array<int, array<int, array<int, int>>>}>             $starts what each stretch from an attempt start tries: the paths at once by slot, and the routes to each item of a loop and through each mark (marks()), by the time they stand at, then by slot
+     * @param array<int, list<array{array<int, int>, array<int, array<int, array<int, int>>>}>> $exits  what each stretch out of an item of a loop tries, by loop, in the order an attempt meets them
+     *
+     * @return array{array<int, int>, int}
+     */
+    private function multiply(int $before, array $rounds, array $starts, array $exits): array
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $marks = [];
+        $most = 0;
+        foreach ($starts as $start) {
+            $paths = [];
+            $arrivals = [];
+            self::add($paths, $arrivals, $start, $before, 'start');
+            foreach ($exits as $loop => $stretches) {
+                $in = $this->entering($arrivals, $loop);
+                if (0 === $in) {
+                    continue;
+                }
+
+                // The items of a loop left at one time read one character:
+                // their stretches stand at once, one group.
+                $out = min($limit, $in * ($rounds[$loop] ?? 1));
+                foreach ($stretches as $stretch) {
+                    self::add($paths, $arrivals, $stretch, $out, 'loop'.$loop);
+                }
+            }
+
+            $most = max($most, self::most($paths));
+            foreach ($arrivals as $key => $groups) {
+                if ($key < 0) {
+                    $passes = [];
+                    foreach ($groups as $slots) {
+                        foreach ($slots as $slot => $ways) {
+                            $passes[$slot] = min($limit, ($passes[$slot] ?? 0) + $ways);
+                        }
+                    }
+
+                    $marks[-1 - $key] = max($marks[-1 - $key] ?? 0, self::most($passes));
+                }
+            }
+        }
+
+        return [$marks, min($limit, max([$most, ...array_values($marks)]))];
+    }
+
+    /**
+     * Adds what a stretch tries, times the ways it is reached, to what the
+     * attempt tries in each slot, its routes to the items of loops and
+     * through marks kept by the time they stand at, apart for each source.
+     *
+     * @param array<int, int>                                                 $paths
+     * @param array<int, array<string, array<int, int>>>                      $arrivals
+     * @param array{array<int, int>, array<int, array<int, array<int, int>>>} $count
+     *
+     * @param-out array<int, int> $paths
+     * @param-out array<int, array<string, array<int, int>>> $arrivals
+     */
+    private static function add(array &$paths, array &$arrivals, array $count, int $ways, string $source): void
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        foreach ($count[0] as $slot => $tried) {
+            $paths[$slot] = min($limit, ($paths[$slot] ?? 0) + $ways * $tried);
+        }
+
+        foreach ($count[1] as $key => $groups) {
+            foreach ($groups as $group => $slots) {
+                foreach ($slots as $slot => $reached) {
+                    $arrivals[$key][$source.':'.$group][$slot] = min($limit, ($arrivals[$key][$source.':'.$group][$slot] ?? 0) + $ways * $reached);
+                }
+            }
+        }
+    }
+
+    /**
+     * The most ways the attempt enters a loop at once. Of the routes that
+     * reach its items at one time, those whose item reads the next
+     * character go on: the most over the classes they read, in the slot of
+     * the character read last. Routes that reach it at different times go
+     * on in it together only where it reads what brought the later ones: the
+     * oldest stands in any slot, every later one in a slot the loop reads.
+     *
+     * @param array<int, array<string, array<int, int>>> $arrivals by item, by the time they stand at, by slot
+     */
+    private function entering(array $arrivals, int $loop): int
+    {
+        $byTime = [];
+        $reads = [];
+        foreach ($this->fullComponents[$loop] ?? [] as $item) {
+            $this->entries[$item] ??= $this->slotsOf($item, false);
+            $reads += array_fill_keys($this->entries[$item], true);
+            foreach ($arrivals[$item] ?? [] as $time => $slots) {
+                foreach ($slots as $slot => $ways) {
+                    foreach ($this->entries[$item] as $class) {
+                        $byTime[$time][$slot][$class] = ($byTime[$time][$slot][$class] ?? 0) + $ways;
+                    }
+                }
+            }
+        }
+
+        // At one time, the routes stand in one slot: the most over its slots.
+        // Every time counts the most in a slot the loop reads, and the oldest
+        // the most in any.
+        $together = 0;
+        $oldest = 0;
+        foreach ($byTime as $bySlot) {
+            $any = isset($bySlot[self::SLOT_ANY]) ? max($bySlot[self::SLOT_ANY]) : 0;
+            $readable = $any;
+            $all = max($any, isset($bySlot[self::SLOT_START]) ? max($bySlot[self::SLOT_START]) : 0);
+            foreach ($bySlot as $slot => $classes) {
+                if ($slot < 0) {
+                    continue;
+                }
+
+                $all = max($all, max($classes) + $any);
+                if (isset($reads[$slot])) {
+                    $readable = max($readable, max($classes) + $any);
+                }
+            }
+
+            $together += $readable;
+            $oldest = max($oldest, $all - $readable);
+        }
+
+        return min(self::MAX_ACYCLIC_AMBIGUITY + 1, $together + $oldest);
+    }
+
+    /**
+     * The most in one slot: a class's own, and what stands in every class.
+     *
+     * @param array<int, int> $slots
+     */
+    private static function most(array $slots): int
+    {
+        $any = $slots[self::SLOT_ANY] ?? 0;
+        $most = $slots[self::SLOT_START] ?? 0;
+        foreach ($slots as $slot => $count) {
+            if ($slot >= 0) {
+                $most = max($most, $count + $any);
+            }
+        }
+
+        return max($most, $any);
+    }
+
+    /**
+     * Under each acyclic reading item, whatever they read and those that
+     * die included, a loop or the end ending one: the paths, the nodes
+     * every step of them stands at, and how many reach each item of a loop
+     * and go through each mark; capped just past the margin. The paths a
+     * stretch tries at once on one input are as many as its paths at most,
+     * two items tried together leading to paths apart; at every step at
+     * once, as many as its nodes.
+     *
+     * @param array<int, int> $loops the items of every loop, by their component
+     *
+     * @return array{array<int, int>, array<int, int>, array<int, array<int, int>>}
+     */
+    private function paths(array $loops): array
+    {
+        $automaton = $this->automaton;
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $tree = [];
+        $nodes = [];
+        $reach = [];
+        // The components from the last back, a component after the ones it reaches.
+        $components = $this->fullComponents ?? [];
+        for ($index = \count($components) - 1; $index >= 0; $index--) {
+            $item = $components[$index][0];
+            if (isset($loops[$item])) {
+                continue;
+            }
+
+            $leaves = $automaton->dead[$item] ?? 0;
+            $under = $leaves;
+            $into = self::marks($automaton->markRoutes[$item] ?? []);
+            foreach ($this->routesOf($item) as $successor => $routes) {
+                $this->budget->step();
+                if (isset($tree[$successor])) {
+                    $leaves = min($limit, $leaves + $routes * $tree[$successor]);
+                    $under = min($limit, $under + $routes * (1 + $nodes[$successor]));
+                    foreach ($reach[$successor] as $key => $ways) {
+                        $into[$key] = min($limit, ($into[$key] ?? 0) + $routes * $ways);
+                    }
+
+                    continue;
+                }
+
+                $leaves = min($limit, $leaves + $routes);
+                $under = min($limit, $under + $routes);
+                if (isset($loops[$successor])) {
+                    $into[$successor] = min($limit, ($into[$successor] ?? 0) + $routes);
+                }
+            }
+
+            $tree[$item] = max(1, $leaves);
+            $nodes[$item] = $under;
+            $reach[$item] = $into;
+        }
+
+        return [$tree, $nodes, $reach];
+    }
+
+    /**
+     * The routes through each mark, by the key that keeps them apart from
+     * the items: -1 for the first.
+     *
+     * @param array<int, int> $routes
+     *
+     * @return array<int, int>
+     */
+    private static function marks(array $routes): array
+    {
+        $keyed = [];
+        foreach ($routes as $mark => $count) {
+            $keyed[-1 - $mark] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count);
+        }
+
+        return $keyed;
+    }
+
+    /**
+     * What a stretch tries, whatever it reads: its first paths, in the slots
+     * they stand in, and every path after them, in every class, its nodes
+     * when it starts again at each step; and every route to each item of a
+     * loop and through each mark, at any step.
+     *
+     * @param array{array<int, int>, int, array<int, int>, list<int>, array<int, true>|null} $stretch the routes to its first items, those that die, those through each mark, the slots they stand in, and when it starts again at each step, out of a loop, the classes that loop reads
+     * @param array<int, int>                                                                $loops
+     *
+     * @return array{array<int, int>, array<int, array<int, array<int, int>>>}
+     */
+    private function whatever(array $stretch, array $loops): array
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        [$tree, $nodes, $reach] = $this->whateverPaths;
+        [$routes, $first, $passes, $slots, $loopReads] = $stretch;
+        $again = null !== $loopReads;
+        $first = min($limit, $first);
+        $later = 0;
+        $firstArrivals = self::marks($passes);
+        $laterArrivals = [];
+        foreach ($routes as $item => $count) {
+            $first = min($limit, $first + $count);
+            if (isset($loops[$item])) {
+                $firstArrivals[$item] = min($limit, ($firstArrivals[$item] ?? 0) + $count);
+
+                continue;
+            }
+
+            if (!isset($tree[$item])) {
+                continue;
+            }
+
+            $later = min($limit, $later + $count * ($again ? $nodes[$item] : $tree[$item]));
+            foreach ($reach[$item] as $key => $ways) {
+                $laterArrivals[$key] = min($limit, ($laterArrivals[$key] ?? 0) + $count * $ways);
+            }
+        }
+
+        // Out of a loop, every step stands at one time; from an attempt start,
+        // the steps after the first at any time.
+        $paths = [];
+        $arrivals = [];
+        foreach ($slots as $slot) {
+            $paths[$slot] = $first;
+            foreach ($firstArrivals as $key => $ways) {
+                $arrivals[$key][0][$slot] = $ways;
+            }
+        }
+
+        if (0 !== $later) {
+            $paths[self::SLOT_ANY] = min($limit, ($paths[self::SLOT_ANY] ?? 0) + $later);
+        }
+
+        foreach ($laterArrivals as $key => $ways) {
+            $arrivals[$key][$again ? 0 : 1][self::SLOT_ANY] = min($limit, ($arrivals[$key][$again ? 0 : 1][self::SLOT_ANY] ?? 0) + $ways);
+        }
+
+        return [$paths, $arrivals];
+    }
+
+    /**
+     * When no list holds an item reached by two routes, nor two items, loops
+     * included, that read one class, every input is read one way at most: at
+     * once, one list is tried, and reaches an item of a loop or goes through
+     * a mark the ways that list does. The most paths a list tries and the
+     * most routes one has to each item of a loop or through each mark; null
+     * when some list reads an input two ways.
+     *
+     * @param list<array{array<int, int>, int, array<int, int>, list<int>, array<int, true>|null}> $lists every list of routes, with its routes that die and those through each mark
+     * @param array<int, int>                                                                      $loops
+     *
+     * @return array{int, array<int, int>}|null
+     */
+    private function oneWay(array $lists, array $loops): ?array
+    {
+        $automaton = $this->automaton;
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $most = 0;
+        $into = [];
+        foreach ($lists as [$routes, $paths, $passes]) {
+            $union = null;
+            $at = self::marks($passes);
+            foreach ($routes as $item => $count) {
+                $paths = min($limit, $paths + $count);
+                if (isset($loops[$item])) {
+                    $at[$item] = min($limit, ($at[$item] ?? 0) + $count);
+                }
+
+                if ($automaton->isFinal($item)) {
+                    continue;
+                }
+
+                $mask = $automaton->masks[$item];
+                if ($count > 1 || (null !== $union && !ItemAutomaton::isEmpty($union & $mask))) {
+                    return null;
+                }
+
+                $union = null === $union ? $mask : $union | $mask;
+            }
+
+            $most = max($most, $paths);
+            foreach ($at as $key => $ways) {
+                $into[$key] = max($into[$key] ?? 0, $ways);
+            }
+        }
+
+        return [$most, $into];
+    }
+
+    /**
+     * What a stretch tries on one input: the routes alive, read class by
+     * class, those that went into a loop or to the end too, which are not
+     * read further, and those that died, step by step, but a success the
+     * engine stops at. At once, in the slot
+     * of the class read last: the most paths at one step, or every step
+     * together when the stretch starts again at each; and every route to
+     * each item of a loop and through each mark, at any step.
+     *
+     * @param array{array<int, int>, int, array<int, int>, list<int>, array<int, true>|null} $stretch the routes to its first items, those that die, those through each mark, the slots they stand in, and when it starts again at each step, out of a loop, the classes that loop reads
+     * @param array<int, int>                                                                $loops
+     * @param array<int, list<int>>                                                          $reading the classes each acyclic item reads
+     *
+     * @throws ModelLimitException
+     *
+     * @return array{array<int, int>, array<int, array<int, array<int, int>>>}
+     */
+    private function readOneInput(array $stretch, array $loops, array $reading): array
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        [$routes, $died, $passes, $slots, $loopReads] = $stretch;
+        // Each entry: a vector, the slots it stands in, whether its next
+        // vectors are still to read, its step, and how many characters from
+        // the first the loop it leaves reads too.
+        $queue = [[array_map(static fn (int $count): int => min($limit, $count), $routes), min($limit, $died), self::marks($passes), $slots, true, 0, 0]];
+        $seen = [];
+        $steps = [];
+        $reached = [];
+        for ($head = 0; $head < \count($queue); $head++) {
+            [$current, $died, $at, $slots, $unread, $step, $alongside] = $queue[$head];
+            $tried = $died;
+            foreach ($current as $item => $count) {
+                if (isset($loops[$item])) {
+                    $at[$item] = ($at[$item] ?? 0) + $count;
+                }
+
+                // A success ends the attempt: one at most is ever reached.
+                if (!$this->succeeds($item)) {
+                    $tried += $count;
+                }
+            }
+
+            foreach ($slots as $slot) {
+                $steps[$step][$alongside][$slot] = max($steps[$step][$alongside][$slot] ?? 0, min($limit, $tried));
+                foreach ($at as $key => $ways) {
+                    $reached[$step][$alongside][$key][$slot] = max($reached[$step][$alongside][$key][$slot] ?? 0, min($limit, $ways));
+                }
+            }
+
+            if (!$unread || $tried > self::MAX_ACYCLIC_AMBIGUITY) {
+                continue;
+            }
+
+            // Every class's next vector, in one pass over the items.
+            $nexts = [];
+            foreach (array_intersect_key($current, $reading) as $item => $count) {
+                $this->budget->step(1 + \count($reading[$item]));
+                $after = $this->routesOf($item);
+                $dies = $count * ($this->automaton->dead[$item] ?? 0);
+                $through = self::marks($this->automaton->markRoutes[$item] ?? []);
+                foreach ($reading[$item] as $class) {
+                    $next = $nexts[$class] ?? [[], 0, []];
+                    foreach ($after as $successor => $ways) {
+                        $next[0][$successor] = min($limit, ($next[0][$successor] ?? 0) + $count * $ways);
+                    }
+
+                    $next[1] = min($limit, $next[1] + $dies);
+                    foreach ($through as $key => $ways) {
+                        $next[2][$key] = min($limit, ($next[2][$key] ?? 0) + $count * $ways);
+                    }
+
+                    $nexts[$class] = $next;
+                }
+            }
+
+            // A vector met again at one step stands in one more slot: its
+            // next ones are read once.
+            $vectors = [];
+            $classes = [];
+            foreach ($nexts as $class => [$next, $dies, $through]) {
+                ksort($next);
+                ksort($through);
+                $further = $alongside === $step && isset($loopReads[$class]) ? $alongside + 1 : $alongside;
+                $key = ($step + 1).'|'.$further.'|'.implode(',', array_keys($next)).'|'.implode(',', $next).'|'.$dies.'|'.implode(',', array_keys($through)).'|'.implode(',', $through);
+                $vectors[$key] = [$next, $dies, $through, $further];
+                $classes[$key][] = $class;
+            }
+
+            foreach ($vectors as $key => [$next, $dies, $through, $further]) {
+                $queue[] = [$next, $dies, $through, $classes[$key], !isset($seen[$key]), $step + 1, $further];
+                $seen[$key] = true;
+            }
+        }
+
+        if (null === $loopReads) {
+            // From an attempt start, each step is a time of its own.
+            $paths = [];
+            $arrivals = [];
+            foreach ($steps as $step => $byAlongside) {
+                foreach ($byAlongside as $alongside => $bySlot) {
+                    foreach ($bySlot as $slot => $tried) {
+                        $paths[$slot] = max($paths[$slot] ?? 0, $tried);
+                    }
+
+                    foreach ($reached[$step][$alongside] ?? [] as $key => $slotWays) {
+                        foreach ($slotWays as $slot => $ways) {
+                            $arrivals[$key][$step][$slot] = max($arrivals[$key][$step][$slot] ?? 0, $ways);
+                        }
+                    }
+                }
+            }
+
+            return [$paths, $arrivals];
+        }
+
+        return [self::atOnceOut($steps), self::atOnceOutReached($reached)];
+    }
+
+    /**
+     * What the stretch out of a loop tries at one time, the loop left at
+     * several: the paths at the shallowest step, with those at each deeper
+     * step whose first characters, as many as the steps between, the loop
+     * reads too, for it went on reading them to be left again.
+     *
+     * @param array<int, array<int, array<int, int>>> $steps the most paths by step, by the characters from the first the loop reads too, by slot
+     *
+     * @return array<int, int>
+     */
+    private static function atOnceOut(array $steps): array
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $paths = [];
+        foreach ($steps as $shallowest => $byAlongside) {
+            $together = [];
+            foreach ($byAlongside as $bySlot) {
+                foreach ($bySlot as $slot => $tried) {
+                    $together[$slot] = max($together[$slot] ?? 0, $tried);
+                }
+            }
+
+            foreach ($steps as $step => $deeper) {
+                if ($step <= $shallowest) {
+                    continue;
+                }
+
+                $most = [];
+                foreach ($deeper as $alongside => $bySlot) {
+                    if ($alongside >= $step - $shallowest) {
+                        foreach ($bySlot as $slot => $tried) {
+                            $most[$slot] = max($most[$slot] ?? 0, $tried);
+                        }
+                    }
+                }
+
+                foreach ($most as $slot => $tried) {
+                    $together[$slot] = min($limit, ($together[$slot] ?? 0) + $tried);
+                }
+            }
+
+            foreach ($together as $slot => $tried) {
+                $paths[$slot] = max($paths[$slot] ?? 0, $tried);
+            }
+        }
+
+        return $paths;
+    }
+
+    /**
+     * The routes out of a loop to each item of a loop and through each mark
+     * at one time, the loop left at several (atOnceOut()): one time.
+     *
+     * @param array<int, array<int, array<int, array<int, int>>>> $reached by step, by the characters from the first the loop reads too, by key, by slot
+     *
+     * @return array<int, array<int, array<int, int>>>
+     */
+    private static function atOnceOutReached(array $reached): array
+    {
+        $byKey = [];
+        foreach ($reached as $step => $byAlongside) {
+            foreach ($byAlongside as $alongside => $keys) {
+                foreach ($keys as $key => $bySlot) {
+                    $byKey[$key][$step][$alongside] = $bySlot;
+                }
+            }
+        }
+
+        $arrivals = [];
+        foreach ($byKey as $key => $steps) {
+            $arrivals[$key][0] = self::atOnceOut($steps);
+        }
+
+        return $arrivals;
+    }
+
+    /**
+     * Whether reaching the item is a success the engine stops at: the end
+     * of the pattern whatever comes next, past no undecided check, where the
+     * model reads no success the engine may refuse.
+     */
+    private function succeeds(int $item): bool
+    {
+        return !$this->widens && $this->automaton->isUnconditional($item) && !$this->automaton->holdsUndecided([$item => true]);
+    }
+
+    /**
+     * The items of every strongly connected component that goes round, by
+     * that component.
+     *
+     * @return array<int, int>
+     */
+    private function loopItems(): array
+    {
+        $loops = [];
+        foreach ($this->fullComponents ?? [] as $index => $members) {
+            if (\count($members) > 1 || \in_array($members[0], $this->automaton->successors[$members[0]], true)) {
+                $loops += array_fill_keys($members, $index);
+            }
+        }
+
+        return $loops;
+    }
+
+    /**
+     * The epsilon paths to each item of a list, a list holding an item twice
+     * at most: those reaching one more often, counted apart.
+     *
+     * @param list<int>       $list
+     * @param array<int, int> $folded
+     *
+     * @return array<int, int>
+     */
+    private static function routes(array $list, array $folded): array
+    {
+        $routes = array_count_values($list);
+
+        return [] === $folded ? $routes : array_replace($routes, $folded);
+    }
+
+    /**
+     * The epsilon paths from a reading item to each item after it.
+     *
+     * @return array<int, int>
+     */
+    private function routesOf(int $item): array
+    {
+        return self::routes($this->automaton->successors[$item], $this->automaton->routes[$item] ?? []);
     }
 
     /**
