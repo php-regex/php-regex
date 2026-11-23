@@ -747,8 +747,12 @@ final class ItemAutomaton
                     break;
 
                 case Pnfa::LINE_START:
-                    if (self::CONTEXT_START === $context || self::CONTEXT_NEWLINE === $context) {
+                    // "^" holds at the subject's start, and after a newline a
+                    // character follows: never at the end of the subject.
+                    if (self::CONTEXT_START === $context) {
                         $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge];
+                    } elseif (self::CONTEXT_NEWLINE === $context) {
+                        $stack[] = [$pnfa->next[$current], $peek, false, $entered, $undecided, $edge];
                     }
 
                     break;

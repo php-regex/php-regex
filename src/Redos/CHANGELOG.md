@@ -6,6 +6,15 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Under `m`, `^` holds after a newline only where a character follows,
+   never at the end of the subject: `preg_match()` gives 0 for `/\n^/m` on
+   `"a\n"`. The model counted a success there, and proved linear a loop
+   that fails every way through it: `/\A(?:\n|\n)+(?:^\z|[^\n])/m` and
+   `/(?:\n|\n)+?(?:^\z|.)/mu` are exponential, no longer safe (proven),
+   and PHP exhausts its backtrack limit on 18 newlines without the JIT, 20
+   with it. A loop whose `^` holds only once it gives a newline back, as
+   in `/\A(?:\n|\n)+^/m`, gets no proven verdict, as `/^(?:a|a)+./` does
+   not.
  * A loop is no longer set aside on a success the analysis widens. A
    bounded repeat read as unbounded, and an atomic body kept with every way
    through it, made the continuation after an ambiguous loop look sure to
