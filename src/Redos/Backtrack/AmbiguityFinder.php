@@ -666,21 +666,24 @@ final class AmbiguityFinder
      * is in the loop: when no cycle of them exists, an abandoned run reads a
      * bounded number of characters inside the loop, and the paths through
      * the loop's items over that many characters bound the ways it reads
-     * them. Held to the margin an acyclic stretch has, they cost a bounded
-     * number of steps per character, however many ways the loop has around
-     * it. A run abandoned past the loop is read by the links out of it.
+     * them, each way the attempt has into one of them read again with each.
+     * Every epsilon path counts: k groups "(?:|)" before a character give
+     * 2^k ways to it. Held to the margin an acyclic stretch has, they cost a
+     * bounded number of steps per character, however many ways the loop has
+     * around it. A run abandoned past the loop is read by the links out of it.
      *
      * The model must count no success the engine may refuse: a search with
      * a lookaround or inside one, an atomic body kept with every way through
-     * it, a bounded repeat read as unbounded, or a "$" read with the final
-     * newline is not read.
+     * it, a bounded repeat read as unbounded, a "$" read with the final
+     * newline, or a "^" under m, which the model takes to hold after a
+     * newline that ends the subject, is not read.
      *
      * @throws ModelLimitException
      */
     private function abandonsShortRuns(int $item): bool
     {
         $pnfa = $this->automaton->pnfa;
-        if (null !== $pnfa->parent || [] !== $pnfa->marks || [] !== $pnfa->approximated || [] !== $pnfa->abstractedLoops || $pnfa->readsFinalNewline) {
+        if (null !== $pnfa->parent || [] !== $pnfa->marks || [] !== $pnfa->approximated || [] !== $pnfa->abstractedLoops || $pnfa->readsFinalNewline || $pnfa->hasLineStart) {
             return false;
         }
 
@@ -716,17 +719,34 @@ final class AmbiguityFinder
     private function runsShortInside(array $members): bool
     {
         $inside = array_fill_keys($members, true);
+        $into = $this->waysInto($inside);
         $heights = [];
         foreach ($members as $member) {
             $after = array_fill_keys($this->automaton->successors[$member], true);
             ksort($after);
             $height = $this->runInside($after, $inside, $heights);
-            if (null === $height || $this->waysInside($member, $inside, $height) > self::MAX_ACYCLIC_AMBIGUITY) {
+            if (null === $height || $into * $this->waysInside($member, $inside, $height) > self::MAX_ACYCLIC_AMBIGUITY) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * The most epsilon paths from one attempt start or one item into the
+     * items of the loop.
+     *
+     * @param array<int, true> $inside the items of the loop
+     */
+    private function waysInto(array $inside): int
+    {
+        $most = 0;
+        foreach ([...$this->automaton->initialRoutes, ...$this->automaton->routes] as $routes) {
+            $most = max($most, array_sum(array_intersect_key($routes, $inside)));
+        }
+
+        return $most;
     }
 
     /**
@@ -774,8 +794,8 @@ final class AmbiguityFinder
 
     /**
      * The paths through the items of the loop from what follows the item,
-     * over at most that many characters: the ways a run abandoned there
-     * reads them, at most.
+     * over at most that many characters, every epsilon path counted: the
+     * ways a run abandoned there reads them, at most.
      *
      * @param array<int, true> $inside the items of the loop
      */
@@ -786,10 +806,8 @@ final class AmbiguityFinder
         for ($read = 0; $read <= $characters; $read++) {
             $next = [];
             foreach ($paths as $from => $count) {
-                foreach ($this->automaton->successors[$from] as $successor) {
-                    if (isset($inside[$successor])) {
-                        $next[$successor] = ($next[$successor] ?? 0) + $count;
-                    }
+                foreach (array_intersect_key($this->automaton->routes[$from], $inside) as $successor => $routes) {
+                    $next[$successor] = ($next[$successor] ?? 0) + $count * $routes;
                 }
             }
 

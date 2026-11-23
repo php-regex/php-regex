@@ -91,6 +91,19 @@ final class ItemAutomaton
     public array $initials = [];
 
     /**
+     * @var array<int, array<int, int>> the epsilon paths from a reading item to
+     *                                  each item after it, every one counted:
+     *                                  the successors list two of them at most
+     */
+    public array $routes = [];
+
+    /**
+     * @var list<array<int, int>> the epsilon paths from each attempt start to
+     *                            each of its items, every one counted
+     */
+    public array $initialRoutes = [];
+
+    /**
      * @var array<int, list<int>> the sub-searches met after a reading item
      */
     public array $marksAfter = [];
@@ -154,7 +167,7 @@ final class ItemAutomaton
     private array $ids = [];
 
     /**
-     * @var array<string, array{list<int>, list<int>, list<int>}> by state and path context
+     * @var array<string, array{list<int>, list<int>, list<int>, array<int, int>}> by state and path context
      */
     private array $closures = [];
 
@@ -173,9 +186,10 @@ final class ItemAutomaton
     ) {
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
-            [$items, $marks] = $this->closure($pnfa->start, $context, false, true);
+            [$items, $marks, , $routes] = $this->closure($pnfa->start, $context, false, true);
 
             $this->initials[] = ['context' => $context, 'items' => $items, 'marks' => $marks];
+            $this->initialRoutes[] = $routes;
         }
 
         for ($item = 0; $item < \count($this->states); $item++) {
@@ -183,7 +197,7 @@ final class ItemAutomaton
                 continue;
             }
 
-            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item]] = $this->closure(
+            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item], $this->routes[$item]] = $this->closure(
                 $pnfa->next[$this->states[$item]],
                 $this->contexts[$item],
                 $this->uncertain[$item],
@@ -564,11 +578,10 @@ final class ItemAutomaton
      * it passes. A path keeps the context of the character read last, to
      * decide "^", "\A", "^" under /m and "\b", and whether it went through
      * a lookaround, whose constraint the model does not keep: a success after
-     * one is not counted.
+     * one is not counted. Returned: the items, the sub-searches met, what
+     * each item's path went through, and how many paths reach each item.
      *
-     * @return array{list<int>, list<int>, list<int>} the items, the
-     *                                                sub-searches met, and what
-     *                                                each item's path went through
+     * @return array{list<int>, list<int>, list<int>, array<int, int>}
      */
     private function closure(int $state, int $context, bool $uncertain, bool $attemptStart = false): array
     {
@@ -703,7 +716,7 @@ final class ItemAutomaton
             }
         }
 
-        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through];
+        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through, $seen];
     }
 
     /**

@@ -41,9 +41,14 @@ CHANGELOG
    `/^(?:a|a|ab)+(?:[ab]*c|a)/`, which reads `[ab]*` again from each
    position of the loop before it fails, quadratic, is not proven linear.
    The run abandoned inside the loop is held to the margin of an acyclic
-   stretch, 1,024 ways: `/^(?:a|a)+.{20}/`, whose dots succeed only twenty
-   characters back, is not proven either (PHP exhausts its backtrack limit
-   on 60 `a` and a newline).
+   stretch, 1,024 ways, each way into the loop counted with each way the
+   run reads it and every empty route counted: `/^(?:a|a)+.{20}/`, whose
+   dots succeed only twenty characters back, is not proven either (PHP
+   exhausts its backtrack limit on 60 `a` and a newline), nor is a loop ten
+   groups `(?:|)` lead into (1,049,601 steps on one `a` and a newline). A
+   `^` under m, which the model takes to hold after a newline that ends the
+   subject, keeps the loop out of the proof: `/\A(?:\n|\n)+\n^(?:\z|.)/m`
+   takes 285 then 18,429 steps on 6 then 12 newlines.
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of

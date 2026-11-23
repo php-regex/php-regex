@@ -189,6 +189,82 @@ final class RedosSureSuccessLoopTest extends TestCase
     }
 
     /**
+     * Under m, "^" does not hold after a newline that ends the subject
+     * (preg_match('/\n^/m', "a\n") is 0), where the model of the pattern
+     * reads it as holding: a success through it may not be the engine's,
+     * and a loop of newlines before it is left to the heuristics. On a run
+     * of newlines PHP takes 285 then 18 429 steps on 6 then 12 of them for
+     * "\A(?:\n|\n)+\n^(?:\z|.)", in the interpreter.
+     */
+    #[Test]
+    #[DataProvider('provideLoopsBeforeAStartOfLine')]
+    public function test_a_loop_before_a_start_of_line_is_left_to_the_heuristics(string $pattern): void
+    {
+        $this->assertSame(0, preg_match('/\n^/m', "a\n"), 'Oracle: "^" holds after the newline that ends the subject.');
+        $counted = PcreAttemptSteps::pinned(self::withoutStartOptimizations($pattern));
+        $short = PcreAttemptSteps::steps($counted, str_repeat("\n", 6));
+        $long = PcreAttemptSteps::steps($counted, str_repeat("\n", 12));
+        $this->assertGreaterThanOrEqual(5 * $short, 2 * $long, \sprintf('Oracle: %s takes %d then %d steps on 6 then 12 newlines: linear.', $pattern, $short, $long));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLoopsBeforeAStartOfLine(): iterable
+    {
+        yield 'a start of line before the end or a character' => ['pattern' => '/\A(?:\n|\n)+\n^(?:\z|.)/m'];
+        yield 'the same, unanchored' => ['pattern' => '/(?:\n|\n)+\n^(?:\z|.)/m'];
+        yield 'a start of line before the end, or another character' => ['pattern' => '/\A(?:\n|\n)+\n(?:^\z|[^\n])/m'];
+        yield 'branches of two lengths' => ['pattern' => '/^(?:\n|\n\n)+(?:^\z|.)/m'];
+        yield 'two runs of newlines' => ['pattern' => '/\A\n*\n*\n^(?:\z|.)/m'];
+        yield 'non-word characters under (*NOTEMPTY)' => ['pattern' => '/(*NOTEMPTY)(?:\W|\W)*(?:^\z|.)/mD'];
+        yield 'spaces then an optional newline' => ['pattern' => '/(?:\s|\s){1,}(?:^\z|.)\n?/m'];
+    }
+
+    /**
+     * An empty group read twice over, "(?:|)", gives the attempt two ways to
+     * the next character, and k of them 2^k: each way into the loop meets
+     * each way the abandoned run reads it, about 4^k steps for one attempt
+     * on one "a" and a newline (21, 273, 1 057, 4 161, 65 793 and 1 049 601
+     * for k = 2, 4, 5, 6, 8 and 10 in the interpreter; PHP exhausts its
+     * backtrack limit at k = 10). The ways count every empty route: a loop
+     * read in more ways than the margin is not proven.
+     */
+    #[Test]
+    #[DataProvider('provideEmptyRoutes')]
+    public function test_the_ways_through_the_loop_count_every_empty_route(int $groups, bool $proven): void
+    {
+        $body = '';
+        for ($group = 0; $group < $groups; $group++) {
+            $body .= 0 === $group % 2 ? '(?:|)' : '(?:(?#'.$group.')|)';
+        }
+
+        $pattern = '/^(?:'.$body.'a)+./';
+        $counted = PcreAttemptSteps::pinned(self::withoutStartOptimizations($pattern));
+        $one = PcreAttemptSteps::steps($counted, "a\n");
+        $this->assertGreaterThanOrEqual(4 ** $groups, $one, \sprintf('Oracle: %s takes %d steps on one "a" and a newline.', $pattern, $one));
+        $short = PcreAttemptSteps::steps($counted, str_repeat('a', 8)."\n");
+        $long = PcreAttemptSteps::steps($counted, str_repeat('a', 16)."\n");
+        $this->assertLessThan(5 * $short, 2 * $long, \sprintf('Oracle: %s takes %d then %d steps on 8 then 16 "a" and a newline.', $pattern, $short, $long));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertSame($proven, $analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{groups: int, proven: bool}>
+     */
+    public static function provideEmptyRoutes(): iterable
+    {
+        foreach ([2 => true, 4 => true, 5 => true, 6 => false, 8 => false, 10 => false] as $groups => $proven) {
+            yield $groups.' empty groups' => ['groups' => $groups, 'proven' => $proven];
+        }
+    }
+
+    /**
      * The pattern with "(*NO_START_OPT)" after the opening delimiter: PCRE2
      * would otherwise give up at once on a subject without a character the
      * pattern requires.
