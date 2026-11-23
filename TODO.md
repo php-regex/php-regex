@@ -9,13 +9,21 @@
   engine always commits to. Read such a body exactly. The patterns #445
   takes from the proof, `/^(?:a|a)+[^x]{0,20}(?:x|\z)/` and
   `/^(?:a+)+(?>.*|y)\b/`, are heuristic now: prove them exponential.
-- False "safe (proven)" since before RC1, from another cause: the
-  automata let `^` under `m` hold after a newline that ends the subject,
-  where PCRE2 does not (`preg_match("/\n^/m", "a\n")` is 0), and the
-  checks that take a success as sure trust it.
-  `/\A(?:\n|\n)+(?:^\z|[^\n])/m` is proven linear, yet 18 `\n` exhaust
-  the backtrack limit with `pcre.jit=0` (20 with the JIT). Model the
-  anchor as PCRE2 does, under every newline convention.
+- Since #446 a loop whose success needs one more character after `^`
+  under `m` is heuristic, though the engine is linear:
+  `/\A(?:\n|\n)+^/m`, `/\A(?:\n|\n)+(?:^|x)/m` and
+  `/\A(?:\n|\n)+(?:^$|[^\n])/mD` lost "safe (proven)", and
+  `/^(?:a|a)+./` was already heuristic for the same reason. Let
+  `AmbiguityFinder::disproved()`, with its `link()` and `chainOn()` uses,
+  accept a success where every non-empty continuation is accepted.
+- `regex.lint.anchor.impossible.start` and `.end` stay silent on
+  patterns PCRE2 never matches: `/a(?=\n^)\n\z/m`, `/(*CRLF)a\Z\r\n^/m`,
+  `/(*CRLF)a$\r^\n/m`, `/a\z^/m`, `/\n^\z/m` and `/a$^/m` (0 with
+  `pcre.jit=0`).
+- The automata leave `^` and `$` under `m` outside the model for
+  `(*CR)`, `(*NUL)`, `(*ANYCRLF)` and `(*ANY)`. Model them: under
+  `(*ANYCRLF)` and `(*ANY)`, `^` holds between `\r` and `\n`
+  (`preg_match("/(*ANYCRLF)\r^\n/m", "\r\n")` is 1).
 - The search cost misses `/(?:a\n)*(?:a{2}|b|\z)/m`: proven safe with no
   search cost, yet `preg_match()` on `"a\n"` × 1,000, 2,000 and 4,000 then
   `!` takes 23, 96 and 330 ms with `pcre.jit=0` (1.2, 4.6 and 18 ms with
