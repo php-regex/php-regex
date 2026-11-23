@@ -230,8 +230,9 @@ final class RedosSureSuccessLoopTest extends TestCase
      * each way the abandoned run reads it, about 4^k steps for one attempt
      * on one "a" and a newline (21, 273, 1 057, 4 161, 65 793 and 1 049 601
      * for k = 2, 4, 5, 6, 8 and 10 in the interpreter; PHP exhausts its
-     * backtrack limit at k = 10). The ways count every empty route: a loop
-     * read in more ways than the margin is not proven.
+     * backtrack limit at k = 10). The ways count every empty route, the way
+     * out to the dot included: 32 ways in times 33 at k = 5 is past the
+     * margin, and the loop is not proven.
      */
     #[Test]
     #[DataProvider('provideEmptyRoutes')]
@@ -259,9 +260,87 @@ final class RedosSureSuccessLoopTest extends TestCase
      */
     public static function provideEmptyRoutes(): iterable
     {
-        foreach ([2 => true, 4 => true, 5 => true, 6 => false, 8 => false, 10 => false] as $groups => $proven) {
+        foreach ([2 => true, 4 => true, 5 => false, 6 => false, 8 => false, 10 => false] as $groups => $proven) {
             yield $groups.' empty groups' => ['groups' => $groups, 'proven' => $proven];
         }
+    }
+
+    /**
+     * The routes into the loop and out of it count with those inside it: an
+     * attempt that fails tries each way in with each way the run reads the
+     * loop and each way out after it. Eight groups "(?:)*" before
+     * "(?:a|a)+" and thirteen after it give one attempt on one "a" and a
+     * newline 8 389 376 steps in the interpreter, and the JIT exhausts PHP's
+     * backtrack limit too; eight written-apart groups before and ten after,
+     * each side within the margin, take 525 313.
+     */
+    #[Test]
+    #[DataProvider('provideRoutesAroundTheLoop')]
+    public function test_the_routes_around_the_loop_count_with_the_ways_inside_it(string $before, string $after, int $steps, bool $proven): void
+    {
+        $pattern = '/^'.$before.'(?:a|a)+'.$after.'./';
+        $counted = PcreAttemptSteps::pinned(self::withoutStartOptimizations($pattern));
+        $one = PcreAttemptSteps::steps($counted, "a\n");
+        $this->assertGreaterThanOrEqual($steps, $one, \sprintf('Oracle: %s takes %d steps on one "a" and a newline.', $pattern, $one));
+        $short = PcreAttemptSteps::steps($counted, str_repeat('a', 8)."\n");
+        $long = PcreAttemptSteps::steps($counted, str_repeat('a', 16)."\n");
+        $this->assertLessThan(5 * $short, 2 * $long, \sprintf('Oracle: %s takes %d then %d steps on 8 then 16 "a" and a newline.', $pattern, $short, $long));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertSame($proven, $analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{before: string, after: string, steps: int, proven: bool}>
+     */
+    public static function provideRoutesAroundTheLoop(): iterable
+    {
+        $apart = static function (int $count, int $offset): string {
+            $groups = '';
+            for ($group = 0; $group < $count; $group++) {
+                $groups .= '(?:'.\chr(98 + ($group + $offset) % 24).'{0}|)';
+            }
+
+            return $groups;
+        };
+
+        yield 'two groups on each side' => ['before' => $apart(2, 0), 'after' => $apart(2, 11), 'steps' => 2 ** 4, 'proven' => true];
+        yield 'eight empty loops before and thirteen after' => ['before' => str_repeat('(?:)*', 8), 'after' => str_repeat('(?:)*', 13), 'steps' => 2 ** 21, 'proven' => false];
+        yield 'eight groups before and ten after' => ['before' => $apart(8, 0), 'after' => $apart(10, 11), 'steps' => 2 ** 18, 'proven' => false];
+    }
+
+    /**
+     * An atomic group or a possessive repeat whose body reads nothing in
+     * two ways is kept with every way through it, where the engine commits
+     * to the first: after "\K" under (*NOTEMPTY) that way leaves the match
+     * empty, the engine refuses it and gives back every way through the
+     * loop, while the model counts the empty way the engine never takes. The
+     * interpreter doubles its steps with each "a"; the JIT, which ignores
+     * (*NOTEMPTY), matches the empty string at once.
+     */
+    #[Test]
+    #[DataProvider('provideZeroWidthAtomicBodies')]
+    public function test_a_zero_width_body_kept_with_every_way_is_left_to_the_heuristics(string $pattern): void
+    {
+        $counted = PcreAttemptSteps::pinned(self::withoutStartOptimizations($pattern));
+        $short = PcreAttemptSteps::steps($counted, str_repeat('a', 8));
+        $long = PcreAttemptSteps::steps($counted, str_repeat('a', 12));
+        $this->assertGreaterThanOrEqual(5 * $short, 2 * $long, \sprintf('Oracle: %s takes %d then %d steps on 8 then 12 "a": linear.', $pattern, $short, $long));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideZeroWidthAtomicBodies(): iterable
+    {
+        yield 'an atomic group' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+(?>\K|)/'];
+        yield 'a possessive optional group' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+(?:\K)?+/'];
+        yield 'a possessive repeat of two branches' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+(?:\K|)++/'];
+        yield 'an atomic optional group' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+(?>(?:\K)?)/'];
+        yield 'a possessive star' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+(?:\K)*+/'];
     }
 
     /**

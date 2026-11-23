@@ -730,7 +730,8 @@ final class AmbiguityFinder
      *
      * The model must count no success the engine may refuse: a search with
      * a lookaround or inside one, an atomic body kept with every way through
-     * it, a bounded repeat read as unbounded, a "$" read with the final
+     * it (one that reads nothing too, "(?>\K|)"), a bounded repeat read as
+     * unbounded, a "$" read with the final
      * newline, or a "^" under m, which the model takes to hold after a
      * newline that ends the subject, is not read.
      *
@@ -739,7 +740,7 @@ final class AmbiguityFinder
     private function abandonsShortRuns(int $item): bool
     {
         $pnfa = $this->automaton->pnfa;
-        if (null !== $pnfa->parent || [] !== $pnfa->marks || [] !== $pnfa->approximated || [] !== $pnfa->abstractedLoops || $pnfa->readsFinalNewline || $pnfa->hasLineStart) {
+        if ($this->widens || null !== $pnfa->parent || [] !== $pnfa->marks || $pnfa->readsFinalNewline || $pnfa->hasLineStart) {
             return false;
         }
 
@@ -775,13 +776,15 @@ final class AmbiguityFinder
     private function runsShortInside(array $members): bool
     {
         $inside = array_fill_keys($members, true);
-        $into = $this->waysInto($inside);
+        $loops = $this->loopItems();
+        $into = $this->waysInto($inside, $loops);
         $heights = [];
+        $paths = [];
         foreach ($members as $member) {
             $after = array_fill_keys($this->automaton->successors[$member], true);
             ksort($after);
             $height = $this->runInside($after, $inside, $heights);
-            if (null === $height || $into * $this->waysInside($member, $inside, $height) > self::MAX_ACYCLIC_AMBIGUITY) {
+            if (null === $height || $into * $this->waysInside($member, $inside, $height, $loops, $paths) > self::MAX_ACYCLIC_AMBIGUITY) {
                 return false;
             }
         }
@@ -790,24 +793,75 @@ final class AmbiguityFinder
     }
 
     /**
-     * The most epsilon paths from one attempt start or one item into the
-     * items of the loop.
+     * The items of every strongly connected component that goes round, by
+     * that component.
+     *
+     * @return array<int, int>
+     */
+    private function loopItems(): array
+    {
+        $loops = [];
+        foreach ($this->fullComponents ?? [] as $index => $members) {
+            if (\count($members) > 1 || \in_array($members[0], $this->automaton->successors[$members[0]], true)) {
+                $loops += array_fill_keys($members, $index);
+            }
+        }
+
+        return $loops;
+    }
+
+    /**
+     * The most ways an attempt reaches the items of the loop from one
+     * attempt start or one item outside it: every epsilon route, through
+     * the acyclic stretch before the loop.
      *
      * @param array<int, true> $inside the items of the loop
+     * @param array<int, int>  $loops  the items of every loop
      */
-    private function waysInto(array $inside): int
+    private function waysInto(array $inside, array $loops): int
     {
         $automaton = $this->automaton;
+        $into = [];
         $most = 0;
         foreach ($automaton->initials as $index => $start) {
-            $most = max($most, array_sum(array_intersect_key(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $inside)));
+            $most = max($most, $this->routesInto(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $inside, $loops, $into));
         }
 
         foreach ($automaton->successors as $item => $successors) {
-            $most = max($most, array_sum(array_intersect_key(self::routes($successors, $automaton->routes[$item] ?? []), $inside)));
+            if (!isset($inside[$item])) {
+                $most = max($most, $this->routesInto(self::routes($successors, $automaton->routes[$item] ?? []), $inside, $loops, $into));
+            }
         }
 
         return $most;
+    }
+
+    /**
+     * The ways from the routes to the items of the loop, through acyclic
+     * items, capped just past the most ways allowed.
+     *
+     * @param array<int, int>  $routes
+     * @param array<int, true> $inside the items of the loop
+     * @param array<int, int>  $loops  the items of every loop
+     * @param array<int, int>  $into   the ways found from each acyclic item
+     */
+    private function routesInto(array $routes, array $inside, array $loops, array &$into): int
+    {
+        $automaton = $this->automaton;
+        $ways = 0;
+        foreach ($routes as $item => $count) {
+            if (!isset($inside[$item]) && ($automaton->isFinal($item) || isset($loops[$item]))) {
+                continue;
+            }
+
+            if (!isset($inside[$item]) && !isset($into[$item])) {
+                $into[$item] = $this->routesInto(self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []), $inside, $loops, $into);
+            }
+
+            $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways + $count * (isset($inside[$item]) ? 1 : $into[$item]));
+        }
+
+        return $ways;
     }
 
     /**
@@ -868,26 +922,40 @@ final class AmbiguityFinder
     }
 
     /**
-     * The paths through the items of the loop from what follows the item,
-     * over at most that many characters, every epsilon path counted: the
-     * ways a run abandoned there reads them, at most.
+     * The paths a run abandoned after the item reads, at most: through the
+     * items of the loop over that many characters, and out of the loop
+     * after the item and each of them that reads, along the acyclic stretch
+     * after it, every epsilon path counted. The items the run stands at
+     * last read nothing more: a character they read would keep it inside.
      *
      * @param array<int, true> $inside the items of the loop
+     * @param array<int, int>  $loops  the items of every loop
+     * @param array<int, int>  $paths  the paths found from each acyclic item
+     *
+     * @param-out array<int, int> $paths
      */
-    private function waysInside(int $item, array $inside, int $characters): int
+    private function waysInside(int $item, array $inside, int $characters, array $loops, array &$paths): int
     {
-        $paths = [$item => 1];
+        $automaton = $this->automaton;
+        $current = [$item => 1];
         $ways = 0;
         for ($read = 0; $read <= $characters; $read++) {
             $next = [];
-            foreach ($paths as $from => $count) {
-                foreach (array_intersect_key(self::routes($this->automaton->successors[$from], $this->automaton->routes[$from] ?? []), $inside) as $successor => $routes) {
-                    $next[$successor] = ($next[$successor] ?? 0) + $count * $routes;
+            foreach ($current as $from => $count) {
+                foreach (self::routes($automaton->successors[$from], $automaton->routes[$from] ?? []) as $successor => $routes) {
+                    if (isset($inside[$successor])) {
+                        $next[$successor] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, ($next[$successor] ?? 0) + $count * $routes);
+
+                        continue;
+                    }
+
+                    $out = $automaton->isFinal($successor) || isset($loops[$successor]) ? 1 : $this->pathsFrom($successor, $loops, $paths);
+                    $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways + $count * $routes * $out);
                 }
             }
 
-            $paths = $next;
-            $ways += array_sum($paths);
+            $current = $next;
+            $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways + array_sum($current));
         }
 
         return $ways;

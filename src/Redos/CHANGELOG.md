@@ -73,13 +73,24 @@ CHANGELOG
    position of the loop before it fails, quadratic, is not proven linear.
    The run abandoned inside the loop is held to the margin of an acyclic
    stretch, 1,024 ways, each way into the loop counted with each way the
-   run reads it and every empty route counted: `/^(?:a|a)+.{20}/`, whose
+   run reads it and leaves it, every empty route counted (eight groups
+   `(?:b{0}|)` before `(?:a|a)+` and ten after the loop take 525,313
+   steps on one `a` and a newline): `/^(?:a|a)+.{20}/`, whose
    dots succeed only twenty characters back, is not proven either (PHP
    exhausts its backtrack limit on 60 `a` and a newline), nor is a loop ten
    groups `(?:|)` lead into (1,049,601 steps on one `a` and a newline). A
    `^` under m, which the model takes to hold after a newline that ends the
    subject, keeps the loop out of the proof: `/\A(?:\n|\n)+\n^(?:\z|.)/m`
-   takes 285 then 18,429 steps on 6 then 12 newlines.
+   takes 285 then 18,429 steps on 6 then 12 newlines, and so does an
+   atomic group or a possessive repeat that reads nothing, kept with every
+   way through it: `/(*NOTEMPTY)^(?:a|a)+(?>\K|)/` commits to the empty
+   match `\K` leaves, which the option refuses, and doubles its steps with
+   each `a` in the interpreter.
+ * An acyclic stretch counts every epsilon route through it, those into a
+   loop and to the end included, where a list of states held each one
+   twice at most: thirteen groups `(?:b{0}|)` after `^…a+` before a dot
+   gave one attempt on one `a` and a newline 2,097,153 steps, past PHP's
+   backtrack limit, and the pattern was safe (proven).
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of
