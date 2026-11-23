@@ -365,6 +365,72 @@ final class AmbiguityFinder
     }
 
     /**
+     * The most epsilon routes along one path of the search, times the ways
+     * the attempt reaches the search (a lookaround's body, read once for
+     * each way to its mark), refused past the margin of an acyclic stretch.
+     * An attempt that fails tries every route, and the routes of one
+     * stretch multiply those of the next: a stretch that ends at a loop or
+     * at a lookaround does not start the count again. Ten groups
+     * "(?:b{0}|)" on each side of "a+" give one attempt 2^20 ways, each
+     * side within the margin. The routes round a loop count once: going
+     * round again is the loop's own ambiguity.
+     *
+     * @throws ModelLimitException
+     *
+     * @return int the routes, for a lookaround's body to start from
+     */
+    public function checkRoutes(int $before = 1): int
+    {
+        $automaton = $this->automaton;
+        if (null === $this->fullComponents) {
+            $this->components(false);
+        }
+
+        $componentOf = [];
+        foreach ($this->fullComponents ?? [] as $index => $members) {
+            $componentOf += array_fill_keys($members, $index);
+        }
+
+        $reach = [];
+        $most = $before;
+        foreach ($automaton->initials as $index => $start) {
+            $this->reachRoutes(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $before, $componentOf, $reach, $most);
+        }
+
+        foreach ($this->fullComponents ?? [] as $index => $members) {
+            if (!isset($reach[$index])) {
+                continue;
+            }
+
+            $round = 1;
+            foreach ($members as $member) {
+                foreach (self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []) as $successor => $routes) {
+                    if (($componentOf[$successor] ?? null) === $index) {
+                        $round = max($round, $routes);
+                    }
+                }
+            }
+
+            $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $reach[$index] * $round);
+            $most = max($most, $ways);
+            foreach ($members as $member) {
+                $after = array_filter(
+                    self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []),
+                    static fn (int $successor): bool => ($componentOf[$successor] ?? null) !== $index,
+                    \ARRAY_FILTER_USE_KEY,
+                );
+                $this->reachRoutes($after, $ways, $componentOf, $reach, $most);
+            }
+        }
+
+        if ($most > self::MAX_ACYCLIC_AMBIGUITY) {
+            throw ModelLimitException::outOfModel(\sprintf('One attempt read along more than %d empty routes', self::MAX_ACYCLIC_AMBIGUITY));
+        }
+
+        return $most;
+    }
+
+    /**
      * The lookaround read in place a cyclic component lies in, null for the
      * search itself: a component never leaves one, whose body ends nowhere.
      */
@@ -422,6 +488,28 @@ final class AmbiguityFinder
     }
 
     /**
+     * The most routes reaching each component, and the end, from routes
+     * taken after the ways that led to them.
+     *
+     * @param array<int, int> $routes
+     * @param array<int, int> $componentOf
+     * @param array<int, int> $reach
+     *
+     * @param-out array<int, int> $reach
+     */
+    private function reachRoutes(array $routes, int $ways, array $componentOf, array &$reach, int &$most): void
+    {
+        foreach ($routes as $successor => $count) {
+            $total = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways * $count);
+            if (isset($componentOf[$successor])) {
+                $reach[$componentOf[$successor]] = max($reach[$componentOf[$successor]] ?? 0, $total);
+            } else {
+                $most = max($most, $total);
+            }
+        }
+    }
+
+    /**
      * An acyclic stretch read in more ways than the cap, written out copies
      * or nested options, costs PCRE that many tries per input: out of the
      * model, whose classes speak of growth with the input. Every epsilon
@@ -432,6 +520,7 @@ final class AmbiguityFinder
      */
     private function checkAcyclicAmbiguity(): void
     {
+        $this->checkRoutes();
         $automaton = $this->automaton;
         $cyclic = $this->component;
         // Where a stretch starts: an attempt start, or an item of a loop the

@@ -163,6 +163,8 @@ final class BacktrackProver
         $automata = [];
         /** @var array<int, list<int>|null> $reach */
         $reach = [];
+        /** @var array<int, int> $routes */
+        $routes = [];
         $best = null;
         /** @var list<list<int>> $lookaroundPumps */
         $lookaroundPumps = [];
@@ -191,6 +193,12 @@ final class BacktrackProver
             $automaton = new ItemAutomaton($pnfa, $budget, $contexts);
             if (isset($parents[$index])) {
                 $automata[$index] = $automaton;
+            }
+
+            // A lookaround's body runs once for each way to its mark: the
+            // empty routes of the search around it multiply its own.
+            if (\count($searches) > 1) {
+                $routes[$index] = (new AmbiguityFinder($automaton, $budget))->checkRoutes(null === $pnfa->parent ? 1 : $routes[$pnfa->parent] ?? 1);
             }
             $bound = null === $bound ? null : $this->boundOf($automaton, $bound);
             $literals = self::requiredLiterals(null === $pnfa->parent ? $regex->pattern : $pnfa->body, $pnfa->unicode);

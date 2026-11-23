@@ -62,6 +62,44 @@ final class RedosAcyclicRoutesTest extends TestCase
         yield 'eleven groups before the loop' => ['before' => 11, 'after' => 0, 'proven' => false];
         // 2 097 153 steps on one "a" and a newline: PHP gives up.
         yield 'eight groups before and thirteen after' => ['before' => 8, 'after' => 13, 'proven' => false];
+        // Each side within the margin, 2^11 together.
+        yield 'five groups before and six after' => ['before' => 5, 'after' => 6, 'proven' => false];
+        yield 'five groups on each side' => ['before' => 5, 'after' => 5, 'proven' => true];
+    }
+
+    /**
+     * The routes multiply along the whole attempt: a stretch that ends at a
+     * loop or at a lookaround does not start the count again after it. Ten
+     * groups on each side of "a+" give one attempt on one "a" and a newline
+     * 2^20 ways, past PHP's backtrack limit, though each stretch alone is
+     * within the margin; so do ten before a lookahead and ten in its body,
+     * which the attempt reads once for each way to the lookahead.
+     */
+    #[Test]
+    #[DataProvider('provideRoutesAcrossAWholeAttempt')]
+    public function test_the_routes_multiply_across_loops_and_lookarounds(string $pattern, string $subject): void
+    {
+        $counted = PcreAttemptSteps::pinned('/(*NO_START_OPT)'.substr($pattern, 1));
+        $this->assertFalse(PcreAttemptSteps::searchUnderLimit($counted, $subject, 1_000_000), 'Oracle: '.$pattern.' finishes on '.json_encode($subject).' under PHP\'s default backtrack limit.');
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string}>
+     */
+    public static function provideRoutesAcrossAWholeAttempt(): iterable
+    {
+        $before = self::emptyGroups(10, 0);
+        $after = self::emptyGroups(10, 11);
+
+        yield 'ten groups on each side of a loop' => ['pattern' => '/^'.$before.'a+'.$after.'./', 'subject' => "a\n"];
+        yield 'of a possessive loop' => ['pattern' => '/^'.$before.'a++'.$after.'./', 'subject' => "a\n"];
+        yield 'of a loop of word characters' => ['pattern' => '/^'.$before.'\w+'.$after.'./', 'subject' => "a\n"];
+        yield 'of a lazy loop' => ['pattern' => '/^'.$before.'a+?'.$after.'./', 'subject' => "a\n"];
+        yield 'around two loops' => ['pattern' => '/^'.$before.'a+'.$after.'b+'.$before.'./', 'subject' => "ab\n"];
+        yield 'before a lookahead and in its body' => ['pattern' => '/^'.$before.'(?='.$after.'.)/', 'subject' => "\n"];
     }
 
     /**

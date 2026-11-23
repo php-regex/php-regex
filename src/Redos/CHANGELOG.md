@@ -90,7 +90,12 @@ CHANGELOG
    loop and to the end included, where a list of states held each one
    twice at most: thirteen groups `(?:b{0}|)` after `^…a+` before a dot
    gave one attempt on one `a` and a newline 2,097,153 steps, past PHP's
-   backtrack limit, and the pattern was safe (proven).
+   backtrack limit, and the pattern was safe (proven). The routes multiply
+   along the whole attempt, across the loops and into a lookaround's body,
+   and their product is held to the same margin: ten groups on each side
+   of `a+` (1,048,577 steps on one `a` and a newline) and ten before a
+   lookahead with ten in its body (1,049,601 steps on a newline) are no
+   longer safe (proven), though each stretch alone is within it.
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of
