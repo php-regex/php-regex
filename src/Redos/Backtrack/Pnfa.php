@@ -75,8 +75,8 @@ final class Pnfa
     public const BOUNDARY = 8;
 
     /**
-     * A start of line under /m: holds before the first character; later the
-     * model does not decide it, and a success after it is not counted.
+     * A start of line under /m: holds at the subject's start, and after a
+     * newline a character follows, never at the end of the subject.
      */
     public const LINE_START = 9;
 
