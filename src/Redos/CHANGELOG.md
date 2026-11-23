@@ -73,7 +73,8 @@ CHANGELOG
    position of the loop before it fails, quadratic, is not proven linear.
    The run abandoned inside the loop is held to the margin of an acyclic
    stretch, 1,024 ways, each way into the loop counted with each way the
-   run reads it and leaves it, every empty route counted (eight groups
+   run reads it and leaves it, every empty route counted along the whole
+   attempt, through the loops before and after it (eight groups
    `(?:b{0}|)` before `(?:a|a)+` and ten after the loop take 525,313
    steps on one `a` and a newline): `/^(?:a|a)+.{20}/`, whose
    dots succeed only twenty characters back, is not proven either (PHP

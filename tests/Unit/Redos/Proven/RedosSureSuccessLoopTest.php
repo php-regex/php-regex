@@ -310,6 +310,51 @@ final class RedosSureSuccessLoopTest extends TestCase
     }
 
     /**
+     * The ways into the loop count the routes before another loop on the
+     * way to it, and the ways out the routes after another loop past it:
+     * "x+" before "(?:a|a)+" does not start the count again. Five groups
+     * before "x+" and five after the loop give one attempt on "xa" and a
+     * newline 2 177 steps in the interpreter, 32 ways to "x+", two into the
+     * loop and 34 the run reads, past the margin; four on each side take
+     * 577.
+     */
+    #[Test]
+    #[DataProvider('provideRoutesPastAnotherLoop')]
+    public function test_the_routes_past_another_loop_count_in_the_ways_around_this_one(string $pattern, string $subject, int $steps, bool $proven): void
+    {
+        $counted = PcreAttemptSteps::pinned(self::withoutStartOptimizations($pattern));
+        if ($steps > 1_000_000) {
+            $this->assertFalse(PcreAttemptSteps::searchUnderLimit($counted, $subject, 1_000_000), 'Oracle: '.$pattern.' finishes on '.json_encode($subject).' under PHP\'s default backtrack limit.');
+        } else {
+            $one = PcreAttemptSteps::steps($counted, $subject);
+            $this->assertGreaterThanOrEqual($steps, $one, \sprintf('Oracle: %s takes %d steps on %s.', $pattern, $one, json_encode($subject)));
+        }
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertSame($proven, $analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string, steps: int, proven: bool}>
+     */
+    public static function provideRoutesPastAnotherLoop(): iterable
+    {
+        $apart = static function (int $count, int $offset): string {
+            $groups = '';
+            for ($group = 0; $group < $count; $group++) {
+                $groups .= '(?:'.\chr(98 + ($group + $offset) % 24).'{0}|)';
+            }
+
+            return $groups;
+        };
+
+        yield 'four groups on each side' => ['pattern' => '/^'.$apart(4, 0).'x+(?:a|a)+'.$apart(4, 11).'./', 'subject' => "xa\n", 'steps' => 577, 'proven' => true];
+        yield 'five groups on each side' => ['pattern' => '/^'.$apart(5, 0).'x+(?:a|a)+'.$apart(5, 11).'./', 'subject' => "xa\n", 'steps' => 2_177, 'proven' => false];
+        yield 'ten groups before another loop and eight after' => ['pattern' => '/^'.$apart(10, 0).'x+(?:a|a)+'.$apart(8, 11).'./', 'subject' => "xa\n", 'steps' => 528_385, 'proven' => false];
+        yield 'ten groups before each of two loops' => ['pattern' => '/^'.$apart(10, 0).'y+'.$apart(10, 11).'x+(?:a|a)+./', 'subject' => "yxa\n", 'steps' => 6_291_456, 'proven' => false];
+    }
+
+    /**
      * An atomic group or a possessive repeat whose body reads nothing in
      * two ways is kept with every way through it, where the engine commits
      * to the first: after "\K" under (*NOTEMPTY) that way leaves the match
