@@ -741,9 +741,14 @@ final class AmbiguityFinder
      */
     private function waysInto(array $inside): int
     {
+        $automaton = $this->automaton;
         $most = 0;
-        foreach ([...$this->automaton->initialRoutes, ...$this->automaton->routes] as $routes) {
-            $most = max($most, array_sum(array_intersect_key($routes, $inside)));
+        foreach ($automaton->initials as $index => $start) {
+            $most = max($most, array_sum(array_intersect_key(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $inside)));
+        }
+
+        foreach ($automaton->successors as $item => $successors) {
+            $most = max($most, array_sum(array_intersect_key(self::routes($successors, $automaton->routes[$item] ?? []), $inside)));
         }
 
         return $most;
@@ -793,6 +798,20 @@ final class AmbiguityFinder
     }
 
     /**
+     * The epsilon paths to each item of a list, a list holding an item twice
+     * at most: those reaching one more often, counted apart.
+     *
+     * @param list<int>       $list
+     * @param array<int, int> $folded
+     *
+     * @return array<int, int>
+     */
+    private static function routes(array $list, array $folded): array
+    {
+        return array_replace(array_count_values($list), $folded);
+    }
+
+    /**
      * The paths through the items of the loop from what follows the item,
      * over at most that many characters, every epsilon path counted: the
      * ways a run abandoned there reads them, at most.
@@ -806,7 +825,7 @@ final class AmbiguityFinder
         for ($read = 0; $read <= $characters; $read++) {
             $next = [];
             foreach ($paths as $from => $count) {
-                foreach (array_intersect_key($this->automaton->routes[$from], $inside) as $successor => $routes) {
+                foreach (array_intersect_key(self::routes($this->automaton->successors[$from], $this->automaton->routes[$from] ?? []), $inside) as $successor => $routes) {
                     $next[$successor] = ($next[$successor] ?? 0) + $count * $routes;
                 }
             }

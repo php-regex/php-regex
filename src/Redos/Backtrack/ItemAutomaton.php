@@ -92,14 +92,15 @@ final class ItemAutomaton
 
     /**
      * @var array<int, array<int, int>> the epsilon paths from a reading item to
-     *                                  each item after it, every one counted:
-     *                                  the successors list two of them at most
+     *                                  an item after it reached by more than
+     *                                  two, every one counted: the successors
+     *                                  list two of them at most
      */
     public array $routes = [];
 
     /**
-     * @var list<array<int, int>> the epsilon paths from each attempt start to
-     *                            each of its items, every one counted
+     * @var array<int, array<int, int>> the same from an attempt start, by its
+     *                                  index in the initials
      */
     public array $initialRoutes = [];
 
@@ -187,9 +188,11 @@ final class ItemAutomaton
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
             [$items, $marks, , $routes] = $this->closure($pnfa->start, $context, false, true);
+            if ([] !== $routes) {
+                $this->initialRoutes[\count($this->initials)] = $routes;
+            }
 
             $this->initials[] = ['context' => $context, 'items' => $items, 'marks' => $marks];
-            $this->initialRoutes[] = $routes;
         }
 
         for ($item = 0; $item < \count($this->states); $item++) {
@@ -197,11 +200,14 @@ final class ItemAutomaton
                 continue;
             }
 
-            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item], $this->routes[$item]] = $this->closure(
+            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item], $routes] = $this->closure(
                 $pnfa->next[$this->states[$item]],
                 $this->contexts[$item],
                 $this->uncertain[$item],
             );
+            if ([] !== $routes) {
+                $this->routes[$item] = $routes;
+            }
         }
 
         $this->partition();
@@ -598,7 +604,8 @@ final class ItemAutomaton
      * decide "^", "\A", "^" under /m and "\b", and whether it went through
      * a lookaround, whose constraint the model does not keep: a success after
      * one is not counted. Returned: the items, the sub-searches met, what
-     * each item's path went through, and how many paths reach each item.
+     * each item's path went through, and how many paths reach each item more
+     * than two reach.
      *
      * @return array{list<int>, list<int>, list<int>, array<int, int>}
      */
@@ -613,6 +620,7 @@ final class ItemAutomaton
         $entries = [];
         $through = [];
         $seen = [];
+        $folded = [];
         $marks = [];
         // Each frame: the state, the constraint on the next character, whether
         // the end may come next, the loops this path entered, whether it went
@@ -642,6 +650,8 @@ final class ItemAutomaton
                         if ($seen[$item] <= 2) {
                             $entries[] = $item;
                             $through[] = $edge;
+                        } else {
+                            $folded[$item] = $seen[$item];
                         }
                     }
 
@@ -731,11 +741,13 @@ final class ItemAutomaton
                     if ($seen[$item] <= 2) {
                         $entries[] = $item;
                         $through[] = $edge;
+                    } else {
+                        $folded[$item] = $seen[$item];
                     }
             }
         }
 
-        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through, $seen];
+        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through, $folded];
     }
 
     /**
