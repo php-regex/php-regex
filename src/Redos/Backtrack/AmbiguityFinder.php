@@ -424,7 +424,9 @@ final class AmbiguityFinder
     /**
      * An acyclic stretch read in more ways than the cap, written out copies
      * or nested options, costs PCRE that many tries per input: out of the
-     * model, whose classes speak of growth with the input.
+     * model, whose classes speak of growth with the input. Every epsilon
+     * route counts: k groups "(?:b{0}|)" in a row give 2^k ways through
+     * them, where a successor list holds a state twice at most.
      *
      * @throws ModelLimitException
      */
@@ -432,34 +434,30 @@ final class AmbiguityFinder
     {
         $automaton = $this->automaton;
         $cyclic = $this->component;
+        // Where a stretch starts: an attempt start, or an item of a loop the
+        // stretch leaves, with the routes to each of its first items.
         $starts = [];
-        foreach ($automaton->initials as $start) {
-            $starts[] = $start['items'];
+        foreach ($automaton->initials as $index => $start) {
+            $starts[] = self::routes($start['items'], $automaton->initialRoutes[$index] ?? []);
         }
 
         foreach ($this->cyclic as $members) {
-            $exits = [];
             foreach ($members as $member) {
-                foreach ($automaton->successors[$member] as $successor) {
-                    if (!isset($cyclic[$successor])) {
-                        $exits[] = $successor;
-                    }
-                }
+                $starts[] = array_diff_key(self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []), $cyclic);
             }
-
-            $starts[] = array_values(array_unique($exits));
         }
 
         // The paths through the acyclic part, whatever they read, bound the
         // paths that read one input: under the cap, nothing to count.
         $paths = [];
         $within = true;
-        foreach ($starts as $items) {
+        foreach ($starts as $routes) {
             $total = 0;
-            foreach ($items as $item) {
-                if (!$automaton->isFinal($item) && !isset($cyclic[$item])) {
-                    $total = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $total + $this->pathsFrom($item, $cyclic, $paths));
-                }
+            foreach ($routes as $item => $count) {
+                // A loop or the end reached by more than one route is reached
+                // that many times.
+                $ways = $automaton->isFinal($item) || isset($cyclic[$item]) ? $count - 1 : $count * $this->pathsFrom($item, $cyclic, $paths);
+                $total = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $total + $ways);
             }
 
             $within = $within && $total <= self::MAX_ACYCLIC_AMBIGUITY;
@@ -469,19 +467,26 @@ final class AmbiguityFinder
             return;
         }
 
-        // When no list of items holds two reading the same class, every input
-        // is read one way at most: nothing to count.
+        // When no item is reached by two routes and no two items reached
+        // together read the same class, every input is read one way at most:
+        // nothing to count.
         $lists = $starts;
         for ($item = 0; $item < $this->size; $item++) {
             if (!$automaton->isFinal($item) && !isset($cyclic[$item])) {
-                $lists[] = $automaton->successors[$item];
+                $lists[] = self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []);
             }
         }
 
         $ambiguous = false;
-        foreach ($lists as $list) {
+        foreach ($lists as $routes) {
             $union = null;
-            foreach ($list as $item) {
+            foreach ($routes as $item => $count) {
+                if ($count > 1) {
+                    $ambiguous = true;
+
+                    break 2;
+                }
+
                 if ($automaton->isFinal($item) || isset($cyclic[$item])) {
                     continue;
                 }
@@ -516,14 +521,10 @@ final class AmbiguityFinder
             }
         }
 
-        foreach ($starts as $items) {
-            $vector = [];
-            foreach ($items as $item) {
-                if (isset($reading[$item])) {
-                    $vector[$item] = ($vector[$item] ?? 0) + 1;
-                }
-            }
-
+        // A vector holds the routes alive on one input, those that went into
+        // a loop or to the end too, which are not read further.
+        foreach ($starts as $routes) {
+            $vector = $routes;
             $queue = [] === $vector ? [] : [$vector];
             $seen = [];
             for ($head = 0; $head < \count($queue); $head++) {
@@ -534,13 +535,12 @@ final class AmbiguityFinder
 
                 // Every class's next vector, in one pass over the items.
                 $nexts = [];
-                foreach ($current as $item => $count) {
+                foreach (array_intersect_key($current, $reading) as $item => $count) {
                     $this->budget->step(1 + \count($reading[$item]));
+                    $after = self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []);
                     foreach ($reading[$item] as $class) {
-                        foreach ($automaton->successors[$item] as $successor) {
-                            if (isset($reading[$successor])) {
-                                $nexts[$class][$successor] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, ($nexts[$class][$successor] ?? 0) + $count);
-                            }
+                        foreach ($after as $successor => $routes) {
+                            $nexts[$class][$successor] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, ($nexts[$class][$successor] ?? 0) + $count * $routes);
                         }
                     }
                 }
@@ -558,8 +558,8 @@ final class AmbiguityFinder
     }
 
     /**
-     * How many paths start at the item and stay in the acyclic part, capped
-     * just past the most ways allowed.
+     * How many paths start at the item and stay in the acyclic part, every
+     * epsilon route counted, capped just past the most ways allowed.
      *
      * @param array<int, int> $cyclic
      * @param array<int, int> $paths  the counts found so far
@@ -583,12 +583,13 @@ final class AmbiguityFinder
             }
 
             $next = array_filter(
-                $this->automaton->successors[$current],
-                fn (int $successor): bool => !$this->automaton->isFinal($successor) && !isset($cyclic[$successor]),
+                array_diff_key(self::routes($this->automaton->successors[$current], $this->automaton->routes[$current] ?? []), $cyclic),
+                fn (int $successor): bool => !$this->automaton->isFinal($successor),
+                \ARRAY_FILTER_USE_KEY,
             );
             if (!$expanded) {
                 $stack[] = [$current, true];
-                foreach ($next as $successor) {
+                foreach ($next as $successor => $_) {
                     if (!isset($paths[$successor])) {
                         $stack[] = [$successor, false];
                     }
@@ -599,8 +600,15 @@ final class AmbiguityFinder
 
             $this->budget->step(1 + \count($next));
             $count = 1;
-            foreach ($next as $successor) {
-                $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count + ($paths[$successor] ?? 0));
+            foreach ($next as $successor => $routes) {
+                $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count + $routes * ($paths[$successor] ?? 0));
+            }
+
+            // A loop or the end reached by more than one route.
+            foreach (self::routes($this->automaton->successors[$current], $this->automaton->routes[$current] ?? []) as $successor => $routes) {
+                if ($this->automaton->isFinal($successor) || isset($cyclic[$successor])) {
+                    $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count + $routes - 1);
+                }
             }
 
             $paths[$current] = $count;
