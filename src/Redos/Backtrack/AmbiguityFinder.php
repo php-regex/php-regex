@@ -81,9 +81,9 @@ final class AmbiguityFinder
     private array $routesTo = [];
 
     /**
-     * @var array<int, int> the most empty routes along a path from each
-     *                      strongly connected component to the end, its own
-     *                      routes round it counted
+     * @var array<int, int<min, 1025>> the most empty routes along a path from
+     *                                 each strongly connected component to the
+     *                                 end, its own routes round it counted
      */
     private array $routesOnward = [];
 
@@ -144,6 +144,11 @@ final class AmbiguityFinder
      *                           reading items, once computed
      */
     private ?array $fullComponents = null;
+
+    /**
+     * @var array<int, int> the component of each reading item among them
+     */
+    private array $fullComponentOf = [];
 
     /**
      * @var array<string, array<int, true>> the items reading a class of each
@@ -396,19 +401,20 @@ final class AmbiguityFinder
     public function checkRoutes(int $before = 1): int
     {
         $automaton = $this->automaton;
+        // Every item follows each one by a single route: one way along each path.
+        if (!$automaton->repeats) {
+            return $before;
+        }
+
         if (null === $this->fullComponents) {
             $this->components(false);
         }
 
-        $componentOf = [];
-        foreach ($this->fullComponents ?? [] as $index => $members) {
-            $componentOf += array_fill_keys($members, $index);
-        }
-
+        $componentOf = $this->fullComponentOf;
         $reach = [];
         $most = $before;
         foreach ($automaton->initials as $index => $start) {
-            $this->reachRoutes(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $before, $componentOf, $reach, $most);
+            $this->reachRoutes(self::routes($start['items'], $automaton->initialRoutes[$index] ?? []), $before, -1, $componentOf, $reach, $most);
         }
 
         foreach ($this->fullComponents ?? [] as $index => $members) {
@@ -418,8 +424,8 @@ final class AmbiguityFinder
 
             $round = 1;
             foreach ($members as $member) {
-                foreach (self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []) as $successor => $routes) {
-                    if (($componentOf[$successor] ?? null) === $index) {
+                foreach ($this->routesOf($member) as $successor => $routes) {
+                    if (($componentOf[$successor] ?? -1) === $index) {
                         $round = max($round, $routes);
                     }
                 }
@@ -429,12 +435,7 @@ final class AmbiguityFinder
             $this->routesTo[$index] = $ways;
             $most = max($most, $ways);
             foreach ($members as $member) {
-                $after = array_filter(
-                    self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []),
-                    static fn (int $successor): bool => ($componentOf[$successor] ?? null) !== $index,
-                    \ARRAY_FILTER_USE_KEY,
-                );
-                $this->reachRoutes($after, $ways, $componentOf, $reach, $most);
+                $this->reachRoutes($this->routesOf($member), $ways, $index, $componentOf, $reach, $most);
             }
         }
 
@@ -442,18 +443,35 @@ final class AmbiguityFinder
             throw ModelLimitException::outOfModel(\sprintf('One attempt read along more than %d empty routes', self::MAX_ACYCLIC_AMBIGUITY));
         }
 
-        // From the last component back: the routes onward from each.
+        return $most;
+    }
+
+    /**
+     * The most empty routes along a path from each strongly connected
+     * component to the end, its own routes round it counted, from the last
+     * component back.
+     *
+     * @return array<int, int<min, 1025>>
+     */
+    private function routesOnward(): array
+    {
+        $automaton = $this->automaton;
+        if ([] !== $this->routesOnward || !$automaton->repeats) {
+            return $this->routesOnward;
+        }
+
         $components = $this->fullComponents ?? [];
         for ($index = \count($components) - 1; $index >= 0; $index--) {
             $round = 1;
             $onward = 1;
             foreach ($components[$index] as $member) {
-                foreach (self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []) as $successor => $routes) {
-                    $target = $componentOf[$successor] ?? null;
+                foreach ($this->routesOf($member) as $successor => $routes) {
+                    $routes = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $routes);
+                    $target = $this->fullComponentOf[$successor] ?? null;
                     if ($target === $index) {
                         $round = max($round, $routes);
                     } else {
-                        $onward = max($onward, min(self::MAX_ACYCLIC_AMBIGUITY + 1, $routes * (null === $target ? 1 : $this->routesOnward[$target])));
+                        $onward = max($onward, min(self::MAX_ACYCLIC_AMBIGUITY + 1, $routes * (null === $target ? 1 : $this->routesOnward[$target] ?? 1)));
                     }
                 }
             }
@@ -461,7 +479,7 @@ final class AmbiguityFinder
             $this->routesOnward[$index] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $round * $onward);
         }
 
-        return $most;
+        return $this->routesOnward;
     }
 
     /**
@@ -526,19 +544,25 @@ final class AmbiguityFinder
      * taken after the ways that led to them.
      *
      * @param array<int, int> $routes
+     * @param int             $from        the component the routes leave, -1 for an attempt start
      * @param array<int, int> $componentOf
      * @param array<int, int> $reach
      *
      * @param-out array<int, int> $reach
      */
-    private function reachRoutes(array $routes, int $ways, array $componentOf, array &$reach, int &$most): void
+    private function reachRoutes(array $routes, int $ways, int $from, array $componentOf, array &$reach, int &$most): void
     {
         foreach ($routes as $successor => $count) {
+            $target = $componentOf[$successor] ?? null;
+            if ($target === $from) {
+                continue;
+            }
+
             $total = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways * $count);
-            if (isset($componentOf[$successor])) {
-                $reach[$componentOf[$successor]] = max($reach[$componentOf[$successor]] ?? 0, $total);
-            } else {
+            if (null === $target) {
                 $most = max($most, $total);
+            } else {
+                $reach[$target] = max($reach[$target] ?? 0, $total);
             }
         }
     }
@@ -566,7 +590,7 @@ final class AmbiguityFinder
 
         foreach ($this->cyclic as $members) {
             foreach ($members as $member) {
-                $starts[] = array_diff_key(self::routes($automaton->successors[$member], $automaton->routes[$member] ?? []), $cyclic);
+                $starts[] = array_diff_key($this->routesOf($member), $cyclic);
             }
         }
 
@@ -596,7 +620,7 @@ final class AmbiguityFinder
         $lists = $starts;
         for ($item = 0; $item < $this->size; $item++) {
             if (!$automaton->isFinal($item) && !isset($cyclic[$item])) {
-                $lists[] = self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []);
+                $lists[] = $this->routesOf($item);
             }
         }
 
@@ -660,7 +684,7 @@ final class AmbiguityFinder
                 $nexts = [];
                 foreach (array_intersect_key($current, $reading) as $item => $count) {
                     $this->budget->step(1 + \count($reading[$item]));
-                    $after = self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []);
+                    $after = $this->routesOf($item);
                     foreach ($reading[$item] as $class) {
                         foreach ($after as $successor => $routes) {
                             $nexts[$class][$successor] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, ($nexts[$class][$successor] ?? 0) + $count * $routes);
@@ -705,11 +729,18 @@ final class AmbiguityFinder
                 continue;
             }
 
-            $next = array_filter(
-                array_diff_key(self::routes($this->automaton->successors[$current], $this->automaton->routes[$current] ?? []), $cyclic),
-                fn (int $successor): bool => !$this->automaton->isFinal($successor),
-                \ARRAY_FILTER_USE_KEY,
-            );
+            // The routes on into the acyclic part, and those to a loop or to
+            // the end beyond the first: reached that many more times.
+            $next = [];
+            $leaves = 0;
+            foreach ($this->routesOf($current) as $successor => $routes) {
+                if ($this->automaton->isFinal($successor) || isset($cyclic[$successor])) {
+                    $leaves += $routes - 1;
+                } else {
+                    $next[$successor] = $routes;
+                }
+            }
+
             if (!$expanded) {
                 $stack[] = [$current, true];
                 foreach ($next as $successor => $_) {
@@ -722,16 +753,9 @@ final class AmbiguityFinder
             }
 
             $this->budget->step(1 + \count($next));
-            $count = 1;
+            $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, 1 + $leaves);
             foreach ($next as $successor => $routes) {
                 $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count + $routes * ($paths[$successor] ?? 0));
-            }
-
-            // A loop or the end reached by more than one route.
-            foreach (self::routes($this->automaton->successors[$current], $this->automaton->routes[$current] ?? []) as $successor => $routes) {
-                if ($this->automaton->isFinal($successor) || isset($cyclic[$successor])) {
-                    $count = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $count + $routes - 1);
-                }
             }
 
             $paths[$current] = $count;
@@ -959,7 +983,7 @@ final class AmbiguityFinder
 
         foreach ($automaton->successors as $item => $successors) {
             if (!isset($inside[$item])) {
-                $ways = $this->routesInto(self::routes($successors, $automaton->routes[$item] ?? []), $inside, $loops, $into);
+                $ways = $this->routesInto($this->routesOf($item), $inside, $loops, $into);
                 $most = max($most, min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways * ($this->routesTo[$componentOf[$item]] ?? 1)));
             }
         }
@@ -986,7 +1010,7 @@ final class AmbiguityFinder
             }
 
             if (!isset($inside[$item]) && !isset($into[$item])) {
-                $into[$item] = $this->routesInto(self::routes($automaton->successors[$item], $automaton->routes[$item] ?? []), $inside, $loops, $into);
+                $into[$item] = $this->routesInto($this->routesOf($item), $inside, $loops, $into);
             }
 
             $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways + $count * (isset($inside[$item]) ? 1 : $into[$item]));
@@ -1049,7 +1073,19 @@ final class AmbiguityFinder
      */
     private static function routes(array $list, array $folded): array
     {
-        return array_replace(array_count_values($list), $folded);
+        $routes = array_count_values($list);
+
+        return [] === $folded ? $routes : array_replace($routes, $folded);
+    }
+
+    /**
+     * The epsilon paths from a reading item to each item after it.
+     *
+     * @return array<int, int>
+     */
+    private function routesOf(int $item): array
+    {
+        return self::routes($this->automaton->successors[$item], $this->automaton->routes[$item] ?? []);
     }
 
     /**
@@ -1069,12 +1105,13 @@ final class AmbiguityFinder
     private function waysInside(int $item, array $inside, int $characters, array $loops, array $componentOf, array &$paths): int
     {
         $automaton = $this->automaton;
+        $onward = $this->routesOnward();
         $current = [$item => 1];
         $ways = 0;
         for ($read = 0; $read <= $characters; $read++) {
             $next = [];
             foreach ($current as $from => $count) {
-                foreach (self::routes($automaton->successors[$from], $automaton->routes[$from] ?? []) as $successor => $routes) {
+                foreach ($this->routesOf($from) as $successor => $routes) {
                     if (isset($inside[$successor])) {
                         $next[$successor] = min(self::MAX_ACYCLIC_AMBIGUITY + 1, ($next[$successor] ?? 0) + $count * $routes);
 
@@ -1083,7 +1120,7 @@ final class AmbiguityFinder
 
                     // The paths of the stretch out of the loop, times the
                     // routes onward from there, through the loops after it.
-                    $out = $automaton->isFinal($successor) ? 1 : $this->routesOnward[$componentOf[$successor]] * (isset($loops[$successor]) ? 1 : $this->pathsFrom($successor, $loops, $paths));
+                    $out = $automaton->isFinal($successor) ? 1 : ($onward[$componentOf[$successor]] ?? 1) * (isset($loops[$successor]) ? 1 : $this->pathsFrom($successor, $loops, $paths));
                     $ways = min(self::MAX_ACYCLIC_AMBIGUITY + 1, $ways + $count * $routes * min(self::MAX_ACYCLIC_AMBIGUITY + 1, $out));
                 }
             }
@@ -2323,9 +2360,11 @@ final class AmbiguityFinder
             $edges = $this->edges($blocked);
         }
 
-        $components = StronglyConnectedComponents::of($edges, $this->budget)->components;
+        $strong = StronglyConnectedComponents::of($edges, $this->budget);
+        $components = $strong->components;
         if (!$blocking) {
             $this->fullComponents = $components;
+            $this->fullComponentOf = $strong->componentOf;
         }
 
         foreach ($components as $members) {

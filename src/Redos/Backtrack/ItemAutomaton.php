@@ -107,6 +107,12 @@ final class ItemAutomaton
     public array $initialRoutes = [];
 
     /**
+     * Whether some epsilon closure reaches one state by two paths: without
+     * one, every item follows each one by a single route.
+     */
+    public bool $repeats = false;
+
+    /**
      * @var array<int, list<int>> the sub-searches met after a reading item
      */
     public array $marksAfter = [];
@@ -710,6 +716,7 @@ final class ItemAutomaton
                         if ($seen[$item] <= 2) {
                             $entries[] = $item;
                             $through[] = $edge;
+                            $this->repeats = $this->repeats || 2 === $seen[$item];
                         } else {
                             $folded[$item] = $seen[$item];
                         }
@@ -812,6 +819,7 @@ final class ItemAutomaton
                     if ($seen[$item] <= 2) {
                         $entries[] = $item;
                         $through[] = $edge;
+                        $this->repeats = $this->repeats || 2 === $seen[$item];
                     } else {
                         $folded[$item] = $seen[$item];
                     }

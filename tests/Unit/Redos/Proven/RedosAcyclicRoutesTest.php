@@ -103,6 +103,24 @@ final class RedosAcyclicRoutesTest extends TestCase
     }
 
     /**
+     * Without an empty route, the stretch still counts the ways it reads one
+     * input: eleven copies of "(?:a|a)" written out read eleven "a" in 2^11
+     * ways, 2 049 steps on them and a "!" in the interpreter, past the
+     * margin, though each state follows the one before by a single route.
+     */
+    #[Test]
+    public function test_copies_written_out_count_the_ways_they_read_one_input(): void
+    {
+        $pattern = '/^'.str_repeat('(?:a|a)', 11).'b/';
+        $counted = PcreAttemptSteps::pinned('/(*NO_START_OPT)'.substr($pattern, 1));
+        $steps = PcreAttemptSteps::steps($counted, str_repeat('a', 11).'!');
+        $this->assertGreaterThanOrEqual(2 ** 11, $steps, \sprintf('Oracle: %s takes %d steps on eleven "a" and a "!".', $pattern, $steps));
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertSame(RedosProof::Heuristic, $analysis->proof, $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
      * Groups that may read nothing in two ways, each written apart so that
      * no two of them are one state of the model.
      */
