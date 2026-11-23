@@ -58,6 +58,8 @@ final class ItemAutomaton
 
     public const EDGE_KEEP = 8;
 
+    public const EDGE_WIDENED = 16;
+
     /**
      * @var list<int> the item's state in the pNFA
      */
@@ -100,7 +102,8 @@ final class ItemAutomaton
      * successor: EDGE_LOOP when it went back into a loop of the pattern,
      * EDGE_ABSTRACTED back into a loop the model abstracted (a bounded repeat
      * read as unbounded), EDGE_LOOKAROUND past a lookaround, EDGE_KEEP past
-     * "\K".
+     * "\K", EDGE_WIDENED through an atomic body kept with every way
+     * through it, or into a further round of a loop the model abstracted.
      *
      * @var array<int, list<int>>
      */
@@ -402,6 +405,60 @@ final class ItemAutomaton
     }
 
     /**
+     * The items after the set reads the class on paths the model reads as
+     * the engine does, or null when one of its final items succeeds before
+     * it: no path takes a further round of a bounded repeat read as
+     * unbounded, which may be past its bound, nor goes through an atomic body
+     * kept with every way through it, which may not be the way the engine
+     * commits to. Both widen what succeeds.
+     *
+     * @param array<int, true> $items
+     *
+     * @return array<int, true>|null
+     */
+    public function stepExactly(array $items, int $class): ?array
+    {
+        $next = [];
+        foreach ($items as $item => $_) {
+            $this->budget->step();
+            if ($this->isFinal($item)) {
+                if ($this->accepts($item, $class)) {
+                    return null;
+                }
+
+                continue;
+            }
+
+            if (!self::has($this->masks[$item], $class)) {
+                continue;
+            }
+
+            $next += $this->exactSuccessors($item);
+        }
+
+        ksort($next);
+
+        return $next;
+    }
+
+    /**
+     * The items after the item on paths the model reads as the engine does.
+     *
+     * @return array<int, true>
+     */
+    public function exactSuccessors(int $item): array
+    {
+        $next = [];
+        foreach ($this->successors[$item] as $index => $successor) {
+            if (0 === ($this->edges[$item][$index] & self::EDGE_WIDENED)) {
+                $next[$successor] = true;
+            }
+        }
+
+        return $next;
+    }
+
+    /**
      * Whether the items may succeed at the end of the subject on the
      * engine: they do, or one of them is a success through an undecided
      * check, such as a lookahead, which the model does not count.
@@ -611,6 +668,9 @@ final class ItemAutomaton
             [$current, $peek, $end, $entered, $undecided, $edge] = $frame;
             // A frame costs what it carries: the loops it remembers.
             $this->budget->step(1 + \count($entered));
+            if (isset($pnfa->keptWhole[$current])) {
+                $edge |= self::EDGE_WIDENED;
+            }
 
             switch ($pnfa->kinds[$current]) {
                 case Pnfa::EPSILON:
@@ -675,7 +735,14 @@ final class ItemAutomaton
                     break;
 
                 case Pnfa::ENTER:
-                    $entered[$pnfa->loops[$current]] = true;
+                    // A second round of a bounded repeat read as unbounded,
+                    // once the path went back into one, may be past its bound.
+                    $loop = $pnfa->loops[$current];
+                    if (isset($pnfa->abstractedLoops[$loop]) && 0 !== ($edge & self::EDGE_ABSTRACTED)) {
+                        $edge |= self::EDGE_WIDENED;
+                    }
+
+                    $entered[$loop] = true;
                     $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge];
 
                     break;

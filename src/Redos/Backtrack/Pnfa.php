@@ -144,6 +144,14 @@ final class Pnfa
     public array $approximated = [];
 
     /**
+     * @var array<int, true> every state of an atomic body kept with every way
+     *                       through it, reading or not: a path through one
+     *                       may reach a success the engine, committed to the
+     *                       body's first way, never reaches
+     */
+    public array $keptWhole = [];
+
+    /**
      * @var list<int> where each lookaround read in place starts in the
      *                pattern, in the order their bodies were built
      */
