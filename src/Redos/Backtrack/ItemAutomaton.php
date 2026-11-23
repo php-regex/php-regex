@@ -107,10 +107,31 @@ final class ItemAutomaton
     public array $initialRoutes = [];
 
     /**
-     * Whether some epsilon closure reaches one state by two paths: without
-     * one, every item follows each one by a single route.
+     * @var array<int, int> the epsilon paths from a reading item that end
+     *                      before any item: at a check that fails, at a
+     *                      success refused, or nowhere. The engine walks
+     *                      each of them all the same.
      */
-    public bool $repeats = false;
+    public array $dead = [];
+
+    /**
+     * @var array<int, int> the same from an attempt start, by its index in
+     *                      the initials
+     */
+    public array $initialDead = [];
+
+    /**
+     * @var array<int, array<int, int>> the epsilon paths from a reading item
+     *                                  through each sub-search's mark: its
+     *                                  body runs once for each
+     */
+    public array $markRoutes = [];
+
+    /**
+     * @var array<int, array<int, int>> the same from an attempt start, by its
+     *                                  index in the initials
+     */
+    public array $initialMarkRoutes = [];
 
     /**
      * @var array<int, list<int>> the sub-searches met after a reading item
@@ -177,7 +198,7 @@ final class ItemAutomaton
     private array $ids = [];
 
     /**
-     * @var array<string, array{list<int>, list<int>, list<int>, array<int, int>}> by state and path context
+     * @var array<string, array{list<int>, list<int>, list<int>, array<int, int>, int, array<int, int>}> by state and path context
      */
     private array $closures = [];
 
@@ -196,9 +217,17 @@ final class ItemAutomaton
     ) {
         $this->splitsContext = null !== $pnfa->wordSet || $pnfa->hasLineStart;
         foreach ($startContexts as $context) {
-            [$items, $marks, , $routes] = $this->closure($pnfa->start, $context, false, true);
+            [$items, $marks, , $routes, $dead, $passes] = $this->closure($pnfa->start, $context, false, true);
             if ([] !== $routes) {
                 $this->initialRoutes[\count($this->initials)] = $routes;
+            }
+
+            if (0 !== $dead) {
+                $this->initialDead[\count($this->initials)] = $dead;
+            }
+
+            if ([] !== $passes) {
+                $this->initialMarkRoutes[\count($this->initials)] = $passes;
             }
 
             $this->initials[] = ['context' => $context, 'items' => $items, 'marks' => $marks];
@@ -209,13 +238,21 @@ final class ItemAutomaton
                 continue;
             }
 
-            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item], $routes] = $this->closure(
+            [$this->successors[$item], $this->marksAfter[$item], $this->edges[$item], $routes, $dead, $passes] = $this->closure(
                 $pnfa->next[$this->states[$item]],
                 $this->contexts[$item],
                 $this->uncertain[$item],
             );
             if ([] !== $routes) {
                 $this->routes[$item] = $routes;
+            }
+
+            if (0 !== $dead) {
+                $this->dead[$item] = $dead;
+            }
+
+            if ([] !== $passes) {
+                $this->markRoutes[$item] = $passes;
             }
         }
 
@@ -667,10 +704,11 @@ final class ItemAutomaton
      * decide "^", "\A", "^" under /m and "\b", and whether it went through
      * a lookaround, whose constraint the model does not keep: a success after
      * one is not counted. Returned: the items, the sub-searches met, what
-     * each item's path went through, and how many paths reach each item more
-     * than two reach.
+     * each item's path went through, how many paths reach each item more
+     * than two reach, how many paths end before any item, and how many go
+     * through each sub-search's mark.
      *
-     * @return array{list<int>, list<int>, list<int>, array<int, int>}
+     * @return array{list<int>, list<int>, list<int>, array<int, int>, int, array<int, int>}
      */
     private function closure(int $state, int $context, bool $uncertain, bool $attemptStart = false): array
     {
@@ -684,7 +722,9 @@ final class ItemAutomaton
         $through = [];
         $seen = [];
         $folded = [];
+        $dead = 0;
         $marks = [];
+        $passes = [];
         // Each frame: the state, the constraint on the next character, whether
         // the end may come next, the loops this path entered, whether it went
         // through an undecided check, and what it went through (EDGE_*).
@@ -702,6 +742,11 @@ final class ItemAutomaton
             switch ($pnfa->kinds[$current]) {
                 case Pnfa::EPSILON:
                     $targets = $pnfa->targets[$current];
+                    // The end of a lookaround read in place: its body leads nowhere.
+                    if ([] === $targets) {
+                        $dead++;
+                    }
+
                     for ($index = \count($targets) - 1; $index >= 0; $index--) {
                         $stack[] = [$targets[$index], $peek, $end, $entered, $undecided, $edge];
                     }
@@ -710,13 +755,17 @@ final class ItemAutomaton
 
                 case Pnfa::CHAR:
                     $label = null === $peek ? $pnfa->sets[$current] : $pnfa->sets[$current]->intersect($peek);
-                    foreach ($this->byContext($label) as [$part, $left]) {
+                    $parts = $this->byContext($label);
+                    if ([] === $parts) {
+                        $dead++;
+                    }
+
+                    foreach ($parts as [$part, $left]) {
                         $item = $this->item($current, $part, null, false, null === $peek && !$this->splitsContext, $left, $undecided);
                         $seen[$item] = ($seen[$item] ?? 0) + 1;
                         if ($seen[$item] <= 2) {
                             $entries[] = $item;
                             $through[] = $edge;
-                            $this->repeats = $this->repeats || 2 === $seen[$item];
                         } else {
                             $folded[$item] = $seen[$item];
                         }
@@ -733,6 +782,8 @@ final class ItemAutomaton
                     $endAllowed = $end && $allowsEnd;
                     if (!$narrowed->isEmpty() || $endAllowed) {
                         $stack[] = [$pnfa->next[$current], $narrowed, $endAllowed, $entered, $undecided, $edge];
+                    } else {
+                        $dead++;
                     }
 
                     break;
@@ -742,6 +793,8 @@ final class ItemAutomaton
                     // PHP's retry offset, after any character.
                     if ($attemptStart) {
                         $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge];
+                    } else {
+                        $dead++;
                     }
 
                     break;
@@ -749,6 +802,8 @@ final class ItemAutomaton
                 case Pnfa::START:
                     if (self::CONTEXT_START === $context) {
                         $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge];
+                    } else {
+                        $dead++;
                     }
 
                     break;
@@ -760,6 +815,8 @@ final class ItemAutomaton
                         $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided, $edge];
                     } elseif (self::CONTEXT_NEWLINE === $context) {
                         $stack[] = [$pnfa->next[$current], $peek, false, $entered, $undecided, $edge];
+                    } else {
+                        $dead++;
                     }
 
                     break;
@@ -795,6 +852,7 @@ final class ItemAutomaton
                     // after it may fail, unless it is taken to hold. Its body
                     // starts in this context.
                     $marks[$pnfa->marks[$current]] = true;
+                    $passes[$pnfa->marks[$current]] = ($passes[$pnfa->marks[$current]] ?? 0) + 1;
                     $this->markContexts[$pnfa->marks[$current]][$context] = true;
                     $held = \in_array($pnfa->marks[$current], $this->held, true);
                     $stack[] = [$pnfa->next[$current], $peek, $end, $entered, $undecided || !$held, $edge | self::EDGE_LOOKAROUND];
@@ -811,6 +869,8 @@ final class ItemAutomaton
                     // the one option the search holds "\K" under, the engine
                     // refuses that success and backtracks.
                     if (0 !== ($edge & self::EDGE_KEEP)) {
+                        $dead++;
+
                         break;
                     }
 
@@ -819,14 +879,13 @@ final class ItemAutomaton
                     if ($seen[$item] <= 2) {
                         $entries[] = $item;
                         $through[] = $edge;
-                        $this->repeats = $this->repeats || 2 === $seen[$item];
                     } else {
                         $folded[$item] = $seen[$item];
                     }
             }
         }
 
-        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through, $folded];
+        return $this->closures[$cacheKey] = [$entries, array_keys($marks), $through, $folded, $dead, $passes];
     }
 
     /**

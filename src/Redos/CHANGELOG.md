@@ -91,12 +91,23 @@ CHANGELOG
    loop and to the end included, where a list of states held each one
    twice at most: thirteen groups `(?:b{0}|)` after `^…a+` before a dot
    gave one attempt on one `a` and a newline 2,097,153 steps, past PHP's
-   backtrack limit, and the pattern was safe (proven). The routes multiply
-   along the whole attempt, across the loops and into a lookaround's body,
-   and their product is held to the same margin: ten groups on each side
-   of `a+` (1,048,577 steps on one `a` and a newline) and ten before a
-   lookahead with ten in its body (1,049,601 steps on a newline) are no
-   longer safe (proven), though each stretch alone is within it.
+   backtrack limit, and the pattern was safe (proven). It counts too the
+   routes that die at a check, which the engine walks as it walks those
+   that go on: ten groups before an `x` and ten after it, then `\ba`, take
+   1,048,577 steps on `xa`, every route after the `x` dying at `\b`, with
+   no loop at all. The paths multiply along the whole attempt, the ways
+   one input is read with the routes, across the loops and into a
+   lookaround's body, once for each path through its mark, and their
+   product is held to the same margin: ten groups on each side of `a+`
+   (1,048,577 steps on one `a` and a newline), ten copies `(?:a|[a])`
+   before `x+` and ten groups after it (1,048,577 steps on ten `a`, an `x`
+   and a newline), and ten groups before a lookahead with ten in its body
+   (1,049,601 steps on a newline) are no longer safe (proven), though each
+   stretch alone is within it. The paths of loops read side by side add
+   up: forty alternatives `a+` each followed by five groups (1,280,001
+   steps on a thousand `a` and a `?`) are no longer safe (proven) either.
+   A pattern found exponential or polynomial keeps its verdict past the
+   margin, its paths only adding to its cost.
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of

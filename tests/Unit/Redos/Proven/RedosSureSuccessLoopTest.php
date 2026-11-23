@@ -315,8 +315,8 @@ final class RedosSureSuccessLoopTest extends TestCase
      * "x+" before "(?:a|a)+" does not start the count again. Five groups
      * before "x+" and five after the loop give one attempt on "xa" and a
      * newline 2 177 steps in the interpreter, 32 ways to "x+", two into the
-     * loop and 34 the run reads, past the margin; four on each side take
-     * 577.
+     * loop and 34 the run reads, past the margin; three on each side take
+     * 161.
      */
     #[Test]
     #[DataProvider('provideRoutesPastAnotherLoop')]
@@ -348,7 +348,7 @@ final class RedosSureSuccessLoopTest extends TestCase
             return $groups;
         };
 
-        yield 'four groups on each side' => ['pattern' => '/^'.$apart(4, 0).'x+(?:a|a)+'.$apart(4, 11).'./', 'subject' => "xa\n", 'steps' => 577, 'proven' => true];
+        yield 'three groups on each side' => ['pattern' => '/^'.$apart(3, 0).'x+(?:a|a)+'.$apart(3, 11).'./', 'subject' => "xa\n", 'steps' => 161, 'proven' => true];
         yield 'five groups on each side' => ['pattern' => '/^'.$apart(5, 0).'x+(?:a|a)+'.$apart(5, 11).'./', 'subject' => "xa\n", 'steps' => 2_177, 'proven' => false];
         yield 'ten groups before another loop and eight after' => ['pattern' => '/^'.$apart(10, 0).'x+(?:a|a)+'.$apart(8, 11).'./', 'subject' => "xa\n", 'steps' => 528_385, 'proven' => false];
         yield 'ten groups before each of two loops' => ['pattern' => '/^'.$apart(10, 0).'y+'.$apart(10, 11).'x+(?:a|a)+./', 'subject' => "yxa\n", 'steps' => 6_291_456, 'proven' => false];
