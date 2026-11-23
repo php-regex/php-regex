@@ -6,6 +6,17 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * A loop is no longer set aside on a success the analysis widens. A
+   bounded repeat read as unbounded, and an atomic body kept with every way
+   through it, made the continuation after an ambiguous loop look sure to
+   succeed where the engine fails: `/^(?:a|a)+[^x]{0,20}(?:x|\z)/` was safe
+   (proven) while PHP exhausts its backtrack limit on 20 `a` and 30 `b`, and
+   so were `/^(?:a|a)+(?:[^x]|[^x]){0,3}(?:x|\z)/`, `/^(?:a+)+(?>.*|y)\b/`
+   and `/^a*a*[^x]{0,20}(?:x|\z)/`, quadratic. A success now sets a loop
+   aside only on a path that takes one round at most of such a repeat and
+   goes through no such body: `/^(?:a|a)+[^x]*(?:x|\z)/`,
+   `/^(?:a|a)+.{0,20}/` and `/^(?:a|a)+(?>[^x]*)(?:x|\z)/` stay safe
+   (proven).
  * `RedosAnalysis::$everyMatchSearchCost`, and `every_match_search_cost` in
    its JSON: the search cost of the functions that look for every match.
    After an empty match PHP tries the same offset again with
