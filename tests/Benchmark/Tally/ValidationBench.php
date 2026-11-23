@@ -116,8 +116,8 @@ final class ValidationBench
      */
     #[DataProvider('validateCases')]
     #[ExpectedFor('counted-4500', instructions: '2.458K', cycles: '21.65K', memory: '40B')]
-    #[ExpectedFor('lookbehind-alternatives', instructions: '106.7K', cycles: '150.6K', memory: '192B')]
-    #[ExpectedFor('many-backreferences', instructions: '51.77K', cycles: '84.51K', memory: '192B')]
+    #[ExpectedFor('lookbehind-alternatives', instructions: '106.2K', cycles: '141.1K', memory: '192B')]
+    #[ExpectedFor('many-backreferences', instructions: '52.16K', cycles: '94.18K', memory: '192B')]
     #[ExpectedFor('recursion-balanced', instructions: '2.500K', cycles: '21.63K', memory: '56B')]
     #[ExpectedFor('reversed-quantifier', instructions: '2.453K', cycles: '21.75K', memory: '40B')]
     #[ExpectedFor('unclosed-group', instructions: '2.461K', cycles: '21.76K', memory: '40B')]
