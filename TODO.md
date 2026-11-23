@@ -9,6 +9,17 @@
   unbounded, and the checks that take a success as sure trust it. Find
   every part the model widens where a success is taken as sure, and
   refuse it there.
+- False "safe (proven)" since before RC1, from another cause: the
+  automata let `^` under `m` hold after a newline that ends the subject,
+  where PCRE2 does not (`preg_match("/\n^/m", "a\n")` is 0), and the
+  checks that take a success as sure trust it.
+  `/\A(?:\n|\n)+(?:^\z|[^\n])/m` is proven linear, yet 18 `\n` exhaust
+  the backtrack limit with `pcre.jit=0` (20 with the JIT). Model the
+  anchor as PCRE2 does, under every newline convention.
+- The search cost misses `/(?:a\n)*(?:a{2}|b|\z)/m`: proven safe with no
+  search cost, yet `preg_match()` on `"a\n"` × 1,000, 2,000 and 4,000 then
+  `!` takes 23, 96 and 330 ms with `pcre.jit=0` (1.2, 4.6 and 18 ms with
+  the JIT), each attempt linear.
 - The overlap rule reads an escape past ASCII under u as unknown where it
   reads the raw letter: under C, `/(?:[a-z]|\x{E9}|[a-c]|)+/u` goes
   unreported while `/(?:[a-z]|é|[a-c]|)+/u` is reported
