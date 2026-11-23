@@ -2,13 +2,13 @@
 
 ## ReDoS precision
 
-- False "safe (proven)" since before RC1: `/^(?:a|a)+[^x]{0,20}(?:x|\z)/`
-  is proven linear, yet `preg_match()` on 20 `a` and 30 `b` exhausts the
-  backtrack limit, with the JIT on and off (PHP 8.4.28, PCRE2 10.49);
-  `{0,3}` is proven exponential. The model reads the bounded repeat as
-  unbounded, and the checks that take a success as sure trust it. Find
-  every part the model widens where a success is taken as sure, and
-  refuse it there.
+- Since #445 a loop is set aside on a sure success only where no widened
+  part lies on the way, which costs precision: of 19,000 fuzzed loop
+  patterns, 242 linear ones lose "safe (proven)", mostly an atomic
+  alternation whose first branch always matches, `(?>[^x]*|y)`, which the
+  engine always commits to. Read such a body exactly. The patterns #445
+  takes from the proof, `/^(?:a|a)+[^x]{0,20}(?:x|\z)/` and
+  `/^(?:a+)+(?>.*|y)\b/`, are heuristic now: prove them exponential.
 - False "safe (proven)" since before RC1, from another cause: the
   automata let `^` under `m` hold after a newline that ends the subject,
   where PCRE2 does not (`preg_match("/\n^/m", "a\n")` is 0), and the
