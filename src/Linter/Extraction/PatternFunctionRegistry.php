@@ -86,9 +86,11 @@ final class PatternFunctionRegistry
         $functions = [];
 
         // The pattern is the first argument, but for one function whose
-        // patterns are the keys of the array passed as first argument.
+        // patterns are the keys of the array passed as first argument. The
+        // functions that look for every match say so, with their limit.
         foreach (array_keys(PregFunctions::PARAMETERS) as $function) {
-            $functions[$function] = new PatternFunction($function, 0, keysArePatterns: 'preg_replace_callback_array' === $function);
+            $everyMatch = \in_array($function, PregFunctions::EVERY_MATCH, true) ? $function : null;
+            $functions[$function] = new PatternFunction($function, 0, keysArePatterns: 'preg_replace_callback_array' === $function, everyMatch: $everyMatch, limitArgument: PregFunctions::limit($function));
         }
 
         // filter_var($value, $filter, $options), filter_input($type,

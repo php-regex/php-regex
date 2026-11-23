@@ -439,6 +439,15 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
                 }
             }
 
+            // A literal limit bounds how many matches the call makes: its
+            // loop no longer goes on after every match.
+            if (null !== $function->limitArgument) {
+                $limit = self::integer($args, $function->limitArgument);
+                if (null !== $limit && $function->boundedBy($limit)) {
+                    $function = $function->bounded();
+                }
+            }
+
             // filter_var() compiles the option only under FILTER_VALIDATE_REGEXP.
             if (null !== $function->filterArgument) {
                 [$index, $name, $constant] = $function->filterArgument;
@@ -602,6 +611,41 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
     }
 
     /**
+     * The integer the argument at the position or under the name writes as
+     * a literal, under its signs: 2, -1; null when left out, spread or
+     * anything else.
+     *
+     * @param array<Arg>         $args
+     * @param array{int, string} $parameter its position and its name
+     */
+    private static function integer(array $args, array $parameter): ?int
+    {
+        $position = 0;
+        $value = null;
+        foreach ($args as $arg) {
+            if ($arg->unpack) {
+                return null;
+            }
+
+            if (null === $arg->name ? $position++ === $parameter[0] : $parameter[1] === $arg->name->toString()) {
+                $value = $arg->value;
+            }
+        }
+
+        $negative = false;
+        while ($value instanceof UnaryMinus || $value instanceof UnaryPlus) {
+            $negative = $negative !== $value instanceof UnaryMinus;
+            $value = $value->expr;
+        }
+
+        if (!$value instanceof LNumber) {
+            return null;
+        }
+
+        return $negative ? -$value->value : $value->value;
+    }
+
+    /**
      * The argument passed by one of the names, compared as PHP does, case
      * included.
      *
@@ -750,6 +794,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             $patternFunction->source(),
             column: null !== $offset ? PendingPattern::column($content, $offset) : null,
             fileOffset: $offset,
+            everyMatch: $patternFunction->everyMatch,
         );
     }
 

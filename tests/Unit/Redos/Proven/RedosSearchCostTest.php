@@ -989,6 +989,11 @@ final class RedosSearchCostTest extends TestCase
 
                 throw new ResourceLimitException('The replay ran out of its limits.', ErrorCode::PatternTooLong);
             }
+
+            public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of every match is not asked.');
+            }
         };
 
         $this->assertNull(self::findSearchCost('/\s+$/', $failing));
@@ -1018,6 +1023,11 @@ final class RedosSearchCostTest extends TestCase
             public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('A bug in the replay.');
+            }
+
+            public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of every match is not asked.');
             }
         };
 

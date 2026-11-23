@@ -31,4 +31,12 @@ interface SearchCostReplayerInterface
      * options leave the replay unable to finish its count.
      */
     public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
+
+    /**
+     * Whether the loop of the functions that look for every match stops on
+     * an empty match inside the run, then retries there an attempt that
+     * refuses it, reads what is left of the run and fails; null when the
+     * limits of the options leave the replay unable to finish its count.
+     */
+    public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
 }

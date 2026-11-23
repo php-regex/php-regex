@@ -178,13 +178,19 @@ final class RegexPatternRule implements Rule
 
         // Safe\preg_match() and the other drop-ins read as the function
         // they stand for.
-        $functionName = $this->registry->lookupFunction($node->name->toString())->label ?? '';
+        $function = $this->registry->lookupFunction($node->name->toString());
+        if (null === $function) {
+            return [];
+        }
+
+        $functionName = $function->label;
         $subject = PregFunctions::subject($functionName);
         if (null === $subject) {
             return [];
         }
 
         $args = $node->getArgs();
+        $everyMatch = self::everyMatch($function, $args, $scope);
         $patternArg = self::argument($args, 0, 'pattern');
         if (null === $patternArg) {
             return [];
@@ -197,7 +203,7 @@ final class RegexPatternRule implements Rule
         $constantSubject = null !== $subjectArg && $scope->getType($subjectArg)->isConstantValue()->yes();
 
         if ('preg_replace_callback_array' === $functionName) {
-            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getStartLine(), $functionName, $constantSubject);
+            return $this->processPregReplaceCallbackArray($patternArg, $scope, $node->getStartLine(), $functionName, $constantSubject, $everyMatch);
         }
 
         // preg_match($pattern, $subject) alone, its result the only output.
@@ -224,7 +230,7 @@ final class RegexPatternRule implements Rule
             $pattern = (string) $pattern;
             $errors = array_merge(
                 $errors,
-                $this->checker->check($pattern, $node->getStartLine(), $scope, $this->formatSource($functionName), $constantSubject, $offset),
+                $this->checker->check($pattern, $node->getStartLine(), $scope, $this->formatSource($functionName), $constantSubject, $offset, $everyMatch),
             );
 
             if ($plainMatch) {
@@ -260,6 +266,7 @@ final class RegexPatternRule implements Rule
         }
 
         $args = $node->getArgs();
+        $everyMatch = self::everyMatch($function, $args, $scope);
         $errors = [];
         foreach ($function->eachArgument() as $carrier) {
             $patternArg = self::patternArgument($args, $carrier);
@@ -282,7 +289,7 @@ final class RegexPatternRule implements Rule
             foreach ($patterns as $pattern => $offset) {
                 $errors = array_merge(
                     $errors,
-                    $this->checker->check((string) $pattern, $node->getStartLine(), $scope, $this->formatSource($function->label), false, $offset),
+                    $this->checker->check((string) $pattern, $node->getStartLine(), $scope, $this->formatSource($function->label), false, $offset, $everyMatch),
                 );
             }
         }
@@ -504,7 +511,7 @@ final class RegexPatternRule implements Rule
     /**
      * @return array<IdentifierRuleError>
      */
-    private function processPregReplaceCallbackArray(Expr $map, Scope $scope, int $lineNumber, string $functionName, bool $constantSubject): array
+    private function processPregReplaceCallbackArray(Expr $map, Scope $scope, int $lineNumber, string $functionName, bool $constantSubject, ?string $everyMatch): array
     {
         // The keys are the patterns, wherever the map is written: in the
         // call, in a variable or in a constant.
@@ -529,11 +536,36 @@ final class RegexPatternRule implements Rule
         foreach (array_values(array_unique($patterns)) as $pattern) {
             $errors = array_merge(
                 $errors,
-                $this->checker->check($pattern, $lineNumber, $scope, $this->formatSource($functionName), $constantSubject, $offsets[$pattern] ?? null),
+                $this->checker->check($pattern, $lineNumber, $scope, $this->formatSource($functionName), $constantSubject, $offsets[$pattern] ?? null, $everyMatch),
             );
         }
 
         return $errors;
+    }
+
+    /**
+     * The preg function whose loop over every match the call runs, which
+     * PHP retries after an empty match; null for a call that stops at the
+     * first match, or one whose limit, as its type says, bounds how many
+     * matches it makes.
+     *
+     * @param array<Arg> $args
+     */
+    private static function everyMatch(PatternFunction $function, array $args, Scope $scope): ?string
+    {
+        if (null === $function->everyMatch || null === $function->limitArgument) {
+            return $function->everyMatch;
+        }
+
+        $limit = self::argument($args, ...$function->limitArgument);
+        $values = null === $limit ? [] : $scope->getType($limit)->getConstantScalarValues();
+        foreach ($values as $value) {
+            if (!\is_int($value) || !$function->boundedBy($value)) {
+                return $function->everyMatch;
+            }
+        }
+
+        return [] === $values ? $function->everyMatch : null;
     }
 
     private function formatSource(string $functionName): string

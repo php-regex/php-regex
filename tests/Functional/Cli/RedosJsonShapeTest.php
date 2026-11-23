@@ -42,6 +42,8 @@ final class RedosJsonShapeTest extends TestCase
         'search_cost',
         // The ceiling on the steps of one attempt.
         'upper_bound_degree',
+        // The search cost of the functions that look for every match.
+        'every_match_search_cost',
     ];
 
     /**

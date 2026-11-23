@@ -6,6 +6,16 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` is raised at the calls of `preg_match_all()`,
+   `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
+   `preg_replace_callback_array()` and `preg_split()`, and of their `Safe\`
+   and composer/pcre forms, on a pattern whose search costs them n² through
+   PHP's retry after an empty match (`RedosAnalysis::$everyMatchSearchCost`),
+   with the message `Quadratic search after an empty match: ...` naming the
+   function. A literal limit that bounds the call keeps it quiet, and so does
+   a `preg_match()` call. `PatternOccurrence::$everyMatch` names the function
+   whose loop the call runs. Severity `medium`: hidden at the default `high`
+   threshold, shown from `--redos-threshold=medium`.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
    `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that
@@ -80,6 +90,18 @@ CHANGELOG
    raw `\xE9`, is reported under fr_FR.ISO8859-1, where the Latin-1
    tables put `\xE9` in `[:alpha:]`, and `"/(?:[[:^alpha:]]|\xD7|)+/"`
    under C as there; neither was.
+ * Without u, `regex.lint.alternation.overlap` reads the text of a branch
+   read caselessly in one case as the tables of the target's locale give
+   it, where it folded the ASCII letters alone: `"/(?:\xC9x|\xE9x)+/i"`,
+   with raw bytes, is reported under fr_FR.ISO8859-1, where the Latin-1
+   tables pair `\xC9` with `\xE9` and PCRE matches `\xE9x` with `\xC9x`,
+   and `"/(?:\xC9|\xE9)+/i"` and `"/(?:\xC9|\xE9|)+/i"` are reported there
+   by that rule rather than by `regex.lint.overlap.charset`; nothing
+   changes under C. The texts
+   `regex.lint.overlap.charset` tells branches apart by are read the same
+   way: `"/(?:\xC9x\\d|\xE9x\\w)+/i"` is reported under fr_FR.ISO8859-1,
+   which it was not. A byte is paired as the target's release reads the
+   tables, and one they pair one way alone keeps its own case.
  * `regex.lint.flag.useless.i` reads the case of a byte above ASCII, and
    under u of an ASCII character, from the tables of the target's locale:
    under fr_FR.ISO8859-1, where `"/\xE9/i"` matches `\xC9`, the flag is no

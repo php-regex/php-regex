@@ -147,14 +147,16 @@ final class PatternChecker
      * The errors of a pattern the running engine compiles; the caller
      * reports one it refuses (PHPStan core does in a preg_*() call).
      *
-     * @param string   $source     where the pattern was found, as "php:preg_match()"
-     * @param int|null $fileOffset where the literal the pattern was written with starts in the file, when
-     *                             the call holds it: a raw character is reported only where that literal
-     *                             holds it as written
+     * @param string      $source     where the pattern was found, as "php:preg_match()"
+     * @param int|null    $fileOffset where the literal the pattern was written with starts in the file, when
+     *                                the call holds it: a raw character is reported only where that literal
+     *                                holds it as written
+     * @param string|null $everyMatch the preg function the call runs the pattern in when it looks for every
+     *                                match, whose loop PHP retries after an empty match; null otherwise
      *
      * @return array<IdentifierRuleError>
      */
-    public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject, ?int $fileOffset = null): array
+    public function check(string $pattern, int $lineNumber, Scope $scope, string $source, bool $constantSubject, ?int $fileOffset = null, ?string $everyMatch = null): array
     {
         if (!$this->scope->judgesBeyondTheRunningEngine() && !$this->lintEnabled && !$this->redosEnabled && !$this->optimizationsEnabled && !$this->complexityEnabled) {
             return [];
@@ -197,6 +199,7 @@ final class PatternChecker
             $lineNumber,
             $source,
             fileOffset: $fileOffset,
+            everyMatch: $everyMatch,
         );
         $analysisService = $this->analysisAt($floor);
 

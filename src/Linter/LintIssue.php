@@ -203,6 +203,12 @@ final class LintIssue
             return new Diagnostic(DiagnosticType::Security, $this->severity, $this->message, $this->issueId, implode("\n", RedosVerdict::searchEvidence($searchCost, $this->analysis->pcreVersion)));
         }
 
+        // So does the search of the calls that look for every match.
+        $everyMatchCost = $this->analysis->everyMatchSearchCost;
+        if (RedosVerdict::SEARCH_ISSUE_ID === $this->issueId && null !== $everyMatchCost) {
+            return new Diagnostic(DiagnosticType::Security, $this->severity, $this->message, $this->issueId, implode("\n", RedosVerdict::everyMatchEvidence($everyMatchCost, $this->analysis->pcreVersion)));
+        }
+
         // The attack, already escaped, its replay, then what each finding
         // says the risk is: the reports that keep only the message and the
         // suggestion still show the evidence and the diagnosis.

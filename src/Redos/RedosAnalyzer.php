@@ -143,10 +143,17 @@ final class RedosAnalyzer
 
             // One attempt proven linear: what the retries of the search cost,
             // replayed in confirmed mode when its severity, that of a proven
-            // quadratic attempt, reaches the threshold.
-            $searchCost = RedosComplexity::Linear === $proof?->complexity
-                ? (new SearchCostProver())->find($regex, $ast, $outcome, RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank(), $parser->target(), $confirmOptions)
-                : null;
+            // quadratic attempt, reaches the threshold; when the search costs
+            // nothing found, what PHP's retry after an empty match costs the
+            // functions that look for every match.
+            $searchCost = null;
+            $everyMatchSearchCost = null;
+            if (RedosComplexity::Linear === $proof?->complexity) {
+                $prover = new SearchCostProver();
+                $replay = RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank();
+                $searchCost = $prover->find($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions);
+                $everyMatchSearchCost = null === $searchCost ? $prover->findEveryMatch($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions) : null;
+            }
 
             $analysis = new RedosAnalysis(
                 severity: $severity,
@@ -170,6 +177,7 @@ final class RedosAnalyzer
                     : [],
                 upperBoundDegree: $outcome->stepBound,
                 searchCost: $searchCost,
+                everyMatchSearchCost: $everyMatchSearchCost,
             );
 
             if (RedosMode::Confirmed !== $mode || !$analysis->exceedsThreshold($threshold)) {

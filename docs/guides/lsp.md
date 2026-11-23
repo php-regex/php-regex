@@ -264,7 +264,9 @@ Warning: Exponential backtracking (proven). Severity: CRITICAL, confidence: MEDI
 
 The quadratic cost of an unanchored search whose every attempt is linear
 is `regex.lint.redos.search`, a Warning, at a threshold of `medium` or
-`low`. Once the analysis proves a pattern linear, the lint warnings that
+`low`. So is the cost of the loop of a call that looks for every match,
+`preg_match_all()` or `preg_split()` for instance, on a pattern whose search
+stops at an empty match inside a run, as on the command line. Once the analysis proves a pattern linear, the lint warnings that
 guess at backtracking (`quantifier.nested`, `dotstar.nested`,
 `overlap.charset`) are no longer published for it. The analysis is bounded
 as on the command line: a pattern past its budget says so in the verdict.
@@ -899,7 +901,7 @@ analyzed for a limit is published as a Warning carrying the limit's code,
 | `regex.lint.lookaround.redundant` | Information | `(?=a(?=b))` asserts what `(?=ab)` asserts (style, off by default) |
 | `regex.lint.quantifier.lazyToClass` | Information | `".*?"` where `"[^"\n]*"` reads the run at once (perf, off by default) |
 | `regex.lint.redos` | Error when confirmed at high severity or above, else Warning | The verdict of the [ReDoS analysis](#redos-analysis), when it is on |
-| `regex.lint.redos.search` | Warning | The quadratic cost of an unanchored search, when the analysis is on |
+| `regex.lint.redos.search` | Warning | The quadratic cost of an unanchored search, or of the loop of a call that looks for every match, when the analysis is on |
 | other `regex.lint.*` | Warning | The [lint rules](../reference/rules.md#quick-reference-table) |
 
 ---

@@ -51,6 +51,13 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  * the values of ArgumentState, where the argument starts, and, in
  * $expression, how the source writes it.
  *
+ * $everyMatch names the preg function a call runs the pattern in when it
+ * looks for every match: preg_match_all(), preg_replace(), preg_filter(),
+ * preg_replace_callback(), preg_replace_callback_array() or preg_split(),
+ * whose loop PHP retries after an empty match; null for a call that stops
+ * at the first match, one a literal limit bounds, or a pattern read
+ * without a call.
+ *
  * $variant is set on a pattern built of a constant of PHP whose value
  * depends on the system the code runs on, DIRECTORY_SEPARATOR, PHP_EOL or
  * PATH_SEPARATOR: the argument holds one pattern for each value, and each
@@ -91,6 +98,7 @@ final class PatternOccurrence
         public readonly ?string $state = null,
         public readonly ?string $expression = null,
         public readonly ?string $variant = null,
+        public readonly ?string $everyMatch = null,
     ) {}
 
     /**
@@ -142,7 +150,7 @@ final class PatternOccurrence
      */
     public function ignoredWhole(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
     }
 
     /**
@@ -153,7 +161,7 @@ final class PatternOccurrence
      */
     public function guardedBy(?TargetConstraint $guard): self
     {
-        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
+        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
     }
 
     /**
@@ -164,7 +172,7 @@ final class PatternOccurrence
      */
     public function analysed(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
     }
 
     /**

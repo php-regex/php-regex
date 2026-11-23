@@ -131,7 +131,10 @@ In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
 `isProvenSafe()` and `headline()` speak of one match attempt: a pattern whose
 unanchored search is quadratic stays `safe (proven)`, and carries that cost in
 `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`null` when no witness was
-found, never a proof of a linear search).
+found, never a proof of a linear search). A pattern whose search is quadratic
+only in the functions that look for every match, through PHP's retry after an
+empty match, carries that cost in `RedosAnalysis::$everyMatchSearchCost`
+instead, and `$searchCost` stays `null`.
 
 The bridges and tools carry more than their classes:
 
@@ -308,9 +311,9 @@ add one to yet.
   library in a minor release, never lose its name.
 - The **JSON output** of the `regex` command: a key keeps its name, its type
   and its meaning, and a success document never gains a top-level `error`
-  (see [JSON output](json-output.md)). The ReDoS analysis' `search_cost`,
-  `null` or `{degree, witness: {prefix, run, breaker}, replayed}`,
-  is one of them.
+  (see [JSON output](json-output.md)). The ReDoS analysis' `search_cost`
+  and `every_match_search_cost`, each `null` or
+  `{degree, witness: {prefix, run, breaker}, replayed}`, are among them.
 - The **tree's JSON export**, `JsonDumper` and `ast.schema.json`: within a
   `version`, a key keeps its name, its type and its meaning, and a node kind
   keeps its `type` name. A minor release may add keys and node kinds, the ones
