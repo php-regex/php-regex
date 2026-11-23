@@ -120,9 +120,17 @@ final class AmbiguityFinder
 
     private readonly int $size;
 
+    /**
+     * Whether the search holds a bounded repeat read as unbounded or an
+     * atomic body kept with every way through it: then a success it reads
+     * may not be the engine's.
+     */
+    private readonly bool $widens;
+
     public function __construct(private readonly ItemAutomaton $automaton, private readonly Budget $budget)
     {
         $this->size = $automaton->count();
+        $this->widens = [] !== $automaton->pnfa->abstractedLoops || [] !== $automaton->pnfa->keptWhole;
     }
 
     /**
@@ -616,14 +624,54 @@ final class AmbiguityFinder
 
     /**
      * Whether no witness can exist for an ambiguity of the item: after it
-     * reads, every continuation is accepted.
+     * reads, every continuation is accepted, on paths the model reads as the
+     * engine does. A bounded repeat read as unbounded, or an atomic body kept
+     * with every way through it, widens what succeeds: "[^x]{0,20}(?:x|\z)"
+     * read as "[^x]*(?:x|\z)" accepts whatever follows, where the engine
+     * fails once twenty characters are not enough.
      */
     private function disproved(int $state): bool
     {
-        $after = array_fill_keys($this->automaton->successors[$state], true);
+        $after = $this->automaton->exactSuccessors($state);
         ksort($after);
 
-        return null === $this->rejectingSuffix($after);
+        return $this->widens ? $this->acceptsEverythingExactly($after) : null === $this->rejectingSuffix($after);
+    }
+
+    /**
+     * Whether every continuation of the set is accepted on paths the model
+     * reads as the engine does (ItemAutomaton::stepExactly()), the end of the
+     * subject included.
+     *
+     * @param array<int, true> $items
+     *
+     * @throws ModelLimitException
+     */
+    private function acceptsEverythingExactly(array $items): bool
+    {
+        $automaton = $this->automaton;
+        $origin = self::key($items);
+        $queue = [$items];
+        $seen = [$origin => true];
+        for ($head = 0; $head < \count($queue); $head++) {
+            $this->budget->step();
+            $current = $queue[$head];
+            if (!$automaton->acceptsAtEnd($current)) {
+                return false;
+            }
+
+            for ($class = 0; $class < $automaton->classCount(); $class++) {
+                $next = $automaton->stepExactly($current, $class);
+                if (null === $next || isset($seen[$key = self::key($next)])) {
+                    continue;
+                }
+
+                $seen[$key] = true;
+                $queue[] = $next;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -1838,7 +1886,7 @@ final class AmbiguityFinder
                     }
                 }
 
-                foreach ($automaton->successors[$item] as $successor) {
+                foreach ($automaton->exactSuccessors($item) as $successor => $_) {
                     if ($automaton->isFinal($successor) && $this->acceptsAll($successor, $ahead)) {
                         $blocked[$item] = true;
 

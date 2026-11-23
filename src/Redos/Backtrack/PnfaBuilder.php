@@ -682,11 +682,13 @@ final class PnfaBuilder
             // body other than one run is kept with every way through it.
             $this->atomicAbstractions[$body->getStartPosition()] ??= self::atomicEntry($body->getStartPosition());
             $this->approximating++;
+            $first = \count($pnfa->kinds);
 
             try {
                 return $this->repeat($body, $min, $max, $next, $leave, $greedy, $flags, $pnfa, $search);
             } finally {
                 $this->approximating--;
+                self::keepWhole($pnfa, $first);
             }
         }
 
@@ -747,11 +749,24 @@ final class PnfaBuilder
     {
         $this->atomicAbstractions[$offset] ??= self::atomicEntry($offset);
         $this->approximating++;
+        $first = \count($pnfa->kinds);
 
         try {
             return $this->node($body, $next, $flags, $pnfa, $search);
         } finally {
             $this->approximating--;
+            self::keepWhole($pnfa, $first);
+        }
+    }
+
+    /**
+     * Marks the states built since the first one as an atomic body kept
+     * with every way through it.
+     */
+    private static function keepWhole(Pnfa $pnfa, int $first): void
+    {
+        for ($state = $first; $state < \count($pnfa->kinds); $state++) {
+            $pnfa->keptWhole[$state] = true;
         }
     }
 
