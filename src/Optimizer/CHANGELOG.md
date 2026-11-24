@@ -65,6 +65,15 @@ CHANGELOG
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
+ * The possessive rewrite reads the flags in force where each item stands,
+   and an option setting no longer keeps it out of the whole pattern:
+   `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` now becomes
+   `/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/`, and
+   `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` becomes
+   `/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/`, while `/(?i)a+b?A/` stays greedy.
+   An option setting that names `U`, under which a plain quantifier is
+   lazy, and a non-atomic lookaround, past whose end the engine reads from
+   where it starts, still keep every quantifier of the pattern as written.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer

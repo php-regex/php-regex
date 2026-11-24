@@ -49,11 +49,8 @@ final class FlagRewrites
     }
 
     /**
-     * Whether an inline flag stands anywhere under the node. The charset
-     * analyzer reads the outer flags only, so an inline flag can change
-     * what a node matches without the disjointness check seeing it, from
-     * where it stands to the end of its group: possessification then
-     * stays out of the whole pattern.
+     * Whether an inline flag stands anywhere under the node: one may turn
+     * "U" on or off around a group, which swaps what "?" and "??" mean.
      */
     public function containsInlineFlags(NodeInterface $node): bool
     {

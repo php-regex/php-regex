@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Parser\Analysis\ByteCharSet;
+use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -56,7 +57,8 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  * has already rewritten. It remembers the repeats whose group the rewriter
  * dropped, for as long as the rewriter lives, what follows the item the
  * rewriter is in, for as long as it is in it, and what follows each call of
- * the pattern visited whole, read once a repetition needs it.
+ * the pattern visited whole and the character sets in force at each node,
+ * read once a repetition needs them.
  *
  * @internal
  */
@@ -103,19 +105,51 @@ final class PossessiveRewrites
      */
     private ?array $calls = null;
 
+    /**
+     * The character sets in force at each node of the pattern visited
+     * whole, and at each item of the sequences possessify() read, under
+     * the flags an option setting changed there: null until a repetition
+     * needs them.
+     *
+     * @var \SplObjectStorage<NodeInterface, CharSetAnalyzer>|null
+     */
+    private ?\SplObjectStorage $inForce = null;
+
     public function __construct(private readonly RewriteState $state, private readonly RepeatRewrites $repeats)
     {
         $this->ungroupedRepeats = new \WeakMap();
     }
 
     /**
-     * Reads the pattern about to be rewritten, and forgets the calls of
-     * the one before.
+     * Whether the pattern keeps every repeat greedy: an option setting
+     * names "U", under which a plain quantifier is lazy, or a lookaround is
+     * not atomic, past whose end the engine reads what follows from where
+     * the lookaround starts, not from where the repetition ends.
+     */
+    public static function keepsRepeatsGreedy(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && false !== strpbrk((string) $node->flags, 'U*')) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::keepsRepeatsGreedy($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Reads the pattern about to be rewritten, and forgets the calls and
+     * the character sets of the one before.
      */
     public function start(RegexNode $node): void
     {
         $this->pattern = $node;
         $this->calls = null;
+        $this->inForce = null;
     }
 
     /**
@@ -202,12 +236,17 @@ final class PossessiveRewrites
      * The items of a sequence with each greedy repeat made possessive where
      * what follows it can never start with a character it gives back.
      *
-     * @param list<NodeInterface> $children
+     * @param list<NodeInterface> $children the items of the sequence as rewritten
+     * @param SequenceNode        $sequence the sequence as the pattern writes it
      *
      * @return list<NodeInterface>
      */
-    public function possessify(array $children): array
+    public function possessify(array $children, SequenceNode $sequence): array
     {
+        // An option setting changes the flags of the items after it: each
+        // item as rewritten reads them where it stands.
+        $this->inForce()->addAll($this->analyzerAt($sequence)->inForce(new SequenceNode($children, $sequence->startPosition, $sequence->endPosition)));
+
         for ($i = 0; $i < \count($children); $i++) {
             $current = $children[$i];
             $suffix = array_slice($children, $i + 1);
@@ -220,7 +259,7 @@ final class PossessiveRewrites
 
                 try {
                     $followingChars = $this->charsAfter($suffix);
-                    if (null !== $followingChars && !$this->state->charSets()->lastChars($current->node)->intersects($followingChars)) {
+                    if (null !== $followingChars && !$this->analyzerAt($current)->lastChars($current->node)->intersects($followingChars)) {
                         $children[$i] = new QuantifierNode(
                             $current->node,
                             $current->quantifier,
@@ -595,8 +634,28 @@ final class PossessiveRewrites
         return match (true) {
             $node instanceof AnchorNode && '$' === $node->value, $node instanceof AssertionNode && 'Z' === $node->value => ByteCharSet::fromChar("\0")->union(ByteCharSet::fromRange(0x0A, 0x0D)),
             $node instanceof AssertionNode && 'z' === $node->value, $node instanceof CommentNode => ByteCharSet::empty(),
-            default => $this->state->charSets()->firstChars($node),
+            default => $this->analyzerAt($node)->firstChars($node),
         };
+    }
+
+    /**
+     * The character sets in force where the node stands: under the flags
+     * an option setting changed there, "(?i)" or "(?i:...)", and for a
+     * group a call runs, those it is written under. A node the pattern
+     * visited whole does not hold reads the flags the pattern is written
+     * with.
+     */
+    private function analyzerAt(NodeInterface $node): CharSetAnalyzer
+    {
+        return $this->inForce()[$node] ?? $this->state->charSets();
+    }
+
+    /**
+     * @return \SplObjectStorage<NodeInterface, CharSetAnalyzer>
+     */
+    private function inForce(): \SplObjectStorage
+    {
+        return $this->inForce ??= null === $this->pattern ? new \SplObjectStorage() : $this->state->charSets()->inForce($this->pattern->pattern);
     }
 
     /**

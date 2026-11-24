@@ -165,11 +165,10 @@ final class OptimizerSafetyTest extends TestCase
     }
 
     /**
-     * The possessifier's charset overlap is computed from the outer flags
-     * only, so an inline (?s:...) scope would look disjoint from a newline
-     * follower while the engine's dot still matches it. Refuse instead of
-     * rewriting: `(?:(?s:.))++` stops before the newline the group could
-     * have consumed.
+     * An inline (?s:...) scope lets the dot take the newline after it:
+     * `(?:(?s:.))++` would stop before the newline the group could have
+     * consumed. The possessifier never reads a dot as disjoint from what
+     * follows it.
      */
     #[Test]
     public function test_possessify_refuses_inline_flag_scopes(): void
@@ -183,22 +182,24 @@ final class OptimizerSafetyTest extends TestCase
     }
 
     /**
-     * The refusal holds wherever the inline scope hides — directly under
-     * the quantifier, inside a sequence, an alternation or a conditional —
-     * while a clean shape still possessifies.
+     * The possessifier reads the flags in force wherever the inline scope
+     * hides — directly under the quantifier, inside a sequence, an
+     * alternation or a conditional: "s" changes no "a", and the rewrite
+     * matches what the pattern matched.
      *
      * @param array{possessive: bool} $options
      * @param string|null             $expected the optimized pattern, when it is not the input
      */
     #[DataProvider('provideInlineFlagScopeShapes')]
     #[Test]
-    public function test_possessify_refuses_inline_flag_scopes_at_any_depth(string $input, array $options, ?string $expected = null): void
+    public function test_possessify_reads_inline_flag_scopes_at_any_depth(string $input, array $options, ?string $expected = null): void
     {
         $optimized = Regex::create(['cache' => null])->optimize(
             $input,
             OptimizerOptions::fromArray($options + ['verify_with_automata' => false]),
         )->optimized;
 
+        $this->assertSame(self::matchedOnEverySubject($input), self::matchedOnEverySubject($optimized), \sprintf('Oracle: %s and %s differ.', $input, $optimized));
         $this->assertSame($expected ?? $input, $optimized);
     }
 
@@ -210,11 +211,13 @@ final class OptimizerSafetyTest extends TestCase
         yield 'scoped group under the quantifier' => [
             'input' => '/(?:(?s:a))+\n/',
             'options' => ['possessive' => true],
+            'expected' => '/(?:(?s:a))++\n/',
         ];
 
         yield 'scoped group inside a sequence' => [
             'input' => '/(?:(?s:a)b)+\n/',
             'options' => ['possessive' => true],
+            'expected' => '/(?:(?s:a)b)++\n/',
         ];
 
         yield 'scoped group inside an alternation' => [
@@ -273,5 +276,31 @@ final class OptimizerSafetyTest extends TestCase
 
         // Without a group the duplicate goes.
         $this->assertSame('/[a]/', Regex::create(['cache' => null])->optimize('/a|a/', new OptimizerOptions(verifyWithAutomata: false))->optimized);
+    }
+
+    /**
+     * What preg_match() answers on every string of "a", "b", "x" and a
+     * newline up to four characters long, with the text and the offset of
+     * the match and of each group.
+     *
+     * @return list<array{int|false, array<array-key, mixed>}>
+     */
+    private static function matchedOnEverySubject(string $pattern): array
+    {
+        $answers = [];
+        $subjects = [''];
+        for ($length = 0; $length <= 4; $length++) {
+            $longer = [];
+            foreach ($subjects as $subject) {
+                $answers[] = [preg_match($pattern, $subject, $matches, \PREG_OFFSET_CAPTURE), $matches];
+                foreach (['a', 'b', 'x', "\n"] as $character) {
+                    $longer[] = $subject.$character;
+                }
+            }
+
+            $subjects = $longer;
+        }
+
+        return $answers;
     }
 }
