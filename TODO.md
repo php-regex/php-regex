@@ -269,12 +269,17 @@ request goes to `phpstan/phpstan-src`.
 
 ## Linter precision
 
-- `CharSetAnalyzer` reads `(*UCP)` without u as Unicode case past ASCII
-  on every release, where PCRE2 does so from 10.35 alone (#440): with a
-  target of PHP 7.4 and PCRE2 10.34, `regex.lint.overlap.charset` reports
-  `"/(*UCP)(?:\xC9|\xE9|)+/i"`, though `/(*UCP)\xC9/i` matches `\xC9`
-  alone there (php:7.4.10). Gate it on `UcpFoldsPastAsciiWithoutUtf`, as
-  `UselessIFlagRule` does.
+- Since #453 the character sets read a byte's case under `(*UCP)` from
+  the target's release, but the paths that ask the running engine do not:
+  the overlap rule where PCRE judges the branches (`setsFromPcre()`,
+  `ClassSetProvider::query()`) and the ReDoS proof (`PnfaBuilder`,
+  `LastCodeUnit`, `SearchCostProver`) read it as PCRE2 10.35 and later
+  do. For PHP 7.4 with PCRE2 10.34, `regex.lint.overlap.charset` still
+  reports `"/(*UCP)(?:\xC9|\xE9)+$/i"`, though `\xC9` matches itself alone
+  there, and `"/(*UCP)^(?:\xE9|\xC9)+x/i"` stays critical (proven), though
+  10.34 runs it on 30 `\xE9` and `!` within the backtrack limit, which
+  10.49 reaches from 20 (JIT and start optimizations off). Read the case
+  there under `UcpFoldsPastAsciiWithoutUtf` as well.
 - Since #452 `regex.lint.flag.useless.i` still keeps an `i` the engine
   finds useless: a class holding both cases under u, `/[aA]/iu` or
   `/[a-zA-Z]/iu`, which needs PCRE2's caseless sets (`k`, `K` and the
