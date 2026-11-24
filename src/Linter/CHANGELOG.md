@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Without u, where the bytes of the branches decide,
+   `regex.lint.overlap.charset` reads a byte read caselessly under
+   `(*UCP)` as the target's PCRE2 does: the case of the character of the
+   same value from 10.35, the tables' case before it.
+   `/(*UCP)(?:\xC9|\xE9|)+/i`, where `\xC9` matches itself alone on 10.34,
+   is no longer reported for PHP 7.4 with PCRE2 10.34, and
+   `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes `\xC9` there, is.
  * `regex.lint.redos.search` is raised at the calls of `preg_match_all()`,
    `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
    `preg_replace_callback_array()` and `preg_split()`, and of their `Safe\`
