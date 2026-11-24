@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -36,7 +37,13 @@ use PHPUnit\Framework\TestCase;
  * takes its number and its name in $matches.
  *
  * A call that may run its own group again, a call of the whole pattern and
- * a call that returns groups stay refused.
+ * a call that returns groups stay refused, but between two patterns that
+ * differ only in possessive quantifiers which take nothing of what may
+ * follow them, read through every call: a call that runs its group again
+ * leads back to where the group starts, the end of the group to every place
+ * a call of it returns to. "/(x(?1)?ca+b?)c/" and "/(x(?1)?ca++b?)c/" write
+ * the same matches, while "/(x(?1)?ca++)(?1)a/" keeps the "a" that
+ * "/(x(?1)?ca+)(?1)a/" gives back to what follows the second call.
  *
  * Checked on PHP 8.4.28 with PCRE2 10.49.
  */
@@ -49,10 +56,12 @@ final class MatchEquivalenceOfCallsTest extends TestCase
     private const FLAGS = \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
 
     /**
-     * The rows that hold from a PCRE2 newer than the floor: a call that
-     * returns groups is PCRE2 10.47 syntax.
+     * The rows that hold from a PCRE2 newer than the floor: the interpreter
+     * of PCRE2 10.42 and before backtracks into no call of the whole
+     * pattern, where the JIT and later releases do; a call that returns
+     * groups is PCRE2 10.47 syntax.
      */
-    private const NEWER_RELEASES = ['10.47' => ['/((a))c(?1(2))/']];
+    private const NEWER_RELEASES = ['10.44' => ['/x(?R)?aa++b?()/'], '10.47' => ['/((a))c(?1(2))/']];
 
     #[Test]
     #[DataProvider('provideCallsReadInPlace')]
@@ -114,6 +123,19 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a group a DEFINE holds, under the extended option of the group around it' => ['left' => '/(?x:(?(DEFINE)(?<n>a b)))(?&n)/', 'right' => '/(?x:(?(DEFINE)(?<n>a b)))ab/', 'letters' => 'ab '];
         yield 'a class a DEFINE holds, under the option of the group around it that skips spaces' => ['left' => '/(?xx:(?(DEFINE)(?<n>[a b])))(?&n)/', 'right' => '/(?xx:(?(DEFINE)(?<n>[a b])))[ab]/', 'letters' => 'ab '];
         yield 'a dot a DEFINE holds, under the dotall option of the group around it' => ['left' => '/(?s:(?(DEFINE)(?<n>.)))(?&n)/', 'right' => '/(?s:(?(DEFINE)(?<n>.)))[\s\S]/', 'letters' => "a\n"];
+        // A group that runs itself again: nothing that may follow the "a"s,
+        // inside the group or after any call of it, starts with "a".
+        yield 'a possessive in a group a DEFINE holds that calls itself' => ['left' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'letters' => 'abcx'];
+        yield 'a possessive in a group that calls itself' => ['left' => '/(x(?1)?ca+b?)c/', 'right' => '/(x(?1)?ca++b?)c/', 'letters' => 'abcx'];
+        yield 'a possessive group inside a group that calls itself' => ['left' => '/(x(?1)?c(a+)b?)c/', 'right' => '/(x(?1)?c(a++)b?)c/', 'letters' => 'abcx'];
+        yield 'a possessive in a group that calls itself, called again where it stands' => ['left' => '/(x(?1)?ca+)(?1)/', 'right' => '/(x(?1)?ca++)(?1)/', 'letters' => 'acx'];
+        yield 'a possessive in a group that calls itself, called twice' => ['left' => '/(?&n){2}c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'right' => '/(?&n){2}c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'letters' => 'abcx'];
+        yield 'a possessive in a group that calls itself at its end, called in a loop' => ['left' => '/(?&n)+(?(DEFINE)(?<n>ca+(?&n)?))/', 'right' => '/(?&n)+(?(DEFINE)(?<n>ca++(?&n)?))/', 'letters' => 'abc'];
+        yield 'a possessive in a group called by a group inside it' => ['left' => '/(x(y(?1)?a+b?)?c)/', 'right' => '/(x(y(?1)?a++b?)?c)/', 'letters' => 'abcxy'];
+        // The group runs again where it stands inside the group it calls.
+        yield 'a possessive in a group that calls the group holding it' => ['left' => '/(?&g)c(?(DEFINE)(?<h>x(?<g>a+(?&h)?b?)))/', 'right' => '/(?&g)c(?(DEFINE)(?<h>x(?<g>a++(?&h)?b?)))/', 'letters' => 'abcx'];
+        yield 'a possessive in a pattern that calls itself whole' => ['left' => '/x(?R)?ca+b?()/', 'right' => '/x(?R)?ca++b?()/', 'letters' => 'abcx'];
+        yield 'a possessive at the end of a pattern that calls itself whole' => ['left' => '/x(?0)?ca+b?/', 'right' => '/x(?0)?ca++b?/', 'letters' => 'abcx'];
     }
 
     #[Test]
@@ -213,6 +235,28 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'the whole pattern beside a group named R' => ['left' => '/(?<R>x)?a(?R)?b/', 'right' => '/(?<R>x)?a(?:x)?b/', 'reason' => $call, 'witness' => 'aabb'];
         yield 'a group a DEFINE holds calling itself' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a(?&n)?b))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>a(?:ab)?b))/', 'reason' => $call, 'witness' => 'aaabbbc'];
         yield 'two groups a DEFINE holds calling each other' => ['left' => '/(?&a)(?(DEFINE)(?<a>x(?&b)?)(?<b>y(?&a)))/', 'right' => '/(?&a)(?(DEFINE)(?<a>x(?:yx)?)(?<b>y(?&a)))/', 'reason' => $call, 'witness' => 'xyxyx'];
+        // A possessive in a group that runs itself again, read through
+        // every call: something after it, inside the group or after a call
+        // of it, starts with "a", and the engine gives an "a" back there.
+        yield 'a possessive in a group that calls itself, an "a" after the call inside it' => ['left' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?aca++b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?aca+b?))/', 'reason' => $call, 'witness' => 'xxacaacac'];
+        yield 'a possessive in a group that calls itself, the group starting with "a"' => ['left' => '/(?&n)c(?(DEFINE)(?<n>a++(?&n)?b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>a+(?&n)?b?))/', 'reason' => $call, 'witness' => 'aabbc'];
+        yield 'a possessive in a group that calls itself, called twice before an "a"' => ['left' => '/(?&n){2}a(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'right' => '/(?&n){2}a(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'reason' => $call, 'witness' => 'xcaxcaa'];
+        yield 'a possessive in a group that calls itself, called twice in a row' => ['left' => '/(?&n)(?&n)(?(DEFINE)(?<n>a++(?&n)?b?))/', 'right' => '/(?&n)(?&n)(?(DEFINE)(?<n>a+(?&n)?b?))/', 'reason' => $call, 'witness' => 'aa'];
+        // Where the group stands, a call follows it; the copy that call
+        // runs is followed by "a".
+        yield 'a possessive in a group that calls itself, called again before an "a"' => ['left' => '/(x(?1)?ca++)(?1)a/', 'right' => '/(x(?1)?ca+)(?1)a/', 'reason' => $call, 'witness' => 'xcaxcaa'];
+        yield 'a possessive in a group that calls the group holding it, called before an "a"' => ['left' => '/(?&g)a(?(DEFINE)(?<h>x(?<g>a++(?&h)?b?)))/', 'right' => '/(?&g)a(?(DEFINE)(?<h>x(?<g>a+(?&h)?b?)))/', 'reason' => $call, 'witness' => 'aa'];
+        yield 'a possessive in a group called by a group inside it, before an "a"' => ['left' => '/(x(y(?1)?a)?ca++b?)/', 'right' => '/(x(y(?1)?a)?ca+b?)/', 'reason' => $call, 'witness' => 'xyxcaaca'];
+        yield 'a possessive in a pattern that calls itself whole, before an "a"' => ['left' => '/x(?R)?aa++b?()/', 'right' => '/x(?R)?aa+b?()/', 'reason' => $call, 'witness' => 'xxaaaa'];
+        yield 'a possessive before a call of the whole pattern, which starts with "a"' => ['left' => '/a++(?R)b|ac/', 'right' => '/a+(?R)b|ac/', 'reason' => $call, 'witness' => 'aacb'];
+        yield 'a possessive in a group that calls itself, read back by a backreference' => ['left' => '/(x(?1)?c(a++)b?)\2/', 'right' => '/(x(?1)?c(a+)b?)\2/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs', 'witness' => 'xcaa'];
+        yield 'a possessive in a group that calls itself, called inside a lookahead' => ['left' => '/(?=(?&n)a)(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'right' => '/(?=(?&n)a)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'reason' => 'Lookarounds', 'witness' => 'xcaa'];
+        // Read alike but for the possessive, these stay outside what the
+        // solver reads: a lazy quantifier against a possessive one, a
+        // pattern read as UTF-8 against one read as bytes, and a verb.
+        yield 'a possessive against a lazy quantifier in a group that calls itself' => ['left' => '/(x(?1)?ca++b?)c/', 'right' => '/(x(?1)?ca+?b?)c/', 'reason' => $call];
+        yield 'a possessive in a group that calls itself, read as UTF-8 on one side' => ['left' => '/(x(?1)?ca++b?)c/u', 'right' => '/(x(?1)?ca+b?)c/', 'reason' => $call, 'witness' => "\xFF"];
+        yield 'a possessive in a group that calls itself, before (*ACCEPT)' => ['left' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++(*ACCEPT)b?))/', 'right' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+(*ACCEPT)b?))/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
         // Group 2 keeps what the call matched: "a" at 2.
         yield 'a call that returns a group inside it' => ['left' => '/((a))c(?1(2))/', 'right' => '/((a))ca/', 'reason' => $call, 'witness' => 'aca'];
         // A call matches what the body of its group matches: one that may
@@ -225,6 +269,20 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a group inside a lookahead' => ['left' => '/(?=(a))a(?1)/', 'right' => '/(?=(a))aa/', 'reason' => 'Lookarounds'];
         // The condition of a conditional stays as written, its groups unread.
         yield 'a group the condition of a conditional holds' => ['left' => '/(?(?=(?<n>a))a|b)(?&n)/', 'right' => '/(?(?=(?<n>a))a|b)a/', 'reason' => $call];
+    }
+
+    /**
+     * A call of the whole pattern that returns groups, PCRE2 10.47 syntax,
+     * writes them where it returns: it is not read through, whichever
+     * engine runs the check.
+     */
+    #[Test]
+    public function test_a_call_of_the_whole_pattern_that_returns_groups_is_not_read_through(): void
+    {
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('A call that may run its own group again, that returns groups, or whose group the match solver does not read');
+
+        (new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])))->matchEquivalent('/x(?R(1))?ca++b?()/', '/x(?R(1))?ca+b?()/');
     }
 
     /**

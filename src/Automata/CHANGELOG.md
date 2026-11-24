@@ -66,6 +66,16 @@ CHANGELOG
    its name, as a group repeated no time does: `/(?(DEFINE)(?<n>x))(a)/`
    and `/(?(DEFINE)(?<m>x))(a)/`, proven to write the same `$matches`, are
    told apart on `a`.
+ * `matchEquivalent()` proves two patterns that differ only in possessive
+   quantifiers where a call may run its own group again, `(?R)` included,
+   by reading through every call: a call that runs its group again leads
+   back to where the group starts, and the end of the group to every place
+   a call of it returns to, however deep the calls run. Where nothing that
+   may follow a possessive quantifier there starts as its body does, it
+   gives nothing back: `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and
+   `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` are proven to write the same
+   `$matches`, while `/(x(?1)?ca++)(?1)a/` stays refused, as the run of the
+   group the second call makes gives an `a` back to what follows it.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

@@ -48,6 +48,14 @@ use PHPRegex\Parser\Node\SubroutineNode;
  * was written under, as its form already does. A group a DEFINE holds runs
  * nowhere else, yet takes its number and its name.
  *
+ * Read through calls, a call that runs its own group again, "(?R)" for the
+ * whole pattern, leads back to where that copy of the group starts, and the
+ * end of the copy to where each such call returns as well as to what follows
+ * the copy: the stack of calls forgotten, the automaton holds every path the
+ * engine may take however deep the calls run, and more. Its possessive
+ * quantifiers are checked against all it may read after them; it is never
+ * run for a match.
+ *
  * @internal
  */
 final class PriorityNfaBuilder
@@ -67,6 +75,11 @@ final class PriorityNfaBuilder
     public const TRAILING_ANCHOR_MESSAGE = 'An end anchor followed by more of the pattern cannot be read by the match solver.';
 
     public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the match solver does not read.';
+
+    /**
+     * The copy of the whole pattern, beside the groups keyed by object id.
+     */
+    private const WHOLE = -1;
 
     private PriorityNfa $nfa;
 
@@ -126,18 +139,46 @@ final class PriorityNfaBuilder
      */
     private int $calls = 0;
 
+    /**
+     * Whether a call that runs its own group again is read through rather
+     * than refused.
+     */
+    private bool $throughCalls = false;
+
+    /**
+     * Read through calls, the copies being built, the innermost last: the
+     * group each copies, by object id, or the whole pattern, and the state
+     * its end leads to. A group stands inside a copy of itself where it
+     * calls a group that holds it.
+     *
+     * @var list<array{int, int}>
+     */
+    private array $copies = [];
+
+    /**
+     * The calls that run a copy again, by the state its end leads to: each
+     * leads back to where the copy starts once it is built.
+     *
+     * @var array<int, list<int>>
+     */
+    private array $copyCalls = [];
+
     public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
 
     /**
-     * @param NodeInterface $tree    the tree the form was translated from, the
-     *                               pattern a RegexNode holds
-     * @param list<Hir>     $defined what each DEFINE of the tree holds, which
-     *                               the form leaves out, read under the
-     *                               options in force where it stands
+     * @param NodeInterface $tree         the tree the form was translated
+     *                                    from, the pattern a RegexNode holds
+     * @param list<Hir>     $defined      what each DEFINE of the tree holds,
+     *                                    which the form leaves out, read
+     *                                    under the options in force where it
+     *                                    stands
+     * @param bool          $throughCalls whether a call that runs its own
+     *                                    group again is read through, for an
+     *                                    automaton never run for a match
      *
      * @throws ComplexityException
      */
-    public function build(Hir $hir, bool $unicode, NodeInterface $tree, array $defined): PriorityNfa
+    public function build(Hir $hir, bool $unicode, NodeInterface $tree, array $defined, bool $throughCalls = false): PriorityNfa
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
@@ -146,13 +187,20 @@ final class PriorityNfaBuilder
         $this->defined = $defined;
         $this->tree = $tree;
         $this->groups = null;
+        $this->throughCalls = $throughCalls;
+        $this->copies = [];
+        $this->copyCalls = [];
         // A group a DEFINE holds runs only where a call runs it, and writes
         // nothing there, yet takes its number and its name.
         foreach ($this->groupsIn($defined) as $group) {
             $this->countGroup($group);
         }
         $match = $this->add(PriorityNfa::MATCH);
-        $this->nfa->start = $this->state($hir, $match);
+        $end = $throughCalls ? $this->enter(self::WHOLE, $match) : $match;
+        $this->nfa->start = $this->state($hir, $end);
+        if ($throughCalls) {
+            $this->leave($end, $this->nfa->start);
+        }
         ksort($this->nfa->names);
 
         $this->assertPossessivesNeverGiveBack();
@@ -198,6 +246,21 @@ final class PriorityNfaBuilder
     private function call(SubroutineNode $call, int $next): int
     {
         $group = $this->calledGroup($call);
+
+        // Read through calls, a call of a copy being built, the innermost,
+        // leads back to where it starts, and returns where its end leads.
+        $runs = null !== $group ? spl_object_id($group) : (self::callsWhole($call) ? self::WHOLE : null);
+        for ($copy = \count($this->copies) - 1; $copy >= 0; $copy--) {
+            [$copied, $end] = $this->copies[$copy];
+            if ($runs === $copied) {
+                $state = $this->split([]);
+                $this->copyCalls[$end][] = $state;
+                $this->nfa->targets[$end][] = $next;
+
+                return $state;
+            }
+        }
+
         if (null === $group || isset($this->running[spl_object_id($group)])) {
             throw new ComplexityException(self::CALL_MESSAGE, $call->getStartPosition(), $this->pattern);
         }
@@ -229,6 +292,39 @@ final class PriorityNfaBuilder
         }
 
         return null;
+    }
+
+    /**
+     * Whether the call runs the whole pattern: "(?R)", "(?0)", "\g<0>".
+     */
+    private static function callsWhole(SubroutineNode $call): bool
+    {
+        return [] === $call->returnedGroups && ('0' === $call->reference || ('R' === $call->reference && '' === $call->syntax));
+    }
+
+    /**
+     * Read through calls, the state the end of a copy leads to, the state
+     * after it, before it is built: each call that runs the copy again
+     * adds the state after the call.
+     */
+    private function enter(int $group, int $next): int
+    {
+        $end = $this->split([$next]);
+        $this->copies[] = [$group, $end];
+
+        return $end;
+    }
+
+    /**
+     * The innermost copy built: each call that ran it again leads back to
+     * where it starts.
+     */
+    private function leave(int $end, int $start): void
+    {
+        array_pop($this->copies);
+        foreach ($this->copyCalls[$end] ?? [] as $call) {
+            $this->nfa->targets[$call] = [$start];
+        }
     }
 
     /**
@@ -370,14 +466,20 @@ final class PriorityNfaBuilder
     private function capture(CaptureHir $hir, int $next): int
     {
         $this->running[spl_object_id($hir)] = true;
+        $end = $this->throughCalls ? $this->enter(spl_object_id($hir), $next) : $next;
+
         // Inside a call the group writes nothing: PCRE2 gives it back the
         // value it held before the call.
         if ($this->calls > 0) {
-            $state = $this->state($hir->body, $next);
+            $state = $this->state($hir->body, $end);
         } else {
             $this->countGroup($hir);
-            $close = $this->tag(2 * $hir->index + 1, $next);
+            $close = $this->tag(2 * $hir->index + 1, $end);
             $state = $this->tag(2 * $hir->index, $this->state($hir->body, $close));
+        }
+
+        if ($this->throughCalls) {
+            $this->leave($end, $state);
         }
 
         unset($this->running[spl_object_id($hir)]);

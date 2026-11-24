@@ -139,6 +139,16 @@ wherever the group runs: `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` write the same `
 so do `/(?&n)c(?(DEFINE)(?<n>a+b?))/` and `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, while
 `/(a++b?)c(?1)a/` is refused, as the call gives an `a` back to what follows it.
 
+A call that may run its own group again has no finite automaton, yet two patterns that differ
+only in possessive quantifiers are still compared: every call is read through, a call that
+runs its group again leading back to where the group starts and the end of the group to
+every place a call of it returns to, however deep the calls run. A possessive quantifier
+that nothing following it there may start like gives nothing back, so
+`/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` write
+the same `$matches`, and so do `/x(?R)?ca+b?()/` and `/x(?R)?ca++b?()/`, while
+`/(x(?1)?ca++)(?1)a/` stays refused: the run of the group the second call makes gives an `a`
+back to what follows it.
+
 Neither question answers the other. The same `$matches` on every subject is the same
 answer on every subject, so the two patterns find a match in the same subjects; it is not
 the same set of whole strings, which is what `equivalent()` compares by default.

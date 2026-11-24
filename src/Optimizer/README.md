@@ -85,7 +85,8 @@ lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
 the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
 DEFINE holds is read there under the options in force where the DEFINE stands:
 `/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
-recursive call is not, and leaves the group greedy.
+group that calls itself is read through every call, what may follow it after
+each return included: `/(x(?1)?ca+b?)c/` becomes `/(x(?1)?ca++b?)c/`.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

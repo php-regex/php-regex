@@ -250,8 +250,20 @@ final class LanguageSolver
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
         $options ??= new SolverOptions();
-        $leftNfa = $this->priorityNfa($left, $options);
-        $rightNfa = $this->priorityNfa($right, $options);
+
+        try {
+            $leftNfa = $this->priorityNfa($left, $options);
+            $rightNfa = $this->priorityNfa($right, $options);
+        } catch (ComplexityException $refusal) {
+            // A call that runs its own group again leaves one proof, the
+            // same in every run: the patterns differ only in possessive
+            // quantifiers that give nothing back, however deep the calls run.
+            if (PriorityNfaBuilder::CALL_MESSAGE === $refusal->getMessage() && $this->possessivesGiveNothingBack($left, $right, $options)) {
+                return new MatchEquivalenceResult(true);
+            }
+
+            throw $refusal;
+        }
 
         if ($leftNfa->unicode !== $rightNfa->unicode) {
             throw new ComplexityException('Both patterns must read the subject the same way, as UTF-8 or as bytes, for the match solver to compare them.', 0, $left);
@@ -770,9 +782,82 @@ final class LanguageSolver
     }
 
     /**
+     * Whether two patterns differ only in quantifiers possessive on one side
+     * and greedy on the other, each possessive one, read as greedy, giving
+     * nothing back: read through every call, nothing that may follow it
+     * starts as its body does. Where the rest of a match fails after the
+     * greedy one, it fails again on each character given back, so both
+     * write what the pattern with each such quantifier greedy writes. The
+     * options, the form and what each DEFINE holds are the same but for
+     * those quantifiers.
+     */
+    private function possessivesGiveNothingBack(string $left, string $right, SolverOptions $options): bool
+    {
+        $translator = new HirTranslator($this->parser->target());
+        $read = [];
+        foreach ([$left, $right] as $pattern) {
+            $ast = $this->parser->parse($pattern);
+            $form = $translator->translate($ast);
+            $read[] = [StartOptions::of($ast->source ?? ''), count_chars($ast->flags, 3), ...self::greedless([$form, ...$translator->defined()])];
+        }
+
+        if ($read[0] !== $read[1]) {
+            return false;
+        }
+
+        try {
+            $this->priorityNfa($left, $options, throughCalls: true);
+            $this->priorityNfa($right, $options, throughCalls: true);
+        } catch (ComplexityException) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Each node of the forms, in the order a walk meets it: its class, how
+     * many children it has and what it holds besides them, positions aside,
+     * a possessive quantifier read as greedy. The properties worked out from
+     * the nodes are left out, as a possessive quantifier changes them.
+     *
+     * @param list<Hir> $forms
+     *
+     * @return list<string>
+     */
+    private static function greedless(array $forms): array
+    {
+        $nodes = [];
+        $pending = $forms;
+        while (null !== $node = array_pop($pending)) {
+            $held = [];
+            foreach (get_object_vars($node) as $name => $field) {
+                $child = $field instanceof Hir || (\is_array($field) && reset($field) instanceof Hir);
+                if (!$child && !\in_array($name, ['properties', 'startPosition', 'endPosition'], true)) {
+                    $held[$name] = $field;
+                }
+            }
+
+            if ($node instanceof RepetitionHir && Greed::Possessive === $node->greed) {
+                $held['greed'] = Greed::Greedy;
+            }
+
+            $children = $node->children();
+            $nodes[] = serialize(RewriteSites::shape([$node::class, \count($children), $held]));
+            array_push($pending, ...$children);
+        }
+
+        return $nodes;
+    }
+
+    /**
+     * @param bool $throughCalls whether a call that runs its own group again
+     *                           is read through, for an automaton never run
+     *                           for a match
+     *
      * @throws ComplexityException
      */
-    private function priorityNfa(string $pattern, SolverOptions $options): PriorityNfa
+    private function priorityNfa(string $pattern, SolverOptions $options, bool $throughCalls = false): PriorityNfa
     {
         $ast = $this->parser->parse($pattern);
 
@@ -792,7 +877,7 @@ final class LanguageSolver
         $translator = new HirTranslator($this->parser->target());
         $form = $translator->translate($ast);
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined());
+        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
     }
 
     /**

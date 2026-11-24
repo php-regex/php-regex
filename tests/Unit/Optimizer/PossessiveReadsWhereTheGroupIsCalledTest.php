@@ -207,13 +207,18 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
         yield 'a call of a group a DEFINE holds, beside another rewrite' => ['pattern' => '/(?&n)c(?:d)(?(DEFINE)(?<n>a+b?))/', 'optimized' => '/(?&n)cd(?(DEFINE)(?<n>a++b?))/', 'changes' => [Rewriter::GROUP_REMOVED, Rewriter::POSSESSIVE]];
         yield 'a call of a group a DEFINE holds, from another it holds' => ['pattern' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a+b?))/', 'optimized' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
         yield 'a group a DEFINE holds, never called' => ['pattern' => '/(?(DEFINE)(?<n>a+b?))a/', 'optimized' => '/(?(DEFINE)(?<n>a++b?))a/', 'changes' => [Rewriter::POSSESSIVE]];
+        // A group that runs itself again is read through every call: what
+        // may follow the "a"s, inside the group or after any call of it.
+        yield 'a group a DEFINE holds calling itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a group calling itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'optimized' => '/(x(?1)?ca++b?)c/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'the whole pattern recursed' => ['pattern' => '/x(?R)?ca+b?()/', 'optimized' => '/x(?R)?ca++b?()/', 'changes' => [Rewriter::POSSESSIVE]];
     }
 
     /**
      * A call the check does not run in place leaves its proof to the
      * rewrite without the possessive step, though the possessive gives
-     * nothing back: a group that calls itself, a DEFINE holding it or not,
-     * and a call of the whole pattern.
+     * nothing back: a group that calls itself inside a lookahead, or that
+     * a backreference reads back.
      *
      * @param list<string> $changes
      */
@@ -236,9 +241,8 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
      */
     public static function provideGroupsTheCheckDoesNotRunWhereTheyAreCalled(): iterable
     {
-        yield 'a group a DEFINE holds calling itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
-        yield 'a group calling itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'possessive' => '/(x(?1)?ca++b?)c/', 'optimized' => '/(x(?1)?ca+b?)c/', 'changes' => []];
-        yield 'the whole pattern recursed' => ['pattern' => '/x(?R)?ca+b?()/', 'possessive' => '/x(?R)?ca++b?()/', 'optimized' => '/x(?R)?ca+b?()/', 'changes' => []];
+        yield 'a group a DEFINE holds calling itself, called inside a lookahead' => ['pattern' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
+        yield 'a group calling itself, read back by a backreference' => ['pattern' => '/(x(?1)?ca+b?)c\1/', 'possessive' => '/(x(?1)?ca++b?)c\1/', 'optimized' => '/(x(?1)?ca+b?)c\1/', 'changes' => []];
     }
 
     /**
