@@ -51,6 +51,14 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     private const TURKISH = 'tr_TR.ISO8859-9';
 
     /**
+     * The rows verified against a newer release than the floor: \p{Lu}
+     * reads as \p{Lc} under i from 10.45, as written before.
+     */
+    private const RELEASES = [
+        '10.45' => ['/[aA\p{Lu}]/i', '/\p{Lu}/i'],
+    ];
+
+    /**
      * @param bool $useless what the engine says: no byte answers otherwise without i
      */
     #[Test]
@@ -58,6 +66,7 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     public function test_flag_i_is_called_useless_where_a_class_holds_every_other_case(string $pattern, string $locale, bool $useless): void
     {
         $this->requiresCompile($pattern);
+        $this->requiresPcre2For($pattern, self::RELEASES);
         if (CharacterTables::BUILT_IN !== $locale) {
             $this->requiresLocale($locale, $pattern);
         }
@@ -147,6 +156,7 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     public function test_flag_i_is_called_useless_where_inline_options_decide_the_case(string $pattern, bool $useless): void
     {
         $this->requiresCompile($pattern);
+        $this->requiresPcre2For($pattern, self::RELEASES);
 
         // Oracle: every byte and every pair of bytes, which every row
         // matches within.
