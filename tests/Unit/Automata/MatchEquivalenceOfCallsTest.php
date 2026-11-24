@@ -297,9 +297,9 @@ final class MatchEquivalenceOfCallsTest extends TestCase
 
         $this->requiresJit($left);
 
-        $this->assertFalse(preg_match($left, $deep), \sprintf('Oracle: %s matches %d bytes of calls.', $left, \strlen($deep)));
+        $this->assertFalse(preg_match(self::compiledAnew($left), $deep), \sprintf('Oracle: %s keeps to the JIT stack on %d bytes of calls.', $left, \strlen($deep)));
         $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, preg_last_error());
-        $this->assertSame(1, preg_match($right, $deep), \sprintf('Oracle: %s runs out of the JIT stack on %d bytes of calls.', $right, \strlen($deep)));
+        $this->assertSame(1, preg_match(self::compiledAnew($right), $deep), \sprintf('Oracle: %s finds no match in %d bytes of calls.', $right, \strlen($deep)));
     }
 
     /**
@@ -325,6 +325,16 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         $this->expectExceptionMessageIsOrContains('A call that may run its own group again, that returns groups, or whose group the match solver does not read');
 
         (new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.49'])))->matchEquivalent('/x(?R(1))?ca++b?()/', '/x(?R(1))?ca+b?()/');
+    }
+
+    /**
+     * The pattern between delimiters of its own: PHP keeps a compiled
+     * pattern by its text, and runs one another test compiled with
+     * pcre.jit off without the JIT.
+     */
+    private static function compiledAnew(string $pattern): string
+    {
+        return '~'.substr($pattern, 1, (int) strrpos($pattern, '/') - 1).'~'.substr($pattern, (int) strrpos($pattern, '/') + 1);
     }
 
     /**

@@ -311,8 +311,8 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
         if (null !== $deep) {
             $this->requiresJit($pattern);
 
-            $this->assertSame(1, preg_match($pattern, $deep), \sprintf('Oracle: %s matches %d bytes of calls.', $pattern, \strlen($deep)));
-            $this->assertFalse(preg_match($possessive, $deep), \sprintf('Oracle: %s runs out of the JIT stack on %d bytes of calls.', $possessive, \strlen($deep)));
+            $this->assertSame(1, preg_match(self::compiledAnew($pattern), $deep), \sprintf('Oracle: %s finds no match in %d bytes of calls.', $pattern, \strlen($deep)));
+            $this->assertFalse(preg_match(self::compiledAnew($possessive), $deep), \sprintf('Oracle: %s keeps to the JIT stack on %d bytes of calls.', $possessive, \strlen($deep)));
             $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, preg_last_error());
         }
     }
@@ -356,6 +356,16 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
     private static function rewrite(string $pattern): string
     {
         return Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(possessive: true))->accept(new PatternPrinter());
+    }
+
+    /**
+     * The pattern between delimiters of its own: PHP keeps a compiled
+     * pattern by its text, and runs one another test compiled with
+     * pcre.jit off without the JIT.
+     */
+    private static function compiledAnew(string $pattern): string
+    {
+        return '~'.substr($pattern, 1, (int) strrpos($pattern, '/') - 1).'~'.substr($pattern, (int) strrpos($pattern, '/') + 1);
     }
 
     /**
