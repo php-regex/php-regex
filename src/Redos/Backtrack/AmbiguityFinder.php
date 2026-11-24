@@ -36,7 +36,8 @@ final class AmbiguityFinder
     /**
      * The most paths one attempt may try at once on one input, the ways an
      * acyclic stretch reads it multiplied along the attempt: a margin under
-     * the default backtrack limit of 1,000,000.
+     * the default backtrack limit of 1,000,000. A run abandoned inside a
+     * loop is held to it too.
      */
     public const MAX_ACYCLIC_AMBIGUITY = 1024;
 
@@ -56,6 +57,12 @@ final class AmbiguityFinder
     private const MAX_CONTINUATION_SETS = 64;
 
     /**
+     * The most sets of items read to bound the runs abandoned inside one
+     * loop: the reading stays cheap, and past it no bound is proven.
+     */
+    private const MAX_ABANDONED_RUN_SETS = 64;
+
+    /**
      * The slots of what an attempt tries at once, besides the classes: what
      * stands in every class, and what stands at the attempt start, before
      * any character.
@@ -63,6 +70,18 @@ final class AmbiguityFinder
     private const SLOT_ANY = -1;
 
     private const SLOT_START = -2;
+
+    /**
+     * @var array<int, bool> whether every run abandoned inside a strongly
+     *                       connected component is short, by its first item
+     */
+    private array $boundedRuns = [];
+
+    /**
+     * @var array<int, true> the items of the components whose abandoned runs
+     *                       are short
+     */
+    private array $shortRuns = [];
 
     /**
      * @var array<int, int> the cyclic component of each reading item in one
@@ -335,7 +354,9 @@ final class AmbiguityFinder
 
                 $witness = $this->witness($state, $this->pumps($labels));
                 if (null === $witness) {
-                    $unwitnessed ??= $state;
+                    if (!$this->abandonsShortRuns($state)) {
+                        $unwitnessed ??= $state;
+                    }
 
                     continue;
                 }
@@ -682,23 +703,24 @@ final class AmbiguityFinder
     }
 
     /**
-     * The most paths through each sub-search's mark at once, and the most
-     * paths the attempt tries at once: what the stretches try in one slot,
-     * each times the ways the attempt enters at once the loop it leaves, the
-     * routes round that loop counted once, add up. Each start is an attempt
-     * of its own.
+     * The most paths through each sub-search's mark at once, the most paths
+     * the attempt tries at once, and the most ways it enters each loop at
+     * once: what the stretches try in one slot, each times the ways the
+     * attempt enters at once the loop it leaves, the routes round that loop
+     * counted once, add up. Each start is an attempt of its own.
      *
      * @param array<int, int>                                                                   $rounds the most routes round each loop
      * @param list<array{array<int, int>, array<int, array<int, array<int, int>>>}>             $starts what each stretch from an attempt start tries: the paths at once by slot, and the routes to each item of a loop and through each mark (marks()), by the time they stand at, then by slot
      * @param array<int, list<array{array<int, int>, array<int, array<int, array<int, int>>>}>> $exits  what each stretch out of an item of a loop tries, by loop, in the order an attempt meets them
      *
-     * @return array{array<int, int>, int}
+     * @return array{array<int, int>, int, array<int, int>}
      */
     private function multiply(int $before, array $rounds, array $starts, array $exits): array
     {
         $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
         $marks = [];
         $most = 0;
+        $into = [];
         foreach ($starts as $start) {
             $paths = [];
             $arrivals = [];
@@ -711,6 +733,7 @@ final class AmbiguityFinder
 
                 // The items of a loop left at one time read one character:
                 // their stretches stand at once, one group.
+                $into[$loop] = max($into[$loop] ?? 0, $in);
                 $out = min($limit, $in * ($rounds[$loop] ?? 1));
                 foreach ($stretches as $stretch) {
                     self::add($paths, $arrivals, $stretch, $out, 'loop'.$loop);
@@ -732,7 +755,7 @@ final class AmbiguityFinder
             }
         }
 
-        return [$marks, min($limit, max([$most, ...array_values($marks)]))];
+        return [$marks, min($limit, max([$most, ...array_values($marks)])), $into];
     }
 
     /**
@@ -1225,6 +1248,216 @@ final class AmbiguityFinder
     }
 
     /**
+     * Whether every run the engine tries and abandons inside the loop of the
+     * item is short: whatever character the loop goes on with, a success is
+     * sure a few characters later. "^(?:a|a)+." is such a loop: once it can
+     * read an "a", the dot can too.
+     *
+     * The engine never backtracks out of a node that holds a success: it
+     * returns from inside it. A run it abandons holds none, so its paths
+     * stand, after each character, at a set of items some continuation
+     * rejects (rejectingSuffix()). Those sets are read from what follows
+     * each item of the loop, on every class, as long as one of their items
+     * is in the loop: when no cycle of them exists, an abandoned run reads a
+     * bounded number of characters inside the loop, and the paths through
+     * the loop's items over that many characters bound the ways it reads
+     * them, each way the attempt has into one of them read again with each.
+     * Every path counts: k groups "(?:|)" before a character give 2^k ways
+     * to it, and a route that dies at a check is walked as one that goes on.
+     * Held to the margin of the paths an attempt tries at once, they cost a
+     * bounded number of steps per character, however many ways the loop has
+     * around it. A run abandoned past the loop is read by the links out of it.
+     *
+     * The model must count no success the engine may refuse: a search with
+     * a lookaround or inside one, an atomic body kept with every way through
+     * it (one that reads nothing too, "(?>\K|)"), a bounded repeat read as
+     * unbounded, a "$" read with the final newline, or a "^" under m, which
+     * the model takes to hold after a newline that ends the subject, is not
+     * read.
+     *
+     * @throws ModelLimitException
+     */
+    private function abandonsShortRuns(int $item): bool
+    {
+        $pnfa = $this->automaton->pnfa;
+        if ($this->widens || null !== $pnfa->parent || [] !== $pnfa->marks || $pnfa->readsFinalNewline || $pnfa->hasLineStart) {
+            return false;
+        }
+
+        $members = [$item];
+        foreach ($this->fullComponents ?? [] as $component) {
+            if (\in_array($item, $component, true)) {
+                $members = $component;
+
+                break;
+            }
+        }
+
+        $first = min([$item, ...$members]);
+        if (!isset($this->boundedRuns[$first])) {
+            $this->boundedRuns[$first] = $this->runsShortInside($members);
+            if ($this->boundedRuns[$first]) {
+                $this->shortRuns += array_fill_keys($members, true);
+            }
+        }
+
+        return $this->boundedRuns[$first];
+    }
+
+    /**
+     * Whether every run abandoned after an item of the strongly connected
+     * component reads it on a bounded stretch, in no more ways than an
+     * acyclic stretch may, each way the attempt enters it at once
+     * (checkWays()) read again with each.
+     *
+     * @param list<int> $members
+     *
+     * @throws ModelLimitException
+     */
+    private function runsShortInside(array $members): bool
+    {
+        if (!$this->counted) {
+            $this->checkWays();
+        }
+
+        // Counted as one list at once, the search reads every input one way:
+        // no loop of it is read in two.
+        if (null === $this->stretches || null === $this->counts) {
+            return false;
+        }
+
+        [$before, $rounds, , , $loops] = $this->stretches;
+        $loop = $loops[$members[0]] ?? -1;
+        [, , $entering] = $this->multiply($before, $rounds, ...$this->counts);
+        $into = $entering[$loop] ?? 1;
+        $inside = array_fill_keys($members, true);
+        $heights = [];
+        $outs = [];
+        foreach ($members as $member) {
+            $after = array_fill_keys($this->automaton->successors[$member], true);
+            ksort($after);
+            $height = $this->runInside($after, $inside, $heights);
+            if (null === $height || $into * $this->waysInside($member, $inside, $height, $loop, $outs) > self::MAX_ACYCLIC_AMBIGUITY) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The most characters a run some continuation rejects reads inside the
+     * loop after the set, -1 when it is not such a run; null when a cycle of
+     * such sets keeps it inside, or when more sets than the reading allows
+     * would tell. Depth first, each set met kept with its answer, null while
+     * it is on the way to the current one.
+     *
+     * @param array<int, true>        $items
+     * @param array<int, true>        $inside  the items of the loop
+     * @param array<string, int|null> $heights
+     *
+     * @throws ModelLimitException
+     */
+    private function runInside(array $items, array $inside, array &$heights): ?int
+    {
+        $key = self::key($items);
+        if (\array_key_exists($key, $heights)) {
+            return $heights[$key];
+        }
+
+        if (\count($heights) >= self::MAX_ABANDONED_RUN_SETS) {
+            return null;
+        }
+
+        if ([] === array_intersect_key($items, $inside) || null === $this->rejectingSuffix($items)) {
+            return $heights[$key] = -1;
+        }
+
+        $heights[$key] = null;
+        $height = 0;
+        for ($class = 0; $class < $this->automaton->classCount(); $class++) {
+            $next = $this->automaton->stepSet($items, $class);
+            $below = null === $next ? -1 : $this->runInside($next, $inside, $heights);
+            if (null === $below) {
+                return null;
+            }
+
+            $height = max($height, $below + 1);
+        }
+
+        return $heights[$key] = $height;
+    }
+
+    /**
+     * The paths a run abandoned after the item tries, at most: through the
+     * items of the loop over that many characters, and out of the loop after
+     * the item and each of them that reads, every path on after one way out
+     * (outOf()). The items the run stands at last read nothing more: a
+     * character they read would keep it inside.
+     *
+     * @param array<int, true> $inside the items of the loop
+     * @param array<int, int>  $outs   the paths after one way out of each item, once counted
+     *
+     * @param-out array<int, int> $outs
+     *
+     * @throws ModelLimitException
+     */
+    private function waysInside(int $item, array $inside, int $characters, int $loop, array &$outs): int
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $current = [$item => 1];
+        $ways = 0;
+        for ($read = 0; $read <= $characters; $read++) {
+            $next = [];
+            foreach ($current as $from => $count) {
+                $outs[$from] ??= $this->outOf($from, $loop);
+                $ways = min($limit, $ways + $count * $outs[$from]);
+                foreach ($this->routesOf($from) as $successor => $routes) {
+                    if (isset($inside[$successor])) {
+                        $next[$successor] = min($limit, ($next[$successor] ?? 0) + $count * $routes);
+                    }
+                }
+            }
+
+            $current = $next;
+            $ways = min($limit, $ways + array_sum($current));
+        }
+
+        return $ways;
+    }
+
+    /**
+     * The most paths tried at once after one way out of an item of a loop:
+     * the stretch out of it, as checkWays() counts it, the routes that die
+     * after the item included, and the stretches out of the loops after it,
+     * one way reaching it; past the margin, counted sharper.
+     *
+     * @throws ModelLimitException
+     */
+    private function outOf(int $item, int $loop): int
+    {
+        [, $rounds, , , $loops] = $this->stretches ?? [1, [], [], [], []];
+        // The stretches out of a loop stand in the order of its items.
+        $index = 0;
+        foreach ($loops as $member => $component) {
+            if ($member === $item) {
+                break;
+            }
+
+            if ($component === $loop) {
+                $index++;
+            }
+        }
+
+        do {
+            $exits = $this->counts[1] ?? [];
+            [, $most] = $this->multiply(1, $rounds, [$exits[$loop][$index] ?? [[], []]], $exits);
+        } while ($most > self::MAX_ACYCLIC_AMBIGUITY && $this->sharpen());
+
+        return $most;
+    }
+
+    /**
      * The items of every strongly connected component that goes round, by
      * that component.
      *
@@ -1550,13 +1783,18 @@ final class AmbiguityFinder
     /**
      * Whether no witness can exist for an ambiguity of the item: after it
      * reads, every continuation is accepted, on paths the model reads as the
-     * engine does. A bounded repeat read as unbounded, or an atomic body kept
-     * with every way through it, widens what succeeds: "[^x]{0,20}(?:x|\z)"
-     * read as "[^x]*(?:x|\z)" accepts whatever follows, where the engine
-     * fails once twenty characters are not enough.
+     * engine does, or every run abandoned inside its loop is bounded
+     * (abandonsShortRuns()). A bounded repeat read as unbounded, or an atomic
+     * body kept with every way through it, widens what succeeds:
+     * "[^x]{0,20}(?:x|\z)" read as "[^x]*(?:x|\z)" accepts whatever follows,
+     * where the engine fails once twenty characters are not enough.
      */
     private function disproved(int $state): bool
     {
+        if (isset($this->shortRuns[$state])) {
+            return true;
+        }
+
         $after = $this->automaton->exactSuccessors($state);
         ksort($after);
 
@@ -1843,6 +2081,10 @@ final class AmbiguityFinder
                 if (null !== $witness) {
                     $best = $this->verdict(RedosComplexity::Polynomial, $witnessed, $witness, $inexact);
                     $bestDegree = $witnessed;
+                } elseif ($this->abandonsShortRuns($end)) {
+                    // The runs tried and abandoned in the second loop are
+                    // bounded: the link costs nothing.
+                    continue;
                 }
 
                 if ($witnessed < $degree && (null === $unwitnessed || $degree > $unwitnessed[0])) {
