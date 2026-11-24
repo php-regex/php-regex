@@ -292,14 +292,24 @@ request goes to `phpstan/phpstan-src`.
 
 ## Optimizer precision
 
-- The possessive rewrite is never offered in a pattern holding an inline
-  flag: `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` and
-  `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` stay greedy, though the engine
-  finds the possessive forms the same and `matchEquivalent()` proves them
-  so since #441.
-- Nor to a repeat that ends its sequence, `possessify()` asking for a
-  suffix: `/(a+)c/` stays greedy and `/(?&n)x(?(DEFINE)(?<n>[0-9]+))/`
-  ships `\d+`, not `\d++`, both proven the same.
+- Since #451 the possessive rewrite stays out of a pattern holding a
+  non-atomic lookaround, past whose end the walk reads the outer text,
+  where the engine reads it from where the lookaround starts:
+  `/^(*napla:x(a+b?))x[ab-]*\1$/` would be offered `a++b?`, which misses
+  `xaaba`. Read that end as followed by nothing known, so that the rest
+  of such a pattern can be made possessive.
+- A repeated group followed by other items is offered its possessive from
+  the characters its body ends with, though it gives back whole runs:
+  `/(?:b|ba)*c/` is offered `(?:b|ba)*+c`, which matches `c` alone in
+  `bac`, and `/[a-z]+(?:-[a-z]+)*$/` is offered `(?:-[a-z]++)*+$`, which
+  holds but which the check does not prove. Either refusal reruns the
+  rewrite without any possessive, so the pattern ships greedy throughout.
+  Read every character a run may give back, or leave such a group out as
+  #451 does one that ends its sequence.
+- A repeat that ends a group a call runs in a loop, `(?1)+` or `(?&n)*`,
+  stays greedy even where the group never starts with what the repeat
+  gives back, `/(xa+)c(?1)+d/`: the walk reads no first characters of a
+  call.
 - A group that calls itself is still refused, in a DEFINE or not:
   `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` is offered `ca++b?`, refused
   with the call message, and ships unchanged, though the engine finds the
