@@ -19,6 +19,7 @@ use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\PatternParser;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -126,10 +127,12 @@ final class RedosAnalyzer
                 // The sets hold the bytes above ASCII the pattern writes and
                 // those a complement takes. Another locale's tables than
                 // PCRE2's own may put any byte in a type or a case: the sets
-                // read both from them. Without a proof, a loop whose branches
-                // start alike is put to the proof alone.
+                // read both from them, and (*UCP) gives a byte the case of its
+                // character from the target's PCRE2 10.35 on. Without a
+                // proof, a loop whose branches start alike is put to the
+                // proof alone.
                 $profiler = new RedosProfiler(
-                    CharSetAnalyzer::forRegex($ast, true, $parser->target()->locale),
+                    CharSetAnalyzer::forRegex($ast, true, $parser->target()->locale, $parser->target()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf)),
                     null === $proof ? $this->provenLinearAlone($ast, $parser) : null,
                 );
                 $ast->accept($profiler);

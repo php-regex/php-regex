@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The heuristics read a byte under `(*UCP)` without u as the target's
+   PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
+   before it has the tables' case, none above ASCII under C.
+   `/(*UCP)^((?:\xE9|\xC9)+)\1$/i`, which PCRE2 10.34 reads in 20 and 28
+   steps on 8 and 12 `\xE9` then `!`, is medium for PHP 7.4 with PCRE2
+   10.34, where it was critical, and stays critical from 10.35.
  * One attempt is safe (proven) only when it tries 1,024 paths at once at
    most, every path counted along the whole attempt: each epsilon route,
    where a list of states held each one twice at most; each route that
