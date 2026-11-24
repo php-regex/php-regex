@@ -89,9 +89,8 @@ final class Rewriter extends AbstractNodeVisitor
 
     /**
      * Whether a quantifier may be made possessive here: the option is on,
-     * no "U" makes a plain quantifier lazy, and no inline flag changes what
-     * a node matches, which the character sets, reading the flags the
-     * pattern is written with, would not see.
+     * no "U" makes a plain quantifier lazy, and no lookaround is non-atomic,
+     * as PossessiveRewrites::keepsRepeatsGreedy() reads them.
      */
     private bool $possessify = false;
 
@@ -153,7 +152,7 @@ final class Rewriter extends AbstractNodeVisitor
     {
         $this->state->start($node, $this->flagRewrites->containsInlineFlags($node->pattern));
         $this->possessiveRewrites->start($node);
-        $this->possessify = $this->possessive && !$this->state->lazyByDefault && !$this->state->inlineFlags;
+        $this->possessify = $this->possessive && !$this->state->lazyByDefault && !PossessiveRewrites::keepsRepeatsGreedy($node->pattern);
         $optimizedPattern = $node->pattern->accept($this);
 
         // Remove useless flags
@@ -326,7 +325,7 @@ final class Rewriter extends AbstractNodeVisitor
         // Auto-possessivization (opt-in, conservative by default)
         // This optimization is opt-in because it can change semantics with backreferences
         if ($this->possessify) {
-            $possessiveChildren = $this->possessiveRewrites->possessify($optimizedChildren);
+            $possessiveChildren = $this->possessiveRewrites->possessify($optimizedChildren, $node);
             if ($possessiveChildren !== $optimizedChildren) {
                 $hasChanged = true;
                 $optimizedChildren = $possessiveChildren;
@@ -402,6 +401,7 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
+        $written = $node;
         // The group a quantifier repeats keeps its parentheses however deep
         // a quantifier of its own sits inside it: the flag comes back to
         // what the enclosing item set, never to false.
@@ -424,6 +424,12 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         $normalized = $this->repeatRewrites->normalizeQuantifier($node);
+        // A repeat no sequence holds reads what follows the group, the
+        // branch or the pattern it stands alone in.
+        if ($this->possessify && $normalized instanceof QuantifierNode) {
+            $normalized = $this->possessiveRewrites->possessifyAlone($written, $normalized);
+        }
+
         if ($ungrouped && $normalized instanceof QuantifierNode) {
             $this->possessiveRewrites->ungrouped($normalized);
         }

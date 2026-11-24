@@ -111,7 +111,6 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
     {
         yield 'a character after the call, the group defined' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>a+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>a++b?))/'];
         yield 'a call by number, the group used in place' => ['pattern' => '/(a+b?)c(?1)d/', 'possessive' => '/(a++b?)c(?1)d/'];
-        yield 'a call that may run again' => ['pattern' => '/(a+b?)c(?1)+d/', 'possessive' => '/(a++b?)c(?1)+d/'];
         yield 'a relative call back' => ['pattern' => '/(a+b?)c(?-1)d/', 'possessive' => '/(a++b?)c(?-1)d/'];
         yield 'a relative call forward' => ['pattern' => '/(?+1)c(a+b?)d/', 'possessive' => '/(?+1)c(a++b?)d/'];
         yield 'a call of a group named R' => ['pattern' => '/(?<R>a+b?)c(?&R)d/', 'possessive' => '/(?<R>a++b?)c(?&R)d/'];
@@ -131,6 +130,77 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
         yield 'a DEFINE holding no group' => ['pattern' => '/(?(DEFINE)a+b?)a/', 'possessive' => '/(?(DEFINE)a++b?)a/'];
         yield 'a recursion test, which calls nothing' => ['pattern' => '/(?(R)x|y)a+b?/', 'possessive' => '/(?(R)x|y)a++b?/'];
         yield 'a recursion test of a group, which calls nothing' => ['pattern' => '/(?(R1)a|b)(a+b?)c/', 'possessive' => '/(?(R1)a|b)(a++b?)c/'];
+    }
+
+    /**
+     * A repetition alone in a group, or ending it, is followed by what
+     * follows the group at every place it runs.
+     */
+    #[Test]
+    #[DataProvider('provideRepetitionsEndingCalledGroupsFollowedByWhatTheyNeverGiveBack')]
+    public function test_a_repetition_ending_a_group_called_only_where_nothing_takes_back_what_it_matched_is_made_possessive(string $pattern, string $expected): void
+    {
+        $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($expected), \sprintf('Oracle: %s and %s differ.', $pattern, $expected));
+
+        $this->assertSame($expected, self::rewrite($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string}>
+     */
+    public static function provideRepetitionsEndingCalledGroupsFollowedByWhatTheyNeverGiveBack(): iterable
+    {
+        yield 'a group a DEFINE holds, called before another character' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>a+))/', 'expected' => '/(?&n)c(?(DEFINE)(?<n>a++))/'];
+        yield 'a group a DEFINE holds, the repetition ending it' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>xa+))/', 'expected' => '/(?&n)c(?(DEFINE)(?<n>xa++))/'];
+        yield 'a call by number, the group used in place' => ['pattern' => '/(a+)c(?1)d/', 'expected' => '/(a++)c(?1)d/'];
+        yield 'a call at the end of the pattern' => ['pattern' => '/(a+)c(?1)/', 'expected' => '/(a++)c(?1)/'];
+    }
+
+    #[Test]
+    #[DataProvider('provideRepetitionsEndingCalledGroupsFollowedByWhatTheyGiveBack')]
+    public function test_a_repetition_ending_a_group_called_where_what_follows_takes_back_what_it_matched_stays_greedy(string $pattern, string $possessive, string $subject, string $expected): void
+    {
+        $this->assertNotSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s match alike on "%s".', $pattern, $possessive, $subject));
+        $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($expected), \sprintf('Oracle: %s and %s differ.', $pattern, $expected));
+
+        $this->assertSame($expected, self::rewrite($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, possessive: string, subject: string, expected: string}>
+     */
+    public static function provideRepetitionsEndingCalledGroupsFollowedByWhatTheyGiveBack(): iterable
+    {
+        yield 'a group a DEFINE holds, called before what it gives back' => ['pattern' => '/(?&n)a(?(DEFINE)(?<n>a+))/', 'possessive' => '/(?&n)a(?(DEFINE)(?<n>a++))/', 'subject' => 'aa', 'expected' => '/(?&n)a(?(DEFINE)(?<n>a+))/'];
+        yield 'a call by number before what the group gives back' => ['pattern' => '/(a+)c(?1)a/', 'possessive' => '/(a++)c(?1)a/', 'subject' => 'acaa', 'expected' => '/(a+)c(?1)a/'];
+        // A call that may run again is followed by its next run, which may
+        // take what the repetition gave back and match on past it.
+        yield 'a call that may run again' => ['pattern' => '/(b+|ba)c(?1)+d/', 'possessive' => '/(b++|ba)c(?1)+d/', 'subject' => 'bcbbad', 'expected' => '/(b+|ba)c(?1)+d/'];
+        yield 'a group a DEFINE holds, called by a call that may run again' => ['pattern' => '/(?&n)+c(?(DEFINE)(?<n>b+|ba))/', 'possessive' => '/(?&n)+c(?(DEFINE)(?<n>b++|ba))/', 'subject' => 'bbac', 'expected' => '/(?&n)+c(?(DEFINE)(?<n>b+|ba))/'];
+    }
+
+    /**
+     * @param list<string> $changes
+     */
+    #[Test]
+    #[DataProvider('provideOptimizationsOfRepetitionsEndingCalledGroups')]
+    public function test_the_optimizer_ships_the_possessive_of_a_repetition_ending_a_called_group(string $pattern, string $expected, array $changes): void
+    {
+        $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($expected), \sprintf('Oracle: %s and %s differ.', $pattern, $expected));
+
+        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(possessive: true));
+
+        $this->assertSame($expected, $result->optimized);
+        $this->assertSame($changes, $result->changes);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, changes: list<string>}>
+     */
+    public static function provideOptimizationsOfRepetitionsEndingCalledGroups(): iterable
+    {
+        yield 'a group a DEFINE holds, called before another character' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>a+))/', 'expected' => '/(?&n)c(?(DEFINE)(?<n>a++))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a call by number, the group used in place' => ['pattern' => '/(a+)c(?1)d/', 'expected' => '/(a++)c(?1)d/', 'changes' => [Rewriter::POSSESSIVE]];
     }
 
     /**

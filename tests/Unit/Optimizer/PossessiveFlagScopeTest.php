@@ -21,12 +21,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * A quantifier made possessive gives nothing back, which keeps the match
- * only where what follows never starts with what it took. The character
- * sets read the flags the pattern is written with: under "U" a plain
- * quantifier is lazy, and an inline flag changes what a node matches from
- * where it stands to the end of its group, so neither is possessified. A
- * rewrite that both drops a possessive quantifier and adds one is checked
- * as any other that adds one.
+ * only where what follows never starts with what it took. Under "U" a
+ * plain quantifier is lazy, which is not possessified, and an inline flag
+ * changes what a node matches from where it stands to the end of its
+ * group, which the character sets read there. A rewrite that both drops a
+ * possessive quantifier and adds one is checked as any other that adds one.
  */
 final class PossessiveFlagScopeTest extends TestCase
 {

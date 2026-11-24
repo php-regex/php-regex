@@ -169,6 +169,11 @@ final class UselessIFlagUnderUcpTest extends TestCase
         yield 'a Latin-1 letter they give no case, under (*UCP)' => ['pattern' => '/(*UCP)\xE9/i', 'reported' => false];
         yield 'that letter raw, under (*UCP)' => ['pattern' => "/(*UCP)\xE9/i", 'reported' => false];
         yield 'that letter, without (*UCP)' => ['pattern' => '/\xE9/i', 'reported' => true];
+        // Under (*UCP) a class reads ASCII from Unicode up to 10.44, which
+        // pairs "q" with "Q", and from the tables from 10.45.
+        yield 'a class of a letter and the byte they pair it with, under (*UCP)' => ['pattern' => '/(*UCP)[q\x80]/i', 'reported' => false];
+        yield 'that class, without (*UCP)' => ['pattern' => '/[q\x80]/i', 'reported' => true];
+        yield 'a class of two signs they pair, without (*UCP)' => ['pattern' => '/[\xD7\xF7]/i', 'reported' => true];
     }
 
     /**
@@ -177,7 +182,9 @@ final class UselessIFlagUnderUcpTest extends TestCase
      * on PCRE2 10.32 (php:7.3) and 10.34 (php:7.4.10), with the JIT and
      * without it, "/(*UCP)\xE9/i" matches "\xE9" alone of the 256 bytes,
      * and every byte under glibc's ru_RU.KOI8-R and pl_PL.ISO-8859-2 reads
-     * the same with (*UCP) as without it.
+     * the same with (*UCP) as without it. "/(*UCP)[aA\xE9]/i" matches the
+     * bytes "/(*UCP)[aA\xE9]/" matches on 10.34, and "\xC9" besides on
+     * 10.35 (php:8.0).
      */
     #[Test]
     #[DataProvider('provideReadsBeforeUcpFolds')]
@@ -199,6 +206,8 @@ final class UselessIFlagUnderUcpTest extends TestCase
         yield 'a raw Latin-1 letter on 10.34' => ['pattern' => "/(*UCP)\xE9/i", 'php' => '7.4', 'pcre' => '10.34', 'locale' => $c, 'reported' => true];
         yield 'a range of Latin-1 capitals on 10.34' => ['pattern' => '/(*UCP)[\xC0-\xDE]/i', 'php' => '7.4', 'pcre' => '10.34', 'locale' => $c, 'reported' => true];
         yield 'a Latin-1 letter on 10.35' => ['pattern' => '/(*UCP)\xE9/i', 'php' => '8.0', 'pcre' => '10.35', 'locale' => $c, 'reported' => false];
+        yield 'a class of a letter, its capital and a Latin-1 letter on 10.34' => ['pattern' => '/(*UCP)[aA\xE9]/i', 'php' => '7.4', 'pcre' => '10.34', 'locale' => $c, 'reported' => true];
+        yield 'that class on 10.35' => ['pattern' => '/(*UCP)[aA\xE9]/i', 'php' => '8.0', 'pcre' => '10.35', 'locale' => $c, 'reported' => false];
         yield 'a sign the given tables pair, on 10.34' => ['pattern' => '/(*UCP)\xD7/i', 'php' => '7.4', 'pcre' => '10.34', 'locale' => self::GIVEN, 'reported' => false];
         yield 'a sign the given tables pair, on 10.35' => ['pattern' => '/(*UCP)\xD7/i', 'php' => '8.0', 'pcre' => '10.35', 'locale' => self::GIVEN, 'reported' => true];
     }

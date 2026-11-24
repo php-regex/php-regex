@@ -34,14 +34,39 @@ use PHPUnit\Framework\TestCase;
  * possessive rewrite reads past its end, as it stops at the end of an
  * atomic lookaround, which nothing after it backtracks into.
  *
- * The rewriter does not reach these today: the "*" of a non-atomic
- * lookaround reads as an inline flag, which keeps the possessive rewrite
- * out of the whole pattern. The walk is asked here on its own, given what
- * follows each item and each group around the repetition as the rewriter
- * records it on its way down.
+ * The rewriter does not reach these: a non-atomic lookaround keeps the
+ * possessive rewrite out of the whole pattern, as the engine reads what
+ * follows it from where it starts, not from where the repetition ends. The
+ * walk is asked here on its own, given what follows each item and each
+ * group around the repetition as the rewriter records it on its way down.
  */
 final class PossessiveNonAtomicLookaroundTest extends TestCase
 {
+    /**
+     * Past a non-atomic lookahead the engine reads from where the
+     * lookahead starts: the "x" after "(*napla:x(a+b?))" is no character
+     * the repetition gives back, yet the reference after it reads the "a"
+     * group 1 gave back on "xaaba".
+     */
+    #[Test]
+    #[DataProvider('provideNonAtomicLookaroundsBeforeWhatReadsTheirGroups')]
+    public function test_a_non_atomic_lookaround_keeps_the_possessive_rewrite_out_of_the_pattern(string $pattern, string $possessive, string $subject): void
+    {
+        $this->assertNotSame(self::matched($pattern, $subject), self::matched($possessive, $subject), \sprintf('Oracle: %s and %s match alike on "%s".', $pattern, $possessive, $subject));
+
+        $ast = Regex::create(['cache' => null])->parse($pattern);
+        $this->assertSame($ast, $ast->accept(new Rewriter(possessive: true)), 'The rewriter leaves the pattern as written.');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, possessive: string, subject: string}>
+     */
+    public static function provideNonAtomicLookaroundsBeforeWhatReadsTheirGroups(): iterable
+    {
+        yield 'a non-atomic lookahead' => ['pattern' => '/^(*napla:x(a+b?))x[ab-]*\1$/', 'possessive' => '/^(*napla:x(a++b?))x[ab-]*\1$/', 'subject' => 'xaaba'];
+        yield 'a non-atomic lookahead, its short form' => ['pattern' => '/^(?*x(a+b?))x[ab-]*\1$/', 'possessive' => '/^(?*x(a++b?))x[ab-]*\1$/', 'subject' => 'xaaba'];
+    }
+
     #[Test]
     #[DataProvider('provideNonAtomicLookarounds')]
     public function test_a_repetition_ending_a_non_atomic_lookaround_stays_greedy(string $pattern, string $possessive, string $subject): void
@@ -113,7 +138,7 @@ final class PossessiveNonAtomicLookaroundTest extends TestCase
     private static function possessified(NodeInterface $node, PossessiveRewrites $rewrites): ?array
     {
         if ($node instanceof SequenceNode && $node->children[0] instanceof QuantifierNode) {
-            return $rewrites->possessify($node->children);
+            return $rewrites->possessify($node->children, $node);
         }
 
         if ($node instanceof SequenceNode) {

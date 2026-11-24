@@ -116,6 +116,9 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
         yield 'a byte the releases read otherwise' => ['pattern' => '/\xFF/i', 'reported' => false];
         yield 'a range holding a byte they pair' => ['pattern' => '/[\xE0-\xEF]/i', 'reported' => false];
         yield 'a range of bytes they leave without a case' => ['pattern' => '/[\xD7-\xD8]/i', 'reported' => true];
+        yield 'a class of a byte and the one they pair it with' => ['pattern' => '/[\xC9\xE9]/i', 'reported' => true];
+        yield 'that class with a byte the interpreter reads otherwise' => ['pattern' => '/[\xB5\xC9\xE9]/i', 'reported' => false];
+        yield 'that class with a byte the releases read otherwise' => ['pattern' => '/[\xC9\xE9\xFF]/i', 'reported' => false];
         yield 'a range whose last byte alone the releases read otherwise' => ['pattern' => '/[\xF7-\xFF]/i', 'reported' => false];
         yield 'a range of ASCII signs, under u, ending at one they pair' => ['pattern' => '/[\x{7B}-\x{7F}]/iu', 'reported' => false];
         yield 'a range of ASCII signs, under u, stopping before one they pair' => ['pattern' => '/[\x{7B}-\x{7C}]/iu', 'reported' => true];
