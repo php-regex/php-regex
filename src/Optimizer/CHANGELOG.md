@@ -65,6 +65,27 @@ CHANGELOG
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
+ * The possessive rewrite reads the flags in force where each item stands,
+   and an option setting no longer keeps it out of the whole pattern:
+   `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` now becomes
+   `/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/`, and
+   `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` becomes
+   `/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/`, while `/(?i)a+b?A/` stays greedy.
+   An option setting that names `U`, under which a plain quantifier is
+   lazy, and a non-atomic lookaround, past whose end the engine reads from
+   where it starts, still keep every quantifier of the pattern as written.
+ * The possessive rewrite reads what follows a repetition that ends its
+   sequence, or stands alone in its group, its branch or the pattern: what
+   follows the group at every place it runs, the alternation or the
+   conditional, up to the end of the pattern. `/(a+)c/` now becomes
+   `/(a++)c/`, `/(?&n)x(?(DEFINE)(?<n>[0-9]+))/` becomes
+   `/(?&n)x(?(DEFINE)(?<n>\d++))/`, and `/x[0-9]+/` becomes `/x\d++/`,
+   while `/(a+)a/`, `/(?:a+){2}/` and `/(a+)\1/` stay greedy. A repeated
+   group that ends its sequence stays greedy, as it gives back whole runs.
+   The next run of a group that may run again follows the repetition that
+   ends it, as it did from a count of two: `/(b+|ba)*c/` stays greedy, and
+   `/(?:a+b?)+c/` is no longer offered `a++`, which the check of the result
+   refused.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer
