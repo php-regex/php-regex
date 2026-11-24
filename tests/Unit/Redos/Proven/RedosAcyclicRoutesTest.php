@@ -156,6 +156,9 @@ final class RedosAcyclicRoutesTest extends TestCase
         yield 'at boundaries a route may skip' => ['pattern' => '/^'.$before.'a+'.self::boundaryGroups(10, 11).'\w/', 'subject' => 'a!'];
         // 2,048 routes die at "\b" after each "a": 1,026,550 steps on 500.
         yield 'inside a loop' => ['pattern' => '/^(?:a(?:'.self::emptyGroups(11, 0).'\b)?)+x/', 'subject' => str_repeat('a', 500).'!'];
+        yield 'out of a loop read in two ways' => ['pattern' => '/^'.self::emptyGroups(3, 20).'(?:a|a)+(?:'.self::emptyGroups(16, 0).'\bx|.)/', 'subject' => "a\n"];
+        yield 'out of a loop read in two ways, six groups before it' => ['pattern' => '/^'.self::emptyGroups(6, 0).'(?:a|a)+(?:'.self::emptyGroups(13, 6).'\bx|.)/', 'subject' => "a\n"];
+        yield 'out of a loop read in two ways, after copies written out' => ['pattern' => '/^'.self::twoWays('b', 10, 0).'x+(?:a|a)+(?:'.self::emptyGroups(12, 0).'\bx|.)/', 'subject' => str_repeat('b', 10)."xa\n"];
     }
 
     /**
@@ -190,6 +193,10 @@ final class RedosAcyclicRoutesTest extends TestCase
         ];
         yield 'empty groups before a lookahead, copies in its body' => ['pattern' => '/^'.self::emptyGroups(10, 0).'(?='.self::twoWays('a', 10, 3).'\n)/', 'subject' => str_repeat('a', 10).'!'];
         yield 'copies before a lookahead, empty groups in its body' => ['pattern' => '/^'.$tenA.'(?='.self::emptyGroups(10, 11).'.)/', 'subject' => str_repeat('a', 10)."\n"];
+        yield 'copies around two loops, then a loop read in two ways' => [
+            'pattern' => '/^'.self::twoWays('b', 10, 0).'y+'.self::twoWays('b', 10, 3).'x+(?:a|a)+./',
+            'subject' => str_repeat('b', 10).'y'.str_repeat('b', 10)."xa\n",
+        ];
         // Each loop leaves to five groups, 32 ways; forty read side by side,
         // 1,280 at each "a": 1,280,001 steps on a thousand.
         yield 'forty loops read side by side' => ['pattern' => self::sideBySide(40), 'subject' => str_repeat('a', 1000).'?'];
