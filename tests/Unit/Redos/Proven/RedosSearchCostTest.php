@@ -935,9 +935,9 @@ final class RedosSearchCostTest extends TestCase
      */
     public static function provideBudgetThresholds(): iterable
     {
-        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstProvenAt' => 75];
-        yield 'literal run' => ['pattern' => '/a+b/', 'firstProvenAt' => 42];
-        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstProvenAt' => 59];
+        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstProvenAt' => 76];
+        yield 'literal run' => ['pattern' => '/a+b/', 'firstProvenAt' => 43];
+        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstProvenAt' => 60];
     }
 
     /**
@@ -963,9 +963,9 @@ final class RedosSearchCostTest extends TestCase
      */
     public static function provideSearchBudgetThresholds(): iterable
     {
-        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstFoundAt' => 111];
-        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 81];
-        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 117];
+        yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstFoundAt' => 112];
+        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 82];
+        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 118];
     }
 
     /**

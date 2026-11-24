@@ -154,10 +154,10 @@ final class RedosAcyclicRoutesTest extends TestCase
         yield 'fifteen after the character' => ['pattern' => '/^'.$before.'x'.self::emptyGroups(14, 10).'(?:b{0}c{0}|)\ba/', 'subject' => 'xa'];
         yield 'on each side of a loop' => ['pattern' => '/^'.$before.'a+'.$after.'\ba/', 'subject' => 'aa'];
         yield 'at boundaries a route may skip' => ['pattern' => '/^'.$before.'a+'.self::boundaryGroups(10, 11).'\w/', 'subject' => 'a!'];
-        yield 'out of a loop read in two ways' => ['pattern' => '/^'.self::emptyGroups(3, 20).'(?:a|a)+(?:'.self::emptyGroups(16, 0).'\bx|.)/', 'subject' => "a\n"];
-        yield 'out of a loop read in two ways, six groups before it' => ['pattern' => '/^'.self::emptyGroups(6, 0).'(?:a|a)+(?:'.self::emptyGroups(13, 6).'\bx|.)/', 'subject' => "a\n"];
         // 2,048 routes die at "\b" after each "a": 1,026,550 steps on 500.
         yield 'inside a loop' => ['pattern' => '/^(?:a(?:'.self::emptyGroups(11, 0).'\b)?)+x/', 'subject' => str_repeat('a', 500).'!'];
+        yield 'out of a loop read in two ways' => ['pattern' => '/^'.self::emptyGroups(3, 20).'(?:a|a)+(?:'.self::emptyGroups(16, 0).'\bx|.)/', 'subject' => "a\n"];
+        yield 'out of a loop read in two ways, six groups before it' => ['pattern' => '/^'.self::emptyGroups(6, 0).'(?:a|a)+(?:'.self::emptyGroups(13, 6).'\bx|.)/', 'subject' => "a\n"];
         yield 'out of a loop read in two ways, after copies written out' => ['pattern' => '/^'.self::twoWays('b', 10, 0).'x+(?:a|a)+(?:'.self::emptyGroups(12, 0).'\bx|.)/', 'subject' => str_repeat('b', 10)."xa\n"];
     }
 
@@ -203,12 +203,46 @@ final class RedosAcyclicRoutesTest extends TestCase
     }
 
     /**
+     * Paths that leave a loop at different times and meet at one position
+     * add up: "a+" leaves at each of sixteen "a", "a{0,15}" reads the rest,
+     * and the sixteen ways reach "b+" together. Five such pairs read sixteen
+     * of each letter in 16^5 ways, 9,437,177 steps on them and a newline in
+     * the interpreter. So do paths that enter a loop at different times and
+     * go on in it together: the 26 prefixes of the alphabet before
+     * "[a-z]+" enter it 26 times on "abc...z", 1,019,227 steps with 600 more
+     * "a" and a "?".
+     */
+    #[Test]
+    #[DataProvider('providePathsMetAtOnePosition')]
+    public function test_the_paths_of_a_loop_at_different_times_add_up(string $pattern, string $subject): void
+    {
+        $counted = PcreAttemptSteps::pinned('/(*NO_START_OPT)'.substr($pattern, 1));
+        $this->assertFalse(PcreAttemptSteps::searchUnderLimit($counted, $subject, 1_000_000), 'Oracle: '.$pattern.' finishes on '.json_encode($subject).' under PHP\'s default backtrack limit.');
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, subject: string}>
+     */
+    public static function providePathsMetAtOnePosition(): iterable
+    {
+        $sixteen = implode('', array_map(static fn (string $letter): string => str_repeat($letter, 16), ['a', 'b', 'c', 'd', 'e']));
+
+        yield 'copies after each of five loops' => ['pattern' => '/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/', 'subject' => $sixteen."\nf"];
+        yield 'any letter after each of five loops' => ['pattern' => '/^a+[a-z]{0,15}b+[a-z]{0,15}c+[a-z]{0,15}d+[a-z]{0,15}e+[a-z]{0,15}!/', 'subject' => $sixteen."\n!"];
+        yield 'prefixes entering a loop at each position' => ['pattern' => '/^(?:'.implode('|', self::prefixes(26)).')[a-z]+'.self::emptyGroups(6, 11).'!/', 'subject' => implode('', range('a', 'z')).str_repeat('a', 600).'?'];
+    }
+
+    /**
      * Within the margin, the routes that die and the ways one input is
      * read stay linear and proven so: one group before "a+", four groups
      * on each side of "x" before "\ba", four copies on each side of "x+", a
-     * "\G" met past the attempt start, a lookahead read in place, whose
-     * body ends nowhere, and copies that read "ab" or "ac", each input one
-     * way.
+     * "\B\b" no character meets, a success "(*NOTEMPTY)" refuses right
+     * after "\K", a "\G" met past the attempt start, a lookahead read in
+     * place, whose body ends nowhere, and copies that read "ab" or "ac",
+     * each input one way.
      */
     #[Test]
     #[DataProvider('provideWaysWithinTheMargin')]
@@ -234,7 +268,11 @@ final class RedosAcyclicRoutesTest extends TestCase
         yield 'four copies on each side of a loop' => ['pattern' => '/^'.self::twoWays('a', 4, 0).'x+'.self::twoWays('a', 4, 3).'./', 'pump' => 'x', 'tail' => "aaaa\n"];
         yield 'twenty loops read side by side' => ['pattern' => self::sideBySide(20), 'pump' => 'a', 'tail' => '?'];
         // Loops that read other characters are never left at once.
+        yield 'copies after two loops' => ['pattern' => '/^a+a{0,3}b+b{0,3}c/', 'pump' => 'a', 'tail' => 'bbbbbb!'];
+        yield 'prefixes entering a loop at each position' => ['pattern' => '/^(?:'.implode('|', self::prefixes(4)).')[a-z]+'.self::emptyGroups(4, 11).'!/', 'pump' => 'a', 'tail' => '?'];
         yield 'one group before a loop' => ['pattern' => '/'.self::emptyGroups(1, 0).'a+!/', 'pump' => 'a', 'tail' => '?'];
+        yield 'a boundary no character meets' => ['pattern' => '/^a+(?:\B\b|)!/', 'pump' => 'a', 'tail' => '?'];
+        yield 'a success refused right after \K' => ['pattern' => '/(*NOTEMPTY)^a+\K/', 'pump' => 'a', 'tail' => '?'];
         yield 'a continuation met past the attempt start' => ['pattern' => '/^(?:a\G|a)+!/', 'pump' => 'a', 'tail' => '?'];
         yield 'a lookahead read in place' => ['pattern' => '/^\w+(?=\s*$)/', 'pump' => 'a', 'tail' => '!'];
         yield 'copies read one way at a time, before a lookahead' => ['pattern' => '/^x+'.str_repeat('(?:ab|ac)', 11).'(?=!)/', 'pump' => 'x', 'tail' => str_repeat('ab', 11).'?'];
@@ -298,6 +336,21 @@ final class RedosAcyclicRoutesTest extends TestCase
         }
 
         return $loops;
+    }
+
+    /**
+     * The first prefixes of the alphabet, the shortest first.
+     *
+     * @return list<string>
+     */
+    private static function prefixes(int $count): array
+    {
+        $prefixes = [];
+        for ($length = 1; $length <= $count; $length++) {
+            $prefixes[] = implode('', \array_slice(range('a', 'z'), 0, $length));
+        }
+
+        return $prefixes;
     }
 
     /**

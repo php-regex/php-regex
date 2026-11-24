@@ -6,6 +6,25 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * One attempt is safe (proven) only when it tries 1,024 paths at once at
+   most, every path counted along the whole attempt: each epsilon route,
+   where a list of states held each one twice at most; each route that
+   dies at a check, as `\b` between two word characters, which the engine
+   walks as it walks one that goes on; each way one input is read,
+   multiplied across the loops and lookarounds of the attempt rather than
+   counted stretch by stretch; the paths that leave a loop at different
+   times and meet at one position, or enter one at different times and go
+   on in it together; the loops read side by side; and a lookaround's body,
+   once for each path through its mark. Thirteen groups `(?:b{0}|)` after
+   `^…a+` before a dot (2,097,153 steps on one `a` and a newline), ten
+   before an `x` and ten after it, then `\ba` (1,048,577 steps on `xa`,
+   with no loop at all), ten copies `(?:a|[a])` before `x+` and ten groups
+   after it (1,048,577 steps on ten `a`, an `x` and a newline),
+   `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/` (9,437,177 steps on
+   sixteen of each letter and a newline), and forty alternatives `a+` each
+   followed by five groups (1,280,001 steps on a thousand `a`) were safe
+   (proven), and get the heuristics' verdict. An exponential or polynomial
+   verdict stands.
  * Under `m`, `^` holds after a newline only where a character follows,
    never at the end of the subject: `preg_match()` gives 0 for `/\n^/m` on
    `"a\n"`. The model counted a success there, and proved linear a loop
@@ -73,8 +92,8 @@ CHANGELOG
    position of the loop before it fails, quadratic, is not proven linear.
    The run abandoned inside the loop is held to the margin of an acyclic
    stretch, 1,024 ways, each way into the loop counted with each way the
-   run reads it and leaves it, every empty route counted along the whole
-   attempt, through the loops before and after it (eight groups
+   run reads it and leaves it, every path counted along the whole attempt,
+   through the loops before and after it (eight groups
    `(?:b{0}|)` before `(?:a|a)+` and ten after the loop take 525,313
    steps on one `a` and a newline): `/^(?:a|a)+.{20}/`, whose
    dots succeed only twenty characters back, is not proven either (PHP
@@ -87,27 +106,6 @@ CHANGELOG
    way through it: `/(*NOTEMPTY)^(?:a|a)+(?>\K|)/` commits to the empty
    match `\K` leaves, which the option refuses, and doubles its steps with
    each `a` in the interpreter.
- * An acyclic stretch counts every epsilon route through it, those into a
-   loop and to the end included, where a list of states held each one
-   twice at most: thirteen groups `(?:b{0}|)` after `^…a+` before a dot
-   gave one attempt on one `a` and a newline 2,097,153 steps, past PHP's
-   backtrack limit, and the pattern was safe (proven). It counts too the
-   routes that die at a check, which the engine walks as it walks those
-   that go on: ten groups before an `x` and ten after it, then `\ba`, take
-   1,048,577 steps on `xa`, every route after the `x` dying at `\b`, with
-   no loop at all. The paths multiply along the whole attempt, the ways
-   one input is read with the routes, across the loops and into a
-   lookaround's body, once for each path through its mark, and their
-   product is held to the same margin: ten groups on each side of `a+`
-   (1,048,577 steps on one `a` and a newline), ten copies `(?:a|[a])`
-   before `x+` and ten groups after it (1,048,577 steps on ten `a`, an `x`
-   and a newline), and ten groups before a lookahead with ten in its body
-   (1,049,601 steps on a newline) are no longer safe (proven), though each
-   stretch alone is within it. The paths of loops read side by side add
-   up: forty alternatives `a+` each followed by five groups (1,280,001
-   steps on a thousand `a` and a `?`) are no longer safe (proven) either.
-   A pattern found exponential or polynomial keeps its verdict past the
-   margin, its paths only adding to its cost.
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of
