@@ -328,3 +328,19 @@ request goes to `phpstan/phpstan-src`.
   `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` is offered `ca++b?`, refused
   with the call message, and ships unchanged, though the engine finds the
   possessive form the same.
+- `LanguageSolver::matchEquivalent()` calls three pairs equivalent that
+  the engine matches differently, with or without calls; the optimizer
+  never ships them, but the mutation judge reads the same verdict:
+  `/a+(?:b)?+a/` and `/a+(?:b)?a/`, which PCRE2's auto-possessification
+  splits on `aa` (0 against 1, JIT on and off, 10.39 to 10.49, alike under
+  `(*NO_AUTO_POSSESS)`); `/a(a)*+b/` and `/a(a)*b/`, whose group 2 the JIT
+  of 10.39 to 10.42 leaves set from an earlier start on `aacab`; and
+  `/c\xE9++b?\w/` and `/c\xE9+b?\w/`, read under C's tables, which split
+  on `c\xE9\xE9` under en_IE.ISO8859-1. Refuse a possessive group that
+  may run zero times after a repeat, a possessive capturing repeat for a
+  target before 10.44, and bytes above ASCII under another locale.
+- The optimizer makes a group's repeat possessive under
+  `(*LIMIT_MATCH=n)`, where the atomic run costs more match calls:
+  `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe` and its rewrite
+  `c(?:ab)++e` exhausts the limit with `pcre.jit=0`. Keep a group's
+  repeat greedy under a match limit the pattern sets.
