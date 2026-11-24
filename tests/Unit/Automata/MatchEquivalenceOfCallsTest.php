@@ -249,6 +249,11 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a possessive in a group called by a group inside it, before an "a"' => ['left' => '/(x(y(?1)?a)?ca++b?)/', 'right' => '/(x(y(?1)?a)?ca+b?)/', 'reason' => $call, 'witness' => 'xyxcaaca'];
         yield 'a possessive in a pattern that calls itself whole, before an "a"' => ['left' => '/x(?R)?aa++b?()/', 'right' => '/x(?R)?aa+b?()/', 'reason' => $call, 'witness' => 'xxaaaa'];
         yield 'a possessive before a call of the whole pattern, which starts with "a"' => ['left' => '/a++(?R)b|ac/', 'right' => '/a+(?R)b|ac/', 'reason' => $call, 'witness' => 'aacb'];
+        yield 'a possessive before the first of two calls of a group that calls itself' => ['left' => '/a++(?&n)(?&n)c(?(DEFINE)(?<n>a(?&n)?b))/', 'right' => '/a+(?&n)(?&n)c(?(DEFINE)(?<n>a(?&n)?b))/', 'reason' => $call, 'witness' => 'aababc'];
+        // An option the form does not show: up to PCRE2 10.49 the engine
+        // makes the "a+" at the end possessive itself, though the pattern
+        // calls itself whole, unless told not to.
+        yield 'a pattern that calls itself whole, against itself told not to make anything possessive' => ['left' => '/x(?R)?aa+b?/', 'right' => '/(*NO_AUTO_POSSESS)x(?R)?aa+b?/', 'reason' => $call];
         yield 'a possessive in a group that calls itself, read back by a backreference' => ['left' => '/(x(?1)?c(a++)b?)\2/', 'right' => '/(x(?1)?c(a+)b?)\2/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs', 'witness' => 'xcaa'];
         yield 'a possessive in a group that calls itself, called inside a lookahead' => ['left' => '/(?=(?&n)a)(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'right' => '/(?=(?&n)a)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'reason' => 'Lookarounds', 'witness' => 'xcaa'];
         // Read alike but for the possessive, these stay outside what the

@@ -833,7 +833,7 @@ final class LanguageSolver
             $held = [];
             foreach (get_object_vars($node) as $name => $field) {
                 $child = $field instanceof Hir || (\is_array($field) && reset($field) instanceof Hir);
-                if (!$child && !\in_array($name, ['properties', 'startPosition', 'endPosition'], true)) {
+                if (!$child && 'properties' !== $name && 'startPosition' !== $name && 'endPosition' !== $name) {
                     $held[$name] = $field;
                 }
             }
