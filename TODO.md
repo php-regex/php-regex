@@ -98,8 +98,20 @@
   and a heuristic finding stands where the engine is linear:
   `/^(?:a|a)+./`, and since #436 `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
   `/(*NOTEMPTY)^(?:a\K|a)+/` (20 → 36 steps on 8 → 16 `a`s), reported
-  critical. Prove such a loop linear when every attempt succeeds at its
-  first try.
+  critical. #443 proves such a loop linear when every attempt succeeds at
+  its first try, and waits until after RC2: each of five reviews found
+  loops it proves linear that exhaust the backtrack limit, the last
+  `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}(?:f|f)+./` on 82
+  characters (6.3 million steps). Merge 2.x into it, with #450's count,
+  which rewrites the same parts of `AmbiguityFinder`, then review it again.
+- Since #450 a linear verdict is refused where one attempt may try more
+  than 1,024 paths at once, which takes the proof from linear patterns
+  too: 1,194 of 66,963 fuzzed patterns proven linear before, and two of
+  the corpus, of the `/^(RH|r)?…V((Z?F)?[N]{0,2})?…/` form, that take 4 to
+  5 steps per character. Count the paths more exactly where they meet.
+- The count of #450 slows some analyses: a chain of 26 `X+.{0,15}` takes
+  216 ms against 10 ms before, and patterns of 5 to 10 `(?:X{0}|)` or
+  `\K` groups around loops take 350 to 700 ms against 25 to 55 ms.
 - The search cost keeps an atomic body other than one run with every way
   through it, so only the replay (confirmed mode) reports
   `/(*NOTEMPTY)(?>a+\K)/`, `/(*NOTEMPTY)(?>(?>a+)\K)/`,
@@ -112,6 +124,16 @@
   `?`, `:` or `)` or the body holds `\Q`: `?a++b?`, `:a++b:` and
   `/\Qa\E++b/` stay unconfirmed. Replay those under a delimiter the body
   does not hold, as `NoJit` does for `*`, `_` and `)`.
+
+## Counted benchmarks
+
+- The counted figures of `ValidationBench::benchValidateKept` move with
+  changes that never reach validation: `lookbehind-alternatives` reads
+  106.2K or 106.7K instructions (141.1K or 150.6K cycles) and
+  `many-backreferences` 51.77K or 52.16K (84.51K or 94.18K cycles), each
+  figure the same on every rerun of one head; the cycles failed #446 and
+  #443. Find what moves them, or give the method a wider cycles margin
+  with `#[MetricTolerance]`.
 
 ## Engine reports
 
