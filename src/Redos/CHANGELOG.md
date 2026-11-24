@@ -6,6 +6,25 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * One attempt is safe (proven) only when it tries 1,024 paths at once at
+   most, every path counted along the whole attempt: each epsilon route,
+   where a list of states held each one twice at most; each route that
+   dies at a check, as `\b` between two word characters, which the engine
+   walks as it walks one that goes on; each way one input is read,
+   multiplied across the loops and lookarounds of the attempt rather than
+   counted stretch by stretch; the paths that leave a loop at different
+   times and meet at one position, or enter one at different times and go
+   on in it together; the loops read side by side; and a lookaround's body,
+   once for each path through its mark. Thirteen groups `(?:b{0}|)` after
+   `^…a+` before a dot (2,097,153 steps on one `a` and a newline), ten
+   before an `x` and ten after it, then `\ba` (1,048,577 steps on `xa`,
+   with no loop at all), ten copies `(?:a|[a])` before `x+` and ten groups
+   after it (1,048,577 steps on ten `a`, an `x` and a newline),
+   `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/` (9,437,177 steps on
+   sixteen of each letter and a newline), and forty alternatives `a+` each
+   followed by five groups (1,280,001 steps on a thousand `a`) were safe
+   (proven), and get the heuristics' verdict. An exponential or polynomial
+   verdict stands.
  * Under `m`, `^` holds after a newline only where a character follows,
    never at the end of the subject: `preg_match()` gives 0 for `/\n^/m` on
    `"a\n"`. The model counted a success there, and proved linear a loop
