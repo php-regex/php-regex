@@ -163,7 +163,10 @@ Found while fixing the bugs of #400; each is PCRE2's, not the library's.
   `toupper(0xFD) = 'I'`, while `I` and `i` pair with each other.
   `/\xFD/i` matches `I` with the JIT and not with `pcre.jit=0` (PHP 8.4.28,
   PCRE2 10.49): the interpreter compares the lowercase forms (`lcc`), the
-  JIT the other case (`fcc`). Report it with the `\w` one.
+  JIT the other case (`fcc`). Report it with the `\w` one. Byte 0xFF
+  splits the paths too under macOS's ru_RU.KOI8-R and fr_FR.ISO8859-15:
+  `/\xFF/i` matches `\xDF` and `\xBE` with the JIT, and no other byte with
+  `pcre.jit=0`.
 - PCRE2's open pull requests fix the JIT's two other wrong answers, found
   on 10.49 and master: #1004 a zero-width branch of a variable-length
   lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
@@ -272,11 +275,17 @@ request goes to `phpstan/phpstan-src`.
   `"/(*UCP)(?:\xC9|\xE9|)+/i"`, though `/(*UCP)\xC9/i` matches `\xC9`
   alone there (php:7.4.10). Gate it on `UcpFoldsPastAsciiWithoutUtf`, as
   `UselessIFlagRule` does.
-- `regex.lint.flag.useless.i` keeps an `i` the engine finds useless where
-  a class holds both cases, `/[aA]/i`, `/(*UCP)[\xC9\xE9]/i`,
-  `/(*UCP)[\xC0-\xFE]/i`, or an inline flag turns it off, `/(?-i)a/i`,
-  `/(*UCP)(?-i)\xE9/i`; and keeps it for `/(*UCP)(?i)\xE9/i`, where the
-  pattern's own `i` adds nothing.
+- Since #452 `regex.lint.flag.useless.i` still keeps an `i` the engine
+  finds useless: a class holding both cases under u, `/[aA]/iu` or
+  `/[a-zA-Z]/iu`, which needs PCRE2's caseless sets (`k`, `K` and the
+  Kelvin sign; `µ`, `Μ` and `μ`), which `OtherCases` does not carry; a
+  class under `(*UCP)` with another locale's tables,
+  `/(*UCP)[\xC9\xE9]/i` under fr_FR.ISO8859-1, whose ASCII case comes
+  from Unicode up to 10.44 and from the tables from 10.45; a class whose
+  bytes the tables leave unsettled, `/[Ii\xDD\xFD]/i` under macOS's
+  tr_TR.ISO8859-9; a backreference to a group that captures nothing with
+  a case, `/(1)\1/i`; and `\p{Lu}`, `\p{Ll}` or `\p{Lt}` before PCRE2
+  10.45, where `i` leaves them as written (`/\p{Lu}/i` on 10.44).
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. The fix
   is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
