@@ -78,7 +78,7 @@ final class PossessiveRewrites
 
     /**
      * What follows each item the rewriter is in, the innermost last: the
-     * items of its sequence from the index given, a repeat that must run
+     * items of its sequence from the index given, a repeat that may run
      * again, whose body then follows its own end, a capturing group, which
      * a call may run elsewhere, a DEFINE, which runs nothing where it
      * stands, or null at the end of an atomic group or a lookaround but a
@@ -198,9 +198,9 @@ final class PossessiveRewrites
     }
 
     /**
-     * Records the repeat the rewriter enters, when its body must run again
+     * Records the repeat the rewriter enters, when its body may run again
      * after a run: "(?:a+b?){2}c" gives an "a" back to its second run on
-     * "aac".
+     * "aac", and "(b+|ba)*c" a "b" to a run of "ba" on "bbac".
      */
     public function enterRepeat(QuantifierNode $node): void
     {
@@ -234,7 +234,9 @@ final class PossessiveRewrites
 
     /**
      * The items of a sequence with each greedy repeat made possessive where
-     * what follows it can never start with a character it gives back.
+     * what follows it can never start with a character it gives back: the
+     * items after it, then, at the end of the sequence or while they may
+     * all match nothing, what follows the sequence.
      *
      * @param list<NodeInterface> $children the items of the sequence as rewritten
      * @param SequenceNode        $sequence the sequence as the pattern writes it
@@ -247,35 +249,34 @@ final class PossessiveRewrites
         // item as rewritten reads them where it stands.
         $this->inForce()->addAll($this->analyzerAt($sequence)->inForce(new SequenceNode($children, $sequence->startPosition, $sequence->endPosition)));
 
-        for ($i = 0; $i < \count($children); $i++) {
-            $current = $children[$i];
-            $suffix = array_slice($children, $i + 1);
-
-            if ($current instanceof QuantifierNode && QuantifierType::Greedy === $current->type && $this->isPossessifyCandidate($current) && !empty($suffix)) {
-                // The sets stop at 0x7F: above it nothing is known disjoint.
-                if ($this->repeats->isCaptureSensitive($current->node) || $this->canMatchEmpty($current->node) || $this->mayTakeAboveAscii($current->node)) {
-                    continue;
-                }
-
-                try {
-                    $followingChars = $this->charsAfter($suffix);
-                    if (null !== $followingChars && !$this->analyzerAt($current)->lastChars($current->node)->intersects($followingChars)) {
-                        $children[$i] = new QuantifierNode(
-                            $current->node,
-                            $current->quantifier,
-                            QuantifierType::Possessive,
-                            $current->startPosition,
-                            $current->endPosition,
-                        );
-                        $this->state->changed(Rewriter::POSSESSIVE);
-                    }
-                } catch (\Throwable) {
-                    // If analysis fails, don't optimize
-                }
+        foreach ($children as $i => $current) {
+            if ($current instanceof QuantifierNode && $this->givesNothingBack($current, \array_slice($children, $i + 1), $this->analyzerAt($current))) {
+                $children[$i] = $this->possessive($current);
             }
         }
 
         return $children;
+    }
+
+    /**
+     * The repeat as rewritten, made possessive where what follows it can
+     * never start with a character it gives back, when no sequence holds
+     * it: what follows the group, the alternation, the conditional, the
+     * DEFINE or the pattern it stands alone in follows it. The sequence
+     * that holds a repeat reads it with the items after it, in
+     * possessify().
+     *
+     * @param QuantifierNode $node      the repeat as the pattern writes it
+     * @param QuantifierNode $rewritten the repeat as rewritten
+     */
+    public function possessifyAlone(QuantifierNode $node, QuantifierNode $rewritten): QuantifierNode
+    {
+        $frame = end($this->after);
+        if (\is_array($frame) && $frame[0][$frame[1] - 1] === $node) {
+            return $rewritten;
+        }
+
+        return $this->givesNothingBack($rewritten, [], $this->analyzerAt($node)) ? $this->possessive($rewritten) : $rewritten;
     }
 
     /**
@@ -363,7 +364,7 @@ final class PossessiveRewrites
      * nothing, what follows the groups around it: "(a+b?)a" gives an "a"
      * back to the "a" after the group on "aa". The walk stops at the end of
      * the pattern, of an atomic group or of a lookaround, which nothing
-     * after it backtracks into; the body of a repeat that must run again
+     * after it backtracks into; the body of a repeat that may run again
      * follows the end of its body as well. A group runs wherever a call
      * runs it, and gives back to what follows the call: "(?&n)a" after
      * "(?<n>a+b?)" in a DEFINE matches "aa". Null when a lookaround may come
@@ -580,7 +581,7 @@ final class PossessiveRewrites
         return match (true) {
             $node instanceof GroupNode && self::closes($node) => [null],
             $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type) => [$node],
-            $node instanceof QuantifierNode && self::repeatsAgain($node) => [$node],
+            $node instanceof QuantifierNode && self::mayRunAgain($node) => [$node],
             $node instanceof DefineNode => [$node],
             $node instanceof ScriptRunNode => [false],
             default => [],
@@ -672,12 +673,12 @@ final class PossessiveRewrites
     }
 
     /**
-     * Whether the body of the repeat must run again after a run, from a
-     * count of two on: "{2}" or "{2,}".
+     * Whether the body of the repeat may run again after a run, up to a
+     * count of two or more: "+", "*", "{2}" or "{0,2}", not "?".
      */
-    private static function repeatsAgain(QuantifierNode $node): bool
+    private static function mayRunAgain(QuantifierNode $node): bool
     {
-        return ($node->bounds->min ?? 0) >= 2;
+        return ($node->bounds->max ?? \PHP_INT_MAX) >= 2;
     }
 
     private static function holdsLookaround(NodeInterface $node): bool
@@ -693,6 +694,51 @@ final class PossessiveRewrites
         }
 
         return false;
+    }
+
+    /**
+     * Whether the repeat is greedy and what follows it, the items given,
+     * then what follows them, can never start with a character it gives
+     * back, read under the character sets in force where it stands.
+     *
+     * @param list<NodeInterface> $suffix
+     */
+    private function givesNothingBack(QuantifierNode $repeat, array $suffix, CharSetAnalyzer $analyzer): bool
+    {
+        // The sets stop at 0x7F: above it nothing is known disjoint.
+        if (QuantifierType::Greedy !== $repeat->type || !$this->isPossessifyCandidate($repeat)
+            || $this->repeats->isCaptureSensitive($repeat->node) || $this->canMatchEmpty($repeat->node) || $this->mayTakeAboveAscii($repeat->node)) {
+            return false;
+        }
+
+        // A repeated group gives back whole runs, which need not start with
+        // a character it ends with: "((?:b|ba)*)c" ends a run of "ba" with
+        // the "b" it gives back on "bac". One that ends its sequence stays
+        // greedy.
+        if ([] === $suffix && $repeat->node instanceof GroupNode) {
+            return false;
+        }
+
+        try {
+            $followingChars = $this->charsAfter($suffix);
+            if (null !== $followingChars && !$analyzer->lastChars($repeat->node)->intersects($followingChars)) {
+                return true;
+            }
+        } catch (\Throwable) { // Not reached by any pattern read: the walks throw nothing of their own.
+            // If analysis fails, don't optimize
+        }
+
+        return false;
+    }
+
+    /**
+     * The repeat made possessive.
+     */
+    private function possessive(QuantifierNode $node): QuantifierNode
+    {
+        $this->state->changed(Rewriter::POSSESSIVE);
+
+        return new QuantifierNode($node->node, $node->quantifier, QuantifierType::Possessive, $node->startPosition, $node->endPosition);
     }
 
     private function isPossessifyCandidate(QuantifierNode $node): bool

@@ -34,6 +34,10 @@ final class OptimizerSafetyTest extends TestCase
     {
         $optimized = Regex::create()->optimize($input, OptimizerOptions::fromArray($options))->optimized;
 
+        foreach (['', 'a', 'b', 'aaaa', 'abab', 'abc', 'def', 'foo', 'AB', 'ABc', 'Ab', '0', '_', 'WIN7', 'WINDOWS10'] as $subject) {
+            $this->assertSame([preg_match($input, $subject, $before, \PREG_OFFSET_CAPTURE), $before], [preg_match($optimized, $subject, $after, \PREG_OFFSET_CAPTURE), $after], \sprintf('Oracle: %s and %s differ on "%s".', $input, $optimized, $subject));
+        }
+
         $this->assertSame($expected, $optimized);
     }
 
@@ -132,7 +136,9 @@ final class OptimizerSafetyTest extends TestCase
 
         // --- 2. The Regression Case (CRITICAL) ---
         // Ensure distinct patterns are NOT deduplicated
-        yield 'Distinct patterns with different quantifiers' => ['/[A-Z]{2,}|[a-z]/', '/[A-Z]{2,}|[a-z]/', ['possessive' => true]];
+        // The count ends its branch at the end of the pattern, where nothing
+        // takes back what it matched.
+        yield 'Distinct patterns with different quantifiers' => ['/[A-Z]{2,}|[a-z]/', '/[A-Z]{2,}+|[a-z]/', ['possessive' => true]];
         yield 'Distinct literals with same length' => ['/abc|def/', '/abc|def/', ['possessive' => true]];
 
         // --- 3. Sequence Compaction (Safe) ---

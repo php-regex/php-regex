@@ -88,7 +88,10 @@ DEFINE holds is read there under the options in force where the DEFINE stands:
 recursive call is not, and leaves the group greedy. The rewrite reads the flags
 in force where each item stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while
 `/(?i)a+b?A/` stays greedy, and an option setting that names `U` or a
-non-atomic lookaround keeps every quantifier of the pattern as written.
+non-atomic lookaround keeps every quantifier of the pattern as written. A
+repetition that ends its group reads what follows the group, every call of it
+and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and `/(a+)a/` stays
+greedy.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

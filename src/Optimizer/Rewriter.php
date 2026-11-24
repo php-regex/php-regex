@@ -401,6 +401,7 @@ final class Rewriter extends AbstractNodeVisitor
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
+        $written = $node;
         // The group a quantifier repeats keeps its parentheses however deep
         // a quantifier of its own sits inside it: the flag comes back to
         // what the enclosing item set, never to false.
@@ -423,6 +424,12 @@ final class Rewriter extends AbstractNodeVisitor
         }
 
         $normalized = $this->repeatRewrites->normalizeQuantifier($node);
+        // A repeat no sequence holds reads what follows the group, the
+        // branch or the pattern it stands alone in.
+        if ($this->possessify && $normalized instanceof QuantifierNode) {
+            $normalized = $this->possessiveRewrites->possessifyAlone($written, $normalized);
+        }
+
         if ($ungrouped && $normalized instanceof QuantifierNode) {
             $this->possessiveRewrites->ungrouped($normalized);
         }
