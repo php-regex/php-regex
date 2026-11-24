@@ -247,8 +247,8 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     }
 
     /**
-     * PCRE2 refuses a code point past a byte without UTF: such a class is
-     * not read, nor its range walked.
+     * PCRE2 refuses a code point past a byte without UTF, and a character
+     * named without UTF: such a class is not read, nor its range walked.
      */
     #[Test]
     #[DataProvider('provideClassesPastAByte')]
@@ -267,6 +267,8 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         yield 'a letter and its capital with the first code point past a byte' => ['pattern' => '/[aA\x{100}]/i'];
         yield 'a letter and its capital with every code point' => ['pattern' => '/[\x00-\x{10FFFF}aA]/i'];
         yield 'a letter and its capital with every code point, backwards' => ['pattern' => '/[\x{10FFFF}-\x00aA]/i'];
+        yield 'a range from a character no name gives to the last small letter' => ['pattern' => '/[\N{NO SUCH NAME}-z]/i'];
+        yield 'a range from the last small letter to a character no name gives' => ['pattern' => '/[z-\N{NO SUCH NAME}]/i'];
     }
 
     private static function reports(string $pattern, string $locale): bool
