@@ -95,6 +95,13 @@ final class CharSetAnalyzer
 
     private readonly bool $unicodeMode;
 
+    /**
+     * Whether (*UCP) gives a byte above ASCII without UTF the case of the
+     * character of its value, as PCRE2 does from 10.35: before, the tables
+     * give it, as without (*UCP).
+     */
+    private readonly bool $ucpCases;
+
     private readonly bool $utf;
 
     private readonly bool $caseless;
@@ -114,24 +121,30 @@ final class CharSetAnalyzer
     private readonly ByteCharSet $dot;
 
     /**
-     * @param string      $startOptions    the options the pattern opens with, such
-     *                                     as "(*CR)(*UTF)": the newline convention
-     *                                     they set decides where the dot stops
-     * @param bool        $readsAboveAscii whether the sets hold the characters above
-     *                                     ASCII, read under the tables of $locale
-     * @param self|null   $samePattern     an analyzer of the same pattern, whose
-     *                                     reading of the start options this one
-     *                                     takes rather than read them again
-     * @param bool        $asciiSpaces     whether "(?aS)" or "(?a)" holds "\s" to
-     *                                     ASCII under (*UCP), and "\S" takes the
-     *                                     spaces above it
-     * @param string|null $locale          the LC_CTYPE locale whose tables the
-     *                                     engine compiles with, "C" for PCRE2's
-     *                                     own: another locale's are read for the
-     *                                     bytes of a type and the other case of a
-     *                                     character, which are not known where
-     *                                     the machine cannot set it, nor under
-     *                                     tables not known, null
+     * @param string      $startOptions      the options the pattern opens with, such
+     *                                       as "(*CR)(*UTF)": the newline convention
+     *                                       they set decides where the dot stops
+     * @param bool        $readsAboveAscii   whether the sets hold the characters above
+     *                                       ASCII, read under the tables of $locale
+     * @param self|null   $samePattern       an analyzer of the same pattern, whose
+     *                                       reading of the start options this one
+     *                                       takes rather than read them again
+     * @param bool        $asciiSpaces       whether "(?aS)" or "(?a)" holds "\s" to
+     *                                       ASCII under (*UCP), and "\S" takes the
+     *                                       spaces above it
+     * @param string|null $locale            the LC_CTYPE locale whose tables the
+     *                                       engine compiles with, "C" for PCRE2's
+     *                                       own: another locale's are read for the
+     *                                       bytes of a type and the other case of a
+     *                                       character, which are not known where
+     *                                       the machine cannot set it, nor under
+     *                                       tables not known, null
+     * @param bool        $ucpFoldsPastAscii whether the release gives a byte above
+     *                                       ASCII under (*UCP) the case of the
+     *                                       character of its value, as PCRE2 does
+     *                                       from 10.35; true where it is not known,
+     *                                       as the releases PHP bundles from 8.0
+     *                                       on do
      */
     public function __construct(
         string $flags = '',
@@ -140,12 +153,14 @@ final class CharSetAnalyzer
         ?self $samePattern = null,
         private readonly bool $asciiSpaces = false,
         ?string $locale = CharacterTables::BUILT_IN,
+        bool $ucpFoldsPastAscii = true,
     ) {
         $this->ownTables = $samePattern->ownTables ?? CharacterTables::BUILT_IN === $locale;
         $this->tables = null === $samePattern ? self::tablesOf($locale) : $samePattern->tables;
         $this->options = $samePattern->options ?? self::readStartOptions($startOptions);
         $this->flags = null === $samePattern ? $this->flagsAtTheStart($flags) : $flags;
         $this->unicodeMode = str_contains($flags, 'u') || $this->options['ucp'];
+        $this->ucpCases = $samePattern->ucpCases ?? ($this->options['ucp'] && $ucpFoldsPastAscii);
         $this->utf = str_contains($flags, 'u') || $this->options['utf'];
         $this->caseless = str_contains($flags, 'i');
         $this->restricted = str_contains($this->flags, 'r');
@@ -157,9 +172,9 @@ final class CharSetAnalyzer
      * An analyzer for the pattern as a whole: its flags and the newline
      * convention its start options set.
      */
-    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false, ?string $locale = CharacterTables::BUILT_IN): self
+    public static function forRegex(RegexNode $regex, bool $readsAboveAscii = false, ?string $locale = CharacterTables::BUILT_IN, bool $ucpFoldsPastAscii = true): self
     {
-        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii, locale: $locale);
+        return new self($regex->flags, StartOptions::of($regex->source ?? ''), $readsAboveAscii, locale: $locale, ucpFoldsPastAscii: $ucpFoldsPastAscii);
     }
 
     /**
@@ -560,20 +575,21 @@ final class CharSetAnalyzer
      * The characters the characters from $start to $end match besides
      * themselves under i. An ASCII letter matches its other case. Above
      * ASCII, read under PCRE2's own tables, a byte has no other case; under
-     * (*UCP) a Latin-1 letter has the other one where it is a byte, "\xC9"
-     * for "\xE9". Under UTF a character above ASCII may match characters
-     * that start with any byte, and "k" and "s" match the Kelvin sign and
-     * the long s, both ways, unless r keeps ASCII apart. Under Turkish
-     * casing "i" and "I" are no pair: "i" matches the capital dotted I,
-     * U+0130, and "I" the small dotless i, U+0131, both ways. The tables
-     * give the other case of a byte, and under UTF or UCP of an ASCII
-     * character: another locale's give it as casesInTables() reads them.
+     * (*UCP) from PCRE2 10.35 a Latin-1 letter has the other one where it
+     * is a byte, "\xC9" for "\xE9". Under UTF a character above ASCII may
+     * match characters that start with any byte, and "k" and "s" match the
+     * Kelvin sign and the long s, both ways, unless r keeps ASCII apart.
+     * Under Turkish casing "i" and "I" are no pair: "i" matches the capital
+     * dotted I, U+0130, and "I" the small dotless i, U+0131, both ways. The
+     * tables give the other case of a byte, and under UTF, or UCP from
+     * 10.35, of an ASCII character: another locale's give it as
+     * casesInTables() reads them.
      */
     private function otherCases(int $start, int $end): ByteCharSet
     {
         $set = ByteCharSet::empty();
         if (!$this->ownTables) {
-            $set = $this->casesInTables($start, $this->utf || $this->unicodeMode ? min($end, 0x7F) : $end);
+            $set = $this->casesInTables($start, $this->utf || $this->ucpCases ? min($end, 0x7F) : $end);
             if ($set->isUnknown()) {
                 return $set;
             }
@@ -624,7 +640,7 @@ final class CharSetAnalyzer
             return $end > 0x7F ? $set->union(ByteCharSet::fromBytes(0x80, 0xFF)) : $set;
         }
 
-        if ($this->unicodeMode) {
+        if ($this->ucpCases) {
             for ($byte = max($start, 0x80); $byte <= min($end, 0xFF); $byte++) {
                 $char = (string) mb_chr($byte, 'UTF-8');
                 foreach ([\MB_CASE_UPPER_SIMPLE, \MB_CASE_LOWER_SIMPLE] as $case) {

@@ -17,6 +17,8 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosOptions;
@@ -728,6 +730,48 @@ final class RedosHeuristicShapesTest extends TestCase
         $this->assertSame($critical, $long > 4 * $short, \sprintf('Oracle disagrees with the row: %d -> %d steps.', $short, $long));
 
         $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null])->redos($pattern)->severity);
+    }
+
+    /**
+     * Under (*UCP) without u a Latin-1 letter meets its other case from
+     * PCRE2 10.35 alone: before it, the case of a byte is the tables',
+     * none above ASCII under C, the branches start apart and the loop is
+     * read as without (*UCP). Engine: on 8 and 12 units of "\xE9" then
+     * "!", with the JIT and start optimizations off, PCRE2 10.34
+     * (php:7.4.10) takes 20 and 28 steps on each row, as the rows of
+     * 10.34 carry, and 10.49 (PHP 8.4.28 on macOS) 1 024 and 16 384, as
+     * the test asks the running engine for the rows of 10.35.
+     *
+     * @param array{int, int}|null $steps the steps of the release's engine, null where the running one reads (*UCP) alike
+     */
+    #[Test]
+    #[DataProvider('provideLatin1LettersUnderUcpByRelease')]
+    public function test_under_ucp_latin1_letters_meet_their_other_case_from_pcre2_10_35(string $pattern, string $php, string $pcre, ?array $steps, bool $critical): void
+    {
+        if (null === $steps) {
+            $this->assertSame((new PcreTarget(\PHP_VERSION_ID, $pcre))->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf), PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf), 'Oracle: the running engine reads (*UCP) as the row\'s release does.');
+            $unoptimized = PcreInterpreter::pattern($pattern[0].'(*NO_START_OPT)'.substr($pattern, 1));
+            $steps = [self::steps($unoptimized, str_repeat("\xE9", 8).'!'), self::steps($unoptimized, str_repeat("\xE9", 12).'!')];
+        }
+
+        $this->assertSame($critical, $steps[1] > 4 * $steps[0], \sprintf('Oracle disagrees with the row: %d -> %d steps.', $steps[0], $steps[1]));
+
+        $this->assertSame($critical, RedosSeverity::Critical === Regex::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $pcre])->redos($pattern)->severity, $pattern.' on PCRE2 '.$pcre);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, php: string, pcre: string, steps: array{int, int}|null, critical: bool}>
+     */
+    public static function provideLatin1LettersUnderUcpByRelease(): iterable
+    {
+        foreach ([
+            'a Latin-1 letter beside its capital under i' => '/(*UCP)^((?:\xE9|\xC9)+)\1$/i',
+            'a Latin-1 letter beside its capital after an option setting' => '/(*UCP)(?i)^((?:\xE9|\xC9)+)\1$/',
+            'a Latin-1 letter beside a range of capitals under i' => '/(*UCP)^((?:\xE9|[\xC0-\xDE])+)\1$/i',
+        ] as $name => $pattern) {
+            yield $name.', on 10.34' => ['pattern' => $pattern, 'php' => '7.4', 'pcre' => '10.34', 'steps' => [20, 28], 'critical' => false];
+            yield $name.', on 10.35' => ['pattern' => $pattern, 'php' => '8.0', 'pcre' => '10.35', 'steps' => null, 'critical' => true];
+        }
     }
 
     /**

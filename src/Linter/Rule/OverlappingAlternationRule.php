@@ -39,6 +39,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -964,7 +965,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * it does not hold, which the ASCII read leaves out: "[^é]" takes 0x90.
      * What the target's tables decide is read from them, another locale's
      * included: the bytes of "\d", "\s", "\w" and the POSIX classes, and
-     * the other case of a character, a byte's read caselessly included.
+     * the other case of a character, a byte's read caselessly included,
+     * which (*UCP) takes from Unicode from the target's PCRE2 10.35 on.
      * Where they cannot tell, the ASCII read of the branch stands: an
      * overlap there goes unreported rather than one PCRE would not see. A
      * branch known neither way, a byte read caselessly whose case the
@@ -977,7 +979,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): ?array
     {
-        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale);
+        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale, ucpFoldsPastAscii: $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
