@@ -82,9 +82,36 @@ CHANGELOG
    `(?:a|a)+` before they fail, are exponential, no longer safe (proven):
    PHP exhausts its backtrack limit on 2,000 `a` in the interpreter, where
    `/^(?:a|a)+\K/` matches the empty string at once. When the attempt
-   succeeds only once the loop gives a character back to read after `\K`,
-   as `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, no verdict is proven, as for
-   `/^(?:a|a)+./`.
+   succeeds once the loop gives a character back to read after `\K`, as
+   `/(*NOTEMPTY)^(?:a|a)+\K.?/` does, it is safe (proven), as
+   `/^(?:a|a)+./` is.
+ * A loop read in two ways that no suffix makes fail is proven linear. In
+   `/^(?:a|a)+./` the dot reads whatever character the loop can go on with,
+   once the loop gives it back: the engine abandons no run inside the loop
+   longer than a character, and the attempt takes the steps `/^(?:a|b)+./`
+   takes, 35 then 67 on 16 then 32 `a` and a `!` in the interpreter.
+   `/^(?:a|aa)+./`, `/^(?:a|a)*./`, `/(*NOTEMPTY)^(?:a|a)+\K.?/` and
+   `/(*NOTEMPTY)^(?:a\K|a)+/`, critical by the heuristics, are safe
+   (proven). `/^(?:a|a)+$/` and `/^(?:a|a)+.$/`, which a suffix makes fail
+   after every way out of the loop, stay exponential, and
+   `/^(?:a|a|ab)+(?:[ab]*c|a)/`, which reads `[ab]*` again from each
+   position of the loop before it fails, quadratic, is not proven linear.
+   The run abandoned inside the loop is held to the margin of an acyclic
+   stretch, 1,024 ways, each way into the loop counted with each way the
+   run reads it and leaves it, every path counted along the whole attempt,
+   through the loops before and after it (eight groups
+   `(?:b{0}|)` before `(?:a|a)+` and ten after the loop take 525,313
+   steps on one `a` and a newline): `/^(?:a|a)+.{20}/`, whose
+   dots succeed only twenty characters back, is not proven either (PHP
+   exhausts its backtrack limit on 60 `a` and a newline), nor is a loop ten
+   groups `(?:|)` lead into (1,049,601 steps on one `a` and a newline). A
+   `^` under m, which the model takes to hold after a newline that ends the
+   subject, keeps the loop out of the proof: `/\A(?:\n|\n)+\n^(?:\z|.)/m`
+   takes 285 then 18,429 steps on 6 then 12 newlines, and so does an
+   atomic group or a possessive repeat that reads nothing, kept with every
+   way through it: `/(*NOTEMPTY)^(?:a|a)+(?>\K|)/` commits to the empty
+   match `\K` leaves, which the option refuses, and doubles its steps with
+   each `a` in the interpreter.
  * The step replay of confirmed mode counts the characters a possessive or
    atomic repeat of one character set reads, which PCRE2's step counter
    does not see: it runs the pattern with each such character in a group of
