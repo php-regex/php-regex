@@ -128,6 +128,16 @@ CHANGELOG
    ru_RU.KOI8-R, whose tables pair `\xD7` with `\xF7`, which it was not.
    Before 10.35, (*UCP) leaves the case of a byte to those tables, as
    before.
+ * Without u, `regex.lint.flag.useless.i` reports a class that holds the
+   other case of every byte it holds, which matches the same bytes with i:
+   `/[aA]/i`, `/[A-z]/i`, and under `(*UCP)` `/(*UCP)[\xC9\xE9]/i` or
+   `/(*UCP)[\xC0-\xFE]/i`, whose signs and sharp s have no other case
+   that is a byte. Under u, and under (*UCP) with another locale's tables,
+   a class with a case keeps the flag, as before. A character, a class or
+   a backreference after an inline option that turns i off, or sets it
+   again, keeps it no more, the flag deciding nothing there: `/(?-i)a/i`,
+   `/(*UCP)(?i)\xE9/i` and `/(?-i)a|b/i`, where the option holds for the
+   alternatives after its own, are reported; `/(?:(?-i)a|b)c/i` is not.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
