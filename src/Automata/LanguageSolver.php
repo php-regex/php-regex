@@ -782,14 +782,14 @@ final class LanguageSolver
     }
 
     /**
-     * Whether two patterns differ only in quantifiers possessive on one side
-     * and greedy on the other, each possessive one, read as greedy, giving
-     * nothing back: read through every call, nothing that may follow it
-     * starts as its body does. Where the rest of a match fails after the
-     * greedy one, it fails again on each character given back, so both
-     * write what the pattern with each such quantifier greedy writes. The
-     * options, the form and what each DEFINE holds are the same but for
-     * those quantifiers.
+     * Whether two patterns differ only in quantifiers over one character,
+     * possessive on one side and greedy on the other, each possessive one,
+     * read as greedy, giving nothing back: read through every call, nothing
+     * that may follow it starts as its body does. Where the rest of a match
+     * fails after the greedy one, it fails again on each character given
+     * back, so both write what the pattern with each such quantifier greedy
+     * writes. The options, the form and what each DEFINE holds are the same
+     * but for those quantifiers.
      */
     private function possessivesGiveNothingBack(string $left, string $right, SolverOptions $options): bool
     {
@@ -818,8 +818,9 @@ final class LanguageSolver
     /**
      * Each node of the forms, in the order a walk meets it: its class, how
      * many children it has and what it holds besides them, positions aside,
-     * a possessive quantifier read as greedy. The properties worked out from
-     * the nodes are left out, as a possessive quantifier changes them.
+     * a possessive quantifier over one character read as greedy. The
+     * properties worked out from the nodes are left out, as a possessive
+     * quantifier changes them.
      *
      * @param list<Hir> $forms
      *
@@ -838,7 +839,12 @@ final class LanguageSolver
                 }
             }
 
-            if ($node instanceof RepetitionHir && Greed::Possessive === $node->greed) {
+            // A possessive quantifier over a group, capturing or not, keeps a
+            // frame of the JIT for each run of the call around it: deep in
+            // the calls, /x(?R)?(?:ab)++c/ runs out of the JIT stack where
+            // /x(?R)?(?:ab)+c/ matches. Over one character, it outlasts the
+            // greedy one.
+            if ($node instanceof RepetitionHir && Greed::Possessive === $node->greed && self::oneCharacterAtATime($node->body)) {
                 $held['greed'] = Greed::Greedy;
             }
 
@@ -848,6 +854,14 @@ final class LanguageSolver
         }
 
         return $nodes;
+    }
+
+    /**
+     * Whether a repeated body is one character, of a set or not: no group.
+     */
+    private static function oneCharacterAtATime(Hir $body): bool
+    {
+        return $body instanceof ClassHir || ($body instanceof LiteralHir && 1 === \count($body->codePoints));
     }
 
     /**

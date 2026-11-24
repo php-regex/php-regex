@@ -75,7 +75,11 @@ CHANGELOG
    gives nothing back: `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and
    `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` are proven to write the same
    `$matches`, while `/(x(?1)?ca++)(?1)a/` stays refused, as the run of the
-   group the second call makes gives an `a` back to what follows it.
+   group the second call makes gives an `a` back to what follows it. Only
+   quantifiers over one character are read so: a possessive quantifier
+   over a group, capturing or not, keeps a frame of the JIT for each run of
+   the call around it, and `/x(?R)?(?:ab)++c/` runs out of the JIT stack
+   some 3,000 calls deep where `/x(?R)?(?:ab)+c/` matches.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

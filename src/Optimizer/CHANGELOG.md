@@ -57,7 +57,9 @@ CHANGELOG
    are read through every call, what may follow the group after each
    return included: `/(x(?1)?ca+b?)c/` now becomes `/(x(?1)?ca++b?)c/`,
    and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` gets `ca++b?`, where the
-   check refused them.
+   check refused them. A group repeated there stays greedy:
+   `/x(?R)?(?:ab)++c/` runs out of the JIT stack deep in the calls where
+   `/x(?R)?(?:ab)+c/` matches.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a

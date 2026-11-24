@@ -288,13 +288,16 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
      * A call the check does not run in place leaves its proof to the
      * rewrite without the possessive step, though the possessive gives
      * nothing back: a group that calls itself inside a lookahead, or that
-     * a backreference reads back.
+     * a backreference reads back, and a possessive group inside a group
+     * that calls itself, which keeps a frame of the JIT for each run of the
+     * call: deep in the calls, its stack runs out where the greedy group
+     * matches.
      *
      * @param list<string> $changes
      */
     #[Test]
     #[DataProvider('provideGroupsTheCheckDoesNotRunWhereTheyAreCalled')]
-    public function test_a_possessive_in_a_group_the_check_does_not_run_where_it_is_called_stays_greedy(string $pattern, string $possessive, string $optimized, array $changes): void
+    public function test_a_possessive_in_a_group_the_check_does_not_run_where_it_is_called_stays_greedy(string $pattern, string $possessive, string $optimized, array $changes, ?string $deep = null): void
     {
         $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($possessive), \sprintf('Oracle: %s and %s differ.', $pattern, $possessive));
         $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($optimized), \sprintf('Oracle: %s and %s differ.', $pattern, $optimized));
@@ -304,15 +307,25 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
 
         $this->assertSame($optimized, $result->optimized);
         $this->assertSame($changes, $result->changes);
+
+        if (null !== $deep) {
+            $this->requiresJit($pattern);
+
+            $this->assertSame(1, preg_match($pattern, $deep), \sprintf('Oracle: %s matches %d bytes of calls.', $pattern, \strlen($deep)));
+            $this->assertFalse(preg_match($possessive, $deep), \sprintf('Oracle: %s runs out of the JIT stack on %d bytes of calls.', $possessive, \strlen($deep)));
+            $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, preg_last_error());
+        }
     }
 
     /**
-     * @return iterable<string, array{pattern: string, possessive: string, optimized: string, changes: list<string>}>
+     * @return iterable<string, array{pattern: string, possessive: string, optimized: string, changes: list<string>, deep?: string}>
      */
     public static function provideGroupsTheCheckDoesNotRunWhereTheyAreCalled(): iterable
     {
         yield 'a group a DEFINE holds calling itself, called inside a lookahead' => ['pattern' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
         yield 'a group calling itself, read back by a backreference' => ['pattern' => '/(x(?1)?ca+b?)c\1/', 'possessive' => '/(x(?1)?ca++b?)c\1/', 'optimized' => '/(x(?1)?ca+b?)c\1/', 'changes' => []];
+        yield 'a group repeated in a pattern that calls itself whole' => ['pattern' => '/x(?R)?(?:ab)+c/', 'possessive' => '/x(?R)?(?:ab)++c/', 'optimized' => '/x(?R)?(?:ab)+c/', 'changes' => [], 'deep' => str_repeat('x', 3_100).str_repeat('abc', 3_100)];
+        yield 'a group repeated in a group that calls itself' => ['pattern' => '/(x(?1)?c(?:ab)+d?)e/', 'possessive' => '/(x(?1)?c(?:ab)++d?)e/', 'optimized' => '/(x(?1)?c(?:ab)+d?)e/', 'changes' => [], 'deep' => str_repeat('x', 3_100).str_repeat('cab', 3_100).'e'];
     }
 
     /**

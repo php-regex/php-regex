@@ -277,6 +277,43 @@ final class MatchEquivalenceOfCallsTest extends TestCase
     }
 
     /**
+     * A possessive quantifier over a group, capturing or not, keeps a frame
+     * of the JIT for each run of the call around it: deep in the calls, the
+     * JIT stack runs out where the greedy quantifier matches. Read through
+     * every call, such a pair stays refused, though the possessive gives
+     * nothing back.
+     */
+    #[Test]
+    #[DataProvider('provideGroupsRepeatedDeepInCalls')]
+    public function test_a_possessive_group_inside_a_call_that_runs_its_group_again_is_refused(string $left, string $right, string $deep): void
+    {
+        try {
+            (new LanguageSolver())->matchEquivalent($left, $right);
+
+            $this->fail(\sprintf('%s and %s are proven alike.', $left, $right));
+        } catch (ComplexityException $refusal) {
+            $this->assertStringContainsString('A call that may run its own group again, that returns groups, or whose group the match solver does not read', $refusal->getMessage());
+        }
+
+        $this->requiresJit($left);
+
+        $this->assertFalse(preg_match($left, $deep), \sprintf('Oracle: %s matches %d bytes of calls.', $left, \strlen($deep)));
+        $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, preg_last_error());
+        $this->assertSame(1, preg_match($right, $deep), \sprintf('Oracle: %s runs out of the JIT stack on %d bytes of calls.', $right, \strlen($deep)));
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, deep: string}>
+     */
+    public static function provideGroupsRepeatedDeepInCalls(): iterable
+    {
+        yield 'a group repeated in a pattern that calls itself whole' => ['left' => '/x(?R)?(?:ab)++c/', 'right' => '/x(?R)?(?:ab)+c/', 'deep' => str_repeat('x', 3_100).str_repeat('abc', 3_100)];
+        yield 'a group repeated in a group that calls itself' => ['left' => '/(x(?1)?c(?:ab)++d?)e/', 'right' => '/(x(?1)?c(?:ab)+d?)e/', 'deep' => str_repeat('x', 3_100).str_repeat('cab', 3_100).'e'];
+        yield 'a capturing group repeated in a group that calls itself' => ['left' => '/(x(?1)?c(a)++d?)e/', 'right' => '/(x(?1)?c(a)+d?)e/', 'deep' => str_repeat('x', 2_000).str_repeat('ca', 2_000).'e'];
+        yield 'a group repeated in a group a DEFINE holds that calls itself' => ['left' => '/(?&n)e(?(DEFINE)(?<n>x(?&n)?c(?:ab)++d?))/', 'right' => '/(?&n)e(?(DEFINE)(?<n>x(?&n)?c(?:ab)+d?))/', 'deep' => str_repeat('x', 3_100).str_repeat('cab', 3_100).'e'];
+    }
+
+    /**
      * A call of the whole pattern that returns groups, PCRE2 10.47 syntax,
      * writes them where it returns: it is not read through, whichever
      * engine runs the check.
