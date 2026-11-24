@@ -191,6 +191,7 @@
     {
         "pattern": "/[^a-zA-Z0-9]/isU",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -340,6 +341,7 @@
     {
         "pattern": "/^#[0-9A-Fa-f]{6}$/isU",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -1840,7 +1842,8 @@
     {
         "pattern": "/^[0-9,a-z,A-Z$_]+$/i",
         "issues": [
-            "regex.lint.charclass.redundant"
+            "regex.lint.charclass.redundant",
+            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -3252,6 +3255,7 @@
     {
         "pattern": "/([\\>\\+\\~\\s]{1})([a-zA-Z0-9\\*]+)([^\\>\\+\\~\\s]*)/si",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s",
             "regex.lint.quantifier.useless"
         ]
@@ -6071,6 +6075,7 @@
     {
         "pattern": "'([\\{])([a-zA-Z0-9_]*?)([\\}])'si",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -6212,12 +6217,14 @@
     {
         "pattern": "/^[A-z]:/i",
         "issues": [
-            "regex.lint.charclass.suspiciousRange"
+            "regex.lint.charclass.suspiciousRange",
+            "regex.lint.flag.useless.i"
         ]
     },
     {
         "pattern": "/^[\\d\\.]+?([a-zA-Z]+?)[\\d]*?$/si",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -6591,6 +6598,7 @@
     {
         "pattern": "/^([a-zA-Z0-9-._~!$&\\'()*+,;=]|%[[:xdigit:]]{2}){1,254}$/i",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.group.quantifiedCapture"
         ]
     },
@@ -6946,6 +6954,7 @@
     {
         "pattern": "#[^a-zA-Z0-9\\-\\_]#is",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s"
         ]
     },
@@ -7587,7 +7596,8 @@
         "issues": [
             "regex.lint.alternation.empty",
             "regex.lint.charclass.redundant",
-            "regex.lint.charclass.suspiciousRange"
+            "regex.lint.charclass.suspiciousRange",
+            "regex.lint.flag.useless.i"
         ]
     },
     {
@@ -9327,6 +9337,7 @@
     {
         "pattern": "#\\\\['a-zA-Z0-9]+#mi",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.m"
         ]
     },
@@ -9705,6 +9716,7 @@
     {
         "pattern": "/(^[a-zA-Z0-9_-]+([.][^\\001)\\ ]+)+$)/siU",
         "issues": [
+            "regex.lint.flag.useless.i",
             "regex.lint.flag.useless.s",
             "regex.lint.group.quantifiedCapture",
             "regex.lint.quantifier.nested"

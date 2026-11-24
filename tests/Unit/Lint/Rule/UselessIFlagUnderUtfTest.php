@@ -115,6 +115,12 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'a letter of Unicode 17' => ['pattern' => '/\x{A7CE}/iu', 'useless' => false, 'reported' => false];
         yield 'that letter in a class' => ['pattern' => '/[\x{A7CE}]/iu', 'useless' => false, 'reported' => false];
         yield 'a range ending at a letter of Unicode 17' => ['pattern' => '/[\x{16E9B}-\x{16EA0}]/iu', 'useless' => false, 'reported' => false];
+        // The Kelvin sign folds with "k" and "K": a class of both bytes
+        // leaves it out without i.
+        yield 'a small letter and its capital whose caseless set holds the Kelvin sign' => ['pattern' => '/[kK]/iu', 'useless' => false, 'reported' => false];
+        // An inline option decides the case of what follows it either way.
+        yield 'a Latin-1 letter after i turned off' => ['pattern' => '/(?-i)\x{E9}/iu', 'useless' => true, 'reported' => true];
+        yield 'a Latin-1 letter after i turned on again' => ['pattern' => '/(?i)\x{E9}/iu', 'useless' => true, 'reported' => true];
     }
 
     /**

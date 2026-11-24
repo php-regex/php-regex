@@ -53,9 +53,8 @@ final class ClassMemberCaseAndDuplicateTest extends TestCase
         // \cA is \x01: the range holds the capitals, which i folds onto
         // the small letters the class does not hold.
         yield 'a range from a control character to the capitals' => ['pattern' => '/[\cA-Z]/i', 'useless' => false, 'reported' => false];
-        // Both cases are in the range already: the flag adds nothing, but
-        // the rule does not read an endpoint written \cA, and stays silent.
-        yield 'a range from a control character over both cases' => ['pattern' => '/[\cA-z0]/i', 'useless' => true, 'reported' => false];
+        // Both cases are in the range already: the flag adds nothing.
+        yield 'a range from a control character over both cases' => ['pattern' => '/[\cA-z0]/i', 'useless' => true, 'reported' => true];
         // \cA to \cZ is \x01 to \x1A: no letter, read as PCRE reads it.
         yield 'a range of control characters' => ['pattern' => '/[\cA-\cZ]/i', 'useless' => true, 'reported' => true];
         yield 'a range of digits' => ['pattern' => '/[\x01-9]/i', 'useless' => true, 'reported' => true];

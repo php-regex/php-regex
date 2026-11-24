@@ -34,8 +34,12 @@ use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Validation\OtherCases;
 
 /**
- * Detects a useless 'i' flag: the pattern contains no case-sensitive
- * characters and no backreferences.
+ * Detects a useless 'i' flag: the pattern contains no character, class or
+ * backreference whose case the flag decides. A class that holds the other
+ * case of every byte it holds matches the same bytes with i, "[aA]"; a
+ * node after an inline option that turns i off, or sets it again, reads
+ * its case alike with the pattern's own i and without it: "a" in
+ * "/(?-i)a/i" and in "/(?i)a/i".
  *
  * Stateful: aggregates case-sensitivity facts during traversal and emits
  * in finish().
@@ -46,11 +50,16 @@ final class UselessIFlagRule extends AbstractLintRule
 {
     public const ID = 'regex.lint.flag.useless.i';
 
-    private bool $hasCaseSensitiveChars = false;
+    /**
+     * Whether the flag decides the case of a node, or the pattern has none.
+     */
+    private bool $flagMatters = false;
 
-    private bool $hasBackreferences = false;
-
-    private bool $trackCaseSensitivity = false;
+    /**
+     * The flags at the start of the pattern, less its own i: where an
+     * inline option sets i again, they hold it as well.
+     */
+    private string $flagsWithoutI = '';
 
     private bool $unicodeMode = false;
 
@@ -99,9 +108,8 @@ final class UselessIFlagRule extends AbstractLintRule
 
     public function begin(LintContext $context): void
     {
-        $this->hasCaseSensitiveChars = false;
-        $this->hasBackreferences = false;
-        $this->trackCaseSensitivity = $context->pattern->hasFlag('i');
+        $this->flagMatters = !$context->pattern->hasFlag('i');
+        $this->flagsWithoutI = str_replace('i', '', $context->activeFlags());
         $this->unicodeMode = $context->pattern->unicodeMode;
         $this->unicodeCase = $this->unicodeMode
             || (str_contains(StartOptions::of($context->pattern->source), '(*UCP)') && $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
@@ -113,61 +121,20 @@ final class UselessIFlagRule extends AbstractLintRule
 
     public function check(NodeInterface $node, LintContext $context): array
     {
-        if ($node instanceof BackrefNode) {
-            $this->hasBackreferences = true;
-
+        // Where an inline option turns i off, the node reads its case as
+        // written with the pattern's i and without it.
+        if ($this->flagMatters || !str_contains($context->activeFlags(), 'i')) {
             return [];
         }
 
-        if (!$this->trackCaseSensitivity || $this->hasCaseSensitiveChars) {
-            return [];
-        }
-
-        if ($node instanceof LiteralNode) {
-            if ($this->stringHasCaseSensitiveLetters($node->value)) {
-                $this->hasCaseSensitiveChars = true;
-            }
-
-            return [];
-        }
-
-        if ($node instanceof CharClassNode) {
-            $expression = $node->expression;
-            if ($expression instanceof AlternationNode) {
-                foreach ($expression->alternatives as $alt) {
-                    if ($this->charClassPartHasLetters($alt)) {
-                        $this->hasCaseSensitiveChars = true;
-
-                        break;
-                    }
-                }
-            } elseif ($this->charClassPartHasLetters($expression)) {
-                $this->hasCaseSensitiveChars = true;
-            }
-
-            return [];
-        }
-
-        if ($node instanceof CharLiteralNode) {
-            if ($this->charLiteralHasCaseSensitiveLetter($node)) {
-                $this->hasCaseSensitiveChars = true;
-            }
-
-            return [];
-        }
-
-        if ($node instanceof UnicodePropNode) {
-            if ($this->unicodePropIsCaseSensitive($node->prop)) {
-                $this->hasCaseSensitiveChars = true;
-            }
-        }
+        $this->flagMatters = $this->hasCase($node) && !$this->setsIAgain($node, $context);
 
         return [];
     }
 
     public function finish(LintContext $context): array
     {
-        if ($context->pattern->hasFlag('i') && !$this->hasCaseSensitiveChars && !$this->hasBackreferences) {
+        if (!$this->flagMatters) {
             return [new RuleViolation(
                 self::ID,
                 "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
@@ -175,6 +142,128 @@ final class UselessIFlagRule extends AbstractLintRule
         }
 
         return [];
+    }
+
+    /**
+     * Whether i changes what the node matches: a reference matches the
+     * text its group captured in either case.
+     */
+    private function hasCase(NodeInterface $node): bool
+    {
+        if ($node instanceof LiteralNode) {
+            return $this->stringHasCaseSensitiveLetters($node->value);
+        }
+
+        if ($node instanceof CharClassNode) {
+            return $this->classHasCase($node->expression);
+        }
+
+        if ($node instanceof CharLiteralNode) {
+            return $this->charLiteralHasCaseSensitiveLetter($node);
+        }
+
+        if ($node instanceof UnicodePropNode) {
+            return $this->unicodePropIsCaseSensitive($node->prop);
+        }
+
+        return $node instanceof BackrefNode;
+    }
+
+    /**
+     * Whether an inline option sets i again before the node, which then
+     * reads its case alike without the pattern's own i: "(?i)" in
+     * "/(?i)a/i".
+     */
+    private function setsIAgain(NodeInterface $node, LintContext $context): bool
+    {
+        return str_contains($context->flagsAt($node, $context->parents()[0] ?? $node, $this->flagsWithoutI), 'i');
+    }
+
+    /**
+     * Whether the class matches other characters with i than without it:
+     * a member has a case, and the class does not hold the other case of
+     * every byte it holds.
+     */
+    private function classHasCase(NodeInterface $expression): bool
+    {
+        $parts = $expression instanceof AlternationNode ? $expression->alternatives : [$expression];
+        foreach ($parts as $part) {
+            if ($this->charClassPartHasLetters($part)) {
+                return !$this->holdsEveryOtherCase($parts);
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether, without UTF, the class holds the other case of every byte
+     * it holds, the one a caseless class adds to it: "[aA]", and under
+     * (*UCP) "[\xC9\xE9]" or "[\xC0-\xFE]", where the multiplication sign,
+     * the division sign and the sharp s have none that is a byte. A type
+     * matches the same bytes with i, and is read apart: "[aA\d]" holds
+     * every other case, "[aA[:upper:]]" does not, which i turns into
+     * "[aA[:alpha:]]".
+     *
+     * @param array<NodeInterface> $parts
+     */
+    private function holdsEveryOtherCase(array $parts): bool
+    {
+        // Under UTF a character may have several other cases, "k" the
+        // capital and the Kelvin sign. Under (*UCP) a class reads ASCII from
+        // Unicode up to 10.44 and from the locale's tables from 10.45.
+        if ($this->unicodeMode || (null !== $this->tables && $this->unicodeCase)) {
+            return false;
+        }
+
+        $bytes = [];
+        foreach ($parts as $part) {
+            if ($part instanceof LiteralNode) {
+                $bytes += count_chars($part->value, 1);
+            } elseif ($part instanceof RangeNode || $part instanceof CharLiteralNode) {
+                $low = $this->endpoint($part instanceof RangeNode ? $part->start : $part);
+                $high = $this->endpoint($part instanceof RangeNode ? $part->end : $part);
+                // PCRE2 refuses a code point past a byte without UTF.
+                if (null === $low || null === $high || max($low, $high) > 0xFF) {
+                    return false;
+                }
+
+                $bytes += array_flip(range($low, $high));
+            } elseif ($this->charClassPartHasLetters($part)) {
+                return false;
+            }
+        }
+
+        foreach (array_keys($bytes) as $byte) {
+            $other = $this->otherByte($byte);
+            if (null === $other || !isset($bytes[$other])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * The other case of a byte, or the byte itself: from the locale's
+     * tables, null where they leave it unsettled; of an ASCII letter; under
+     * (*UCP), of a byte past ASCII from PCRE2's Unicode tables of the
+     * target's release, where it is a byte. Those tables are not read for
+     * ASCII, where they give the letters alone a case.
+     */
+    private function otherByte(int $byte): ?int
+    {
+        if (null !== $this->tables) {
+            return $this->tables->settledOtherCase($byte);
+        }
+
+        if (!$this->unicodeCase || $byte < 0x80) {
+            return CodePoints::isAsciiLetter($byte) ? $byte ^ 0x20 : $byte;
+        }
+
+        $other = OtherCases::of($this->target)->otherCase($byte);
+
+        return 0 === $other >> 8 ? $other : $byte;
     }
 
     private function charClassPartHasLetters(NodeInterface $node): bool
