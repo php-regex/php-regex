@@ -1000,7 +1000,7 @@ Exception hierarchy (simplified):
   - `InvalidRegexOptionException` (invalid configuration option)
   - `CacheException` (a cache directory or file that cannot be written)
   - `InternalFailureException` (the library could not finish its own work: no verdict on the pattern)
-  - `LintException` (a lint formatter or worker that failed)
+  - `LintException` (`@internal`: a lint formatter or worker that failed, inside the lint commands)
   - `UnknownLintRuleException` (a rules map that names a rule the linter does not run)
   - `UnsupportedTargetException` (a target PHP whose engine the library does not judge: PHP 7.2 and earlier ship PCRE1)
   - `JsonEncodingException` (a value the JSON output cannot write)
@@ -1018,7 +1018,7 @@ Exception hierarchy (simplified):
 
 Each class lives in the `Exception` namespace of its package:
 `PHPRegex\Parser\Exception\ExceptionInterface` and the parser's own,
-`PHPRegex\Linter\Exception\LintException`,
+`PHPRegex\Linter\Exception\LintException` (internal),
 `PHPRegex\Linter\Exception\UnknownLintRuleException`,
 `PHPRegex\Linter\Exception\UnsupportedTargetException`,
 `PHPRegex\Transpiler\Exception\TranspileException`,

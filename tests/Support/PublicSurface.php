@@ -46,7 +46,7 @@ final class PublicSurface
             'Exception/ExceptionInterface', 'Exception/UnknownToolException', 'Exception/TargetException',
         ],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
-        'Linter' => ['PatternLinter', 'LintSeverity', 'Exception/LintException', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
+        'Linter' => ['PatternLinter', 'LintSeverity', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',

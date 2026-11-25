@@ -565,6 +565,9 @@ CHANGELOG
  * `PatternLinter::analyze($ast)` returns the findings of the rules on the
    tree `parse()` gives, and `getIssues()` those of the last tree read; the
    `visit*()` methods of the linter are `@internal`.
+ * `LintException` is `@internal`: only the lint commands' own services
+   throw it, a formatter they do not know or a worker that failed. Catch
+   `ExceptionInterface` around them.
  * `new PatternLinter($target, $rules)` takes the `PcreTarget` its rules read
    the pattern for, the running PHP's when null, and then the map turning
    rules on and off, as `checks.lint.rules` does.
