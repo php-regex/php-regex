@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.anchor.impossible.start` reports `^` under `m` after a
+   character that ends no line under the newline convention (`/a$^/m`,
+   `/(*CRLF)a$\r^\n/m`), beside `\z` once a character was read (`/a\z^/m`,
+   `/\n^\z/m`), and in a lookahead after characters the items after it read
+   as many of before `\z` (`/a(?=\n^)\n\z/m`). Under `(*CRLF)` and
+   `(*ANYCRLF)`, `regex.lint.anchor.impossible.end` reads the newline that
+   ends the subject after `\Z` and `$` without `m`: `/(*CRLF)a\Z\r\n^/m` is
+   reported, and `/(*ANYCRLF)a\Z\r^/m`, which matches `"a\r\n"`, is not.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
