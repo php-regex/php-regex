@@ -184,12 +184,15 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         $steps = [];
         foreach ([1, 2] as $quarters) {
             $start = \strlen($prefix) + $quarters * $quarter * \strlen($run);
-            $match = self::matchFrom($pinned, $subject, $start, $options);
-            if (null === $match) {
+            $step = self::steps($pinned, $subject, $start, $options);
+            if (null === $step) {
                 return null;
             }
 
-            if (false === $match || $match[0] <= $start || $match[0] > $start + $bound) {
+            // Counted, the attempt finishes under the same limits: it
+            // matches or fails.
+            $match = self::matchFrom($pinned, $subject, $start, $options);
+            if (!\is_array($match) || $match[0] <= $start || $match[0] > $start + $bound) {
                 return false;
             }
 
@@ -204,11 +207,6 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
                 if (false !== $retried && $retried[0] > $match[0] + $bound) {
                     return false;
                 }
-            }
-
-            $step = self::steps($pinned, $subject, $start, $options);
-            if (null === $step) {
-                return null;
             }
 
             $steps[] = $step;

@@ -243,6 +243,11 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         yield 'possessive repeat of every character' => ['pattern' => '/a(?:.*+\d)?/s', 'run' => 'a'];
         yield 'word boundary inside the run' => ['pattern' => '/\b\w(?:\w+\d)?/', 'run' => 'a'];
         yield 'caret' => ['pattern' => '/^a(?:a+\d)?/', 'run' => 'a'];
+        // The paths tried before the match succeed later, through the
+        // possessive dot: the match reads the run.
+        yield 'possessive repeat of every character in a later branch' => ['pattern' => '/a(?:a+\d|.*+)?/s', 'run' => 'a'];
+        // The paths tried before the match fail on the next character.
+        yield 'run word of two characters the paths tried before fail inside' => ['pattern' => '/ab(?:ac)?|(?:ab)+\d/', 'run' => 'ab'];
     }
 
     /**
@@ -263,6 +268,9 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $near = PcreAttemptSteps::steps($pinned, $subject, 128);
         $found = preg_match($pinned, $subject, $matches, \PREG_OFFSET_CAPTURE, 64);
         $short = 1 === $found && $matches[0][1] + \strlen($matches[0][0]) > 64 && $matches[0][1] + \strlen($matches[0][0]) <= 68;
+        if ('/a+\d/' === $pattern) {
+            $this->assertSame(0, $found, 'Oracle: the attempt of '.$pattern.' matches.');
+        }
         // The oracle of each outcome, as the engine gives it.
         if (true === $replays) {
             $this->assertTrue($short && $far - $near >= 64, \sprintf('Oracle: the attempt of %s at a quarter of the run matches past four characters, or does not read the run (%d then %d steps).', $pattern, $far, $near));
@@ -285,7 +293,45 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         yield 'the attempt reads no run' => ['pattern' => '/a(?:a+\d)??/', 'options' => [], 'replays' => false];
         yield 'the match reads the run' => ['pattern' => '/a+(?:a+\d)?/', 'options' => [], 'replays' => false];
         yield 'the match is empty' => ['pattern' => '/(?:a+\d)?/', 'options' => [], 'replays' => false];
+        yield 'the attempt fails' => ['pattern' => '/a+\d/', 'options' => [], 'replays' => false];
         yield 'limits too low for the attempt' => ['pattern' => '/a(?:a+\d)?/', 'options' => ['backtrackLimit' => 50], 'replays' => null];
+    }
+
+    /**
+     * After a match "\K" leaves empty PHP retries where it ends, refusing
+     * an empty match at its start: a retry that then reads the run moves
+     * the loop past it, and one the limits stop cannot be counted. On a
+     * run of "ab", "(?<=b)a\K" leaves an empty match after each "a", where
+     * "(?=b)" would match empty and "b(?:ab)+" reads the rest of the run.
+     *
+     * @param array{backtrackLimit?: int} $options
+     */
+    #[Test]
+    #[DataProvider('provideRetriesAfterAKeptEmptyMatch')]
+    public function test_replay_of_short_matches_follows_the_retry_after_a_kept_empty_match(array $options, ?bool $replays): void
+    {
+        $pattern = '/(?<=b)a\K|(?=b)|b(?:ab)+/';
+        $subject = str_repeat('ab', 256);
+        $this->assertSame(1, preg_match(PcreAttemptSteps::pinned($pattern), $subject, $matches, \PREG_OFFSET_CAPTURE, 128), 'Oracle: the attempt a quarter through the run fails.');
+        $this->assertSame(['', 129], $matches[0], 'Oracle: the attempt does not stop on an empty match after one character.');
+        $retry = PcreAttemptSteps::pinned('/(*NOTEMPTY_ATSTART)'.substr($pattern, 1));
+        $this->assertSame(1, preg_match($retry, $subject, $retried, \PREG_OFFSET_CAPTURE, 129), 'Oracle: the retry fails.');
+        $this->assertSame(512, $retried[0][1] + \strlen($retried[0][0]), 'Oracle: the retry stops before the end of the run.');
+        if (isset($options['backtrackLimit'])) {
+            $this->assertGreaterThan($options['backtrackLimit'], PcreAttemptSteps::steps($retry, $subject, 129), 'Oracle: the retry fits the limit.');
+            $this->assertLessThan($options['backtrackLimit'], PcreAttemptSteps::steps(PcreAttemptSteps::pinned($pattern), $subject, 128), 'Oracle: the attempt needs more than the limit.');
+        }
+
+        $this->assertSame($replays, (new SearchCostReplayer())->replaysShortMatches($pattern, '', 'ab', '', new ConfirmationOptions(...$options)));
+    }
+
+    /**
+     * @return iterable<string, array{options: array{backtrackLimit?: int}, replays: bool|null}>
+     */
+    public static function provideRetriesAfterAKeptEmptyMatch(): iterable
+    {
+        yield 'the retry reads the run' => ['options' => [], 'replays' => false];
+        yield 'limits too low for the retry' => ['options' => ['backtrackLimit' => 50], 'replays' => null];
     }
 
     /**

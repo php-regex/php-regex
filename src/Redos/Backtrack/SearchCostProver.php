@@ -1025,39 +1025,40 @@ final class SearchCostProver
     private function readsToTheEnd(ItemAutomaton $automaton, Budget $budget, array $tried, array $word, int $phase, array $jumps): ?array
     {
         ksort($tried);
+        $length = \count($word);
+
+        // No path succeeds inside the run: the items at the end of each run
+        // word, from the phase on, until they repeat.
         $set = $tried;
-        $exactly = $tried;
-        for ($at = 0 === $phase ? \count($word) : $phase; $at < \count($word); $at++) {
+        $seen = [];
+        $after = [];
+        for ($at = $phase; true; $at = ($at + 1) % $length) {
+            if (0 === $at) {
+                $key = implode(',', array_keys($set));
+                if (isset($seen[$key])) {
+                    break;
+                }
+
+                $seen[$key] = true;
+                $after += $set;
+            }
+
             $set = $automaton->stepSet($set, $word[$at]);
-            $exactly = self::stepExactly($automaton, $exactly, $word[$at], $jumps);
-            if (null === $set || null === $exactly || [] === $exactly) {
+            if (null === $set) {
                 return null;
             }
         }
 
-        if (!$this->entersItself($automaton, $budget, $exactly, $word, $jumps)) {
-            return null;
-        }
-
-        // No path succeeds inside the run: the items after each run word,
-        // until they repeat.
-        $seen = [];
-        $after = [];
-        while (true) {
-            $key = implode(',', array_keys($set));
-            if (isset($seen[$key])) {
-                return $after;
-            }
-
-            $seen[$key] = true;
-            $after += $set;
-            foreach ($word as $class) {
-                $set = $automaton->stepSet($set, $class);
-                if (null === $set) {
-                    return null;
-                }
+        // One of them reads to the end of any run.
+        $exactly = $tried;
+        foreach (0 === $phase ? [] : \array_slice($word, $phase) as $class) {
+            $exactly = self::stepExactly($automaton, $exactly, $class, $jumps);
+            if (null === $exactly || [] === $exactly) {
+                return null;
             }
         }
+
+        return $this->entersItself($automaton, $budget, $exactly, $word, $jumps) ? $after : null;
     }
 
     /**
