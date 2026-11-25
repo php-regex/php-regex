@@ -848,10 +848,6 @@ final class PossessiveRewrites
     private function insideACalledGroup(): bool
     {
         $calls = $this->calls();
-        if ([] === $calls) {
-            return false;
-        }
-
         if (null !== $this->pattern && isset($calls[spl_object_id($this->pattern)])) {
             return true;
         }
