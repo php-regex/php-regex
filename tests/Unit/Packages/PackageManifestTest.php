@@ -220,6 +220,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
             'Parser\Resolution\ArgumentState', 'Parser\Resolution\Hole', 'Parser\Resolution\PatternArgument',
+            // A group whose brackets decide which repeats PCRE2 makes
+            // possessive is never called redundant.
+            'Automata\Transform\AutoPossession',
         ],
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
@@ -238,6 +241,9 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Analysis\GroupIndex', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\StartOptions', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            // A rewrite of the brackets that decide which repeats PCRE2
+            // makes possessive is checked, and the Modernizer keeps them.
+            'Automata\Transform\AutoPossession',
         ],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
