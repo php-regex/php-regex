@@ -6,6 +6,11 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:lint` and `regex:routes` read a named group of a route constraint
+   as non-capturing too where the installed `symfony/routing` drops its
+   name, 6.4.51, 7.4.24 and 8.1.12 on: `->where('locale', '(?<l>en|fr)')`
+   is linted as `{^(?P<locale>(?:en|fr))$}sDu`, and `(?<n>a)\k<n>` is
+   invalid there, as the router compiles them.
  * `php_version` in `config/php-regex.php` takes a Composer constraint
    (`">=8.1"`, `"^8.1 <8.7"`) besides a single version: `regex:lint` judges
    the range as `regex lint --php-version` does, from its lowest PHP and at
