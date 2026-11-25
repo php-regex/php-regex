@@ -430,7 +430,10 @@ search of `preg_match()` at an empty match, but these functions go on, and PHP's
 retry after each empty match reads to the end of the run (see the
 [ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).
 The tip then starts with `Quadratic search after an empty match` and names the
-function. A `preg_match()` call of that pattern is not reported, and neither is
+function. A pattern such as `/a*b|a/` stops the search of `preg_match()` at a
+short match, found after `a*b` read to the end of the run, and these functions
+start again where it ends: the tip then starts with `Quadratic search over short
+matches`. A `preg_match()` call of such a pattern is not reported, and neither is
 a call whose limit, as its type says, bounds the matches.
 
 ```php
