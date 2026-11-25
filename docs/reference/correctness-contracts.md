@@ -119,7 +119,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   (`ext/pcre/php_pcre.c`, since PHP 5.6.13), then move one character on: about n² steps. Each search of the loop
   starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing; `^` without `m` and
   `\A` do. It is reported as `every_match_search_cost`, and as the lint issue `regex.lint.redos.search` and the
-  PHPStan identifier `regex.redos.search` at the calls of those functions that no literal limit bounds, at severity
+  PHPStan identifier `regex.redos.search` at the calls that run the loop of one of those functions, wrappers and `RegexIterator` modes included, that no literal limit bounds, at severity
   `medium`, a warning. Measured with PHP 8.4.28 and PCRE2 10.49, `/(?:a+\d)?/` on `"a" x n`, n = 2,000 / 4,000 /
   8,000 / 16,000: `preg_match_all()` 2.3 / 8.6 / 34 / 131 ms with `pcre.jit=0`, 1.8 / 6.8 / 27 / 106 ms with
   `pcre.jit=1`; `preg_match()` 0.01 ms.
@@ -132,6 +132,11 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     same way and is not reported.
   - **A pattern several calls read**, through a constant or a variable, is reported at its first call, and its cost
     follows that call.
+  - **A call whose loop an argument decides** is reported only when the call spells out a value that makes it loop:
+    a `RegexIterator` mode in a variable, or changed later with `setMode()`, is not read. A lazy `Strings::matchAll()`
+    of nette/utils loops through `preg_match()` from the end of each match, with no retry: that loop is not priced,
+    though `/(?:a+\d)?/` costs it n² too (1.2 / 3.6 / 12.5 ms on n = 2,000 / 4,000 / 8,000, PHP 8.4.28, PCRE2
+    10.49).
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 

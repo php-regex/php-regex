@@ -106,6 +106,133 @@ final class EveryMatchCallTest extends TestCase
         yield 'composer/pcre replaceCallbackArray' => ['call' => "\\Composer\\Pcre\\Preg::replaceCallbackArray(['/p/' => static fn (\$m) => ''], \$s);", 'function' => 'preg_replace_callback_array', 'limit' => null, 'everyMatch' => 'preg_replace_callback_array', 'presets' => [InteropPresets::COMPOSER_PCRE]];
         yield 'composer/pcre split' => ['call' => "\\Composer\\Pcre\\Preg::split('/p/', \$s);", 'function' => 'preg_split', 'limit' => null, 'everyMatch' => 'preg_split', 'presets' => [InteropPresets::COMPOSER_PCRE]];
         yield 'composer/pcre split with a limit' => ['call' => "\\Composer\\Pcre\\Preg::splitWithOffsets('/p/', \$s, 2);", 'function' => 'preg_split', 'limit' => 2, 'everyMatch' => null, 'presets' => [InteropPresets::COMPOSER_PCRE]];
+
+        // nette/utils 4.1, src/Utils/Strings.php: matchAll() calls
+        // preg_match_all() unless lazy, where its generator calls
+        // preg_match() from the end of each match, with no retry; split()
+        // calls preg_split() and replace() preg_replace(), or
+        // preg_replace_callback() for a callable, each with its $limit.
+        yield 'nette/utils matchAll' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/');", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils matchAll not lazy' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: false);", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils matchAll lazy' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: true);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils matchAll lazy by position' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', false, 0, false, false, false, TRUE);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils split' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/');", 'function' => 'preg_split', 'limit' => null, 'everyMatch' => 'preg_split', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils split with no limit' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/', limit: -1);", 'function' => 'preg_split', 'limit' => -1, 'everyMatch' => 'preg_split', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils split with a limit' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/', false, false, 2);", 'function' => 'preg_split', 'limit' => 2, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils replace' => ['call' => "\\Nette\\Utils\\Strings::replace(\$s, '/p/');", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils replace of a map' => ['call' => "\\Nette\\Utils\\Strings::replace(\$s, ['/p/' => '']);", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils replace with a limit' => ['call' => "\\Nette\\Utils\\Strings::replace(\$s, '/p/', '', 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils replace with a callback' => ['call' => "\\Nette\\Utils\\Strings::replace(\$s, '/p/', static fn (\$m) => '');", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils replace with a callback and a limit' => ['call' => "\\Nette\\Utils\\Strings::replace(\$s, '/p/', static fn (\$m) => '', limit: 2);", 'function' => 'preg_replace_callback', 'limit' => 2, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils match' => ['call' => "\\Nette\\Utils\\Strings::match(\$s, '/p/');", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+
+        // spatie/regex 3.1, src/Regex.php, MatchAllResult.php and
+        // ReplaceResult.php: matchAll() calls preg_match_all(), replace()
+        // preg_replace(), or preg_replace_callback() for a callable that is
+        // no string, with its $limit.
+        yield 'spatie/regex matchAll' => ['call' => "\\Spatie\\Regex\\Regex::matchAll('/p/', \$s);", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex replace' => ['call' => "\\Spatie\\Regex\\Regex::replace('/p/', '', \$s);", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex replace with a limit' => ['call' => "\\Spatie\\Regex\\Regex::replace('/p/', '', \$s, 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex replace with a callback' => ['call' => "\\Spatie\\Regex\\Regex::replace('/p/', function (\$m) { return ''; }, \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex replace with Closure::fromCallable()' => ['call' => "\\Spatie\\Regex\\Regex::replace('/p/', \\Closure::fromCallable('strval'), \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex replace with a callable string' => ['call' => "\\Spatie\\Regex\\Regex::replace('/p/', 'strval', \$s);", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::SPATIE_REGEX]];
+        yield 'spatie/regex match' => ['call' => "\\Spatie\\Regex\\Regex::match('/p/', \$s);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::SPATIE_REGEX]];
+
+        // laravel/framework 13.44, src/Illuminate/Support/Str.php:
+        // matchAll() calls preg_match_all(), replaceMatches() preg_replace(),
+        // or preg_replace_callback() for a Closure, with its $limit.
+        yield 'illuminate/support matchAll' => ['call' => "\\Illuminate\\Support\\Str::matchAll('/p/', \$s);", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s);", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a limit' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s, 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a named limit' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s, limit: 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a callback' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', static fn (array \$m): string => '', \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a first-class callable' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches(replace: \$this->replace(...), pattern: '/p/', subject: \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a closure in parentheses' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', (function (array \$m): string { return ''; }), \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support isMatch' => ['call' => "\\Illuminate\\Support\\Str::isMatch('/p/', \$s);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support match' => ['call' => "\\Illuminate\\Support\\Str::match('/p/', \$s);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+    }
+
+    /**
+     * RegexIterator::accept() runs the loop of preg_match_all() under
+     * ALL_MATCHES, of preg_split() under SPLIT and of preg_replace() under
+     * REPLACE, each without a limit (ext/spl/spl_iterators.c); MATCH, the
+     * default, and GET_MATCH stop at the first match. The mode is read from
+     * the constructor, written as a constant of the class or an integer.
+     *
+     * The oracle runs the iterator in that mode: on a longer run it makes
+     * more matches only where it loops, and then as many as the function
+     * named.
+     *
+     * @param int<0, 4> $mode
+     */
+    #[Test]
+    #[DataProvider('provideIterators')]
+    public function test_extraction_names_the_loop_of_a_regex_iterator_mode(string $call, string $class, int $mode, ?string $everyMatch): void
+    {
+        $short = self::iteratorMatches($class, $mode, str_repeat('a', 1000));
+        $long = self::iteratorMatches($class, $mode, str_repeat('a', 2000));
+        $this->assertSame(null !== $everyMatch, $long > $short, \sprintf('Oracle: %s in mode %d makes %d then %d matches.', $class, $mode, $short, $long));
+        if (null !== $everyMatch) {
+            $this->assertSame(self::matchesMade($everyMatch, null, str_repeat('a', 2000)), $long, 'Oracle: the mode loops as '.$everyMatch.'() does.');
+        }
+
+        $code = "<?php\n\$s = 'x';\n\$it = new \\RecursiveArrayIterator([\$s]);\n".$call."\n";
+        $this->assertSame([['/p/', $everyMatch]], $this->readWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The token strategy, on '.$call);
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame([['/p/', $everyMatch]], $this->readWith(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The parser strategy, on '.$call);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{call: string, class: string, mode: int<0, 4>, everyMatch: string|null}>
+     */
+    public static function provideIterators(): iterable
+    {
+        yield 'MATCH by default' => ['call' => "new RegexIterator(\$it, '/p/');", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::MATCH, 'everyMatch' => null];
+        yield 'MATCH' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::MATCH);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::MATCH, 'everyMatch' => null];
+        yield 'GET_MATCH' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::GET_MATCH);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::GET_MATCH, 'everyMatch' => null];
+        yield 'ALL_MATCHES' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::ALL_MATCHES);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::ALL_MATCHES, 'everyMatch' => 'preg_match_all'];
+        yield 'SPLIT, fully qualified' => ['call' => "new \\RegexIterator(\$it, '/p/', \\RegexIterator::SPLIT);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::SPLIT, 'everyMatch' => 'preg_split'];
+        yield 'REPLACE' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::REPLACE);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::REPLACE, 'everyMatch' => 'preg_replace'];
+        yield 'ALL_MATCHES as an integer' => ['call' => "new RegexIterator(\$it, '/p/', 2);", 'class' => \RegexIterator::class, 'mode' => 2, 'everyMatch' => 'preg_match_all'];
+        yield 'ALL_MATCHES by name, in parentheses' => ['call' => "new RegexIterator(\$it, '/p/', mode: (RegexIterator::ALL_MATCHES));", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::ALL_MATCHES, 'everyMatch' => 'preg_match_all'];
+        yield 'a mode the subclass inherits' => ['call' => "new RegexIterator(\$it, '/p/', RecursiveRegexIterator::SPLIT);", 'class' => \RegexIterator::class, 'mode' => \RegexIterator::SPLIT, 'everyMatch' => 'preg_split'];
+        yield 'RecursiveRegexIterator ALL_MATCHES' => ['call' => "new RecursiveRegexIterator(\$it, '/p/', RecursiveRegexIterator::ALL_MATCHES);", 'class' => \RecursiveRegexIterator::class, 'mode' => \RecursiveRegexIterator::ALL_MATCHES, 'everyMatch' => 'preg_match_all'];
+        yield 'RecursiveRegexIterator GET_MATCH' => ['call' => "new RecursiveRegexIterator(\$it, '/p/', RecursiveRegexIterator::GET_MATCH);", 'class' => \RecursiveRegexIterator::class, 'mode' => \RecursiveRegexIterator::GET_MATCH, 'everyMatch' => null];
+    }
+
+    /**
+     * An argument that decides whether the call loops, and that the call
+     * does not spell out, leaves it as one that stops at the first match:
+     * only a call sure to loop names its loop.
+     *
+     * @param list<string> $presets
+     */
+    #[Test]
+    #[DataProvider('provideUndecidedCalls')]
+    public function test_extraction_names_no_loop_an_unread_argument_decides(string $call, array $presets = []): void
+    {
+        $registry = [] === $presets ? PatternFunctionRegistry::native() : PatternFunctionRegistry::create($presets);
+        $code = "<?php\n".$call."\n";
+        $this->assertSame([['/p/', null]], $this->readWith(new TokenBasedExtractionStrategy([], $registry), $code), 'The token strategy, on '.$call);
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame([['/p/', null]], $this->readWith(new PhpParserExtractionStrategy([], $registry), $code), 'The parser strategy, on '.$call);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{call: string, presets?: list<string>}>
+     */
+    public static function provideUndecidedCalls(): iterable
+    {
+        yield 'a mode in a variable' => ['call' => "new RegexIterator(\$it, '/p/', \$mode);"];
+        yield 'a mode a spread may hold' => ['call' => "new RegexIterator(\$it, '/p/', ...\$rest);"];
+        yield 'a mode computed' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::ALL_MATCHES | 0);"];
+        yield 'a constant of another class' => ['call' => "new RegexIterator(\$it, '/p/', Modes::ALL_MATCHES);"];
+        yield 'a constant of an object' => ['call' => "new RegexIterator(\$it, '/p/', \$it::ALL_MATCHES);"];
+        yield 'a namespace\'s class of the same name' => ['call' => "namespace App;\nnew \\RegexIterator(\$it, '/p/', RegexIterator::ALL_MATCHES);"];
+        yield 'a constant RegexIterator does not declare' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::EVERY_MATCH);"];
+        yield 'lazy in a variable' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: \$lazy);", 'presets' => [InteropPresets::NETTE_UTILS]];
     }
 
     /**
@@ -172,6 +299,32 @@ final class EveryMatchCallTest extends TestCase
         self::assertIsInt($made, 'Oracle: '.$function.' failed.');
 
         return $made;
+    }
+
+    /**
+     * How many matches the iterator makes with the probe on the subject in
+     * the mode: those of the match array, the pieces past the first, the
+     * replacements, or one for a mode that stops at the first match.
+     *
+     * @param int<0, 4> $mode
+     */
+    private static function iteratorMatches(string $class, int $mode, string $subject): int
+    {
+        $iterator = \RecursiveRegexIterator::class === $class
+            ? new \RecursiveRegexIterator(new \RecursiveArrayIterator([$subject]), self::PROBE, $mode)
+            : new \RegexIterator(new \ArrayIterator([$subject]), self::PROBE, $mode);
+        $iterator->replacement = '#';
+        $current = null;
+        foreach ($iterator as $value) {
+            $current = $value;
+        }
+
+        return match ($mode) {
+            \RegexIterator::ALL_MATCHES => \is_array($current) && isset($current[0]) && \is_array($current[0]) ? \count($current[0]) : 0,
+            \RegexIterator::SPLIT => \is_array($current) ? \count($current) - 1 : 0,
+            \RegexIterator::REPLACE => \is_string($current) ? substr_count($current, '#') : 0,
+            default => null === $current ? 0 : 1,
+        };
     }
 
     /**

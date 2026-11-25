@@ -261,6 +261,93 @@ final class CallArgumentsBindingTest extends TestCase
     }
 
     /**
+     * The value of the argument that decides whether a call looks for every
+     * match: an integer, true or false as 1 and 0, or a constant of
+     * RegexIterator, which RecursiveRegexIterator inherits, its class
+     * resolved as PHP resolves it, with the value PHP gives it.
+     *
+     * @return iterable<string, array{arguments: string, namespace: string, value: int|false|null}>
+     */
+    public static function provideDecisions(): iterable
+    {
+        yield 'left out' => ['arguments' => '$it, $p', 'namespace' => '', 'value' => false];
+        yield 'an integer' => ['arguments' => '$it, $p, 2', 'namespace' => '', 'value' => 2];
+        yield 'an integer under signs and parentheses' => ['arguments' => '$it, $p, (- -3)', 'namespace' => '', 'value' => 3];
+        yield 'true' => ['arguments' => '$it, $p, true', 'namespace' => '', 'value' => 1];
+        yield 'false in capitals, qualified' => ['arguments' => '$it, $p, \FALSE', 'namespace' => '', 'value' => 0];
+        yield 'a constant' => ['arguments' => '$it, $p, RegexIterator::ALL_MATCHES', 'namespace' => '', 'value' => \RegexIterator::ALL_MATCHES];
+        yield 'a constant, fully qualified' => ['arguments' => '$it, $p, \RegexIterator::SPLIT', 'namespace' => 'App', 'value' => \RegexIterator::SPLIT];
+        yield 'a constant the subclass inherits' => ['arguments' => '$it, $p, RecursiveRegexIterator::REPLACE', 'namespace' => '', 'value' => \RegexIterator::REPLACE];
+        yield 'a constant in parentheses, by name' => ['arguments' => '$it, mode: (RegexIterator::GET_MATCH), pattern: $p', 'namespace' => '', 'value' => \RegexIterator::GET_MATCH];
+        yield 'the default mode, its class in lowercase' => ['arguments' => '$it, $p, regexiterator::MATCH', 'namespace' => '', 'value' => \RegexIterator::MATCH];
+        yield 'a constant of an imported class' => ['arguments' => '$it, $p, R::ALL_MATCHES', 'namespace' => '', 'value' => \RegexIterator::ALL_MATCHES];
+        yield 'a constant of the namespace\'s class' => ['arguments' => '$it, $p, RegexIterator::ALL_MATCHES', 'namespace' => 'App', 'value' => null];
+        yield 'a constant of another class' => ['arguments' => '$it, $p, Modes::ALL_MATCHES', 'namespace' => '', 'value' => null];
+        yield 'a constant the class does not declare' => ['arguments' => '$it, $p, RegexIterator::all_matches', 'namespace' => '', 'value' => null];
+        yield 'the class name' => ['arguments' => '$it, $p, RegexIterator::class', 'namespace' => '', 'value' => null];
+        yield 'a constant of static' => ['arguments' => '$it, $p, static::ALL_MATCHES', 'namespace' => '', 'value' => null];
+        yield 'a constant name after a dot' => ['arguments' => '$it, $p, RegexIterator . ALL_MATCHES', 'namespace' => '', 'value' => null];
+        yield 'a dynamic constant name' => ['arguments' => '$it, $p, RegexIterator::$mode', 'namespace' => '', 'value' => null];
+        yield 'a flag, which is no mode' => ['arguments' => '$it, $p, RegexIterator::USE_KEY', 'namespace' => '', 'value' => null];
+        yield 'a constant, then more' => ['arguments' => '$it, $p, RegexIterator::ALL_MATCHES | 0', 'namespace' => '', 'value' => null];
+        yield 'a variable' => ['arguments' => '$it, $p, $mode', 'namespace' => '', 'value' => null];
+        yield 'a spread' => ['arguments' => '$it, ...$rest', 'namespace' => '', 'value' => null];
+    }
+
+    #[Test]
+    #[DataProvider('provideDecisions')]
+    public function test_decision_reads_the_value_the_call_spells(string $arguments, string $namespace, int|false|null $value): void
+    {
+        [$tokens, $start, $total, $closers] = $this->call($arguments);
+        $context = new NameResolutionContext();
+        if ('' !== $namespace) {
+            $context->enterNamespace($namespace);
+        } else {
+            $context->importClass('R', 'RegexIterator');
+        }
+
+        $this->assertSame($value, CallArguments::decision($tokens, $start, $total, [2, 'mode'], $closers, $context));
+    }
+
+    /**
+     * A closure whatever its value, the whole argument: what a library
+     * calling preg_replace_callback() for a Closure, a callable or an
+     * object always passes there.
+     *
+     * @return iterable<string, array{argument: string, closure: bool}>
+     */
+    public static function provideClosures(): iterable
+    {
+        yield 'a closure' => ['argument' => 'function ($m) { return ""; }', 'closure' => true];
+        yield 'a static arrow function' => ['argument' => 'static fn (array $m): string => ""', 'closure' => true];
+        yield 'an attributed closure' => ['argument' => '#[Pure] function ($m) { return ""; }', 'closure' => true];
+        yield 'in parentheses' => ['argument' => '((fn ($m) => ""))', 'closure' => true];
+        yield 'Closure::fromCallable()' => ['argument' => "\\Closure::fromCallable('strtoupper')", 'closure' => true];
+        yield 'an imported Closure' => ['argument' => "C::fromCallable('strtoupper')", 'closure' => true];
+        yield 'a first-class callable' => ['argument' => 'strtoupper(...)', 'closure' => true];
+        yield 'a first-class method' => ['argument' => '$this->upper(...)', 'closure' => true];
+        yield 'an array callable' => ['argument' => "[\$this, 'upper']", 'closure' => false];
+        yield 'an object' => ['argument' => 'new Upper()', 'closure' => false];
+        yield '$this' => ['argument' => '$this', 'closure' => false];
+        yield 'a string' => ['argument' => "'strtoupper'", 'closure' => false];
+        yield 'a variable' => ['argument' => '$callback', 'closure' => false];
+        yield 'a closure, then more' => ['argument' => 'function () {} ?: $b', 'closure' => false];
+        yield 'fromCallable of another class' => ['argument' => "Other::fromCallable('f')", 'closure' => false];
+        yield 'nothing' => ['argument' => '', 'closure' => false];
+    }
+
+    #[Test]
+    #[DataProvider('provideClosures')]
+    public function test_is_closure_reads_the_whole_argument(string $argument, bool $closure): void
+    {
+        [$tokens, $start, $total, $closers] = $this->call($argument);
+        $context = new NameResolutionContext();
+        $context->importClass('C', 'Closure');
+
+        $this->assertSame($closure, CallArguments::isClosure($tokens, $start, $total - 2, $closers, $context));
+    }
+
+    /**
      * The tokens of a call f(...) holding the arguments, where they start,
      * how many tokens the file has and its brackets.
      *

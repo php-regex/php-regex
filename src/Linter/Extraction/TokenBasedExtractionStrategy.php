@@ -835,6 +835,26 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             }
         }
 
+        // RegexIterator's mode and Nette's lazy decide whether the call
+        // looks for every match: only a value the call spells out says it
+        // does.
+        if (null !== $patternFunction->loopArgument) {
+            [$position, $name] = $patternFunction->loopArgument;
+            $decision = CallArguments::decision($tokens, $startIndex, $totalTokens, [$position, $name], $closers, $context);
+            if (false !== $decision) {
+                $patternFunction = $patternFunction->decidedBy($decision);
+            }
+        }
+
+        // A closure as replacement makes the call run
+        // preg_replace_callback().
+        if (null !== $patternFunction->callbackArgument) {
+            $replacement = CallArguments::find($tokens, $startIndex, $totalTokens, $patternFunction->callbackArgument[0], [$patternFunction->callbackArgument[1]], $closers);
+            if (null !== $replacement && CallArguments::isClosure($tokens, $replacement[0], $replacement[1], $closers, $context)) {
+                $patternFunction = $patternFunction->replacingThroughCallback();
+            }
+        }
+
         // A literal limit bounds how many matches the call makes: its loop
         // no longer goes on after every match.
         if (null !== $patternFunction->limitArgument) {

@@ -215,22 +215,34 @@ final class InteropPresets
             ],
             // Nette puts the subject first and takes an array of pattern =>
             // replacement; utf8: true appends "u" to every pattern.
+            // matchAll() calls preg_match_all() unless lazy, where its
+            // generator calls preg_match() from the end of each match;
+            // split() calls preg_split(), replace() preg_replace(), or
+            // preg_replace_callback() for an object or an array, each with
+            // its limit (nette/utils 4.1, src/Utils/Strings.php).
             self::NETTE_UTILS => [
                 'nette\utils\strings::match' => new PatternFunction('Strings::match', 1, utf8Argument: [5, 'utf8']),
-                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1, utf8Argument: [6, 'utf8']),
-                'nette\utils\strings::split' => new PatternFunction('Strings::split', 1, utf8Argument: [5, 'utf8']),
-                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2, utf8Argument: [6, 'utf8']),
+                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1, utf8Argument: [6, 'utf8'], everyMatch: 'preg_match_all', loopArgument: [7, 'lazy', [0 => 'preg_match_all']]),
+                'nette\utils\strings::split' => new PatternFunction('Strings::split', 1, utf8Argument: [5, 'utf8'], everyMatch: 'preg_split', limitArgument: [4, 'limit']),
+                'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2, utf8Argument: [6, 'utf8'], everyMatch: 'preg_replace', limitArgument: [3, 'limit'], callbackArgument: [2, 'replacement']),
             ],
+            // matchAll() calls preg_match_all(), replace() preg_replace(), or
+            // preg_replace_callback() for a callable that is no string, with
+            // its limit (spatie/regex 3.1, src/MatchAllResult.php and
+            // src/ReplaceResult.php).
             self::SPATIE_REGEX => [
                 'spatie\regex\regex::match' => new PatternFunction('Regex::match'),
-                'spatie\regex\regex::matchall' => new PatternFunction('Regex::matchAll'),
-                'spatie\regex\regex::replace' => new PatternFunction('Regex::replace'),
+                'spatie\regex\regex::matchall' => new PatternFunction('Regex::matchAll', everyMatch: 'preg_match_all'),
+                'spatie\regex\regex::replace' => new PatternFunction('Regex::replace', everyMatch: 'preg_replace', limitArgument: [3, 'limit'], callbackArgument: [1, 'replacement']),
             ],
+            // matchAll() calls preg_match_all(), replaceMatches()
+            // preg_replace(), or preg_replace_callback() for a Closure, with
+            // its limit (laravel/framework 13, src/Illuminate/Support/Str.php).
             self::ILLUMINATE_SUPPORT => [
                 'illuminate\support\str::match' => new PatternFunction('Str::match'),
-                'illuminate\support\str::matchall' => new PatternFunction('Str::matchAll'),
+                'illuminate\support\str::matchall' => new PatternFunction('Str::matchAll', everyMatch: 'preg_match_all'),
                 'illuminate\support\str::ismatch' => new PatternFunction('Str::isMatch'),
-                'illuminate\support\str::replacematches' => new PatternFunction('Str::replaceMatches'),
+                'illuminate\support\str::replacematches' => new PatternFunction('Str::replaceMatches', everyMatch: 'preg_replace', limitArgument: [3, 'limit'], callbackArgument: [1, 'replace']),
             ],
             self::PHPUNIT => [
                 ...self::onClass('PHPUnit\Framework', 'Assert', self::phpunitAssertions()),
