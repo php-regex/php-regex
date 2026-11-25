@@ -431,14 +431,17 @@ its parameter as comma-separated values and runs the first one:
 
 A route constraint is judged as the router compiles it: stripped of a
 leading `^` or `\A` and a trailing `$` or `\z`, its groups made
-non-capturing, in a group named after the parameter, between braces and
+non-capturing (a named group too where the installed `symfony/routing`
+drops its name, 6.4.51, 7.4.24 and 8.1.12 on: `(?<l>en|fr)` is read as
+`(?:en|fr)`), in a group named after the parameter, between braces and
 under the `s`, `D` and `u` flags Laravel's route compiler adds (and `i` for
 a domain parameter). `->where('v', '(a+)+')` is linted as
 `{^(?P<v>(?:a+)+)$}sDu`, so its backtracking is reported; the flags the
 router adds are never a finding, since the constraint cannot remove them.
 A constraint that compiles alone but breaks the route is invalid: `[{]`
 leaves the router's braces unbalanced, `a\$` loses its `$` and escapes the
-group's `)`, and `(a)(b)\2` refers to a group that no longer captures.
+group's `)`, and `(a)(b)\2` refers to a group that no longer captures, as
+does `(?<n>a)\k<n>` where the router drops the group's name.
 
 ## ReDoS findings
 
