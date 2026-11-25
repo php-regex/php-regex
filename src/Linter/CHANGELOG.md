@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` at the calls that look for every match also
+   covers short matches, as `/a*b|a/` on a run of `a`: the attempt that
+   finds each one reads to the end of the run first. The message then
+   starts with `Quadratic search over short matches`.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the

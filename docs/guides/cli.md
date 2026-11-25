@@ -1465,9 +1465,12 @@ The same issue is raised at a call of `preg_match_all()`, `preg_replace()`,
 `preg_split()`, or a `Safe\` or composer/pcre form of one, that no literal limit
 bounds. The pattern is one whose `preg_match()` search stops at an empty match
 inside a run: these functions go on after it, and PHP's retry of each empty match
-reads to the end of the run (see the
+reads to the end of the run. Or it stops at a short match inside the run, which
+its attempt finds after it read to the end of the run: these functions start
+again where it ends, and pay the run at each match (see the
 [ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).
-Its attack is in the analysis' `every_match_search_cost`:
+The message then starts with `Quadratic search over short matches`. Its attack
+is in the analysis' `every_match_search_cost`:
 
 ```
   app/Fields.php:3:22
