@@ -123,6 +123,10 @@ final class EndOfLineTail
      *                                                                      nothing is known of it
      * @param bool                                          $wordAboveAscii whether a byte above ASCII may be a word character: under u,
      *                                                                      (*UCP) or another locale's tables; PCRE2's own hold none
+     * @param ByteCharSet|null                              $words          the bytes that are word characters, every byte read, where
+     *                                                                      another locale's tables tell them without UTF nor UCP: under
+     *                                                                      glibc's tr_TR.ISO-8859-9, 0xDD is one and 0xD7 is none; null
+     *                                                                      where $wordAboveAscii says
      */
     public function __construct(
         private readonly CharSetAnalyzer $analyzer,
@@ -131,6 +135,7 @@ final class EndOfLineTail
         private readonly ?\Closure $readsCharacter = null,
         private readonly ?ByteCharSet $before = null,
         private readonly bool $wordAboveAscii = false,
+        private readonly ?ByteCharSet $words = null,
     ) {
         $this->newlineStarts = self::setOf($newline);
     }
@@ -430,6 +435,15 @@ final class EndOfLineTail
 
         if (null === $this->before) {
             return true;
+        }
+
+        // Where another locale's tables tell the word characters, every byte
+        // read, a byte is one or not as they say: "\B" holds after a byte
+        // they leave out.
+        if (null !== $this->words) {
+            return $boundary
+                ? $this->before->intersects($this->words)
+                : $this->before->intersect($this->words)->ranges() !== $this->before->ranges();
         }
 
         // A byte above ASCII, a literal written as it is, is no word

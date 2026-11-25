@@ -290,10 +290,13 @@ unless the pattern reads a character caselessly where the engine's paths read
 some case otherwise, as macOS's `tr_TR.ISO8859-9` reads `i`, `I` and `\xDD`.
 Under glibc's `tr_TR.ISO-8859-9`, which pairs `i` with `\xDD` and `I` with
 `\xFD`, `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are reported under `C`
-alone, and `/i+\xDD+$/i` under that locale alone. The last code unit PCRE2
-requires before an attempt has the other case the tables give it, or under
-`(*UCP)` the one Unicode gives it: `/a+\xe9/i` looks for `\xE9` or `\xC9`
-there, for `\xE9` alone under `C`.
+alone, and `/i+\xDD+$/i` under that locale alone.
+A word boundary after an end anchor, `regex.lint.anchor.impossible.end`, reads
+the word characters of the tables without `u` nor `(*UCP)`: `/\xDD$\B\n/`
+never matches there, `\xDD` being a word character, and is reported. The last
+code unit PCRE2 requires before an attempt has the other case the tables give
+it, or under `(*UCP)` the one Unicode gives it: `/a+\xe9/i` looks for `\xE9` or
+`\xC9` there, for `\xE9` alone under `C`.
 
 The command line takes `--locale`, `regex.json` takes `locale`, and every
 bridge has a `locale` setting beside its PHP and PCRE2 ones. The runtime

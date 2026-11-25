@@ -228,18 +228,25 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * ASCII too. Null where either cannot tell. Both read the item under
      * the flags in effect at it, $flags, and at each node inside it: under
      * i, "[^a-z]" leaves out the capitals, which it takes after "(?-i)".
+     * Where the rules read every byte, under the tables of the target's
+     * locale, the second read holds all the item reads, and alone: "\W"
+     * takes none of the letters those tables give above ASCII.
      */
     private function lastCharacters(NodeInterface $child, string $flags, LintContext $context): ?ByteCharSet
     {
         // The flags hold u wherever the pattern sets it: no inline flag turns
         // it off, "(?^)" resets i, m, n, r, s and x only.
-        $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
-        $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
-        if (null === $ascii) {
-            return null;
+        $tables = $context->readsEveryByte();
+        $ascii = ByteCharSet::empty();
+        if (!$tables) {
+            $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
+            $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
+            if (null === $ascii) {
+                return null;
+            }
         }
 
-        $this->everyByte ??= new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
+        $this->everyByte ??= $tables ? $context->everyByteAnalyzer() : new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
         $this->everyByteAt[$flags] ??= $this->everyByte->withFlags($flags);
         $everyByte = self::lastCharactersUnder($child, $this->everyByteAt[$flags]);
 
@@ -458,11 +465,13 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
         // A byte above ASCII may be a word character under u, under (*UCP)
         // and under the tables of a locale other than PCRE2's own, the "C"
-        // locale of the target.
+        // locale of the target, which tell which bytes are where the rules
+        // read every byte and UCP does not hold.
+        $words = $context->readsEveryByte() ? $context->everyByteAnalyzer()->wordSet() : ByteCharSet::unknown();
         $wordAboveAscii = $context->pattern->unicodeMode
             || str_contains(StartOptions::of($context->pattern->source), '(*UCP)')
-            || 'C' !== $context->target->locale;
+            || ('C' !== $context->target->locale && $words->isUnknown());
 
-        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii);
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii, $words->isUnknown() ? null : $words);
     }
 }

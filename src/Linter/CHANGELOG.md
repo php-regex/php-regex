@@ -21,6 +21,12 @@ CHANGELOG
    `\xDD`, a pattern read caselessly is read in ASCII as before, every
    caseless set holding such a byte, a caseless `[a-z]` among them, being
    unknown otherwise. Nothing changes under C.
+ * Without u nor UCP, under another locale's tables than PCRE2's own,
+   `regex.lint.anchor.impossible.end` reads which bytes are word
+   characters from the target's tables, where it took every byte above
+   ASCII for both: under glibc's tr_TR.ISO-8859-9, `/\W$\b\n/` and
+   `/\xDD$\B\n/`, which never match there, are reported, as
+   `"/\xE9$\B\n/"` is under fr_FR.ISO8859-1. Nothing changes under C.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
