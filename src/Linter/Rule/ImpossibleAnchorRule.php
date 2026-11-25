@@ -184,7 +184,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
                 if ($skipForMultiline && !$accepted) {
                     $issue = null;
-                    if ($i > 0 && !$prefixCanBeEmpty) {
+                    if (!$prefixCanBeEmpty) {
                         $this->readUpTo($children, $flagsAtChild, $i, $read, $before, $context);
                         $issue = $this->circumflexAfterNoLineEnd($child, $before, $context) ?? self::circumflexBesideTheEnd($child, $children, $i);
                     }
@@ -331,7 +331,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
             }
 
             $length = self::fixedLength([$item], $lengths);
-            if (null === $length || $after + $length > $ahead) {
+            if (null === $length) {
                 return null;
             }
             $after += $length;
@@ -656,8 +656,7 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         // read every byte and UCP does not hold.
         $words = $context->readsEveryByte() ? $context->everyByteAnalyzer()->wordSet() : ByteCharSet::unknown();
         $wordAboveAscii = $context->pattern->unicodeMode
-            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)')
-            || ('C' !== $context->target->locale && $words->isUnknown());
+            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)');
 
         return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii, $words->isUnknown() ? null : $words);
     }
