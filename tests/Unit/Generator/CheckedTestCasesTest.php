@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Generator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Engine\PcreError;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -89,6 +90,23 @@ final class CheckedTestCasesTest extends TestCase
         $this->assertInstanceOf(PcreError::class, (new PcreEngine())->compile($pattern));
 
         $this->assertSame(['matching' => [], 'non_matching' => []], $this->cases($pattern));
+    }
+
+    /**
+     * A matching case the heuristics miss, as a reference to a group, is a
+     * sample drawn with the parser the generator was built with: one that
+     * refuses the pattern draws none.
+     */
+    #[Test]
+    public function test_the_samples_a_case_is_drawn_from_are_read_with_the_parser_given(): void
+    {
+        $tree = Regex::create(['cache' => null])->parse('/^(a)\1$/');
+        $this->assertSame(0, preg_match('/^(a)\1$/', 'a'));
+
+        $this->assertSame(['aa'], $tree->accept(new TestCaseGenerator())['matching']);
+        $this->assertSame(['aa'], $tree->accept(new TestCaseGenerator(RegexParser::create(['cache' => null])))['matching']);
+        $this->assertSame([], $tree->accept(new TestCaseGenerator(RegexParser::create(['cache' => null, 'max_pattern_length' => 5])))['matching']);
+        $this->assertSame(['parser'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), (new \ReflectionMethod(TestCaseGenerator::class, '__construct'))->getParameters()));
     }
 
     /**

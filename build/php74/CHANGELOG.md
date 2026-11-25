@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `ParserOptions` holds no ReDoS list: `ParserOptions::fromArray()` and
+   `RegexParser::create()`, which dropped `redos_ignored_patterns`, refuse
+   it and name `RedosAnalyzer`'s `$ignoredPatterns`. Every argument of
+   `new ParserOptions()` has its default, a new `ArrayCache` for the cache.
  * `PatternFormatter::compact()` keeps a group of comments inside an atomic
    group or a possessive repeat as `(?:)`: PCRE2 makes a character repeated
    before such a group possessive as if the group could not be skipped, and

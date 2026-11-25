@@ -13,7 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -32,6 +34,27 @@ final class ParserOptionsDefaultsTest extends TestCase
         $this->assertSame(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, $options->maxPatternLength);
         $this->assertSame(ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, $options->maxLookbehindLength);
         $this->assertSame(ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, $options->maxRecursionDepth);
+    }
+
+    /**
+     * Options built in code name only what they change: every argument
+     * has the default fromArray() gives the key left out.
+     */
+    #[Test]
+    public function test_the_constructor_takes_the_defaults_of_every_argument(): void
+    {
+        $options = new ParserOptions();
+        $target = new PcreTarget(80200, '10.40', 'C');
+
+        $this->assertSame(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, $options->maxPatternLength);
+        $this->assertSame(ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, $options->maxLookbehindLength);
+        $this->assertInstanceOf(ArrayCache::class, $options->cache);
+        $this->assertNotSame($options->cache, (new ParserOptions())->cache);
+        $this->assertFalse($options->runtimePcreValidation);
+        $this->assertSame(ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, $options->maxRecursionDepth);
+        $this->assertEquals(PcreTarget::runtime(), $options->target);
+        $this->assertSame($target, (new ParserOptions(target: $target))->target);
+        $this->assertEquals(ParserOptions::fromArray([]), $options);
     }
 
     #[Test]

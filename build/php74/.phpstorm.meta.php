@@ -7,7 +7,6 @@ registerArgumentsSet(
     'max_pattern_length',
     'max_lookbehind_length',
     'cache',
-    'redos_ignored_patterns',
     'runtime_pcre_validation',
     'max_recursion_depth',
     'php_version',

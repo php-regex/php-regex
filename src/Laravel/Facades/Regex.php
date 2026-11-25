@@ -44,9 +44,9 @@ use PHPRegex\Transpiler\TranspileResult;
 /**
  * Laravel Facade for the PHPRegex library.
  *
- * @phpstan-import-type OptionsArray from ParserOptions
+ * @phpstan-import-type RegexOptionsArray from ToolkitRegex
  *
- * @method static ToolkitRegex                  create(OptionsArray $options = [])
+ * @method static ToolkitRegex                  create(RegexOptionsArray $options = [])
  * @method static ToolkitRegex                  fromOptions(ParserOptions $options)
  * @method static RegexNode                     parse(string $regex)
  * @method static RegexParser                   parser()

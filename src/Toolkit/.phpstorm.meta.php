@@ -3,6 +3,19 @@
 namespace PHPSTORM_META;
 
 registerArgumentsSet(
+    'regex_create_option_keys',
+    'max_pattern_length',
+    'max_lookbehind_length',
+    'cache',
+    'runtime_pcre_validation',
+    'max_recursion_depth',
+    'php_version',
+    'pcre_version',
+    'locale',
+    'redos_ignored_patterns'
+);
+
+registerArgumentsSet(
     'explanation_formats',
     'text',
     'html'
@@ -17,7 +30,7 @@ registerArgumentsSet(
 expectedArguments(
     \PHPRegex\Toolkit\Regex::create(),
     0,
-    argumentsSet('regex_option_keys')
+    argumentsSet('regex_create_option_keys')
 );
 
 expectedArguments(

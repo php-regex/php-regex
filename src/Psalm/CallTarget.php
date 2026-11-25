@@ -23,7 +23,6 @@ use PHPRegex\Linter\Extraction\GuardRegions;
 use PHPRegex\Linter\Extraction\PhpParserGuards;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
-use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -279,7 +278,7 @@ final class CallTarget
 
     private static function parserFor(PcreTarget $target): RegexParser
     {
-        return RegexParser::fromOptions(new ParserOptions(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, new ArrayCache(), target: $target));
+        return RegexParser::fromOptions(new ParserOptions(target: $target));
     }
 
     /**

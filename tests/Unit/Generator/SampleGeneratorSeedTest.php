@@ -66,16 +66,20 @@ final class SampleGeneratorSeedTest extends TestCase
     }
 
     /**
-     * The seed comes last, after the repetition cap and the engine.
+     * The seed comes after the repetition cap, the parser last, as every
+     * service takes it; generate() takes the pattern alone.
      */
     #[Test]
-    public function test_the_seed_is_the_last_constructor_argument(): void
+    public function test_the_seed_follows_the_repetition_cap_and_the_parser_comes_last(): void
     {
         $parameters = (new \ReflectionMethod(SampleGenerator::class, '__construct'))->getParameters();
 
-        $this->assertSame(['maxRepetition', 'engine', 'seed'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $parameters));
-        $this->assertTrue($parameters[2]->isDefaultValueAvailable());
+        $this->assertSame(['maxRepetition', 'seed', 'parser'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $parameters));
+        $this->assertTrue($parameters[1]->isDefaultValueAvailable());
+        $this->assertNull($parameters[1]->getDefaultValue());
         $this->assertNull($parameters[2]->getDefaultValue());
+        $this->assertSame(['regex'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), (new \ReflectionMethod(SampleGenerator::class, 'generate'))->getParameters()));
+        $this->assertSame((new SampleGenerator(seed: 42))->generate('/[a-z]{5}\d+/'), (new SampleGenerator(3, 42))->generate('/[a-z]{5}\d+/'));
     }
 
     #[Test]

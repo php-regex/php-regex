@@ -61,6 +61,7 @@ use PHPRegex\Symfony\Security\SecurityAccessControlReport;
 use PHPRegex\Symfony\Security\SecurityConfigExtractor;
 use PHPRegex\Symfony\Security\SecurityFirewallReport;
 use PHPRegex\Symfony\Validator\RegexConstraintAnalyzer;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -102,6 +103,7 @@ final class TypeAliasInventoryTest extends TestCase
         NodeFinder::class => ['NodeFilter'],
         ParserOptions::class => ['OptionsArray'],
         OptimizerOptions::class => ['OptimizerOptionsArray'],
+        Regex::class => ['RegexOptionsArray'],
         RedosSearchCost::class => ['SearchCostArray'],
         RedosWitness::class => ['WitnessArray'],
         RegexFactory::class => ['Target'],

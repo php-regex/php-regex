@@ -34,7 +34,6 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
@@ -70,7 +69,21 @@ use PHPRegex\Transpiler\TranspileResult;
  * Provides methods for parsing, validating, optimizing, and analyzing
  * regular expressions. Supports caching and runtime PCRE validation.
  *
- * @phpstan-import-type OptionsArray from ParserOptions
+ * The options of create() are the parser's, ParserOptions' OptionsArray,
+ * and the patterns the ReDoS analysis skips, which the facade hands to the
+ * analyzer it builds.
+ *
+ * @phpstan-type RegexOptionsArray array{
+ *     max_pattern_length?: int,
+ *     max_lookbehind_length?: int,
+ *     cache?: CacheInterface|string|null,
+ *     runtime_pcre_validation?: bool,
+ *     max_recursion_depth?: int,
+ *     php_version?: int|string|null,
+ *     pcre_version?: string|null,
+ *     locale?: string|null,
+ *     redos_ignored_patterns?: array<string>,
+ * }
  */
 final class Regex
 {
@@ -112,35 +125,37 @@ final class Regex
     /**
      * @param RegexParser   $parser               Reads and judges every pattern
      * @param array<string> $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
-     * @param PcreEngine    $engine               Runs the pattern to check the samples
      */
-    private function __construct(
-        private readonly RegexParser $parser,
-        private readonly array $redosIgnoredPatterns,
-        private readonly PcreEngine $engine = new PcreEngine(),
-    ) {}
+    private function __construct(private readonly RegexParser $parser, private readonly array $redosIgnoredPatterns) {}
 
     /**
      * Create a new Regex instance with optional configuration.
      *
      * Every call returns a fresh instance; nothing is memoized.
      *
-     * @param OptionsArray $options Configuration options
+     * @param RegexOptionsArray $options The parser's options, and "redos_ignored_patterns": the patterns redos() and
+     *                                   analyze() skip, as RedosAnalyzer's $ignoredPatterns argument takes them
+     *
+     * @throws InvalidRegexOptionException when an option is unknown, or holds a value of the wrong type or range
      *
      * @return self New Regex instance
      */
     public static function create(array $options = []): self
     {
-        return self::fromOptions(ParserOptions::fromArray($options));
+        $ignoredPatterns = self::ignoredPatterns($options);
+        unset($options['redos_ignored_patterns']);
+
+        return new self(RegexParser::fromOptions(ParserOptions::fromArray($options)), $ignoredPatterns);
     }
 
     /**
      * A facade configured by options already read, as from a configuration
-     * file through ParserOptions::fromArray().
+     * file through ParserOptions::fromArray(); its ReDoS analysis skips no
+     * pattern.
      */
     public static function fromOptions(ParserOptions $options): self
     {
-        return new self(RegexParser::fromOptions($options), $options->redosIgnoredPatterns);
+        return new self(RegexParser::fromOptions($options), []);
     }
 
     /**
@@ -162,7 +177,7 @@ final class Regex
     {
         $parser = $this->parser->withTarget($target);
 
-        return $parser === $this->parser ? $this : new self($parser, $this->redosIgnoredPatterns, $this->engine);
+        return $parser === $this->parser ? $this : new self($parser, $this->redosIgnoredPatterns);
     }
 
     /**
@@ -508,9 +523,9 @@ final class Regex
      */
     public function generate(string $regex): string
     {
-        // The generator checks each sample with this instance's engine and
-        // judges the pattern with its parser.
-        return (new SampleGenerator(engine: $this->engine))->generate($regex, $this->parser);
+        // The generator judges the pattern with this instance's parser and
+        // checks each sample with the running engine.
+        return (new SampleGenerator(parser: $this->parser))->generate($regex);
     }
 
     /**
@@ -560,6 +575,32 @@ final class Regex
     public function clearCaches(): void
     {
         $this->parser->clearCaches();
+    }
+
+    /**
+     * The patterns the ReDoS analysis skips, as the options hold them: from
+     * a configuration file, anything.
+     *
+     * @param RegexOptionsArray $options
+     *
+     * @throws InvalidRegexOptionException when they are no list of strings
+     *
+     * @return array<string>
+     */
+    private static function ignoredPatterns(array $options): array
+    {
+        $patterns = $options['redos_ignored_patterns'] ?? [];
+        if (!\is_array($patterns)) {
+            throw new InvalidRegexOptionException('"redos_ignored_patterns" must be a list of strings.');
+        }
+
+        foreach ($patterns as $pattern) {
+            if (!\is_string($pattern)) {
+                throw new InvalidRegexOptionException('"redos_ignored_patterns" must contain only strings.');
+            }
+        }
+
+        return $patterns;
     }
 
     /**

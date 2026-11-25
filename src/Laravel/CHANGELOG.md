@@ -50,7 +50,7 @@ CHANGELOG
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each
    `@regex-ignore` marker, or issue identifier it names, that silences
    nothing, as `regex.ignore.unmatched`.
- * The facade's `create()` and `optimize()` take the `OptionsArray` and
+ * The facade's `create()` and `optimize()` take the `RegexOptionsArray` and
    `OptimizerOptionsArray` shapes of the toolkit, so PHPStan checks the
    options passed through them.
  * `complexity.enabled`, off by default, makes `regex:lint` report the

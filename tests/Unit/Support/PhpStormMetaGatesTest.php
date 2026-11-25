@@ -40,6 +40,7 @@ final class PhpStormMetaGatesTest extends TestCase
      */
     private const SET_OWNERS = [
         'regex_option_keys' => self::PARSER_META_FILE,
+        'regex_create_option_keys' => self::META_FILE,
         'explanation_formats' => self::META_FILE,
         'highlight_formats' => self::META_FILE,
         'redos_thresholds' => self::REDOS_META_FILE,
@@ -77,6 +78,24 @@ final class PhpStormMetaGatesTest extends TestCase
     public function test_the_option_keys_the_ide_suggests_are_the_ones_the_parser_reads(): void
     {
         $this->assertStringContainsString("'pcre_version'", $this->argumentsSet('regex_option_keys'));
+        $this->assertStringNotContainsString("'redos_ignored_patterns'", $this->argumentsSet('regex_option_keys'));
+    }
+
+    /**
+     * Regex::create() reads the parser's keys and the patterns its ReDoS
+     * analysis skips.
+     */
+    #[Test]
+    public function test_the_option_keys_the_ide_suggests_for_the_facade_are_the_parsers_and_its_own(): void
+    {
+        $this->assertSame(
+            [...self::quoted($this->argumentsSet('regex_option_keys')), 'redos_ignored_patterns'],
+            self::quoted($this->argumentsSet('regex_create_option_keys')),
+        );
+        $this->assertMatchesRegularExpression(
+            '/expectedArguments\(\s*\\\\PHPRegex\\\\Toolkit\\\\Regex::create\(\),\s*0,\s*argumentsSet\(\'regex_create_option_keys\'\)\s*\)/',
+            (string) \file_get_contents(self::META_FILE),
+        );
     }
 
     /**

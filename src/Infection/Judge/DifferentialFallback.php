@@ -15,7 +15,6 @@ namespace PHPRegex\Infection\Judge;
 
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\RegexParser;
 
 /**
  * Subjects to try when the automata found none: strings each pattern
@@ -33,7 +32,7 @@ final class DifferentialFallback
      */
     public const SAMPLES = 4;
 
-    public function __construct(private readonly SampleGenerator $generator = new SampleGenerator(), private readonly ?RegexParser $parser = null) {}
+    public function __construct(private readonly SampleGenerator $generator = new SampleGenerator()) {}
 
     /**
      * @return list<string>
@@ -48,7 +47,7 @@ final class DifferentialFallback
                 $this->generator->setSeed($seed + $i);
 
                 try {
-                    $subject = $this->generator->generate($pattern, $this->parser);
+                    $subject = $this->generator->generate($pattern);
                 } catch (ExceptionInterface) {
                     break;
                 }

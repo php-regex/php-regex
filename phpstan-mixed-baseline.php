@@ -152,7 +152,6 @@ return [
     'src/Parser/ParserOptions.php' => [
         'PHPRegex\Parser\ParserOptions::createCache()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::fromArray()' => ['validator-input', 1],
-        'PHPRegex\Parser\ParserOptions::getIgnoredPatterns()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getLookbehindLength()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getPatternLength()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getPhpVersionId()' => ['validator-input', 1],
@@ -160,7 +159,6 @@ return [
         'PHPRegex\Parser\ParserOptions::getRuntimePcreValidation()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getTarget()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::validateOptionKeys()' => ['validator-input', 1],
-        'PHPRegex\Parser\ParserOptions::validatePatternStrings()' => ['validator-input', 1],
     ],
     'src/Parser/Printer/StructuralFingerprint.php' => [
         'PHPRegex\Parser\Printer\StructuralFingerprint::canonical()' => ['reflection-sink', 3],

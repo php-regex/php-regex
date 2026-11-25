@@ -410,6 +410,7 @@
             "analysis_version": "1",
             "search_cost": null,
             "upper_bound_degree": 0,
+            "every_match_search_cost": null,
             "replay_error": null,
             "linear": true,
             "attack": null

@@ -44,7 +44,8 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - One target, `PcreTarget`, replaces the PHP version id the lexer, parser, validator and `DelimitedPattern` took. See [One target](UPGRADE-2.0.md#one-target-pcretarget-replaces-the-php-version-id).
 - `php_version` refuses a version below PHP 7.0 or past 9.99, and `pcre_version` a release below PCRE2 10.00; the Rector rules judge a target of PHP 10 as 9.99. See [php_version](UPGRADE-2.0.md#php_version-names-a-release-and-the-limits-are-checked-where-the-options-are-built).
 - `php_version` is read whole, so `"8.2foo"`, `"8.2.100"` and `82` throw where a prefix was read, and `new ParserOptions()` checks its limits as `fromArray()` did. See [php_version](UPGRADE-2.0.md#php_version-names-a-release-and-the-limits-are-checked-where-the-options-are-built).
-- The options of `Regex::create()` and `RegexParser::create()` are the closed shape `OptionsArray`; options read from a file go through `ParserOptions::fromArray()` or the new `Regex::fromOptions()`. See [php_version](UPGRADE-2.0.md#php_version-names-a-release-and-the-limits-are-checked-where-the-options-are-built).
+- The options of `RegexParser::create()` are the closed shape `OptionsArray`, and those of `Regex::create()` `RegexOptionsArray`, which adds `redos_ignored_patterns`; options read from a file go through `ParserOptions::fromArray()` or the new `Regex::fromOptions()`. See [php_version](UPGRADE-2.0.md#php_version-names-a-release-and-the-limits-are-checked-where-the-options-are-built).
+- `redos_ignored_patterns` is an option of `Regex::create()` only: `RegexParser::create()`, which dropped it, refuses it, and `RedosAnalyzer` takes the patterns as `$ignoredPatterns`. See [redos_ignored_patterns](UPGRADE-2.0.md#redos_ignored_patterns-is-an-option-of-the-facade-not-of-the-parser).
 - `PcreLimits`, `RedosOptions` and `SolverOptions` refuse a limit that means nothing (a cap below 1, a budget below 0) with `InvalidRegexOptionException`. See [php_version](UPGRADE-2.0.md#php_version-names-a-release-and-the-limits-are-checked-where-the-options-are-built).
 - `Regex::tokenize()` is an instance method; it and `RegexParser::tokenize()` return a `list<Token>` read for the instance's target. See [tokenize()](UPGRADE-2.0.md#tokenize-returns-the-tokens-for-the-instances-target).
 - One parameter name per concept, which named arguments make part of the API: `$regex` for a delimited pattern, `$ast`, `$subject`, `$parser`. See [One name per argument](UPGRADE-2.0.md#one-name-per-argument).
@@ -125,7 +126,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 
 #### Parser and toolkit
 - `QuantifierNode::$bounds` holds the least and the most repetitions of a quantifier, read once when the node is built (null only for a node built by hand around a token that is no quantifier).
-- `new SampleGenerator(seed: 42)` takes the seed with the other arguments; `setSeed()` and `resetSeed()` stay, and each sample drawn on a seeded instance starts again from the seed.
+- `new SampleGenerator(int $maxRepetition = 3, ?int $seed = null, ?RegexParser $parser = null)` takes the seed and the parser `generate(string $regex)` reads with; `setSeed()` and `resetSeed()` stay, and each sample drawn on a seeded instance starts again from the seed. `new TestCaseGenerator(?RegexParser $parser = null)` draws with that parser the samples its heuristics miss.
 - `new Optimizer()` and `new Transpiler()` without a parser read with `RegexParser::create()`.
 - `new CompatibilityChecker($parser)` and `RangeDiff::between($from, $to, $parser)` judge every target with that parser's locale, recursion depth and limits.
 

@@ -23,7 +23,8 @@ use PHPUnit\Framework\TestCase;
  * The options of Regex::create() and RegexParser::create() are a closed
  * shape: a misspelt key or a value of the wrong type is a static error
  * where it is written, as the runtime check already refuses it, not a
- * mixed array PHPStan lets through.
+ * mixed array PHPStan lets through. The patterns the ReDoS analysis skips
+ * are the facade's option, never the parser's.
  */
 final class OptionsShapeTest extends TestCase
 {
@@ -39,6 +40,7 @@ final class OptionsShapeTest extends TestCase
         "\\PHPRegex\\Toolkit\\Regex::create(['php_version' => []]);",
         "\\PHPRegex\\Toolkit\\Regex::create(['php_version' => '8.2', 'cache' => null, 'redos_ignored_patterns' => ['/a/']]);",
         "\\PHPRegex\\Parser\\RegexParser::create(['max_recursion_depth' => 10]);",
+        "\\PHPRegex\\Parser\\RegexParser::create(['redos_ignored_patterns' => ['/a/']]);",
         '',
     ];
 
@@ -51,7 +53,7 @@ final class OptionsShapeTest extends TestCase
 
         $lines = array_map(static fn (array $error): int => $error['line'], self::errors());
 
-        $this->assertSame([5, 6, 7], $lines);
+        $this->assertSame([5, 6, 7, 10], $lines);
     }
 
     /**

@@ -26,6 +26,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InternalFailureException;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -148,7 +149,11 @@ final class RegexParser
     }
 
     /**
-     * @param OptionsArray $options The options Regex::create() takes
+     * @param OptionsArray $options The options Regex::create() takes, but the patterns the ReDoS analysis skips,
+     *                              which RedosAnalyzer takes
+     *
+     * @throws InvalidRegexOptionException when an option is unknown, "redos_ignored_patterns" included, or holds a
+     *                                     value of the wrong type or range
      */
     public static function create(array $options = []): self
     {

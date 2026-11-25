@@ -34,6 +34,7 @@ use PHPRegex\Laravel\Command\ExplainCommand;
 use PHPRegex\Laravel\Command\CompareCommand;
 use PHPRegex\Laravel\Command\TranspileCommand;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Redos\RedosProof;
 use Illuminate\Support\Facades\Artisan;
 
 /**
@@ -233,6 +234,24 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         // This should work (at limit)
         $ast = $regex->parse($longPattern);
         $this->assertInstanceOf(RegexNode::class, $ast);
+    }
+
+    /**
+     * The Regex service skips "redos.ignored_patterns" in its own analysis;
+     * the options patterns are read with, which regex:lint also hands its
+     * parser, hold none of them.
+     */
+    #[Test]
+    public function test_the_regex_service_skips_the_ignored_patterns_the_parser_never_reads(): void
+    {
+        self::configOf($this->application())->set('php-regex.redos.ignored_patterns', ['/(a+)+$/']);
+        $this->application()->forgetInstance(Regex::class);
+
+        /** @var \PHPRegex\Toolkit\Regex $regex */
+        $regex = $this->application()->make(Regex::class);
+
+        $this->assertSame(RedosProof::NotAnalyzed, $regex->redos('/(a+)+$/')->proof);
+        $this->assertSame(['max_pattern_length', 'max_lookbehind_length', 'cache'], array_keys(PHPRegexServiceProvider::regexOptions($this->application())));
     }
 
     /**
