@@ -96,7 +96,7 @@ final class AutoPossession
             }
 
             if (self::skippable($node)) {
-                $lastSkippableStart = max($lastSkippableStart ?? $node->getStartPosition(), $node->getStartPosition());
+                $lastSkippableStart = $node->getStartPosition();
             }
         }
 
@@ -121,7 +121,7 @@ final class AutoPossession
      */
     public static function shape(NodeInterface $pattern, bool $spliced): array
     {
-        return self::shapeOf($pattern, $spliced, null);
+        return self::shapeOf($pattern, $spliced);
     }
 
     /**
@@ -129,27 +129,16 @@ final class AutoPossession
      * change which repeats PCRE2 makes possessive: a character repeated
      * before an atomic group or a possessive repeat of a group that may
      * match nothing stands in the pattern with or without it, and the
-     * brackets that decide it differ (see shapeWithout()). "(?:b)" in
-     * "/a+(?:b)?+a/" and "(?:)" in "/a+(?>(?:)|b)a/" stay; "(?>)" in
+     * brackets that decide it differ: the shape (see shape()) of the
+     * pattern with the group taken out, its body standing where it stood,
+     * is not the pattern's. "(?:b)" in "/a+(?:b)?+a/", "(?:a)" in
+     * "/(?:a)+(?:b)?+a/" and "(?:)" in "/a+(?>(?:)|b)a/" stay; "(?>)" in
      * "/a(?>)b/", with no repeat before it, can go.
      */
     public static function groupDecides(NodeInterface $pattern, GroupNode $group): bool
     {
         return (null !== self::repeatBeforeSkippableGroup($pattern) || null !== self::repeatBeforeSkippableGroup($pattern, $group))
-            && self::shape($pattern, false) !== self::shapeWithout($pattern, $group);
-    }
-
-    /**
-     * The shape (see shape()) of the pattern with the group taken out, its
-     * body standing where it stood: where it differs from the shape of the
-     * pattern, the group changes which repeats PCRE2 makes possessive.
-     * "(?:b)" in "/a+(?:b)?+a/", or "(?:a)" in "/(?:a)+(?:b)?+a/", cannot go.
-     *
-     * @return list<string>
-     */
-    public static function shapeWithout(NodeInterface $pattern, GroupNode $group): array
-    {
-        return self::shapeOf($pattern, false, $group);
+            && self::shapeOf($pattern) !== self::shapeOf($pattern, unwrapped: $group);
     }
 
     /**
@@ -157,7 +146,7 @@ final class AutoPossession
      *
      * @return list<string>
      */
-    private static function shapeOf(NodeInterface $pattern, bool $spliced, ?GroupNode $unwrapped): array
+    private static function shapeOf(NodeInterface $pattern, bool $spliced = false, ?GroupNode $unwrapped = null): array
     {
         $repeats = '';
         $skippable = [];
@@ -225,7 +214,7 @@ final class AutoPossession
 
     /**
      * Whether the node may match the empty string; true for anything not
-     * read here.
+     * read here, a sequence whose parts each may too.
      */
     private static function mayMatchNothing(NodeInterface $node, ?GroupNode $unwrapped = null): bool
     {
@@ -237,8 +226,6 @@ final class AutoPossession
                     return false;
                 }
             }
-
-            return true;
         }
 
         if ($node instanceof AlternationNode) {

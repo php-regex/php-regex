@@ -166,6 +166,7 @@ final class NewlineConventionAnchorsTest extends TestCase
             // A match may start between "\r" and "\n" only where another
             // starts before the "\r".
             'a line end, maybe after a letter' => ['(*ANYCRLF)', 'b?$', 'm'],
+            'a line feed, maybe after a carriage return, or a letter' => ['(*ANYCRLF)', '\r?\n|b', ''],
             'a line start between cr and lf' => ['(*ANYCRLF)', '\r^\n', 'm'],
             'a line end then start between cr and lf' => ['(*ANYCRLF)', 'a$\r^\n', 'm'],
             'a line end between cr and lf' => ['(*ANYCRLF)', 'a\r$', 'm'],
@@ -208,6 +209,10 @@ final class NewlineConventionAnchorsTest extends TestCase
         foreach ($anyUnicode as $name => [$body, $flags]) {
             yield $name => ['options' => '(*ANY)', 'body' => $body, 'flags' => $flags, 'letters' => self::ANY_CODE_POINTS, 'length' => 4];
         }
+
+        // The characters next to the newlines of (*ANY) end no line.
+        yield 'line end before a tab or a shift out under (*ANY)' => ['options' => '(*ANY)', 'body' => 'a$', 'flags' => 'm', 'letters' => ['a', "\t", "\x0E", "\r", "\n"], 'length' => 3];
+        yield 'line end before the code points next to the separators under (*ANY) and u' => ['options' => '(*ANY)', 'body' => 'a$', 'flags' => 'mu', 'letters' => ['a', "\u{2027}", "\u{2028}", "\u{2029}", "\u{202A}"], 'length' => 3];
     }
 
     /**

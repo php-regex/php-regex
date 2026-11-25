@@ -313,6 +313,10 @@ final class RedosSearchCostReplayTest extends TestCase
         yield 'possessive' => ['pattern' => '/\Qa\E++b/', 'counted' => '/\Q\E(?:\Qa\E)\E++b/', 'run' => 'a'];
         yield 'possessive, a quote left empty before the repeat' => ['pattern' => '/\Qa\E\Q\E++b/', 'counted' => '/\Q\E(?:\Qa\E)\E\Q\E++b/', 'run' => 'a'];
         yield 'possessive of a sign the quote keeps' => ['pattern' => '/\Q.\E++b/', 'counted' => '/\Q\E(?:\Q.\E)\E++b/', 'run' => '.'];
+        // A "\E" that ends no quote: the character before it is written
+        // as it stands, in a plain group.
+        yield 'possessive of a class before an \E that ends no quote' => ['pattern' => '/[a]\E++b/', 'counted' => '/(?:[a])\E++b/', 'run' => 'a'];
+        yield 'possessive of an escape before an \E that ends no quote' => ['pattern' => '/\x61\E++b/', 'counted' => '/(?:\x61)\E++b/', 'run' => 'a'];
         // The quote stands elsewhere: the repeated character takes a plain group.
         yield 'possessive before a quoted branch' => ['pattern' => '/a++b|\Qx\E/', 'counted' => '/(?:a)++b|\Qx\E/', 'run' => 'a'];
     }
