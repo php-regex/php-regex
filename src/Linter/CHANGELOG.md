@@ -81,6 +81,15 @@ CHANGELOG
    `regex.lint.flag.redundant` no longer calls `(?x)` redundant after
    `(?xx)`, nor `(?xx)` under the `x` modifier, and names `(?xx)` once
    where it is.
+ * `regex.lint.group.redundant`, `regex.lint.group.empty` and
+   `regex.lint.quantifier.concatenation` no longer advise a change of the
+   brackets or the repeats PCRE2 reads to make a repeat possessive: PCRE2
+   makes a character repeated before an atomic group, or a possessive
+   repeat of a group, that may match nothing possessive, as if the group
+   could not be skipped. `(?:b)` in `/a+(?:b)?+a/`, `(?:a)` in
+   `/(?:a)+(?:b)?+a/`, `(?:)` in `/a+(?>(?:)|b)a/` and `a?` in
+   `/[ab]{2,}a?(?:b){0,2}+a/` were reported, where the pattern without them
+   matches otherwise.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
  * Without u, `regex.lint.overlap.charset`, where the bytes of the

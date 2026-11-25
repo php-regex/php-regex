@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\PossessiveBrackets;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -58,6 +59,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         }
 
         $issues = [];
+        $madePossessive = null;
         $children = $node->children;
         $count = \count($children);
         $flags = $context->flagsAtEachChild($node);
@@ -140,6 +142,18 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             if (null === $leftMax && $this->isKnownSubset($right->node, $rightSet, $left->node, $leftSet, $context, $flags[$i])
                 && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
             ) {
+                // A run PCRE2 may make possessive before a group it may skip
+                // stays as written: dropped or fixed to a count, it gives
+                // back to the run before it what PCRE2 took. Read last, as
+                // it walks the whole pattern. The first run tightened above
+                // never stands before that group: the second does, made
+                // possessive alike with or without the change, and ends
+                // where the run of their characters ends either way.
+                $madePossessive ??= PossessiveBrackets::repeatsMadePossessive($node, $context);
+                if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
+                    continue;
+                }
+
                 $issues[] = new RuleViolation(
                     self::ID,
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',

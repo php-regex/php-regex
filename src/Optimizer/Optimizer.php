@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Optimizer;
 
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\LexerException;
@@ -161,13 +162,15 @@ final class Optimizer
             return null;
         }
 
-        if ($optimizedPattern !== $regex && $this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive)) {
+        if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || (!$options->verifyWithAutomata && $this->movesAutoPossession($ast, $optimizedPattern)))) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
             // possessive forms it cannot prove safe, and an unverified one can
             // change the language PCRE matches. This gate runs on its own, not
             // only under verifyWithAutomata, because the rewrite rules that
-            // possessify are on by default.
+            // possessify are on by default. So does one that changes the
+            // brackets PCRE2 reads to make a repeat possessive, which the
+            // next branch checks when the options ask for every check.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return null;
             }
@@ -224,6 +227,25 @@ final class Optimizer
         $markers = $this->atomicityMarkers($optimized);
 
         return $markers > $this->atomicityMarkers($original) || ($possessive && $markers > 0);
+    }
+
+    /**
+     * Whether the rewrite may change which repeats PCRE2 makes possessive:
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped, and the brackets decide which. "/a+(?:b)?+a/" finds nothing
+     * in "aa", where "/a+b?+a/" finds it.
+     */
+    private function movesAutoPossession(RegexNode $original, string $optimized): bool
+    {
+        try {
+            $rewritten = $this->parser->parse($optimized)->pattern;
+        } catch (RegexException) {
+            return true;
+        }
+
+        return (null !== AutoPossession::repeatBeforeSkippableGroup($original->pattern) || null !== AutoPossession::repeatBeforeSkippableGroup($rewritten))
+            && AutoPossession::shape($original->pattern, false) !== AutoPossession::shape($rewritten, false);
     }
 
     private function atomicityMarkers(string $pattern): int

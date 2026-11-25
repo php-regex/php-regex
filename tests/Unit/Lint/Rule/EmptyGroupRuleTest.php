@@ -17,6 +17,7 @@ use PHPRegex\Linter\LintSeverity;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -170,6 +171,34 @@ final class EmptyGroupRuleTest extends TestCase
         yield 'optional' => ['pattern' => '/^a(?:)?$/', 'without' => '/^a?$/', 'subject' => ''];
         yield 'count' => ['pattern' => '/^a(?:){2}$/', 'without' => '/^a{2}$/', 'subject' => 'a'];
         yield 'atomic plus' => ['pattern' => '/^a(?>)+$/', 'without' => '/^a+$/', 'subject' => 'aa'];
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped, and an empty group decides it: entered, it stops the engine
+     * from reading on. Each pattern finds "aa", with and without the JIT,
+     * where the one without the empty group finds nothing.
+     */
+    #[Test]
+    #[DataProvider('provideEmptyGroupsTheEngineReads')]
+    public function test_an_empty_group_the_engine_reads_before_a_possessive_is_not_reported(string $pattern, string $without): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49, and 10.34 and 10.39.
+        $this->assertSame([1, 0], [preg_match($pattern, 'aa'), preg_match($without, 'aa')]);
+        $this->assertSame([1, 0], [preg_match(PcreInterpreter::pattern($pattern), 'aa'), preg_match(PcreInterpreter::pattern($without), 'aa')]);
+
+        $this->assertNull($this->violation($pattern));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, without: string}>
+     */
+    public static function provideEmptyGroupsTheEngineReads(): iterable
+    {
+        yield 'a first branch of an atomic group' => ['pattern' => '/a+(?>(?:)|b)a/', 'without' => '/a+(?>|b)a/'];
+        yield 'a first branch of a possessive group' => ['pattern' => '/a+(?:(?:)|b)?+a/', 'without' => '/a+(?:|b)?+a/'];
+        yield 'an empty atomic group before an optional one' => ['pattern' => '/a+(?>)(?:b)?+a/', 'without' => '/a+(?:b)?+a/'];
     }
 
     /**

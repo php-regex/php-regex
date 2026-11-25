@@ -14,6 +14,9 @@ CHANGELOG
    wrote, finds `aa`. The pattern now ships as written, and so do
    `/a+(?:b|c)?+a/`, which became `/a+[bc]?+a/`, and `/a+(?>(?:b)?)a/`,
    which became `/a+(?>b?)a/`. `/a+(?:b)?+c/` still becomes `/a+b?+c/`.
+   Such a rewrite is checked by the automata whatever `verifyWithAutomata`
+   says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
+   `/a+b?+a/`.
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The
