@@ -829,8 +829,11 @@ A pattern read through a name is reported once, where its literal is written,
 whatever the number of calls that use it: `regex lint` points at the line of
 `private const PATTERN`, and the JSON report gives the first call as `source`
 and the way it reached the literal as `location`, `via self::PATTERN` (see the
-[JSON output reference](../reference/json-output.md#result-lintresults)). The
-console shows it under the pattern:
+[JSON output reference](../reference/json-output.md#result-lintresults)). Each
+of those calls that looks for every match, `preg_match_all()` or `preg_split()`
+for instance, still gets the search cost of its own loop there, one
+`regex.lint.redos.search` for each such function. The console shows it under
+the pattern:
 
 ```
   app/Slug.php:14:22

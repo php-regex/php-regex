@@ -109,8 +109,14 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         yield 'preg_match_all' => ['code' => "preg_match_all('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
         yield 'preg_split' => ['code' => "preg_split('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
         yield 'preg_match' => ['code' => "preg_match('/(?:a+\\d)?/', \$s);", 'messages' => []];
+        yield 'preg_match_all of a pattern whose loop is linear' => ['code' => "preg_match_all('/a/', \$s);", 'messages' => []];
         yield 'preg_replace bounded by a limit' => ['code' => "preg_replace('/(?:a+\\d)?/', '', \$s, 1);", 'messages' => []];
         yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+        yield 'a literal preg_match reads before preg_match_all' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match(\$p, \$s);\npreg_match_all(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+        yield 'a literal two loops read' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);\npreg_split(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried()), RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
+        yield 'a variable given another literal after the loop that reads it' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);\n\$p = '/(?:b+\\d)?/';\npreg_match(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+        yield 'a variable a branch may give another literal' => ['code' => "function f(\$s, \$c) {\n\$p = '/(?:a+\\d)?/';\nif (\$c) { \$p = '/(?:b+\\d)?/'; }\npreg_match_all(\$p, \$s);\n}", 'messages' => []];
+        yield 'a constant preg_match reads before preg_replace' => ['code' => "const P = '/(?:a+\\d)?/';\nfunction f(\$s) { preg_match(P, \$s); return preg_replace(P, '', \$s); }", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace', self::retried())]];
         yield 'a RegexIterator splitting' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::SPLIT);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
         yield 'a RegexIterator matching' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::GET_MATCH);", 'messages' => []];
         yield 'a callback through Laravel\'s Str' => ['code' => "Illuminate\\Support\\Str::replaceMatches('/(?:a+\\d)?/', static fn (array \$m): string => '', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace_callback', self::retried())]];

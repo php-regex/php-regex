@@ -104,6 +104,33 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
         yield 'no call' => ['source' => 'php', 'function' => 'preg_match'];
     }
 
+    /**
+     * A literal several calls read is one occurrence, at its first call:
+     * each other call that looks for every match gets the cost of its own
+     * loop, named in its own issue, and a function named twice is raised
+     * once.
+     */
+    #[Test]
+    public function test_every_match_search_cost_is_raised_for_each_loop_the_literal_runs_in(): void
+    {
+        foreach (['preg_match_all', 'preg_split'] as $function) {
+            $this->assertGreaterThanOrEqual(100, self::matchesMade($function, str_repeat('a', 100).'!'), 'Oracle: '.$function.'() stops before the end of the run.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', str_repeat('a', 100).'!'), 'Oracle: preg_match() goes on after the first match.');
+        self::assertRetriesGrow();
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_match()', everyMatchElsewhere: ['preg_match_all', 'preg_split']));
+
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, '', 'a', '', false)), RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
+        foreach ($issues as $issue) {
+            $this->assertSame('warning', $issue->severity->level());
+            $this->assertSame([1, 'file.php'], [$issue->line, $issue->file], 'Raised where the literal is written.');
+        }
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_split()', everyMatch: 'preg_split', everyMatchElsewhere: ['preg_split']));
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
+    }
+
     #[Test]
     public function test_every_match_search_cost_is_hidden_by_the_default_threshold(): void
     {

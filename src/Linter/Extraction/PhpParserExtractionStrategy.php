@@ -225,7 +225,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
 
             if (null === $collector) {
-                $collector = new AstValueCollector($this->patternArguments(...));
+                $collector = new AstValueCollector($this->patternArguments(...), $content);
                 // Tokenized when a variable of the file level is read, and
                 // only then.
                 $collector->values()->useFileLevel(new FileLevelCode($content));
@@ -269,7 +269,9 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
         }
 
-        return $occurrences;
+        // A literal several calls read is reported at the first, with the
+        // loops over every match of the others.
+        return $values?->withEveryMatchElsewhere($occurrences, $file) ?? $occurrences;
     }
 
     /**

@@ -79,6 +79,22 @@ final class ResolutionLimitsTest extends TestCase
     }
 
     /**
+     * The same when each call looks for every match: each looping call
+     * the variable meets again adds its loop to the literals of the first
+     * read once, whatever the number of such calls.
+     */
+    #[Test]
+    public function test_a_variable_reused_many_times_by_a_loop_is_read_in_linear_time(): void
+    {
+        foreach ($this->strategies() as $name => $strategy) {
+            $small = min(array_map(fn (): float => $this->timeReading($strategy, 500, 'preg_match_all'), range(1, 3)));
+            $large = min(array_map(fn (): float => $this->timeReading($strategy, 4000, 'preg_match_all'), range(1, 3)));
+
+            $this->assertLessThan(24 * $small, $large, \sprintf('%s: %.3fs for 500 calls, %.3fs for 4000.', $name, $small, $large));
+        }
+    }
+
+    /**
      * Twelve operands of 32 values each would give 32 to the power of 12
      * strings: two operands of several values are not multiplied, and
      * the product is never built. Nothing is known of the argument, and
@@ -379,11 +395,11 @@ final class ResolutionLimitsTest extends TestCase
         return max($elapsed, 0.001);
     }
 
-    private function timeReading(ExtractorInterface $strategy, int $calls): float
+    private function timeReading(ExtractorInterface $strategy, int $calls, string $function = 'preg_match'): float
     {
         $code = "<?php\n\nfunction f(\$s)\n{\n";
         for ($i = 0; $i < $calls; $i++) {
-            $code .= \sprintf("    \$re = '/a%d/'; preg_match(\$re, \$s);\n", $i);
+            $code .= \sprintf("    \$re = '/a%d/'; %s(\$re, \$s);\n", $i, $function);
         }
         $file = $this->makeProject(['same.php' => $code."}\n"]).'/same.php';
 

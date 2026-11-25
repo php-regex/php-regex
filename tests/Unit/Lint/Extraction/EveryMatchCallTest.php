@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
@@ -236,6 +237,264 @@ final class EveryMatchCallTest extends TestCase
     }
 
     /**
+     * A literal several calls read, through a variable or a constant, is
+     * reported once, where it is written, at its first call: the functions
+     * of the other calls that look for every match come with it, each
+     * once, in the order of the calls, so that each such call gets the
+     * cost of its loop. A call a literal limit bounds, or one that stops at
+     * the first match, adds none.
+     *
+     * @param list<string> $loops     the functions whose loop the oracle runs
+     * @param list<string> $elsewhere
+     */
+    #[Test]
+    #[DataProvider('provideLiteralsSeveralCallsRead')]
+    public function test_extraction_names_every_loop_a_literal_runs_in(string $code, array $loops, ?string $everyMatch, array $elsewhere): void
+    {
+        foreach ($loops as $function) {
+            $this->assertGreaterThan(self::matchesMade($function, null, str_repeat('a', 1000)), self::matchesMade($function, null, str_repeat('a', 2000)), 'Oracle: '.$function.' stops early.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', null, str_repeat('a', 2000)), 'Oracle: preg_match() goes on.');
+        $this->assertSame(1, self::matchesMade('preg_replace', 1, str_repeat('a', 2000)), 'Oracle: the limit does not bound preg_replace().');
+
+        $code = "<?php\n\$s = 'x';\n".$code."\n";
+        $expected = [['/p/', $everyMatch, $elsewhere]];
+        $this->assertSame($expected, $this->readLoopsWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The token strategy.');
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->readLoopsWith(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The parser strategy.');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{code: string, loops: list<string>, everyMatch: string|null, elsewhere: list<string>}>
+     */
+    public static function provideLiteralsSeveralCallsRead(): iterable
+    {
+        yield 'a variable preg_match() reads first' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_match_all(\$p, \$s);\n}", 'loops' => ['preg_match_all'], 'everyMatch' => null, 'elsewhere' => ['preg_match_all']];
+        yield 'a variable three loops read' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match_all(\$p, \$s);\npreg_replace(\$p, '', \$s);\npreg_split(\$p, \$s);\n}", 'loops' => ['preg_match_all', 'preg_replace', 'preg_split'], 'everyMatch' => 'preg_match_all', 'elsewhere' => ['preg_replace', 'preg_split']];
+        yield 'a variable the same loop reads twice' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match_all(\$p, \$s);\npreg_match_all(\$p, \$s, \$m);\n}", 'loops' => ['preg_match_all'], 'everyMatch' => 'preg_match_all', 'elsewhere' => []];
+        yield 'a variable a bounded call reads after preg_match()' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_replace(\$p, '', \$s, 1);\n}", 'loops' => [], 'everyMatch' => null, 'elsewhere' => []];
+        yield 'a constant preg_match() reads first' => ['code' => "const P = '/p/';\nfunction f(\$s) { preg_match(P, \$s); return preg_split(P, \$s); }", 'loops' => ['preg_split'], 'everyMatch' => null, 'elsewhere' => ['preg_split']];
+        yield 'a class constant preg_match() reads first' => ['code' => "class K { const Q = '/p/'; function g(\$s) { preg_match(self::Q, \$s); return preg_replace_callback(self::Q, static fn (\$m) => '', \$s); } }", 'loops' => ['preg_replace_callback'], 'everyMatch' => null, 'elsewhere' => ['preg_replace_callback']];
+        yield 'a variable a list reads after preg_match()' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_replace([\$p], '', \$s);\n}", 'loops' => ['preg_replace'], 'everyMatch' => null, 'elsewhere' => ['preg_replace']];
+    }
+
+    /**
+     * A call reads, through a variable, the value of the latest assignment
+     * before it in straight-line code: the loop over every match of the
+     * call is that literal's alone. Where an assignment in a branch or a
+     * loop may stand between, the call names no loop: it is no literal's
+     * more than another's.
+     *
+     * @param list<string>                                   $loops    the functions whose loop the oracle runs
+     * @param list<array{string, string|null, list<string>}> $expected
+     */
+    #[Test]
+    #[DataProvider('provideAssignmentsACallReads')]
+    public function test_extraction_names_the_loop_of_the_assignment_a_call_reads(string $code, array $loops, array $expected): void
+    {
+        foreach ($loops as $function) {
+            $this->assertGreaterThan(self::matchesMade($function, null, str_repeat('a', 1000)), self::matchesMade($function, null, str_repeat('a', 2000)), 'Oracle: '.$function.' stops early.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', null, str_repeat('a', 2000)), 'Oracle: preg_match() goes on.');
+
+        $code = "<?php\n\$s = 'x';\n".$code."\n";
+        $this->assertSame($expected, $this->readLoopsWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The token strategy.');
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->readLoopsWith(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The parser strategy.');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{code: string, loops: list<string>, expected: list<array{string, string|null, list<string>}>}>
+     */
+    public static function provideAssignmentsACallReads(): iterable
+    {
+        yield 'a variable given another literal after the loop that reads it' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; preg_match(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'a variable each loop reads with its own literal' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; preg_split(\$p, \$s); }",
+            'loops' => ['preg_match_all', 'preg_split'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, ['preg_split']]],
+        ];
+        yield 'a variable given its literal once, read by two loops' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); preg_split(\$p, \$s); }",
+            'loops' => ['preg_match_all', 'preg_split'],
+            'expected' => [['/p/', 'preg_match_all', ['preg_split']]],
+        ];
+        yield 'a variable a branch may give another literal' => [
+            'code' => "function f(\$s, \$c) { \$p = '/p/'; if (\$c) { \$p = '/q/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable each branch gives a literal' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; } else { \$p = '/q/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable a later turn of the loop gives another literal' => [
+            'code' => "function f(\$s, \$l) { \$p = '/p/'; foreach (\$l as \$x) { preg_match_all(\$p, \$s); \$p = '/q/'; } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable read through another one' => [
+            'code' => "function f(\$s) { \$q = '/p/'; \$p = \$q; preg_match(\$p, \$s); preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, ['preg_match_all']]],
+        ];
+        yield 'a variable read through another one given another literal later' => [
+            'code' => "function f(\$s) { \$q = '/p/'; \$p = \$q; preg_match_all(\$p, \$s); \$q = '/q/'; preg_match(\$q, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'a platform constant a loop reads through a variable' => [
+            'code' => 'function f($s) { $eol = PHP_EOL; return preg_split($eol, $s); }',
+            'loops' => ['preg_split'],
+            'expected' => [["\n", 'preg_split', []], ["\r\n", 'preg_split', []]],
+        ];
+        // The head of a foreach over literals assigns the variable before
+        // the body at each turn: each value runs in the loop.
+        yield 'a variable the head of a foreach gives each literal' => [
+            'code' => "function f(\$s) { foreach (['/p/', '/q/'] as \$p) { preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', 'preg_match_all', []]],
+        ];
+        yield 'a variable the body of a foreach gives another literal before the read' => [
+            'code' => "function f(\$s) { foreach (['/p/'] as \$p) { \$p = '/q/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        yield 'a variable the head of a foreach gives, read after the loop' => [
+            'code' => "function f(\$s) { foreach (['/p/'] as \$p) { } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        // An assignment before the read in the block that holds it runs
+        // before the read, whatever loop or branch holds the block.
+        yield 'an assignment in a loop body before the read' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in an if body before the read' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a loop body before a read in a branch of it' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; if (\$c) { preg_match_all(\$p, \$s); } } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a loop body the body replaces after the read' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, another behind a condition before the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; \$c && \$p = '/q/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, another in a nested branch before the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; if (\$c) { \$p = '/q/'; } preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, read after the loop' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment in a loop body, read in a loop inside it that writes after the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; while (\$c) { preg_match_all(\$p, \$s); \$p = '/q/'; } } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, comments around its braces' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) // :\n # :\n { \$p = '/p/'; preg_match_all(\$p, \$s); /* } */ // }\n # }\n } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a for loop of the alternative syntax with an empty head' => [
+            'code' => "function f(\$s) { for (;;) /* { */ : \$p = '/p/'; preg_match_all(\$p, \$s); endfor; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment as the unbraced body that ends the file' => [
+            'code' => "\$q = '/q/';\npreg_match(\$q, \$s);\nif (\$s) \$p = '/p/';",
+            'loops' => [],
+            'expected' => [['/q/', null, []]],
+        ];
+        // A case of a switch may be entered past the assignment, and a
+        // block of the alternative syntax is not told apart by both
+        // readings: neither says.
+        yield 'an assignment in a case before the read' => [
+            'code' => "function f(\$s, \$c) { switch (\$c) { case 1: \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment in a block of the alternative syntax before the read' => [
+            'code' => "function f(\$s, \$c) { if (\$c): \$p = '/p/'; preg_match_all(\$p, \$s); endif; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a variable a goto may come back to' => [
+            'code' => "function f(\$s) { \$p = '/p/'; a: preg_match_all(\$p, \$s); goto a; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a parameter' => [
+            'code' => 'function f($p, $s) { preg_match_all($p, $s); }',
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        yield 'a variable read before its assignment' => [
+            'code' => "function f(\$s) { preg_match_all(\$p, \$s); \$p = '/p/'; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        // A composition reads each variable it joins where it stands, as
+        // the latest assignment before it gives it.
+        yield 'a variable composed with another one' => [
+            'code' => "function f(\$s) { \$x = 'p'; \$p = '/'.\$x.'/'; preg_match(\$p, \$s); preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, ['preg_match_all']]],
+        ];
+        yield 'a composition in the argument of a variable given another value later' => [
+            'code' => "function f(\$s) { \$x = 'p'; preg_match_all('/'.\$x.'/', \$s); \$x = 'q'; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a variable choosing between another one and a literal' => [
+            'code' => "function f(\$s, \$c) { \$q = '/p/'; \$p = \$c ? \$q : '/r/'; preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/r/', 'preg_match_all', []]],
+        ];
+        yield 'a variable choosing between another one a branch may change and a literal' => [
+            'code' => "function f(\$s, \$c) { \$q = '/p/'; if (\$c) { \$q = '/q/'; } \$p = \$c ? \$q : '/r/'; preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []], ['/r/', null, []]],
+        ];
+        yield 'a variable holding a list of another one' => [
+            'code' => "function f(\$s) { \$x = '/p/'; \$l = [\$x]; preg_match(\$x, \$s); preg_replace(\$l, '', \$s); }",
+            'loops' => ['preg_replace'],
+            'expected' => [['/p/', null, []]],
+        ];
+        // At the file level a call between the first assignment and the
+        // read may write the variable: what the second call reads is not
+        // known.
+        yield 'a variable of the file level given another literal after the loop that reads it' => [
+            'code' => "\$p = '/p/';\npreg_match_all(\$p, \$s);\n\$p = '/q/';\npreg_match(\$p, \$s);",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+    }
+
+    /**
      * Each pattern of a list runs in the loop of the call.
      */
     #[Test]
@@ -267,10 +526,16 @@ final class EveryMatchCallTest extends TestCase
     #[Test]
     public function test_the_copies_of_an_occurrence_keep_its_loop(): void
     {
-        $occurrence = new PatternOccurrence('/p/', 'file.php', 1, 'preg_split()', everyMatch: 'preg_split');
+        $occurrence = new PatternOccurrence('/p/', 'file.php', 1, 'preg_split()', everyMatch: 'preg_split', everyMatchElsewhere: ['preg_replace']);
 
         $this->assertSame('preg_split', $occurrence->ignoredWhole()->everyMatch);
         $this->assertSame('preg_split', $occurrence->analysed()->everyMatch);
+        $this->assertSame(['preg_replace'], $occurrence->ignoredWhole()->everyMatchElsewhere);
+        $this->assertSame(['preg_replace'], $occurrence->analysed()->everyMatchElsewhere);
+        $this->assertSame(['preg_replace'], $occurrence->guardedBy(TargetConstraint::phpFrom(80200, null))->everyMatchElsewhere);
+        $this->assertSame(['preg_split', 'preg_replace'], $occurrence->everyMatchCalls());
+        $this->assertSame(['preg_replace'], (new PatternOccurrence('/p/', 'file.php', 1, 'preg_match()', everyMatchElsewhere: ['preg_replace']))->everyMatchCalls());
+        $this->assertSame([], PatternOccurrence::found('/p/', 'file.php', 1)->everyMatchCalls());
     }
 
     /**
@@ -325,6 +590,24 @@ final class EveryMatchCallTest extends TestCase
             \RegexIterator::REPLACE => \is_string($current) ? substr_count($current, '#') : 0,
             default => null === $current ? 0 : 1,
         };
+    }
+
+    /**
+     * The pattern, the loop of its call and those of the other calls of
+     * each occurrence the strategy reads.
+     *
+     * @return list<array{string, string|null, list<string>}>
+     */
+    private function readLoopsWith(ExtractorInterface $strategy, string $code): array
+    {
+        $directory = $this->makeProject(['subject.php' => $code]);
+        $read = [];
+        foreach ($strategy->extract([$directory.'/subject.php']) as $occurrence) {
+            $this->assertNull($occurrence->parserFallback, 'The parser refused the file: '.($occurrence->parserFallback ?? ''));
+            $read[] = [$occurrence->pattern, $occurrence->everyMatch, $occurrence->everyMatchElsewhere];
+        }
+
+        return $read;
     }
 
     /**

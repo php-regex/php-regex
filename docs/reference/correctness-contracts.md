@@ -143,13 +143,19 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   - **Short matches** are looked for with no prefix: the first call, at the subject's start, must end on a short
     match too. A call whose first attempt fails, and whose later attempt matches, is not read, nor is a match past
     four run words.
-  - **A pattern several calls read**, through a constant or a variable, is reported at its first call, and its cost
-    follows that call.
   - **A call whose loop an argument decides** is reported only when the call spells out a value that makes it loop:
     a `RegexIterator` mode in a variable, or changed later with `setMode()`, is not read. A lazy `Strings::matchAll()`
     of nette/utils loops through `preg_match()` from the end of each match, with no retry: that loop is not priced,
     though `/(?:a+\d)?/` costs it n² too (1.2 / 3.6 / 12.5 ms on n = 2,000 / 4,000 / 8,000, PHP 8.4.28, PCRE2
     10.49).
+  - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
+    written, with one finding for each function of those calls that looks for every match. Through a variable, a call
+    runs in its loop the value of the latest assignment before it when that one runs first on every path to the call:
+    a statement of the body, or of the block of braces the call stands in, that no later assignment reaches through a
+    loop the block holds. `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`. The head of a
+    `foreach` over literals gives each of them to a call in its body the body does not write it in first, and a
+    composition joins what each variable holds where it is read. Where an assignment in a branch or a loop of its own
+    may stand between, in a `switch` or in a block of the alternative syntax, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 

@@ -92,6 +92,28 @@ final class RegexFinderConstantsTest extends TestCase
     }
 
     /**
+     * A pattern of another file several calls read is found at the first
+     * argument naming it, with the preg functions of the other calls that
+     * look for every match.
+     */
+    #[Test]
+    public function test_a_pattern_of_another_file_keeps_the_loops_of_the_other_calls(): void
+    {
+        $content = <<<'CODE'
+            <?php
+            use App\Support\Patterns;
+            function f($s) { preg_match(Patterns::RE, $s); preg_match_all(Patterns::RE, $s); preg_split(Patterns::RE, $s); }
+            CODE;
+
+        $found = array_map(
+            static fn (RegexOccurrence $occurrence): array => [$occurrence->pattern, $occurrence->line, $occurrence->everyMatch, $occurrence->everyMatchElsewhere, $occurrence->everyMatchCalls()],
+            (new RegexFinder())->find($content, $this->declarations()),
+        );
+
+        $this->assertSame([['/(a/', 3, null, ['preg_match_all', 'preg_split'], ['preg_match_all', 'preg_split']]], $found);
+    }
+
+    /**
      * "@regex-ignore" naming no issue on the line of the argument silences
      * the pattern there, as on the line of a literal.
      */
