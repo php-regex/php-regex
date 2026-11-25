@@ -13,7 +13,6 @@
     xsi:noNamespaceSchemaLocation="tools/bc-check/vendor/roave/backward-compatibility-check/Resources/schema.xsd">
     <baseline>
         <ignored-regex>#^\[BC\] SKIPPED: .* "(PHPUnit|Psalm|Symfony|Illuminate|Rector|PhpParser|PHPStan|Infection)\\[^"]*" could not be found in the located source$#</ignored-regex>
-        <ignored-regex>#^\[BC\] ADDED: Case PHPRegex\\Parser\\PcreFeature::CaselessCasePropertiesMatchCasedLetters was added$#</ignored-regex>
         <ignored-regex>#^\[BC\] CHANGED: Value of constant PHPRegex\\(Toolkit\\Regex::VERSION(_ID)?|[A-Za-z\\]+::(CACHE_VERSION|ANALYSIS_VERSION)) changed from #</ignored-regex>
     </baseline>
 </roave-bc-check>
