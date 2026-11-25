@@ -80,7 +80,7 @@ final class LintCommandBaselineFormatTest extends TestCase
         file_put_contents('code/test.php', self::ERROR_SOURCE);
 
         [$generated] = $this->lint(['code', '--generate-baseline=baseline.json']);
-        $this->assertSame(1, $generated);
+        $this->assertSame(0, $generated);
 
         [$exitCode, $stdout, $stderr] = $this->lint([$spelling, '--format=json', '--baseline=baseline.json']);
         $this->assertSame(0, $exitCode, $stdout.$stderr);
@@ -114,7 +114,7 @@ final class LintCommandBaselineFormatTest extends TestCase
         file_put_contents('test.php', implode("\n", $lines)."\n");
 
         [$generated] = $this->lint(['test.php', '--generate-baseline=baseline.json']);
-        $this->assertSame(1, $generated);
+        $this->assertSame(0, $generated);
         $this->assertSame([10, 20], self::valuesOf(self::readBaseline('baseline.json'), 'line'));
 
         array_splice($lines, 4, 0, [$call]);
@@ -145,7 +145,7 @@ final class LintCommandBaselineFormatTest extends TestCase
         file_put_contents('test.php', implode("\n", $lines)."\n");
 
         [$generated] = $this->lint(['test.php', '--generate-baseline=baseline.json']);
-        $this->assertSame(1, $generated);
+        $this->assertSame(0, $generated);
         $this->assertSame([14], self::valuesOf(self::readBaseline('baseline.json'), 'line'));
 
         array_splice($lines, 12, 0, [$call]);
@@ -170,7 +170,7 @@ final class LintCommandBaselineFormatTest extends TestCase
         file_put_contents('test.php', self::ERROR_SOURCE);
 
         [$generated] = $this->lint(['test.php', ...$generate]);
-        $this->assertSame(1, $generated);
+        $this->assertSame(0, $generated);
         $this->assertFileExists('baseline.json');
 
         [$exitCode, $stdout, $stderr] = $this->lint(['test.php', ...$use]);

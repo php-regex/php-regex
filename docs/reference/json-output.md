@@ -156,9 +156,12 @@ Every position counts bytes.
 
 `file` is relative to the working directory, with `/` separators, when the
 file lies under it, and absolute otherwise. `regex lint src` and
-`regex lint "$PWD/src"` print the same `file` values. The baseline file uses
-the same rule, with its `.` and `..` segments resolved and `\` read as a
-separator, so `regex lint ./src` and `regex lint src` share a baseline.
+`regex lint "$PWD/src"` print the same `file` values. The baseline file
+names each file relative to its own directory instead, as PHPStan's does,
+with `..` segments for a file above it (`../src/Form.php` for a baseline
+under `build/`) and absolute on another drive, its `.` and `..` segments
+resolved and `\` read as a separator, so `regex lint ./src` and
+`regex lint src` share a baseline, and a run from any directory reads it.
 
 ### Order
 
@@ -1403,7 +1406,7 @@ entries included, is a usage error (exit code 2, `stage: "usage"`).
 
 | key | type | meaning |
 |---|---|---|
-| `file` | string | As in the issue (see [Paths](#paths)); what a baseline matches on |
+| `file` | string | The issue's file, relative to the directory of the baseline file (see [Paths](#paths)); what a baseline matches on |
 | `line` | int | As in the issue; decides between entries that match the same issues |
 | `column` | int \| null | As in the issue |
 | `issue_id` | string | As in the issue; what a baseline matches on |

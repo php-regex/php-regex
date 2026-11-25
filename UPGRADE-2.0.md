@@ -503,6 +503,12 @@ A baseline file that is missing or is not a baseline is now a usage error
 (exit code 2), where 1.x went on with no baseline. See
 [the CLI guide](docs/guides/cli.md#baseline).
 
+The baseline names each file relative to its own directory, as PHPStan's
+does (`../src/Form.php` for a baseline under `build/`), where 1.x named it
+from the working directory: it serves a run from any directory. A run with
+`--generate-baseline` exits with 0 once the baseline is written, the errors
+it found being the ones the baseline now knows, where 1.x exited with 1.
+
 ### `// @regex-lint-ignore`
 
 The 1.x comment `// @regex-lint-ignore` on the line above a pattern no longer

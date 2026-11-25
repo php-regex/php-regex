@@ -2152,7 +2152,7 @@ pattern.
 
 | Command                                      | Exits with 1 when                                                                  |
 |----------------------------------------------|------------------------------------------------------------------------------------|
-| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read; or a worker fails or exits |
+| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0), unless `--generate-baseline` writes them to a baseline, which leaves 0; or the files cannot be read; or a worker fails or exits |
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid, or a later version of a range named with `--php-version` refuses it |
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse, or a later version of a range named with `--php-version` refuses it |
 | `graph`                                      | The pattern does not parse, a later version of a range named with `--php-version` refuses it, or it cannot be drawn as an automaton |
@@ -2721,9 +2721,11 @@ Both options take their file after a space or an `=`.
 - **Every format.** A baselined issue is gone from the console, JSON, GitHub,
   Checkstyle and JUnit reports alike, and the exit code is computed without
   it.
-- **Paths.** Files are recorded relative to the directory the command runs
-  from: generate and apply the baseline from the same directory, usually the
-  project root.
+- **Paths.** Files are recorded relative to the directory of the baseline
+  file, as PHPStan records them: `build/regex-baseline.json` names
+  `../src/Form.php`. The baseline then serves a run from any directory, and
+  moves with the project. A file on another drive than the baseline is
+  recorded absolute.
 - **The file.** `{"version": 1, "issues": [...]}`, each issue with its `file`,
   `line`, `column`, `issue_id`, `message`, `severity`, `pattern`,
   `expression` and `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
@@ -2744,6 +2746,9 @@ Both options take their file after a space or an `=`.
 - **A 1.x baseline**, a plain list, is refused like any non-baseline file:
   exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on
   a run that also passes `--generate-baseline`. Regenerate it once.
+- **Exit code 0** once `--generate-baseline` has written the file: the
+  errors the run found are the ones the baseline now knows. The report still
+  lists them.
 - **Exit code 2** when the baseline file is missing, empty or not a baseline,
   or when the generated file cannot be written.
 

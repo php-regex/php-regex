@@ -353,8 +353,69 @@ final class LintBaselineContractTest extends TestCase
 
         [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--generate-baseline=baseline.json']);
 
-        $this->assertSame(1, $exitCode, $stdout);
+        $this->assertSame(0, $exitCode, $stdout);
         $this->assertCount(4, JsonContract::asArray(JsonContract::decodeDocument((string) file_get_contents('baseline.json'))['issues'] ?? null));
+    }
+
+    /**
+     * A run that writes the baseline succeeds once it is written: the
+     * errors it found are the ones the baseline now knows. The report
+     * still lists them, in every format.
+     */
+    #[Test]
+    #[DataProvider('provideFormats')]
+    public function test_generate_baseline_exits_0_once_the_baseline_is_written(string $format): void
+    {
+        $this->enterProject(self::FILES);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex(['lint', 'src', '--format='.$format, '--jobs=1', '--no-optimize', '--generate-baseline=baseline.json']);
+
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $this->assertStringContainsString('Baseline generated at baseline.json', $stdout.$stderr);
+        $this->assertStringContainsString('src/a.php', $stdout);
+        $this->assertCount(4, JsonContract::asArray(JsonContract::decodeDocument((string) file_get_contents('baseline.json'))['issues'] ?? null));
+
+        // The same run without it fails on those errors.
+        [$exitCode] = $this->runRegex(['lint', 'src', '--format='.$format, '--jobs=1', '--no-optimize']);
+        $this->assertSame(1, $exitCode);
+    }
+
+    /**
+     * @return iterable<string, array{format: string}>
+     */
+    public static function provideFormats(): iterable
+    {
+        yield 'JSON' => ['format' => 'json'];
+        yield 'console' => ['format' => 'console'];
+        yield 'checkstyle' => ['format' => 'checkstyle'];
+    }
+
+    /**
+     * A baseline names its files from its own directory, as PHPStan's
+     * does: written under build/, it serves a run from the project root
+     * and a run from src/ alike.
+     */
+    #[Test]
+    public function test_a_baseline_names_its_files_from_its_own_directory(): void
+    {
+        $directory = $this->enterProject(self::FILES + ['build/.keep' => '']);
+
+        [$exitCode, $stdout, $stderr] = $this->runRegex([...self::LINT, '--generate-baseline=build/baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout.$stderr);
+        $files = [];
+        foreach (JsonContract::asArray(JsonContract::decodeDocument((string) file_get_contents('build/baseline.json'))['issues'] ?? null) as $entry) {
+            $files[] = JsonContract::asArray($entry)['file'] ?? null;
+        }
+        $this->assertSame(['../src/a.php', '../src/a.php', '../src/b.php', '../src/b.php'], $files);
+
+        [$exitCode, $stdout] = $this->runRegex([...self::LINT, '--baseline=build/baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], $this->reportedIssues($stdout));
+
+        chdir($directory.'/src');
+        [$exitCode, $stdout] = $this->runRegex(['lint', '.', '--format=json', '--jobs=1', '--no-optimize', '--baseline=../build/baseline.json']);
+        $this->assertSame(0, $exitCode, $stdout);
+        $this->assertSame([], $this->reportedIssues($stdout));
     }
 
     /**

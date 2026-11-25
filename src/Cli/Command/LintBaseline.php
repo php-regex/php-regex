@@ -30,9 +30,13 @@ use PHPRegex\Parser\Text\Path;
  * out of a report.
  *
  * Each entry names an issue by its identifier, its file relative to the
- * working directory and a hash of the exact bytes of its pattern: the issue
- * stays known when its line moves or its message is reworded. An issue with
- * no pattern, an argument built at run time, is named by the bytes of the
+ * directory of the baseline file, as PHPStan names it, and a hash of the
+ * exact bytes of its pattern: the issue stays known when its line moves or
+ * its message is reworded, and the baseline serves a run from any
+ * directory. A file on another root than the baseline, a drive of its own,
+ * is named absolute; a baseline behind a stream wrapper, which has no
+ * directory on disk, names its files from the working directory. An issue
+ * with no pattern, an argument built at run time, is named by the bytes of the
  * argument as the source writes it; an entry written before such issues
  * were reported has none, and is read as it was. The file is
  * read with its "." and ".." segments resolved, so "code", "./code" and
@@ -67,7 +71,8 @@ final class LintBaseline
     private const KEPT_COUNTS = ['parserFallbacks', 'argumentsConstant', 'argumentsFiniteSet', 'argumentsQuotedShell', 'argumentsRawShell', 'argumentsOpaque'];
 
     /**
-     * @param array<string, array<int, int>> $lines the line of each entry, by key
+     * @param array<string, array<int, int>> $lines the line of each entry, by key, its file named from the
+     *                                              working directory, as the report names it
      */
     private function __construct(private readonly array $lines) {}
 
@@ -104,22 +109,24 @@ final class LintBaseline
     /**
      * The baseline of every issue of the report, as the JSON document every
      * command writes: one entry per issue, in the report's order, its keys
-     * those of the report's issue. Each string is written with the bytes
-     * that are not UTF-8 spelled "\xHH", so that the encoding cannot fail;
-     * the hash keeps the exact pattern. The entry of an issue with no
-     * pattern, an argument built at run time, gives the argument as the
-     * source writes it under "expression", null beside a pattern, and its
-     * hash is the hash of that text.
+     * those of the report's issue, its file named from the directory of
+     * $file, the baseline file the document is written to. Each string is
+     * written with the bytes that are not UTF-8 spelled "\xHH", so that the
+     * encoding cannot fail; the hash keeps the exact pattern. The entry of
+     * an issue with no pattern, an argument built at run time, gives the
+     * argument as the source writes it under "expression", null beside a
+     * pattern, and its hash is the hash of that text.
      */
-    public static function generate(LintReport $report): string
+    public static function generate(LintReport $report, string $file): string
     {
+        $directory = self::directoryOf($file);
         $issues = [];
         foreach ($report->results as $result) {
             $pattern = $result['pattern'] ?? '';
             $expression = self::expression($result);
             foreach ($result['issues'] as $issue) {
                 $issues[] = [
-                    'file' => self::relativePath($issue->file),
+                    'file' => self::pathFrom($directory, $issue->file),
                     'line' => $issue->line,
                     'column' => $issue->column,
                     'issue_id' => self::issueId($issue),
@@ -393,6 +400,7 @@ final class LintBaseline
             throw new CliException(\sprintf('The baseline file %s is not of version %d, the one this version reads: regenerate it with --generate-baseline.', $file, self::VERSION));
         }
 
+        $directory = self::directoryOf($file);
         $lines = [];
         foreach ($data['issues'] as $item) {
             $entry = $item instanceof \stdClass ? get_object_vars($item) : null;
@@ -404,7 +412,7 @@ final class LintBaseline
             ) {
                 throw self::notABaseline($file);
             }
-            $lines[self::key($entry['issue_id'], self::normalizeSpelledPath($entry['file']), $entry['pattern_hash'])][] = $entry['line'];
+            $lines[self::key($entry['issue_id'], self::entryFile($directory, $entry['file']), $entry['pattern_hash'])][] = $entry['line'];
         }
 
         return new self($lines);
@@ -489,12 +497,15 @@ final class LintBaseline
     }
 
     /**
-     * A path as a baseline spells it, with its "." and ".." segments
-     * resolved and spelled again: each "\xHH" that stands for a byte the
-     * spelling escapes is read back first, so that its backslash is not
-     * taken for a separator.
+     * The file an entry names, as the report names it: read from the
+     * directory of the baseline when it is relative, then named from the
+     * working directory, its "." and ".." segments resolved and spelled
+     * again. Each "\xHH" that stands for a byte the spelling escapes is
+     * read back first, so that its backslash is not taken for a separator.
+     *
+     * @param string|null $directory the directory of the baseline file; null for one with no directory on disk
      */
-    private static function normalizeSpelledPath(string $path): string
+    private static function entryFile(?string $directory, string $path): string
     {
         $bytes = LibraryPcre::replaceCallback(
             '/\\\\x([89A-F][0-9A-F])/',
@@ -502,7 +513,88 @@ final class LintBaseline
             $path,
         ) ?? $path;
 
-        return self::escape(self::normalizePath($bytes));
+        if (null !== $directory && '' === self::root(self::normalizePath($bytes))) {
+            $bytes = $directory.'/'.$bytes;
+        }
+
+        return self::escape(self::relativePath($bytes));
+    }
+
+    /**
+     * The absolute directory a baseline file names its files from: null
+     * for a file behind a stream wrapper, which has no directory on disk,
+     * or for a relative one when the working directory is gone.
+     */
+    private static function directoryOf(string $file): ?string
+    {
+        return str_contains($file, '://') ? null : self::absolute(\dirname($file));
+    }
+
+    /**
+     * The path made absolute from the working directory, read lexically;
+     * null when it is relative and the working directory is gone.
+     */
+    private static function absolute(string $path): ?string
+    {
+        $normalized = self::normalizePath($path);
+        if ('' !== self::root($normalized)) {
+            return $normalized;
+        }
+
+        $cwd = getcwd();
+
+        return false === $cwd ? null : self::normalizePath($cwd.'/'.$normalized);
+    }
+
+    /**
+     * A file as a baseline in $directory names it: from that directory,
+     * with a ".." segment for each directory to climb, when both lie on the
+     * same root; absolute on another root. Named from the working
+     * directory when the baseline has no directory on disk.
+     */
+    private static function pathFrom(?string $directory, string $path): string
+    {
+        $absolute = self::absolute($path);
+        if (null === $directory || null === $absolute) {
+            return self::relativePath($path);
+        }
+
+        $root = self::root($absolute);
+        if (self::root($directory) !== $root) {
+            return $absolute;
+        }
+
+        $from = self::segments(substr($directory, \strlen($root)));
+        $to = self::segments(substr($absolute, \strlen($root)));
+        $shared = 0;
+        while (isset($from[$shared], $to[$shared]) && $from[$shared] === $to[$shared]) {
+            $shared++;
+        }
+
+        return implode('/', [...array_fill(0, \count($from) - $shared, '..'), ...\array_slice($to, $shared)]);
+    }
+
+    /**
+     * The segments of a normalized path without its root.
+     *
+     * @return list<string>
+     */
+    private static function segments(string $path): array
+    {
+        return '' === $path ? [] : explode('/', $path);
+    }
+
+    /**
+     * The root of a path with forward slashes: "/", a drive as "C:/", or
+     * "" for a relative path.
+     */
+    private static function root(string $path): string
+    {
+        return match (true) {
+            str_starts_with($path, '/') => '/',
+            \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':' === $path[1] && '/' === $path[2] => substr($path, 0, 3),
+            default => '',
+        };
     }
 
     /**
@@ -514,11 +606,7 @@ final class LintBaseline
     private static function normalizePath(string $path): string
     {
         $path = Path::normalize($path);
-        $root = match (true) {
-            str_starts_with($path, '/') => '/',
-            \strlen($path) >= 3 && Ascii::isAlpha($path[0]) && ':' === $path[1] && '/' === $path[2] => substr($path, 0, 3),
-            default => '',
-        };
+        $root = self::root($path);
         $path = substr($path, \strlen($root));
 
         $segments = [];

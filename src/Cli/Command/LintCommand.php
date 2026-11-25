@@ -386,7 +386,9 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return self::INVALID;
         }
 
-        return $report->stats['errors'] > 0 ? self::FAILURE : self::SUCCESS;
+        // The baseline written knows every error the run found: the run
+        // did what it was asked.
+        return $report->stats['errors'] > 0 && null === $arguments->generateBaseline ? self::FAILURE : self::SUCCESS;
     }
 
     /**
@@ -492,7 +494,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
             return true;
         }
 
-        return false !== @file_put_contents($arguments->generateBaseline, LintBaseline::generate($report));
+        return false !== @file_put_contents($arguments->generateBaseline, LintBaseline::generate($report, $arguments->generateBaseline));
     }
 
     /**
