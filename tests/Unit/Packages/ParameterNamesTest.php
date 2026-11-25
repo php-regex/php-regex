@@ -17,6 +17,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Optimizer\Modernizer;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
@@ -96,6 +97,8 @@ final class ParameterNamesTest extends TestCase
         yield 'FirstMatchPartition::__construct' => ['class' => FirstMatchPartition::class, 'method' => '__construct', 'names' => ['solver', 'options']];
         yield 'FirstMatchPartition::partition' => ['class' => FirstMatchPartition::class, 'method' => 'partition', 'names' => ['candidates']];
         yield 'RedosRepairer::repair' => ['class' => RedosRepairer::class, 'method' => 'repair', 'names' => ['regex']];
+        yield 'RedosRepairer::__construct' => ['class' => RedosRepairer::class, 'method' => '__construct', 'names' => ['parser', 'dfaCache']];
+        yield 'Modernizer::__construct' => ['class' => Modernizer::class, 'method' => '__construct', 'names' => ['target']];
         yield 'PcreEngine::compile' => ['class' => PcreEngine::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject']];
         yield 'PcreEngine::test' => ['class' => PcreEngine::class, 'method' => 'test', 'names' => ['regex', 'subject']];

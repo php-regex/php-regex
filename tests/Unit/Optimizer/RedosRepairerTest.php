@@ -18,15 +18,18 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RedosRepair;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Cache\ArrayCache;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -39,6 +42,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class RedosRepairerTest extends TestCase
 {
+    use PcreGates;
+
     private const SUBJECTS = ['', 'a', 'aa', 'aaaa', 'aab', 'b', '1', '12', '12a', 'ab ab', 'ab', 'a a', 'aa!'];
 
     #[Test]
@@ -355,12 +360,64 @@ final class RedosRepairerTest extends TestCase
         };
         $parser = RegexParser::create();
 
-        $repairs = (new RedosRepairer($parser, null, new LanguageSolver($parser, $cache)))->repair($pattern);
+        $repairs = (new RedosRepairer($parser, $cache))->repair($pattern);
 
         $this->assertSame([null, null], array_map(static fn (RedosRepair $repair): ?bool => $repair->sameSubjects, $repairs));
         $own = LanguageSolver::dfaCacheKey($pattern, $parser->target()->cacheKey(), new SolverOptions(matchMode: MatchMode::Partial), \PCRE_VERSION);
         $times = array_count_values($cache->asked);
         $this->assertSame(\count($cache->asked) - $times[$own] + 1, $times[$own]);
+    }
+
+    /**
+     * The analysis and the proofs read the pattern for the repairer's
+     * parser, the DFAs of the cache it is given included: for PHP 8.2,
+     * whose PCRE2 reads "{,9}" as text, "/^(?:a+){,9}$/" holds one loop and
+     * needs no repair.
+     */
+    #[Test]
+    public function test_the_repairer_reads_the_pattern_for_its_parser_with_a_dfa_cache(): void
+    {
+        $parser = RegexParser::create(['php_version' => '8.2']);
+        $this->assertFalse($parser->target()->supports(PcreFeature::OpenAndPaddedRepeatCounts));
+
+        $this->assertSame([], (new RedosRepairer($parser, dfaCache: new InMemoryDfaCache()))->repair('/^(?:a+){,9}$/'));
+    }
+
+    /**
+     * Where the running PCRE2 reads "{,9}" as a repeat of the loop, the
+     * repairer of the runtime makes the inner loop possessive.
+     */
+    #[Test]
+    public function test_the_repairer_of_the_runtime_reads_a_repeat_without_minimum(): void
+    {
+        $this->requiresPcre2('10.43', '"{,9}"');
+        $this->assertSame(1, preg_match('/^(?:a+){,9}$/', 'aaa'), 'Oracle: "{,9}" repeats from PCRE2 10.43.');
+        $this->assertSame(0, preg_match('/^(?:a+){,9}$/', 'a{,9}'));
+
+        $this->assertSame(['/^(?:a++){,9}$/'], array_map(static fn (RedosRepair $repair): string => $repair->pattern, (new RedosRepairer(dfaCache: new InMemoryDfaCache()))->repair('/^(?:a+){,9}$/')));
+    }
+
+    /**
+     * A pattern that does not lex or parse gets no repair, and nothing is
+     * thrown.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidPatterns')]
+    public function test_an_invalid_pattern_gets_no_repair(string $regex): void
+    {
+        $this->assertFalse(@preg_match($regex, ''), 'Oracle: PCRE refuses '.$regex);
+
+        $this->assertSame([], (new RedosRepairer())->repair($regex));
+        $this->assertNull((new RedosRepairer())->firstRepair($regex));
+    }
+
+    /**
+     * @return iterable<string, array{regex: string}>
+     */
+    public static function provideInvalidPatterns(): iterable
+    {
+        yield 'an unclosed class' => ['regex' => '/[a/'];
+        yield 'an unclosed group' => ['regex' => '/(a+)+(/'];
     }
 
     #[Test]

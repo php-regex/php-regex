@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Visitor;
 
 use PHPRegex\Optimizer\Modernizer;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -417,7 +418,7 @@ final class ModernizerTest extends TestCase
     private function modernize(string $pattern, ?string $locale = null): string
     {
         $ast = $this->regexService->parse($pattern);
-        $modernized = $ast->accept(new Modernizer($locale));
+        $modernized = $ast->accept(new Modernizer(null === $locale ? null : PcreTarget::runtime()->withLocale($locale)));
 
         return $modernized->accept(new PatternPrinter());
     }
