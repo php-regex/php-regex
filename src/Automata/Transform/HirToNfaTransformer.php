@@ -154,8 +154,8 @@ final class HirToNfaTransformer
             if ($skipsStartsBetweenCrAndLf && !$startAnchored) {
                 // A match starts anywhere but after a "\r" and before a "\n".
                 $fragment = $this->concatenate($this->buildNode(new AlternationHir([
-                    new LookHir(new LiteralHir([0x0D]), LookKind::NegativeBehind, true),
-                    new LookHir(new LiteralHir([0x0A]), LookKind::NegativeAhead, true),
+                    new LookHir(new LiteralHir([0x0D]), LookKind::NegativeBehind),
+                    new LookHir(new LiteralHir([0x0A]), LookKind::NegativeAhead),
                 ])), $fragment);
             }
             $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $end);
@@ -845,7 +845,6 @@ final class HirToNfaTransformer
             if ($this->crLfEndsALine()) {
                 $carriageReturn = $this->builder->createState();
                 $this->builder->addTransition($carriageReturn, CharSet::single(0x0A), $newline);
-                $ends = $ends->subtract(CharSet::single(0x0D));
                 $acceptStates[] = $carriageReturn;
             }
             foreach ($fragment->acceptStates as $acceptState) {
