@@ -147,8 +147,9 @@ final class RedosAnalyzer
             // One attempt proven linear: what the retries of the search cost,
             // replayed in confirmed mode when its severity, that of a proven
             // quadratic attempt, reaches the threshold; when the search costs
-            // nothing found, what PHP's retry after an empty match costs the
-            // functions that look for every match.
+            // nothing found, what PHP's retry after an empty match, or the
+            // attempt that finds each short match, costs the functions that
+            // look for every match.
             $searchCost = null;
             $everyMatchSearchCost = null;
             if (RedosComplexity::Linear === $proof?->complexity) {

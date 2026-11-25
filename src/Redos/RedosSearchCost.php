@@ -28,6 +28,14 @@ use PHPRegex\Redos\Backtrack\WitnessRenderer;
  * The prefix, often empty, keeps the first attempt from matching the bare
  * run: "^\s+" in "/^\s+|\s+$/" would.
  *
+ * The cost of the functions that look for every match,
+ * RedosAnalysis::$everyMatchSearchCost, comes two ways: after an empty match
+ * inside the run, PHP's retry at the same offset reads to the end of the
+ * run, or, with $shortMatch, the attempt that ends each short match reads
+ * to the end of the run before it settles on it, as "a(?:a+\d)?" and
+ * "a*b|a" do. The loop then starts a call where each match ends, inside the
+ * run.
+ *
  * The parts hold raw bytes; toArray() gives them as PHP double-quoted
  * literals, like RedosWitness.
  *
@@ -40,9 +48,11 @@ final class RedosSearchCost
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$searchCost
      *
-     * @param int       $degree   the degree of the search's cost in the run's length: 2
-     * @param string    $prefix   what comes before the run: the first attempt fails on it
-     * @param bool|null $replayed whether the engine replay, without the JIT, counted attempts growing with the rest of the run; null when no replay was made
+     * @param int       $degree     the degree of the search's cost in the run's length: 2
+     * @param string    $prefix     what comes before the run: the first attempt fails on it
+     * @param bool|null $replayed   whether the engine replay, without the JIT, counted attempts growing with the rest of the run; null when no replay was made
+     * @param bool      $shortMatch for the cost of the functions that look for every match, whether each call pays the run
+     *                              in the attempt that ends a short match, rather than in the retry after an empty one
      */
     public function __construct(
         public readonly int $degree,
@@ -51,6 +61,7 @@ final class RedosSearchCost
         public readonly string $breaker,
         public readonly bool $unicode,
         public readonly ?bool $replayed = null,
+        public readonly bool $shortMatch = false,
     ) {}
 
     /**

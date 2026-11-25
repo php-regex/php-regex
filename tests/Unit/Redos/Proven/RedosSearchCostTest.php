@@ -994,6 +994,11 @@ final class RedosSearchCostTest extends TestCase
             {
                 throw new \LogicException('The replay of every match is not asked.');
             }
+
+            public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of short matches is not asked.');
+            }
         };
 
         $this->assertNull(self::findSearchCost('/\s+$/', $failing));
@@ -1028,6 +1033,11 @@ final class RedosSearchCostTest extends TestCase
             public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('The replay of every match is not asked.');
+            }
+
+            public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of short matches is not asked.');
             }
         };
 

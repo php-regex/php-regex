@@ -30,8 +30,10 @@ use PHPRegex\Redos\ConfirmationOptions;
  *
  * The witness replays when the search on it matches nowhere and an attempt
  * started further from the breaker takes at least one more step per run
- * word. The counter sees nothing inside an atomic or possessive repeat of a
- * single character set ("a++", "(?>a+)"), and counts a repeat of a group,
+ * word; the one of short matches, when each such attempt matches a little
+ * past its start instead. The counter sees nothing inside an atomic or
+ * possessive repeat of a single character set ("a++", "(?>a+)"), and
+ * counts a repeat of a group,
  * "(?:a)++" or "(?>a+b)+", at each pass: the search proof hands over the
  * pattern with each such character in a group of its own, which changes no
  * match. A pattern that leaves no delimiter for the counting verbs does not
@@ -53,6 +55,12 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
     private const WORDS = 256;
 
     private const MAX_STEPS = 10_000_000;
+
+    /**
+     * The most run words a short match reads, as the search-cost proof
+     * bounds it.
+     */
+    private const MAX_MATCH_WORDS = 4;
 
     private const NO_AUTO_POSSESS = '(*NO_AUTO_POSSESS)';
 
@@ -147,6 +155,90 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         }
 
         return $steps[0] - $steps[1] >= $quarter;
+    }
+
+    /**
+     * Whether the engine, without its JIT, ends the attempt pinned a quarter
+     * and half-way through the run on a match past its start within
+     * MAX_MATCH_WORDS run words, as the call of the loop of
+     * preg_match_all() and its kin started there does, and whether the
+     * attempt takes one more step at least per run word left; null when the
+     * engine cannot count. A match that "\K" leaves empty makes PHP retry
+     * where it ends, refusing an empty match there: that retry must not
+     * read past the same bound, so that the loop goes on inside the run.
+     */
+    #[\Override]
+    public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
+    {
+        $options ??= new ConfirmationOptions();
+        $counted = self::counted($pattern);
+        if (null === $counted) {
+            return false;
+        }
+
+        $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
+        $quarter = intdiv(self::WORDS, 4);
+        $pinned = $counted.'A';
+        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1 + \strlen(NoJit::VERB.self::NO_AUTO_POSSESS), 0).'A';
+        $bound = self::MAX_MATCH_WORDS * \strlen($run);
+        $steps = [];
+        foreach ([1, 2] as $quarters) {
+            $start = \strlen($prefix) + $quarters * $quarter * \strlen($run);
+            $match = self::matchFrom($pinned, $subject, $start, $options);
+            if (null === $match) {
+                return null;
+            }
+
+            if (false === $match || $match[0] <= $start || $match[0] > $start + $bound) {
+                return false;
+            }
+
+            // The loop retries after a match "\K" leaves empty; one the
+            // limits stop cannot be counted either.
+            if ($match[1]) {
+                $retried = self::matchFrom($retry, $subject, $match[0], $options);
+                if (null === $retried) {
+                    return null;
+                }
+
+                if (false !== $retried && $retried[0] > $match[0] + $bound) {
+                    return false;
+                }
+            }
+
+            $step = self::steps($pinned, $subject, $start, $options);
+            if (null === $step) {
+                return null;
+            }
+
+            $steps[] = $step;
+        }
+
+        return $steps[0] - $steps[1] >= $quarter;
+    }
+
+    /**
+     * Where the match of the pattern from the offset ends, and whether it
+     * is empty, as "\K" may leave one that reads a character; false when
+     * there is none, null when the limits of the options stop the engine.
+     *
+     * @return array{int, bool}|false|null
+     */
+    private static function matchFrom(string $pattern, string $subject, int $offset, ConfirmationOptions $options): array|false|null
+    {
+        $found = self::counts($pattern, $subject, $offset, self::MAX_STEPS, $options, \PREG_OFFSET_CAPTURE);
+        if (null === $found->matched) {
+            return null;
+        }
+
+        $whole = $found->groups[0] ?? null;
+        if (!$found->matched || !\is_array($whole)) {
+            return false;
+        }
+
+        $text = (string) $whole[0];
+
+        return [$whole[1] + \strlen($text), '' === $text];
     }
 
     /**

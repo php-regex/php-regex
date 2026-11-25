@@ -133,8 +133,10 @@ unanchored search is quadratic stays `safe (proven)`, and carries that cost in
 `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`null` when no witness was
 found, never a proof of a linear search). A pattern whose search is quadratic
 only in the functions that look for every match, through PHP's retry after an
-empty match, carries that cost in `RedosAnalysis::$everyMatchSearchCost`
-instead, and `$searchCost` stays `null`.
+empty match or the attempt that finds each short match
+(`RedosSearchCost::$shortMatch`), carries that cost in
+`RedosAnalysis::$everyMatchSearchCost` instead, and `$searchCost` stays
+`null`.
 
 The bridges and tools carry more than their classes:
 

@@ -1213,7 +1213,7 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
 | `upper_bound_degree` | int \| null | The degree `d` of a proven bound `n^d` on the steps of one attempt, with or without an attack; `null` when no polynomial bound is proven. A ceiling, not the verdict: it may be above 1 next to a linear one |
-| `every_match_search_cost` | object \| null | The cost of the search of the functions that look for every match, which PHP retries after an empty match, when `search_cost` is `null`: a [search cost](#every-match-search-cost-redos_analysisevery_match_search_cost); `null` when no witness was found |
+| `every_match_search_cost` | object \| null | The cost of the search of the functions that look for every match, through PHP's retry after an empty match or the attempt that finds each short match, when `search_cost` is `null`: a [search cost](#every-match-search-cost-redos_analysisevery_match_search_cost); `null` when no witness was found |
 
 ### Finding: `redos_analysis.findings[]`
 
@@ -1294,11 +1294,16 @@ The search of `preg_match()` stops at an empty match inside the run, and
 the same offset with `PCRE2_NOTEMPTY_ATSTART | PCRE2_ANCHORED`, then moves one
 character on, and each retry reads to the end of the run before it fails. On the
 run repeated n times then the breaker, those functions take a number of steps
-quadratic in n, as `/(?:a+\d)?/` does on `"a" x n`.
+quadratic in n, as `/(?:a+\d)?/` does on `"a" x n`. Or the search of
+`preg_match()` stops at a short match inside the run, which its attempt finds
+after a path that reads to the end of the run failed: those functions start
+again where the match ends and pay the run at each match, as `/a*b|a/` does on
+`"a" x n`.
 
 It is looked for only when one attempt is proven linear and `search_cost` is
-`null`. The JIT does not avoid this cost: PHP runs the retry in PCRE2's
-interpreter whatever `pcre.jit`. The linter, PHPStan and the language server
+`null`. The JIT does not avoid the cost of the retry: PHP runs it in PCRE2's
+interpreter whatever `pcre.jit`. It may avoid the cost of short matches for
+some patterns. The linter, PHPStan and the language server
 report it as `regex.lint.redos.search` at the calls that run such a loop, and
 nowhere else.
 
@@ -1306,7 +1311,7 @@ nowhere else.
 |---|---|---|
 | `degree` | int | The degree of the cost in the length of the run: `2` |
 | `witness` | object | The attack: an [every-match search witness](#every-match-search-witness-redos_analysisevery_match_search_costwitness) |
-| `replayed` | bool \| null | Whether the step replay of the retry, pinned and refusing an empty match at its start without the JIT, found retries that take more steps the further they start from the end of the run; `null` when no replay was made (theoretical mode, or a confirmed analysis whose threshold is above `medium`) |
+| `replayed` | bool \| null | Whether the step replay of the retry, pinned and refusing an empty match at its start without the JIT, found retries that take more steps the further they start from the end of the run, or, for short matches, the replay of the attempt pinned without the JIT found attempts that do; `null` when no replay was made (theoretical mode, or a confirmed analysis whose threshold is above `medium`) |
 
 ### Every-match search witness: `redos_analysis.every_match_search_cost.witness`
 
@@ -1316,8 +1321,8 @@ is: `"<prefix>" . str_repeat("<run>", $n) . "<breaker>"` builds the attack.
 | key | type | meaning |
 |---|---|---|
 | `prefix` | string | What comes before the run, often empty |
-| `run` | string | The part repeated: the search of `preg_match()` stops at an empty match inside it, and each retry after an empty match reads to its end |
-| `breaker` | string | What comes after the run and fails every retry, often empty |
+| `run` | string | The part repeated: the search of `preg_match()` stops at an empty match inside it, and each retry after an empty match reads to its end; or at a short match inside it, which each attempt finds after it read to its end |
+| `breaker` | string | What comes after the run and fails every retry, or every path an attempt tries before its short match, often empty |
 
 ### Confirmation: `redos_analysis.confirmation`
 

@@ -123,13 +123,24 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   `medium`, a warning. Measured with PHP 8.4.28 and PCRE2 10.49, `/(?:a+\d)?/` on `"a" x n`, n = 2,000 / 4,000 /
   8,000 / 16,000: `preg_match_all()` 2.3 / 8.6 / 34 / 131 ms with `pcre.jit=0`, 1.8 / 6.8 / 27 / 106 ms with
   `pcre.jit=1`; `preg_match()` 0.01 ms.
+- **Semantics, short matches:** Or a witness on which the first attempt of each call of the loop, read in the order
+  PCRE2 tries its paths, first tries paths that read to the end of the run and fail there, then succeeds after one
+  character at least and four run words at most: the search of `preg_match()` stops at that short match, and each
+  call of the loop starts where the last match ended, inside the run. `RedosSearchCost::$shortMatch` is `true`, and the
+  lint message starts with `Quadratic search over short matches`. A match `\K` leaves empty makes PHP retry where it
+  ends, refusing an empty match at its start only: that retry ends on the next short match the same way. Measured with
+  PHP 8.4.28 and PCRE2 10.49 on `"a" x n`, n = 2,000 / 4,000 / 8,000 / 16,000, `preg_match_all()` with
+  `pcre.jit=0`: `/a(?:a+\d)?/` 1.1 / 4.1 / 16 / 63 ms, `/a*b|a/` 1.2 / 4.3 / 17 / 64 ms, `/a\K(?:a+\d)?/` 1.1 / 4.3
+  / 17 / 64 ms; with `pcre.jit=1` 0.7 / 2.8 / 11 / 43 ms, 0.7 / 2.8 / 11 / 43 ms and 1.1 / 4.2 / 16 / 65 ms.
 - **Guarantee:** None in the other direction, as for `search_cost`. Confirmed mode replays the retry pinned at two
-  offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`).
+  offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`); for short matches, the attempt
+  pinned at two offsets, which must match within four run words.
 - **Limits:**
-  - **The JIT** does not avoid it: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the retry always runs in
-    the interpreter.
-  - **A match that is short but not empty** after a long read (`/a(?:a+\d)?/`, `/a*b|a/`) costs the same loop the
-    same way and is not reported.
+  - **The JIT** does not avoid the cost of the retry: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the
+    retry always runs in the interpreter. It may avoid the cost of short matches for some patterns.
+  - **Short matches** are looked for with no prefix: the first call, at the subject's start, must end on a short
+    match too. A call whose first attempt fails, and whose later attempt matches, is not read, nor is a match past
+    four run words.
   - **A pattern several calls read**, through a constant or a variable, is reported at its first call, and its cost
     follows that call.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
