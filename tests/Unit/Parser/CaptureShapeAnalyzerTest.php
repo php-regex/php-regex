@@ -212,7 +212,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
         PeakMemory::reset();
         $before = memory_get_peak_usage();
-        $shape = (new CaptureShapeAnalyzer())->analyze($regex);
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze($regex);
         $growth = memory_get_peak_usage() - $before;
 
         $this->assertNull($shape->whole->values);
@@ -261,7 +261,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideNewerSyntax')]
     public function test_newer_syntax_reads_what_the_engine_writes(string $pattern, int $group, ?array $values, Participation $participation, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['pcre_version' => '10.47'])->parse($pattern));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create(['pcre_version' => '10.47'])->parse($pattern));
         $groups = [0 => $shape->whole] + $shape->groups;
         $this->assertArrayHasKey($group, $groups);
         $actual = $groups[$group];
@@ -352,7 +352,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $parser = RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']);
 
         foreach (['/(?=a\K)a/', '/(?(?=a\K)a|b)/', '/(?:(?=a\K)|b)a/', '/(?:(?=a\K)b)?a/'] as $pattern) {
-            $this->assertSame('array{0: string}', (new CaptureShapeAnalyzer())->analyze($parser->parse($pattern))->matchShape(), $pattern);
+            $this->assertSame('array{0: string}', CaptureShapeAnalyzer::forEveryRelease()->analyze($parser->parse($pattern))->matchShape(), $pattern);
         }
     }
 
@@ -406,7 +406,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
     /**
      * Given a target, a version condition keeps the arm that release takes;
-     * without one it keeps both. Before PCRE2 10.47 a one-digit minor reads
+     * read for every release it keeps both. Before PCRE2 10.47 a one-digit minor reads
      * as tens, from 10.47 as written. Oracle, the arm the engine runs:
      *   (?(VERSION>=10.45)y|n): 10.39 n, 10.44 n, 10.49 y
      *   (?(VERSION>=10.5)y|n):  10.39 n, 10.44 n (10.50), 10.49 y (10.05)
@@ -418,8 +418,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
     #[DataProvider('provideVersionFolds')]
     public function test_a_version_condition_keeps_the_arm_the_target_takes(string $pattern, ?string $release, string $expected, string $subject = 'ab'): void
     {
-        $target = null === $release ? null : new PcreTarget(80400, $release);
-        $shape = (new CaptureShapeAnalyzer($target))->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => $release ?? '10.44'])->parse($pattern));
+        $analyzer = null === $release ? CaptureShapeAnalyzer::forEveryRelease() : new CaptureShapeAnalyzer(new PcreTarget(80400, $release));
+        $shape = $analyzer->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => $release ?? '10.44'])->parse($pattern));
 
         $this->assertSame($expected, $shape->matchShape());
 
@@ -429,6 +429,25 @@ final class CaptureShapeAnalyzerTest extends TestCase
             $this->assertSame(1, preg_match($pattern, $subject, $matches));
             $this->assertStringContainsString("0: '".$matches[0]."'", $shape->matchShape());
         }
+    }
+
+    /**
+     * Without a target the analyzer reads the pattern for the running
+     * engine, as the parser does: a version condition keeps the arm the
+     * running PCRE2 takes, the one preg_match() runs.
+     */
+    #[Test]
+    public function test_no_target_reads_the_pattern_for_the_running_engine(): void
+    {
+        $pattern = '/(?(VERSION>=10.45)(a)|(b))/';
+        $ast = RegexParser::create()->parse($pattern);
+        $matches = [];
+        $this->assertSame(1, preg_match($pattern, 'ab', $matches));
+        $arm = 'a' === $matches[0] ? "array{0: 'a', 1: 'a'}" : "array{0: 'b', 1: '', 2: 'b'}";
+
+        $this->assertSame($arm, (new CaptureShapeAnalyzer())->analyze($ast)->matchShape());
+        $this->assertEquals((new CaptureShapeAnalyzer(PcreTarget::runtime()))->analyze($ast), (new CaptureShapeAnalyzer())->analyze($ast));
+        $this->assertSame("array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}", CaptureShapeAnalyzer::forEveryRelease()->analyze($ast)->matchShape());
     }
 
     /**
@@ -581,8 +600,8 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
         foreach (['8.4', '8.5', '8.6'] as $php) {
             $parser = RegexParser::create(['php_version' => $php]);
-            $this->assertSame("array{0: 'a', MARK: 'a'|'m', 1: 'a'}", (new CaptureShapeAnalyzer())->analyze($parser->parse('/(?<MARK>a)(*MARK:m)/'))->matchShape(), $php);
-            $this->assertSame("array{0: 'ab', n: 'a', 1: 'a', 2: 'b'}", (new CaptureShapeAnalyzer())->analyze($parser->parse('/(?<n>a)(b)/'))->matchShape(), $php);
+            $this->assertSame("array{0: 'a', MARK: 'a'|'m', 1: 'a'}", CaptureShapeAnalyzer::forEveryRelease()->analyze($parser->parse('/(?<MARK>a)(*MARK:m)/'))->matchShape(), $php);
+            $this->assertSame("array{0: 'ab', n: 'a', 1: 'a', 2: 'b'}", CaptureShapeAnalyzer::forEveryRelease()->analyze($parser->parse('/(?<n>a)(b)/'))->matchShape(), $php);
         }
     }
 
@@ -1134,7 +1153,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
         $split = RegexParser::create()->parse('/(?:'.$nested.str_repeat('|(b)', 15).')/');
         $merged = RegexParser::create()->parse('/(?:'.$nested.')/');
 
-        $analyzer = new CaptureShapeAnalyzer();
+        $analyzer = CaptureShapeAnalyzer::forEveryRelease();
         $this->assertCount(16, $analyzer->analyze($split)->cases);
 
         $splitSeconds = self::fastestAnalysis($analyzer, $split);
@@ -3208,7 +3227,7 @@ final class CaptureShapeAnalyzerTest extends TestCase
 
     private function analyze(string $pattern): CaptureShape
     {
-        return (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        return CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
     }
 
     private function group(string $pattern, int $number): CaptureGroupShape

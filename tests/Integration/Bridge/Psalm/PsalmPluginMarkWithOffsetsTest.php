@@ -46,7 +46,7 @@ final class PsalmPluginMarkWithOffsetsTest extends TestCase
         $this->assertSame('m', $matches['MARK']);
 
         PsalmTypes::codebase();
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse(self::PATTERN));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse(self::PATTERN));
         // The plugin's type holds the mark beside the pair, in either order.
         $this->assertMatchesRegularExpression("/MARK: (?:'m'\\|list\\{'a', int<0, max>\\}|list\\{'a', int<0, max>\\}\\|'m')\\}$/", MatchesType::ofMatch($shape, \PREG_OFFSET_CAPTURE)->getId());
 

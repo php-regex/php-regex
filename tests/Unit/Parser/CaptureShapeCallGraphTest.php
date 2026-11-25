@@ -410,6 +410,6 @@ final class CaptureShapeCallGraphTest extends TestCase
 
     private static function analyze(string $pattern): CaptureShape
     {
-        return (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        return CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
     }
 }

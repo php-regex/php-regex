@@ -45,7 +45,7 @@ final class ShapeConformanceTest extends TestCase
     {
         $this->requiresCompile($pattern);
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(
             RegexParser::create()->parse($pattern),
         );
 

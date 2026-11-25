@@ -50,7 +50,7 @@ final class UnresolvedCharacterNameTest extends TestCase
     #[Test]
     public function test_the_group_holding_it_has_no_value_to_list(): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['cache' => null])->parse('/(\N{x})/'));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create(['cache' => null])->parse('/(\N{x})/'));
 
         $this->assertNull($shape->groups[1]->values);
     }

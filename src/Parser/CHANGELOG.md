@@ -23,6 +23,10 @@ CHANGELOG
    `ParserOptions` or a `PcreTarget` refused, by its key (`"php_version"`,
    `"pcre_version"`, `"locale"`, `"max_pattern_length"`, ...); null when
    the fault is no single option's, as an unknown key.
+ * `Analysis\CaptureShapeAnalyzer` without a target reads the pattern for
+   the running engine, as the parser does; `forEveryRelease()` reads it
+   for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
+   condition kept.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for

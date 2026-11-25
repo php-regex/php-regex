@@ -415,10 +415,12 @@ $shape->matchShape();
 
 `(?(VERSION>=10.45)...)` keeps the arm the release the analyzer is given takes:
 `new CaptureShapeAnalyzer($target)` takes a `PcreTarget`, and `Regex::captureShape()`
-passes the facade's own. Before PCRE2 10.47 a one-digit minor reads as tens, so
-`(?(VERSION>=10.5)...)` holds on 10.49 and not on 10.44, where it reads 10.50. A
-release reads the condition the same wherever it runs, so it folds in a pattern that
-calls a group too. Without a target, `new CaptureShapeAnalyzer()`, both arms stay:
+passes the facade's own. Without a target, `new CaptureShapeAnalyzer()` reads the
+pattern for the running engine, as `RegexParser::create()` does. Before PCRE2 10.47 a
+one-digit minor reads as tens, so `(?(VERSION>=10.5)...)` holds on 10.49 and not on
+10.44, where it reads 10.50. A release reads the condition the same wherever it runs,
+so it folds in a pattern that calls a group too. Read for every release,
+`CaptureShapeAnalyzer::forEveryRelease()`, both arms stay:
 
 ```php
 use PHPRegex\Parser\PcreTarget;
@@ -428,7 +430,7 @@ $regex = RegexParser::create(['pcre_version' => '10.44'])->parse('/(?(VERSION>=1
 
 (new CaptureShapeAnalyzer(new PcreTarget(80400, '10.44')))->analyze($regex)->matchShape();
 // array{0: 'b', 1: '', 2: 'b'}
-(new CaptureShapeAnalyzer())->analyze($regex)->matchShape();
+CaptureShapeAnalyzer::forEveryRelease()->analyze($regex)->matchShape();
 // array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}
 ```
 
