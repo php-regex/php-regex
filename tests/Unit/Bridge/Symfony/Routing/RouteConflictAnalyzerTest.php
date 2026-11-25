@@ -1252,13 +1252,17 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
-     * The compiled matcher looks a route with no variable up by its path,
-     * every trailing slash of the request trimmed off, before it tries any
-     * route with a regex. A route ending on a slash takes its path with any
+     * The compiled matcher looks a route with no variable up by its path
+     * before it tries any route with a regex. Before symfony/routing 6.4.51,
+     * 7.4.24 and 8.1.12, and on 8.0, it trims every trailing slash of the
+     * request off first: a route ending on a slash takes its path with any
      * number of slashes as is, and redirects it with none; any other takes
      * its path, and redirects it with any number of slashes, "/" answering
-     * them with a 404. A route matched with a regex takes its path with one
-     * slash at most.
+     * them with a 404. Since those releases, it looks a route up for a
+     * request with one trailing slash at most, as it tries a route with a
+     * regex, and leaves a request with more to the routes it tries with a
+     * regex: "/" takes no other. A route matched with a regex takes its path
+     * with one slash at most.
      *
      * @param array{0: string, 1: list<string>, 2: list<string>}    $earlier path, methods, schemes
      * @param array{0: string, 1: list<string>, 2: list<string>}    $later   path, methods, schemes
@@ -1266,7 +1270,7 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideRoutesLookedUpByTheirPath')]
-    public function test_a_route_looked_up_by_its_path_takes_it_with_any_number_of_trailing_slashes(array $earlier, array $later, array $probes, ?string $type, int $skipped): void
+    public function test_a_route_looked_up_by_its_path_takes_the_trailing_slashes_the_matcher_looks_it_up_with(array $earlier, array $later, array $probes, ?string $type, int $skipped): void
     {
         $collection = new RouteCollection();
         $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1])->setSchemes($earlier[2]));
@@ -1293,7 +1297,10 @@ final class RouteConflictAnalyzerTest extends TestCase
     /**
      * A route with no variable is matched with a regex, one slash at most,
      * when a route declared before it that is matched with a regex matches
-     * its path: the dumper keeps it among the static paths otherwise.
+     * its path: the dumper keeps it among the static paths otherwise, where
+     * the matcher looks it up with every trailing slash trimmed off before
+     * symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one
+     * slash at most since.
      *
      * @param list<string> $conflicts the conflicts, as "type earlier later"
      */
@@ -1383,10 +1390,12 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     public static function provideRoutesTheDumperSortsByHost(): iterable
     {
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
         yield 'a route tried with a regex declared before, sorted after' => [
             'routes' => [['unused', '/unused', [], '{sub}.a.com'], ['regex', '/{x<admin>}', ['POST'], 'A.COM'], ['admin', '/admin', ['GET'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], 'a.com']],
-            'probe' => ['a.com', '/admin//', 'admin'],
-            'conflicts' => ['shadowed admin later'],
+            'probe' => ['a.com', '/admin//', $trims ? 'admin' : 'later'],
+            'conflicts' => $trims ? ['shadowed admin later'] : [],
         ];
         yield 'a route tried with a regex declared after, sorted before' => [
             'routes' => [['unused', '/unused', [], 'x.a.com'], ['admin', '/admin', ['GET'], '{sub}.b.org'], ['regex', '/{x<admin>}', ['POST'], 'a.com'], ['later', '/{p<admin//>}', ['GET'], '{sub}.b.org']],
@@ -1583,12 +1592,16 @@ final class RouteConflictAnalyzerTest extends TestCase
             'answer' => 'redirect',
             'note' => 'GET and HEAD requests differing by a trailing slash are redirected to the earlier route.',
         ];
-        yield '"/" with more slashes' => [
-            'earlier' => ['/', ['GET'], []],
-            'later' => ['/{p</+>}', ['GET'], []],
-            'answer' => '404',
-            'note' => 'The earlier route answers GET and HEAD requests for "/" followed by more slashes with a 404.',
-        ];
+        // Since symfony/routing 6.4.51, 7.4.24 and 8.1.12, "/" takes no
+        // request with more slashes: "//" goes to the routes after it.
+        if (FrameworkMatcher::trimsEveryTrailingSlash()) {
+            yield '"/" with more slashes' => [
+                'earlier' => ['/', ['GET'], []],
+                'later' => ['/{p</+>}', ['GET'], []],
+                'answer' => '404',
+                'note' => 'The earlier route answers GET and HEAD requests for "/" followed by more slashes with a 404.',
+            ];
+        }
         yield 'a path the earlier route matches as is' => [
             'earlier' => ['/{x<a/?>}', ['GET'], []],
             'later' => ['/{y<a//>}', ['GET'], []],
@@ -1614,8 +1627,10 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     public static function provideRoutesDeclaredBeforeOneWithNoVariable(): iterable
     {
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
         yield 'a route matching its path' => ['first' => '/{x<admin>}', 'winner' => 'later', 'conflicts' => []];
-        yield 'a route matching another path' => ['first' => '/{x<other>}', 'winner' => 'earlier', 'conflicts' => ['shadowed earlier later']];
+        yield 'a route matching another path' => ['first' => '/{x<other>}', 'winner' => $trims ? 'earlier' : 'later', 'conflicts' => $trims ? ['shadowed earlier later'] : []];
     }
 
     /**
@@ -1623,32 +1638,41 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     public static function provideRoutesLookedUpByTheirPath(): iterable
     {
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
         yield 'a route before one taking its path with two slashes' => [
             'earlier' => ['/admin', ['GET'], []],
             'later' => ['/{p<admin//>}', ['GET'], []],
-            'probes' => [['GET', 'http', '/admin//', false], ['HEAD', 'http', '/admin//', false]],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '/admin//', !$trims], ['HEAD', 'http', '/admin//', !$trims], ['GET', 'http', '/admin///', !$trims]],
+            'type' => $trims ? 'shadowed' : null,
             'skipped' => 0,
         ];
         yield 'a route on https before one on http taking its path with two slashes' => [
             'earlier' => ['/admin', ['GET'], ['https']],
             'later' => ['/{p<admin//>}', ['GET'], ['http']],
-            'probes' => [['GET', 'http', '/admin//', false], ['HEAD', 'http', '/admin//', false]],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '/admin//', !$trims], ['HEAD', 'http', '/admin//', !$trims]],
+            'type' => $trims ? 'shadowed' : null,
             'skipped' => 0,
         ];
         yield 'a route for any method before one taking its path with one slash or more' => [
             'earlier' => ['/admin', [], []],
             'later' => ['/{p<admin/+>}', [], []],
-            'probes' => [['GET', 'http', '/admin///', false], ['POST', 'http', '/admin///', true]],
+            'probes' => [['GET', 'http', '/admin/', false], ['GET', 'http', '/admin///', !$trims], ['POST', 'http', '/admin///', true]],
             'type' => 'overlap',
             'skipped' => 0,
         ];
         yield 'a route ending on a slash before one taking its path with two slashes' => [
             'earlier' => ['/admin/', [], []],
             'later' => ['/{p<admin//>}', [], []],
-            'probes' => [['GET', 'http', '/admin//', false], ['POST', 'http', '/admin//', false]],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '/admin//', !$trims], ['POST', 'http', '/admin//', !$trims]],
+            'type' => $trims ? 'shadowed' : null,
+            'skipped' => 0,
+        ];
+        yield 'a route ending on a slash before one taking it with one slash or none' => [
+            'earlier' => ['/admin/', [], []],
+            'later' => ['/{p<admin/?>}', [], []],
+            'probes' => [['GET', 'http', '/admin', false], ['POST', 'http', '/admin', true], ['GET', 'http', '/admin/', false], ['POST', 'http', '/admin//', !$trims]],
+            'type' => 'overlap',
             'skipped' => 0,
         ];
         yield 'a route on https ending on a slash before one on http taking its path with two slashes' => [
@@ -1670,15 +1694,15 @@ final class RouteConflictAnalyzerTest extends TestCase
         yield 'the root route before one taking it with more slashes' => [
             'earlier' => ['/', ['GET'], []],
             'later' => ['/{p</+>}', ['GET'], []],
-            'probes' => [['GET', 'http', '//', false], ['HEAD', 'http', '///', false]],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '//', !$trims], ['HEAD', 'http', '///', !$trims]],
+            'type' => $trims ? 'shadowed' : null,
             'skipped' => 0,
         ];
         yield 'the root route on https before a catch-all on http' => [
             'earlier' => ['/', ['GET'], ['https']],
             'later' => ['/{p<.*>}', [], ['http']],
-            'probes' => [['GET', 'http', '/', true], ['GET', 'http', '//', false], ['HEAD', 'http', '//', false], ['POST', 'http', '//', true]],
-            'type' => 'overlap',
+            'probes' => [['GET', 'http', '/', true], ['GET', 'http', '//', !$trims], ['HEAD', 'http', '//', !$trims], ['POST', 'http', '//', true]],
+            'type' => $trims ? 'overlap' : null,
             'skipped' => 0,
         ];
         yield 'a route matched with a regex before one taking its path with two slashes' => [
@@ -1702,13 +1726,18 @@ final class RouteConflictAnalyzerTest extends TestCase
      * tries any route with a regex, whatever their order: of a route tried
      * with a regex declared before it, it takes the requests first. The
      * pair is read in that order, noted, and offered distinct paths rather
-     * than a reorder that changes nothing.
+     * than a reorder that changes nothing. The dumper tries the route with
+     * a regex after such a route when it matches its path with one slash at
+     * most: before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0,
+     * the route looked up takes its path with more slashes too, "/admin//"
+     * from "/{x<admin//>}"; since, it takes none, and the routes share no
+     * request.
      *
      * @param list<array{0: string, 1: string, 2: string|null}> $probes method, path, and the route the request reaches
      */
     #[Test]
     #[DataProvider('provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath')]
-    public function test_a_later_route_looked_up_by_its_path_is_read_before_an_earlier_one_tried_with_a_regex(string $earlier, array $probes, string $type): void
+    public function test_a_later_route_looked_up_by_its_path_is_read_before_an_earlier_one_tried_with_a_regex(string $earlier, array $probes, ?string $type): void
     {
         $collection = new RouteCollection();
         $collection->add('earlier', (new Route($earlier))->setMethods(['GET']));
@@ -1720,10 +1749,14 @@ final class RouteConflictAnalyzerTest extends TestCase
 
         $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
 
-        $this->assertSame([$type.' later earlier'], array_map(
+        $this->assertSame(null === $type ? [] : [$type.' later earlier'], array_map(
             static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
             $report->conflicts,
         ));
+        if (null === $type) {
+            return;
+        }
+
         $this->assertContains('The router looks up the route with no variable by its path before it tries the other with a regex, whatever their order.', $report->conflicts[0]['notes']);
         $this->assertIsString($report->conflicts[0]['example']);
         $this->assertSame('later', FrameworkMatcher::reached($collection, 'GET', $report->conflicts[0]['example']));
@@ -1734,19 +1767,21 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{earlier: string, probes: list<array{0: string, 1: string, 2: string|null}>, type: string}>
+     * @return iterable<string, array{earlier: string, probes: list<array{0: string, 1: string, 2: string|null}>, type: string|null}>
      */
     public static function provideRoutesTriedWithARegexBeforeOneLookedUpByItsPath(): iterable
     {
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
         yield 'an earlier route all of whose paths the later one takes' => [
             'earlier' => '/{x<admin//>}',
-            'probes' => [['GET', '/admin//', 'later'], ['HEAD', '/admin//', 'later'], ['GET', '/admin/', 'later']],
-            'type' => 'shadowed',
+            'probes' => [['GET', '/admin//', $trims ? 'later' : 'earlier'], ['HEAD', '/admin//', $trims ? 'later' : 'earlier'], ['GET', '/admin/', 'later']],
+            'type' => $trims ? 'shadowed' : null,
         ];
         yield 'an earlier route with a path of its own' => [
             'earlier' => '/{x<admin//|other>}',
-            'probes' => [['GET', '/admin//', 'later'], ['GET', '/admin/', 'later'], ['GET', '/other', 'earlier']],
-            'type' => 'overlap',
+            'probes' => [['GET', '/admin//', $trims ? 'later' : 'earlier'], ['GET', '/admin/', 'later'], ['GET', '/other', 'earlier']],
+            'type' => $trims ? 'overlap' : null,
         ];
     }
 
@@ -2156,6 +2191,37 @@ final class RouteConflictAnalyzerTest extends TestCase
             $report->conflicts,
         ));
         $this->assertSame([], $report->conflicts[0]['conflict']['staticSegments']);
+    }
+
+    /**
+     * A root route the dumper tries with a regex, after a route with a
+     * regex that matches "/", takes "//" with the slash every route tried
+     * with a regex may end on. Before symfony/routing 6.4.51, 7.4.24 and
+     * 8.1.12, and on 8.0, the matcher reads it for that slash and answers
+     * GET and HEAD with a 404; since, it reads no trailing slash on "/" and
+     * passes "//" on to the routes after it.
+     */
+    #[Test]
+    public function test_the_root_route_tried_with_a_regex_reads_two_slashes_as_its_release_does(): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/{x<.*>}'))->setMethods(['POST']));
+        $collection->add('home', (new Route('/'))->setMethods(['GET']));
+        $collection->add('slashes', (new Route('/{p</+>}'))->setMethods(['GET']));
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
+        $this->assertSame('home', FrameworkMatcher::reached($collection, 'GET', '/'));
+        $this->assertSame($trims ? '404' : 'match', FrameworkMatcher::answer($collection, 'GET', '//'));
+        $this->assertSame($trims ? null : 'slashes', FrameworkMatcher::reached($collection, 'HEAD', '//'));
+        $this->assertSame('slashes', FrameworkMatcher::reached($collection, 'GET', '///'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($trims ? [['overlap', 'home', 'slashes', '//']] : [], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name'], $conflict['example']],
+            $report->conflicts,
+        ));
+        $this->assertSame(0, $report->stats['skipped_pairs']);
     }
 
     /**

@@ -199,7 +199,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## Symfony Bridge Analyzers
 
 **Routes (`regex:routes`)**
-- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only.
+- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only. The trailing slashes of a request are read as the application's `symfony/routing` reads them: a route with no variable takes its path with any number of them before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one at most since.
 - **Guarantee:** Sound for supported regex subset and route conditions considered in analysis.
 - **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown.
 
