@@ -16,6 +16,9 @@ CHANGELOG
    `RegexException`: the formatter refusing its own output is a bug of the
    library, never a verdict on the pattern. It carries `$errorCode`, always
    `regex.formatting.unsafe`, and holds the pattern to report in `$pattern`.
+ * `Validation\ValidationResult::isLimit()` tells a limit of the library,
+   which says nothing of the pattern, from a verdict; `isPatternRefused()`
+   is true for a pattern refused only, false for a valid one and at a limit.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
