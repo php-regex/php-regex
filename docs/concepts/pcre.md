@@ -322,7 +322,9 @@ tables decide. Where another verdict needs a character's other case under
 PHP release, not with the target's PCRE2:
 
 - `regex.lint.flag.useless.i`, besides the target's tables: a character
-  mbstring gives another case keeps the flag, though the tables give it none;
+  mbstring gives another case keeps the flag, though the tables give it none,
+  but in a class that holds every other case the tables and the caseless
+  sets give its characters;
 - `regex.lint.alternation.overlap`: two branches compared caseless under `u`;
 - the ReDoS search-cost witness (`search_cost`): the other case a class may
   read under `iu`;
@@ -506,6 +508,7 @@ and a target has it from the release it arrived in on
 | `NamedCharacterBraceRefusedInClass` | 10.45 | "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one. |
 | `ClassesCompiledFromMergedRanges` | 10.45 | A class compiles from its ranges sorted and merged: the other cases a caseless class adds past the map are added once, "[\p{Any}]" or a class of every byte compiles to a match of any character and "\P{Any}" to a class of none, where each member added its own. |
 | `CaselessReferenceHoldsItsCaseRules` | 10.45 | A caseless back reference compiles to one unit more, which holds its case rules. |
+| `CaselessCasePropertiesMatchCasedLetters` | 10.45 | Under i, "\p{Lu}", "\p{Ll}" and "\p{Lt}" match every cased letter, as "\p{Lc}" does, where they matched as written. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
 | `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. |
