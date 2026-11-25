@@ -395,7 +395,11 @@ final class LanguageSolver
      * aside, the same options before it, and the same flags but for an "s"
      * or an "m" that form already applied. [0-9] and \d, a{1} and a, (?:a)
      * and a read alike. Such patterns run alike in every call, and wherever
-     * their text is spliced into a larger pattern.
+     * their text is spliced into a larger pattern. Without "u", a pattern
+     * that holds "\w" outside a class, or the byte 0xFF, reads like no
+     * other where the tables may hold that byte in "\w": PCRE2 may read
+     * one against the other in the text around it as if 0xFF were no word
+     * character (see AutoPossession::meetsLastByteWhereSpliced()).
      *
      * @internal the lint asks it of a rewrite it would splice into a larger pattern
      */
@@ -677,14 +681,16 @@ final class LanguageSolver
      * Without "u", PCRE2 makes a repeat of the byte 0xFF or of "\w"
      * possessive beside the other as if 0xFF were no word character, which
      * the brackets of each decide and the normal form does not say: such a
-     * pattern reads like no other.
+     * pattern reads like no other. Spliced, a pattern may meet the other
+     * one in the text around it: "[\w]+" and "\w+" read apart there.
      */
     private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced, PcreTarget $target): bool
     {
         return self::sameSettings($leftAst, $rightAst)
             && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
             && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced)
-            && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst);
+            && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst)
+            && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)));
     }
 
     /**

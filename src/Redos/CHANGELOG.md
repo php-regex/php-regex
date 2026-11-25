@@ -61,6 +61,15 @@ CHANGELOG
    within the backtrack limit, is safe (proven) for that target, where it
    was critical (proven). The last code unit PCRE2 requires, which the
    search cost reads, takes the tables' case there too.
+ * Where the tables give the case, PCRE2 looks for the byte 0xFF it
+   requires last in its own case, whatever other case they give it: under
+   `ru_RU.KOI8-R`, which pairs it with 0xDF, `/a+\xff/i` and `/a[\xff\xdf]/`
+   find no match in `a\xdf`, with and without the JIT, in PCRE2 10.49,
+   where `(*NO_START_OPT)` finds it; `fr_FR.ISO8859-15` pairs it with 0xBE
+   alike. The search cost of `/\xdf+!\xff/i` under that locale was a run of
+   `\xdf` with no breaker, on which the engine tries no attempt; its
+   breaker now holds `\xff`, and confirmed mode replays it
+   (`replayed: true`).
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a

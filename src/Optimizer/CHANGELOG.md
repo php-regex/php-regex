@@ -26,7 +26,12 @@ CHANGELOG
    `/(?:\xFF)?\w/`, `/(?:\w)+\xFF/` and `/(?:\w)+?\xFF/` stay as well. The
    rewrite ships only under a target that names a locale whose tables
    leave 0xFF out of `\w`, as el_GR.ISO8859-7 does, and such a rewrite is
-   checked by the automata whatever `verifyWithAutomata` says.
+   checked by the automata whatever `verifyWithAutomata` says. The
+   `Modernizer` keeps the groups of such a pattern, whatever locale it is
+   given, the empty group in `/\xFF+?(?:)\w/` too, at whose end PCRE2
+   stops the lazy repeat: it wrote `/(?:\xFF)+\w/` as `/\xFF+\w/`, and
+   `/\xFF+?(?:)\w/` as `/\xFF+?\w/`, which finds nothing in `\xFF\xFF`
+   under fr_FR.ISO8859-1.
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The

@@ -292,6 +292,102 @@ final class LastBytePossessionTest extends TestCase
     }
 
     /**
+     * Read alone, each pair runs alike, but spliced into a larger pattern,
+     * as a router splices each requirement into a group of its own, PCRE2
+     * reads "\w" against what stands around it as if 0xFF were no word
+     * character: under Latin-1 the witness tells the two splices apart,
+     * the JIT on and off, and a target that names that locale reads the
+     * pair apart.
+     */
+    #[Test]
+    #[DataProvider('provideSplicedParts')]
+    public function test_a_part_beside_the_last_byte_reads_apart_where_it_is_spliced_under_latin1(string $left, string $right, string $splice, string $witness): void
+    {
+        $this->requiresLocale(self::LATIN1, $left);
+
+        [$leftSpliced, $rightSpliced] = [\sprintf($splice, substr($left, 1, -1)), \sprintf($splice, substr($right, 1, -1))];
+        $apart = new \ArrayObject();
+        CharacterTables::under(self::LATIN1, static function () use ($leftSpliced, $rightSpliced, $witness, $apart): void {
+            $apart[] = self::matchesOf($leftSpliced, $witness) !== self::matchesOf($rightSpliced, $witness);
+            $apart[] = self::matchesOf(PcreInterpreter::pattern($leftSpliced), $witness) !== self::matchesOf(PcreInterpreter::pattern($rightSpliced), $witness);
+        });
+        $this->assertSame([true, true], $apart->getArrayCopy(), \sprintf('%s and %s write the same matches on %s under Latin-1.', $leftSpliced, $rightSpliced, json_encode(bin2hex($witness))));
+
+        $this->assertFalse((new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => self::LATIN1])))->readAlike($left, $right));
+    }
+
+    /**
+     * Under C's tables the splices write the same matches, yet a target
+     * that names no locale but C may run under any: the pair reads apart on
+     * every machine, whichever side is read first. Read whole, with nothing
+     * around them, the two still run alike in every call. Under "u", where
+     * "\w" reads the Unicode properties, the pair reads alike. "\w" is
+     * found outside a class where the tables may hold 0xFF in it: those of
+     * a target of no locale, or the given tables of Latin-1, and not the
+     * given word characters of Greek.
+     */
+    #[Test]
+    #[DataProvider('provideSplicedParts')]
+    public function test_a_part_beside_the_last_byte_reads_apart_where_the_tables_may_hold_it_in_a_word(string $left, string $right, string $splice, string $witness): void
+    {
+        [$leftSpliced, $rightSpliced] = [\sprintf($splice, substr($left, 1, -1)), \sprintf($splice, substr($right, 1, -1))];
+        $alike = new \ArrayObject();
+        CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($leftSpliced, $rightSpliced, $witness, $alike): void {
+            $alike[] = self::matchesOf($leftSpliced, $witness) === self::matchesOf($rightSpliced, $witness);
+            $alike[] = self::matchesOf(PcreInterpreter::pattern($leftSpliced), $witness) === self::matchesOf(PcreInterpreter::pattern($rightSpliced), $witness);
+        });
+        $this->assertSame([true, true], $alike->getArrayCopy(), 'C\'s tables write the same matches.');
+
+        foreach ([[], ['locale' => CharacterTables::BUILT_IN]] as $target) {
+            $solver = new LanguageSolver(RegexParser::create(['cache' => null] + $target));
+            $this->assertFalse($solver->readAlike($left, $right), \sprintf('%s and %s read alike.', $left, $right));
+            $this->assertFalse($solver->readAlike($right, $left), \sprintf('%s and %s read alike.', $right, $left));
+            $this->assertSame([], $solver->runsOfEveryCall($left, $right), \sprintf('%s and %s need a run.', $left, $right));
+        }
+
+        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null])))->readAlike($left.'u', $right.'u'));
+
+        self::giveTables();
+        $parser = RegexParser::create(['cache' => null]);
+        foreach ([CharacterTables::BUILT_IN => true, self::GIVEN_LATIN1 => true, self::GIVEN_GREEK => false] as $locale => $found) {
+            $target = new PcreTarget(\PHP_VERSION_ID, \PCRE_VERSION, $locale);
+            $this->assertFalse(AutoPossession::meetsLastByteWhereSpliced($parser->parse($left), $target), $locale);
+            $this->assertSame($found, AutoPossession::meetsLastByteWhereSpliced($parser->parse($right), $target), $locale);
+        }
+    }
+
+    /**
+     * Under el_GR.ISO8859-7, where "\w" leaves 0xFF out, the splices write
+     * the same matches, the JIT on and off, and a target that names that
+     * locale reads the pair alike.
+     */
+    #[Test]
+    #[DataProvider('provideSplicedParts')]
+    public function test_a_part_beside_the_last_byte_reads_alike_under_tables_that_leave_it_out_of_a_word(string $left, string $right, string $splice, string $witness): void
+    {
+        $this->requiresLocale(self::GREEK, $left);
+
+        [$leftSpliced, $rightSpliced] = [\sprintf($splice, substr($left, 1, -1)), \sprintf($splice, substr($right, 1, -1))];
+        $alike = new \ArrayObject();
+        CharacterTables::under(self::GREEK, static function () use ($leftSpliced, $rightSpliced, $witness, $alike): void {
+            $alike[] = self::matchesOf($leftSpliced, $witness) === self::matchesOf($rightSpliced, $witness);
+            $alike[] = self::matchesOf(PcreInterpreter::pattern($leftSpliced), $witness) === self::matchesOf(PcreInterpreter::pattern($rightSpliced), $witness);
+        });
+        $this->assertSame([true, true], $alike->getArrayCopy(), 'The Greek tables write the same matches.');
+
+        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => self::GREEK])))->readAlike($left, $right));
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, splice: string, witness: string}>
+     */
+    public static function provideSplicedParts(): iterable
+    {
+        yield 'a class of word characters repeated, before the byte' => ['left' => '/[\w]+/', 'right' => '/\w+/', 'splice' => '/(?P<a>%s)(?P<b>\xFF)/', 'witness' => "a\xFF\xFF"];
+        yield 'a class of word characters, after the byte repeated' => ['left' => '/[\w]/', 'right' => '/\w/', 'splice' => '/(?P<a>\xFF+)(?P<b>%s)/', 'witness' => "\xFF\xFF"];
+    }
+
+    /**
      * The refusal names the repeat nearest what PCRE2 reads it against:
      * the byte repeated twice is made possessive in its second repeat,
      * which the first, then the byte, follows, and "\w" repeated before the

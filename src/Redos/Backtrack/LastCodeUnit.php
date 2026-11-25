@@ -180,7 +180,9 @@ final class LastCodeUnit
      * of the target's locale give it, and Unicode's under "(*UCP)" from
      * PCRE2 10.35: "\xE9" has "\xC9" under fr_FR.ISO8859-1 and under
      * "(*UCP)", none under C nor under "(*UCP)" before 10.35, and "\xFF" has
-     * U+0178 under "(*UCP)", past any byte the subject holds.
+     * U+0178 under "(*UCP)", past any byte the subject holds. Where the
+     * tables give the case, PCRE2 keeps the caseless flag below 255 only:
+     * "\xFF" has none, though ru_RU.KOI8-R pairs it with "\xDF".
      *
      * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
      *                                the running engine's when null
@@ -210,7 +212,8 @@ final class LastCodeUnit
             return null;
         }
 
-        $other = 0 !== ($required[0] & self::CASELESS) ? $reader->otherCase($required[2]) : $required[2];
+        $caseless = 0 !== ($required[0] & self::CASELESS) && (null === $reader->tables || $required[1] < 0xFF);
+        $other = $caseless ? $reader->otherCase($required[2]) : $required[2];
 
         return [$required[2], $other === $required[2] ? null : $other];
     }
