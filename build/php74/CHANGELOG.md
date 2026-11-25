@@ -27,6 +27,10 @@ CHANGELOG
    the running engine, as the parser does; `forEveryRelease()` reads it
    for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
    condition kept.
+ * The `PcreFeature` cases that say only where or how PCRE2 reports an
+   error, for a pattern refused either way (`ErrorOffsetPastTheFault`,
+   `TooLargeAtPatternStart`, ...), are internal: a minor release may merge
+   or remove one.
  * `Analysis\GroupNumbering::getWrittenGroupCount()` counts the capturing
    groups as written, not PCRE2's capture count: `/(?|(a)|(b))/` writes two,
    PCRE2 counts one, `$maxGroupNumber`.
