@@ -261,6 +261,23 @@ CHANGELOG
    again, keeps it no more, the flag deciding nothing there: `/(?-i)a/i`,
    `/(*UCP)(?i)\xE9/i` and `/(?-i)a|b/i`, where the option holds for the
    alternatives after its own, are reported; `/(?:(?-i)a|b)c/i` is not.
+ * Under u, `regex.lint.flag.useless.i` reports a class that holds every
+   character the target's PCRE2 folds each of its own with, its caseless
+   set included, which matches the same characters with i: `/[aA]/iu`,
+   `/[kK\x{212A}]/iu` and `/[a-zA-Z\x{17F}\x{212A}]/iu` are reported,
+   `/[kK]/iu` and `/[a-zA-Z]/iu`, which match the Kelvin sign and the long
+   s only with i, are not. Under (*UCP) with another locale's tables, a
+   class reads a byte above ASCII as the character of the same value, and
+   an ASCII letter where the tables pair it as Unicode does:
+   `/(*UCP)[\xC9\xE9]/i` is reported under fr_FR.ISO8859-1. A
+   backreference to a group that captures nothing with a case,
+   `/(1)\1/i` or `/(\d)\1/i`, is read without one. `\p{Lu}`, `\p{Ll}` and
+   `\p{Lt}` are read caseless before PCRE2 10.45, where i leaves them as
+   written: `/\p{Lu}/i` is reported for PHP 8.4 with PCRE2 10.44. `\p{Lc}`,
+   `\p{L&}`, `\p{Upper}` and `\p{Lower}`, which i changes on no release,
+   no longer keep the flag, and `\P{Lu}` and `\p{^Lu}` keep it from 10.45,
+   where i changes them: `/\P{Lu}/iu` was reported though it matches 2,314
+   characters fewer with i on PCRE2 10.49.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

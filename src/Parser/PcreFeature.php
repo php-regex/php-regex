@@ -259,6 +259,11 @@ enum PcreFeature
     case CaselessReferenceHoldsItsCaseRules;
 
     /**
+     * Under i, "\p{Lu}", "\p{Ll}" and "\p{Lt}" match every cased letter, as "\p{Lc}" does, where they matched as written.
+     */
+    case CaselessCasePropertiesMatchCasedLetters;
+
+    /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
      */
     case VersionConditionWholeNumbers;
@@ -395,7 +400,8 @@ enum PcreFeature
             self::ClassEscapeEndingRangeRefusedAsEscape,
             self::NamedCharacterBraceRefusedInClass,
             self::ClassesCompiledFromMergedRanges,
-            self::CaselessReferenceHoldsItsCaseRules => '10.45',
+            self::CaselessReferenceHoldsItsCaseRules,
+            self::CaselessCasePropertiesMatchCasedLetters => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GroupListErrors,

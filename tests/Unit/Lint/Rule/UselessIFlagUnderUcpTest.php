@@ -170,8 +170,14 @@ final class UselessIFlagUnderUcpTest extends TestCase
         yield 'that letter raw, under (*UCP)' => ['pattern' => "/(*UCP)\xE9/i", 'reported' => false];
         yield 'that letter, without (*UCP)' => ['pattern' => '/\xE9/i', 'reported' => true];
         // Under (*UCP) a class reads ASCII from Unicode up to 10.44, which
-        // pairs "q" with "Q", and from the tables from 10.45.
+        // pairs "q" with "Q", and from the tables from 10.45: a letter they
+        // pair otherwise than Unicode keeps the flag, on any release.
         yield 'a class of a letter and the byte they pair it with, under (*UCP)' => ['pattern' => '/(*UCP)[q\x80]/i', 'reported' => false];
+        yield 'a class of a letter, its capital and the byte they pair it with, under (*UCP)' => ['pattern' => '/(*UCP)[qQ\x80]/i', 'reported' => false];
+        yield 'a class of a letter and the capital Unicode pairs it with, under (*UCP)' => ['pattern' => '/(*UCP)[xX]/i', 'reported' => false];
+        // Past ASCII the class reads Unicode's case, whatever they give.
+        yield 'a class of a letter, its capital and a Latin-1 letter and its capital, under (*UCP)' => ['pattern' => '/(*UCP)[aA\xC9\xE9]/i', 'reported' => true];
+        yield 'a class of a Latin-1 letter, its capital and a byte they pair with "q", under (*UCP)' => ['pattern' => '/(*UCP)[\xC9\xE9\x80]/i', 'reported' => true];
         yield 'that class, without (*UCP)' => ['pattern' => '/[q\x80]/i', 'reported' => true];
         yield 'a class of two signs they pair, without (*UCP)' => ['pattern' => '/[\xD7\xF7]/i', 'reported' => true];
     }

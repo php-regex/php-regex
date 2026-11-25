@@ -16,6 +16,8 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Validation\OtherCases;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreGates;
@@ -50,6 +52,8 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
 
     private const TURKISH = 'tr_TR.ISO8859-9';
 
+    private const UNSETTLED = 'xx_XX.GIVEN_UNSETTLED';
+
     /**
      * The rows verified against a newer release than the floor: \p{Lu}
      * reads as \p{Lc} under i from 10.45, as written before.
@@ -57,6 +61,8 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     private const RELEASES = [
         '10.45' => ['/[aA\p{Lu}]/i', '/\p{Lu}/i'],
     ];
+
+    private static ?string $everyCharacter = null;
 
     /**
      * @param bool $useless what the engine says: no byte answers otherwise without i
@@ -146,6 +152,96 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         // The Turkish tables pair "I" with "i", and 0xFD with "I" alone: a
         // class of 0xFD matches "I" with i, and of "I" matches "i".
         yield 'a capital and the dotless small letter under Turkish' => ['pattern' => '/[I\xFD]/i', 'locale' => self::TURKISH, 'useless' => false];
+        // Under (*UCP) a byte past ASCII takes Unicode's case whatever the
+        // tables give it, and an ASCII letter keeps "its capital" where the
+        // tables give it the one Unicode does.
+        yield 'a Latin-1 letter and its capital under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[\xC9\xE9]/i', 'locale' => self::LATIN1, 'useless' => true];
+        yield 'a letter, its capital, a Latin-1 letter and its capital under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[aA\xC9\xE9]/i', 'locale' => self::LATIN1, 'useless' => true];
+        yield 'both runs of Latin-1 letters under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[\xC0-\xDE\xE0-\xFE]/i', 'locale' => self::LATIN1, 'useless' => true];
+        yield 'a Latin-1 letter and its capital with a letter under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[\xC9\xE9a]/i', 'locale' => self::LATIN1, 'useless' => false];
+        yield 'the Y with acute and its small letter under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[\xDD\xFD]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'the Y with acute and "i" under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[i\xDD]/i', 'locale' => self::TURKISH, 'useless' => false];
+    }
+
+    /**
+     * A byte whose other case the engine's paths or releases read
+     * otherwise keeps the flag, whatever the class holds: macOS's
+     * tr_TR.ISO8859-9 pairs "I" with "i" but 0xDD with "i" and 0xFD with
+     * "I", and the interpreter reads "I", "i" and 0xDD apart from a class
+     * of them. The engine finds the flag useless there; the rule, which
+     * cannot tell which reading a class gets, keeps it. The tables are
+     * given as macOS reads them, which a Linux runner does not.
+     *
+     * Engine: PHP 8.4.28 / PCRE2 10.49 on macOS, under tr_TR.ISO8859-9,
+     * with the JIT and without it: of the 256 bytes, each row matches the
+     * same with i and without.
+     */
+    #[Test]
+    #[DataProvider('provideClassesOfUnsettledBytes')]
+    public function test_flag_i_is_kept_where_the_tables_leave_a_byte_of_the_class_unsettled(string $pattern): void
+    {
+        $others = [0xDD => 0x69, 0xFD => 0x49];
+        $cases = '';
+        for ($byte = 0; $byte < 256; $byte++) {
+            $cases .= \chr($others[$byte] ?? (Ascii::isAlpha(\chr($byte)) ? $byte ^ 0x20 : $byte));
+        }
+        CharacterTables::useTables(self::UNSETTLED, $cases, [0x49, 0x69, 0xDD]);
+
+        $this->assertFalse(self::reports($pattern, self::UNSETTLED), addcslashes($pattern, "\200..\377"));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideClassesOfUnsettledBytes(): iterable
+    {
+        yield 'both cases of "i" and the Turkish letters' => ['pattern' => '/[Ii\xDD\xFD]/i'];
+        yield 'both cases of "i" under (*UCP)' => ['pattern' => '/(*UCP)[iI]/i'];
+        yield 'both cases of "i" and the Turkish letters under (*UCP)' => ['pattern' => '/(*UCP)[iI\xDD\xFD]/i'];
+    }
+
+    /**
+     * Under i, "\p{Lu}", "\p{Ll}" and "\p{Lt}" match every cased letter
+     * from PCRE2 10.45, as "\p{Lc}" does, and match as written before it.
+     * "\p{Lc}", "\p{L&}", "\p{Upper}" and "\p{Lower}" match as written on
+     * every release.
+     *
+     * Engine, with the JIT and without it, every character under u and
+     * every byte without: each row matches the same with i and without on
+     * PCRE2 10.39, 10.40, 10.42 and 10.44 (php:8.1 to php:8.4), where
+     * "/\p{Lu}/iu" matches 1,831 characters with i and without; on 10.49
+     * (PHP 8.4.28, macOS) it matches 4,200 with i and 1,886 without, and
+     * "/\p{L&}/iu" 4,200 either way. The oracle runs where the engine
+     * stands on the side of 10.45 the row does.
+     */
+    #[Test]
+    #[DataProvider('provideCaseProperties')]
+    public function test_flag_i_is_called_useless_on_a_case_property_where_the_release_reads_it_as_written(string $pattern, string $pcre, bool $useless): void
+    {
+        if (PcreTarget::runtime()->pcreAtLeast('10.45') === version_compare($pcre, '10.45', '>=')) {
+            $without = substr($pattern, 0, -\strlen(strrchr($pattern, '/') ?: '')).str_replace('i', '', strrchr($pattern, '/') ?: '');
+            $subject = str_contains($pattern, '/iu') ? self::everyCharacter() : implode('', array_map(\chr(...), range(0, 255)));
+            $this->assertSame($useless, preg_match_all($pattern, $subject) === preg_match_all($without, $subject), \sprintf('Oracle: %s matches otherwise than %s.', $pattern, $without));
+        }
+
+        $this->assertSame($useless, self::reports($pattern, CharacterTables::BUILT_IN, $pcre), $pattern.' on PCRE2 '.$pcre);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, pcre: string, useless: bool}>
+     */
+    public static function provideCaseProperties(): iterable
+    {
+        foreach (['/\p{Lu}/i', '/\p{Ll}/iu', '/\p{Lt}/i', '/\P{Lu}/iu', '/[^\p{Ll}]/i', '/[aA\p{Lu}]/i'] as $pattern) {
+            yield $pattern.' on 10.44' => ['pattern' => $pattern, 'pcre' => '10.44', 'useless' => true];
+            yield $pattern.' on 10.45' => ['pattern' => $pattern, 'pcre' => '10.45', 'useless' => false];
+        }
+
+        yield '/\p{Lu}/i on 10.40' => ['pattern' => '/\p{Lu}/i', 'pcre' => '10.40', 'useless' => true];
+        foreach (['/\p{L&}/iu', '/\p{Lc}/i', '/\p{Upper}/iu', '/\p{Lower}/i', '/[aA\p{L&}]/i'] as $pattern) {
+            yield $pattern.' on 10.44' => ['pattern' => $pattern, 'pcre' => '10.44', 'useless' => true];
+            yield $pattern.' on 10.49' => ['pattern' => $pattern, 'pcre' => '10.49', 'useless' => true];
+        }
     }
 
     /**
@@ -223,6 +319,25 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
             'a reference to a letter in a group turning i off' => ['/(?-i:(a))\1/i', false],
             'a reference turning i on again to a digit' => ['/(?-i)(1)(?i)\1/i', true],
             'a reference to a letter in a group turning i off within it' => ['/((?-i)a)\1/i', false],
+            // A reference matches the text its group captured, in either
+            // case: where the group captures nothing with a case, it
+            // matches that text alone.
+            'a reference to a digit' => ['/(1)\1/i', true],
+            'a reference to a digit type' => ['/(\d)\1/i', true],
+            'a reference to a space type' => ['/(\s)\1/i', true],
+            'a reference to a class of digits' => ['/([0-9])\1/i', true],
+            'a reference to a repeated class of digits and signs' => ['/([0-9+-]+)\1/i', true],
+            'a relative reference to a choice of digits' => ['/(1|2)\g{-1}/i', true],
+            'a reference by name to a digit' => ['/(?<n>1)\k<n>/i', true],
+            'a reference to a digit after a group capturing a letter with i turned off' => ['/(?-i:(a)?)(1)\2/i', true],
+            'a reference to the digits of a reset group' => ['/(?|(1)|(2))\1/i', true],
+            'a reference to a reset group holding a letter' => ['/(?|(1)|(a))\1/i', false],
+            'a reference to a word type' => ['/(\w)\1/i', false],
+            'a reference to any character' => ['/(.)\1/i', false],
+            'a reference to a negated class of digits' => ['/([^0-9])\1/i', false],
+            'a reference to a letter written as an escape' => ['/(\x41)\1/i', false],
+            'a reference to a letter type, the class of the letters' => ['/([[:alpha:]])\1/i', false],
+            'a reference to a class of the letter property' => ['/([\p{L}])\1/i', false],
         ] as $name => [$pattern, $useless]) {
             yield $name => ['pattern' => $pattern, 'useless' => $useless];
         }
@@ -258,7 +373,8 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
 
     /**
      * PCRE2 refuses a code point past a byte without UTF, and a character
-     * named without UTF: such a class is not read, nor its range walked.
+     * named but by its code point: such a class is not read, nor its range
+     * walked.
      */
     #[Test]
     #[DataProvider('provideClassesPastAByte')]
@@ -279,11 +395,29 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         yield 'a letter and its capital with every code point, backwards' => ['pattern' => '/[\x{10FFFF}-\x00aA]/i'];
         yield 'a range from a character no name gives to the last small letter' => ['pattern' => '/[\N{NO SUCH NAME}-z]/i'];
         yield 'a range from the last small letter to a character no name gives' => ['pattern' => '/[z-\N{NO SUCH NAME}]/i'];
+        yield 'a range from a character no name gives to the last small letter under u' => ['pattern' => '/[\N{NO SUCH NAME}-z]/iu'];
     }
 
-    private static function reports(string $pattern, string $locale): bool
+    /**
+     * Every character in UTF-8 once, in order, but the surrogates.
+     */
+    private static function everyCharacter(): string
     {
-        $regex = Regex::create(['cache' => null, 'locale' => $locale]);
+        if (null === self::$everyCharacter) {
+            self::$everyCharacter = '';
+            foreach ([[0, 0xD7FF], [0xE000, 0x10FFFF]] as [$first, $last]) {
+                for ($from = $first; $from <= $last; $from += 0x10000) {
+                    self::$everyCharacter .= mb_convert_encoding(pack('N*', ...range($from, min($from + 0xFFFF, $last))), 'UTF-8', 'UTF-32BE');
+                }
+            }
+        }
+
+        return self::$everyCharacter;
+    }
+
+    private static function reports(string $pattern, string $locale, ?string $pcre = null): bool
+    {
+        $regex = Regex::create(['cache' => null, 'locale' => $locale] + (null === $pcre ? [] : ['pcre_version' => $pcre]));
         $linter = new PatternLinter([], $regex->target());
         $regex->parse($pattern)->accept($linter);
 
