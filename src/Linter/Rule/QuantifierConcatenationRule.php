@@ -59,7 +59,6 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         }
 
         $issues = [];
-        $madePossessive = null;
         $children = $node->children;
         $count = \count($children);
         $flags = $context->flagsAtEachChild($node);
@@ -149,7 +148,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 // never stands before that group: the second does, made
                 // possessive alike with or without the change, and ends
                 // where the run of their characters ends either way.
-                $madePossessive ??= PossessiveBrackets::repeatsMadePossessive($node, $context);
+                $madePossessive = PossessiveBrackets::repeatsMadePossessive($node, $context);
                 if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
                     continue;
                 }
