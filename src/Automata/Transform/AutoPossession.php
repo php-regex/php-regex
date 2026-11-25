@@ -51,6 +51,17 @@ use PHPRegex\Parser\PcreTarget;
 final class AutoPossession
 {
     /**
+     * Whether each pattern asked about holds a repeat PCRE2 may make
+     * possessive as if the byte 0xFF were no word character, each group a
+     * repeat reads taken out, whatever the tables, kept as long as its tree
+     * is: a rule asks at each group it would report, and reading it walks
+     * the whole pattern.
+     *
+     * @var \WeakMap<NodeInterface, bool>|null
+     */
+    private static ?\WeakMap $besideLastByte = null;
+
+    /**
      * The first atomic group or possessive repeat of a group that may match
      * nothing and that a character repeated some number of times precedes,
      * or null. Every possessive repeat of a group from zero counts, "*+"
@@ -131,39 +142,65 @@ final class AutoPossession
      */
     public static function repeatMadePossessiveBesideLastByte(RegexNode $regex, PcreTarget $target): ?QuantifierNode
     {
-        if (str_contains($regex->flags, 'u') || (CharacterTables::BUILT_IN !== $target->locale && !CharSet::fromRanges(CharacterTables::forLocale($target->locale)->bytesOf('w'))->contains(0xFF))) {
-            return null;
+        return self::mayReadLastByteAsNoWord($regex->flags, $target->locale) ? self::repeatBesideLastByte($regex->pattern) : null;
+    }
+
+    /**
+     * Whether taking a group out of the pattern, its body standing where it
+     * stood, may change which repeats PCRE2 makes possessive as if the byte
+     * 0xFF were no word character: the pattern holds such a repeat (see
+     * repeatMadePossessiveBesideLastByte()), each group a repeat reads taken
+     * out, and the brackets of any group may decide it. The engine never
+     * makes a repeat written as a group possessive, and stops a lazy repeat
+     * at the end of a group: under fr_FR.ISO8859-1 "/(?:\xFF)+\w/" finds
+     * "\xFF\xFF" where "/\xFF+\w/" finds nothing, and so does
+     * "/\xFF+?(?:)\w/" where "/\xFF+?\w/" does not, with and without the
+     * JIT, in PCRE2 10.49. Read wider than for one group: "(?:a)" in
+     * "/(?:\xFF)+\w(?:a)/" is kept as well.
+     *
+     * @param string      $flags  the flags of the pattern
+     * @param string|null $locale the LC_CTYPE locale it runs under, "C" or
+     *                            null where any may be
+     */
+    public static function bracketsDecideBesideLastByte(NodeInterface $pattern, string $flags, ?string $locale): bool
+    {
+        self::$besideLastByte ??= new \WeakMap();
+
+        return self::mayReadLastByteAsNoWord($flags, $locale ?? CharacterTables::BUILT_IN)
+            && (self::$besideLastByte[$pattern] ??= null !== self::repeatBesideLastByte($pattern, true));
+    }
+
+    /**
+     * Whether PCRE2 may read the pattern, spliced into a larger one, against
+     * what stands around it as if the byte 0xFF were no word character: it
+     * holds "\w" outside a class, or a node that may read that byte, which
+     * a repeat around it may be made possessive before, or which, repeated,
+     * may be made possessive before what follows. Read alone, "[\w]+" and
+     * "\w+" run alike, yet under fr_FR.ISO8859-1
+     * "/(?P<a>[\w]+)(?P<b>\xFF)/" finds "a\xFF\xFF" where
+     * "/(?P<a>\w+)(?P<b>\xFF)/" finds nothing, with and without the JIT, in
+     * PCRE2 10.49. None is found under "u", or where the target names a
+     * locale whose tables leave 0xFF out of "\w".
+     */
+    public static function meetsLastByteWhereSpliced(RegexNode $regex, PcreTarget $target): bool
+    {
+        if (!self::mayReadLastByteAsNoWord($regex->flags, $target->locale)) {
+            return false;
         }
 
-        $beforeWord = null;
-        $beforeLastByte = null;
         $pending = [$regex->pattern];
         while (null !== $node = array_pop($pending)) {
-            if (null !== $beforeWord && self::word($node)) {
-                return $beforeWord;
-            }
-
-            if (null !== $beforeLastByte && self::lastByte($node)) {
-                return $beforeLastByte;
-            }
-
-            if ($node instanceof QuantifierNode && QuantifierType::Possessive !== $node->type && self::repeatsSomeNumberOfTimes($node)) {
-                if (self::lastByte($node->node)) {
-                    $beforeWord = $node;
-                }
-
-                if (self::word($node->node)) {
-                    $beforeLastByte = $node;
-                }
+            if (self::word($node) || self::lastByte($node)) {
+                return true;
             }
 
             // PCRE2 reads a class whole: "[\w]" is no "\w" to it.
             if (!self::isClass($node)) {
-                array_push($pending, ...array_reverse($node->getChildren()));
+                array_push($pending, ...$node->getChildren());
             }
         }
 
-        return null;
+        return false;
     }
 
     /**
@@ -198,6 +235,56 @@ final class AutoPossession
     {
         return (null !== self::repeatBeforeSkippableGroup($pattern) || null !== self::repeatBeforeSkippableGroup($pattern, $group))
             && self::shapeOf($pattern) !== self::shapeOf($pattern, unwrapped: $group);
+    }
+
+    /**
+     * Without "u", where the tables of the locale may hold 0xFF in "\w":
+     * those of one that names no locale but C may.
+     */
+    private static function mayReadLastByteAsNoWord(string $flags, string $locale): bool
+    {
+        return !str_contains($flags, 'u') && (CharacterTables::BUILT_IN === $locale || CharSet::fromRanges(CharacterTables::forLocale($locale)->bytesOf('w'))->contains(0xFF));
+    }
+
+    /**
+     * The repeat repeatMadePossessiveBesideLastByte() names, whatever the
+     * tables.
+     *
+     * @param bool $groupsRead whether a repeat of a group reads its body, as
+     *                         if each such group were taken out
+     */
+    private static function repeatBesideLastByte(NodeInterface $pattern, bool $groupsRead = false): ?QuantifierNode
+    {
+        $beforeWord = null;
+        $beforeLastByte = null;
+        $pending = [$pattern];
+        while (null !== $node = array_pop($pending)) {
+            if (null !== $beforeWord && self::word($node)) {
+                return $beforeWord;
+            }
+
+            if (null !== $beforeLastByte && self::lastByte($node)) {
+                return $beforeLastByte;
+            }
+
+            if ($node instanceof QuantifierNode && QuantifierType::Possessive !== $node->type && self::repeatsSomeNumberOfTimes($node)) {
+                $operand = $groupsRead && $node->node instanceof GroupNode ? $node->node->child : $node->node;
+                if (self::lastByte($operand)) {
+                    $beforeWord = $node;
+                }
+
+                if (self::word($operand)) {
+                    $beforeLastByte = $node;
+                }
+            }
+
+            // PCRE2 reads a class whole: "[\w]" is no "\w" to it.
+            if (!self::isClass($node)) {
+                array_push($pending, ...array_reverse($node->getChildren()));
+            }
+        }
+
+        return null;
     }
 
     /**

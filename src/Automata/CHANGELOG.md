@@ -138,7 +138,13 @@ CHANGELOG
    `\w` outside a class, or that byte, anywhere after it, and such a
    pattern no longer reads like another, unless the target names a locale
    whose tables leave 0xFF out of `\w`. A target that names no locale but
-   C may run under any, and is refused too.
+   C may run under any, and is refused too. `readAlike()`, which reads two
+   patterns as text spliced into a larger one, no longer reads alike a
+   pattern that holds `\w` outside a class, or that byte, under the same
+   targets: the text around it may hold the other. `/[\w]+/` and `/\w+/`
+   read alike, yet under fr_FR.ISO8859-1 `/(?P<a>[\w]+)(?P<b>\xFF)/`, as a
+   router splices two requirements, finds `a\xFF\xFF` where
+   `/(?P<a>\w+)(?P<b>\xFF)/` finds nothing.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven
