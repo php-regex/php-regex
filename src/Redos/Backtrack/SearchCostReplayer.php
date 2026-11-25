@@ -129,7 +129,7 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
         $quarter = intdiv(self::WORDS, 4);
-        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1 + \strlen(NoJit::VERB.self::NO_AUTO_POSSESS), 0).'A';
+        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1, 0).'A';
         $steps = [];
         foreach ([1, 2] as $quarters) {
             $start = \strlen($prefix) + $quarters * $quarter * \strlen($run);
@@ -185,7 +185,7 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
         $quarter = intdiv(self::WORDS, 4);
         $pinned = $counted.'A';
-        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1 + \strlen(NoJit::VERB.self::NO_AUTO_POSSESS), 0).'A';
+        $retry = substr_replace($counted, self::NOTEMPTY_AT_START, 1, 0).'A';
         $bound = self::MAX_MATCH_WORDS * \strlen($run);
         $steps = [];
         foreach ([1, 2] as $quarters) {
@@ -236,7 +236,7 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         }
 
         $whole = $found->groups[0] ?? null;
-        if (!$found->matched || !\is_array($whole)) {
+        if (!\is_array($whole)) {
             return false;
         }
 
