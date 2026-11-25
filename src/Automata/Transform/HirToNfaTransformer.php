@@ -121,8 +121,8 @@ final class HirToNfaTransformer
      * @param LocaleBoundClasses|null $localeBound the classes whose characters past ASCII the tables
      *                                             of an unknown locale decide; null when the tables
      *                                             read are the ones the pattern runs under
-     * @param string $newline the newline convention the pattern's options set, as
-     *                        StartOptions::newline() names it: where its lines end
+     * @param string                  $newline     the newline convention the pattern's options set, as
+     *                                             StartOptions::newline() names it: where its lines end
      */
     public function __construct(
         private readonly string $pattern,
