@@ -197,9 +197,9 @@ final class RunsUnderLocaleTablesTest extends TestCase
         yield 'a small and a capital a, as branches, glibc' => ['pattern' => '/(?:a|A)+$/i', 'locale' => $glibc, 'rules' => [$text]];
         yield 'a class of small letters and a capital I, as branches, glibc' => ['pattern' => '/(?:[a-z]|I)+$/i', 'locale' => $glibc, 'rules' => []];
         yield 'a class of small letters and a capital J, as branches, glibc' => ['pattern' => '/(?:[a-z]|J)+$/i', 'locale' => $glibc, 'rules' => [$charset]];
-        yield 'a small i and 0xDD, as branches, glibc' => ['pattern' => '/(?:|i|\xDD)+$/i', 'locale' => $glibc, 'rules' => [$charset]];
+        yield 'a small i and 0xDD, as branches, glibc' => ['pattern' => '/(?:|i|\xDD)+$/i', 'locale' => $glibc, 'rules' => [$text]];
         yield 'a small i and a raw 0xDD, as branches, glibc' => ['pattern' => "/(?:|i|\xDD)+\$/i", 'locale' => $glibc, 'rules' => [$text]];
-        yield 'a capital I and 0xFD, as branches, glibc' => ['pattern' => '/(?:|I|\xFD)+$/i', 'locale' => $glibc, 'rules' => [$charset]];
+        yield 'a capital I and 0xFD, as branches, glibc' => ['pattern' => '/(?:|I|\xFD)+$/i', 'locale' => $glibc, 'rules' => [$text]];
         yield 'a run of small i, then a capital, in a loop, glibc' => ['pattern' => '/(?:i+I)+$/i', 'locale' => $glibc, 'rules' => []];
         yield 'a run of small i, then 0xDD, in a loop, glibc' => ['pattern' => '/(?:i+\xDD)+$/i', 'locale' => $glibc, 'rules' => [$nested]];
         yield 'a run of small i, then a capital read caselessly, in a loop, glibc' => ['pattern' => '/(?:i+(?i:I))+$/', 'locale' => $glibc, 'rules' => []];
