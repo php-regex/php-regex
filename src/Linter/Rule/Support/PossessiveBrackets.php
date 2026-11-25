@@ -32,6 +32,23 @@ use PHPRegex\Parser\Node\NodeInterface;
  */
 final class PossessiveBrackets
 {
+    /**
+     * The shape (see AutoPossession::shape()) of each pattern asked about,
+     * kept as long as its tree is: a rule asks at each group it would
+     * report, and reading it walks the whole pattern.
+     *
+     * @var \WeakMap<NodeInterface, list<string>>|null
+     */
+    private static ?\WeakMap $shapes = null;
+
+    /**
+     * The repeats PCRE2 may make possessive in each pattern asked about,
+     * kept as long as its tree is.
+     *
+     * @var \WeakMap<NodeInterface, array<int, true>>|null
+     */
+    private static ?\WeakMap $madePossessive = null;
+
     private function __construct() {}
 
     /**
@@ -42,7 +59,13 @@ final class PossessiveBrackets
      */
     public static function groupDecides(GroupNode $group, LintContext $context): bool
     {
-        return AutoPossession::groupDecides($context->parents()[0] ?? $group, $group);
+        $pattern = $context->parents()[0] ?? $group;
+        self::$shapes ??= new \WeakMap();
+
+        // Taking a group out makes none the engine may skip: a pattern that
+        // holds none has nothing for the brackets to decide.
+        return [] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
+            && AutoPossession::groupDecides($pattern, $group);
     }
 
     /**
@@ -56,6 +79,9 @@ final class PossessiveBrackets
      */
     public static function repeatsMadePossessive(NodeInterface $node, LintContext $context): array
     {
-        return AutoPossession::repeatsBeforeSkippableGroups($context->parents()[0] ?? $node);
+        $pattern = $context->parents()[0] ?? $node;
+        self::$madePossessive ??= new \WeakMap();
+
+        return self::$madePossessive[$pattern] ??= AutoPossession::repeatsBeforeSkippableGroups($pattern);
     }
 }

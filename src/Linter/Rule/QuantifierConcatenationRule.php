@@ -80,14 +80,6 @@ final class QuantifierConcatenationRule extends AbstractLintRule
                 continue;
             }
 
-            // A run PCRE2 may make possessive before a group it may skip
-            // stays as written: dropped or fixed to a count, it gives back
-            // to the run before it what PCRE2 took.
-            $madePossessive ??= PossessiveBrackets::repeatsMadePossessive($node, $context);
-            if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
-                continue;
-            }
-
             if ($left->node instanceof GroupNode && null !== $left->node->flags) {
                 $turnsIOn = GroupType::InlineFlags === $left->node->type
                     && !str_contains($flags[$i], 'i')
@@ -150,6 +142,18 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             if (null === $leftMax && $this->isKnownSubset($right->node, $rightSet, $left->node, $leftSet, $context, $flags[$i])
                 && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
             ) {
+                // A run PCRE2 may make possessive before a group it may skip
+                // stays as written: dropped or fixed to a count, it gives
+                // back to the run before it what PCRE2 took. Read last, as
+                // it walks the whole pattern. The first run tightened above
+                // never stands before that group: the second does, made
+                // possessive alike with or without the change, and ends
+                // where the run of their characters ends either way.
+                $madePossessive ??= PossessiveBrackets::repeatsMadePossessive($node, $context);
+                if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
+                    continue;
+                }
+
                 $issues[] = new RuleViolation(
                     self::ID,
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',

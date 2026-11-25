@@ -152,6 +152,7 @@ final class RedundantGroupRuleTest extends TestCase
     {
         yield 'an optional group repeated possessively' => ['pattern' => '/a+(?:b)?+a/', 'group' => '(?:b)', 'without' => '/a+b?+a/'];
         yield 'an optional group in an atomic group' => ['pattern' => '/a+(?>(?:b)?)a/', 'group' => '(?:b)', 'without' => '/a+(?>b?)a/'];
+        yield 'an optional group before an optional letter in an atomic group' => ['pattern' => '/a+(?>(?:b)?c?)a/', 'group' => '(?:b)', 'without' => '/a+(?>b?c?)a/'];
         yield 'a repeat written as a group' => ['pattern' => '/(?:a)+(?:b)?+a/', 'group' => '(?:a)', 'without' => '/a+(?:b)?+a/'];
     }
 
@@ -184,6 +185,27 @@ final class RedundantGroupRuleTest extends TestCase
         $this->assertSame([1, 1], [preg_match('/(?:a)+(?:b)?a/', 'aa'), preg_match('/a+(?:b)?a/', 'aa')]);
 
         $this->assertInstanceOf(RuleViolation::class, $this->violation('/(?:a)+(?:b)?a/'));
+    }
+
+    /**
+     * Each pattern is read on its own: one linted after a pattern whose
+     * brackets decide a possessive, by the same facade, is judged by its
+     * own.
+     */
+    #[Test]
+    public function test_the_brackets_of_one_pattern_decide_nothing_for_the_next(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49.
+        $this->assertSame([0, 1], [preg_match('/a+(?:b)?+a/', 'aa'), preg_match('/a+b?+a/', 'aa')]);
+        $this->assertSame([1, 1], [preg_match('/a+(?:b)?a/', 'aa'), preg_match('/a+b?a/', 'aa')]);
+
+        $regex = Regex::create(['cache' => null]);
+        $reported = [];
+        foreach (['/a+(?:b)?+a/', '/a+(?:b)?a/', '/a+(?:b)?+a/'] as $pattern) {
+            $reported[] = \count(array_filter($regex->lint($pattern), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+        }
+
+        $this->assertSame([0, 1, 0], $reported);
     }
 
     #[Test]
