@@ -20,20 +20,23 @@ use PHPUnit\Framework\Assert;
  * suite keeps compiled patterns, in random order, some compiled while
  * pcre.jit is off: a pattern compiled once is not compiled again when
  * pcre.jit changes, so a claim about the JIT made in the suite's own
- * process may read the interpreter.
+ * process may read the interpreter. A locale given is set for LC_CTYPE
+ * first, so that the engine compiles under its tables.
  */
 final class JitInAFreshProcess
 {
-    private const CODE = '$m = []; $r = preg_match(base64_decode($argv[1]), base64_decode($argv[2]), $m, PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL, (int) $argv[3]); echo json_encode(["result" => $r, "matches" => $m, "jit" => PCRE_JIT_SUPPORT], JSON_INVALID_UTF8_SUBSTITUTE);';
+    private const CODE = 'if ("" !== $argv[4] && false === setlocale(LC_CTYPE, $argv[4])) { exit; } $m = []; $r = preg_match(base64_decode($argv[1]), base64_decode($argv[2]), $m, PREG_OFFSET_CAPTURE | PREG_UNMATCHED_AS_NULL, (int) $argv[3]); echo json_encode(["result" => $r, "matches" => $m, "jit" => PCRE_JIT_SUPPORT], JSON_INVALID_UTF8_SUBSTITUTE);';
 
     private function __construct() {}
 
     /**
      * 1, 0, or false when the pattern does not compile.
+     *
+     * @param string $locale the LC_CTYPE locale the child compiles under; none when empty
      */
-    public static function matched(string $pattern, string $subject, int $offset = 0): int|false
+    public static function matched(string $pattern, string $subject, int $offset = 0, string $locale = ''): int|false
     {
-        return self::run($pattern, $subject, $offset)['result'];
+        return self::run($pattern, $subject, $offset, $locale)['result'];
     }
 
     /**
@@ -52,9 +55,9 @@ final class JitInAFreshProcess
     /**
      * @return array{result: int|false, matches: array<array-key, mixed>}
      */
-    private static function run(string $pattern, string $subject, int $offset): array
+    private static function run(string $pattern, string $subject, int $offset, string $locale = ''): array
     {
-        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'pcre.jit=1', '-r', self::CODE, '--', base64_encode($pattern), base64_encode($subject), (string) $offset], ProcessPipes::descriptors(), $pipes);
+        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'pcre.jit=1', '-r', self::CODE, '--', base64_encode($pattern), base64_encode($subject), (string) $offset, $locale], ProcessPipes::descriptors(), $pipes);
         Assert::assertIsResource($process);
         [$output, $error] = ProcessPipes::drain($pipes);
         fclose($pipes[1]);
