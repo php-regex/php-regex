@@ -205,10 +205,10 @@ final class PackageManifestTest extends TestCase
         // branches by the sets it is given. The rule on a useless i reads
         // the other case of a byte from the tables of the target's locale,
         // and under u of every character of a range from PCRE2's Unicode
-        // tables of the target's release.
+        // tables of the target's release, with its caseless sets.
         'Linter' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
-            'Parser\Engine\CharacterTables', 'Parser\Validation\OtherCases',
+            'Parser\Engine\CharacterTables', 'Parser\Validation\OtherCases', 'Parser\Validation\PcreTables',
             'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\Path', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',

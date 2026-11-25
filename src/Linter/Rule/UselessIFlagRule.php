@@ -14,17 +14,25 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\CodePoints;
+use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
+use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
+use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
+use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -32,14 +40,17 @@ use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Parser\Validation\OtherCases;
+use PHPRegex\Parser\Validation\PcreTables;
 
 /**
  * Detects a useless 'i' flag: the pattern contains no character, class or
  * backreference whose case the flag decides. A class that holds the other
- * case of every byte it holds matches the same bytes with i, "[aA]"; a
- * node after an inline option that turns i off, or sets it again, reads
- * its case alike with the pattern's own i and without it: "a" in
- * "/(?-i)a/i" and in "/(?i)a/i".
+ * case of every character it holds matches the same characters with i,
+ * "[aA]", and under UTF "[kK\x{212A}]", whose caseless set the Kelvin sign
+ * completes; a reference to a group that captures nothing with a case
+ * matches that text alone, "(1)\1"; a node after an inline option that
+ * turns i off, or sets it again, reads its case alike with the pattern's
+ * own i and without it: "a" in "/(?-i)a/i" and in "/(?i)a/i".
  *
  * Stateful: aggregates case-sensitivity facts during traversal and emits
  * in finish().
@@ -90,6 +101,18 @@ final class UselessIFlagRule extends AbstractLintRule
      */
     private ?OtherCases $otherCases = null;
 
+    /**
+     * Whether Turkish rules fold "i" with the dotted capital I and "I" with
+     * the dotless small i, "(*TURKISH_CASING)".
+     */
+    private bool $turkish = false;
+
+    /**
+     * The groups of the pattern, numbered as PCRE2 numbers them: null where
+     * the linter was given none.
+     */
+    private ?PcreGroups $groups = null;
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -117,6 +140,8 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->tables = CharacterTables::BUILT_IN === $context->target->locale ? null : CharacterTables::forLocale($context->target->locale);
         $this->target = $context->target;
         $this->otherCases = null;
+        $this->turkish = str_contains(StartOptions::of($context->pattern->source), '(*TURKISH_CASING)');
+        $this->groups = $context->groups->pcre;
     }
 
     public function check(NodeInterface $node, LintContext $context): array
@@ -146,7 +171,8 @@ final class UselessIFlagRule extends AbstractLintRule
 
     /**
      * Whether i changes what the node matches: a reference matches the
-     * text its group captured in either case.
+     * text its group captured in either case, which has none where the
+     * group captures no character with a case.
      */
     private function hasCase(NodeInterface $node): bool
     {
@@ -166,7 +192,89 @@ final class UselessIFlagRule extends AbstractLintRule
             return $this->unicodePropIsCaseSensitive($node->prop);
         }
 
-        return $node instanceof BackrefNode;
+        return $node instanceof BackrefNode && $this->referenceMayMatchCase($node);
+    }
+
+    /**
+     * Whether a group the reference names may capture a character with a
+     * case: a reference no group answers is read as one that does.
+     */
+    private function referenceMayMatchCase(BackrefNode $node): bool
+    {
+        $groups = $this->groups?->groupsReferencedBy($node) ?? [];
+        foreach ($groups as $group) {
+            if ($this->mayCaptureCase($group)) {
+                return true;
+            }
+        }
+
+        return [] === $groups;
+    }
+
+    /**
+     * Whether the node may match a character with a case: a literal or a
+     * class with one, a negated class, any character, a type but the digits
+     * and the white space under PCRE2's own tables, a reference or a call.
+     * An anchor, an assertion or a comment matches no character; a
+     * lookaround is read as a group.
+     */
+    private function mayCaptureCase(NodeInterface $node): bool
+    {
+        if ($node instanceof SequenceNode || $node instanceof AlternationNode || $node instanceof GroupNode || $node instanceof QuantifierNode) {
+            foreach ($node->getChildren() as $child) {
+                if ($this->mayCaptureCase($child)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        if ($node instanceof CharClassNode) {
+            return $node->isNegated || $this->classMayMatchCase($node->expression);
+        }
+
+        if ($node instanceof CharTypeNode) {
+            return !$this->typeHasNoCase($node);
+        }
+
+        if ($node instanceof LiteralNode || $node instanceof CharLiteralNode) {
+            return $this->hasCase($node);
+        }
+
+        return !$node instanceof AnchorNode && !$node instanceof AssertionNode && !$node instanceof CommentNode;
+    }
+
+    /**
+     * Whether a member of the class may be a character with a case: one
+     * written, one of a range, or one a type, a POSIX class or a property
+     * holds, but the digits and the white space under PCRE2's own tables.
+     */
+    private function classMayMatchCase(NodeInterface $expression): bool
+    {
+        foreach ($expression instanceof AlternationNode ? $expression->alternatives : [$expression] as $part) {
+            $hasCase = match (true) {
+                $part instanceof LiteralNode, $part instanceof CharLiteralNode, $part instanceof RangeNode => $this->charClassPartHasLetters($part),
+                $part instanceof CharTypeNode => !$this->typeHasNoCase($part),
+                $part instanceof PosixClassNode => null !== $this->tables || !\in_array(Ascii::lower($part->class), ['digit', 'space', 'blank', 'cntrl'], true),
+                default => true,
+            };
+            if ($hasCase) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the type holds no character with a case: the digits, the
+     * white space and the horizontal and vertical space, under PCRE2's own
+     * tables or Unicode's, which give none of them a case.
+     */
+    private function typeHasNoCase(CharTypeNode $node): bool
+    {
+        return null === $this->tables && \in_array($node->value, ['d', 's', 'h', 'v'], true);
     }
 
     /**
@@ -210,10 +318,11 @@ final class UselessIFlagRule extends AbstractLintRule
     private function holdsEveryOtherCase(array $parts): bool
     {
         // Under UTF a character may have several other cases, "k" the
-        // capital and the Kelvin sign. Under (*UCP) a class reads ASCII from
-        // Unicode up to 10.44 and from the locale's tables from 10.45.
-        if ($this->unicodeMode || (null !== $this->tables && $this->unicodeCase)) {
-            return false;
+        // capital and the Kelvin sign. A class of two characters may
+        // compile to one matched caselessly, which reads ASCII from another
+        // locale's tables, and Turkish rules fold "i" otherwise.
+        if ($this->unicodeMode) {
+            return null === $this->tables && !$this->turkish && $this->holdsEveryCaselessSet($parts);
         }
 
         $bytes = [];
@@ -245,25 +354,101 @@ final class UselessIFlagRule extends AbstractLintRule
     }
 
     /**
-     * The other case of a byte, or the byte itself: from the locale's
-     * tables, null where they leave it unsettled; of an ASCII letter; under
-     * (*UCP), of a byte past ASCII from PCRE2's Unicode tables of the
-     * target's release, where it is a byte. Those tables are not read for
-     * ASCII, where they give the letters alone a case.
+     * Whether, under UTF, the class holds every character a caseless class
+     * adds to one it holds: its caseless set, "K", "k" and the Kelvin sign
+     * for "k", or its other case, from PCRE2's Unicode tables of the
+     * target's release. A type, a POSIX class or a property without a case
+     * matches the same characters with i, and is read apart.
+     *
+     * @param array<NodeInterface> $parts
+     */
+    private function holdsEveryCaselessSet(array $parts): bool
+    {
+        // The ends of each member, an end no character gives leaving the
+        // class unread.
+        $ends = [];
+        foreach ($parts as $part) {
+            if ($part instanceof LiteralNode) {
+                foreach (mb_str_split($part->value, 1, 'UTF-8') as $char) {
+                    $ends[] = [mb_ord($char, 'UTF-8'), mb_ord($char, 'UTF-8')];
+                }
+            } elseif ($part instanceof RangeNode || $part instanceof CharLiteralNode) {
+                $ends[] = [$this->endpoint($part instanceof RangeNode ? $part->start : $part), $this->endpoint($part instanceof RangeNode ? $part->end : $part)];
+            } elseif ($this->charClassPartHasLetters($part)) {
+                $ends[] = [null, null];
+            }
+        }
+
+        $ranges = [];
+        foreach ($ends as [$low, $high]) {
+            if (!\is_int($low) || !\is_int($high)) {
+                return false;
+            }
+
+            $ranges[] = [min($low, $high), max($low, $high)];
+        }
+
+        $this->otherCases ??= OtherCases::of($this->target);
+        $sets = PcreTables::caselessSets();
+        foreach ($ranges as [$low, $high]) {
+            $cased = array_keys($this->otherCases->between($low, $high));
+            foreach (array_keys($sets) as $codePoint) {
+                if ($low <= $codePoint && $codePoint <= $high) {
+                    $cased[] = $codePoint;
+                }
+            }
+
+            foreach ($cased as $codePoint) {
+                foreach ($sets[$codePoint] ?? [$this->otherCases->otherCase($codePoint)] as $other) {
+                    if (!self::inRanges($other, $ranges)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * @param list<array{int, int}> $ranges
+     */
+    private static function inRanges(int $codePoint, array $ranges): bool
+    {
+        foreach ($ranges as [$low, $high]) {
+            if ($low <= $codePoint && $codePoint <= $high) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The other case of a byte, or the byte itself: under (*UCP), of a
+     * byte past ASCII from PCRE2's Unicode tables of the target's release,
+     * where it is a byte, whatever the locale's tables give; of an ASCII
+     * letter; from the locale's tables, null where they leave it unsettled.
+     * Under (*UCP) a class reads ASCII from Unicode up to 10.44 and from
+     * the tables from 10.45: an ASCII byte they pair otherwise than Unicode
+     * is unsettled there.
      */
     private function otherByte(int $byte): ?int
     {
-        if (null !== $this->tables) {
-            return $this->tables->settledOtherCase($byte);
+        if ($this->unicodeCase && $byte >= 0x80) {
+            $other = OtherCases::of($this->target)->otherCase($byte);
+
+            return 0 === $other >> 8 ? $other : $byte;
         }
 
-        if (!$this->unicodeCase || $byte < 0x80) {
-            return CodePoints::isAsciiLetter($byte) ? $byte ^ 0x20 : $byte;
+        $ascii = CodePoints::isAsciiLetter($byte) ? $byte ^ 0x20 : $byte;
+        if (null === $this->tables) {
+            return $ascii;
         }
 
-        $other = OtherCases::of($this->target)->otherCase($byte);
+        $other = $this->tables->settledOtherCase($byte);
 
-        return 0 === $other >> 8 ? $other : $byte;
+        return !$this->unicodeCase || $other === $ascii ? $other : null;
     }
 
     private function charClassPartHasLetters(NodeInterface $node): bool
@@ -483,35 +668,30 @@ final class UselessIFlagRule extends AbstractLintRule
         return null !== $this->tables && $codePoint <= ($this->unicodeCase ? 0x7F : 0xFF);
     }
 
+    /**
+     * Whether i changes what the property matches: "\p{Lu}", "\p{Ll}" and
+     * "\p{Lt}" match every cased letter under i from 10.45, as written
+     * before. "\p{Lc}", "\p{L&}", "\p{Upper}" and "\p{Lower}" match as
+     * written on every release.
+     */
     private function unicodePropIsCaseSensitive(string $prop): bool
     {
         if ('' === $prop) {
             return false;
         }
 
-        $normalized = $this->normalizeUnicodePropName($prop);
-
-        return \in_array($normalized, [
-            'lu',
-            'll',
-            'lt',
-            'lc',
-            'l&',
-            'upper',
-            'lower',
-            'title',
-            'uppercase_letter',
-            'lowercase_letter',
-            'titlecase_letter',
-            'cased_letter',
-        ], true);
+        return \in_array($this->normalizeUnicodePropName($prop), ['lu', 'll', 'lt'], true)
+            && $this->target->supports(PcreFeature::CaselessCasePropertiesMatchCasedLetters);
     }
 
+    /**
+     * The name of a property without its braces and its negation, "\P{Lu}"
+     * and "\p{^Lu}" read as "lu".
+     */
     private function normalizeUnicodePropName(string $prop): string
     {
-        $normalized = ltrim($prop, '^');
-        $normalized = trim($normalized, '{}');
-        $normalized = str_replace(['-', ' '], '_', $normalized);
+        $normalized = ltrim(trim($prop, '{}'), '^');
+        $normalized = str_replace(['-', ' ', '_'], '', $normalized);
 
         return Ascii::lower($normalized);
     }
