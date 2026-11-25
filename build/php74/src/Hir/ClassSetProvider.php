@@ -903,10 +903,10 @@ final class ClassSetProvider
             return false;
         }
 
-        $caseless = self::query($atom, false, $modifiers, $startVerbs, false, $tables);
+        $caseless = self::query($atom, false, $modifiers, $startVerbs, true, $tables);
         // "r" alone, which keeps ASCII apart under "i", is refused before
         // PCRE2 10.43.
-        $caseSensitive = self::query($atom, false, str_replace(['i', 'r'], '', $modifiers), $startVerbs, false, $tables);
+        $caseSensitive = self::query($atom, false, str_replace(['i', 'r'], '', $modifiers), $startVerbs, true, $tables);
         if (null === $caseless || null === $caseSensitive) {
             return null;
         }
