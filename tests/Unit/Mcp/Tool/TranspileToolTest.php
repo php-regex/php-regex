@@ -32,7 +32,7 @@ final class TranspileToolTest extends TestCase
     #[DataProvider('provideTranslations')]
     public function test_the_answer_is_the_cli_document(array $arguments, array $cli, bool $isError): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute($arguments);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute($arguments);
 
         [, $stdout] = $this->runRegex([...$cli, '--json']);
 
@@ -58,7 +58,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_the_text_reads_the_literal_then_the_notes(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/^a$/m', 'target' => 'js']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/^a$/m', 'target' => 'js']);
 
         $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $result->structured['literal']);
         $this->assertStringStartsWith($result->structured['literal']."\n", $result->text);
@@ -68,7 +68,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_refusal_is_read_in_the_text(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)a/', 'target' => 'js']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)a/', 'target' => 'js']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('Atomic groups are not supported in JavaScript.', $result->text);
@@ -78,7 +78,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_missing_pattern_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['target' => 'js']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['target' => 'js']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -87,7 +87,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_python_version_that_is_no_string_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 3.11]);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 3.11]);
 
         $this->assertTrue($result->isError);
         $this->assertSame(['error' => 'The "python_version" argument must be a Python release, as "3.11".', 'stage' => 'usage'], $result->structured);
@@ -96,7 +96,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_an_unknown_target_php_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'js', 'php_version' => 'eight']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'js', 'php_version' => 'eight']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -113,7 +113,7 @@ final class TranspileToolTest extends TestCase
         $this->assertSame(1, preg_match('/\p{L}+/u', 'é', $character));
         $this->assertSame('é', $character[0]);
 
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'target' => 'js']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'target' => 'js']);
 
         $this->assertFalse($result->isError);
         $set = 'Without the u flag "\p{L}" at offset 0 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.';
@@ -124,7 +124,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_missing_target_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/a/']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -134,7 +134,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_dialect_the_transpiler_has_no_target_for_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'perl']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'perl']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -144,7 +144,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_pattern_the_lexer_or_the_parser_refuses_is_a_pattern_failure(): void
     {
-        $tool = ToolCatalog::v1()->get('regex_transpile')->tool;
+        $tool = ToolCatalog::create()->get('regex_transpile')->tool;
 
         foreach (['/[/' => 'unclosed character class', '/(?<n/' => 'name'] as $pattern => $word) {
             $result = $tool->execute(['pattern' => $pattern, 'target' => 'js']);
@@ -158,7 +158,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_python_version_that_is_not_a_release_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 'three']);
+        $result = ToolCatalog::create()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 'three']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);

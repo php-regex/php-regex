@@ -27,6 +27,8 @@ final class ToolDefinition
     public readonly array $annotations;
 
     /**
+     * @internal built by ToolCatalog::create(): every tool is announced read-only and idempotent
+     *
      * @param array<string, mixed> $inputSchema  JSON Schema of the arguments
      * @param array<string, mixed> $outputSchema JSON Schema of the structured answer, the error envelope included
      */

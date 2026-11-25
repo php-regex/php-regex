@@ -19,6 +19,8 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Mcp\ToolCatalog;
+use PHPRegex\Mcp\ToolDefinition;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\LexerException;
@@ -93,6 +95,10 @@ final class InternalMembersTest extends TestCase
             AlphabeticAssertionToClassicRector::class => ['__construct'],
             EscapeNulByteRector::class => ['__construct'],
             PossessiveRepeatOnceRector::class => ['__construct'],
+            // Every tool of the catalog is announced read-only: a tool of
+            // the application's own is no extension point.
+            ToolCatalog::class => ['with'],
+            ToolDefinition::class => ['__construct'],
         ];
 
         foreach ($members as $class => $methods) {

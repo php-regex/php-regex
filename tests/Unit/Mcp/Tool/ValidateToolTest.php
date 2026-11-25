@@ -30,7 +30,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_a_valid_pattern_answers_the_cli_document(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
 
         [, $stdout] = $this->runRegex(['validate', '/a+/', '--json']);
 
@@ -43,7 +43,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_an_invalid_pattern_is_a_verdict_not_a_tool_error(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/(a/']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/(a/']);
 
         [, $stdout] = $this->runRegex(['validate', '/(a/', '--json']);
 
@@ -58,7 +58,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_a_hint_is_read_in_the_text(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a{2,1}/']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a{2,1}/']);
 
         $validation = JsonContract::asArray($result->structured['validation']);
         $this->assertFalse($validation['is_valid']);
@@ -68,7 +68,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_a_missing_pattern_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute([]);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute([]);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -78,7 +78,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_an_unknown_target_is_a_usage_failure_naming_the_argument(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => 'eight']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => 'eight']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -88,7 +88,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_a_php_that_ships_pcre1_is_refused_as_the_cli_refuses_it(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => '7.2']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => '7.2']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('target', $result->structured['stage']);
@@ -98,7 +98,7 @@ final class ValidateToolTest extends TestCase
     #[Test]
     public function test_a_pattern_over_the_library_limit_is_not_analyzed(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/'.str_repeat('a', 100_001).'/']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/'.str_repeat('a', 100_001).'/']);
 
         $this->assertFalse($result->isError);
         $this->assertSame('limit', JsonContract::asArray($result->structured['validation'])['category']);

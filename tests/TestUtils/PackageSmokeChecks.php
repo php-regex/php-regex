@@ -86,7 +86,7 @@ final class PackageSmokeChecks
                 return false !== $input && 0 === (new Server(null, $input))->run();
             }],
             'Laravel' => [PHPRegexServiceProvider::class, static fn (): bool => self::extends(PHPRegexServiceProvider::class, ServiceProvider::class)],
-            'Mcp' => [McpApplication::class, static fn (): bool => 'Valid.' === ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a+/'])->text],
+            'Mcp' => [McpApplication::class, static fn (): bool => 'Valid.' === ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a+/'])->text],
             'Linter' => [PatternLinter::class, static function (): bool {
                 $linter = new PatternLinter();
                 RegexParser::create()->parse('/[aa]/')->accept($linter);

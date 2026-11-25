@@ -99,7 +99,7 @@ In short, the public surface is:
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |
-| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `ServerInterface`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
+| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
 
 Each path is relative to the package namespace: `Analysis\CaptureShape` in
 `regex-parser` is `PHPRegex\Parser\Analysis\CaptureShape`. `Node\*` is every
@@ -171,7 +171,10 @@ The bridges and tools carry more than their classes:
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
 - `regex-mcp`: the tools' names, arguments and the documents they answer
-  ([every key](json-output.md)), and the classes above. The `mcp/sdk`
+  ([every key](json-output.md)), and the classes above.
+  `ToolCatalog::create()` serves the library's tools, and a minor release may
+  add one; `ToolCatalog::with()` and the constructor of `ToolDefinition` are
+  `@internal`, as every tool is announced read-only and idempotent. The `mcp/sdk`
   constraint is not covered: the SDK is experimental, pinned to the minors
   the server is tested with, and a minor release of PHPRegex may add the
   SDK's next minor to the pin or drop the oldest.

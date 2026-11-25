@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Application::run()` serves the catalog `ToolCatalog::create()` builds
+   for the target, and `Application::serve()` a catalog built beforehand;
+   the constructor takes the logger only. `ToolCatalog::with()`, the
+   constructor of `ToolDefinition` and `ServerInterface` are `@internal`.
  * The server speaks to `mcp/sdk` 0.9 and 0.10: Composer installs 0.9 on
    PHP 8.1 and 0.10, which requires PHP 8.2, from PHP 8.2. The phar carries
    0.9.
