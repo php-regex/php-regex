@@ -2,11 +2,6 @@
 
 ## Before the tag
 
-- #464 asks a target whether its JIT clears the groups of a possessive
-  repeat, as PCRE2 10.44's does, through `PcreFeature::LongGroupNames`,
-  which 10.44 brought too. Give that behaviour a `PcreFeature` case of its
-  own, with the line the backward-compatibility check needs, as #469 did:
-  a case added after 2.0.0 breaks a `match` over the enum.
 - Decide what a target that names no locale means for classes above ASCII
   without u: `matchEquivalent('/\w/', '/[a-zA-Z0-9_]/')` answers alike,
   reading C's tables, while `/\w/` matches `\xE9` under en_IE.ISO8859-1;
