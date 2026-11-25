@@ -959,7 +959,7 @@ final class SearchCostProver
             }
 
             $last = $automaton->representatives[$word[\count($word) - 1]];
-            $breakers = $this->breakers($automaton, $budget, $after, [], $finalNewline ? $last : null, self::EVERY_CALL);
+            $breakers = $this->breakers($automaton, $budget, $after, [], $finalNewline ? $last : null);
             if ([] !== $breakers) {
                 return [
                     'prefix' => [],
