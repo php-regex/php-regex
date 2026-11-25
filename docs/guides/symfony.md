@@ -330,7 +330,10 @@ Each one is read as the pattern Symfony runs:
 - A route requirement is a fragment of the compiled route. Its leading `^`
   or `\A` and its trailing `$` or `\z` are stripped once, as
   `Route::sanitizeRequirement()` does (`^^a` keeps one `^`), its groups
-  are made non-capturing, and it is matched in a group named after the
+  are made non-capturing, a named group too where the application's
+  `symfony/routing` drops its name (6.4.51, 7.4.24 and 8.1.12 on, never
+  8.0: `(?<l>en|fr)` is read as `(?:en|fr)`, and a `\k<l>` after it names
+  no group), and it is matched in a group named after the
   parameter with `{^...$}sD`, plus `i` for a host parameter and `u` when
   the route sets its `utf8` option: `\d+` on `{id}` is linted as
   `{^(?P<id>\d+)$}sD`. A requirement that starts with `/` or `#` is no
@@ -339,7 +342,8 @@ Each one is read as the pattern Symfony runs:
   unbalanced, `a\$` loses its `$` and escapes the group's `)`. What the
   router adds is not the requirement's to change: a useless `s` or `D`, a
   rewrite that only drops a flag, and a repeated unnamed group (the router
-  makes it non-capturing) are not reported.
+  makes it non-capturing), or a named one where the router drops its name,
+  are not reported.
 - A security `path` (in `access_control` or as a firewall `pattern`) is
   matched with `{...}s`, and a `host` with `{...}i`, as written and without
   anchors: `path: /api` matches `/v1/api` too, and a space or a line feed
@@ -668,18 +672,26 @@ counts as one that may end on the slash. A later
 route whose paths the earlier one matches in part and redirects for the
 rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
 route that takes no `GET` request redirects none. The router looks a route
-with no variable up by its path, every trailing slash of the request
-trimmed off, before it tries any route with a regex, unless a route it
-tries with a regex and sorts before it matches that path, the routes
-sorted by host first when one names a host, as the router's dumper reads
-them: `/admin` redirects
-`GET /admin//` too, so `/{p<admin//>}` after it is shadowed, `/admin/`
-takes `/admin//` as is, for any method on its own schemes, and `/` answers
-`GET //` with a 404. A route tried with a regex takes its path with one
-slash at most. A route with no variable therefore takes the requests of a
-route tried with a regex declared before it, `/admin/` those of
-`/{x<admin//>}`: the pair is read in the order the router tries them,
-noted, and offered distinct paths, which a reorder would not give. A later route ending on a variable that may end on the
+with no variable up by its path before it tries any route with a regex,
+unless a route it tries with a regex and sorts before it matches that
+path, the routes sorted by host first when one names a host, as the
+router's dumper reads them. A route tried with a regex takes its path with
+one slash at most. How many trailing slashes of the request the router
+reads on a route it looks up by its path depends on the release, and the
+analysis reads them as the application's `symfony/routing` does. Before
+6.4.51, 7.4.24 and 8.1.12, and on 8.0, it trims every trailing slash off
+the request first: `/admin` redirects `GET /admin//` too, so
+`/{p<admin//>}` after it is shadowed, `/admin/` takes `/admin//` as is,
+for any method on its own schemes, and `/` answers `GET //` with a 404, as
+does a root route the router tries with a regex. A route with no variable
+therefore takes the requests of a route tried with a regex declared before
+it, `/admin/` those of `/{x<admin//>}`: the pair is read in the order the
+router tries them, noted, and offered distinct paths, which a reorder
+would not give. Since those releases, it looks a route up for a request
+with one trailing slash at most, as it reads a route tried with a regex,
+and tries the routes with a regex on a request with more: `/{p<admin//>}`
+after `/admin` keeps `GET /admin//`, and `/` takes no request but its own,
+`GET //` going on to the routes after it. A later route ending on a variable that may end on the
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
@@ -691,7 +703,8 @@ a path it reads for its slash still loses it the request. Each such
 finding notes what the router does with the
 request: it redirects it to the earlier route, matches it as is where the
 earlier route ends on a variable whose value PCRE captures with the slash,
-or, for `//` after `/`, answers it with a 404.
+or, for `//` after `/` on a release that trims every slash, answers it
+with a 404.
 
 `regex:security` reads `access_control` the same way: the first rule whose
 path, host, methods, addresses, port, route and attributes take a request
