@@ -17,6 +17,16 @@ CHANGELOG
    Such a rewrite is checked by the automata whatever `verifyWithAutomata`
    says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
    `/a+b?+a/`.
+ * The group around a repeat of the byte 0xFF before `\w`, or of `\w`
+   before that byte, stays as written without `u`: PCRE2 makes the repeat
+   possessive once the group is out, as if 0xFF were no word character,
+   and under fr_FR.ISO8859-1, where `\w` takes it, `/\xFF+\w/`, which the
+   check proved alike and the optimizer wrote for `/(?:\xFF)+\w/`, finds
+   nothing in `\xFF\xFF`, where `/(?:\xFF)+\w/` finds it. `/(?:\xFF)+?\w/`,
+   `/(?:\xFF)?\w/`, `/(?:\w)+\xFF/` and `/(?:\w)+?\xFF/` stay as well. The
+   rewrite ships only under a target that names a locale whose tables
+   leave 0xFF out of `\w`, as el_GR.ISO8859-7 does, and such a rewrite is
+   checked by the automata whatever `verifyWithAutomata` says.
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The

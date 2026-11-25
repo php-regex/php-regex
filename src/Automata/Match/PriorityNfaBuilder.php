@@ -82,6 +82,8 @@ final class PriorityNfaBuilder
 
     public const POSSESSIVE_CAPTURE_MESSAGE = 'Before PCRE2 10.44 the JIT may leave a group of a possessive repeat set from an earlier start of the match, which the match solver does not read.';
 
+    public const LAST_BYTE_MESSAGE = 'Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the match solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".';
+
     public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier proven on a byte past ASCII against a class holds under the tables of C alone, and the target names no other locale.';
 
     /**

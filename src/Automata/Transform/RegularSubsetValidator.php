@@ -55,10 +55,19 @@ final class RegularSubsetValidator
         self::assertCrLfRead($regex, $pattern);
         self::assertEmptyMatchesAllowed($regex, $pattern);
 
+        // The language reads a repeat as written, where PCRE2 makes one of
+        // the byte 0xFF or of "\w" possessive beside the other as if 0xFF
+        // were no word character.
+        $tables = $target ?? PcreTarget::runtime();
+        $lastByte = AutoPossession::repeatMadePossessiveBesideLastByte($regex, $tables);
+        if (null !== $lastByte) {
+            throw new ComplexityException(HirToNfaTransformer::LAST_BYTE_MESSAGE, $lastByte->getStartPosition(), $pattern);
+        }
+
         $hir = (new HirTranslator($target))->translate($regex);
         // A target that names no locale but C may run under any: without
         // "u" the tables a class is read under past ASCII are not known.
-        $committed = (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex), LocaleBoundClasses::of($regex, $target ?? PcreTarget::runtime())))
+        $committed = (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex), LocaleBoundClasses::of($regex, $tables)))
             ->assertTranslatable($hir, $options);
 
         // The language reads a proven commitment as written, where PCRE2

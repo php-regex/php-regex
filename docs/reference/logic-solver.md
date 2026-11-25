@@ -132,7 +132,7 @@ reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/`
 write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
 still takes its number, and `/(?(DEFINE)(?<n>x))a/` and `/a/`, as a group a DEFINE holds does.
 
-Three more refusals follow from what the engine does on its own. PCRE2 makes a character
+Four more refusals follow from what the engine does on its own. PCRE2 makes a character
 repeated before an atomic group, or a possessive repeat of a group, that may match nothing
 possessive, as if the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,
 with and without the JIT, from PCRE2 10.34 to 10.49, where `/a+(?:b)?a/` finds `aa`. Such
@@ -151,6 +151,19 @@ a POSIX class, or a class under `i` that holds some of the letters and the bytes
 but not all, is refused: under en_IE.ISO8859-1 `\w` takes `\xE9`, and `/c\xE9++b?\w/` finds
 nothing in `c\xE9\xE9`, where `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route
 host compiles, is read. A target that names its locale is read under its tables.
+
+Without `u`, PCRE2 also makes a repeat of the byte 0xFF possessive before `\w`, and a
+repeat of `\w` possessive before that byte, lazy ones too, as if 0xFF were no word
+character, whatever the tables say. Under fr_FR.ISO8859-1, where `\w` takes 0xFF,
+`/\xFF+\w/` finds nothing in `\xFF\xFF` and `/\w+\xFF/` nothing in `a\xFF\xFF`, with and
+without the JIT, in PCRE2 10.49, where `/(?:\xFF)+\w/`, `/\xFF+[\w]/` and `/[\w]+\xFF/`
+find them: a repeat written as a group and a class are read as written. Both solvers refuse
+a pattern with such a repeat, of the byte written out or as an escape, of a class that names
+it, or of U+0178, which folds to it under UTF, with `\w` outside a class, or that byte,
+anywhere after it, and such a pattern never reads alike with another, unless the target
+names a locale whose tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does. A target that
+names no locale but C may run under any, and is refused too. `u` reads `\w` from the
+Unicode properties, and is read.
 
 Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
 body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
@@ -502,6 +515,7 @@ verbatim:
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
 | a character repeated before an atomic group or a possessive repeat of a group that may match nothing, `a+(?:b)?+a` | `PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.` |
 | without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
+| without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |

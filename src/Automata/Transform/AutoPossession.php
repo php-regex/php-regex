@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Automata\Solver\RewriteSites;
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -28,8 +30,10 @@ use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Where PCRE2 makes a repeat possessive that the pattern does not: a
@@ -105,6 +109,61 @@ final class AutoPossession
         }
 
         return array_fill_keys(array_keys(array_filter($repeats, static fn (int $end): bool => $end <= $lastSkippableStart)), true);
+    }
+
+    /**
+     * The repeat PCRE2 may make possessive as if the byte 0xFF were no word
+     * character, or null. Without "u", PCRE2 makes a repeat of that byte
+     * possessive before "\w", and a repeat of "\w" before that byte, lazy
+     * ones too, whatever the tables say: under fr_FR.ISO8859-1, where "\w"
+     * takes 0xFF, "/\xFF+\w/" finds nothing in "\xFF\xFF" and "/\w+\xFF/"
+     * nothing in "a\xFF\xFF", where "/(?:\xFF)+\w/", "/\xFF+[\w]/" and
+     * "/[\w]+\xFF/" find them, with and without the JIT, in PCRE2 10.49.
+     * None is found where the target names a locale whose tables leave 0xFF
+     * out of "\w"; one that names no locale but C may run under any.
+     *
+     * Read wider than the engine reads it: a repeat, some number of times
+     * and not possessive, of a character or a class that names the byte, or
+     * U+0178, which folds to it under UTF, with "\w" outside a class
+     * anywhere after it, or of "\w" with such a character or class anywhere
+     * after it. The repeat named is the nearest before what PCRE2 reads it
+     * against.
+     */
+    public static function repeatMadePossessiveBesideLastByte(RegexNode $regex, PcreTarget $target): ?QuantifierNode
+    {
+        if (str_contains($regex->flags, 'u') || (CharacterTables::BUILT_IN !== $target->locale && !CharSet::fromRanges(CharacterTables::forLocale($target->locale)->bytesOf('w'))->contains(0xFF))) {
+            return null;
+        }
+
+        $beforeWord = null;
+        $beforeLastByte = null;
+        $pending = [$regex->pattern];
+        while (null !== $node = array_pop($pending)) {
+            if (null !== $beforeWord && self::word($node)) {
+                return $beforeWord;
+            }
+
+            if (null !== $beforeLastByte && self::lastByte($node)) {
+                return $beforeLastByte;
+            }
+
+            if ($node instanceof QuantifierNode && QuantifierType::Possessive !== $node->type && self::repeatsSomeNumberOfTimes($node)) {
+                if (self::lastByte($node->node)) {
+                    $beforeWord = $node;
+                }
+
+                if (self::word($node->node)) {
+                    $beforeLastByte = $node;
+                }
+            }
+
+            // PCRE2 reads a class whole: "[\w]" is no "\w" to it.
+            if (!self::isClass($node)) {
+                array_push($pending, ...array_reverse($node->getChildren()));
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -263,6 +322,31 @@ final class AutoPossession
     private static function groupLike(NodeInterface $node): bool
     {
         return !self::oneCharacter($node) && !$node instanceof BackrefNode;
+    }
+
+    /**
+     * Whether the node is "\w" outside a class, which PCRE2 reads against a
+     * repeated byte by its tables, but for 0xFF.
+     */
+    private static function word(NodeInterface $node): bool
+    {
+        return $node instanceof CharTypeNode && 'w' === $node->value;
+    }
+
+    /**
+     * Whether the node may read the byte 0xFF as one character: the byte,
+     * U+00FF or U+0178 written out or as an escape, or a class that names
+     * one of them, which PCRE2 may compile as that character alone.
+     */
+    private static function lastByte(NodeInterface $node): bool
+    {
+        return [] !== array_filter(self::isClass($node) ? self::nodes($node) : [$node], static fn (NodeInterface $member): bool => ($member instanceof CharLiteralNode && (0xFF === $member->codePoint || 0x178 === $member->codePoint))
+            || ($member instanceof LiteralNode && (str_contains($member->value, "\xFF") || str_contains($member->value, "\u{FF}") || str_contains($member->value, "\u{178}"))));
+    }
+
+    private static function isClass(NodeInterface $node): bool
+    {
+        return $node instanceof CharClassNode || $node instanceof ExtendedCharClassNode;
     }
 
     private static function oneCharacter(NodeInterface $node): bool
