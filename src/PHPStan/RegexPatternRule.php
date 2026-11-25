@@ -57,7 +57,7 @@ use PHPStan\Type\Type;
  *     phpVersion?: string|int|array{min: string|int, max: string|int}|null,
  *     pcreVersion?: string|null,
  *     locale?: string|null,
- *     interop?: list<string>|null,
+ *     extraction?: array{interop?: list<string>|null},
  *     checks?: array{
  *         lint?: array{enabled?: bool},
  *         redos?: array{enabled?: bool, threshold?: string},
@@ -116,7 +116,7 @@ final class RegexPatternRule implements Rule
     /**
      * The calls carrying a pattern, as `regex lint` reads them: the native
      * functions, their namespaced drop-ins and the static methods of the
-     * wrapper libraries the "interop" parameter names.
+     * wrapper libraries "extraction.interop" names.
      */
     private readonly PatternFunctionRegistry $registry;
 
@@ -126,7 +126,7 @@ final class RegexPatternRule implements Rule
      * @internal built by extension.neon; configure through `phpRegex`
      *
      * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion",
-     *                                                               "interop" (the presets read, every one when null) and
+     *                                                               "extraction.interop" (the presets read, every one when null) and
      *                                                               "checks" ("lint", "redos", "optimizations"),
      *                                                               every key optional
      * @param PhpVersion|null                    $phpVersion         the PHP version PHPStan analyses the project for: patterns are
@@ -141,7 +141,7 @@ final class RegexPatternRule implements Rule
      *                                                               in a namespace, for a guard written without a leading backslash
      *
      * @throws InvalidRegexOptionException when "phpVersion", "pcreVersion" or "checks.redos.threshold" cannot be read,
-     *                                     or "interop" names a preset that does not exist
+     *                                     or "extraction.interop" names a preset that does not exist
      * @throws UnsupportedTargetException  when the PHP to judge for ships PCRE1, as regex lint refuses it
      */
     public function __construct(
@@ -151,11 +151,11 @@ final class RegexPatternRule implements Rule
         ?ReflectionProvider $reflectionProvider = null,
     ) {
         $this->checker = new PatternChecker($config, $phpVersion, $phpVersionRange, $reflectionProvider);
-        $interop = $config['interop'] ?? null;
+        $interop = $config['extraction']['interop'] ?? null;
         $presets = \is_array($interop) ? array_values(array_filter($interop, \is_string(...))) : InteropPresets::DEFAULT_PRESETS;
         foreach ($presets as $preset) {
             if (!InteropPresets::exists($preset)) {
-                throw new InvalidRegexOptionException(InteropPresets::unknownError($preset, 'phpRegex.interop'));
+                throw new InvalidRegexOptionException(InteropPresets::unknownError($preset, 'phpRegex.extraction.interop'));
             }
         }
         $this->registry = PatternFunctionRegistry::native()->withPresets($presets);

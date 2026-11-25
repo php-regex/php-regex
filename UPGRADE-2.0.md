@@ -1267,7 +1267,7 @@ a later 2.x release adds stays off for you:
 `[]` (or `--no-interop`) reads the native calls only. The Laravel package
 takes the same list under `extraction.interop` in `config/php-regex.php`, the
 Symfony bundle under `php_regex.extraction.interop`, the PHPStan extension
-under `phpRegex.interop`. A name that is no preset is a configuration error
+under `phpRegex.extraction.interop`. A name that is no preset is a configuration error
 everywhere, which names the preset it most likely means: `regex lint` and
 `regex debug` exit with code 2, the Symfony bundle throws
 `InvalidConfigurationException` as the container is built, Laravel's

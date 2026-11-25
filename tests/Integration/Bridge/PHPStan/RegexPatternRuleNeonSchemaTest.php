@@ -62,6 +62,7 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'checks.redos.mode' => ["checks:\n            redos:\n                mode: confirmed", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}mode"];
         yield 'checks.redos.noJit' => ["checks:\n            redos:\n                noJit: false", "phpRegex\u{A0}›\u{A0}checks\u{A0}›\u{A0}redos\u{A0}›\u{A0}noJit"];
         yield 'noNewMixed' => ["noNewMixed:\n            enabled: true", "phpRegex\u{A0}›\u{A0}noNewMixed"];
+        yield 'interop, read under extraction' => ['interop: []', "phpRegex\u{A0}›\u{A0}interop"];
     }
 
     #[Test]
@@ -116,9 +117,9 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
      */
     public static function provideUnknownPresets(): iterable
     {
-        yield 'the name before the rename' => ['neon' => 'interop: [laravel-str]', 'message' => 'Unknown extraction preset "laravel-str" in phpRegex.interop: did you mean "illuminate-support"?'];
-        yield 'beside a known one' => ['neon' => 'interop: [nette-utils, phpunt]', 'message' => 'Unknown extraction preset "phpunt" in phpRegex.interop: did you mean "phpunit"?'];
-        yield 'nothing near' => ['neon' => 'interop: [zzz]', 'message' => 'Unknown extraction preset "zzz" in phpRegex.interop: the presets are '.implode(', ', InteropPresets::names()).'.'];
+        yield 'the name before the rename' => ['neon' => "extraction:\n            interop: [laravel-str]", 'message' => 'Unknown extraction preset "laravel-str" in phpRegex.extraction.interop: did you mean "illuminate-support"?'];
+        yield 'beside a known one' => ['neon' => "extraction:\n            interop: [nette-utils, phpunt]", 'message' => 'Unknown extraction preset "phpunt" in phpRegex.extraction.interop: did you mean "phpunit"?'];
+        yield 'nothing near' => ['neon' => "extraction:\n            interop: [zzz]", 'message' => 'Unknown extraction preset "zzz" in phpRegex.extraction.interop: the presets are '.implode(', ', InteropPresets::names()).'.'];
     }
 
     #[Test]
@@ -139,9 +140,10 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         $neon = (string) file_get_contents(\dirname(__DIR__, 4).'/src/PHPStan/extension.neon');
 
         $this->assertStringNotContainsString(InteropPresets::COMPOSER_PCRE.'|', $neon);
-        $parameters = $this->loadExtensionWith('interop: ['.implode(', ', InteropPresets::names()).']')->getParameter('phpRegex');
+        $parameters = $this->loadExtensionWith("extraction:\n            interop: [".implode(', ', InteropPresets::names()).']')->getParameter('phpRegex');
         $this->assertIsArray($parameters);
-        $this->assertSame(InteropPresets::names(), $parameters['interop'] ?? null);
+        $this->assertIsArray($parameters['extraction'] ?? null);
+        $this->assertSame(InteropPresets::names(), $parameters['extraction']['interop'] ?? null);
     }
 
     /**
@@ -172,8 +174,9 @@ final class RegexPatternRuleNeonSchemaTest extends TestCase
         yield 'php version as min and max versions' => ['neon' => "phpVersion:\n            min: '8.1'\n            max: '8.6'", 'path' => ['phpVersion'], 'expected' => ['min' => '8.1', 'max' => '8.6']];
         yield 'pcre version as PCRE_VERSION spells it' => ['neon' => "pcreVersion: '10.44 2024-06-07'", 'path' => ['pcreVersion'], 'expected' => '10.44 2024-06-07'];
         yield 'pcre pre-release' => ['neon' => "pcreVersion: '10.45-RC1'", 'path' => ['pcreVersion'], 'expected' => '10.45-RC1'];
-        yield 'interop presets' => ['neon' => 'interop: [composer-pcre, nette-utils]', 'path' => ['interop'], 'expected' => ['composer-pcre', 'nette-utils']];
-        yield 'no interop preset' => ['neon' => 'interop: []', 'path' => ['interop'], 'expected' => []];
+        yield 'interop presets' => ['neon' => "extraction:\n            interop: [composer-pcre, nette-utils]", 'path' => ['extraction', 'interop'], 'expected' => ['composer-pcre', 'nette-utils']];
+        yield 'no interop preset' => ['neon' => "extraction:\n            interop: []", 'path' => ['extraction', 'interop'], 'expected' => []];
+        yield 'every interop preset' => ['neon' => "extraction:\n            interop: null", 'path' => ['extraction', 'interop'], 'expected' => null];
     }
 
     /**

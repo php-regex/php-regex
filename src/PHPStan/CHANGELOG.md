@@ -81,8 +81,8 @@ CHANGELOG
    pattern and a replacement that both vary are not paired value by value: a
    reference is reported only when no possible pattern defines its group.
  * The static methods of every preset `regex lint` reads are judged by
-   default; `phpRegex.interop` takes the preset names of
-   `extraction.interop` to read only some, and refuses an unknown one, naming
+   default; `phpRegex.extraction.interop` takes the preset names of
+   `regex.json`'s `extraction.interop` to read only some, and refuses an unknown one, naming
    the preset it most likely means, as the other bridges do. A named argument is read under the name the library
    gives its pattern parameter.
  * A named argument is matched with its case, as PHP does: `PATTERN:` names

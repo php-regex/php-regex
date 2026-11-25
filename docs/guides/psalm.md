@@ -378,7 +378,7 @@ The plugin reads the same facts of a pattern as the
   with nothing. The PHPStan extension reports it as
   `regex.replacement.undefinedGroup`.
 - The plugin reads the `preg_*` calls only. The static methods of the wrapper
-  libraries the extension reads under `phpRegex.interop`, composer/pcre's
+  libraries the extension reads under `phpRegex.extraction.interop`, composer/pcre's
   `Preg::match()` or Laravel's `Str::isMatch()` for instance, are neither
   validated nor checked for ReDoS.
 
