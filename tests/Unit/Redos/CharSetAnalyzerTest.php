@@ -643,7 +643,9 @@ final class CharSetAnalyzerTest extends TestCase
                     preg_match('/^\w$/', "\xE9"),
                     preg_match('/^\W$/', "\xE9"),
                     preg_match("/^\xC9$/i", "\xE9"),
-                    preg_match('/(*UTF)^\w$/', 'é'),
+                    // What either path takes: the interpreter's start-up
+                    // study leaves "é" out, pcre.jit=0 included.
+                    max(preg_match('/(*UTF)^\w$/', 'é'), preg_match('/(*NO_JIT)(*NO_START_OPT)(*UTF)^\w$/', 'é')),
                     preg_match_all('/\d/', implode('', array_map(\chr(...), range(0, 0xFF)))),
                     preg_match('/^[[:alpha:]]$/', "\xE9"),
                     preg_match('/^[[:^alpha:]]$/', "\xE9"),
@@ -698,11 +700,13 @@ final class CharSetAnalyzerTest extends TestCase
      * Read under the tables of a locale the machine sets, a caseless item
      * takes the other case those tables give each byte, and under u or
      * (*UCP) each ASCII character: the set is what the engine matches, on
-     * the JIT as on the interpreter, ASCII letters included, and the
-     * complement of a class leaves out the pair alone. Above ASCII under u
-     * or (*UCP) the case is Unicode's: el_GR.ISO8859-7 pairs ς (0xF2) with
-     * Σ (0xD3), (*UCP) with Ò (0xD2). Under u a set knows a character by
-     * the byte it starts with.
+     * the JIT as on the interpreter, alone or repeated, ASCII letters
+     * included, and the complement of a class leaves out the pair alone.
+     * The interpreter reads ς (0xF2) alone under el_GR.ISO8859-7 as itself,
+     * which the JIT, and the interpreter's repeat, pair with Σ (0xD3): the
+     * set holds what either takes. Above ASCII under u or (*UCP) the case
+     * is Unicode's, (*UCP) pairing ς with Ò (0xD2). Under u a set knows a
+     * character by the byte it starts with.
      */
     #[Test]
     #[DataProvider('provideCaselessItemsUnderEachTables')]
@@ -716,13 +720,16 @@ final class CharSetAnalyzerTest extends TestCase
             $subjects[] = $utf ? (string) mb_chr($codePoint, 'UTF-8') : \chr($codePoint);
         }
 
-        // Oracle: the characters the item matches under the locale, on the
-        // JIT and on the interpreter, by the byte each starts with.
+        // Oracle: the characters the item matches under the locale, alone
+        // and repeated, on the JIT and on the interpreter, by the byte each
+        // starts with. The interpreter's repeat reads a character as the
+        // JIT does alone, which pcre.jit=0 leaves out.
         $taken = [];
         CharacterTables::under($locale, static function () use ($options, $atom, $flags, $subjects, &$taken): void {
             foreach ($subjects as $subject) {
                 foreach (['', '(*NO_JIT)(*NO_START_OPT)'] as $engine) {
-                    if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')$/'.$flags, $subject)) {
+                    if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')$/'.$flags, $subject)
+                        || 1 === preg_match('/'.$engine.$options.'^'.$atom.'{2}$/'.$flags, $subject.$subject)) {
                         $taken[\ord($subject[0])] = true;
                     }
                 }
