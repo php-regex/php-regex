@@ -27,6 +27,9 @@ CHANGELOG
    the running engine, as the parser does; `forEveryRelease()` reads it
    for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
    condition kept.
+ * `Printer\FormatResult` is a result object, built by the formatter
+   alone. `Validation\PatternCompatibility::$verdicts` holds the verdicts,
+   as `verdicts()` gives them.
  * `Analysis\LengthRangeCalculator` takes the Unicode mode alone; the
    calculator that follows calls into the groups they run is internal, as
    is `PcreTarget::cacheKey()`.

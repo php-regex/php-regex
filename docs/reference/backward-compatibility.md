@@ -50,7 +50,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
   `Analysis\GroupNumbering`, `Analysis\LiteralExtractionResult`,
   `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Engine\PcreMatch`,
   `Engine\PcreError`, `Analysis\PatternInfo`, `Validation\PatternCompatibility`,
-  `Validation\TargetVerdict`, `Validation\RangeVerdict`;
+  `Validation\TargetVerdict`, `Validation\RangeVerdict`, `Printer\FormatResult`;
 - `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
 - `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,

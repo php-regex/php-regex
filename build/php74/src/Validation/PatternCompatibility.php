@@ -29,12 +29,14 @@ final class PatternCompatibility
      * @var list<TargetVerdict>
      *
      */
-    private array $verdicts;
+    public array $verdicts;
 
     /**
      * @internal built by CompatibilityChecker::check()
      *
-     * @param list<TargetVerdict> $verdicts
+     * @param list<TargetVerdict> $verdicts one verdict per point of the
+     *                                      matrix, by PHP version, then by
+     *                                      PCRE2 release
      */
     public function __construct(array $verdicts)
     {
@@ -42,6 +44,8 @@ final class PatternCompatibility
     }
 
     /**
+     * The verdicts, as $verdicts holds them.
+     *
      * @return list<TargetVerdict>
      */
     public function verdicts(): array

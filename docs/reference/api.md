@@ -527,7 +527,7 @@ $compatibility->isValidEverywhere();                        // false: PHP 8.5 re
 $compatibility->invalidVerdicts()[0]->target->phpVersionId; // 80500
 ```
 
-`verdicts()` lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
+`$verdicts`, which `verdicts()` gives too, lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
 `PcreTarget`) and its `validation` (a `ValidationResult`). `invalidVerdicts()` keeps the ones that refuse the pattern.
 Validity is not monotone, and the matrix widens when the library learns a PHP or PCRE2 release, so a minor release may
 add verdicts. `new CompatibilityChecker($parser)` gives the same answer from `php-regex/regex-parser`, each point judged
@@ -939,7 +939,7 @@ foreach ($result->changes as $change) {
 
 ### FormatResult
 
-Returned by `format()` and `compact()`.
+Returned by `format()` and `compact()`, never built by hand: its constructor is internal.
 
 | property | type | meaning |
 |---|---|---|
