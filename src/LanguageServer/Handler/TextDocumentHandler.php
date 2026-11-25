@@ -778,18 +778,16 @@ final class TextDocumentHandler
 
         // One for each such call of the literal.
         $everyMatchCost = $redos->everyMatchSearchCost;
-        if (null === $everyMatchCost) {
-            return $diagnostics;
-        }
-
-        foreach ($everyMatch as $function) {
-            $diagnostics[] = $this->diagnosticConverter->fromRedos(
-                RedosVerdict::SEARCH_ISSUE_ID,
-                RedosVerdict::everyMatchMessage($function, $everyMatchCost),
-                RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion),
-                false,
-                $span,
-            );
+        if (null !== $everyMatchCost) {
+            foreach ($everyMatch as $function) {
+                $diagnostics[] = $this->diagnosticConverter->fromRedos(
+                    RedosVerdict::SEARCH_ISSUE_ID,
+                    RedosVerdict::everyMatchMessage($function, $everyMatchCost),
+                    RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion),
+                    false,
+                    $span,
+                );
+            }
         }
 
         return $diagnostics;

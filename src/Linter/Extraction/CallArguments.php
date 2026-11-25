@@ -249,11 +249,7 @@ final class CallArguments
     public static function utf8(array $tokens, int $startIndex, int $totalTokens, array $utf8, array $closers): ?bool
     {
         $value = self::given($tokens, $startIndex, $totalTokens, $utf8, $closers);
-        if (null === $value) {
-            return null;
-        }
-
-        $literal = false === $value ? 0 : self::boolean($tokens, $value[0], $value[1]);
+        $literal = \is_array($value) ? self::boolean($tokens, $value[0], $value[1]) : $value;
 
         return null === $literal ? null : 1 === $literal;
     }
@@ -312,13 +308,11 @@ final class CallArguments
             $last = PhpTokens::previousSignificant($tokens, $last - 1) ?? $first;
         }
 
-        $token = $tokens[$first] ?? ';';
-        $next = PhpTokens::nextSignificant($tokens, $first + 1, $last + 1) ?? $last + 1;
-        if (\is_array($token) && \in_array($token[0], [\T_ATTRIBUTE, \T_STATIC, \T_FUNCTION, \T_FN], true) && self::closureEnd($tokens, $first, $last, $closers) === $last) {
-            return true;
-        }
-
-        return self::isClosureFromCallable($tokens, $first, $next, $last, $closers, $context) || self::isFirstClassCallable($tokens, $first, $last, $closers);
+        // closureEnd() is null for anything but a closure or an arrow
+        // function.
+        return self::closureEnd($tokens, $first, $last, $closers) === $last
+            || self::isClosureFromCallable($tokens, $first, PhpTokens::nextSignificant($tokens, $first + 1, $end) ?? $end, $last, $closers, $context)
+            || self::isFirstClassCallable($tokens, $first, $last, $closers);
     }
 
     /**

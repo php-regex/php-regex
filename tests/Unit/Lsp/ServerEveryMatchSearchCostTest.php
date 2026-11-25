@@ -147,6 +147,25 @@ final class ServerEveryMatchSearchCostTest extends TestCase
     }
 
     /**
+     * A pattern whose attempt is not linear has no search cost of its own
+     * loop: the call that looks for every match publishes its verdict, as
+     * one that stops at the first match does, and nothing more.
+     */
+    #[Test]
+    public function test_a_call_that_loops_publishes_the_verdict_of_a_pattern_whose_attempt_is_not_linear(): void
+    {
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern('/(a+)+$/'), str_repeat('a', 30).'!'), 'Oracle: one attempt backtracks past the limit.');
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error());
+
+        foreach (["preg_match_all('/(a+)+\$/', \$s);", "preg_match('/(a+)+\$/', \$s);"] as $code) {
+            $codes = array_column($this->diagnostics($code), 'code');
+
+            $this->assertContains(RedosVerdict::ISSUE_ID, $codes, 'The verdict, at '.$code);
+            $this->assertNotContains(self::SEARCH, $codes, 'No search cost, at '.$code);
+        }
+    }
+
+    /**
      * The lint rule of the search cost turns it off.
      */
     #[Test]

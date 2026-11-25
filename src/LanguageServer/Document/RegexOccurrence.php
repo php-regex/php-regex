@@ -65,13 +65,14 @@ final class RegexOccurrence
     /**
      * The preg functions whose loop over every match runs the pattern, at
      * the call the extractor reads the literal at and at the others, each
-     * once, in the order of the calls.
+     * once, in the order of the calls: the extractor names each function of
+     * the others once, the one of the call it reads the literal at left out.
      *
      * @return list<string>
      */
     public function everyMatchCalls(): array
     {
-        return array_values(array_unique(null === $this->everyMatch ? $this->everyMatchElsewhere : [$this->everyMatch, ...$this->everyMatchElsewhere]));
+        return null === $this->everyMatch ? $this->everyMatchElsewhere : [$this->everyMatch, ...$this->everyMatchElsewhere];
     }
 
     /**
