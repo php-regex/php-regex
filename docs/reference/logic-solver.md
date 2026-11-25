@@ -134,21 +134,28 @@ release PHP bundles: the engine backtracks into the call (`/(a|ab)(?1)c/` matche
 the groups inside it are given back the values they held before it, and the body keeps the
 options the group was written under (`/(a)(?i)(?1)/` finds nothing in `aA`). A group a
 `(?(DEFINE)...)` holds runs only there, under the options in force where the DEFINE stands:
-`/(?i:(?(DEFINE)(?<n>a)))(?&n)/` finds `A`. A possessive quantifier in a called group is read
-wherever the group runs: `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` write the same `$matches`, and
-so do `/(?&n)c(?(DEFINE)(?<n>a+b?))/` and `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, while
-`/(a++b?)c(?1)a/` is refused, as the call gives an `a` back to what follows it.
+`/(?i:(?(DEFINE)(?<n>a)))(?&n)/` finds `A`.
+
+A pattern that holds a possessive quantifier inside a group a call runs, a group a DEFINE
+holds included, or anywhere in a pattern that calls itself whole, is refused, whatever
+follows the quantifier: PCRE2's JIT, which PHP runs by default, misses matches of such a
+pattern that its interpreter finds, and the match solver reads the interpreter. With
+`pcre.jit=1`, `/(a++)c(?1)d/` finds no match in `acacad`, where `/(a+)c(?1)d/` and the
+interpreter match `acad` (PCRE2 10.34 to 10.49), `/(a*+)c(?1)d/` none in `ccd`, and
+`/(xa++)c(?1)?d/` none in `xacxacd` (10.39 to 10.49): an attempt that ran the call fails,
+and no later start finds the match. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are refused as
+well, though no subject was found on which they differ. A possessive quantifier outside every
+group a call runs is read as before: `/a+;(x)(?1)/` and `/a++;(x)(?1)/` write the same
+`$matches`.
 
 A call that may run its own group again has no finite automaton, yet two patterns that differ
-only in possessive quantifiers over one character are still compared: every call is read
-through, a call that runs its group again leading back to where the group starts and the end
-of the group to every place a call of it returns to, however deep the calls run. A possessive quantifier
-that nothing following it there may start like gives nothing back, so
-`/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` write
-the same `$matches`, and so do `/x(?R)?ca+b?()/` and `/x(?R)?ca++b?()/`, while
-`/(x(?1)?ca++)(?1)a/` stays refused: the run of the group the second call makes gives an `a`
-back to what follows it. A possessive quantifier over a group, capturing or not, stays refused
-there too: it keeps a frame of the JIT for each run of the call around it, and
+only in possessive quantifiers over one character, outside every group a call runs, are still
+compared: every call is read through, a call that runs its group again leading back to where
+the group starts and the end of the group to every place a call of it returns to, however
+deep the calls run. A possessive quantifier that nothing following it there may start like
+gives nothing back, so `/a+b(x(?1)?y)/` and `/a++b(x(?1)?y)/` write the same `$matches`. A
+possessive quantifier over a group, capturing or not, in a group that calls itself is refused
+on two counts: it keeps a frame of the JIT for each run of the call around it, and
 `/x(?R)?(?:ab)++c/` runs out of the JIT stack some 3,000 calls deep where
 `/x(?R)?(?:ab)+c/` matches.
 

@@ -40,6 +40,7 @@ use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -65,6 +66,8 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
@@ -95,6 +98,13 @@ final class LanguageSolver
      * observed.
      */
     private const DEAD = -1;
+
+    /**
+     * Why the match solver reads no pattern that holds a possessive
+     * quantifier inside a group a call runs: PCRE2's JIT, which PHP runs by
+     * default, misses matches of it that the interpreter finds.
+     */
+    private const JIT_MESSAGE = 'A possessive quantifier inside a group a call runs, or in a pattern that calls itself whole, makes PCRE2\'s JIT miss matches its interpreter finds, and the match solver reads the interpreter: /(a++)c(?1)d/ finds no match in "acacad" with the JIT.';
 
     /**
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
@@ -229,7 +239,10 @@ final class LanguageSolver
      * shortest subject the two treat differently.
      *
      * The match mode of the options does not apply: the question is what
-     * preg_match() does.
+     * preg_match() does. A pattern that holds a possessive quantifier inside
+     * a group a call runs, or anywhere when it calls itself whole, is not
+     * read: PCRE2's JIT, which PHP runs by default, misses matches of it
+     * that the interpreter finds, "/(a++)c(?1)d/" none in "acacad".
      *
      * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
@@ -250,6 +263,12 @@ final class LanguageSolver
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
         $options ??= new SolverOptions();
+
+        foreach ([$left, $right] as $pattern) {
+            if (self::possessiveWhereACallRuns($this->parser->parse($pattern))) {
+                throw new ComplexityException(self::JIT_MESSAGE, 0, $pattern);
+            }
+        }
 
         try {
             $leftNfa = $this->priorityNfa($left, $options);
@@ -280,8 +299,10 @@ final class LanguageSolver
     /**
      * The runs that prove two patterns write the same results in every
      * preg_*() call, or null when no run does: a pattern that reads the text
-     * before where a search starts (a lookbehind, "\b", "\B", "^" under /m)
-     * or that reports a match start of its own ("\K").
+     * before where a search starts (a lookbehind, "\b", "\B", "^" under /m),
+     * that reports a match start of its own ("\K"), or that holds a
+     * possessive quantifier inside a group a call runs, of which PCRE2's JIT
+     * misses matches the interpreter finds (see matchEquivalent()).
      *
      * A search from an offset reads the subject from there as one from 0
      * reads what follows, but for "^" and "\A", which never hold past the
@@ -307,6 +328,10 @@ final class LanguageSolver
         $defined = [$translator->defined()];
         $hirs[] = $translator->translate($rightAst);
         $defined[] = $translator->defined();
+
+        if (self::possessiveWhereACallRuns($leftAst) || self::possessiveWhereACallRuns($rightAst)) {
+            return null;
+        }
 
         if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
             return [];
@@ -862,6 +887,42 @@ final class LanguageSolver
     private static function oneCharacterAtATime(Hir $body): bool
     {
         return $body instanceof ClassHir || ($body instanceof LiteralHir && 1 === \count($body->codePoints));
+    }
+
+    /**
+     * Whether a possessive quantifier stands inside a group a subroutine
+     * call runs, or anywhere in a pattern that calls itself whole. PCRE2's
+     * JIT misses matches of such a pattern that its interpreter, which the
+     * match solver reads, finds, once an attempt that ran the call failed:
+     * /(a++)c(?1)d/ finds nothing in "acacad" with the JIT, from PCRE2 10.34
+     * to 10.49, where the interpreter and /(a+)c(?1)d/ match "acad". The
+     * possessive need give nothing back: no pattern of this shape is read.
+     */
+    private static function possessiveWhereACallRuns(RegexNode $ast): bool
+    {
+        $groups = GroupIndex::of($ast->pattern);
+        foreach ($groups->recursesWhole() ? [$ast->pattern] : $groups->subroutineTargets() as $called) {
+            if (self::holdsPossessive($called)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function holdsPossessive(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsPossessive($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
