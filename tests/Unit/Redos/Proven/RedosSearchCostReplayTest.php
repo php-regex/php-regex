@@ -333,6 +333,41 @@ final class RedosSearchCostReplayTest extends TestCase
     }
 
     /**
+     * The search tries the attempts the breaker starts after every attempt
+     * of the run: a match there, or an empty one at the subject's end,
+     * leaves each of them made, reading to the end of the run. Without "\K"
+     * a match starts where its attempt did: "/(?:a+\d)?$/" matches "" at
+     * 256 on "a"x256, and "/(?:a+\d)?!/" matches "!" at 256 on "a"x256."!",
+     * where the attempts pinned in the run fail. With "\K" an earlier
+     * attempt may report its match there: "/a+b|a+\K$/" matches "" at 256
+     * and "/a+b|a+\K!/" "!" at 256, each from its first attempt, which reads
+     * the run twice, and the search is linear.
+     */
+    #[Test]
+    public function test_replay_accepts_a_match_after_the_run_alone(): void
+    {
+        $subject = str_repeat('a', 256);
+        $this->assertSame(1, preg_match('/(?:a+\d)?$/', $subject, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: /(?:a+\d)?$/ finds no match.');
+        $this->assertSame(['', 256], $matches[0], 'Oracle: /(?:a+\d)?$/ matches before the end.');
+        $this->assertSame(0, preg_match('/(?:a+\d)?$/A', $subject, $matches, 0, 64), 'Oracle: the attempt of /(?:a+\d)?$/ inside the run matches.');
+        $this->assertSame(1, preg_match('/(?:a+\d)?!/', $subject.'!', $matches, \PREG_OFFSET_CAPTURE), 'Oracle: /(?:a+\d)?!/ finds no match.');
+        $this->assertSame(['!', 256], $matches[0], 'Oracle: /(?:a+\d)?!/ matches before the breaker.');
+        $this->assertSame(0, preg_match('/(?:a+\d)?!/A', $subject.'!', $matches, 0, 64), 'Oracle: the attempt of /(?:a+\d)?!/ inside the run matches.');
+        $this->assertSame(1, preg_match('/a+b|a+\K$/', $subject, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: /a+b|a+\K$/ finds no match.');
+        $this->assertSame(['', 256], $matches[0], 'Oracle: /a+b|a+\K$/ reports its match before the end.');
+        $this->assertSame(1, preg_match('/a+b|a+\K$/A', $subject), 'Oracle: the attempt of /a+b|a+\K$/ at the subject start fails.');
+        $this->assertSame(1, preg_match('/a+b|a+\K!/', $subject.'!', $matches, \PREG_OFFSET_CAPTURE), 'Oracle: /a+b|a+\K!/ finds no match.');
+        $this->assertSame(['!', 256], $matches[0], 'Oracle: /a+b|a+\K!/ reports its match before the breaker.');
+        $this->assertSame(1, preg_match('/a+b|a+\K!/A', $subject.'!'), 'Oracle: the attempt of /a+b|a+\K!/ at the subject start fails.');
+
+        $replayer = new SearchCostReplayer();
+        $this->assertTrue($replayer->replays('/(?:a+\d)?$/', '', 'a', ''));
+        $this->assertTrue($replayer->replays('/(?:a+\d)?!/', '', 'a', '!'));
+        $this->assertFalse($replayer->replays('/a+b|a+\K$/', '', 'a', ''));
+        $this->assertFalse($replayer->replays('/a+b|a+\K!/', '', 'a', '!'));
+    }
+
+    /**
      * Attempts that each stop at a bound do not grow with the rest of the
      * run, though they take more than a step per run word between them:
      * /\s{1,150}$/ and /\s{1,180}$/ are linear (15.9 / 32.1 / 64.2 ms and

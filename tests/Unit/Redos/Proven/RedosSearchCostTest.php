@@ -252,8 +252,10 @@ final class RedosSearchCostTest extends TestCase
         yield 'leading class of a property and its negation under u' => ['pattern' => '/[\pL\PL]*\d$/u'];
         // One alternative matches the required code unit alone at the end
         // (pcre2test 10.49: "Last code unit = 'b'"): the witness carries it
-        // inside the breaker, a character after it. 6.3 / 24.5 / 97.9 ms on
-        // "a"x5k/10k/20k."!b!", each other row alike (pcre.jit=0).
+        // inside the breaker, after a character that fails the run, and the
+        // attempt at it matches once every attempt of the run has failed.
+        // 6.5 / 27.3 / 100.4 ms on "a"x5k/10k/20k."!b", each other row alike
+        // (pcre.jit=0).
         yield 'alternative matching the required code unit at the end' => ['pattern' => '/a+b|b$/'];
         yield 'alternative matching the required sign at the end' => ['pattern' => '/\s+=|=$/'];
         yield 'alternative matching the required semicolon at the end' => ['pattern' => '/\w+;|;$/'];
@@ -262,18 +264,22 @@ final class RedosSearchCostTest extends TestCase
     }
 
     /**
-     * The attack is a valid witness: the search matches nowhere on it,
-     * whatever the number of run words.
+     * The attack is a valid witness: the search matches nowhere before the
+     * breaker, whatever the number of run words. An attempt the breaker
+     * starts may match it, after every attempt of the run: "/a+b|b$/"
+     * matches the "b" of "!b".
      */
     #[Test]
     #[DataProvider('provideQuadraticSearches')]
-    public function test_search_cost_witness_is_matched_nowhere_by_the_search(string $pattern): void
+    public function test_search_cost_witness_is_matched_nowhere_before_the_breaker(string $pattern): void
     {
         $cost = (new RedosAnalyzer())->analyze($pattern)->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
 
         foreach ([1, 2, 3, 100] as $words) {
-            $this->assertSame(0, preg_match($pattern, $cost->build($words)), \sprintf('%s on %d run words', $pattern, $words));
+            $subject = $cost->build($words);
+            $found = preg_match($pattern, $subject, $matches, \PREG_OFFSET_CAPTURE);
+            $this->assertTrue(0 === $found || $matches[0][1] >= \strlen($subject) - \strlen($cost->breaker), \sprintf('%s on %d run words matches at %d.', $pattern, $words, $matches[0][1] ?? -1));
         }
     }
 
@@ -752,10 +758,6 @@ final class RedosSearchCostTest extends TestCase
         // pcre.jit=0 (measured, not asserted), against 62.8 / 251.2 ms for
         // the same pattern without s.
         yield 'atomic leading dot-star under s' => ['pattern' => '/(?>.*)[xy]/s'];
-        // PCRE2 requires the "b" every alternative ends with, and every
-        // subject holding one matches through the second alternative.
-        yield 'alternative matching the required code unit alone' => ['pattern' => '/(.*)(?:ab)+|b/'];
-        yield 'lazy dot-star alternative matching the required code unit alone' => ['pattern' => '/.*?(?:ab)+|b/s'];
         // A class of every code point is PCRE2's any character under u: the
         // possessive repeat moves to the end in one step (0.2 / 0.3 / 0.5 ms
         // on "a"x5k/10k/20k."b", pcre.jit=0).
@@ -942,7 +944,7 @@ final class RedosSearchCostTest extends TestCase
 
     /**
      * The search proof pays its own steps out of the shared budget: one step
-     * short of what it needs (measured 2026-11-23), one attempt stays proven
+     * short of what it needs (measured 2026-11-25), one attempt stays proven
      * linear and no witness comes, never an error; with them, the witness.
      */
     #[Test]
@@ -964,8 +966,8 @@ final class RedosSearchCostTest extends TestCase
     public static function provideSearchBudgetThresholds(): iterable
     {
         yield 'trailing whitespace' => ['pattern' => '/\s+$/', 'firstFoundAt' => 112];
-        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 82];
-        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 118];
+        yield 'literal run' => ['pattern' => '/a+b/', 'firstFoundAt' => 81];
+        yield 'two-character run word' => ['pattern' => '/(?:ab)+c/', 'firstFoundAt' => 113];
     }
 
     /**

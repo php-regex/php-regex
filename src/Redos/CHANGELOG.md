@@ -20,6 +20,20 @@ CHANGELOG
    on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
    0.01 ms through `preg_match()`. `RedosSearchCost::$shortMatch` says so,
    and confirmed mode replays the attempt pinned inside the run.
+ * The search cost lets the attempts after the run match: the search tries
+   those the breaker starts, and the one at the subject's end, once every
+   attempt of the run has read to its end and failed. `/\s*$/` (131, 521
+   then 2,093 ms on 5,000, 10,000 then 20,000 spaces and `!`),
+   `/(?:a+\d)?$/` (1.1, 4.1, 15.8 then 62 ms on 2,000 to 16,000 `a`),
+   `/(?:a\n)*(?:a{2}|b|\z)/m` (20, 79 then 321 ms on `a\n` 1,000, 2,000
+   then 4,000 times and `!`), `/(?:\w+\.)?x/` (1.2, 4.8 then 19 ms on
+   2,000, 4,000 then 8,000 `0` and `x`) and `/(.*)(?:ab)+|b/` (177, 728
+   then 2,856 ms on 5,000, 10,000 then 20,000 `!` and `b`), with
+   `pcre.jit=0`, were proven safe with no search cost, and are reported,
+   though `preg_match()` returns 1 on the attack. The breaker of
+   `/a+b|b$/` is `"!b"`, no longer `"!b!"`. The replay of confirmed mode
+   accepts a match that starts in the breaker or at the subject's end, but
+   in a pattern holding `\K`.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.
