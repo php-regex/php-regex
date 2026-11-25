@@ -84,7 +84,7 @@ final class PublicSurface
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'ExplainFormat', 'HighlightFormat'],
-        'Transpiler' => ['Transpiler', 'Dialect', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'Target/JavaScript/VModeCompatibility'],
+        'Transpiler' => ['Transpiler', 'Dialect', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'VModeCompatibility', 'VModeFinding'],
     ];
 
     /**
@@ -108,6 +108,6 @@ final class PublicSurface
         'Redos' => ['RedosAnalysis', 'Finding', 'Hotspot', 'RedosWitness', 'RedosSearchCost', 'Confirmation', 'ConfirmationSample'],
         'Linter' => ['Rule/RuleViolation'],
         'Toolkit' => ['AnalysisReport'],
-        'Transpiler' => ['TranspileResult'],
+        'Transpiler' => ['TranspileResult', 'VModeFinding'],
     ];
 }

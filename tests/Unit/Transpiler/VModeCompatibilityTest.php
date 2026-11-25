@@ -14,8 +14,10 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Transpiler;
 
 use PHPRegex\Parser\RegexParser;
-use PHPRegex\Transpiler\Target\JavaScript\VModeCompatibility;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Transpiler;
+use PHPRegex\Transpiler\VModeCompatibility;
+use PHPRegex\Transpiler\VModeFinding;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -38,7 +40,7 @@ final class VModeCompatibilityTest extends TestCase
     {
         $findings = self::check($value);
 
-        $this->assertSame($expected, array_map(static fn (array $finding): array => [$finding['construct'], $finding['offset'], $finding['refused']], $findings));
+        $this->assertSame($expected, array_map(static fn (VModeFinding $finding): array => [$finding->construct, $finding->offset, $finding->refused], $findings));
         $this->assertSame(!$compiles, \in_array(true, array_column($findings, 'refused'), true));
     }
 
@@ -321,20 +323,48 @@ final class VModeCompatibilityTest extends TestCase
     #[Test]
     public function test_a_finding_says_what_to_write(): void
     {
-        $this->assertSame('Under v a class takes "-" escaped only: write "\-".', self::check('[a-z0-9-]')[0]['message']);
-        $this->assertSame('Under v "&&" in a class is the intersection of its sides, not two "&": escape one of them, "\&".', self::check('[a&&b]')[0]['message']);
-        $this->assertSame('JavaScript knows no escape "\x{" under v: a syntax error.', self::check('\x{41}')[0]['message']);
-        $this->assertSame('Under v a "{" that opens no quantifier is a syntax error: write "\{".', self::check('a{,3}')[0]['message']);
+        $this->assertSame('Under v a class takes "-" escaped only: write "\-".', self::check('[a-z0-9-]')[0]->message);
+        $this->assertSame('Under v "&&" in a class is the intersection of its sides, not two "&": escape one of them, "\&".', self::check('[a&&b]')[0]->message);
+        $this->assertSame('JavaScript knows no escape "\x{" under v: a syntax error.', self::check('\x{41}')[0]->message);
+        $this->assertSame('Under v a "{" that opens no quantifier is a syntax error: write "\{".', self::check('a{,3}')[0]->message);
     }
 
+    /**
+     * A check keeps nothing of the one before: each call reads its own tree,
+     * and the findings it gave are values that a later call leaves as they
+     * were.
+     */
     #[Test]
     public function test_the_checker_can_be_reused(): void
     {
         $checker = new VModeCompatibility();
         $parser = RegexParser::create();
 
-        $this->assertCount(1, $checker->check($parser->parse('/a++/u')));
+        $possessive = $checker->check($parser->parse('/a++/u'));
+        $this->assertEquals([new VModeFinding(0, 'possessive', 'JavaScript has no possessive quantifier: "a++" is a syntax error under v.', true)], $possessive);
         $this->assertSame([], $checker->check($parser->parse('/a+/u')));
+        $this->assertEquals([new VModeFinding(1, 'posix_class', 'JavaScript has no POSIX class: under v "[:alpha:]" is a nested class of the characters ":alpha:".', false)], $checker->check($parser->parse('/[[:alpha:]]/u')));
+        $this->assertSame(['possessive'], array_column($possessive, 'construct'));
+        $this->assertSame([], (new \ReflectionClass(VModeCompatibility::class))->getProperties(), 'The checker holds nothing between two calls.');
+    }
+
+    /**
+     * A finding is a value: the offset of the construct in the body, its
+     * name, what the browser does with it, and whether it refuses to compile
+     * the pattern.
+     */
+    #[Test]
+    public function test_a_finding_carries_the_offset_the_construct_the_message_and_the_refusal(): void
+    {
+        [$escape, $doubled] = self::check('\Ea[a&&b]');
+
+        $this->assertSame(0, $escape->offset);
+        $this->assertSame('escape', $escape->construct);
+        $this->assertSame('JavaScript knows no escape "\E" under v: a syntax error.', $escape->message);
+        $this->assertTrue($escape->refused);
+        $this->assertSame(5, $doubled->offset);
+        $this->assertSame('class_double_punctuator', $doubled->construct);
+        $this->assertFalse($doubled->refused);
     }
 
     /**
@@ -345,14 +375,14 @@ final class VModeCompatibilityTest extends TestCase
     public function test_what_the_html_pattern_target_writes_passes(): void
     {
         foreach (['/^[-a()|{}\/]+$/', '/^[a-z0-9._%+-]+@[a-z]+$/i', '/^a++b$/', '/^(?>a|b)c$/', '/^\d\w\s$/', '/^[!-\/]$/i'] as $pattern) {
-            $value = (new Transpiler())->transpile($pattern, 'html-pattern')->pattern;
+            $value = (new Transpiler())->transpile($pattern, Dialect::HtmlPattern)->pattern;
 
             $this->assertSame([], self::check($value), $pattern.' as '.$value);
         }
     }
 
     /**
-     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     * @return list<VModeFinding>
      */
     private static function check(string $value): array
     {

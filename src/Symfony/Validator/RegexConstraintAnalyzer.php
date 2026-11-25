@@ -23,8 +23,9 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Transpiler\Dialect;
-use PHPRegex\Transpiler\Target\JavaScript\VModeCompatibility;
 use PHPRegex\Transpiler\Transpiler;
+use PHPRegex\Transpiler\VModeCompatibility;
+use PHPRegex\Transpiler\VModeFinding;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\Constraints\Choice;
 use Symfony\Component\Validator\Constraints\Length;
@@ -550,7 +551,10 @@ final class RegexConstraintAnalyzer
             }
 
             try {
-                return (new VModeCompatibility())->check($this->parser->parse($delimiter.$html.$delimiter.'u'));
+                return array_map(
+                    static fn (VModeFinding $finding): array => ['offset' => $finding->offset, 'construct' => $finding->construct, 'message' => $finding->message, 'refused' => $finding->refused],
+                    (new VModeCompatibility())->check($this->parser->parse($delimiter.$html.$delimiter.'u')),
+                );
             } catch (RegexException) {
                 return $structure ? self::unbalanced($html) : [];
             }
