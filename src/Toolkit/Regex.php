@@ -34,7 +34,6 @@ use PHPRegex\Parser\Analysis\PatternInfo;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\DelimitedPattern;
-use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
@@ -126,13 +125,8 @@ final class Regex
     /**
      * @param RegexParser   $parser               Reads and judges every pattern
      * @param array<string> $redosIgnoredPatterns Patterns to ignore in ReDoS analysis
-     * @param PcreEngine    $engine               Runs the pattern to check the samples
      */
-    private function __construct(
-        private readonly RegexParser $parser,
-        private readonly array $redosIgnoredPatterns,
-        private readonly PcreEngine $engine = new PcreEngine(),
-    ) {}
+    private function __construct(private readonly RegexParser $parser, private readonly array $redosIgnoredPatterns) {}
 
     /**
      * Create a new Regex instance with optional configuration.
@@ -183,7 +177,7 @@ final class Regex
     {
         $parser = $this->parser->withTarget($target);
 
-        return $parser === $this->parser ? $this : new self($parser, $this->redosIgnoredPatterns, $this->engine);
+        return $parser === $this->parser ? $this : new self($parser, $this->redosIgnoredPatterns);
     }
 
     /**
@@ -529,9 +523,9 @@ final class Regex
      */
     public function generate(string $regex): string
     {
-        // The generator checks each sample with this instance's engine and
-        // judges the pattern with its parser.
-        return (new SampleGenerator(engine: $this->engine))->generate($regex, $this->parser);
+        // The generator judges the pattern with this instance's parser and
+        // checks each sample with the running engine.
+        return (new SampleGenerator(parser: $this->parser))->generate($regex);
     }
 
     /**

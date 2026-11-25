@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Generator;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\Exception\ResourceLimitException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -110,7 +111,30 @@ final class VerifiedSampleTest extends TestCase
     {
         $parser = RegexParser::create();
 
-        $this->assertSame(1, preg_match('/\d{3}-[A-Z]{2}/', (new SampleGenerator())->generate('/\d{3}-[A-Z]{2}/', $parser)));
+        $this->assertSame(1, preg_match('/\d{3}-[A-Z]{2}/', (new SampleGenerator(parser: $parser))->generate('/\d{3}-[A-Z]{2}/')));
+    }
+
+    /**
+     * The generator reads every pattern with the parser it was built with,
+     * its limits and its target included.
+     */
+    #[Test]
+    public function test_the_parser_the_generator_is_built_with_reads_every_pattern(): void
+    {
+        $this->assertSame('abcdef', (new SampleGenerator())->generate('/abcdef/'));
+
+        $generator = new SampleGenerator(parser: RegexParser::create(['cache' => null, 'max_pattern_length' => 5]));
+
+        try {
+            $generator->generate('/abcdef/');
+            $this->fail('The parser the generator was built with was not asked.');
+        } catch (ResourceLimitException $e) {
+            $this->assertStringContainsString('5', $e->getMessage());
+        }
+
+        $this->expectException(ResourceLimitException::class);
+
+        $generator->generate('/ghijkl/');
     }
 
     #[Test]

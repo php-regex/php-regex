@@ -483,7 +483,10 @@ echo $sample;  // e.g., "Word12"
 Visiting the tree draws a sample from the tree alone: an assertion, a condition or a
 backreference can make it one the engine does not match (`/(?!^)a/` draws `a`). `generate()`
 draws again and checks each sample with the running engine, as `Regex::generate()` does, and
-throws `SampleGenerationException` when none matches:
+throws `SampleGenerationException` when none matches. It reads and judges the pattern with the
+parser the generator was built with, the last argument of
+`new SampleGenerator(int $maxRepetition = 3, ?int $seed = null, ?RegexParser $parser = null)`,
+or with one for the running PHP:
 
 ```php
 use PHPRegex\Generator\SampleGenerator;
@@ -499,7 +502,9 @@ echo (new SampleGenerator())->generate('/(?!^)a/');  // "aa"
 checked against the running engine: `preg_match()` gives 1 on each matching case and 0 on each
 non-matching one. A pattern the engine refuses has no case, and one that matches every subject
 (`/a*/`) has no non-matching case. No case is longer than 1,048,576 bytes, the longest sample
-`SampleGenerator` builds: `/^(?:a{65535}){100}$/` has no matching case.
+`SampleGenerator` builds: `/^(?:a{65535}){100}$/` has no matching case. A matching case its
+heuristics miss, as `/^(a)\1$/`, is a sample `SampleGenerator::generate()` draws with the parser
+of `new TestCaseGenerator(?RegexParser $parser = null)`.
 
 ```php
 use PHPRegex\Toolkit\Regex;

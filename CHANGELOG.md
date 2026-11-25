@@ -126,7 +126,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 
 #### Parser and toolkit
 - `QuantifierNode::$bounds` holds the least and the most repetitions of a quantifier, read once when the node is built (null only for a node built by hand around a token that is no quantifier).
-- `new SampleGenerator(seed: 42)` takes the seed with the other arguments; `setSeed()` and `resetSeed()` stay, and each sample drawn on a seeded instance starts again from the seed.
+- `new SampleGenerator(int $maxRepetition = 3, ?int $seed = null, ?RegexParser $parser = null)` takes the seed and the parser `generate(string $regex)` reads with; `setSeed()` and `resetSeed()` stay, and each sample drawn on a seeded instance starts again from the seed. `new TestCaseGenerator(?RegexParser $parser = null)` draws with that parser the samples its heuristics miss.
 - `new Optimizer()` and `new Transpiler()` without a parser read with `RegexParser::create()`.
 - `new CompatibilityChecker($parser)` and `RangeDiff::between($from, $to, $parser)` judge every target with that parser's locale, recursion depth and limits.
 

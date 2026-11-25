@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The generators take their parser when they are built, as every service
+   does: `new SampleGenerator(int $maxRepetition = 3, ?int $seed = null,
+   ?RegexParser $parser = null)`, whose `generate(string $regex)` reads and
+   judges the pattern with it, and `new TestCaseGenerator(?RegexParser
+   $parser = null)`, which draws with it the samples its heuristics miss.
+   Both ask the running engine what a class holds; neither takes one.
  * A seeded `SampleGenerator` starts each `generate()` from its seed once,
    and each draw the engine refuses is followed by a new one: every retry
    drew the same sample again, and 27 seeds in 40 threw

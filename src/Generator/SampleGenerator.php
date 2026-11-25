@@ -22,6 +22,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -248,20 +249,24 @@ final class SampleGenerator extends AbstractNodeVisitor
     private ?PcreTarget $target = null;
 
     /**
-     * The parser of the calls that name none, built on the first of them.
+     * Asks the running engine what a class or a property holds, and checks
+     * each sample.
      */
-    private ?RegexParser $parser = null;
+    private readonly PcreEngine $engine;
 
     /**
-     * @param int        $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
-     * @param PcreEngine $engine        Asks the running engine what a class or a property holds
-     * @param int|null   $seed          Locks the random source, as setSeed() does: each sample starts again from it
+     * @param int              $maxRepetition Maximum repetitions for quantifiers like `*` or `+`
+     * @param int|null         $seed          Locks the random source, as setSeed() does: each sample starts again
+     *                                        from it
+     * @param RegexParser|null $parser        Reads and judges every pattern generate() takes; one for the running PHP,
+     *                                        built on the first of them and kept, when null
      */
     public function __construct(
         private readonly int $maxRepetition = 3,
-        private readonly PcreEngine $engine = new PcreEngine(),
-        ?int $seed = null
+        ?int $seed = null,
+        private ?RegexParser $parser = null,
     ) {
+        $this->engine = new PcreEngine();
         $this->seed = $seed;
         $this->resetRandomizer($seed);
     }
@@ -289,19 +294,22 @@ final class SampleGenerator extends AbstractNodeVisitor
      * name for, as the target reads it, gets no sample: no character of
      * the property can be drawn or checked.
      *
-     * @param string           $regex  The delimited pattern
-     * @param RegexParser|null $parser Reads and judges the pattern; one for the running PHP, kept for the next call, when null
+     * The pattern is read and judged with the parser the generator was
+     * built with.
+     *
+     * @param string $regex The delimited pattern
      *
      * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
      * @throws LexerException            when the pattern does not tokenize
+     * @throws LimitException            when the pattern passes a limit of the parser
      * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
      *                                   exist, holds a property the running engine cannot read as the target does,
      *                                   more repeats add nothing than a sample may hold, or no sample the running
      *                                   engine matches was found
      */
-    public function generate(string $regex, ?RegexParser $parser = null): string
+    public function generate(string $regex): string
     {
-        $parser ??= $this->parser ??= RegexParser::create();
+        $parser = $this->parser ??= RegexParser::create();
         $ast = $parser->parse($regex);
         // A pattern PCRE refuses, as a call to a group that does not exist,
         // has no sample to draw.

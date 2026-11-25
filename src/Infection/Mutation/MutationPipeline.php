@@ -15,6 +15,7 @@ namespace PHPRegex\Infection\Mutation;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
+use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Infection\Hint\HintWriter;
 use PHPRegex\Infection\Hint\KillString;
 use PHPRegex\Infection\Judge\Budget;
@@ -71,7 +72,7 @@ final class MutationPipeline
         $this->engine = new PcreEngine();
         $this->redos = new RedosGuard(new RedosAnalyzer($this->parser));
         $this->replay = new CallReplay($this->engine);
-        $this->fallback = new DifferentialFallback(parser: $this->parser);
+        $this->fallback = new DifferentialFallback(new SampleGenerator(parser: $this->parser));
         $this->hints = new HintWriter($this->parser, $this->engine);
     }
 

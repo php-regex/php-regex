@@ -1239,12 +1239,12 @@ if (!\function_exists('phpregex_playground_run')) {
         $matching = [];
         foreach ([0, 1, 2] as $draw) {
             try {
-                $matching[] = (new SampleGenerator(3, seed: $seed + $draw))->generate($regex, $library->parser());
+                $matching[] = (new SampleGenerator(3, $seed + $draw, $library->parser()))->generate($regex);
             } catch (RegexException $e) {
                 break;
             }
         }
-        $cases = $library->parse($regex)->accept(new TestCaseGenerator());
+        $cases = $library->parse($regex)->accept(new TestCaseGenerator($library->parser()));
         $matching = array_merge($matching, $cases['matching']);
         $nonMatching = $cases['non_matching'];
 
