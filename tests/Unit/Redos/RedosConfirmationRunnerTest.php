@@ -217,9 +217,11 @@ final class RedosConfirmationRunnerTest extends TestCase
         $confirmation = (new ConfirmationRunner())->confirm(
             'abc',
             new RedosAnalysis(RedosSeverity::High, 8),
-            new ConfirmationOptions(minInputLength: 2, maxInputLength: 3, steps: 2, iterations: 1, timeoutMs: 50.0),
+            new ConfirmationOptions(minInputLength: 2, maxInputLength: 3, steps: 2, iterations: 1, timeoutMs: 10_000.0),
         );
 
+        // A wide timeout: under load, a narrow one stops the run after the
+        // first sample.
         $this->assertFalse($confirmation->confirmed);
         $this->assertCount(2, $confirmation->samples);
         $this->assertSame(\PREG_INTERNAL_ERROR, $confirmation->samples[0]->pregErrorCode);
