@@ -27,6 +27,9 @@ CHANGELOG
    the running engine, as the parser does; `forEveryRelease()` reads it
    for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
    condition kept.
+ * `Analysis\GroupNumbering::getWrittenGroupCount()` counts the capturing
+   groups as written, not PCRE2's capture count: `/(?|(a)|(b))/` writes two,
+   PCRE2 counts one, `$maxGroupNumber`.
  * `Engine\PcreEngine::match()` takes its flags and its offset in
    `preg_match()`'s order, then the limits: `match($regex, $subject, $flags,
    $offset, $limits)`. `Engine\PcreMatch::$pcreError` holds the

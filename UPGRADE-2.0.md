@@ -482,6 +482,7 @@ one.
 | `RegexLanguageSolver::prepare()` | `LanguageSolver::compile()` |
 | `Regex::clearValidatorCaches()` | `Regex::clearCaches()` |
 | `Regex::new()` | `Regex::create()` |
+| `GroupNumbering::getCaptureCount()` | `GroupNumbering::getWrittenGroupCount()` |
 
 <!-- upgrade-map:end -->
 

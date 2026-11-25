@@ -58,7 +58,12 @@ final class GroupNumbering
         return $this->namedGroups[$name] ?? [];
     }
 
-    public function getCaptureCount(): int
+    /**
+     * How many capturing groups the pattern writes. Not PCRE2's capture
+     * count: the groups of a branch reset share their numbers, so
+     * /(?|(a)|(b))/ writes two groups and PCRE2 counts one, $maxGroupNumber.
+     */
+    public function getWrittenGroupCount(): int
     {
         return \count($this->captureSequence);
     }

@@ -2,6 +2,7 @@
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector\Set\FixtureUpgrade20;
 
+use RegexParser\GroupNumbering;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
@@ -28,6 +29,11 @@ final class CodeWrittenFor13
     {
         return $service->getRegex();
     }
+
+    public function groups(GroupNumbering $numbering): int
+    {
+        return $numbering->getCaptureCount();
+    }
 }
 
 ?>
@@ -36,6 +42,7 @@ final class CodeWrittenFor13
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector\Set\FixtureUpgrade20;
 
+use RegexParser\GroupNumbering;
 use RegexParser\Lint\RegexAnalysisService;
 use RegexParser\ReDoS\ReDoSSeverity;
 use RegexParser\Regex;
@@ -61,6 +68,11 @@ final class CodeWrittenFor13
     public function parser(\PHPRegex\Linter\AnalysisService $service): object
     {
         return $service->getParser();
+    }
+
+    public function groups(\PHPRegex\Parser\Analysis\GroupNumbering $numbering): int
+    {
+        return $numbering->getWrittenGroupCount();
     }
 }
 

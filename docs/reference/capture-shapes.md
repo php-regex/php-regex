@@ -734,8 +734,9 @@ this.
   the trailing groups that took no part in the match (`preg_match('/(a)|(b)/', 'a', $m)`
   gives the keys `[0, 1]`, where `$maxGroupNumber` is 2).
 - `$captureSequence`: the number of each capturing group, in the order they are written.
-- `getCaptureCount()`: how many capturing groups are written. Inside a branch reset,
-  this can be more than `$maxGroupNumber`.
+- `getWrittenGroupCount()`: how many capturing groups are written, not PCRE2's capture
+  count. Inside a branch reset, this can be more than `$maxGroupNumber`, which is the
+  count PCRE2 gives: `/(?|(a)|(b))/` writes two groups and PCRE2 counts one.
 - `$namedGroups`: each name and the numbers it stands for.
 - `hasNamedGroup()` and `getNamedGroupNumbers()`: one name, looked up. An unknown name
   has no numbers.
@@ -749,7 +750,7 @@ $numbering = (new GroupNumberingCollector())->collect($regex);
 
 $numbering->maxGroupNumber;                 // 3
 $numbering->captureSequence;                // [1, 2, 2, 3]
-$numbering->getCaptureCount();              // 4
+$numbering->getWrittenGroupCount();         // 4
 $numbering->namedGroups;                    // ['year' => [1], 'day' => [3]]
 $numbering->hasNamedGroup('day');           // true
 $numbering->getNamedGroupNumbers('day');    // [3]
