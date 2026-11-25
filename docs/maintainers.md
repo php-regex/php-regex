@@ -1051,6 +1051,9 @@ Two kinds of benchmark live there:
   cycles (2,000 at least) or 5 % of its memory past its numbers fails the
   job; a case as far below them passes and asks for its new numbers, so
   that a later slowdown back to the old ones does not go unnoticed.
+  `ValidationBench::benchValidateKept` allows its cycles 12,000 at least:
+  the job counts its two long patterns, which the call hashes again,
+  about 9,600 cycles apart on heads that never reach the validation path.
 
 Tally runs on Linux alone, and the counts depend on the PHP build, the
 system libraries and the CPU architecture. `task tally` runs the cases in
