@@ -257,7 +257,6 @@ final class PossessiveReadsPastTheGroupTest extends TestCase
     public static function provideOptimizationsOfRepetitionsEndingTheirSequence(): iterable
     {
         yield 'a repetition alone in its group' => ['pattern' => '/(a+)c/', 'expected' => '/(a++)c/', 'changes' => [Rewriter::POSSESSIVE]];
-        yield 'a repetition alone in a group a DEFINE holds' => ['pattern' => '/(?&n)x(?(DEFINE)(?<n>[0-9]+))/', 'expected' => '/(?&n)x(?(DEFINE)(?<n>\d++))/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
         yield 'a repetition ending the pattern' => ['pattern' => '/x[0-9]+/', 'expected' => '/x\d++/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
         // The sequence reads its repetition once the items after it are
         // rewritten.

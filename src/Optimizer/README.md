@@ -81,20 +81,20 @@ which is proven whatever the option says. A rewrite whose possessive
 quantifiers are not proven is made again without them, and the other rewrites
 ship: the proof reads no possessive quantifier in a pattern that holds a
 lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
-`/\d+x(?!y)/`. A call of a group is read as the body of the group run where
-the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
-DEFINE holds is read there under the options in force where the DEFINE stands:
-`/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
-group that calls itself is read through every call, what may follow it after
-each return included: `/(x(?1)?ca+b?)c/` becomes `/(x(?1)?ca++b?)c/`, while a
-group repeated there stays greedy, as the possessive one runs out of the JIT
-stack first deep in the calls. The
-rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
-`/(?i)a++b?c/`, while `/(?i)a+b?A/` stays greedy, and an option setting that
-names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
-written. A repetition that ends its group reads what follows the group, every
-call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
-`/(a+)a/` stays greedy.
+`/\d+x(?!y)/`. Every repetition inside a group a call runs, a group a DEFINE
+holds included, and everywhere in a pattern that calls itself whole, stays
+greedy, whatever follows it: PCRE2's JIT, which PHP runs by default, misses
+matches of a possessive quantifier there that its interpreter finds.
+`/(a++)c(?1)d/` finds no match in `acacad` with the JIT, from PCRE2 10.34 to
+10.49, where `/(a+)c(?1)d/` matches `acad`, so `/(a+)c(?1)d/`,
+`/(a+b?)c(?1)d/` and `/(?&n)c(?(DEFINE)(?<n>a+b?))/` stay as written. A
+repetition outside every group a call runs is read as before: `/a+;(x)(?1)/`
+becomes `/a++;(x)(?1)/`. The rewrite reads the flags in force where each item
+stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays
+greedy, and an option setting that names `U` or a non-atomic lookaround keeps
+every quantifier of the pattern as written. A repetition that ends its group
+reads what follows the group up to the end of the pattern: `/(a+)c/` becomes
+`/(a++)c/`, and `/(a+)a/` stays greedy.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

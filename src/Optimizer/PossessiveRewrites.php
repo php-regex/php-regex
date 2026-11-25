@@ -707,7 +707,8 @@ final class PossessiveRewrites
     {
         // The sets stop at 0x7F: above it nothing is known disjoint.
         if (QuantifierType::Greedy !== $repeat->type || !$this->isPossessifyCandidate($repeat)
-            || $this->repeats->isCaptureSensitive($repeat->node) || $this->canMatchEmpty($repeat->node) || $this->mayTakeAboveAscii($repeat->node)) {
+            || $this->repeats->isCaptureSensitive($repeat->node) || $this->canMatchEmpty($repeat->node) || $this->mayTakeAboveAscii($repeat->node)
+            || $this->insideACalledGroup()) {
             return false;
         }
 
@@ -726,6 +727,35 @@ final class PossessiveRewrites
             }
         } catch (\Throwable) { // Not reached by any pattern read: the walks throw nothing of their own.
             // If analysis fails, don't optimize
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the repeat the rewriter reads stands inside a group a call
+     * runs, a group a DEFINE holds included, or the pattern calls itself
+     * whole. PCRE2's JIT, which PHP runs by default, misses matches of a
+     * possessive quantifier there that its interpreter finds, once an
+     * attempt that ran the call failed: "/(a++)c(?1)d/" finds no match in
+     * "acacad" with the JIT, from PCRE2 10.34 to 10.49, where "/(a+)c(?1)d/"
+     * matches "acad". Such a repeat stays greedy, whatever follows it.
+     */
+    private function insideACalledGroup(): bool
+    {
+        $calls = $this->calls();
+        if ([] === $calls) {
+            return false;
+        }
+
+        if (null !== $this->pattern && isset($calls[spl_object_id($this->pattern)])) {
+            return true;
+        }
+
+        foreach ($this->after as $frame) {
+            if ($frame instanceof GroupNode && isset($calls[spl_object_id($frame)])) {
+                return true;
+            }
         }
 
         return false;
