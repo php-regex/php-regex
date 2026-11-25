@@ -34,7 +34,7 @@ This page lists every key of every document.
 | `regex explain` | the [explain document](#explain) |
 
 Symfony's and Laravel's `regex:lint` print the same lint report, and their
-`regex:transpile` the same transpile document without `php_target` and
+`regex:transpile` the same transpile document without `target` and
 `range` (the bridges judge one PHP version), with the same error envelope —
 the commands come with their bundles ([Symfony](../guides/symfony.md),
 [Laravel](../guides/laravel.md)). Three bridge commands print a report of
@@ -642,7 +642,7 @@ One measurement, under `redos.bench.pattern` and `redos.bench.safe`.
 
 `regex transpile <pattern> --format=json` rewrites a pattern for another
 regex dialect. Symfony's and Laravel's `regex:transpile --format=json` print
-the same document, without `php_target` and `range`: the bridges judge one
+the same document, without `target` and `range`: the bridges judge one
 PHP version.
 
 The pattern is validated first. An invalid pattern stops the command with the
@@ -662,7 +662,7 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 
 | key | type | meaning |
 |---|---|---|
-| `target` | string | The dialect, by its full name: `javascript`, `html-pattern` or `python`; an open set |
+| `dialect` | string | The dialect, by its full name: `javascript`, `html-pattern` or `python`; an open set |
 | `source` | string | The PCRE pattern given |
 | `pattern` | string | The pattern body in the target dialect |
 | `flags` | string | The target's flags |
@@ -670,7 +670,7 @@ no equivalent for stops it with the envelope too, stage `pattern`, without a
 | `constructor` | string | Code that builds the pattern in the target language, as `new RegExp("a+b", "i")` |
 | `warnings` | list of strings | Where the target matches differently from PCRE |
 | `notes` | list of strings | What was rewritten on the way, matching the same |
-| `php_target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the rewrite is the floor's; `target` names the dialect |
+| `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the rewrite is the floor's |
 | `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
 Without `u`, PCRE takes one byte for a set where the targets take one
@@ -682,7 +682,7 @@ ASCII, and agree under `u` for UTF-8 subjects.
 
 ```json
 {
-    "target": "javascript",
+    "dialect": "javascript",
     "source": "/^\\S+$/D",
     "pattern": "^[^\\t-\\r ]+$",
     "flags": "",
@@ -694,7 +694,7 @@ ASCII, and agree under `u` for UTF-8 subjects.
     "notes": [
         "Applied /D: \"$\" is written for the end of the subject alone."
     ],
-    "php_target": {
+    "target": {
         "php": "8.4.27",
         "pcre": "10.49",
         "locale": "C",

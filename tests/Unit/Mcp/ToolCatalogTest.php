@@ -182,8 +182,8 @@ final class ToolCatalogTest extends TestCase
         yield 'explain, an invalid pattern' => ['tool' => 'regex_explain', 'arguments' => ['pattern' => '/(a/'], 'isError' => true];
         yield 'format' => ['tool' => 'regex_format', 'arguments' => ['pattern' => '/^(?<year>\d{4})-(?<month>\d{2})$/', 'width' => 24], 'isError' => false];
         yield 'format, an invalid pattern' => ['tool' => 'regex_format', 'arguments' => ['pattern' => '/(a/'], 'isError' => true];
-        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['pattern' => '/^a$/m', 'target' => 'js'], 'isError' => false];
-        yield 'transpile, a refusal' => ['tool' => 'regex_transpile', 'arguments' => ['pattern' => '/(?>a+)a/', 'target' => 'js'], 'isError' => true];
+        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['pattern' => '/^a$/m', 'dialect' => 'js'], 'isError' => false];
+        yield 'transpile, a refusal' => ['tool' => 'regex_transpile', 'arguments' => ['pattern' => '/(?>a+)a/', 'dialect' => 'js'], 'isError' => true];
         yield 'redos' => ['tool' => 'regex_redos', 'arguments' => ['pattern' => '/^(a+)+$/'], 'isError' => false];
         yield 'redos, confirmed' => ['tool' => 'regex_redos', 'arguments' => ['pattern' => '/^(a+)+$/', 'mode' => 'confirmed'], 'isError' => false];
         yield 'redos, an invalid pattern' => ['tool' => 'regex_redos', 'arguments' => ['pattern' => '/(a/'], 'isError' => true];

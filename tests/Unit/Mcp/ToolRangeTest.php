@@ -27,9 +27,9 @@ use PHPUnit\Framework\TestCase;
  * php_version, as a call's argument or as the server's default, takes a
  * Composer constraint as well as a single version: each tool judges the
  * pattern at every version of the range, does its work at the floor, and
- * its structured answer gains the "target" ("php_target" for transpile,
- * whose "target" is the dialect) and the "range" of the CLI's documents,
- * which the v1 output schema declares. The target is the call's, then
+ * its structured answer gains the "target" and the "range" of the CLI's
+ * documents, which the v1 output schema declares; transpile names its
+ * dialect apart, in "dialect". The target is the call's, then
  * the server's flag, then the running PHP: ServerWorkingDirectoryTest
  * shows that no file of the working directory names it.
  */
@@ -85,7 +85,7 @@ final class ToolRangeTest extends TestCase
         yield 'format' => ['tool' => 'regex_format', 'arguments' => [], 'pattern' => RangePatterns::KEEP_IN_LOOKBEHIND];
         yield 'redos' => ['tool' => 'regex_redos', 'arguments' => [], 'pattern' => RangePatterns::KEEP_IN_LOOKBEHIND];
         // The translator refuses "\K" at any PHP: the warning row only.
-        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['target' => 'js'], 'pattern' => RangePatterns::QUANTIFIER_WITHOUT_MIN];
+        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['dialect' => 'js'], 'pattern' => RangePatterns::QUANTIFIER_WITHOUT_MIN];
     }
 
     /**
@@ -185,7 +185,7 @@ final class ToolRangeTest extends TestCase
         yield 'explain' => ['tool' => 'regex_explain', 'arguments' => []];
         yield 'format' => ['tool' => 'regex_format', 'arguments' => []];
         yield 'redos' => ['tool' => 'regex_redos', 'arguments' => []];
-        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['target' => 'js']];
+        yield 'transpile' => ['tool' => 'regex_transpile', 'arguments' => ['dialect' => 'js']];
     }
 
     /**
@@ -220,13 +220,12 @@ final class ToolRangeTest extends TestCase
         $required = JsonContract::asArray($success['required'] ?? null, $tool);
         $this->assertArrayHasKey('range', $properties, $tool);
         $this->assertContains('range', $required, $tool);
-        // transpile's "target" is the dialect already: it names the PHP
-        // versions judged "php_target".
-        $targetKey = 'regex_transpile' === $tool ? 'php_target' : 'target';
-        $this->assertSame('object', JsonContract::asArray($properties[$targetKey] ?? null, $tool)['type'] ?? null, $tool);
-        $this->assertContains($targetKey, $required, $tool);
+        // transpile's dialect has a key of its own: "target" is the PHP
+        // versions judged, in every tool.
+        $this->assertSame('object', JsonContract::asArray($properties['target'] ?? null, $tool)['type'] ?? null, $tool);
+        $this->assertContains('target', $required, $tool);
         if ('regex_transpile' === $tool) {
-            $this->assertSame('string', JsonContract::asArray($properties['target'] ?? null, $tool)['type'] ?? null, 'The dialect stays a string.');
+            $this->assertSame('string', JsonContract::asArray($properties['dialect'] ?? null, $tool)['type'] ?? null, 'The dialect is a string.');
         }
 
         $result = $definition->tool->execute(['pattern' => $pattern, 'php_version' => '>=8.1', ...$arguments]);
@@ -239,13 +238,12 @@ final class ToolRangeTest extends TestCase
         );
         $this->assertTrue($outcome->isValid(), $tool.': '.json_encode($result->structured));
         $this->assertArrayHasKey('range', $result->structured, $tool);
-        $this->assertArrayHasKey($targetKey, $result->structured, $tool);
+        $this->assertArrayHasKey('target', $result->structured, $tool);
     }
 
     /**
-     * The target of ">=8.1" as lint names it, "php_target" for transpile,
-     * whose "target" is the dialect; where the server names its source is
-     * its own.
+     * The target of ">=8.1" as lint names it, beside transpile's dialect;
+     * where the server names its source is its own.
      *
      * @param array<string, mixed> $structured
      */
@@ -254,13 +252,11 @@ final class ToolRangeTest extends TestCase
         $expected = ProjectTarget::fromSources(['--php-version' => '>=8.1'], [], null, [])->toArray();
         unset($expected['source']);
 
-        $key = 'target';
         if ('regex_transpile' === $tool) {
-            self::assertSame('javascript', $structured['target'] ?? null, 'transpile keeps the dialect as its target.');
-            $key = 'php_target';
+            self::assertSame('javascript', $structured['dialect'] ?? null, 'transpile names its dialect apart from the target.');
         }
 
-        $target = JsonContract::asArray($structured[$key] ?? null, $tool.' has no '.$key.'.');
+        $target = JsonContract::asArray($structured['target'] ?? null, $tool.' has no target.');
         self::assertIsString($target['source'] ?? null, $tool);
         unset($target['source']);
         self::assertSame($expected, $target, $tool);

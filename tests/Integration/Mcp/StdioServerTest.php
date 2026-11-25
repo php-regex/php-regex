@@ -70,7 +70,7 @@ final class StdioServerTest extends TestCase
             self::request(1, 'initialize', self::INITIALIZE),
             self::notification('notifications/initialized'),
             self::request(2, 'tools/call', ['name' => 'regex_validate', 'arguments' => ['pattern' => '/a+/']]),
-            self::request(3, 'tools/call', ['name' => 'regex_transpile', 'arguments' => ['pattern' => '/(?>a+)a/', 'target' => 'js']]),
+            self::request(3, 'tools/call', ['name' => 'regex_transpile', 'arguments' => ['pattern' => '/(?>a+)a/', 'dialect' => 'js']]),
         ]);
 
         $valid = JsonContract::asArray(self::at($answers, 2, 'result'));

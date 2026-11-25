@@ -177,7 +177,7 @@ final class CommandsTest extends LaravelTestCase
             '--format' => 'json',
         ])
             ->assertSuccessful()
-            ->expectsOutputToContain('"target": "python"');
+            ->expectsOutputToContain('"dialect": "python"');
     }
 
     #[Test]

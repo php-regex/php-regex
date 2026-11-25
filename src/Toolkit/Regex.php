@@ -59,6 +59,8 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Transpiler\Dialect;
+use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileResult;
@@ -382,9 +384,20 @@ final class Regex
 
     /**
      * Transpile a PCRE regex literal to another regex dialect.
+     *
+     * @param Dialect|string $dialect The dialect, or a name Dialect::fromName() takes ("js", "html", "python"...)
+     *
+     * @throws InvalidRegexOptionException when $dialect is a name no dialect answers to
+     * @throws LexerException              when the pattern does not tokenize
+     * @throws ParserException             when the pattern does not parse
+     * @throws SemanticErrorException      when the engine refuses the pattern
+     * @throws TranspileException          when the dialect cannot carry the pattern without changing what matches
      */
-    public function transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
+    public function transpile(string $regex, Dialect|string $dialect, ?TranspileOptions $options = null): TranspileResult
     {
+        // The dialect is read before the pattern, as the transpiler reads it.
+        $dialect = \is_string($dialect) ? Dialect::fromName($dialect) : $dialect;
+
         // A translation states what the pattern matches: a pattern the
         // engine refuses has nothing to translate, as info() says.
         $this->parse($regex);
@@ -392,7 +405,7 @@ final class Regex
 
         $this->transpiler ??= new Transpiler($this->parser);
 
-        return $this->transpiler->transpile($regex, $target, $options);
+        return $this->transpiler->transpile($regex, $dialect, $options);
     }
 
     /**

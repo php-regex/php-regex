@@ -763,7 +763,7 @@
     },
     "regex_transpile": {
         "title": "Translate a regex pattern to JavaScript, HTML or Python",
-        "description": "A PCRE pattern written as in PHP source (/…/flags) rewritten for JavaScript (js), an HTML pattern attribute (html) or Python (python), with every note on what was rewritten and every warning on what matches differently. A construct the dialect cannot express is refused with its reason, never approximated.",
+        "description": "A PCRE pattern written as in PHP source (/…/flags) rewritten for JavaScript (javascript or js), an HTML pattern attribute (html-pattern or html) or Python (python or py), with every note on what was rewritten and every warning on what matches differently. A construct the dialect cannot express is refused with its reason, never approximated.",
         "inputSchema": {
             "type": "object",
             "properties": {
@@ -771,14 +771,17 @@
                     "type": "string",
                     "description": "The pattern as written in PHP source, delimiters and flags included, as /^\\d+$/i. The delimiters are required."
                 },
-                "target": {
+                "dialect": {
                     "type": "string",
                     "enum": [
+                        "javascript",
                         "js",
+                        "html-pattern",
                         "html",
-                        "python"
+                        "python",
+                        "py"
                     ],
-                    "description": "The dialect: js, html or python."
+                    "description": "The dialect: javascript or js, html-pattern or html, python or py."
                 },
                 "python_version": {
                     "type": "string",
@@ -795,7 +798,7 @@
             },
             "required": [
                 "pattern",
-                "target"
+                "dialect"
             ],
             "additionalProperties": false
         },
@@ -805,7 +808,7 @@
                 {
                     "type": "object",
                     "properties": {
-                        "target": {
+                        "dialect": {
                             "type": "string"
                         },
                         "source": {
@@ -835,7 +838,7 @@
                                 "type": "string"
                             }
                         },
-                        "php_target": {
+                        "target": {
                             "type": "object",
                             "properties": {
                                 "php": {
@@ -938,7 +941,7 @@
                         }
                     },
                     "required": [
-                        "target",
+                        "dialect",
                         "source",
                         "pattern",
                         "flags",
@@ -946,7 +949,7 @@
                         "constructor",
                         "warnings",
                         "notes",
-                        "php_target",
+                        "target",
                         "range"
                     ],
                     "additionalProperties": false

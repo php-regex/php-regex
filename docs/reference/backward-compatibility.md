@@ -57,7 +57,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
   `TrivialMatch`, `Ordered\FirstMatchCell`;
 - `regex-redos`: `RedosAnalysis`, `Finding`, `Hotspot`, `RedosWitness`,
   `RedosSearchCost`, `Confirmation`, `ConfirmationSample`;
-- `regex-transpiler`: `TranspileResult`;
+- `regex-transpiler`: `TranspileResult`, `VModeFinding`;
 - `regex-linter`: `Rule\RuleViolation`;
 - `regex-toolkit`: `AnalysisReport`.
 
@@ -88,7 +88,7 @@ In short, the public surface is:
 | `regex-infection` | `Mutator\RegexQuantifier`, `Mutator\RegexAnchor`, `Mutator\RegexCharClass`, `Mutator\RegexAlternation`, `Mutator\RegexFlag`, `Mutator\RegexEscape` |
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCell` |
 | `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
-| `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `Target\JavaScript\VModeCompatibility` |
+| `regex-transpiler` | `Transpiler`, `Dialect`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `VModeCompatibility`, `VModeFinding` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `ExplainFormat`, `HighlightFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |

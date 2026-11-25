@@ -4,13 +4,23 @@ CHANGELOG
 2.0
 ---
 
- * `Target\JavaScript\VModeCompatibility` lists what a browser does wrong
-   with a pattern written for PCRE and read as is under the `v` flag, as the
-   HTML `pattern` attribute reads it: each construct it refuses to compile
-   (a possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, `(?#`,
+ * The `Dialect` enum names the dialects a pattern transpiles to:
+   `JavaScript`, `HtmlPattern` and `Python`. `Transpiler::transpile()` takes
+   a case or a name, as `transpile($regex, Dialect::Python)` or
+   `transpile($regex, 'py')`, in its `$dialect` argument (1.x `$target`).
+   `Dialect::fromName()` reads `javascript` or `js`, `html-pattern` or
+   `html`, `python` or `py`, and `Dialect::names()` lists them. A name no
+   dialect answers to throws `InvalidRegexOptionException` before the
+   pattern is read, where 1.x threw `TranspileException`.
+ * `VModeCompatibility::check()` lists what a browser does wrong with a
+   pattern written for PCRE and read as is under the `v` flag, as the HTML
+   `pattern` attribute reads it, one `VModeFinding` per construct, with its
+   `offset`, its `construct`, its `message` and whether the browser
+   `refused` to compile the pattern for it: each construct it refuses (a
+   possessive, an atomic group, `\h`, `\A`, `(?P<name>`, `\Q...\E`, `(?#`,
    an unescaped `-` or `(` in a class, a lone `{`, an escape JavaScript does
    not know, a property it does not name, `\p{Greek}`) or reads otherwise (a
-   POSIX class, `&&` between single operands, `\v`), with its offset.
+   POSIX class, `&&` between single operands, `\v`).
  * JavaScript and the HTML pattern attribute refuse what a lookbehind
    matched right to left reads otherwise than PCRE: a group in a branch of
    more than one length, `/(?<=(ab|a)b?)c/`, which captures `ab` in PCRE

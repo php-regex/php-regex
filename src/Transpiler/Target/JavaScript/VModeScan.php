@@ -30,31 +30,17 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\VModeFinding;
 
 /**
- * What a pattern written for PCRE, read as is by a browser under the v
- * flag, does wrong: the HTML pattern attribute compiles its value with
- * "v" alone, and a value the browser refuses to compile validates nothing.
- * Each finding names the construct, where it is written in the pattern
- * (a byte offset into its body) and what the browser does with it.
+ * One reading of a pattern for VModeCompatibility::check(): the findings of
+ * its tree, then of its source, gathered in a scan that serves that one
+ * pattern alone.
  *
- * A class under v escapes more than one under u: "(", ")", "[", "{", "}",
- * "/", "-" and "|" must be escaped anywhere in it, and a punctuator from
- * the reserved list must not be written twice in a row ("&&", "--"...).
+ * @internal
  */
-final class VModeCompatibility
+final class VModeScan
 {
-    /**
-     * What a class escapes under the v flag: the syntax characters, "/",
-     * "-", and the reserved punctuators, every one a legal escape there.
-     */
-    public const CLASS_SET_META = [
-        '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true, '(' => true, ')' => true,
-        '{' => true, '}' => true, '/' => true, '|' => true, '$' => true, '.' => true, '*' => true,
-        '+' => true, '?' => true, '&' => true, '!' => true, '#' => true, '%' => true, ',' => true,
-        ':' => true, ';' => true, '<' => true, '=' => true, '>' => true, '@' => true, '`' => true, '~' => true,
-    ];
-
     /**
      * The characters a class under v refuses unescaped, alone: ECMAScript's
      * ClassSetSyntaxCharacter, but for "]" and "\", which close the class
@@ -96,26 +82,25 @@ final class VModeCompatibility
     ];
 
     /**
-     * @var array<int, array{offset: int, construct: string, message: string, refused: bool}>
+     * @var array<int, VModeFinding>
      */
     private array $findings = [];
 
-    private string $source = '';
+    private function __construct(private readonly string $source) {}
 
     /**
      * What the browser does wrong with the pattern, in the order written.
      *
-     * @return list<array{offset: int, construct: string, message: string, refused: bool}>
+     * @return list<VModeFinding>
      */
-    public function check(RegexNode $regex): array
+    public static function of(RegexNode $ast): array
     {
-        $this->findings = [];
-        $this->source = $regex->source ?? '';
-        $this->visit($regex->pattern);
-        $this->scan();
-        usort($this->findings, static fn (array $left, array $right): int => $left['offset'] <=> $right['offset']);
+        $scan = new self($ast->source ?? '');
+        $scan->visit($ast->pattern);
+        $scan->scan();
+        usort($scan->findings, static fn (VModeFinding $left, VModeFinding $right): int => $left->offset <=> $right->offset);
 
-        return $this->findings;
+        return $scan->findings;
     }
 
     private function visit(NodeInterface $node): void
@@ -222,7 +207,7 @@ final class VModeCompatibility
             if ('\\' === $char) {
                 $next = $source[$i + 1];
                 if ('Q' === $next) {
-                    $this->findings[] = ['offset' => $i, 'construct' => 'quote', 'message' => 'JavaScript has no \Q...\E: under v it is an invalid escape; escape each character instead.', 'refused' => true];
+                    $this->findings[] = new VModeFinding($i, 'quote', 'JavaScript has no \Q...\E: under v it is an invalid escape; escape each character instead.', true);
                     $end = strpos($source, '\\E', $i);
                     $i = false === $end ? $length : $end + 1;
 
@@ -235,7 +220,7 @@ final class VModeCompatibility
                 // class, \q{...} is a string the class takes as written.
                 if (str_contains('pPuxqgoN', $next) && '{' === ($source[$i + 1] ?? '') && false !== $close = strpos($source, '}', $i)) {
                     if ('q' === $next) {
-                        $this->findings = array_filter($this->findings, static fn (array $finding): bool => $finding['offset'] < $i || $finding['offset'] > $close);
+                        $this->findings = array_filter($this->findings, static fn (VModeFinding $finding): bool => $finding->offset < $i || $finding->offset > $close);
                     }
 
                     $i = $close;
@@ -248,7 +233,7 @@ final class VModeCompatibility
                 $depth++;
                 $first = $i + 1 + ('^' === ($source[$i + 1] ?? '') ? 1 : 0);
                 if (']' === ($source[$first] ?? '')) {
-                    $this->findings[] = ['offset' => $first, 'construct' => 'class_syntax', 'message' => 'Under v "[]" is the empty class, and the "]" after it a syntax error: write "\\]".', 'refused' => true];
+                    $this->findings[] = new VModeFinding($first, 'class_syntax', 'Under v "[]" is the empty class, and the "]" after it a syntax error: write "\\]".', true);
                     $i = $first;
                 }
 
@@ -271,9 +256,9 @@ final class VModeCompatibility
                     continue;
                 }
 
-                $this->findings[] = ['offset' => $i, 'construct' => 'brace', 'message' => 'Under v a "{" that opens no quantifier is a syntax error: write "\\{".', 'refused' => true];
+                $this->findings[] = new VModeFinding($i, 'brace', 'Under v a "{" that opens no quantifier is a syntax error: write "\\{".', true);
             } elseif ('}' === $char || ']' === $char) {
-                $this->findings[] = ['offset' => $i, 'construct' => 'brace', 'message' => 'Under v a lone "'.$char.'" is a syntax error: write "\\'.$char.'".', 'refused' => true];
+                $this->findings[] = new VModeFinding($i, 'brace', 'Under v a lone "'.$char.'" is a syntax error: write "\\'.$char.'".', true);
             }
         }
     }
@@ -305,7 +290,7 @@ final class VModeCompatibility
             str_contains('^$\\.*+?()[]{}|/', $next) => true,
             // \N alone is a character type, judged as one; \N{U+41} names a code point.
             'N' === $next => '{U+' !== substr($source, $at, 3),
-            $inClass && isset(self::CLASS_SET_META[$next]) => true,
+            $inClass && isset(JavaScriptPrinter::CLASS_SET_META[$next]) => true,
             str_contains('dDwWsSfnrt', $next) => true,
             'b' === $next || 'B' === $next => 'B' !== $next || !$inClass,
             '0' === $next => !Ascii::isDigit($following),
@@ -319,7 +304,7 @@ final class VModeCompatibility
         };
 
         if (!$known) {
-            $this->findings[] = ['offset' => $offset, 'construct' => 'escape', 'message' => \sprintf('JavaScript knows no escape "\\%s%s" under v: a syntax error.', $next, 'x' === $next && '{' === $following ? '{' : ''), 'refused' => true];
+            $this->findings[] = new VModeFinding($offset, 'escape', \sprintf('JavaScript knows no escape "\\%s%s" under v: a syntax error.', $next, 'x' === $next && '{' === $following ? '{' : ''), true);
         }
     }
 
@@ -331,7 +316,7 @@ final class VModeCompatibility
     private function judgeProperty(int $offset, string $next, string $name): void
     {
         if (!JavaScriptProperties::readsAsWritten($name, 'P' === $next)) {
-            $this->findings[] = ['offset' => $offset, 'construct' => 'property', 'message' => \sprintf('JavaScript knows no property "\\%s{%s}" under v: a syntax error.', $next, $name), 'refused' => true];
+            $this->findings[] = new VModeFinding($offset, 'property', \sprintf('JavaScript knows no property "\\%s{%s}" under v: a syntax error.', $next, $name), true);
         }
     }
 
@@ -380,7 +365,7 @@ final class VModeCompatibility
 
     private function add(NodeInterface $node, string $construct, string $message, int $shift = 0, bool $refused = true): void
     {
-        $this->findings[] = ['offset' => $node->getStartPosition() + $shift, 'construct' => $construct, 'message' => $message, 'refused' => $refused];
+        $this->findings[] = new VModeFinding($node->getStartPosition() + $shift, $construct, $message, $refused);
     }
 
     private function text(NodeInterface $node): string

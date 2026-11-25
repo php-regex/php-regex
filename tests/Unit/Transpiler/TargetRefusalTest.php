@@ -17,6 +17,7 @@ use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptPrinter;
 use PHPRegex\Transpiler\Target\TargetRegistry;
@@ -178,7 +179,7 @@ final class TargetRefusalTest extends TestCase
     #[Test]
     public function test_python_target_names_the_quote_its_literals_open_with(): void
     {
-        $target = (new TargetRegistry())->get('python');
+        $target = (new TargetRegistry())->get(Dialect::Python);
 
         $this->assertSame("'", $target->getDefaultDelimiter());
         $this->assertSame("r'(?a)a'", Regex::create(['cache' => null])->transpile('/a/', 'python')->literal);

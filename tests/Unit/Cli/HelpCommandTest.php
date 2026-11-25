@@ -20,7 +20,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Tests\TestUtils\OutputFactory;
-use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\Dialect;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -554,9 +554,8 @@ final class HelpCommandTest extends TestCase
 
         $this->assertSame('Target dialect (js, html, python)', $page);
 
-        $registry = new TargetRegistry();
         foreach (['js', 'html', 'python'] as $target) {
-            $this->assertContains($target, $registry->listTargets());
+            $this->assertContains($target, Dialect::names());
         }
     }
 

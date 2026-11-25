@@ -19,8 +19,8 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
-use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -49,7 +49,7 @@ final class TranspileCommand extends Command
     {
         $this
             ->addArgument('pattern', InputArgument::REQUIRED, 'The PCRE pattern to transpile.')
-            ->addOption('target', 't', InputOption::VALUE_OPTIONAL, 'Target dialect ('.implode(', ', (new TargetRegistry())->listTargets()).')', 'js')
+            ->addOption('target', 't', InputOption::VALUE_OPTIONAL, 'Target dialect ('.implode(', ', Dialect::names()).')', 'js')
             ->addOption('python-version', null, InputOption::VALUE_REQUIRED, 'The Python release the pattern runs on (3.11 carries atomic groups)')
             ->addOption('format', null, InputOption::VALUE_OPTIONAL, 'Output format (console, json)', 'console');
     }
@@ -78,8 +78,8 @@ final class TranspileCommand extends Command
         }
 
         try {
-            (new TargetRegistry())->get($target);
-        } catch (TranspileException $e) {
+            Dialect::fromName($target);
+        } catch (InvalidRegexOptionException $e) {
             return $this->fail($output, $io, $json, $e->getMessage(), JsonDocument::STAGE_USAGE, Command::INVALID);
         }
 

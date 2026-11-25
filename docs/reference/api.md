@@ -631,14 +631,15 @@ echo Regex::create()->compact("/\n    (?<year>\d{4})   # year\n    -\n    (?<mon
 
 ---
 
-### transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
+### transpile(string $regex, Dialect|string $dialect, ?TranspileOptions $options = null): TranspileResult
 
 Transpiles a PCRE literal to another regex dialect: JavaScript, the HTML `pattern` attribute, or Python.
 
 ```php
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 
-$result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
+$result = Regex::create()->transpile('/(?P<word>\\w+)/i', Dialect::JavaScript);
 
 echo $result->literal;     // /(?<word>\w+)/i
 echo $result->constructor; // new RegExp("(?<word>\\w+)", "i")
@@ -650,6 +651,10 @@ echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.ASCII | re.IGNOREC
 ```
 
 Notes:
+- The dialect is a case of `PHPRegex\Transpiler\Dialect` (`JavaScript`, `HtmlPattern`, `Python`), or a name
+  `Dialect::fromName()` takes: `javascript` or `js`, `html-pattern` or `html`, `python` or `py`, in any case.
+  `Dialect::names()` lists them. A name no dialect answers to throws `InvalidRegexOptionException`, before the
+  pattern is read.
 - A pattern the engine refuses throws what `validate()` refuses, as `info()` does: `/\N{U+41}/` without `u` has
   nothing to translate. `Transpiler`, called directly, reads the tree as it parses.
 - Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
@@ -1022,7 +1027,7 @@ Exception hierarchy (simplified):
       - `RecursionLimitException` (max recursion depth)
       - `ResourceLimitException` (max pattern length, or a text explanation or ASCII tree past 8 MiB)
     - `SemanticErrorException` (semantic validation failure)
-    - `TranspileException` (unsupported target or feature during transpile)
+    - `TranspileException` (a construct or a flag the dialect cannot carry)
     - `SampleGenerationException` (no sample the pattern matches was found)
     - `ComplexityException` (a pattern outside what the automata can decide)
 
@@ -1118,7 +1123,7 @@ try {
 | `info($regex)`          | PatternInfo             | PCRE2 facts, lengths, anchors |
 | `compatibility($regex)` | PatternCompatibility    | Valid on which PHP and PCRE2 |
 | `optimize($regex)`      | OptimizationResult      | Optimize pattern  |
-| `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
+| `transpile($regex, $dialect)` | TranspileResult   | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |
 | `highlight($regex)`     | string                  | Syntax highlight  |
 | `format($regex, $width)` | FormatResult           | Pretty-print with line wrapping |

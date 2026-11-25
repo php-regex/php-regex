@@ -23,13 +23,6 @@ use PHPRegex\Transpiler\TranspileContext;
  */
 interface TargetInterface
 {
-    public function getName(): string;
-
-    /**
-     * @return array<int, string>
-     */
-    public function getAliases(): array;
-
     public function getDefaultDelimiter(): string;
 
     public function compile(RegexNode $ast, TranspileContext $context): string;

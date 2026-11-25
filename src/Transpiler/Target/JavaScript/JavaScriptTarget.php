@@ -28,16 +28,6 @@ final class JavaScriptTarget implements TargetInterface
 {
     private const SUPPORTED_FLAGS = ['i', 's', 'u'];
 
-    public function getName(): string
-    {
-        return 'javascript';
-    }
-
-    public function getAliases(): array
-    {
-        return ['js'];
-    }
-
     public function getDefaultDelimiter(): string
     {
         return '/';

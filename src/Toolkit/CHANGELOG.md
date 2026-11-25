@@ -12,3 +12,6 @@ CHANGELOG
    that key. A facade built by `Regex::fromOptions()` skips no pattern.
  * `Regex::create()` takes the `locale` option, and `Regex::withTarget()`
    gives a facade for another target with every other option.
+ * `Regex::transpile()` takes a `PHPRegex\Transpiler\Dialect` case or its
+   name in its `$dialect` argument (1.x `$target`), and reads it before the
+   pattern: a name no dialect answers to throws `InvalidRegexOptionException`.

@@ -22,8 +22,8 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
-use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileOptions;
 
 /**
@@ -73,20 +73,18 @@ final class TranspileCommand extends Command
             return self::INVALID;
         }
 
-        // The transpiler's own targets, aliases included, as the regex
+        // The transpiler's own dialects, aliases included, as the regex
         // command reads them; the JSON envelope carries its very message.
-        $registry = new TargetRegistry();
-
         try {
-            $registry->get($target);
-        } catch (TranspileException $e) {
+            Dialect::fromName($target);
+        } catch (InvalidRegexOptionException $e) {
             if ('json' === $format) {
                 DocumentWriter::document($this->output, JsonDocument::error($e->getMessage(), JsonDocument::STAGE_USAGE));
             } else {
                 $this->error(\sprintf(
                     "Invalid target '%s'. Supported targets: %s",
                     $target,
-                    implode(', ', $registry->listTargets()),
+                    implode(', ', Dialect::names()),
                 ));
             }
 

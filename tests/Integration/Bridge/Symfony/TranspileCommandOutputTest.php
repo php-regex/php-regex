@@ -15,7 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\TranspileCommand;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\Dialect;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -226,7 +226,7 @@ final class TranspileCommandOutputTest extends TestCase
     {
         $description = (new TranspileCommand(Regex::create()))->getDefinition()->getOption('target')->getDescription();
 
-        $this->assertSame('Target dialect ('.implode(', ', (new TargetRegistry())->listTargets()).')', $description);
+        $this->assertSame('Target dialect ('.implode(', ', Dialect::names()).')', $description);
     }
 
     /**
