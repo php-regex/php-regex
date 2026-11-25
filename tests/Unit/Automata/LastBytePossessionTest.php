@@ -21,6 +21,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -45,6 +46,7 @@ use PHPUnit\Framework\TestCase;
 final class LastBytePossessionTest extends TestCase
 {
     use InstalledLocales;
+    use PcreGates;
 
     private const FLAGS = \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
 
@@ -70,6 +72,11 @@ final class LastBytePossessionTest extends TestCase
     private const GIVEN_GREEK = 'xx_XX.LASTBYTEGREEK';
 
     /**
+     * Extended classes compile from PCRE2 10.45.
+     */
+    private const NEWER_RELEASES = ['10.45' => ['/(?[\xFF])+\w/', '/\xFF+(?[\w])/']];
+
+    /**
      * Under Latin-1 the witness tells each pair apart, the JIT on and off;
      * a target that names that locale is read under its tables, where the
      * engine makes the repeat possessive, and both solvers refuse the pair.
@@ -78,6 +85,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsMadePossessive')]
     public function test_a_repeat_made_possessive_beside_the_last_byte_is_refused_under_latin1(string $left, string $right, string $letters, string $witness): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         $this->requiresLocale(self::LATIN1, $left);
 
         $apart = new \ArrayObject();
@@ -102,6 +110,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsMadePossessive')]
     public function test_a_repeat_made_possessive_beside_the_last_byte_is_refused_where_the_tables_may_hold_it_in_a_word(string $left, string $right, string $letters, string $witness): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         $alike = new \ArrayObject();
         CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($left, $right, $letters, $alike): void {
             foreach (self::subjects($letters, 4) as $subject) {
@@ -142,6 +151,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsMadePossessive')]
     public function test_the_repeat_made_possessive_is_found_where_the_tables_may_hold_the_last_byte_in_a_word(string $left, string $right, string $letters, string $witness): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         self::giveTables();
         $parser = RegexParser::create(['cache' => null]);
         foreach ([CharacterTables::BUILT_IN, self::GIVEN_LATIN1] as $locale) {
@@ -200,6 +210,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsReadAsWritten')]
     public function test_a_repeat_the_engine_reads_as_written_is_proven_under_latin1(string $left, string $right, string $letters): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         $this->requiresLocale(self::LATIN1, $left);
 
         $alike = new \ArrayObject();
@@ -222,6 +233,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsReadAsWritten')]
     public function test_a_repeat_the_engine_reads_as_written_is_proven_for_a_target_of_no_locale(string $left, string $right, string $letters): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         $alike = new \ArrayObject();
         CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($left, $right, $letters, $alike): void {
             foreach (self::subjects($letters, 4) as $subject) {
@@ -264,6 +276,7 @@ final class LastBytePossessionTest extends TestCase
     #[DataProvider('provideRepeatsMadePossessive')]
     public function test_a_repeat_beside_the_last_byte_is_proven_under_tables_that_leave_it_out_of_a_word(string $left, string $right, string $letters, string $witness): void
     {
+        $this->requiresPcre2For($left, self::NEWER_RELEASES);
         $this->requiresLocale(self::GREEK, $left);
 
         $alike = new \ArrayObject();
