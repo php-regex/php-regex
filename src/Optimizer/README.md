@@ -94,7 +94,12 @@ rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
 names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
 written. A repetition that ends its group reads what follows the group, every
 call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
-`/(a+)a/` stays greedy.
+`/(a+)a/` stays greedy. Under a limit the pattern sets on what PCRE2 spends on
+a match, `(*LIMIT_MATCH=n)`, `(*LIMIT_DEPTH=n)` or `(*LIMIT_HEAP=n)`, every
+repeated group stays greedy, as a possessive one may spend more of it without
+the JIT: `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
+`/(*LIMIT_MATCH=4)c(?:ab)++e/` gives up. A repeated character or class spends
+no more, and is still made possessive there.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program

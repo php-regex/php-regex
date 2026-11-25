@@ -90,6 +90,17 @@ CHANGELOG
    ends it, as it did from a count of two: `/(b+|ba)*c/` stays greedy, and
    `/(?:a+b?)+c/` is no longer offered `a++`, which the check of the result
    refused.
+ * The possessive rewrite keeps every repeated group greedy in a pattern
+   that sets a limit on what PCRE2 spends on a match, `(*LIMIT_MATCH=n)`,
+   `(*LIMIT_DEPTH=n)`, its old name `(*LIMIT_RECURSION=n)`, or
+   `(*LIMIT_HEAP=n)`: without the JIT a possessive group may spend more of
+   it than the greedy one, and `/(*LIMIT_MATCH=4)c(?:ab)+e/`, which matches
+   `cababe`, is no longer rewritten `/(*LIMIT_MATCH=4)c(?:ab)++e/`, which
+   gives up on it. A repeated character or class spends no more of any of
+   them, and is still made possessive there:
+   `/(*LIMIT_MATCH=10)^[a-z]+(?:-[a-z]+)*$/` now becomes
+   `/(*LIMIT_MATCH=10)^[a-z]++(?:-[a-z]++)*$/`, where the check of the
+   result refused the possessive group offered with them.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer

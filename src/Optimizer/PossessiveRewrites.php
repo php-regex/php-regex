@@ -70,6 +70,18 @@ final class PossessiveRewrites
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring];
 
     /**
+     * The limits a pattern may set on what PCRE2 spends on a match, beside
+     * "(*LIMIT_MATCH=n)", by the name a verb gives them.
+     */
+    private const LIMITS = ['LIMIT_DEPTH', 'LIMIT_RECURSION', 'LIMIT_HEAP'];
+
+    /**
+     * Whether the pattern visited sets a limit on what PCRE2 spends on a
+     * match, which a possessive group may spend more of.
+     */
+    private bool $limited = false;
+
+    /**
      * The repeats whose group was dropped, "(?:a)+" written "a+".
      *
      * @var \WeakMap<QuantifierNode, true>
@@ -150,6 +162,7 @@ final class PossessiveRewrites
         $this->pattern = $node;
         $this->calls = null;
         $this->inForce = null;
+        $this->limited = self::setsLimit($node->pattern);
     }
 
     /**
@@ -306,6 +319,26 @@ final class PossessiveRewrites
         }
 
         return $children;
+    }
+
+    /**
+     * Whether the pattern sets a limit on what PCRE2 spends on a match:
+     * "(*LIMIT_MATCH=n)", "(*LIMIT_DEPTH=n)", its old name
+     * "(*LIMIT_RECURSION=n)", or "(*LIMIT_HEAP=n)".
+     */
+    private static function setsLimit(NodeInterface $node): bool
+    {
+        if ($node instanceof LimitMatchNode || ($node instanceof PcreVerbNode && \in_array($node->name, self::LIMITS, true))) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::setsLimit($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -714,8 +747,11 @@ final class PossessiveRewrites
         // A repeated group gives back whole runs, which need not start with
         // a character it ends with: "((?:b|ba)*)c" ends a run of "ba" with
         // the "b" it gives back on "bac". One that ends its sequence stays
-        // greedy.
-        if ([] === $suffix && $repeat->node instanceof GroupNode) {
+        // greedy. So does one under a limit the pattern sets: PCRE2's
+        // interpreter spends a match call more on "c(?:ab)++e" than on
+        // "c(?:ab)+e" over "cababe", and a frame more on "c(?:ab){2,}+e",
+        // which a repeated character never does.
+        if ($repeat->node instanceof GroupNode && ([] === $suffix || $this->limited)) {
             return false;
         }
 
