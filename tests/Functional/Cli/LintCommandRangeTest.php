@@ -165,7 +165,7 @@ final class LintCommandRangeTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('lint', $document);
         $this->assertSame(
-            ['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => self::fullRange()],
+            ['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'pcre_source' => null, 'locale_source' => null, 'range' => self::fullRange()],
             $document['target'] ?? null,
         );
     }
@@ -263,7 +263,7 @@ final class LintCommandRangeTest extends TestCase
         JsonContract::assertShape('lint', $document);
         $points = [80100, 80200, 80300, 80400, 80425, 80500, 80510];
         $this->assertSame(
-            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'range' => self::rows($points)],
+            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'pcre_source' => null, 'locale_source' => null, 'range' => self::rows($points)],
             $document['target'] ?? null,
         );
         $this->assertSame(self::meaningChanges($points), self::warnings($document), $stdout);
@@ -287,7 +287,7 @@ final class LintCommandRangeTest extends TestCase
         JsonContract::assertShape('lint', $document);
         $points = [80100, 80200, 80300];
         $this->assertSame(
-            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'range' => self::rows($points)],
+            ['php' => '8.1', 'pcre' => self::judgedPcre(80100), 'locale' => 'C', 'source' => 'regex.json', 'pcre_source' => null, 'locale_source' => null, 'range' => self::rows($points)],
             $document['target'] ?? null,
         );
         $this->assertSame(self::meaningChanges($points), self::warnings($document), $stdout);

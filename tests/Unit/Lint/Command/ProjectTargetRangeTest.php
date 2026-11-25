@@ -251,6 +251,8 @@ final class ProjectTargetRangeTest extends TestCase
             'pcre' => self::judgedPcre(80400),
             'locale' => 'C',
             'source' => 'composer.json require.php',
+            'pcre_source' => null,
+            'locale_source' => null,
             'range' => [
                 ['php' => '8.4', 'pcre' => self::judgedPcre(80400)],
                 ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)],

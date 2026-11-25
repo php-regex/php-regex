@@ -206,7 +206,7 @@ final class LintCommand extends AbstractCommand implements JsonCommandInterface
                 $output->writeError('Note: '.ReportSpelling::displayField($notice)."\n");
             }
             if (!$json) {
-                $output->writeError(\sprintf("Target: %s (%s)\n", $target->label(), $target->source()));
+                $output->writeError(\sprintf("Target: %s (%s)\n", $target->label(), $target->origins()));
             }
         }
 

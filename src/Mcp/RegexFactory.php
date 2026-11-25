@@ -112,7 +112,7 @@ final class RegexFactory
      */
     private static function keyOf(ProjectTarget $target): string
     {
-        return (string) json_encode([array_map(static fn (PcreTarget $point): string => $point->key(), $target->range()), $target->source(), $target->notices()]);
+        return (string) json_encode([array_map(static fn (PcreTarget $point): string => $point->key(), $target->range()), $target->source(), $target->pcreSource(), $target->localeSource(), $target->notices()]);
     }
 
     /**

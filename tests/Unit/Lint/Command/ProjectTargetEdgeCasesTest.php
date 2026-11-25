@@ -124,7 +124,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
 
         $this->assertSame(70400, $resolved->target()->phpVersionId);
         $this->assertSame('10.42', $resolved->target()->pcreVersion);
-        $this->assertSame('--php-version; --pcre-version', $resolved->source());
+        $this->assertSame(['--php-version', '--pcre-version', null], self::sources($resolved));
         $this->assertSame([], $resolved->notices());
     }
 
@@ -492,14 +492,20 @@ final class ProjectTargetEdgeCasesTest extends TestCase
     }
 
     #[Test]
-    public function test_resolve_joins_the_sources_php_first(): void
+    public function test_resolve_names_where_each_part_came_from(): void
     {
         $directory = $this->makeProject(['composer.json' => '{"require": {"php": "^8.3"}}']);
 
-        $this->assertSame('composer.json require.php; --pcre-version', ProjectTarget::resolve(null, '10.43', [], $directory, [])->source());
-        $this->assertSame('regex.json; --pcre-version', ProjectTarget::resolve(null, '10.43', ['phpVersion' => '8.4'], $directory, [])->source());
-        $this->assertSame('--php-version; regex.json', ProjectTarget::resolve('8.4', null, ['pcreVersion' => '10.42'], $directory, [])->source());
-        $this->assertSame('running PHP; --pcre-version', ProjectTarget::resolve(null, '10.42', [], $this->makeProject(), [])->source());
+        $this->assertSame(['composer.json require.php', '--pcre-version', null], self::sources(ProjectTarget::resolve(null, '10.43', [], $directory, [])));
+        $this->assertSame(['regex.json', '--pcre-version', null], self::sources(ProjectTarget::resolve(null, '10.43', ['phpVersion' => '8.4'], $directory, [])));
+        $this->assertSame(['--php-version', 'regex.json', null], self::sources(ProjectTarget::resolve('8.4', null, ['pcreVersion' => '10.42'], $directory, [])));
+        $this->assertSame(['running PHP', '--pcre-version', null], self::sources(ProjectTarget::resolve(null, '10.42', [], $this->makeProject(), [])));
+        // One source naming two parts names each.
+        $this->assertSame(['regex.json', 'regex.json', null], self::sources(ProjectTarget::resolve(null, null, ['phpVersion' => '8.4', 'pcreVersion' => '10.42'], $directory, [])));
+        // The people reading the banner get them joined, the PHP's first, a
+        // source named once.
+        $this->assertSame('composer.json require.php; --pcre-version', ProjectTarget::resolve(null, '10.43', [], $directory, [])->origins());
+        $this->assertSame('regex.json', ProjectTarget::resolve(null, null, ['phpVersion' => '8.4', 'pcreVersion' => '10.42'], $directory, [])->origins());
     }
 
     #[Test]
@@ -509,7 +515,7 @@ final class ProjectTargetEdgeCasesTest extends TestCase
 
         $this->assertSame('8.3.7', $resolved->php());
         // php and the range both name the patch the flag gives.
-        $this->assertSame(['php' => '8.3.7', 'pcre' => '10.42', 'locale' => 'C', 'source' => '--php-version; --pcre-version', 'range' => [['php' => '8.3.7', 'pcre' => '10.42']]], $resolved->toArray());
+        $this->assertSame(['php' => '8.3.7', 'pcre' => '10.42', 'locale' => 'C', 'source' => '--php-version', 'pcre_source' => '--pcre-version', 'locale_source' => null, 'range' => [['php' => '8.3.7', 'pcre' => '10.42']]], $resolved->toArray());
         $this->assertSame(['php_version' => 80307, 'pcre_version' => '10.42', 'locale' => 'C'], $resolved->regexOptions());
     }
 
@@ -684,5 +690,19 @@ final class ProjectTargetEdgeCasesTest extends TestCase
         yield '--php-version, one PCRE1 series' => ['flag' => '7.2.*', 'config' => [], 'message' => '--php-version allows PHP 7.2: '.$refusal];
         yield 'regex.json, an object of strings' => ['flag' => null, 'config' => ['phpVersion' => ['min' => '7.0', 'max' => '7.2']], 'message' => 'regex.json allows PHP 7.0: '.$refusal];
         yield 'regex.json, an object of PHP_VERSION_IDs' => ['flag' => null, 'config' => ['phpVersion' => ['min' => 70100, 'max' => 70299]], 'message' => 'regex.json allows PHP 7.1: '.$refusal];
+    }
+
+    /**
+     * Where the PHP, the PCRE2 release and the locale came from, as the
+     * JSON report gives them.
+     *
+     * @return array{string, string|null, string|null}
+     */
+    private static function sources(ProjectTarget $target): array
+    {
+        $described = $target->toArray();
+        self::assertSame([$target->source(), $target->pcreSource(), $target->localeSource()], [$described['source'], $described['pcre_source'], $described['locale_source']]);
+
+        return [$described['source'], $described['pcre_source'], $described['locale_source']];
     }
 }

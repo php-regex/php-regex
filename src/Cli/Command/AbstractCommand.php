@@ -276,10 +276,10 @@ abstract class AbstractCommand implements CommandInterface
     protected function targetMeta(Output $output, TargetRange $range): array
     {
         $target = $range->target;
-        if ('running PHP' === $target->source()) {
+        if ($target->isRuntime()) {
             return [];
         }
 
-        return ['Target PHP' => $output->warning($target->label()).' ('.$target->source().')'.LintOutputRenderer::laterPoints($output, $target)];
+        return ['Target PHP' => $output->warning($target->label()).' ('.$target->origins().')'.LintOutputRenderer::laterPoints($output, $target)];
     }
 }

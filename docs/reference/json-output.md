@@ -265,6 +265,8 @@ short for `--format=json`.
         "pcre": "10.40",
         "locale": "C",
         "source": "composer.json require.php",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
     "host": {"php": "8.4.26", "pcre": "10.49"},
@@ -330,10 +332,12 @@ short for `--format=json`.
 | `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when its patch is not 0 (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`); always the first `range` entry's `php` |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
 | `locale` | string | The `LC_CTYPE` locale the patterns were judged under, as the C library names it: `C` for PCRE2's own character tables; the same at every `range` entry |
-| `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP`, then where the PCRE2 release and the locale came from when it was elsewhere (`running PHP; --locale`) |
+| `source` | string | Where the PHP came from: `--php-version`, `regex.json`, `composer.json require.php`, `composer.json config.platform.php` or `running PHP`; the Symfony and Laravel commands name their own setting (`php_regex.php_version`, `config php-regex.php_version`); an open set |
+| `pcre_source` | string \| null | Where the PCRE2 release came from, in the same words: `--pcre-version`, `regex.json`, `composer.json config.platform.lib-pcre`, a bridge's setting; `null` when nothing named it, the release then the running one for the running PHP's minor version, else the one that PHP bundles |
+| `locale_source` | string \| null | Where the locale came from, in the same words: `--locale`, `regex.json`, a bridge's setting; `null` when nothing named it, the runtime's `LC_CTYPE` then |
 | `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP is a range: read from `composer.json require.php`, or named by `--php-version` or `phpVersion` as a constraint or `{min, max}` |
 
-`php`, `pcre` and `source` name the floor: the lint rules and the ReDoS
+`php`, `pcre` and their sources name the floor: the lint rules and the ReDoS
 analysis judge every pattern there. When the PHP is a range,
 each pattern is also validated (parsed and checked, without the lint rules)
 at every PHP version above the floor that a rule of the library changes at
@@ -692,6 +696,8 @@ ASCII, and agree under `u` for UTF-8 subjects.
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -729,6 +735,8 @@ ASCII, and agree under `u` for UTF-8 subjects.
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -792,6 +800,8 @@ apart, 0 and 1:
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -844,6 +854,8 @@ plain language, the text the console prints. `--json` is short for
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",

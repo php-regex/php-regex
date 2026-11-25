@@ -41,6 +41,8 @@ final class ToolCatalog
             'pcre' => ['type' => 'string'],
             'locale' => ['type' => 'string'],
             'source' => ['type' => 'string'],
+            'pcre_source' => ['type' => ['string', 'null']],
+            'locale_source' => ['type' => ['string', 'null']],
             'range' => [
                 'type' => 'array',
                 'items' => [
@@ -52,7 +54,7 @@ final class ToolCatalog
                 'minItems' => 1,
             ],
         ],
-        'required' => ['php', 'pcre', 'locale', 'source', 'range'],
+        'required' => ['php', 'pcre', 'locale', 'source', 'pcre_source', 'locale_source', 'range'],
         'additionalProperties' => false,
     ];
 

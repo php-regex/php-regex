@@ -2409,6 +2409,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "php": "8.4.26",
         "pcre": "10.49",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.26",

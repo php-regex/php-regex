@@ -75,7 +75,7 @@ final class JsonContract
         // regex lint --format=json
         'lint' => ['target', 'host', 'stats', 'results'],
         'lint.host' => ['php', 'pcre'],
-        'lint.target' => ['php', 'pcre', 'locale', 'source', 'range'],
+        'lint.target' => ['php', 'pcre', 'locale', 'source', 'pcre_source', 'locale_source', 'range'],
         'lint.target.range[]' => ['php', 'pcre'],
         'lint.stats' => [
             'errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed',
