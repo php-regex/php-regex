@@ -45,20 +45,20 @@ final class TranspileToolTest extends TestCase
      */
     public static function provideTranslations(): iterable
     {
-        yield 'javascript, /m' => ['arguments' => ['pattern' => '/^a$/m', 'target' => 'js'], 'cli' => ['transpile', '/^a$/m', '--target=js'], 'isError' => false];
-        yield 'html' => ['arguments' => ['pattern' => '/^[a-z]+$/i', 'target' => 'html'], 'cli' => ['transpile', '/^[a-z]+$/i', '--target=html'], 'isError' => false];
-        yield 'python 3.11, an atomic group' => ['arguments' => ['pattern' => '/(?>a+)b/', 'target' => 'python', 'python_version' => '3.11'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.11'], 'isError' => false];
-        yield 'python 3.10, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)b/', 'target' => 'python', 'python_version' => '3.10'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.10'], 'isError' => true];
-        yield 'javascript, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)a/', 'target' => 'js'], 'cli' => ['transpile', '/(?>a+)a/', '--target=js'], 'isError' => true];
-        yield 'javascript, a verb refused' => ['arguments' => ['pattern' => '/a(*SKIP)b/', 'target' => 'js'], 'cli' => ['transpile', '/a(*SKIP)b/', '--target=js'], 'isError' => true];
-        yield 'an invalid pattern' => ['arguments' => ['pattern' => '/(a/', 'target' => 'js'], 'cli' => ['transpile', '/(a/', '--target=js'], 'isError' => true];
-        yield 'a semantic error' => ['arguments' => ['pattern' => '/(?<=a+)b/', 'target' => 'js'], 'cli' => ['transpile', '/(?<=a+)b/', '--target=js'], 'isError' => true];
+        yield 'javascript, /m' => ['arguments' => ['pattern' => '/^a$/m', 'dialect' => 'js'], 'cli' => ['transpile', '/^a$/m', '--target=js'], 'isError' => false];
+        yield 'html' => ['arguments' => ['pattern' => '/^[a-z]+$/i', 'dialect' => 'html'], 'cli' => ['transpile', '/^[a-z]+$/i', '--target=html'], 'isError' => false];
+        yield 'python 3.11, an atomic group' => ['arguments' => ['pattern' => '/(?>a+)b/', 'dialect' => 'python', 'python_version' => '3.11'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.11'], 'isError' => false];
+        yield 'python 3.10, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)b/', 'dialect' => 'python', 'python_version' => '3.10'], 'cli' => ['transpile', '/(?>a+)b/', '--target=python', '--python-version=3.10'], 'isError' => true];
+        yield 'javascript, an atomic group refused' => ['arguments' => ['pattern' => '/(?>a+)a/', 'dialect' => 'js'], 'cli' => ['transpile', '/(?>a+)a/', '--target=js'], 'isError' => true];
+        yield 'javascript, a verb refused' => ['arguments' => ['pattern' => '/a(*SKIP)b/', 'dialect' => 'js'], 'cli' => ['transpile', '/a(*SKIP)b/', '--target=js'], 'isError' => true];
+        yield 'an invalid pattern' => ['arguments' => ['pattern' => '/(a/', 'dialect' => 'js'], 'cli' => ['transpile', '/(a/', '--target=js'], 'isError' => true];
+        yield 'a semantic error' => ['arguments' => ['pattern' => '/(?<=a+)b/', 'dialect' => 'js'], 'cli' => ['transpile', '/(?<=a+)b/', '--target=js'], 'isError' => true];
     }
 
     #[Test]
     public function test_the_text_reads_the_literal_then_the_notes(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/^a$/m', 'target' => 'js']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/^a$/m', 'dialect' => 'js']);
 
         $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $result->structured['literal']);
         $this->assertStringStartsWith($result->structured['literal']."\n", $result->text);
@@ -68,7 +68,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_refusal_is_read_in_the_text(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)a/', 'target' => 'js']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/(?>a+)a/', 'dialect' => 'js']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('Atomic groups are not supported in JavaScript.', $result->text);
@@ -78,7 +78,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_missing_pattern_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['target' => 'js']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['dialect' => 'js']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -87,7 +87,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_python_version_that_is_no_string_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 3.11]);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'dialect' => 'python', 'python_version' => 3.11]);
 
         $this->assertTrue($result->isError);
         $this->assertSame(['error' => 'The "python_version" argument must be a Python release, as "3.11".', 'stage' => 'usage'], $result->structured);
@@ -96,7 +96,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_an_unknown_target_php_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'js', 'php_version' => 'eight']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'dialect' => 'js', 'php_version' => 'eight']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -113,7 +113,7 @@ final class TranspileToolTest extends TestCase
         $this->assertSame(1, preg_match('/\p{L}+/u', 'é', $character));
         $this->assertSame('é', $character[0]);
 
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'target' => 'js']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/\p{L}+/', 'dialect' => 'js']);
 
         $this->assertFalse($result->isError);
         $set = 'Without the u flag "\p{L}" at offset 0 takes one byte in PCRE and one character in this target, so the two differ on a subject holding a character outside ASCII; under u, for UTF-8 subjects, they agree. Add u.';
@@ -122,23 +122,43 @@ final class TranspileToolTest extends TestCase
     }
 
     #[Test]
-    public function test_a_missing_target_is_a_usage_failure(): void
+    public function test_a_missing_dialect_is_a_usage_failure(): void
     {
         $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
-        $this->assertSame('The "target" argument is required: js, html or python.', $result->structured['error']);
+        $this->assertSame('The "dialect" argument is required: one of javascript, js, html-pattern, html, python, py.', $result->structured['error']);
+    }
+
+    /**
+     * The argument is the dialect, which the 2.0 answer names "dialect";
+     * "target" is the PHP versions judged, as in every other tool.
+     */
+    #[Test]
+    public function test_the_dialect_is_its_own_argument_and_key(): void
+    {
+        $tool = ToolCatalog::v1()->get('regex_transpile')->tool;
+
+        foreach (['javascript' => 'javascript', 'js' => 'javascript', 'html-pattern' => 'html-pattern', 'html' => 'html-pattern', 'python' => 'python', 'py' => 'python'] as $name => $dialect) {
+            $result = $tool->execute(['pattern' => '/a/', 'dialect' => $name]);
+
+            $this->assertFalse($result->isError, $name);
+            $this->assertSame($dialect, $result->structured['dialect'] ?? null, $name);
+            $this->assertIsArray($result->structured['target'] ?? null, $name);
+        }
+
+        $this->assertTrue($tool->execute(['pattern' => '/a/', 'target' => 'js'])->isError);
     }
 
     #[Test]
     public function test_a_dialect_the_transpiler_has_no_target_for_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'perl']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'dialect' => 'perl']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
-        $this->assertSame('The "target" argument is required: js, html or python.', $result->structured['error']);
+        $this->assertSame('The "dialect" argument is required: one of javascript, js, html-pattern, html, python, py.', $result->structured['error']);
     }
 
     #[Test]
@@ -147,7 +167,7 @@ final class TranspileToolTest extends TestCase
         $tool = ToolCatalog::v1()->get('regex_transpile')->tool;
 
         foreach (['/[/' => 'unclosed character class', '/(?<n/' => 'name'] as $pattern => $word) {
-            $result = $tool->execute(['pattern' => $pattern, 'target' => 'js']);
+            $result = $tool->execute(['pattern' => $pattern, 'dialect' => 'js']);
             $this->assertTrue($result->isError, $pattern);
             $this->assertSame('pattern', $result->structured['stage'], $pattern);
             $this->assertIsString($result->structured['error']);
@@ -158,7 +178,7 @@ final class TranspileToolTest extends TestCase
     #[Test]
     public function test_a_python_version_that_is_not_a_release_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'target' => 'python', 'python_version' => 'three']);
+        $result = ToolCatalog::v1()->get('regex_transpile')->tool->execute(['pattern' => '/a/', 'dialect' => 'python', 'python_version' => 'three']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);

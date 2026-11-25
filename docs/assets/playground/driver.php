@@ -1178,7 +1178,7 @@ if (!\function_exists('phpregex_playground_run')) {
         $started = hrtime(true);
         $regex = phpregex_playground_string($input, 'regex');
         // The dialect has a key of its own: "target" names the engine to judge for.
-        $target = phpregex_playground_string($input, 'dialect');
+        $dialect = phpregex_playground_string($input, 'dialect');
         $library = phpregex_playground_library(phpregex_playground_target($input));
         $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'transpile' => null, 'refusal' => null, 'error' => null, 'timing' => ['transpileMs' => 0.0]];
 
@@ -1202,9 +1202,9 @@ if (!\function_exists('phpregex_playground_run')) {
         }
 
         try {
-            $answer['transpile'] = $library->transpile($regex, $target, $options)->jsonSerialize();
-        } catch (RegexException $e) {
-            // A construct the target has no spelling for, or a target the
+            $answer['transpile'] = $library->transpile($regex, $dialect, $options)->jsonSerialize();
+        } catch (RegexException|InvalidRegexOptionException $e) {
+            // A construct the dialect has no spelling for, or a dialect the
             // transpiler does not know: content, in the transpiler's words.
             $answer['refusal'] = ['message' => $e->getMessage()];
         }

@@ -20,10 +20,11 @@ CHANGELOG
    version. The tool's answer is computed for the lowest version, and the
    pattern is checked at every later version where one of the library's
    rules changes. The server reads no file from its working directory.
- * Every structured answer ends with `target`, the PHP versions judged
-   (`php_target` for `regex_transpile`, whose `target` is the dialect), and
+ * Every structured answer ends with `target`, the PHP versions judged, and
    `range`, the verdict of each version on the pattern. The output schemas
-   declare both.
+   declare both. `regex_transpile` takes its dialect in `dialect`
+   (`javascript` or `js`, `html-pattern` or `html`, `python` or `py`) and
+   names it `dialect` in its answer.
  * Each tool's output schema is an object at its root (`"type": "object"`
    beside the `oneOf` of the success document and the error envelope), as
    the protocol's tool schema requires: a client that checks it, as the

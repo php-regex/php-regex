@@ -83,7 +83,7 @@ final class ParameterNamesTest extends TestCase
     public static function provideSignatures(): iterable
     {
         yield 'Transpiler::__construct' => ['class' => Transpiler::class, 'method' => '__construct', 'names' => ['parser']];
-        yield 'Transpiler::transpile' => ['class' => Transpiler::class, 'method' => 'transpile', 'names' => ['regex', 'target']];
+        yield 'Transpiler::transpile' => ['class' => Transpiler::class, 'method' => 'transpile', 'names' => ['regex', 'dialect']];
         yield 'LanguageSolver::acceptsPrefix' => ['class' => LanguageSolver::class, 'method' => 'acceptsPrefix', 'names' => ['regex', 'subject']];
         yield 'LanguageSolver::language' => ['class' => LanguageSolver::class, 'method' => 'language', 'names' => ['regex']];
         yield 'LanguageSolver::compile' => ['class' => LanguageSolver::class, 'method' => 'compile', 'names' => ['regex']];

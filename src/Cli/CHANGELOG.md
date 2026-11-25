@@ -66,10 +66,9 @@ CHANGELOG
    document as on the console, so `format`, `transpile` and `highlight` keep
    stdout for what they produce; `compare` starts each line with the pattern
    it is about (`Pattern 1: `, `Pattern 2: `), and `redos --safe` judges the
-   safe pattern too. Their JSON gains lint's `target` object (`php_target`
-   for `transpile`, whose `target` is the dialect) and a `range` list, the
-   verdict of each version, with `safe_range` for `redos --safe`; no existing
-   key changes. The banner's `Target PHP` line, shown when `--php-version`,
+   safe pattern too. Their JSON gains lint's `target` object and a `range`
+   list, the verdict of each version, with `safe_range` for `redos --safe`;
+   `transpile` names its dialect `dialect`, which 1.x named `target`. The banner's `Target PHP` line, shown when `--php-version`,
    `--pcre-version` or `--locale` is given, names the target resolved, where
    it came from and the later versions judged, followed by lint's `Note:`
    lines (on stderr beside JSON and the other formats, and without the banner

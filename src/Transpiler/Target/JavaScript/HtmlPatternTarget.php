@@ -38,16 +38,6 @@ final class HtmlPatternTarget implements TargetInterface
 {
     private const PADDING = '[\s\S]*';
 
-    public function getName(): string
-    {
-        return 'html-pattern';
-    }
-
-    public function getAliases(): array
-    {
-        return ['html'];
-    }
-
     public function getDefaultDelimiter(): string
     {
         return '';

@@ -318,7 +318,7 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertSame(3, $js['protocol']);
         $this->assertNull($js['refusal']);
         $this->assertNotNull($js['transpile']);
-        $this->assertSame('javascript', $js['transpile']['target']);
+        $this->assertSame('javascript', $js['transpile']['dialect']);
         $this->assertSame('(?:^|(?<=\n)(?!$))a(?=\n|$)', $js['transpile']['pattern']);
         $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $js['transpile']['literal']);
         $this->assertSame([], $js['transpile']['warnings']);
@@ -349,7 +349,7 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertNull($answer['refusal']);
         $this->assertIsArray($answer['transpile']);
         $this->assertSame('/(?:^|(?<=\n)(?!$))a(?=\n|$)/', $answer['transpile']['literal']);
-        $this->assertSame('javascript', $answer['transpile']['target']);
+        $this->assertSame('javascript', $answer['transpile']['dialect']);
     }
 
     /**
@@ -361,7 +361,7 @@ final class PlaygroundToolsTest extends TestCase
         yield 'a verb to JavaScript' => ['pattern' => '/a(*SKIP)b/', 'dialect' => 'js', 'fields' => [], 'message' => 'PCRE verbs are not supported in JavaScript.'];
         yield '\K to JavaScript' => ['pattern' => '/(?<=a)b\K/', 'dialect' => 'js', 'fields' => [], 'message' => '\K is not supported in JavaScript.'];
         yield 'atomic group to Python 3.10' => ['pattern' => '/(?>a+)b/', 'dialect' => 'python', 'fields' => ['pythonVersion' => '3.10'], 'message' => 'Atomic groups are not supported in Python re.'];
-        yield 'an unknown target' => ['pattern' => '/a/', 'dialect' => 'ruby', 'fields' => [], 'message' => 'Unknown transpile target: ruby. Expected one of: html, html-pattern, javascript, js, py, python.'];
+        yield 'an unknown dialect' => ['pattern' => '/a/', 'dialect' => 'ruby', 'fields' => [], 'message' => 'Unknown transpile dialect: ruby. Expected one of: javascript, js, html-pattern, html, python, py.'];
     }
 
     /**

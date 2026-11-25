@@ -18,7 +18,7 @@ use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Dialect;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -126,12 +126,25 @@ final class RegexFormatArgumentsTest extends TestCase
         $this->assertFalse(enum_exists('PHPRegex\\Toolkit\\OutputFormat'));
     }
 
+    /**
+     * The dialect is read before the pattern: a name no dialect answers to
+     * is reported over a pattern that does not parse.
+     */
     #[Test]
-    public function test_transpile_names_the_targets_it_takes(): void
+    public function test_transpile_names_the_dialects_it_takes(): void
     {
-        $this->expectException(TranspileException::class);
-        $this->expectExceptionMessageIsOrContains('Unknown transpile target: bogus. Expected one of: html, html-pattern, javascript, js, py, python.');
+        $this->expectException(InvalidRegexOptionException::class);
+        $this->expectExceptionMessageIsOrContains('Unknown transpile dialect: bogus. Expected one of: javascript, js, html-pattern, html, python, py.');
 
-        Regex::create()->transpile('/a+/', 'bogus');
+        Regex::create()->transpile('/(/', 'bogus');
+    }
+
+    #[Test]
+    public function test_transpile_takes_the_dialect_or_its_name(): void
+    {
+        $regex = Regex::create(['cache' => null]);
+
+        $this->assertSame('python', $regex->transpile('/a+/', Dialect::Python)->target);
+        $this->assertSame($regex->transpile('/a+/', 'py')->literal, $regex->transpile('/a+/', Dialect::Python)->literal);
     }
 }

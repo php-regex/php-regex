@@ -105,9 +105,9 @@ final class JsonContract
         'redos.bench' => ['vuln', 'safe'],
         'redos.summary' => ['result_parity', 'speedup', 'delta_ms'],
 
-        // regex transpile --format=json, and the Symfony and Laravel commands:
-        // "target" is the dialect, "php_target" the PHP versions judged.
-        'transpile' => ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes', 'php_target', 'range'],
+        // regex transpile --format=json, and the Symfony and Laravel commands
+        // without the target and the range.
+        'transpile' => ['dialect', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes', 'target', 'range'],
 
         // regex format --format=json
         'format' => ['pattern', 'formatted', 'changed', 'refusal', 'target', 'range'],
@@ -182,7 +182,7 @@ final class JsonContract
         'format.target' => 'lint.target',
         'redos.target' => 'lint.target',
         'validate.target' => 'lint.target',
-        'transpile.php_target' => 'lint.target',
+        'transpile.target' => 'lint.target',
         'analyze.range[]' => 'range_point',
         'debug.range[]' => 'range_point',
         'explain.range[]' => 'range_point',

@@ -4,6 +4,14 @@ CHANGELOG
 2.0
 ---
 
+ * The `Dialect` enum names the dialects a pattern transpiles to:
+   `JavaScript`, `HtmlPattern` and `Python`. `Transpiler::transpile()` takes
+   a case or a name, as `transpile($regex, Dialect::Python)` or
+   `transpile($regex, 'py')`, in its `$dialect` argument (1.x `$target`).
+   `Dialect::fromName()` reads `javascript` or `js`, `html-pattern` or
+   `html`, `python` or `py`, and `Dialect::names()` lists them. A name no
+   dialect answers to throws `InvalidRegexOptionException` before the
+   pattern is read, where 1.x threw `TranspileException`.
  * `Target\JavaScript\VModeCompatibility` lists what a browser does wrong
    with a pattern written for PCRE and read as is under the `v` flag, as the
    HTML `pattern` attribute reads it: each construct it refuses to compile

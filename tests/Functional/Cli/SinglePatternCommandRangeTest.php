@@ -33,8 +33,8 @@ use PHPUnit\Framework\TestCase;
  * transpile and highlight print their product alone on stdout: the range's
  * words go to stderr.
  *
- * transpile names the PHP versions judged "php_target": its "target" is
- * the dialect.
+ * transpile names its dialect "dialect", beside the "target" every
+ * document names the PHP versions judged with.
  *
  * transpile, compare and graph refuse every construct a later PHP refuses
  * ("\K" in a lookaround, "\C" under "u") at the floor already: they have
@@ -207,12 +207,12 @@ final class SinglePatternCommandRangeTest extends TestCase
     }
 
     /**
-     * transpile's JSON already has a "target", the dialect: it keeps it,
-     * names the PHP versions judged "php_target", lint's object, and gains
-     * the "range" list.
+     * transpile's JSON names its dialect "dialect", and the PHP versions
+     * judged "target", lint's object, as every document does, and gains the
+     * "range" list.
      */
     #[Test]
-    public function test_the_transpile_document_keeps_its_dialect_target_and_gains_the_php_target_and_the_range(): void
+    public function test_the_transpile_document_names_its_dialect_beside_the_target_and_the_range(): void
     {
         self::assertEngineReadsQuantifierWithoutMin();
         $directory = $this->enterProject();
@@ -224,8 +224,8 @@ final class SinglePatternCommandRangeTest extends TestCase
         $this->assertSame('Warning: '.self::parsesDifferentlyMessage(self::firstPointReadingQuantifierOtherwise(RangePatterns::FROM_8_1))."\n", $stderr, 'stdout holds the document alone: the warning goes to stderr.');
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('transpile', $document);
-        $this->assertSame('javascript', $document['target'] ?? null);
-        $this->assertSame(ProjectTarget::resolve('>=8.1', null, [], $directory, [])->toArray(), $document['php_target'] ?? null);
+        $this->assertSame('javascript', $document['dialect'] ?? null);
+        $this->assertSame(ProjectTarget::resolve('>=8.1', null, [], $directory, [])->toArray(), $document['target'] ?? null);
         self::assertRange(
             $document['range'] ?? null,
             RangePatterns::FROM_8_1,
@@ -235,7 +235,7 @@ final class SinglePatternCommandRangeTest extends TestCase
         );
 
         $floor = JsonContract::decodeDocument($floorStdout);
-        foreach (['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'] as $key) {
+        foreach (['dialect', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'] as $key) {
             $this->assertSame($floor[$key] ?? null, $document[$key] ?? null, $key.' keeps the value the floor gives it.');
         }
     }

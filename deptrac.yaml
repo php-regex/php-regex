@@ -189,7 +189,7 @@ deptrac:
     LinterInternal: [Linter, Parser, ParserInternal, Explain, ReDoS, Automata, AutomataInternal, Optimizer]
     Toolkit: [Parser, Explain, Optimizer, Generator, ReDoS, Transpiler, Linter]
     # The language server is started by its class name, when its package is installed.
-    Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Automata, AutomataInternal, ReDoS, RedosInternal, Transpiler, TranspilerInternal, Linter, LinterInternal, LanguageServerInternal]
+    Cli: [Toolkit, Parser, ParserInternal, Explain, Optimizer, Automata, AutomataInternal, ReDoS, RedosInternal, Transpiler, Linter, LinterInternal, LanguageServerInternal]
     Mcp: [Toolkit, Parser, ParserInternal, ReDoS, Transpiler, Linter, LinterInternal]
     LanguageServer: [Toolkit, Parser, ParserInternal, Explain, ReDoS, Linter, LinterInternal, LanguageServerInternal]
     LanguageServerInternal: [LanguageServer, Toolkit, Parser, ParserInternal, Explain, ReDoS, Linter, LinterInternal]
@@ -198,5 +198,5 @@ deptrac:
     Infection: [Parser, ParserInternal, Automata, Generator, ReDoS]
     Psalm: [Parser, ParserInternal, Automata, Linter, LinterInternal]
     Rector: [Parser, Automata]
-    Symfony: [Toolkit, Parser, ParserInternal, Optimizer, Automata, ReDoS, Transpiler, TranspilerInternal, Linter, LinterInternal]
-    Laravel: [Toolkit, Parser, ParserInternal, Optimizer, Automata, ReDoS, Transpiler, TranspilerInternal, Linter, LinterInternal]
+    Symfony: [Toolkit, Parser, ParserInternal, Optimizer, Automata, ReDoS, Transpiler, Linter, LinterInternal]
+    Laravel: [Toolkit, Parser, ParserInternal, Optimizer, Automata, ReDoS, Transpiler, Linter, LinterInternal]

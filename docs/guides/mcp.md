@@ -179,7 +179,7 @@ The document of `regex format --json`: the pattern laid out or compacted, whethe
 | Argument | Meaning |
 |----------|---------|
 | `pattern` | The pattern |
-| `target` | `js`, `html` or `python` |
+| `dialect` | `javascript` or `js`, `html-pattern` or `html`, `python` or `py` |
 | `python_version` | The Python release the pattern runs on, as `3.11`, which carries atomic groups |
 | `php_version`, `pcre_version` | The target |
 
@@ -217,7 +217,7 @@ Every answer is a verdict for a PHP version and a PCRE2 release, resolved in thi
 2. `--php-version`, `--pcre-version` and `--locale` given to `regex-mcp` or `regex mcp`;
 3. the PHP running the server, and the PCRE2 it bundles.
 
-`php_version` names one version (`"8.2"`) or a range, as a Composer constraint (`">=8.1"`, `"^8.1 <8.7"`): a library that installs on several PHP versions passes its `require.php`. The answer is computed for the lowest version, and the pattern is also validated at every later version of the range where a rule of the library changes. The structured content carries `target`, the versions judged (`php_target` for `regex_transpile`, whose `target` is the dialect), and `range`, each version's verdict, the floor first, as the [CLI's JSON](../reference/json-output.md#range-point-range_point) does. The text answer says it too, in the words of `regex lint`: an `Error:` line when a later version refuses the pattern, a `Warning:` line when one reads it otherwise or gives it another meaning, and a `Note:` line for each note of the resolution (a range clipped to PHP 7.3, a PCRE2 judged with older rules). The answer stays a success when the lowest version accepts the pattern.
+`php_version` names one version (`"8.2"`) or a range, as a Composer constraint (`">=8.1"`, `"^8.1 <8.7"`): a library that installs on several PHP versions passes its `require.php`. The answer is computed for the lowest version, and the pattern is also validated at every later version of the range where a rule of the library changes. The structured content carries `target`, the versions judged, and `range`, each version's verdict, the floor first, as the [CLI's JSON](../reference/json-output.md#range-point-range_point) does. The text answer says it too, in the words of `regex lint`: an `Error:` line when a later version refuses the pattern, a `Warning:` line when one reads it otherwise or gives it another meaning, and a `Note:` line for each note of the resolution (a range clipped to PHP 7.3, a PCRE2 judged with older rules). The answer stays a success when the lowest version accepts the pattern.
 
 A PHP of 7.2 or earlier is refused: it ships PCRE1, which the library does not judge. The server reads no `regex.json` and no `composer.json`: a client started from another directory would read the wrong project's, so the target is what the command line and the call say.
 

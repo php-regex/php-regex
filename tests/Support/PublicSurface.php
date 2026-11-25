@@ -84,7 +84,7 @@ final class PublicSurface
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'ExplainFormat', 'HighlightFormat'],
-        'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'Target/JavaScript/VModeCompatibility'],
+        'Transpiler' => ['Transpiler', 'Dialect', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'Target/JavaScript/VModeCompatibility'],
     ];
 
     /**

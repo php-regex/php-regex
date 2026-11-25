@@ -573,7 +573,8 @@ its body, `$ast` a parsed tree, `$subject` the text matched against and
 | method | before | after |
 |---|---|---|
 | `Transpiler::__construct()` | `$regex` | `$parser` |
-| `Transpiler::transpile()` | `$pattern` | `$regex` |
+| `Transpiler::transpile()` | `$pattern`, `$target` | `$regex`, `$dialect` |
+| `Regex::transpile()` | `$target` | `$dialect` |
 | `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$subject` |
 | `LanguageSolver::language()`, `compile()` | `$pattern` | `$regex` |
 | `TrivialMatchClassifier::classify()`, `matchedLiteral()` | `$pattern` | `$regex` |
@@ -1367,6 +1368,7 @@ prints one error envelope. The
 | baseline entry | `type` | `severity` |
 | `runtime.jit` (`analyze`, `debug`, `redos`) | the `pcre.jit` string, as `"1"` | a bool |
 | `confirmation.jit_setting` | a string | a bool |
+| `transpile` | `target`, the dialect | `dialect`; `target` is the PHP versions judged, as in every document |
 | an error | `{"error": "..."}`, or `{"error": "...", "stage": "analyze"}` and `"debug"` | `{"error": "...", "stage": "..."}`, stage `usage`, `config`, `collect`, `analyze`, `pattern` or `internal`; `analyze` now names the step of `lint` that analyses the patterns, a worker that failed or exited, never the `analyze` command |
 
 The rest of the lint `validation` object (`error`, `category`, `offset`,
@@ -1378,8 +1380,9 @@ The same renames hold in PHP. `ValidationResult` implements
 `complexity_score`, `caret_snippet` and `error_code`, where 1.x gave the
 public property names `isValid`, `complexityScore`, `caretSnippet` and
 `errorCode`. `category` and `error_code` are the enum values, as strings. The
-keys of `json_encode()` on an `OptimizationResult` or a `TranspileResult` do
-not change.
+keys of `json_encode()` on an `OptimizationResult` do not change; on a
+`TranspileResult`, `target` is `dialect`, as in the CLI's document, and the
+`$target` property keeps its name.
 
 - Every lint issue carries every key, `null` when it does not apply:
   `severity, file, line, column, file_offset, position, issue_id, message,
@@ -1722,6 +1725,7 @@ which no caller should catch on purpose.
 | what went wrong | before | 2.0 |
 |---|---|---|
 | `Regex::explain()` with an unknown format | `\InvalidArgumentException` | `InvalidRegexOptionException` |
+| `transpile()` with an unknown dialect | `TranspileException` | `InvalidRegexOptionException`, thrown by `Dialect::fromName()` before the pattern is read; `transpile()` takes a `PHPRegex\Transpiler\Dialect` case or its name, and `TranspileException` is left to a pattern the dialect cannot carry |
 | `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `PHPRegex\Linter\Exception\LintException` |
 | a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `PHPRegex\Linter\Exception\LintException` |
 | `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\Exception\CliException` |

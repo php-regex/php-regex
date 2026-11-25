@@ -157,9 +157,7 @@ final class AbstractCommandTargetTest extends TestCase
         $this->assertSame('config', JsonContract::decodeDocument($lint)['stage'] ?? null, $lint);
         $this->assertSame(0, $exitCode, $stdout.$stderr);
         $this->assertSame('', $stderr);
-        // transpile's "target" is the dialect: the PHP judged is "php_target".
-        $key = 'transpile' === $command[0] ? 'php_target' : 'target';
-        $this->assertSame('running PHP', JsonContract::asArray(JsonContract::decodeDocument($stdout)[$key] ?? null)['source'] ?? null);
+        $this->assertSame('running PHP', JsonContract::asArray(JsonContract::decodeDocument($stdout)['target'] ?? null)['source'] ?? null);
     }
 
     /**

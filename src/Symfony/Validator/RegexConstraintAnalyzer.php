@@ -22,6 +22,7 @@ use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Target\JavaScript\VModeCompatibility;
 use PHPRegex\Transpiler\Transpiler;
 use Symfony\Component\Validator\Constraint;
@@ -655,7 +656,7 @@ final class RegexConstraintAnalyzer
     private function writeSuggestion(string $pattern): array
     {
         try {
-            $html = $this->transpiler->transpile($pattern, 'html-pattern')->pattern;
+            $html = $this->transpiler->transpile($pattern, Dialect::HtmlPattern)->pattern;
         } catch (\Throwable) {
             return [null, false];
         }
