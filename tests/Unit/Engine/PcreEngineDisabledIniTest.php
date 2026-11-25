@@ -54,8 +54,8 @@ final class PcreEngineDisabledIniTest extends TestCase
             $out = ['ini_set' => function_exists('ini_set')];
             foreach (['match', 'test'] as $method) {
                 try {
-                    $answer = $engine->{$method}('/(a+)+$/', $subject, $limits);
-                    $out[$method] = ['matched' => $answer->matched, 'groups' => $answer->groups, 'error' => $answer->error, 'errorCode' => $answer->errorCode];
+                    $answer = $engine->{$method}('/(a+)+$/', $subject, limits: $limits);
+                    $out[$method] = ['matched' => $answer->matched, 'groups' => $answer->groups, 'error' => $answer->error, 'pcreError' => $answer->pcreError];
                 } catch (\Throwable $e) {
                     $out[$method] = ['thrown' => $e::class.': '.$e->getMessage()];
                 }
@@ -96,8 +96,8 @@ final class PcreEngineDisabledIniTest extends TestCase
             $engine = new \PHPRegex\Parser\Engine\PcreEngine();
             $limits = new \PHPRegex\Parser\Engine\PcreLimits(10, 100000);
             $calls = [
-                'limits' => static fn () => $engine->match('/a/', 'a', $limits),
-                'refused pattern under limits' => static fn () => $engine->match('/[a/', 'a', $limits),
+                'limits' => static fn () => $engine->match('/a/', 'a', limits: $limits),
+                'refused pattern under limits' => static fn () => $engine->match('/[a/', 'a', limits: $limits),
                 'no room for the verb' => static fn () => $engine->match('_'.NO_ROOM_BODY.'_', 'a'),
             ];
             $out = [];
@@ -183,8 +183,8 @@ final class PcreEngineDisabledIniTest extends TestCase
             $subject = str_repeat('a', 12).'!';
             $out = ['ini_get' => function_exists('ini_get')];
             try {
-                $answer = $engine->match('/(a+)+$/', $subject, new \PHPRegex\Parser\Engine\PcreLimits(10, 100000));
-                $out['match'] = ['matched' => $answer->matched, 'errorCode' => $answer->errorCode, 'error' => $answer->error];
+                $answer = $engine->match('/(a+)+$/', $subject, limits: new \PHPRegex\Parser\Engine\PcreLimits(10, 100000));
+                $out['match'] = ['matched' => $answer->matched, 'pcreError' => $answer->pcreError, 'error' => $answer->error];
             } catch (\Throwable $e) {
                 $out['match'] = ['thrown' => $e::class.': '.$e->getMessage()];
             }
@@ -196,7 +196,7 @@ final class PcreEngineDisabledIniTest extends TestCase
             PHP_WRAP);
 
         $this->assertFalse($result['ini_get'], 'The child process runs with ini_get() disabled.');
-        $this->assertSame(['matched' => null, 'errorCode' => \PREG_BACKTRACK_LIMIT_ERROR, 'error' => 'Backtrack limit exhausted'], $result['match']);
+        $this->assertSame(['matched' => null, 'pcreError' => \PREG_BACKTRACK_LIMIT_ERROR, 'error' => 'Backtrack limit exhausted'], $result['match']);
         $this->assertSame(['123456', '54321'], $result['after']);
         $this->assertSame([0, \PREG_NO_ERROR], $result['bare'], 'Oracle: under 123456 the probe gives 0.');
         $this->assertSame('123456', $result['returned']);
@@ -229,10 +229,10 @@ final class PcreEngineDisabledIniTest extends TestCase
                 set_error_handler($sentinel);
                 $answer = 'answer' === $method
                     ? $engine->answer('preg_match', '/(a+)+$/', str_repeat('a', 12).'!', [], $limits)
-                    : $engine->{$method}('/(a+)+$/', str_repeat('a', 12).'!', $limits);
+                    : $engine->{$method}('/(a+)+$/', str_repeat('a', 12).'!', limits: $limits);
                 $out[$method] = [
                     'answer' => $answer instanceof \PHPRegex\Parser\Engine\PcreMatch
-                        ? [$answer->matched, $answer->groups, $answer->errorCode, $answer->error]
+                        ? [$answer->matched, $answer->groups, $answer->pcreError, $answer->error]
                         : $answer,
                     'handler' => $sentinel === set_error_handler(static fn (): bool => true),
                     'restored' => $before === ini_get_all('pcre', false),
@@ -305,13 +305,13 @@ final class PcreEngineDisabledIniTest extends TestCase
             $limits = new PcreLimits(10, 500);
             $refused = [null, \PREG_INTERNAL_ERROR, 'The PCRE limits could not be set: ini_set() refused pcre.jit'];
             foreach (['under limits' => $limits, 'without limits' => null] as $name => $given) {
-                $answer = PcreEngine::withJit()->match('/(a+)+$/', $subject, $given);
-                $this->assertSame($refused, [$answer->matched, $answer->errorCode, $answer->error], $name);
+                $answer = PcreEngine::withJit()->match('/(a+)+$/', $subject, limits: $given);
+                $this->assertSame($refused, [$answer->matched, $answer->pcreError, $answer->error], $name);
             }
             $this->assertSame(0, $GLOBALS['nativeCalls'] ?? 0, 'No native match runs once pcre.jit is refused.');
 
-            $answer = (new PcreEngine())->match('/(a+)+$/', $subject, $limits);
-            $this->assertSame([null, \PREG_BACKTRACK_LIMIT_ERROR, 'Backtrack limit exhausted'], [$answer->matched, $answer->errorCode, $answer->error]);
+            $answer = (new PcreEngine())->match('/(a+)+$/', $subject, limits: $limits);
+            $this->assertSame([null, \PREG_BACKTRACK_LIMIT_ERROR, 'Backtrack limit exhausted'], [$answer->matched, $answer->pcreError, $answer->error]);
             $this->assertSame('0', \ini_get('pcre.jit'), 'The setting stays as the process has it.');
         } finally {
             \ini_set('pcre.jit', $jit);

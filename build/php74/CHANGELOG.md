@@ -16,6 +16,38 @@ CHANGELOG
    the empty group it enters stops it. `/a+(?>(?:#c\n)|b)a/x` compacted to
    `/a+(?>|b)a/`, which finds nothing in `aa`; it is now
    `/a+(?>(?:)|b)a/`.
+ * `Exception\FormattingException` is a `RuntimeException`, not a
+   `RegexException`: the formatter refusing its own output is a bug of the
+   library, never a verdict on the pattern. It carries `$errorCode`, always
+   `regex.formatting.unsafe`, and holds the pattern to report in `$pattern`.
+ * `Validation\ValidationResult::isLimit()` tells a limit of the library,
+   which says nothing of the pattern, from a verdict; `isPatternRefused()`
+   is true for a pattern refused only, false for a valid one and at a limit.
+ * `Exception\InvalidRegexOptionException::$option` names the option a
+   `ParserOptions` or a `PcreTarget` refused, by its key (`"php_version"`,
+   `"pcre_version"`, `"locale"`, `"max_pattern_length"`, ...); null when
+   the fault is no single option's, as an unknown key.
+ * `Analysis\CaptureShapeAnalyzer` without a target reads the pattern for
+   the running engine, as the parser does; `forEveryRelease()` reads it
+   for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
+   condition kept.
+ * `Printer\FormatResult` is a result object, built by the formatter
+   alone. `Validation\PatternCompatibility::$verdicts` holds the verdicts,
+   as `verdicts()` gives them.
+ * `Analysis\LengthRangeCalculator` takes the Unicode mode alone; the
+   calculator that follows calls into the groups they run is internal, as
+   is `PcreTarget::cacheKey()`.
+ * The `PcreFeature` cases that say only where or how PCRE2 reports an
+   error, for a pattern refused either way (`ErrorOffsetPastTheFault`,
+   `TooLargeAtPatternStart`, ...), are internal: a minor release may merge
+   or remove one.
+ * `Analysis\GroupNumbering::getWrittenGroupCount()` counts the capturing
+   groups as written, not PCRE2's capture count: `/(?|(a)|(b))/` writes two,
+   PCRE2 counts one, `$maxGroupNumber`.
+ * `Engine\PcreEngine::match()` takes its flags and its offset in
+   `preg_match()`'s order, then the limits: `match($regex, $subject, $flags,
+   $offset, $limits)`. `Engine\PcreMatch::$pcreError` holds the
+   `preg_last_error()` code. `matchAll()` is internal.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
@@ -290,7 +322,7 @@ CHANGELOG
    with every other option.
  * `ParserOptions::DEFAULT_MAX_PATTERN_LENGTH`, `DEFAULT_MAX_LOOKBEHIND_LENGTH`
    and `DEFAULT_MAX_RECURSION_DEPTH` hold the default limits, which
-   `RegexParser::DEFAULT_*` name as well.
+   `Regex::DEFAULT_*` repeat on the facade.
  * `php_version` is read whole, each part after the major at most 99, and a
    PHP_VERSION_ID is at least `ParserOptions::OLDEST_PHP_VERSION_ID`, 70000;
    the constructor of `ParserOptions` checks the ranges of the limits.

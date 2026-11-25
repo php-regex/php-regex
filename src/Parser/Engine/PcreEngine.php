@@ -77,7 +77,7 @@ final class PcreEngine
      */
     public static function limitsWereNotSet(PcreMatch $match): bool
     {
-        return \PREG_INTERNAL_ERROR === $match->errorCode && str_starts_with((string) $match->error, self::LIMITS_NOT_SET);
+        return \PREG_INTERNAL_ERROR === $match->pcreError && str_starts_with((string) $match->error, self::LIMITS_NOT_SET);
     }
 
     /**
@@ -105,17 +105,18 @@ final class PcreEngine
     }
 
     /**
-     * What preg_match() answers for the pattern and the subject, under the
-     * limits given (the ini ones when null), the search starting at the
-     * offset as preg_match() reads it: a byte offset in the whole subject,
-     * counted from its end when negative, so "\b" and a lookbehind still see
-     * what lies before it. An offset past the end of the subject is a null
-     * verdict, as preg_match() returns false for it. The flags are
-     * preg_match()'s own, so the capture shape follows them.
+     * What preg_match() answers for the pattern and the subject, its flags
+     * and its offset taken in preg_match()'s order, under the limits given
+     * (the ini ones when null). The flags are preg_match()'s own, so the
+     * capture shape follows them. The search starts at the offset as
+     * preg_match() reads it: a byte offset in the whole subject, counted
+     * from its end when negative, so "\b" and a lookbehind still see what
+     * lies before it. An offset past the end of the subject is a null
+     * verdict, as preg_match() returns false for it.
      *
      * @param int-mask<0, \PREG_OFFSET_CAPTURE, \PREG_UNMATCHED_AS_NULL> $flags
      */
-    public function match(string $regex, string $subject, ?PcreLimits $limits = null, int $offset = 0, int $flags = 0): PcreMatch
+    public function match(string $regex, string $subject, int $flags = 0, int $offset = 0, ?PcreLimits $limits = null): PcreMatch
     {
         $groups = [];
         $outcome = $this->run(
@@ -158,6 +159,8 @@ final class PcreEngine
     /**
      * Every match of the whole pattern in the subject, in order; null when
      * the engine refuses the pattern or gives up.
+     *
+     * @internal the sample generator reads the matches a chunk holds
      *
      * @return list<string>|null
      */

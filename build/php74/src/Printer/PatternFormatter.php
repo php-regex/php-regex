@@ -74,19 +74,19 @@ final class PatternFormatter
      *
      * @throws FormattingException when the output would not be the same pattern
      */
-    public function format(RegexNode $regex): FormatResult
+    public function format(RegexNode $ast): FormatResult
     {
         $printer = PatternPrinter::forFormatting($this->width);
-        $formatted = $regex->accept($printer);
+        $formatted = $ast->accept($printer);
 
         $refusal = $printer->refusal();
         if (null !== $refusal) {
             return new FormatResult($formatted, false, $refusal);
         }
 
-        $this->check($regex, $formatted);
+        $this->check($ast, $formatted);
 
-        return new FormatResult($formatted, $formatted !== self::written($regex));
+        return new FormatResult($formatted, $formatted !== self::written($ast));
     }
 
     /**
@@ -97,19 +97,19 @@ final class PatternFormatter
      *
      * @throws FormattingException when the output would not be the same pattern
      */
-    public function compact(RegexNode $regex): FormatResult
+    public function compact(RegexNode $ast): FormatResult
     {
         $printer = PatternPrinter::forCompacting();
-        $compacted = $regex->accept($printer);
+        $compacted = $ast->accept($printer);
 
         $refusal = $printer->refusal();
         if (null !== $refusal) {
             return new FormatResult($compacted, false, $refusal);
         }
 
-        $this->check($regex, $compacted);
+        $this->check($ast, $compacted);
 
-        return new FormatResult($compacted, $compacted !== self::written($regex));
+        return new FormatResult($compacted, $compacted !== self::written($ast));
     }
 
     /**

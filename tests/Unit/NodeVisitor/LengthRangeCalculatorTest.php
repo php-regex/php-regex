@@ -106,7 +106,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $group = $ast->pattern instanceof SequenceNode ? $ast->pattern->children[0] : null;
         $this->assertInstanceOf(GroupNode::class, $group);
         $calls = [];
-        $visitor = new LengthRangeCalculator(calledBody: static function (SubroutineNode $call) use ($group, &$calls): NodeInterface {
+        $visitor = LengthRangeCalculator::followingCalls(false, static function (SubroutineNode $call) use ($group, &$calls): NodeInterface {
             $calls[] = $call->reference;
 
             return $group->child;
@@ -116,11 +116,41 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame(['1'], $calls);
     }
 
+    /**
+     * The constructor takes the mode alone: a calculator that follows the
+     * calls is built by the analysis that resolves them, as followingCalls().
+     */
+    #[Test]
+    public function test_the_constructor_takes_the_unicode_mode_alone(): void
+    {
+        $parameters = (new \ReflectionMethod(LengthRangeCalculator::class, '__construct'))->getParameters();
+
+        $this->assertCount(1, $parameters);
+        $this->assertSame('unicode', $parameters[0]->getName());
+    }
+
+    /**
+     * A calculator that follows the calls counts in the mode it is given
+     * where no whole pattern sets it: "é" is two bytes, one character
+     * under UTF.
+     */
+    #[Test]
+    public function test_following_calls_counts_in_the_mode_given(): void
+    {
+        $this->assertSame([1, 0], [preg_match('/^..$/s', 'é'), preg_match('/^.$/s', 'é')]);
+        $this->assertSame([0, 1], [preg_match('/^..$/su', 'é'), preg_match('/^.$/su', 'é')]);
+        $body = new LiteralNode('é', 0, 2);
+        $call = new SubroutineNode('body', '', 0, 0);
+
+        $this->assertSame([2, 2], $call->accept(LengthRangeCalculator::followingCalls(false, static fn (SubroutineNode $call): NodeInterface => $body)));
+        $this->assertSame([1, 1], $call->accept(LengthRangeCalculator::followingCalls(true, static fn (SubroutineNode $call): NodeInterface => $body)));
+    }
+
     #[Test]
     public function test_subroutine_stays_unbounded_where_the_resolver_gives_no_body(): void
     {
         $ast = Regex::create()->parse('/(a(?1)?b)x(?1)/');
-        $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): ?NodeInterface => null);
+        $visitor = LengthRangeCalculator::followingCalls(false, static fn (SubroutineNode $call): ?NodeInterface => null);
 
         $this->assertSame([3, null], $ast->accept($visitor));
     }
@@ -136,7 +166,7 @@ final class LengthRangeCalculatorTest extends TestCase
             ], 0, 0);
         }
         $calls = 0;
-        $visitor = new LengthRangeCalculator(calledBody: function (SubroutineNode $call) use ($bodies, &$calls): NodeInterface {
+        $visitor = LengthRangeCalculator::followingCalls(false, function (SubroutineNode $call) use ($bodies, &$calls): NodeInterface {
             $this->assertLessThanOrEqual(40, ++$calls, 'Shared bodies must not be expanded at every call site.');
 
             return $bodies[(int) $call->reference];
@@ -201,7 +231,7 @@ final class LengthRangeCalculatorTest extends TestCase
     public function test_endless_subroutine_chain_stops_at_the_call_depth_limit(): void
     {
         $calls = 0;
-        $visitor = new LengthRangeCalculator(calledBody: function (SubroutineNode $call) use (&$calls): NodeInterface {
+        $visitor = LengthRangeCalculator::followingCalls(false, function (SubroutineNode $call) use (&$calls): NodeInterface {
             $this->assertLessThanOrEqual(1024, ++$calls);
 
             return new SubroutineNode('next', '', 0, 0);
@@ -260,7 +290,7 @@ final class LengthRangeCalculatorTest extends TestCase
         $this->assertSame([0, 1], [preg_match('/^..$/su', 'é'), preg_match('/^.$/su', 'é')]);
         $body = new LiteralNode('é', 0, 2);
         $call = new SubroutineNode('body', '', 0, 0);
-        $visitor = new LengthRangeCalculator(calledBody: static fn (SubroutineNode $call): NodeInterface => $body);
+        $visitor = LengthRangeCalculator::followingCalls(false, static fn (SubroutineNode $call): NodeInterface => $body);
 
         $this->assertSame([2, 2], (new RegexNode($call, '', '/', 0, 0))->accept($visitor));
         $this->assertSame([1, 1], (new RegexNode($call, 'u', '/', 0, 0))->accept($visitor));

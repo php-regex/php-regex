@@ -658,8 +658,8 @@ final class BacktrackProver
             foreach (\array_slice([$verdict['suffix'], ...$verdict['alternatives']], 0, self::BOUNDED_SUFFIXES) as $suffix) {
                 foreach (self::BOUNDED_PUMPS as $pumps) {
                     $subject = $prefix.str_repeat($pump, $pumps).Utf8::encode($suffix, $unicode);
-                    $match = $verdict['withoutMatches'] ? $engine->test($pinned, $subject, $limits) : $engine->match($pinned, $subject, $limits);
-                    if (\PREG_BACKTRACK_LIMIT_ERROR === $match->errorCode) {
+                    $match = $verdict['withoutMatches'] ? $engine->test($pinned, $subject, $limits) : $engine->match($pinned, $subject, limits: $limits);
+                    if (\PREG_BACKTRACK_LIMIT_ERROR === $match->pcreError) {
                         $gaveUp = true;
 
                         return;

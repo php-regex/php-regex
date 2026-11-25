@@ -19,19 +19,34 @@ use PHPRegex\Parser\ErrorCode;
  * Thrown when the formatter wrote a pattern that does not read back as the
  * one it was given. The formatter checks its own output and throws rather
  * than return a pattern that could match differently: this is a bug in the
- * library, worth reporting with the pattern.
+ * library, not a fault of the pattern, worth reporting with the pattern.
+ * It is no RegexException: nothing that judges a pattern catches it.
  *
  * @see \PHPRegex\Parser\Printer\PatternFormatter
  */
-final class FormattingException extends RegexException implements ExceptionInterface
+final class FormattingException extends \RuntimeException implements ExceptionInterface
 {
     /**
-     * @internal the library throws its exceptions; catch them, read them
+     * Always ErrorCode::FormattingUnsafe.
      *
-     * @param string $pattern the pattern given to the formatter
      */
-    public function __construct(string $message, string $pattern, ?\Throwable $previous = null)
-    {
-        parent::__construct($message, ErrorCode::FormattingUnsafe(), null, $pattern, $previous);
+    public ErrorCode $errorCode;
+    /**
+     */
+    public string $pattern;
+
+    /**
+     * @internal built by PatternFormatter
+     *
+     * @param string $pattern the pattern given to the formatter, as written
+     */
+    public function __construct(
+        string $message,
+        string $pattern,
+        ?\Throwable $previous = null
+    ) {
+        $this->pattern = $pattern;
+        parent::__construct($message, 0, $previous);
+        $this->errorCode = ErrorCode::FormattingUnsafe();
     }
 }

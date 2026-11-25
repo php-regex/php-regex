@@ -213,7 +213,7 @@ final class CaptureLayoutTest extends TestCase
 
     private static function shape(string $pattern): CaptureShape
     {
-        return (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        return CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
     }
 
     /**

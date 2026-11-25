@@ -28,6 +28,9 @@ final class FormatResult
      */
     public ?FormatRefusal $refusal = null;
 
+    /**
+     * @internal built by PatternFormatter
+     */
     public function __construct(string $pattern, bool $changed, ?FormatRefusal $refusal = null)
     {
         /**

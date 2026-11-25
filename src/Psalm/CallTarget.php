@@ -294,7 +294,7 @@ final class CallTarget
             // A PHP on PCRE1 is refused after, with its own reason.
             'php_version' === $option ? TargetSpec::intervals($value) ?? ParserOptions::phpVersionIdOf($value) : ParserOptions::fromArray([$option => $value]);
         } catch (InvalidRegexOptionException $e) {
-            throw new InvalidRegexOptionException(\sprintf('The <%s> option of %s must be %s; got "%s".', $element, Plugin::class, $expected, $value), 0, $e);
+            throw new InvalidRegexOptionException(\sprintf('The <%s> option of %s must be %s; got "%s".', $element, Plugin::class, $expected, $value), previous: $e);
         }
     }
 }

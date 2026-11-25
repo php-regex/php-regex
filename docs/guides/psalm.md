@@ -345,7 +345,7 @@ does not know it. Only `preg_match()` reads such a pattern;
   (the second is reported): it leaves `$matches` as it was, so no branch can
   say what it holds.
 - A pattern past the library's length limit (100,000 bytes,
-  `RegexParser::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
+  `ParserOptions::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
 - A shape of more keys than `maxShapedArraySize`: Psalm keeps no such shape.
 - A `preg_match_all()` call whose pattern holds `\K`, or whose offset is not
   a constant ≤ 0: it may return `false` and leave `[]`.

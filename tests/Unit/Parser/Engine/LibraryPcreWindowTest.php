@@ -54,7 +54,7 @@ final class LibraryPcreWindowTest extends TestCase
             [$verdict, $error, $inside] = LibraryPcre::run(static function (): array {
                 $match = (new PcreEngine())->match(self::PROBE, self::SUBJECT);
 
-                return [$match->matched, $match->errorCode, ini_get('pcre.backtrack_limit')];
+                return [$match->matched, $match->pcreError, ini_get('pcre.backtrack_limit')];
             });
             $after = ini_get('pcre.backtrack_limit');
         } finally {

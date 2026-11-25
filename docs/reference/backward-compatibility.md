@@ -50,7 +50,7 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
   `Analysis\GroupNumbering`, `Analysis\LiteralExtractionResult`,
   `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Engine\PcreMatch`,
   `Engine\PcreError`, `Analysis\PatternInfo`, `Validation\PatternCompatibility`,
-  `Validation\TargetVerdict`, `Validation\RangeVerdict`;
+  `Validation\TargetVerdict`, `Validation\RangeVerdict`, `Printer\FormatResult`;
 - `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
 - `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
@@ -110,6 +110,11 @@ In `regex-parser`, `NodeVisitorInterface`, `AbstractNodeVisitor` and
 and `BsrConvention` are the enums of `Analysis\PatternInfo`. `Analysis\ByteCharSet`,
 `Analysis\CharSetAnalyzer` and `Cache\AstSerializer` are not public, nor is any
 other class of those namespaces left out of the row.
+
+A `PcreFeature` case marked `@internal` says only where or how PCRE2 reports an
+error, for a pattern refused before and after the release that changed it: a
+minor release may merge such a case into another or remove it. Every other
+case names a behaviour a pattern meets, and stays.
 
 In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
 `Minimization\MinimizationAlgorithm` are the two algorithm enums.

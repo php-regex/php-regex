@@ -104,6 +104,7 @@ final class PublicSurface
             'Analysis/LiteralExtractionResult', 'Analysis/CaptureShape', 'Analysis/CaptureGroupShape',
             'Engine/PcreMatch', 'Engine/PcreError',
             'Analysis/PatternInfo', 'Validation/PatternCompatibility', 'Validation/TargetVerdict', 'Validation/RangeVerdict',
+            'Printer/FormatResult',
         ],
         'Redos' => ['RedosAnalysis', 'Finding', 'Hotspot', 'RedosWitness', 'RedosSearchCost', 'Confirmation', 'ConfirmationSample'],
         'Linter' => ['Rule/RuleViolation'],

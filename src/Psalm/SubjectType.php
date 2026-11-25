@@ -143,7 +143,7 @@ final class SubjectType
     {
         foreach ($offsets as $offset) {
             // An error is no answer: the call may still have matched.
-            if (false !== (new PcreEngine())->match($pattern, $subject, null, $offset)->matched) {
+            if (false !== (new PcreEngine())->match($pattern, $subject, offset: $offset)->matched) {
                 return true;
             }
         }

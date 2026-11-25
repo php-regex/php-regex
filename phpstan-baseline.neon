@@ -1068,11 +1068,6 @@ parameters:
 			count: 1
 			path: tests/Unit/Parser/PhpVersionGatesTest.php
 
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Parser\\Exception\\RegexException'' and PHPRegex\Parser\Exception\FormattingException will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/Parser/Printer/PatternFormatterTest.php
 
 		-
 			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertInstanceOf() with ''PHPRegex\\Redos\\RedosAnalysis'' and PHPRegex\Redos\RedosAnalysis will always evaluate to true.'
@@ -1110,23 +1105,8 @@ parameters:
 			count: 1
 			path: tests/Unit/Redos/Proven/RedosSearchCostTest.php
 
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 100000 and 100000 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/RegexParserTest.php
 
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 255 and 255 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/RegexParserTest.php
 
-		-
-			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with 512 and 512 will always evaluate to true.'
-			identifier: method.alreadyNarrowedType
-			count: 1
-			path: tests/Unit/RegexParserTest.php
 
 		-
 			rawMessage: 'Call to method PHPUnit\Framework\Assert::assertSame() with ''10.49'' and ''10.49'' will always evaluate to true.'

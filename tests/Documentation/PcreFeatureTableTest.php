@@ -41,4 +41,32 @@ final class PcreFeatureTableTest extends TestCase
 
         $this->assertSame($known, $documented);
     }
+
+    /**
+     * A case that says only where or how PCRE2 reports an error is tagged
+     * internal, and its row says so: a minor release may merge it or
+     * remove it.
+     */
+    #[Test]
+    public function test_the_table_marks_the_internal_behaviours(): void
+    {
+        preg_match_all('/^\| `(\w+)` \| 10\.\d{2} \| (.*) \|$/m', (string) file_get_contents(__DIR__.'/../../docs/concepts/pcre.md'), $rows, \PREG_SET_ORDER);
+        $marked = [];
+        foreach ($rows as [, $name, $change]) {
+            if (str_ends_with($change, ' *(internal)*')) {
+                $marked[] = $name;
+            }
+        }
+
+        $internal = [];
+        foreach (PcreFeature::cases() as $feature) {
+            if (1 === preg_match('/^\s*\*\s*@internal\b/m', (string) (new \ReflectionEnumUnitCase(PcreFeature::class, $feature->name))->getDocComment())) {
+                $internal[] = $feature->name;
+            }
+        }
+
+        $this->assertNotSame([], $internal);
+        $this->assertContains('PossessiveRepeatGroupsClearedEachStart', array_diff(array_column(PcreFeature::cases(), 'name'), $internal), 'A matching behaviour stays public.');
+        $this->assertSame($internal, $marked);
+    }
 }

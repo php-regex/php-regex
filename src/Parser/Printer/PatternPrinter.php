@@ -326,8 +326,15 @@ final class PatternPrinter extends AbstractNodeVisitor
     private ?array $spacedBraces = null;
 
     /**
-     * asWritten(), normalized() and pretty() name the printer each flag set
-     * here gives. $collapseExtendedComments gives one more: a normalized
+     * When false, escapes and comment syntax are normalized instead of
+     * being given back the way the pattern spelled them: normalized() sets
+     * it, as comparing two patterns needs that form.
+     */
+    private bool $preserveSpelling = true;
+
+    /**
+     * asWritten() and pretty() name the printer each flag set here gives,
+     * normalized() one more. $collapseExtendedComments gives a normalized
      * printer that writes every comment under x as "(?#...)".
      */
     public function __construct(
@@ -344,12 +351,6 @@ final class PatternPrinter extends AbstractNodeVisitor
          * representation of verbose regexes without leaking full comment text.
          */
         private readonly bool $collapseExtendedComments = false,
-        /**
-         * When false, escapes and comment syntax are normalized instead of
-         * being given back the way the pattern spelled them. Comparing two
-         * patterns needs that normalized form.
-         */
-        private readonly bool $preserveSpelling = true
     ) {
         $this->mode = $this->pretty ? self::MODE_PRETTY : self::MODE_OFF;
     }
@@ -375,7 +376,10 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     public static function normalized(): self
     {
-        return new self(false, false, false);
+        $printer = new self();
+        $printer->preserveSpelling = false;
+
+        return $printer;
     }
 
     /**

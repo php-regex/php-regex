@@ -59,7 +59,7 @@ final class InlineFlagsCaretTest extends TestCase
     {
         $this->assertSame(1, preg_match($pattern, 'ab'), 'the engine accepts it');
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
 
         $this->assertSame([1, 2], array_keys($shape->groups));
         $this->assertSame('d', $shape->groups[1]->name);

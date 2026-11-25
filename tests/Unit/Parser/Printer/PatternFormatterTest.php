@@ -17,7 +17,6 @@ use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharLiteralType;
 use PHPRegex\Parser\Node\CharTypeNode;
@@ -28,11 +27,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Tests\Support\PcreGates;
@@ -301,7 +300,7 @@ final class PatternFormatterTest extends TestCase
 
         $result = (new PatternFormatter(1))->format($this->parse($pattern));
 
-        $this->assertLessThan(RegexParser::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
+        $this->assertLessThan(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
         $this->assertSameMeaning($pattern, $result->pattern);
     }
 
@@ -408,11 +407,13 @@ final class PatternFormatterTest extends TestCase
      * The formatter reads its own output back and compares it with its
      * input: a tree that does not say what its own text says makes the two
      * disagree, and the formatter throws rather than emit a wrong pattern.
-     * It checks an unchanged result too.
+     * It checks an unchanged result too. The exception reports a fault of
+     * the library, not of the pattern: no RegexException, the pattern it
+     * was given to report with it.
      */
     #[Test]
     #[DataProvider('provideTreesThatDisagreeWithTheirText')]
-    public function test_format_and_compact_throw_rather_than_emit_a_different_pattern(RegexNode $regex, string $operation): void
+    public function test_format_and_compact_throw_rather_than_emit_a_different_pattern(RegexNode $regex, string $operation, string $pattern, bool $readBack): void
     {
         $formatter = new PatternFormatter();
 
@@ -427,7 +428,10 @@ final class PatternFormatterTest extends TestCase
         } catch (FormattingException $exception) {
             $this->assertSame(ErrorCode::FormattingUnsafe, $exception->errorCode);
             $this->assertSame('regex.formatting.unsafe', $exception->errorCode->value);
-            $this->assertInstanceOf(RegexException::class, $exception);
+            $this->assertSame(\RuntimeException::class, get_parent_class($exception), 'A fault of the library, no RegexException.');
+            $this->assertSame($pattern, $exception->pattern);
+            $this->assertSame('The formatter wrote a pattern that does not read back as '.$pattern.'.', $exception->getMessage());
+            $this->assertSame($readBack, null === $exception->getPrevious(), 'The output parses back, as another pattern, or does not parse.');
         }
     }
 
@@ -1461,7 +1465,7 @@ final class PatternFormatterTest extends TestCase
 
         $this->assertNull($result->refusal);
         $this->assertTrue($result->changed);
-        $this->assertGreaterThan(RegexParser::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
+        $this->assertGreaterThan(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
         $this->assertSame(20002, substr_count($result->pattern, "\n") + 1);
         $this->assertSame(1, preg_match($result->pattern, $subject));
         $this->assertSame(0, preg_match($result->pattern, str_repeat('a', 20000)));
@@ -2977,7 +2981,7 @@ final class PatternFormatterTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{regex: RegexNode, operation: string}>
+     * @return iterable<string, array{regex: RegexNode, operation: string, pattern: string, readBack: bool}>
      */
     public static function provideTreesThatDisagreeWithTheirText(): iterable
     {
@@ -2987,6 +2991,8 @@ final class PatternFormatterTest extends TestCase
         yield 'format, unchanged, a source that is not the tree' => [
             'regex' => new RegexNode($parsed->pattern, $parsed->flags, $parsed->delimiter, $parsed->startPosition, $parsed->endPosition, 'ac'),
             'operation' => 'format',
+            'pattern' => '/ac/',
+            'readBack' => true,
         ];
 
         // The tree of "/a(?!)b/", which never matches, with "ab" recorded as
@@ -2995,6 +3001,8 @@ final class PatternFormatterTest extends TestCase
         yield 'format, unchanged, a source without the empty lookahead of the tree' => [
             'regex' => new RegexNode($failing->pattern, $failing->flags, $failing->delimiter, $failing->startPosition, $failing->endPosition, 'ab'),
             'operation' => 'format',
+            'pattern' => '/ab/',
+            'readBack' => true,
         ];
 
         // The tree of "/(?(?=a)bb)c/" with its "no" branch written empty in
@@ -3003,16 +3011,19 @@ final class PatternFormatterTest extends TestCase
         yield 'format, unchanged, a source whose conditional writes an empty "no" branch' => [
             'regex' => new RegexNode($conditional->pattern, $conditional->flags, $conditional->delimiter, $conditional->startPosition, $conditional->endPosition, '(?(?=a)bb|)c'),
             'operation' => 'format',
+            'pattern' => '/(?(?=a)bb|)c/',
+            'readBack' => true,
         ];
 
         // A character whose spelling "\x41" says A while its code point says B.
         $sequence = new SequenceNode([new CharLiteralNode('\x41', 0x42, CharLiteralType::Unicode, 0, 4), new LiteralNode('b', 4, 5)], 0, 5);
-        yield 'format, a tree that disagrees with itself' => ['regex' => new RegexNode($sequence, '', '/', 0, 5), 'operation' => 'format'];
-        yield 'compact, a tree that disagrees with itself' => ['regex' => new RegexNode($sequence, '', '/', 0, 5), 'operation' => 'compact'];
+        yield 'format, a tree that disagrees with itself' => ['regex' => new RegexNode($sequence, '', '/', 0, 5), 'operation' => 'format', 'pattern' => '/\\x41b/', 'readBack' => true];
+        yield 'compact, a tree that disagrees with itself' => ['regex' => new RegexNode($sequence, '', '/', 0, 5), 'operation' => 'compact', 'pattern' => '/\\x41b/', 'readBack' => true];
 
-        // A spelling that is no escape at all: the output does not parse back.
-        $broken = new SequenceNode([new CharLiteralNode('\x{', 0x41, CharLiteralType::Unicode, 0, 3), new LiteralNode('b', 3, 4)], 0, 4);
-        yield 'format, an output that does not parse back' => ['regex' => new RegexNode($broken, '', '/', 0, 4), 'operation' => 'format'];
+        // A spelling that is no escape at all, and opens a group it never
+        // closes: the output does not parse back.
+        $broken = new SequenceNode([new CharLiteralNode('\x{(', 0x41, CharLiteralType::Unicode, 0, 4), new LiteralNode('b', 4, 5)], 0, 5);
+        yield 'format, an output that does not parse back' => ['regex' => new RegexNode($broken, '', '/', 0, 5), 'operation' => 'format', 'pattern' => '/\\x{(b/', 'readBack' => false];
     }
 
     /**

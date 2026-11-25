@@ -106,21 +106,6 @@ final class RegexParser
     public const CACHE_VERSION = 'ast-0a75d2e39cca8f8f9df7e2a4e19caa06';
 
     /**
-     * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
-     */
-    public const DEFAULT_MAX_PATTERN_LENGTH = ParserOptions::DEFAULT_MAX_PATTERN_LENGTH;
-
-    /**
-     * ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH, by the name the parser gave it first.
-     */
-    public const DEFAULT_MAX_LOOKBEHIND_LENGTH = ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH;
-
-    /**
-     * ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, by the name the parser gave it first.
-     */
-    public const DEFAULT_MAX_RECURSION_DEPTH = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH;
-
-    /**
      * How many validate() results a parser keeps, the latest read first.
      */
     private const MAX_KEPT_RESULTS = 1024;

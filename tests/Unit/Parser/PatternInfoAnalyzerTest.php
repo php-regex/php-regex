@@ -20,6 +20,7 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\NewlineConvention;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\EngineProbe;
@@ -1210,7 +1211,7 @@ final class PatternInfoAnalyzerTest extends TestCase
     #[Test]
     public function test_a_nesting_at_the_recursion_depth_limit_still_answers(): void
     {
-        $depth = RegexParser::DEFAULT_MAX_RECURSION_DEPTH - 1;
+        $depth = ParserOptions::DEFAULT_MAX_RECURSION_DEPTH - 1;
         $info = $this->info('/'.str_repeat('(?:', $depth).'a*'.str_repeat(')', $depth).'/');
 
         $this->assertTrue($info->alwaysMatches);

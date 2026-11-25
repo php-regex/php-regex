@@ -13,29 +13,30 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
-use PHPUnit\Framework\Attributes\DataProvider;
-use PHPRegex\Linter\Extraction\ExtractorInterface;
-use PHPUnit\Framework\Attributes\Test;
-use PHPRegex\Parser\RegexParser;
-use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\Node\RegexNode;
-use PHPRegex\Parser\Cache\CacheInterface;
-use PHPRegex\Parser\Cache\FilesystemCache;
-use PHPRegex\Parser\PcreTarget;
-use PHPRegex\Linter\AnalysisService;
-use PHPRegex\Linter\LintService;
-use PHPRegex\Linter\Formatter\FormatterRegistry;
-use PHPRegex\Linter\Source\PatternSourceCollection;
-use PHPRegex\Laravel\Extractor\RoutePatternSource;
-use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
+use Illuminate\Support\Facades\Artisan;
+use PHPRegex\Laravel\Command\CompareCommand;
+use PHPRegex\Laravel\Command\ExplainCommand;
 use PHPRegex\Laravel\Command\LintCommand;
 use PHPRegex\Laravel\Command\RoutesCommand;
-use PHPRegex\Laravel\Command\ExplainCommand;
-use PHPRegex\Laravel\Command\CompareCommand;
 use PHPRegex\Laravel\Command\TranspileCommand;
+use PHPRegex\Laravel\Extractor\RoutePatternSource;
+use PHPRegex\Laravel\Extractor\ValidationRulePatternSource;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
+use PHPRegex\Linter\AnalysisService;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\Formatter\FormatterRegistry;
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Parser\Cache\CacheInterface;
+use PHPRegex\Parser\Cache\FilesystemCache;
+use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosProof;
-use Illuminate\Support\Facades\Artisan;
+use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Test;
 
 /**
  * Integration tests for the Laravel bridge.
@@ -99,7 +100,7 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $regex->parse('/abc/');
 
         $cache = new FilesystemCache($cacheDir);
-        $cacheFile = $cache->generateKey(RegexParser::cacheSeed('/abc/', PcreTarget::runtime(), RegexParser::DEFAULT_MAX_RECURSION_DEPTH));
+        $cacheFile = $cache->generateKey(RegexParser::cacheSeed('/abc/', PcreTarget::runtime(), ParserOptions::DEFAULT_MAX_RECURSION_DEPTH));
 
         $this->assertFileExists($cacheFile);
 

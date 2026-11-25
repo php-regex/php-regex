@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
-use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\ParserOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +55,7 @@ final class PsalmPluginBudgetTest extends TestCase
     {
         // PCRE2 compiles a comment of any length; the library stops reading at
         // its length limit. Psalm keeps the literal only below maxStringLength.
-        $pattern = '/(a)(?#'.str_repeat('x', RegexParser::DEFAULT_MAX_PATTERN_LENGTH).')/';
+        $pattern = '/(a)(?#'.str_repeat('x', ParserOptions::DEFAULT_MAX_PATTERN_LENGTH).')/';
         $this->assertSame(1, preg_match($pattern, 'a'), 'The engine must compile the row\'s pattern.');
 
         $directory = sys_get_temp_dir().'/php-regex-psalm-'.bin2hex(random_bytes(4));

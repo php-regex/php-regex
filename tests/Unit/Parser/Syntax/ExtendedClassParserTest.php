@@ -18,6 +18,7 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Lexer;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\ExtendedClassParser;
@@ -412,8 +413,8 @@ final class ExtendedClassParserTest extends TestCase
         $parser = new ExtendedClassParser(
             $state,
             '',
-            RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
-            static fn (array $tokens, bool $counted): NodeInterface => (new TokenParser(RegexParser::DEFAULT_MAX_RECURSION_DEPTH, $target))
+            ParserOptions::DEFAULT_MAX_RECURSION_DEPTH,
+            static fn (array $tokens, bool $counted): NodeInterface => (new TokenParser(ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, $target))
                 ->parse(new TokenStream($tokens, $body), '', '/', \strlen($body))->pattern,
             static function (int $at, int $parentheses): void {},
         );

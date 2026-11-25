@@ -20,4 +20,24 @@ namespace PHPRegex\Parser\Exception;
  */
 final class InvalidRegexOptionException extends \InvalidArgumentException implements ExceptionInterface
 {
+    /**
+     */
+    public ?string $option = null;
+
+    /**
+     * @internal the library throws its exceptions; catch them, read them
+     *
+     * @param string|null $option the option at fault, by the key the options
+     *                            array gives it ("php_version",
+     *                            "max_pattern_length"); null when the fault
+     *                            is no single option's
+     */
+    public function __construct(
+        string $message,
+        ?string $option = null,
+        ?\Throwable $previous = null
+    ) {
+        $this->option = $option;
+        parent::__construct($message, 0, $previous);
+    }
 }

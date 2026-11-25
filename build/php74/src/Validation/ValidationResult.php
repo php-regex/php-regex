@@ -83,16 +83,13 @@ final class ValidationResult implements \JsonSerializable
 
     /**
      * Whether the pattern is refused — for the engine the library judges,
-     * or by its own grammar. Null when the run said nothing: the pattern
-     * is valid, or the library stopped at a limit of its own.
+     * or by its own grammar. False for a valid pattern, and where the
+     * library stopped at a limit of its own: that says nothing of the
+     * pattern (isLimit()).
      */
-    public function isPatternRefused(): ?bool
+    public function isPatternRefused(): bool
     {
-        if ($this->isValid) {
-            return null;
-        }
-
-        return !$this->isLimit();
+        return !$this->isValid && !$this->isLimit();
     }
 
     /**

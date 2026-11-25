@@ -230,7 +230,7 @@ final class PackageManifestTest extends TestCase
         // version as the CLI's single-pattern commands do; what the later
         // versions find is said in the text answer in lint's words.
         'Mcp' => [
-            'Linter\Config\ProjectTarget', 'Linter\Config\TargetSpec', 'Linter\RangeFindings', 'Linter\RangePoints',
+            'Linter\Config\ProjectTarget', 'Linter\RangeFindings', 'Linter\RangePoints',
             'Parser\Json\JsonDocument',
         ],
         // The modernizer reads (*UCP) among the opening verbs the parser

@@ -588,12 +588,12 @@ final class Regex
     {
         $patterns = $options['redos_ignored_patterns'] ?? [];
         if (!\is_array($patterns)) {
-            throw new InvalidRegexOptionException('"redos_ignored_patterns" must be a list of strings.');
+            throw new InvalidRegexOptionException('"redos_ignored_patterns" must be a list of strings.', 'redos_ignored_patterns');
         }
 
         foreach ($patterns as $pattern) {
             if (!\is_string($pattern)) {
-                throw new InvalidRegexOptionException('"redos_ignored_patterns" must contain only strings.');
+                throw new InvalidRegexOptionException('"redos_ignored_patterns" must contain only strings.', 'redos_ignored_patterns');
             }
         }
 

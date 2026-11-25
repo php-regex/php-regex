@@ -333,7 +333,7 @@ final class PcreEngineTest extends TestCase
         $this->assertSame($matched ? 1 : 0, $oracle['result'], 'The oracle disagrees with the case itself.');
         $this->assertSame($groups, $oracle['groups'], 'The oracle disagrees with the case itself.');
 
-        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match($pattern, $subject, null, $offset));
+        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match($pattern, $subject, offset: $offset));
 
         $this->assertSame($matched, $match->matched);
         $this->assertSame($groups, $match->groups);
@@ -367,12 +367,12 @@ final class PcreEngineTest extends TestCase
         $oracle = $this->oracleMatch('/a/', 'ba', 3);
         $this->assertFalse($oracle['result']);
 
-        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match('/a/', 'ba', null, 3));
+        $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match('/a/', 'ba', offset: 3));
 
         $this->assertNull($match->matched);
         $this->assertSame([], $match->groups);
         $this->assertSame($oracle['error'], $match->error);
-        $this->assertSame(\PREG_INTERNAL_ERROR, $match->errorCode);
+        $this->assertSame(\PREG_INTERNAL_ERROR, $match->pcreError);
     }
 
     /**
@@ -392,7 +392,7 @@ final class PcreEngineTest extends TestCase
 
         $this->assertCount(3, (new \ReflectionMethod(PcreEngine::class, 'test'))->getParameters());
         $this->assertNull($this->withoutWarnings(static fn (): PcreMatch => $engine->test($pattern, $subject, $limits))->matched);
-        $this->assertTrue($engine->match($pattern, $subject, $limits, 0)->matched);
+        $this->assertTrue($engine->match($pattern, $subject, limits: $limits)->matched);
     }
 
     /**
@@ -408,12 +408,12 @@ final class PcreEngineTest extends TestCase
         $subject = str_repeat('a', 50).'b';
         $engine = new PcreEngine();
 
-        $this->assertTrue($engine->match($pattern, $subject, new PcreLimits(backtrackLimit: 10, recursionLimit: 100000), 45)->matched);
+        $this->assertTrue($engine->match($pattern, $subject, offset: 45, limits: new PcreLimits(backtrackLimit: 10, recursionLimit: 100000))->matched);
 
-        $stopped = $this->withoutWarnings(static fn (): PcreMatch => $engine->match($pattern, $subject, new PcreLimits(backtrackLimit: 10, recursionLimit: 100000), 0));
+        $stopped = $this->withoutWarnings(static fn (): PcreMatch => $engine->match($pattern, $subject, limits: new PcreLimits(backtrackLimit: 10, recursionLimit: 100000)));
 
         $this->assertNull($stopped->matched);
-        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $stopped->errorCode);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $stopped->pcreError);
         $this->assertSame($this->backtrackLimit, \ini_get('pcre.backtrack_limit'));
     }
 
@@ -454,12 +454,12 @@ final class PcreEngineTest extends TestCase
         $engine = new PcreEngine();
         $limits = new PcreLimits(backtrackLimit: 1000000, recursionLimit: 100000);
 
-        $this->assertTrue($engine->match($pattern, $subject, $limits)->matched);
+        $this->assertTrue($engine->match($pattern, $subject, limits: $limits)->matched);
 
         $test = $this->withoutWarnings(static fn (): PcreMatch => $engine->test($pattern, $subject, $limits));
 
         $this->assertNull($test->matched);
-        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $test->errorCode);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $test->pcreError);
         $this->assertSame([], $test->groups);
         $this->assertSame($this->backtrackLimit, \ini_get('pcre.backtrack_limit'));
         $this->assertTrue($engine->test('/a/', 'xa')->matched);
@@ -474,7 +474,7 @@ final class PcreEngineTest extends TestCase
         $match = $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match(
             '/(a+)+$/',
             $subject,
-            new PcreLimits(backtrackLimit: 10, recursionLimit: 100000),
+            limits: new PcreLimits(backtrackLimit: 10, recursionLimit: 100000),
         ));
 
         $this->assertNull($match->matched);
@@ -498,7 +498,7 @@ final class PcreEngineTest extends TestCase
         $match = $this->withoutWarnings(static fn (): PcreMatch => $engine->match(
             '/(a(?1)?)/',
             $subject,
-            new PcreLimits(backtrackLimit: 1000000, recursionLimit: 2),
+            limits: new PcreLimits(backtrackLimit: 1000000, recursionLimit: 2),
         ));
 
         $this->assertNull($match->matched);
@@ -513,7 +513,7 @@ final class PcreEngineTest extends TestCase
         $this->withoutWarnings(static fn (): PcreMatch => (new PcreEngine())->match(
             '/[a/',
             'a',
-            new PcreLimits(backtrackLimit: 10, recursionLimit: 2),
+            limits: new PcreLimits(backtrackLimit: 10, recursionLimit: 2),
         ));
 
         $this->assertSame($this->backtrackLimit, \ini_get('pcre.backtrack_limit'));
@@ -563,7 +563,7 @@ final class PcreEngineTest extends TestCase
         }
         error_clear_last();
 
-        $match = (new PcreEngine())->match('/a/', 'a', new PcreLimits(backtrackLimit: 1000, recursionLimit: 1000));
+        $match = (new PcreEngine())->match('/a/', 'a', limits: new PcreLimits(backtrackLimit: 1000, recursionLimit: 1000));
 
         $this->assertTrue($match->matched);
         $this->assertSame('10x', \ini_get('pcre.backtrack_limit'));

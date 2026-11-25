@@ -275,7 +275,7 @@ final class PatternLab
     private static function match(string $pattern, string $subject): array
     {
         self::$engine ??= new PcreEngine();
-        $outcome = self::$engine->match($pattern, $subject, null, 0, \PREG_UNMATCHED_AS_NULL | \PREG_OFFSET_CAPTURE);
+        $outcome = self::$engine->match($pattern, $subject, \PREG_UNMATCHED_AS_NULL | \PREG_OFFSET_CAPTURE);
 
         if (null === $outcome->matched) {
             return ['result' => false, 'groups' => [], 'error' => $outcome->error];

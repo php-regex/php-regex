@@ -48,12 +48,12 @@ final class ValidationLimitVerdictTest extends TestCase
     }
 
     #[Test]
-    public function test_a_valid_pattern_has_no_verdict_to_give(): void
+    public function test_a_valid_pattern_is_not_refused(): void
     {
         $result = RegexParser::create()->validate('/a/');
 
         $this->assertTrue($result->isValid);
         $this->assertFalse($result->isLimit());
-        $this->assertNull($result->isPatternRefused());
+        $this->assertFalse($result->isPatternRefused());
     }
 }

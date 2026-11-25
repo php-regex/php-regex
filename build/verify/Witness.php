@@ -129,7 +129,7 @@ final class Witness
     {
         $readings = [];
         $readings['shape'] = self::read(static function () use ($ast) {
-            $shape = (new CaptureShapeAnalyzer())->analyze($ast);
+            $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze($ast);
             $read = ['shape' => $shape];
             foreach (self::MATCH_FLAGS as $flags) {
                 $read['match'.$flags] = $shape->matchShape($flags);

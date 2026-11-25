@@ -65,8 +65,8 @@ final class CacheRoundTripTest extends TestCase
         $this->assertSame(1, $reader->getCacheStats()['hits'], 'The second parser read the tree from the cache.');
         $this->assertSame(Witness::normalize($parsed), Witness::normalize($restored));
         $this->assertSame(
-            Witness::normalize((new CaptureShapeAnalyzer())->analyze($parsed)),
-            Witness::normalize((new CaptureShapeAnalyzer())->analyze($restored)),
+            Witness::normalize(CaptureShapeAnalyzer::forEveryRelease()->analyze($parsed)),
+            Witness::normalize(CaptureShapeAnalyzer::forEveryRelease()->analyze($restored)),
         );
     }
 }

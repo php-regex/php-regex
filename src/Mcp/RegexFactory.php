@@ -14,11 +14,9 @@ declare(strict_types=1);
 namespace PHPRegex\Mcp;
 
 use PHPRegex\Linter\Config\ProjectTarget;
-use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Mcp\Exception\TargetException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 
@@ -129,11 +127,7 @@ final class RegexFactory
         try {
             $target = ProjectTarget::fromSources($sources['php_version'], $sources['pcre_version'], null, [], $sources['locale']);
         } catch (InvalidRegexOptionException $e) {
-            // A version no reader takes: the message names every form the
-            // argument takes, a constraint included.
-            $message = ParserOptions::PHP_VERSION_EXPECTED === $e->getMessage() ? TargetSpec::RANGE_EXPECTED : $e->getMessage();
-
-            throw new TargetException('Invalid option: '.$message, 'usage', $e);
+            throw new TargetException('Invalid option: '.$e->getMessage(), 'usage', $e);
         } catch (UnsupportedTargetException $e) {
             throw new TargetException($e->getMessage(), 'target', $e);
         }

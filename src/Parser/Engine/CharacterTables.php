@@ -297,7 +297,7 @@ final class CharacterTables
      */
     private static function withLocale(string $locale, \Closure $read): void
     {
-        $refused = new InvalidRegexOptionException(\sprintf('"locale" names "%s", which this machine cannot set: install it, or name one that "locale -a" lists.', $locale));
+        $refused = new InvalidRegexOptionException(\sprintf('"locale" names "%s", which this machine cannot set: install it, or name one that "locale -a" lists.', $locale), 'locale');
         // "0" asks setlocale() for the current locale, and "" for the one
         // the environment names: neither names one.
         if (\in_array($locale, ['', '0'], true) || \strlen($locale) > self::MAX_NAME_LENGTH || str_contains($locale, "\0") || !\function_exists('setlocale')) {

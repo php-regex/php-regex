@@ -468,7 +468,9 @@ Where the library still departs from what the target's PCRE2 reports:
 
 The rules that differ between releases each name the behaviour that changed,
 and a target has it from the release it arrived in on
-(`PcreTarget::supports(PcreFeature::ScanSubstring)`):
+(`PcreTarget::supports(PcreFeature::ScanSubstring)`). A row marked *(internal)*
+says only where or how PCRE2 reports an error, for a pattern refused before and
+after: that case is `@internal`, and a minor release may merge or remove it.
 
 | behaviour | from | what changed |
 |---|---|---|
@@ -506,37 +508,37 @@ and a target has it from the release it arrived in on
 | `ExtendedCharClass` | 10.45 | Perl extended character classes, "(?[ ... ])". |
 | `CasingSettingVerbs` | 10.45 | "(*CASELESS_RESTRICT)" and "(*TURKISH_CASING)". |
 | `HugeBackreferenceNumberIsReference` | 10.45 | "\8" or "\9" followed by eight digits or more is a reference, not a digit and text. |
-| `NumberTooBigPastWholeNumber` | 10.45 | A number past its limit, 65535 or the 1000 of the major of a version condition, is reported past the whole number. |
-| `LimitValueErrorOnFaultingCharacter` | 10.45 | An error in a "(*LIMIT_x=" value is reported on the faulty character. |
-| `PosixItemErrorPastItsEnd` | 10.45 | An unknown POSIX class or collating element is reported past its end. |
-| `MalformedPropertyName` | 10.45 | A character no property name holds makes "\p{...}" malformed at that character. |
-| `RangeFromTypeReadToItsEnd` | 10.45 | A range from a type, a POSIX class or a property is read to its end before it is refused. |
+| `NumberTooBigPastWholeNumber` | 10.45 | A number past its limit, 65535 or the 1000 of the major of a version condition, is reported past the whole number. *(internal)* |
+| `LimitValueErrorOnFaultingCharacter` | 10.45 | An error in a "(*LIMIT_x=" value is reported on the faulty character. *(internal)* |
+| `PosixItemErrorPastItsEnd` | 10.45 | An unknown POSIX class or collating element is reported past its end. *(internal)* |
+| `MalformedPropertyName` | 10.45 | A character no property name holds makes "\p{...}" malformed at that character. *(internal)* |
+| `RangeFromTypeReadToItsEnd` | 10.45 | A range from a type, a POSIX class or a property is read to its end before it is refused. *(internal)* |
 | `EmptyQuoteSkippedAfterClassEscape` | 10.45 | "[\w\E-a]": the empty quote is skipped, and the hyphen makes a range. |
 | `SpacedHyphenAfterClassEscapeMakesRange` | 10.45 | Under "(?xx)", a space between a class escape and a hyphen no longer keeps the hyphen a member: "[\d -z]" is the range "\d-z", which is refused. |
 | `ClassBackslashKIsLetter` | 10.45 | "\k" in a class is the letter k, not an invalid escape. |
 | `HexEscapeNeedsDigits` | 10.45 | "\x" with no hexadecimal digit is an error, not a NUL. |
-| `EmptyQuoteOpeningClassIsUnclosed` | 10.45 | "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash. |
-| `ClassEscapeEndingRangeRefusedAsEscape` | 10.45 | An escape a class refuses, as "\N" or "\z", ending a range is refused as that escape, not as an invalid range. |
-| `NamedCharacterBraceRefusedInClass` | 10.45 | "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one. |
+| `EmptyQuoteOpeningClassIsUnclosed` | 10.45 | "[\E" or "[\Q\E" at the end of the pattern is a class left open, not a trailing backslash. *(internal)* |
+| `ClassEscapeEndingRangeRefusedAsEscape` | 10.45 | An escape a class refuses, as "\N" or "\z", ending a range is refused as that escape, not as an invalid range. *(internal)* |
+| `NamedCharacterBraceRefusedInClass` | 10.45 | "\N{" in a class is refused as a character name whatever follows the brace, where a count after "\N" was read as one. *(internal)* |
 | `ClassesCompiledFromMergedRanges` | 10.45 | A class compiles from its ranges sorted and merged: the other cases a caseless class adds past the map are added once, "[\p{Any}]" or a class of every byte compiles to a match of any character and "\P{Any}" to a class of none, where each member added its own. |
 | `CaselessReferenceHoldsItsCaseRules` | 10.45 | A caseless back reference compiles to one unit more, which holds its case rules. |
 | `CaselessCasePropertiesMatchCasedLetters` | 10.45 | Under i, "\p{Lu}", "\p{Ll}" and "\p{Lt}" match every cased letter, as "\p{Lc}" does, where they matched as written. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
-| `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. |
-| `GReferenceNumberReadBeforeClosing` | 10.47 | An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g". |
-| `NamedCodePointReadBeforeModeCheck` | 10.47 | "\N{U+...}" without UTF is read to its brace before it is refused. |
-| `CalloutConditionErrorAtItemStart` | 10.47 | An error in a callout condition is reported at the start of the item. |
-| `ErrorOffsetPastTheFault` | 10.47 | Most syntax errors are reported past the faulty character rather than on it. |
-| `AlphaNameAtPatternEndIsUnclosed` | 10.47 | An alphabetic name the pattern ends in, as "(*pla", is a missing ")", not an unknown assertion. |
-| `VersionConditionLeftOpenIsVersionError` | 10.47 | A character after the major of "(?(VERSION=10z)" is a version error, not a condition left open. |
-| `BranchCountErrorOffTheConditionName` | 10.47 | A conditional on a name that holds more than two branches is not reported on that name. |
-| `SurrogateRefusedBeforeBrace` | 10.47 | Under UTF a surrogate written in braces, "\x{d800" or "\o{154000", is refused before the closing brace is looked for. |
-| `TooLargeAtPatternStart` | 10.47 | A pattern too large to compile is reported at offset 0, not at its end. |
+| `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. *(internal)* |
+| `GReferenceNumberReadBeforeClosing` | 10.47 | An unclosed "\g<3" or "\g{3" is refused after the number, not at "\g". *(internal)* |
+| `NamedCodePointReadBeforeModeCheck` | 10.47 | "\N{U+...}" without UTF is read to its brace before it is refused. *(internal)* |
+| `CalloutConditionErrorAtItemStart` | 10.47 | An error in a callout condition is reported at the start of the item. *(internal)* |
+| `ErrorOffsetPastTheFault` | 10.47 | Most syntax errors are reported past the faulty character rather than on it. *(internal)* |
+| `AlphaNameAtPatternEndIsUnclosed` | 10.47 | An alphabetic name the pattern ends in, as "(*pla", is a missing ")", not an unknown assertion. *(internal)* |
+| `VersionConditionLeftOpenIsVersionError` | 10.47 | A character after the major of "(?(VERSION=10z)" is a version error, not a condition left open. *(internal)* |
+| `BranchCountErrorOffTheConditionName` | 10.47 | A conditional on a name that holds more than two branches is not reported on that name. *(internal)* |
+| `SurrogateRefusedBeforeBrace` | 10.47 | Under UTF a surrogate written in braces, "\x{d800" or "\o{154000", is refused before the closing brace is looked for. *(internal)* |
+| `TooLargeAtPatternStart` | 10.47 | A pattern too large to compile is reported at offset 0, not at its end. *(internal)* |
 | `ScanSubstringListsEachGroupOnce` | 10.47 | A substring scan compiles each group it lists once, and a name several groups bear only while one of them is not listed before it, where each item listed compiled. |
-| `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. |
+| `UnclosedBraceAtPatternEnd` | 10.48 | A braced escape left open at the end of the pattern is reported at the end, not past it. *(internal)* |
 | `ExtendedClassBesideLookbehindCompiles` | 10.48 | A pattern that holds a lookbehind compiles an operator of an extended class outside it, and a lookbehind an extended class that nests a class or a parenthesis, where both failed. |
-| `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. |
+| `TooLargeAtGroupEndReportedAtPatternEnd` | 10.48 | A pattern found too large only where a group or the pattern ends is reported at the end of the pattern again. *(internal)* |
 | `PossessiveReferenceRepeatedInPlace` | 10.48 | A possessive count on a back reference compiles to a possessive repeat, where it wrapped the reference in an atomic group. |
 
 ## A known JIT crash

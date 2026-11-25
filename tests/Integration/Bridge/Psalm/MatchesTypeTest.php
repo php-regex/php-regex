@@ -364,7 +364,7 @@ final class MatchesTypeTest extends TestCase
 
         // A fixed target, as the digests are read with one: the types this
         // parity holds must not change with the PCRE2 running the tests.
-        return (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($pattern));
+        return CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse($pattern));
     }
 
     /**

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\ResourceLimitException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
@@ -67,9 +68,12 @@ final class RegexParserTest extends TestCase
 
         $this->assertSame('10.40', $parser->target()->pcreVersion);
         $this->assertFalse($parser->validate('/'.str_repeat('a', 20).'/')->isValid);
-        $this->assertSame(100_000, RegexParser::DEFAULT_MAX_PATTERN_LENGTH);
-        $this->assertSame(255, RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH);
-        $this->assertSame(512, RegexParser::DEFAULT_MAX_RECURSION_DEPTH);
+        // The defaults have one home, the options; the facade repeats them.
+        $defaults = static fn (string $class): array => array_filter((new \ReflectionClass($class))->getConstants(), static fn (string $name): bool => str_starts_with($name, 'DEFAULT_'), \ARRAY_FILTER_USE_KEY);
+        $expected = ['DEFAULT_MAX_PATTERN_LENGTH' => 100_000, 'DEFAULT_MAX_LOOKBEHIND_LENGTH' => 255, 'DEFAULT_MAX_RECURSION_DEPTH' => 512];
+        $this->assertSame($expected, $defaults(ParserOptions::class));
+        $this->assertSame([], $defaults(RegexParser::class));
+        $this->assertSame($expected, $defaults(Regex::class));
     }
 
     /**

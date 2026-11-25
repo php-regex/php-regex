@@ -29,7 +29,7 @@ final class CaptureShapeMixedAlternationLimitTest extends TestCase
     #[Test]
     public function test_a_mixed_alternation_reads_no_values_and_the_shared_facts_only(): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(
             RegexParser::create()->parse('/(a|\d)/'),
         );
 

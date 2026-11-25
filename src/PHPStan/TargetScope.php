@@ -366,7 +366,9 @@ final class TargetScope
         try {
             $intervals = \is_array($setting) ? [TargetSpec::minMax($setting['min'], $setting['max'])] : TargetSpec::intervals($setting);
         } catch (InvalidRegexOptionException $e) {
-            throw new InvalidRegexOptionException(str_replace('"php_version"', 'phpRegex.phpVersion', $e->getMessage()), previous: $e);
+            // The reader names the option by its key, "php_version": here
+            // the setting is phpRegex.phpVersion.
+            throw new InvalidRegexOptionException(str_replace('"php_version"', 'phpRegex.phpVersion', $e->getMessage()), 'phpRegex.phpVersion', $e);
         }
 
         if (null === $intervals) {

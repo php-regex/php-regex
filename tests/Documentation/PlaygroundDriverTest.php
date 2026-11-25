@@ -17,6 +17,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -663,6 +664,7 @@ final class PlaygroundDriverTest extends TestCase
             SemanticErrorException::class,
             TextExplainer::class,
             InvalidRegexOptionException::class,
+            FormattingException::class,
             RedosMode::class,
             SampleGenerator::class,
             TestCaseGenerator::class,
