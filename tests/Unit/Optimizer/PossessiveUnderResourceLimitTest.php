@@ -85,6 +85,28 @@ final class PossessiveUnderResourceLimitTest extends TestCase
     }
 
     /**
+     * A rewriter reads the limits of each pattern it visits whole: one
+     * that sets none after one that does gets its possessive group, and
+     * the other way round.
+     */
+    #[Test]
+    public function test_a_rewriter_reads_the_limit_of_each_pattern_it_visits(): void
+    {
+        $limited = '/(*LIMIT_MATCH=4)c(?:ab)+e/';
+        $this->assertSame([[1, \PREG_NO_ERROR], [1, \PREG_NO_ERROR]], self::matchedWithoutTheJit(['/c(?:ab)+e/', '/c(?:ab)++e/'], ['cababe']), 'Oracle: without a limit both match "cababe", JIT off.');
+        [, [$answer]] = self::matchedWithoutTheJit([$limited, '/(*LIMIT_MATCH=4)c(?:ab)++e/'], ['cababe']);
+        $this->assertFalse($answer, 'Oracle: the possessive group gives up under the limit, JIT off.');
+
+        $rewriter = new Rewriter(possessive: true);
+        $parser = Regex::create(['cache' => null]);
+        $rewrite = static fn (string $pattern): string => $parser->parse($pattern)->accept($rewriter)->accept(new PatternPrinter());
+
+        $this->assertSame($limited, $rewrite($limited));
+        $this->assertSame('/c(?:ab)++e/', $rewrite('/c(?:ab)+e/'));
+        $this->assertSame($limited, $rewrite($limited));
+    }
+
+    /**
      * The repeated character keeps within every limit the greedy one keeps
      * within, from one to twenty, on each subject: the oracle runs both
      * under each.

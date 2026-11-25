@@ -76,10 +76,11 @@ final class PossessiveRewrites
     private const LIMITS = ['LIMIT_DEPTH', 'LIMIT_RECURSION', 'LIMIT_HEAP'];
 
     /**
-     * Whether the pattern visited sets a limit on what PCRE2 spends on a
-     * match, which a possessive group may spend more of.
+     * Whether the pattern visited whole sets a limit on what PCRE2 spends
+     * on a match, which a possessive group may spend more of: null until a
+     * repeated group needs it.
      */
-    private bool $limited = false;
+    private ?bool $limited = null;
 
     /**
      * The repeats whose group was dropped, "(?:a)+" written "a+".
@@ -162,7 +163,7 @@ final class PossessiveRewrites
         $this->pattern = $node;
         $this->calls = null;
         $this->inForce = null;
-        $this->limited = self::setsLimit($node->pattern);
+        $this->limited = null;
     }
 
     /**
@@ -319,6 +320,15 @@ final class PossessiveRewrites
         }
 
         return $children;
+    }
+
+    /**
+     * Whether the pattern visited whole sets a limit on what PCRE2 spends
+     * on a match; a tree visited without its pattern reads none.
+     */
+    private function limited(): bool
+    {
+        return $this->limited ??= null !== $this->pattern && self::setsLimit($this->pattern->pattern);
     }
 
     /**
@@ -751,7 +761,7 @@ final class PossessiveRewrites
         // interpreter spends a match call more on "c(?:ab)++e" than on
         // "c(?:ab)+e" over "cababe", and a frame more on "c(?:ab){2,}+e",
         // which a repeated character never does.
-        if ($repeat->node instanceof GroupNode && ([] === $suffix || $this->limited)) {
+        if ($repeat->node instanceof GroupNode && ([] === $suffix || $this->limited())) {
             return false;
         }
 
