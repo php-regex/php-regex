@@ -65,8 +65,6 @@ final class PatternLinterReuseTest extends TestCase
      */
     private static function findings(PatternLinter $linter, string $pattern): array
     {
-        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
-
-        return array_map(static fn (RuleViolation $issue): string => $issue->id.'@'.($issue->offset ?? '-'), $linter->getIssues());
+        return array_map(static fn (RuleViolation $issue): string => $issue->id.'@'.($issue->offset ?? '-'), $linter->analyze(Regex::create(['cache' => null])->parse($pattern)));
     }
 }

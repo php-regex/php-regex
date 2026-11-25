@@ -92,6 +92,7 @@ final class ParameterNamesTest extends TestCase
         yield 'TrivialMatchClassifier::matchedLiteral' => ['class' => TrivialMatchClassifier::class, 'method' => 'matchedLiteral', 'names' => ['regex']];
         yield 'RedosRepairer::repair' => ['class' => RedosRepairer::class, 'method' => 'repair', 'names' => ['regex']];
         yield 'PatternLinter::__construct' => ['class' => PatternLinter::class, 'method' => '__construct', 'names' => ['target', 'rules']];
+        yield 'PatternLinter::analyze' => ['class' => PatternLinter::class, 'method' => 'analyze', 'names' => ['ast']];
         yield 'PcreEngine::compile' => ['class' => PcreEngine::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject']];
         yield 'PcreEngine::test' => ['class' => PcreEngine::class, 'method' => 'test', 'names' => ['regex', 'subject']];

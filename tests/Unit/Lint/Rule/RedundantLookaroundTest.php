@@ -122,8 +122,7 @@ final class RedundantLookaroundTest extends TestCase
     private function issues(string $pattern, bool $enabled): array
     {
         $linter = new PatternLinter(rules: $enabled ? ['lookaround.redundant' => true] : []);
-        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
-        return array_values(array_filter($linter->getIssues(), static fn (RuleViolation $issue): bool => self::RULE === $issue->id));
+        return array_values(array_filter($linter->analyze(Regex::create(['cache' => null])->parse($pattern)), static fn (RuleViolation $issue): bool => self::RULE === $issue->id));
     }
 }

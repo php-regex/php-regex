@@ -398,7 +398,9 @@ foreach (Regex::create()->lint('/(?=a)b/') as $violation) {
 
 Each `RuleViolation` (`PHPRegex\Linter\Rule\RuleViolation`) carries the rule's `id`, its `message`, the `offset`
 and `end` of the text it names in the pattern body, a `hint` when the rule has one, and its `severity`
-(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`.
+(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`. Without the facade,
+`(new PatternLinter($parser->target()))->analyze($parser->parse($regex))` returns it too: `PatternLinter`
+(`PHPRegex\Linter\PatternLinter`) takes the target, then a map turning rules on and off by id.
 
 ---
 

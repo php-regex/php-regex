@@ -55,7 +55,7 @@ A few 1.3 classes map to a 2.0 class marked `@internal`, which the
 [backward compatibility promise](docs/reference/backward-compatibility.md)
 does not cover: `RegexProblem` and `ProblemType` became `Linter\Diagnostic`
 and `Linter\DiagnosticType`, built only by the lint commands. Read lint
-results through `PatternLinter::getIssues()` (`Rule\RuleViolation`) or the
+results through `PatternLinter::analyze()` (`Rule\RuleViolation`) or the
 CLI's JSON output.
 
 A Rector set makes these changes in your code. It ships with the Rector

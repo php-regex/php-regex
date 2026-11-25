@@ -562,6 +562,9 @@ CHANGELOG
  * `PatternOccurrence` is read through `$pattern`, `$file`, `$line`,
    `$column` and `$source`, the five an extractor of your own gives
    `found()`; its other properties are `@internal`.
+ * `PatternLinter::analyze($ast)` returns the findings of the rules on the
+   tree `parse()` gives, and `getIssues()` those of the last tree read; the
+   `visit*()` methods of the linter are `@internal`.
  * `new PatternLinter($target, $rules)` takes the `PcreTarget` its rules read
    the pattern for, the running PHP's when null, and then the map turning
    rules on and off, as `checks.lint.rules` does.

@@ -77,16 +77,15 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 Usage
 -----
 
-`PatternLinter` is a node visitor: run it on any parsed AST.
+`PatternLinter::analyze()` takes the tree `parse()` gives and returns the findings of the rules on it.
 
 ```php
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\RegexParser;
 
 $linter = new PatternLinter();
-RegexParser::create()->parse('/(a+)+b/')->accept($linter);
 
-foreach ($linter->getIssues() as $violation) {
+foreach ($linter->analyze(RegexParser::create()->parse('/(a+)+b/')) as $violation) {
     echo $violation->id, ': ', $violation->message, "\n";
 }
 ```
@@ -94,6 +93,10 @@ foreach ($linter->getIssues() as $violation) {
 regex.lint.quantifier.nested: Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
 regex.lint.group.quantifiedCapture: Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
+
+`getIssues()` gives the findings of the last pattern read again. The linter walks the tree as a node visitor, so
+`$ast->accept($linter)` on the root reads it as `analyze()` does; its `visit*()` methods are `@internal`, and a node
+below the root is no pattern to lint: the rules read its groups and flags from the root.
 
 The constructor takes the target first, `new PatternLinter($parser->target())`: a rule that asks what a
 part of the pattern matches then reads it as that PHP and PCRE2 read it, the running ones without it. With the
@@ -109,9 +112,8 @@ $linter = new PatternLinter(rules: [
     'quantifier.nested' => false,        // disable one rule
     'unicode.shorthandWithoutU' => true, // enable the opt-in rule
 ]);
-RegexParser::create()->parse('/^\w+\d*$/')->accept($linter);
 
-foreach ($linter->getIssues() as $violation) {
+foreach ($linter->analyze(RegexParser::create()->parse('/^\w+\d*$/')) as $violation) {
     echo $violation->id, ': ', $violation->message, "\n";
 }
 ```

@@ -55,7 +55,8 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
- * Lints regex patterns for semantic issues like useless flags.
+ * Lints regex patterns for semantic issues like useless flags: analyze()
+ * takes the tree of a pattern and returns the findings of the rules on it.
  *
  * @phpstan-import-type CapturingGroupInfo from GroupIndex
  *
@@ -178,6 +179,23 @@ final class PatternLinter extends AbstractNodeVisitor
     }
 
     /**
+     * The findings of the rules on a pattern, read from the root of its
+     * tree, as RegexParser::parse() gives it: the rules read the groups and
+     * the flags of the whole pattern.
+     *
+     * @return list<RuleViolation>
+     */
+    public function analyze(RegexNode $ast): array
+    {
+        $ast->accept($this);
+
+        return $this->issues;
+    }
+
+    /**
+     * The findings of the last pattern read, by analyze() or by accept()
+     * on the root of its tree.
+     *
      * @return list<RuleViolation>
      */
     public function getIssues(): array
@@ -185,6 +203,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $this->issues;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitRegex(RegexNode $node): NodeInterface
     {
@@ -217,6 +238,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitLiteral(LiteralNode $node): NodeInterface
     {
@@ -225,6 +249,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitComment(CommentNode $node): NodeInterface
     {
@@ -233,6 +260,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): NodeInterface
     {
@@ -242,6 +272,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
@@ -252,6 +285,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharClass(CharClassNode $node): NodeInterface
     {
@@ -260,6 +296,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitDot(DotNode $node): NodeInterface
     {
@@ -268,6 +307,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitAnchor(AnchorNode $node): NodeInterface
     {
@@ -276,6 +318,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitAlternation(AlternationNode $node): NodeInterface
     {
@@ -293,6 +338,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitSequence(SequenceNode $node): NodeInterface
     {
@@ -310,6 +358,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): NodeInterface
     {
@@ -319,6 +370,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitGroup(GroupNode $node): NodeInterface
     {
@@ -328,6 +382,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitBackref(BackrefNode $node): NodeInterface
     {
@@ -336,6 +393,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): NodeInterface
     {
@@ -344,6 +404,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
@@ -356,6 +419,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): NodeInterface
     {
@@ -364,6 +430,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): NodeInterface
     {
@@ -372,6 +441,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharType(CharTypeNode $node): NodeInterface
     {
@@ -380,6 +452,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitConditional(ConditionalNode $node): NodeInterface
     {
@@ -389,6 +464,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitDefine(DefineNode $node): NodeInterface
     {
