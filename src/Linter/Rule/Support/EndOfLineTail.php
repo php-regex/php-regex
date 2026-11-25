@@ -367,10 +367,6 @@ final class EndOfLineTail
             foreach (array_keys($starts) as $start) {
                 $stops += $this->stops($node, $start, $dotAll);
             }
-
-            if ([] === $stops) {
-                return [];
-            }
             $starts = $stops;
         }
 
@@ -392,11 +388,11 @@ final class EndOfLineTail
         }
 
         if ($node instanceof DotNode || ($node instanceof CharTypeNode && 'N' === $node->value)) {
-            return $at < $length && (($node instanceof DotNode && $dotAll) || !$this->endsALineAlone($at)) ? [$at + 1 => true] : [];
+            return $at < $length && (($node instanceof DotNode && $dotAll) || !$this->lineEndsAfter($at)) ? [$at + 1 => true] : [];
         }
 
         if ($node instanceof CharTypeNode && 'R' === $node->value) {
-            return ("\r\n" === substr($this->text, $at, 2) ? [$at + 2 => true] : []) + ($at < $length ? [$at + 1 => true] : []);
+            return ("\r\n" === substr($this->text, $at) ? [$at + 2 => true] : []) + ($at < $length ? [$at + 1 => true] : []);
         }
 
         if (self::readsOneCharacter($node) && !($node instanceof CharTypeNode && 'X' === $node->value)) {
@@ -470,22 +466,9 @@ final class EndOfLineTail
             return $this->stops($node->yes, $at, $dotAll) + $this->stops($node->no, $at, $dotAll);
         }
 
-        if (self::isZeroWidth($node)) {
-            return $here;
-        }
-
-        // A reference, a call, a script run, "\X": anywhere on.
-        return array_fill_keys(range($at, $length), true);
-    }
-
-    /**
-     * Whether the character at the place ends a line alone, which a dot
-     * does not read: a "\r" before a "\n" under "(*CRLF)", either of them
-     * under "(*ANYCRLF)".
-     */
-    private function endsALineAlone(int $at): bool
-    {
-        return 'CRLF' === $this->convention ? "\r\n" === substr($this->text, $at, 2) : true;
+        // What reads nothing stops where it starts; a reference, a call, a
+        // script run, "\X" anywhere on.
+        return self::isZeroWidth($node) ? $here : array_fill_keys(range($at, $length), true);
     }
 
     /**
@@ -504,11 +487,13 @@ final class EndOfLineTail
     }
 
     /**
-     * Whether a newline starts at the place, where "$" under m holds.
+     * Whether a newline starts at the place, short of the end: "$" holds
+     * there, and a dot reads the character only under s. "\r\n" under
+     * "(*CRLF)", either of its characters under "(*ANYCRLF)".
      */
     private function lineEndsAfter(int $at): bool
     {
-        return 'CRLF' === $this->convention ? "\r\n" === substr($this->text, $at, 2) : $at < \strlen($this->text);
+        return 'CRLF' === $this->convention ? "\r\n" === substr($this->text, $at) : true;
     }
 
     /**
