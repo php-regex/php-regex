@@ -15,8 +15,6 @@ namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
 use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
-use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -29,7 +27,6 @@ use PHPUnit\Framework\Attributes\Test;
  */
 final class LintCommandOptimizationsTest extends LaravelTestCase
 {
-    use PhpUnitForwardCompat;
     use TemporaryProject;
 
     // [0-9]+ becomes \d+: a saving of 3 characters.
@@ -72,35 +69,50 @@ final class LintCommandOptimizationsTest extends LaravelTestCase
     }
 
     /**
-     * @return iterable<string, array{saving: mixed, shown: string}>
+     * A value the run cannot use stops it as any setting of
+     * config/php-regex.php does: one line naming the key, exit code 2.
+     *
+     * @return iterable<string, array{optimizations: array<string, mixed>, message: string}>
      */
-    public static function provideUnreadableSavings(): iterable
+    public static function provideUnreadableSettings(): iterable
     {
-        yield 'zero' => ['saving' => 0, 'shown' => '0'];
-        yield 'a string' => ['saving' => '3', 'shown' => 'a string'];
+        yield 'a switch that is a string' => ['optimizations' => ['enabled' => 'no'], 'message' => '"optimizations.enabled" must be true or false, not a string.'];
+        yield 'a switch that is a number' => ['optimizations' => ['enabled' => 1], 'message' => '"optimizations.enabled" must be true or false, not a int.'];
+        yield 'a saving that is a string' => ['optimizations' => ['min_savings' => '3'], 'message' => '"optimizations.min_savings" must be an integer of at least 1, not a string.'];
+        yield 'a saving of zero' => ['optimizations' => ['min_savings' => 0], 'message' => '"optimizations.min_savings" must be an integer of at least 1, not 0.'];
+        yield 'a negative saving' => ['optimizations' => ['min_savings' => -1], 'message' => '"optimizations.min_savings" must be an integer of at least 1, not -1.'];
+        yield 'an option the optimizer does not know' => ['optimizations' => ['options' => ['canonicalizeCharClasses' => false]], 'message' => 'Unknown optimizer option "canonicalizeCharClasses"'];
     }
 
+    /**
+     * @param array<string, mixed> $optimizations
+     */
     #[Test]
-    #[DataProvider('provideUnreadableSavings')]
-    public function test_a_saving_below_one_is_refused(mixed $saving, string $shown): void
+    #[DataProvider('provideUnreadableSettings')]
+    public function test_a_setting_the_run_cannot_use_stops_it_with_exit_code_2(array $optimizations, string $message): void
     {
-        $this->configure(['min_savings' => $saving]);
+        $this->configure($optimizations);
 
-        $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"optimizations.min_savings" must be an integer of at least 1, not '.$shown.'.');
+        [$status, $payload] = $this->lint([]);
 
-        $this->optimizationCount([]);
+        $this->assertSame(2, $status);
+        $this->assertSame('config', $payload['stage'] ?? null);
+        $this->assertIsString($payload['error'] ?? null);
+        $this->assertStringStartsWith('Invalid config/php-regex.php: '.$message, $payload['error']);
     }
 
+    /**
+     * A saving of one is the least the run takes, a switch off is read as
+     * one: neither stops it.
+     */
     #[Test]
-    public function test_a_switch_that_is_no_boolean_is_refused(): void
+    public function test_the_least_saving_and_a_switch_off_are_read(): void
     {
-        $this->configure(['enabled' => 'no']);
+        $this->configure(['enabled' => false, 'min_savings' => 1]);
 
-        $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"optimizations.enabled" must be true or false, not a string.');
+        [$status] = $this->lint([]);
 
-        $this->optimizationCount([]);
+        $this->assertSame(0, $status);
     }
 
     /**
@@ -133,9 +145,26 @@ final class LintCommandOptimizationsTest extends LaravelTestCase
      */
     private function optimizationCount(array $input): int
     {
+        [, $payload] = $this->lint($input);
+        $this->assertIsArray($payload['stats'] ?? null);
+        $this->assertIsInt($payload['stats']['optimizations'] ?? null);
+
+        return $payload['stats']['optimizations'];
+    }
+
+    /**
+     * The exit code and the JSON document of a run over a project holding
+     * one pattern to optimize.
+     *
+     * @param array<string, string> $input
+     *
+     * @return array{int, array<mixed>}
+     */
+    private function lint(array $input): array
+    {
         $project = $this->makeProject(['src/Pattern.php' => self::DIGITS_FILE]);
 
-        Artisan::call('regex:lint', [
+        $status = Artisan::call('regex:lint', [
             'paths' => [$project.'/src'],
             '--format' => 'json',
             '--no-routes' => true,
@@ -146,9 +175,7 @@ final class LintCommandOptimizationsTest extends LaravelTestCase
 
         $payload = json_decode($output, true);
         $this->assertIsArray($payload, 'output is not JSON: '.$output);
-        $this->assertIsArray($payload['stats'] ?? null);
-        $this->assertIsInt($payload['stats']['optimizations'] ?? null);
 
-        return $payload['stats']['optimizations'];
+        return [$status, $payload];
     }
 }

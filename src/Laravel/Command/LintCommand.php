@@ -102,11 +102,14 @@ final class LintCommand extends Command
         $editorUrl = config('php-regex.ide');
         $jobs = $this->option('jobs');
         $minSavings = $this->option('min-savings');
-        $optimizations = config('php-regex.optimizations', []);
-        $optimizations = \is_array($optimizations) ? $optimizations : [];
-        $checkOptimizations = $optimizations['enabled'] ?? true;
-        if (!\is_bool($checkOptimizations)) {
-            throw new InvalidRegexOptionException(\sprintf('"optimizations.enabled" must be true or false, not a %s.', get_debug_type($checkOptimizations)));
+
+        // A setting the run cannot use is reported by the setup, as every
+        // other setting of config/php-regex.php is: it is read again there,
+        // and until then the run takes the defaults.
+        try {
+            [$checkOptimizations, $configuredSavings, $optimizerOptions] = self::optimizations();
+        } catch (InvalidRegexOptionException) {
+            [$checkOptimizations, $configuredSavings, $optimizerOptions] = [true, 1, new OptimizerOptions(verifyWithAutomata: true)];
         }
 
         return (new ConsoleLintRunner($this->formatterRegistry))->run(new ConsoleLintRequest(
@@ -119,10 +122,10 @@ final class LintCommand extends Command
             // skeleton lives under vendor/), excludes nothing.
             excludeBase: $configured ? base_path() : null,
             // Without --min-savings, optimizations.min_savings.
-            minSavings: \is_string($minSavings) ? $minSavings : (string) PHPRegexServiceProvider::atLeastOne('optimizations.min_savings', $optimizations['min_savings'] ?? 1),
+            minSavings: \is_string($minSavings) ? $minSavings : (string) $configuredSavings,
             jobs: null === $jobs ? null : (\is_string($jobs) ? $jobs : ''),
             disabledSources: array_keys(array_filter(['routes' => (bool) $this->option('no-routes'), 'validators' => $skipValidators])),
-            optimizations: self::normalizeOptimizations($optimizations['options'] ?? []),
+            optimizations: $optimizerOptions,
             checkOptimizations: $checkOptimizations,
             checkRedos: true === config('php-regex.redos.enabled'),
             checkComplexity: true === config('php-regex.complexity.enabled'),
@@ -149,6 +152,9 @@ final class LintCommand extends Command
                     getenv(),
                     ['config php-regex.locale' => $this->configLocale()],
                 );
+                // Read again: a setting the run cannot use stops it here,
+                // as the others do.
+                self::optimizations();
                 /** @var AnalysisService $analysis */
                 $analysis = $this->laravel->make('php-regex.analysis');
                 /** @var LintService $lint */
@@ -246,6 +252,32 @@ final class LintCommand extends Command
         $base = base_path();
 
         return array_map(static fn (string $path): string => RelativePathHelper::absolutize($path, $base), $paths);
+    }
+
+    /**
+     * The optimizations of config/php-regex.php, read as regex.json's
+     * checks.optimizations: whether the run suggests any, the saving a
+     * suggestion needs, and what the optimizer may rewrite.
+     *
+     * @throws InvalidRegexOptionException when "enabled" is no boolean, "min_savings" no integer of at least 1,
+     *                                     or "options" names an option the optimizer does not take
+     *
+     * @return array{bool, int, OptimizerOptions}
+     */
+    private static function optimizations(): array
+    {
+        $optimizations = config('php-regex.optimizations');
+        $optimizations = \is_array($optimizations) ? $optimizations : [];
+        $enabled = $optimizations['enabled'] ?? true;
+        if (!\is_bool($enabled)) {
+            throw new InvalidRegexOptionException(\sprintf('"optimizations.enabled" must be true or false, not a %s.', get_debug_type($enabled)));
+        }
+
+        return [
+            $enabled,
+            PHPRegexServiceProvider::atLeastOne('optimizations.min_savings', $optimizations['min_savings'] ?? 1),
+            self::normalizeOptimizations($optimizations['options'] ?? []),
+        ];
     }
 
     /**
