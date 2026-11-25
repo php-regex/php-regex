@@ -112,7 +112,8 @@ CHANGELOG
    capturing group for a target before PCRE2 10.44: the JIT of 10.39 to
    10.42 leaves the group set from an earlier start of the match, and
    `/a(a)*+b/` writes `a` to group 1 on `aacab`, where `/a(a)*b/` leaves it
-   unset.
+   unset. The target answers it as
+   `PcreFeature::PossessiveRepeatGroupsClearedEachStart`.
  * Without `u`, under a target that names no locale but C,
    `matchEquivalent()`, `equivalent()`, `intersection()` and `subsetOf()`
    refuse a possessive quantifier, or an atomic group, proven on a byte past
