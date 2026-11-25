@@ -137,9 +137,10 @@ final class ErrorFactoryTest extends TestCase
         $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low);
         $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);
 
-        $verdict = (new \ReflectionMethod(ErrorFactory::class, 'redosVerdict'))->invoke(null, $analysis);
+        $error = ErrorFactory::redos($pattern, $analysis, null, 1);
 
-        $this->assertSame('unknown, not analyzed', $verdict);
+        $this->assertInstanceOf(TipRuleError::class, $error);
+        $this->assertStringStartsWith("Severity: unknown, not analyzed.\n", $error->getTip());
     }
 
     private function assertError(string $message, string $identifier, int $line, ?string $tip, IdentifierRuleError $error): void
