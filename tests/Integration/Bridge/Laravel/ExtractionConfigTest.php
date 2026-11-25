@@ -19,6 +19,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Tests\Support\DecoratingHelperCallExtractor;
 use PHPRegex\Tests\Support\LintFunctionOverrides;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
@@ -138,6 +139,41 @@ final class ExtractionConfigTest extends LaravelTestCase
         $this->assertSame(2, $status, $output);
         $this->assertStringContainsString('Invalid config/php-regex.php: Unknown extraction preset "laravel-str" in php-regex.extraction.interop: did you mean "illuminate-support"?', $output);
         $this->assertStringNotContainsString('/(nette/', $output);
+    }
+
+    /**
+     * An extractor that extends php-regex.extractor.strategy, the built-in
+     * one, adds its calls to those the library reads, and regex:lint reads
+     * both.
+     */
+    #[Test]
+    public function test_an_extractor_extending_the_built_in_one_adds_its_calls(): void
+    {
+        $project = $this->makeProject(['app/Check.php' => "<?php\n\ncheck('/\\d+/i', \$s);\npreg_match('/\\d+/i', \$s);\n"]);
+        $this->application()->setBasePath($project);
+        $this->application()->extend('php-regex.extractor.strategy', static fn (ExtractorInterface $builtIn): ExtractorInterface => new DecoratingHelperCallExtractor($builtIn));
+
+        $status = Artisan::call('regex:lint', [
+            'paths' => [$project.'/app'],
+            '--format' => 'json',
+            '--no-routes' => true,
+            '--no-validators' => true,
+            '--jobs' => '1',
+        ]);
+        $payload = json_decode(Artisan::output(), true);
+
+        $this->assertSame(0, $status);
+        $this->assertIsArray($payload);
+        $this->assertIsArray($payload['results'] ?? null);
+        $issues = [];
+        foreach ($payload['results'] as $result) {
+            $this->assertIsArray($result);
+            foreach ((array) ($result['issues'] ?? []) as $issue) {
+                $this->assertIsArray($issue);
+                $issues[] = [$issue['line'] ?? null, $issue['issue_id'] ?? null];
+            }
+        }
+        $this->assertSame([[3, 'regex.lint.flag.useless.i'], [4, 'regex.lint.flag.useless.i']], $issues);
     }
 
     /**

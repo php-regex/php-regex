@@ -15,18 +15,22 @@ namespace PHPRegex\Tests\Integration\Bridge\Symfony;
 
 use PHPRegex\Symfony\Command\LintCommand;
 use PHPRegex\Tests\Support\BundleContainer;
+use PHPRegex\Tests\Support\DecoratingHelperCallExtractor;
 use PHPRegex\Tests\Support\HelperCallExtractor;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * An extractor the application writes, named by "extractor_service", is
  * the one regex:lint reads patterns with: the calls it reports are linted,
  * the native calls it leaves out are not, and the inline markers of the
  * file its occurrences name apply to them as to the built-in extractor's.
+ * One that decorates the built-in extractor adds its calls to the native
+ * ones.
  */
 final class CustomExtractorKernelTest extends TestCase
 {
@@ -67,18 +71,38 @@ final class CustomExtractorKernelTest extends TestCase
     }
 
     /**
+     * An extractor that decorates php_regex.extractor.instance, the built-in
+     * one, adds its calls to those the library reads: with extractor_service
+     * left out, the native calls are read too.
+     */
+    #[Test]
+    public function test_an_extractor_decorating_the_built_in_one_adds_its_calls(): void
+    {
+        $issues = $this->lintIssues("<?php\n\ncheck('/\\d+/i', \$subject);\npreg_match('/\\d+/i', \$subject);\n", decorate: true);
+
+        $this->assertSame([[3, 7, 'regex.lint.flag.useless.i'], [4, 12, 'regex.lint.flag.useless.i']], $issues);
+    }
+
+    /**
      * @return list<array{mixed, mixed, mixed}>
      */
-    private function lintIssues(string $code): array
+    private function lintIssues(string $code, bool $decorate = false): array
     {
         $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}', 'src/Pattern.php' => $code]);
 
         $container = new ContainerBuilder();
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
-        $container->register('app.regex_extractor', HelperCallExtractor::class);
         $extension = BundleContainer::register($container);
-        $container->loadFromExtension($extension->getAlias(), ['extractor_service' => 'app.regex_extractor']);
+        if ($decorate) {
+            $container->register('app.regex_extractor', DecoratingHelperCallExtractor::class)
+                ->setDecoratedService('php_regex.extractor.instance')
+                ->setArgument('$inner', new Reference('.inner'));
+            $container->loadFromExtension($extension->getAlias(), []);
+        } else {
+            $container->register('app.regex_extractor', HelperCallExtractor::class);
+            $container->loadFromExtension($extension->getAlias(), ['extractor_service' => 'app.regex_extractor']);
+        }
         $container->compile();
 
         $command = $container->get('php_regex.command.lint');

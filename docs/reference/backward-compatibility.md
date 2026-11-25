@@ -191,7 +191,13 @@ Extending and implementing are covered only where the API is meant for it:
   occurrence with `PatternOccurrence::found()`. The constructor of
   `PatternOccurrence`, its other methods and its other properties are
   `@internal`; read an occurrence through `$pattern`, `$file`, `$line`,
-  `$column` and `$source`.
+  `$column` and `$source`. An extractor the Symfony bundle's
+  `extractor_service` names replaces the built-in one: the lint reads
+  patterns with it alone. To read your calls beside the built-in ones,
+  decorate the built-in extractor and call it from yours: the service
+  `php_regex.extractor.instance` in the Symfony bundle, the binding
+  `php-regex.extractor.strategy` in the Laravel integration. Both ids stay
+  for all of 2.x.
 
 Every other public interface (`NodeInterface`, `ConfirmationRunnerInterface`, …)
 is there to type against, not to implement. Lint rules, transpiler targets and

@@ -141,6 +141,19 @@ Warning: Extraction interop entry ignored: expected a string, got bool.
 A `functions` spec the lint cannot read, `x#a` or `x#1$` say, is ignored
 with `Malformed pattern function "x#a", ignored.`
 
+To read the patterns of your own calls beside the ones the package reads,
+extend the built-in extractor, bound as `php-regex.extractor.strategy`, in
+the `register()` method of a service provider. Yours implements
+`PHPRegex\Linter\Extraction\ExtractorInterface`, is handed the built-in one,
+and returns its occurrences with your own, each built with
+`PatternOccurrence::found()`:
+
+```php
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+
+$this->app->extend('php-regex.extractor.strategy', static fn (ExtractorInterface $builtIn): ExtractorInterface => new \App\Regex\RuleExtractor($builtIn));
+```
+
 An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`
 are not thresholds: they are the verdicts a pattern gets.
