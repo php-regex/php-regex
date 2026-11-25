@@ -148,6 +148,10 @@ final class LoopShape
      * newline convention is the one the pattern's analyzer holds: under
      * (*CR) the dot takes "\n". An i in force at the inner loop, or turned
      * on inside it as in "(?i:a)", refuses the iteration as the i flag does.
+     * Where the rules read every byte, under the tables of the target's
+     * locale, the sets hold all the items take: under glibc's
+     * tr_TR.ISO-8859-9, "\w" takes 0xDD, and "(?:\w+\xDD)+" is no such
+     * iteration.
      */
     public static function isSeparatedIteration(SequenceNode $iteration, QuantifierNode $inner, LintContext $context): bool
     {
@@ -168,7 +172,8 @@ final class LoopShape
             return false;
         }
 
-        $innerSet = $context->firstChars($inner->node, $flags[$innerKey]);
+        $everyByte = $context->comparesEveryByte();
+        $innerSet = $everyByte ? $context->firstBytes($inner->node, $flags[$innerKey]) : $context->firstChars($inner->node, $flags[$innerKey]);
         if ($innerSet->isUnknown() || $innerSet->isEmpty()) {
             return false;
         }
@@ -180,31 +185,35 @@ final class LoopShape
         }
 
         $next = $items[$nextKey];
-        if (self::mayTakeACharacterAboveAscii($inner->node, $context) && self::mayTakeACharacterAboveAscii($next, $context)) {
+        if (self::mayTakeACharacterPastItsSet($inner->node, $context) && self::mayTakeACharacterPastItsSet($next, $context)) {
             return false;
         }
 
-        $nextSet = $context->firstChars($next, $flags[$nextKey])->union($context->lastChars($next, $flags[$nextKey]));
+        $nextSet = $everyByte
+            ? $context->firstBytes($next, $flags[$nextKey])->union($context->lastBytes($next, $flags[$nextKey]))
+            : $context->firstChars($next, $flags[$nextKey])->union($context->lastChars($next, $flags[$nextKey]));
 
         return !$nextSet->isUnknown() && !$nextSet->isEmpty() && !$nextSet->intersects($innerSet);
     }
 
     /**
-     * Whether the node may take a character above ASCII. The character sets
-     * stop at 0x7F: a dot or a negated class never meets "\xE9" there,
-     * although the engine lets it take one. So two items that both may take
-     * such a character are never known apart; an item held to ASCII is, its
-     * set being whole.
+     * Whether the node may take a character its set does not hold: one
+     * above ASCII, where the sets of firstChars() stop. A dot or a negated
+     * class never meets "\xE9" there, although the engine lets it take
+     * one. So two items that both may take such a character are never
+     * known apart; an item held to ASCII is, its set being whole.
      *
      * A literal or a class holding a byte above ASCII may take one, as do a
      * dot, a negated class, \D, \W, \S, \h, \v and the like, a Unicode
      * property, a POSIX class and anything not read here. \d, \w and \s
-     * are held to ASCII without u, unless the pattern opens with a verb
-     * such as (*UCP), which widens them.
+     * are held to ASCII without u under PCRE2's own tables, unless the
+     * pattern opens with a verb such as (*UCP), which widens them. Where the
+     * rules read every byte, under another locale's tables, whose "\w" and
+     * cases reach past ASCII, a set holds all the node takes: none.
      */
-    public static function mayTakeACharacterAboveAscii(NodeInterface $node, LintContext $context): bool
+    public static function mayTakeACharacterPastItsSet(NodeInterface $node, LintContext $context): bool
     {
-        return self::mayTakeAboveAscii($node, str_contains($context->pattern->flags, 'u') || self::patternStartsWithVerb($context));
+        return !$context->comparesEveryByte() && self::mayTakeAboveAscii($node, str_contains($context->pattern->flags, 'u') || self::patternStartsWithVerb($context));
     }
 
     /**

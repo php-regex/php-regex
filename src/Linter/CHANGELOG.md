@@ -51,6 +51,27 @@ CHANGELOG
    call names no loop.
    `PatternOccurrence::$everyMatchElsewhere` names the functions of the
    other calls, and `everyMatchCalls()` all of them.
+ * Without u, under another locale's tables than PCRE2's own,
+   `regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`
+   and `regex.lint.overlap.charset` read the characters of a run or a
+   branch every byte as the target's tables give them, the other case of an
+   ASCII letter and the bytes of `\w`, `\d` and `\s` above ASCII included,
+   where they folded ASCII letters by PCRE2's own pairs. Under glibc's
+   tr_TR.ISO-8859-9, which pairs `i` with `\xDD` and `I` with `\xFD`,
+   `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are no longer reported,
+   and `/i+\xDD+$/i` and `"/(?:\w+\xDD)+$/"`, with the byte written as it
+   is, are; under fr_FR.ISO8859-1, `"/\xC9+\xE9+$/i"` is reported and
+   `"/(?:\xC9+\xEA)+$/i"` no longer. Where the engine's paths read the case
+   of a byte otherwise, as macOS's tr_TR.ISO8859-9 reads `i`, `I` and
+   `\xDD`, a pattern read caselessly is read in ASCII as before, every
+   caseless set holding such a byte, a caseless `[a-z]` among them, being
+   unknown otherwise. Nothing changes under C.
+ * Without u nor UCP, under another locale's tables than PCRE2's own,
+   `regex.lint.anchor.impossible.end` reads which bytes are word
+   characters from the target's tables, where it took every byte above
+   ASCII for both: under glibc's tr_TR.ISO-8859-9, `/\W$\b\n/` and
+   `/\xDD$\B\n/`, which never match there, are reported, as
+   `"/\xE9$\B\n/"` is under fr_FR.ISO8859-1. Nothing changes under C.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
  * Without u, `regex.lint.overlap.charset`, where the bytes of the

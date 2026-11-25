@@ -20,7 +20,6 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Linter\Rule\Support\SourceQuote;
 use PHPRegex\Parser\Analysis\ByteCharSet;
-use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
@@ -176,13 +175,17 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // earlier alternative carries into it.
         $charSets = [];
         $flagsAt = [];
-        $leadBytes = null;
         $anyUnknown = false;
         $pastAscii = false;
         // The atoms each branch may start with, and the lookaheads before
         // each, which the bytes do not read.
         $starts = [];
         $guarded = false;
+        // Under another locale's tables without UTF, the ASCII read and its
+        // fold are PCRE2's: those tables may give "\w" bytes above ASCII,
+        // and pair "i" with another byte than "I", as glibc's
+        // tr_TR.ISO-8859-9 pairs it with 0xDD.
+        $everyByte = $context->comparesEveryByte();
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
             $alternative = $node->alternatives[$index];
             $flagsAt[] = $flags;
@@ -193,14 +196,18 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // with, as "é" is, whether written as it is or as an escape,
             // "\x{E9}", or in a range, which the ASCII read leaves unknown.
             if ($charSet->isUnknown() && $context->pattern->unicodeMode) {
-                $charSet = ($leadBytes ??= self::everyByteAnalyzer($context))->withFlags($flags)->firstChars($alternative);
+                $charSet = $context->everyByteAnalyzer()->withFlags($flags)->firstChars($alternative);
             }
 
             // The case the branch starts in: the flags at its first atom, a
             // "(?i:" around it or a bare "(?i)" before it included, not one
             // later in the branch, which leaves the start case-sensitive.
             $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
-            $folded = $caseless ? self::foldCharSet($charSet) : $charSet;
+            $folded = match (true) {
+                !$caseless => $charSet,
+                $everyByte => ByteCharSet::unknown(),
+                default => self::foldCharSet($charSet),
+            };
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
             // Without u it is a character the sets class in ASCII alone,
@@ -225,10 +232,13 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // for a set the ASCII read leaves unknown as well: an escape past
         // ASCII, "\xE9", is the byte it names, as the same byte written as
         // it is. A branch behind a lookahead is judged by PCRE alone: the
-        // bytes would take the characters the lookahead refuses.
+        // bytes would take the characters the lookahead refuses. Under
+        // another locale's tables, the bytes stand for the ASCII read, which
+        // knows nothing of them: read every byte, as those tables give them.
         $sets = match (true) {
             $guarded, $anyUnknown && $context->pattern->unicodeMode => $this->setsFromPcre($node, $starts, $context),
             $anyUnknown, $pastAscii => $this->setsFromPcre($node, $starts, $context) ?? ($context->pattern->unicodeMode ? array_map(self::alphabetSet(...), array_map(self::asciiPart(...), $charSets)) : self::everyByte($node, $charSets, $context)),
+            $everyByte => self::everyByte($node, $charSets, $context),
             default => array_map(self::alphabetSet(...), $charSets),
         };
         if (null === $sets) {
@@ -1053,7 +1063,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): ?array
     {
-        $analyzer = self::everyByteAnalyzer($context);
+        $analyzer = $context->everyByteAnalyzer();
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
@@ -1067,16 +1077,6 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $sets;
-    }
-
-    /**
-     * The analyzer that reads every byte, under the target's tables: past
-     * ASCII without u a character is a byte, and under u one is known by the
-     * byte it starts with.
-     */
-    private static function everyByteAnalyzer(LintContext $context): CharSetAnalyzer
-    {
-        return new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale, ucpFoldsPastAscii: $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
     }
 
     /**

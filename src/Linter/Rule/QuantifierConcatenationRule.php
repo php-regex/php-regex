@@ -170,10 +170,19 @@ final class QuantifierConcatenationRule extends AbstractLintRule
      * folding a complement directly. In UTF mode a caseless "k" or "s" also
      * takes the Kelvin sign or the long s, which a case-sensitive run does
      * not hold.
+     *
+     * Where the rules read every byte, under the tables of the target's
+     * locale, each set holds every byte its run takes, a case as those
+     * tables give it, which may pair "i" with another byte than "I": under
+     * glibc's tr_TR.ISO-8859-9 a caseless "i" takes 0xDD, and no "I".
      */
     private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
     {
-        if (LoopShape::mayTakeACharacterAboveAscii($run, $context) && !LoopShape::takesEveryCharacterAboveAscii($other, $context)) {
+        if ($context->comparesEveryByte()) {
+            return $set->intersect($otherSet)->ranges() === $set->ranges();
+        }
+
+        if (LoopShape::mayTakeACharacterPastItsSet($run, $context) && !LoopShape::takesEveryCharacterAboveAscii($other, $context)) {
             return false;
         }
 
@@ -359,7 +368,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return null;
         }
 
-        $set = $context->firstChars($core, $flags);
+        $set = $context->comparesEveryByte() ? $context->firstBytes($core, $flags) : $context->firstChars($core, $flags);
 
         if ($set->isUnknown() || $set->isEmpty()) {
             return null;
@@ -387,7 +396,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             }
 
             [$min] = $guard->accept(new LengthRangeCalculator());
-            $first = $context->firstChars($guard, $flags);
+            $first = $context->comparesEveryByte() ? $context->firstBytes($guard, $flags) : $context->firstChars($guard, $flags);
             if (0 === $min || $first->isUnknown() || $first->intersects($next)) {
                 return false;
             }
