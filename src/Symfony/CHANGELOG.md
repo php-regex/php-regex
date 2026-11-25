@@ -6,6 +6,17 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:routes` reads the trailing slashes of a request as the
+   application's `symfony/routing` does: since 6.4.51, 7.4.24 and 8.1.12,
+   the router looks a route with no variable up for a request with one
+   trailing slash at most, and `/` takes no request but its own, so
+   `/{p<admin//>}` after `/admin` keeps `GET /admin//` and `/{p</+>}` after
+   `/` keeps `GET //`, where they were reported shadowed. Before those
+   releases, and on 8.0, a route with no variable still takes its path with
+   any number of trailing slashes. `regex:lint` reads a named group of a
+   route requirement as non-capturing too where the router drops its name,
+   on the same releases: `(?<l>en|fr)` is linted as `(?:en|fr)`, and
+   `(?<n>a)\k<n>` is invalid there.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,
