@@ -24,13 +24,13 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Without u, where PCRE judges no branch (one of them matches empty), the
- * bytes the branches start with decide, and under (*UCP) a byte read
- * caselessly takes the other case of the character of its value from
- * PCRE2 10.35 alone: "/(*UCP)(?:\xC9|\xE9|)+/i" overlaps for a target of
- * 10.35 and not of 10.34, where "\xC9" matches itself alone, and a class
- * leaving "\xE9" out takes "\xC9" on 10.34, which it leaves out from
- * 10.35. A byte with no other case, or whose other case is no byte, reads
+ * Without u, under (*UCP), a byte read caselessly takes the other case
+ * of the character of its value from PCRE2 10.35 alone, where PCRE judges
+ * the branches as where it judges none (one of them matches empty) and
+ * the bytes they start with decide: "/(*UCP)(?:\xC9|\xE9|)+/i" and
+ * "/(*UCP)(?:\xC9|\xE9)+$/i" overlap for a target of 10.35 and not of
+ * 10.34, where "\xC9" matches itself alone, and a class leaving "\xE9" out
+ * takes "\xC9" on 10.34, which it leaves out from 10.35. A byte with no other case, or whose other case is no byte, reads
  * alike on both. Under u the bytes do not decide: the rule asks PCRE, or
  * reads the ASCII part alone, and UTF reads Unicode's case on every
  * release.
@@ -93,6 +93,10 @@ final class AlternationOverlapUnderUcpTest extends TestCase
             'two signs without a case' => ['/(*UCP)(?:\xD7|\xF7|)+/i', ['(?i:\xD7)', '(?i:\xF7)'], "\xF7", [0, 1], [0, 1]],
             'the small y with diaeresis, then the small letters before it' => ['/(*UCP)(?:\xFF|[\xF8-\xFE]|)+/i', ['(?i:\xFF)', '(?i:[\xF8-\xFE])'], "\xFF", [1, 0], [1, 0]],
             'the last ASCII character, then the first byte above it' => ['/(*UCP)(?:\x7F|\x80|)+/i', ['(?i:\x7F)', '(?i:\x80)'], "\x80", [0, 1], [0, 1]],
+            'a Latin-1 capital, then its small letter, judged by PCRE' => ['/(*UCP)(?:\xC9|\xE9)+$/i', ['(?i:\xC9)', '(?i:\xE9)'], "\xE9", [0, 1], [1, 1]],
+            'a range of Latin-1 capitals, then a small letter, judged by PCRE' => ['/(*UCP)(?:[\xC0-\xDE]|\xE0)+$/i', ['(?i:[\xC0-\xDE])', '(?i:\xE0)'], "\xE0", [0, 1], [1, 1]],
+            'a class leaving a Latin-1 small letter out, then its capital, judged by PCRE' => ['/(*UCP)(?:[^\xE9]|\xC9)+$/i', ['(?i:[^\xE9])', '(?i:\xC9)'], "\xC9", [1, 1], [0, 1]],
+            'a Latin-1 capital, then its small letter, case-sensitive, judged by PCRE' => ['/(*UCP)(?:\xC9|\xE9)+$/', ['\xC9', '\xE9'], "\xE9", [0, 1], [0, 1]],
         ] as $name => [$pattern, $branches, $byte, $before, $from]) {
             yield $name.', on 10.34' => ['pattern' => $pattern, 'branches' => $branches, 'byte' => $byte, 'php' => '7.4', 'pcre' => '10.34', 'taken' => $before];
             yield $name.', on 10.35' => ['pattern' => $pattern, 'branches' => $branches, 'byte' => $byte, 'php' => '8.0', 'pcre' => '10.35', 'taken' => $from];
