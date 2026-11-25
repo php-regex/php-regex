@@ -182,7 +182,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 
 #### Integrations
 
-- `php-regex/regex-psalm`: types `$matches` of `preg_match()`, `preg_match_all()`, `preg_replace_callback()` and `preg_split()` from the pattern, narrows the subject, and reports invalid patterns.
+- `php-regex/regex-psalm`: types `$matches` of `preg_match()`, `preg_match_all()`, `preg_replace_callback()` and `preg_split()` from the pattern, narrows the subject, and reports invalid patterns and, under `<redos>true</redos>`, the ReDoS findings of the PHPStan extension (`RegexRedos`, `RegexRedosSearch`).
 - `php-regex/regex-rector`: `RegexSetList::STRING_FUNCTIONS` turns `preg_*` calls into `str_contains()`, `str_replace()` or `explode()` once the automata prove it; `RegexSetList::PCRE_UPGRADE` readies patterns for an older PHP; `RegexSetList::UPGRADE_2_0` moves 1.3 code to the 2.0 names.
 - `php-regex/regex-phpunit`: `assertPatternMatches()`, `assertPatternDoesNotMatch()`, `assertPatternCompiles()` and `assertPatternIsLinear()`.
 - PHPStan: `phpRegex.phpVersion`, `phpRegex.pcreVersion`, `phpRegex.locale`, `phpRegex.interop`; `RegexPatternArgumentRule` for `#[RegexPattern]` and `#[Language('RegExp')]` parameters; `regex.replacement.undefinedGroup`, always reported; `regex.trivialMatch`; the presets' static methods judged like `preg_*()`.
