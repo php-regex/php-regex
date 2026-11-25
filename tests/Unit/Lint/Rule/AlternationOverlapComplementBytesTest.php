@@ -34,7 +34,9 @@ use PHPUnit\Framework\TestCase;
  * caselessly too: a caseless "[^a]" takes 0xC3 under both, and leaves "A"
  * out, and a caseless 0xC9 takes 0xE9 under the Latin-1 tables alone. A
  * byte written as an escape, "\xE9", "\x{E9}", "\351" or "\o{351}", is
- * the byte written as it is, and a POSIX class takes the bytes the tables
+ * the byte written as it is, literal text included: two literal branches
+ * whose texts fold alike are reported as overlapping text whichever way
+ * their bytes are written. A POSIX class takes the bytes the tables
  * give it: "[[:alpha:]]" takes 0xE9 under the Latin-1 tables alone, and
  * "[[:upper:]]" under i, where the engine reads it as "[[:alpha:]]".
  *
@@ -133,7 +135,7 @@ final class AlternationOverlapComplementBytesTest extends TestCase
 
             foreach ([['\xC9', '\xE9'], ['\x{C9}', '\x{E9}'], ['\311', '\351'], ['\o{311}', '\o{351}'], ['\xC9', "\xE9"], ["\xC9", '\o{351}']] as [$capital, $small]) {
                 $name = 'a Latin-1 capital written '.addcslashes($capital, "\200..\377").' read caselessly, then its small letter written '.addcslashes($small, "\200..\377").', '.$locale;
-                yield $name => ['pattern' => '/(?:'.$capital.'|'.$small.'|)+/i', 'branches' => ['(?i:'.$capital.')', '(?i:'.$small.')'], 'byte' => "\xE9", 'locale' => $locale, 'reported' => $latin1];
+                yield $name => ['pattern' => '/(?:'.$capital.'|'.$small.'|)+/i', 'branches' => ['(?i:'.$capital.')', '(?i:'.$small.')'], 'byte' => "\xE9", 'locale' => $locale, 'reported' => $latin1, 'rule' => OverlappingAlternationRule::ID_OVERLAP];
             }
 
             yield 'a Latin-1 capital written as an escape read caselessly, then another small letter, '.$locale => ['pattern' => '/(?:\xC9|\xEA|)+/i', 'branches' => ['(?i:\xC9)', '(?i:\xEA)'], 'byte' => "\xEA", 'locale' => $locale, 'reported' => false];
@@ -226,7 +228,7 @@ final class AlternationOverlapComplementBytesTest extends TestCase
         yield 'no word character, then a sign written as an escape' => ['pattern' => '/(?:|\W|\xD7)+/', 'reported' => true];
         yield 'a digit, then a superscript two written as an escape' => ['pattern' => '/(?:|\d|\xB2)+/', 'reported' => true];
         yield 'a space, then a no-break space written as an escape' => ['pattern' => '/(?:|\s|\xA0)+/', 'reported' => true];
-        yield 'a Latin-1 capital written as an escape read caselessly, then its small letter' => ['pattern' => '/(?:|\xC9|\xE9)+/i', 'reported' => true];
+        yield 'a Latin-1 capital written as an escape read caselessly, then its small letter' => ['pattern' => '/(?:|\xC9|\xE9)+/i', 'reported' => true, 'rule' => OverlappingAlternationRule::ID_OVERLAP];
         yield 'a Latin-1 capital written as an escape read caselessly, then another small letter' => ['pattern' => '/(?:|\xC9|\xEA)+/i', 'reported' => false];
         yield 'a caseless escape the interpreter reads otherwise' => ['pattern' => '/(?:|\xB5|\xC9)+/i', 'reported' => false];
         yield 'a POSIX class of letters, then a Latin-1 letter' => ['pattern' => "/(?:|[[:alpha:]]|\xE9)+/", 'reported' => true];

@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -62,7 +63,7 @@ final class NodePredicates
         if ($node instanceof DotNode) {
             return true;
         }
-        if ($node instanceof CharLiteralNode) {
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
             return true;
         }
         if ($node instanceof UnicodePropNode) {
