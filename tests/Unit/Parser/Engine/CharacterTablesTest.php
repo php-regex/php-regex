@@ -166,6 +166,13 @@ final class CharacterTablesTest extends TestCase
         $this->assertSame(0x78, $tables->otherCase(0xFF, new PcreTarget(80400, '10.42', 'C')));
         $this->assertSame(0xFF, $tables->otherCase(0xFF, new PcreTarget(80400, '10.43', 'C')));
 
+        // A byte pairs with the other case either side of 10.43 gives it.
+        $this->assertTrue($tables->mayPair(0xE9, 0xC9));
+        $this->assertTrue($tables->mayPair(0xDD, 0x69));
+        $this->assertTrue($tables->mayPair(0xFF, 0x78));
+        $this->assertFalse($tables->mayPair(0x49, 0xDD));
+        $this->assertFalse($tables->mayPair(0xE9, 0xE8));
+
         // Given one table alone, both sides of 10.43 read it.
         CharacterTables::useTables('xx_XX.GIVEN', $from1043);
         $tables = CharacterTables::forLocale('xx_XX.GIVEN');

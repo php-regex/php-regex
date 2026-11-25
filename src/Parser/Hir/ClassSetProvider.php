@@ -263,20 +263,31 @@ final class ClassSetProvider
      * being kept: the next query scans again. A refusal to compile the
      * probe, or an atom that leaves no delimiter free, is kept.
      *
-     * @param string  $atom        one character's worth of pattern: a class, an escape, a dot
-     * @param string  $modifiers   the options in force at the atom, as above
-     * @param string  $startVerbs  the options the pattern opens with, such as "(*UCP)"
-     *                             or "(*CR)": they change what a class or a dot matches
-     * @param bool    $unicodeFlag whether the pattern's own /u flag is set: this PHP
-     *                             passes PCRE2_UCP with it, so the probe carries the flag
-     *                             only when the pattern does — a lone "(*UTF)" reads
-     *                             UTF-8 without the Unicode properties
-     * @param ?string $locale      the LC_CTYPE locale the pattern runs under, whose
-     *                             character tables decide the types, the POSIX classes
-     *                             and the other case of a character below 256 without
-     *                             /u; the one PHP compiles under now when null
+     * Without UTF, under another locale's tables than PCRE2's own, the
+     * set is one every path of the engine reads: where they read the atom
+     * apart, it is not known (see alikeOnEveryPath()). And where the
+     * target's release reads the case of a byte under (*UCP) otherwise
+     * than the running engine, it is the target's (see
+     * caselessUnderUcpOfTheTables()).
+     *
+     * @param string    $atom              one character's worth of pattern: a class, an escape, a dot
+     * @param string    $modifiers         the options in force at the atom, as above
+     * @param string    $startVerbs        the options the pattern opens with, such as "(*UCP)"
+     *                                     or "(*CR)": they change what a class or a dot matches
+     * @param bool      $unicodeFlag       whether the pattern's own /u flag is set: this PHP
+     *                                     passes PCRE2_UCP with it, so the probe carries the flag
+     *                                     only when the pattern does — a lone "(*UTF)" reads
+     *                                     UTF-8 without the Unicode properties
+     * @param ?string   $locale            the LC_CTYPE locale the pattern runs under, whose
+     *                                     character tables decide the types, the POSIX classes
+     *                                     and the other case of a character below 256 without
+     *                                     /u; the one PHP compiles under now when null
+     * @param bool|null $ucpFoldsPastAscii whether the target's release gives a byte above ASCII
+     *                                     under (*UCP) without UTF the case of the character of
+     *                                     its value, as PCRE2 does from 10.35; the running
+     *                                     engine's reading when null
      */
-    public static function query(string $atom, bool $unicode, string $modifiers, string $startVerbs = '', bool $unicodeFlag = true, ?string $locale = null): ?CharSet
+    public static function query(string $atom, bool $unicode, string $modifiers, string $startVerbs = '', bool $unicodeFlag = true, ?string $locale = null, ?bool $ucpFoldsPastAscii = null): ?CharSet
     {
         StaticCaches::register(self::class, self::clear(...));
 
@@ -286,18 +297,27 @@ final class ClassSetProvider
         // Under /u the Unicode properties decide; otherwise the tables of
         // the locale, read by a scan under it.
         $tables = '' !== $global ? CharacterTables::BUILT_IN : $locale ?? CharacterTables::current();
-        $key = $startVerbs.$global.'|'.$modifiers.':'.$atom.(CharacterTables::BUILT_IN === $tables ? '' : '|'.$tables);
+        // A caseless byte under (*UCP) the target's release reads otherwise
+        // than the running engine.
+        $ucpCasesApart = !$unicode && null !== $ucpFoldsPastAscii && str_contains($modifiers, 'i') && str_contains($startVerbs, '(*UCP)')
+            && $ucpFoldsPastAscii !== PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
+        $key = $startVerbs.$global.'|'.$modifiers.':'.$atom.(CharacterTables::BUILT_IN === $tables ? '' : '|'.$tables).($ucpCasesApart ? '|ucp cases of the other release' : '');
         if (!isset(self::$sets[$key])) {
             // A scan of the 256 bytes costs less than reading the atom: only
             // the Unicode scans, over every code point, are worth saving.
             $set = null;
-            $read = static function () use (&$set, $atom, $unicode, $modifiers, $startVerbs, $unicodeFlag, $global, $key): void {
+            $read = static function () use (&$set, $atom, $unicode, $modifiers, $startVerbs, $unicodeFlag, $global, $key, $tables): void {
                 $set = ($unicode && $unicodeFlag ? self::caselessAscii($atom, $modifiers) : null)
                     ?? ($unicode ? self::derived($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
                     ?? ($unicode ? self::composed($atom, $modifiers, $startVerbs, $unicodeFlag) : null)
                     ?? self::scanned($atom, $unicode, $modifiers, $global, $startVerbs, $key);
+                if (!$unicode && CharacterTables::BUILT_IN !== $tables && $set instanceof CharSet) {
+                    $set = self::alikeOnEveryPath($set, $atom, $modifiers, $startVerbs);
+                }
             };
-            if ('' !== $global) {
+            if ($ucpCasesApart) {
+                $set = self::caselessUnderUcpOfTheTables($atom, $modifiers, $startVerbs, $tables);
+            } elseif ('' !== $global) {
                 $read();
             } else {
                 CharacterTables::under($tables, $read);
@@ -821,6 +841,65 @@ final class ClassSetProvider
         }
 
         return $set;
+    }
+
+    /**
+     * The set of a byte atom under another locale's tables than PCRE2's
+     * own, where every path of the engine reads it alike; false where they
+     * read it apart. The interpreter compares a character matched alone by
+     * the small letters of the tables (pcre2_match.c, OP_CHARI), where the
+     * JIT, and the interpreter's repeat of the character, take it and the
+     * other case the tables give it, and PCRE2 reads a class of a character
+     * and that other case as the character, caseless (pcre2_compile.c):
+     * under macOS's tr_TR.ISO8859-9 the dotless i "\xFD" takes "I" on the
+     * JIT alone, "I" the dotted capital "\xDD" on the interpreter alone. The
+     * probe reads the atom alone on the interpreter; repeated, it reads it
+     * as the JIT does alone. An atom that opens a group, which a repeat
+     * would not take whole, is read alone.
+     *
+     * @param CharSet $alone the set the probe reads for the atom alone
+     */
+    private static function alikeOnEveryPath(CharSet $alone, string $atom, string $modifiers, string $startVerbs): CharSet|false|null
+    {
+        if (str_starts_with($atom, '(')) {
+            return $alone;
+        }
+
+        $repeated = self::scan($atom.'+', false, $modifiers, '', $startVerbs);
+        if (!$repeated instanceof CharSet) {
+            return $repeated;
+        }
+
+        return $repeated->key() === $alone->key() ? $alone : false;
+    }
+
+    /**
+     * The set of a byte atom read caselessly under (*UCP), for a target
+     * whose release reads the case of a byte above ASCII otherwise than the
+     * running engine: from PCRE2 10.35 the character of the byte's value
+     * gives it, before it the tables, as without (*UCP). Where the engine
+     * reads Unicode's case and the target PCRE2's own tables, which give
+     * no byte above ASCII another case, the atom takes the bytes above
+     * ASCII it takes read case-sensitively, and the ASCII ones it takes
+     * caselessly, which both releases read alike: no case joins a byte
+     * above ASCII to an ASCII character. Not known elsewhere, false: the
+     * engine reads no other release's case.
+     */
+    private static function caselessUnderUcpOfTheTables(string $atom, string $modifiers, string $startVerbs, string $tables): CharSet|false|null
+    {
+        if (CharacterTables::BUILT_IN !== $tables || !PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf)) {
+            return false;
+        }
+
+        $caseless = self::query($atom, false, $modifiers, $startVerbs, false, $tables);
+        // "r" alone, which keeps ASCII apart under "i", is refused before
+        // PCRE2 10.43.
+        $caseSensitive = self::query($atom, false, str_replace(['i', 'r'], '', $modifiers), $startVerbs, false, $tables);
+        if (null === $caseless || null === $caseSensitive) {
+            return null;
+        }
+
+        return $caseless->intersect(CharSet::range(0, 0x7F))->union($caseSensitive->intersect(CharSet::range(0x80, 0xFF)));
     }
 
     /**

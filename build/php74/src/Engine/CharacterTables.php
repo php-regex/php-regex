@@ -247,6 +247,15 @@ final class CharacterTables
     }
 
     /**
+     * Whether the tables of either side of 10.43 give the second byte as
+     * the other case of the first.
+     */
+    public function mayPair(int $byte, int $other): bool
+    {
+        return \chr($other) === $this->casesFrom1043[$byte] || \chr($other) === $this->casesBefore143[$byte];
+    }
+
+    /**
      * The bytes a type ("d", "s", "w") or a POSIX name holds, as ranges.
      *
      * @return list<array{0: int, 1: int}>

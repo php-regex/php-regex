@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Hir;
 
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -43,6 +44,7 @@ use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\ConditionParser;
 use PHPRegex\Parser\Syntax\StartOptions;
@@ -54,8 +56,10 @@ use PHPRegex\Parser\Syntax\StartOptions;
  * escape, a dot or a caseless letter is asked of the engine once per process
  * (see ClassSetProvider), so "\w" under /u, "\p{L}" or "k" under /iu, which
  * also matches the Kelvin sign, are exact for the PHP that runs. A class of
- * plain characters and ranges is read without asking. Given a target older
- * than PCRE2 10.40, a script name means the script, as it did there.
+ * plain characters and ranges is read without asking, but under another
+ * locale's tables without UTF. Given a target older than PCRE2 10.40, a
+ * script name means the script, as it did there; older than 10.35, a byte
+ * read caselessly under (*UCP) has the tables' case, as it had there.
  *
  * @internal
  */
@@ -134,6 +138,12 @@ final class HirTranslator
      *
      */
     private ?string $locale;
+
+    /**
+     * Whether the bytes are read under another locale's tables than
+     * PCRE2's own: without UTF, under a locale other than "C".
+     */
+    private bool $localeTables = false;
     /**
      */
     private ?PcreTarget $target = null;
@@ -155,6 +165,7 @@ final class HirTranslator
         $this->source = $regex->source ?? '';
         $this->startVerbs = StartOptions::of($this->source);
         $this->unicode = self::unicodeOf($regex);
+        $this->localeTables = !$this->unicode && CharacterTables::BUILT_IN !== ($this->locale ?? CharacterTables::current());
         $this->unicodeFlag = false !== strpos($regex->flags, 'u');
         $this->dollarEndOnly = false !== strpos($regex->flags, 'D');
         $this->groupNumbers = $this->numberGroups($regex);
@@ -422,8 +433,11 @@ final class HirTranslator
             }
 
             // Under xx a class skips its unescaped spaces and tabs, "[a b]"
-            // is "[ab]": the engine reads such a class.
-            if (0 === ($flags & self::CASELESS)
+            // is "[ab]": the engine reads such a class. So it does a class of
+            // a byte and the other case another locale's tables give it,
+            // which PCRE2 reads as the byte, caseless, and its paths apart
+            // (see ClassSetProvider).
+            if (0 === ($flags & self::CASELESS) && !$this->localeTables
                 && (0 === ($flags & self::EXTENDED_MORE) || false === strpbrk($this->text($node), " \t"))) {
                 $set = $this->directClass($node);
                 if (null !== $set) {
@@ -455,7 +469,7 @@ final class HirTranslator
         }
 
         $atom = ClassSetProvider::spelledFor($atom, $this->target);
-        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag, $this->locale);
+        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startVerbs, $this->unicodeFlag, $this->locale, ($nullsafeVariable2 = $this->target) ? $nullsafeVariable2->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf()) : null);
         if (null === $set) {
             // PCRE refused the atom on its own, or gave up scanning it under
             // its limits, or the running engine has no name for a property
@@ -581,12 +595,12 @@ final class HirTranslator
         if ([] !== $codePoints) {
             $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
         }
-        $matchSubject588 = \count($flat);
+        $matchSubject602 = \count($flat);
 
         switch (true) {
-            case 0 === $matchSubject588:
+            case 0 === $matchSubject602:
                 return new EmptyHir($start, $end);
-            case 1 === $matchSubject588:
+            case 1 === $matchSubject602:
                 return $flat[0];
             default:
                 return new ConcatHir($flat, $start, $end);
