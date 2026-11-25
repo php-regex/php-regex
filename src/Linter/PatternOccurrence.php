@@ -56,7 +56,10 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  * preg_replace_callback(), preg_replace_callback_array() or preg_split(),
  * whose loop PHP retries after an empty match; null for a call that stops
  * at the first match, one a literal limit bounds, or a pattern read
- * without a call.
+ * without a call. A literal several calls read, through a variable or a
+ * constant, is one occurrence, at its first call: $everyMatchElsewhere
+ * names the preg functions of the other calls that look for every match,
+ * each once, in the order of the calls, and everyMatchCalls() all of them.
  *
  * $variant is set on a pattern built of a constant of PHP whose value
  * depends on the system the code runs on, DIRECTORY_SEPARATOR, PHP_EOL or
@@ -99,6 +102,10 @@ final class PatternOccurrence
         public readonly ?string $expression = null,
         public readonly ?string $variant = null,
         public readonly ?string $everyMatch = null,
+        /**
+         * @var list<string>
+         */
+        public readonly array $everyMatchElsewhere = [],
     ) {}
 
     /**
@@ -150,7 +157,7 @@ final class PatternOccurrence
      */
     public function ignoredWhole(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, true, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch, $this->everyMatchElsewhere);
     }
 
     /**
@@ -161,7 +168,7 @@ final class PatternOccurrence
      */
     public function guardedBy(?TargetConstraint $guard): self
     {
-        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
+        return null === $guard ? $this : new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard?->intersect($guard) ?? $guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch, $this->everyMatchElsewhere);
     }
 
     /**
@@ -172,7 +179,34 @@ final class PatternOccurrence
      */
     public function analysed(): self
     {
-        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch);
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, false, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch, $this->everyMatchElsewhere);
+    }
+
+    /**
+     * The preg functions whose loop over every match runs the pattern, at
+     * its own call and at the other calls that read its literal, each once,
+     * in the order of the calls.
+     *
+     * @internal
+     *
+     * @return list<string>
+     */
+    public function everyMatchCalls(): array
+    {
+        return array_values(array_unique(null === $this->everyMatch ? $this->everyMatchElsewhere : [$this->everyMatch, ...$this->everyMatchElsewhere]));
+    }
+
+    /**
+     * The same occurrence, with the preg functions of the other calls that
+     * read its literal and look for every match.
+     *
+     * @internal
+     *
+     * @param list<string> $functions
+     */
+    public function withEveryMatchElsewhere(array $functions): self
+    {
+        return new self($this->pattern, $this->file, $this->line, $this->source, $this->displayPattern, $this->location, $this->isIgnored, $this->column, $this->fileOffset, $this->unread, $this->parserFallback, $this->ignores, $this->guard, $this->targets, $this->argumentOffset, $this->argumentLength, $this->state, $this->expression, $this->variant, $this->everyMatch, $functions);
     }
 
     /**

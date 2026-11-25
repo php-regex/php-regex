@@ -383,7 +383,9 @@ final class TokenBasedExtractionStrategy implements ArgumentAwareInterface, Extr
             }
         }
 
-        return $occurrences;
+        // A literal several calls read is reported at the first, with the
+        // loops over every match of the others.
+        return $resolver?->withEveryMatchElsewhere($occurrences, $file) ?? $occurrences;
     }
 
     /**

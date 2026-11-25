@@ -336,7 +336,7 @@ A `preg_match()` call, and a pattern analysed with no call, keep the verdict of 
            alternative stops it, \G and the A modifier do not.
 ```
 
-The extractor reports a pattern that several calls read, as a constant or a variable, once, at its first call, and the cost follows that call.
+The extractor reports a pattern that several calls read, as a constant or a variable, once, where its literal is written. Each of those calls that looks for every match gets the finding of its own loop, which names its function: `$p` read by `preg_match()`, then by `preg_match_all()` and `preg_split()`, gets two findings, and a function two of them call is named once.
 
 A match that is short but not empty costs the same loop the same way and is not reported, as in `/a*b|a/` above or `/a(?:a+\d)?/`.
 

@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` is raised for each call that looks for every
+   match and reads a pattern through a variable or a constant, not only at
+   the first call that reads it: `$p` read by `preg_match()` then
+   `preg_match_all()` was not reported. The pattern is still reported once,
+   where its literal is written, with one finding for each function of
+   those calls. `PatternOccurrence::$everyMatchElsewhere` names the
+   functions of the other calls, and `everyMatchCalls()` all of them.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the

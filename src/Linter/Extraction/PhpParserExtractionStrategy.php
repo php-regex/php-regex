@@ -268,7 +268,9 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
         }
 
-        return $occurrences;
+        // A literal several calls read is reported at the first, with the
+        // loops over every match of the others.
+        return $values?->withEveryMatchElsewhere($occurrences, $file) ?? $occurrences;
     }
 
     /**

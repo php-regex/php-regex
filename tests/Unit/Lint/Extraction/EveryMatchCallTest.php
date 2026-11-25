@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Extraction;
 
 use PhpParser\ParserFactory;
+use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
@@ -109,6 +110,49 @@ final class EveryMatchCallTest extends TestCase
     }
 
     /**
+     * A literal several calls read, through a variable or a constant, is
+     * reported once, where it is written, at its first call: the functions
+     * of the other calls that look for every match come with it, each
+     * once, in the order of the calls, so that each such call gets the
+     * cost of its loop. A call a literal limit bounds, or one that stops at
+     * the first match, adds none.
+     *
+     * @param list<string> $loops     the functions whose loop the oracle runs
+     * @param list<string> $elsewhere
+     */
+    #[Test]
+    #[DataProvider('provideLiteralsSeveralCallsRead')]
+    public function test_extraction_names_every_loop_a_literal_runs_in(string $code, array $loops, ?string $everyMatch, array $elsewhere): void
+    {
+        foreach ($loops as $function) {
+            $this->assertGreaterThan(self::matchesMade($function, null, str_repeat('a', 1000)), self::matchesMade($function, null, str_repeat('a', 2000)), 'Oracle: '.$function.' stops early.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', null, str_repeat('a', 2000)), 'Oracle: preg_match() goes on.');
+        $this->assertSame(1, self::matchesMade('preg_replace', 1, str_repeat('a', 2000)), 'Oracle: the limit does not bound preg_replace().');
+
+        $code = "<?php\n\$s = 'x';\n".$code."\n";
+        $expected = [['/p/', $everyMatch, $elsewhere]];
+        $this->assertSame($expected, $this->readLoopsWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The token strategy.');
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->readLoopsWith(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The parser strategy.');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{code: string, loops: list<string>, everyMatch: string|null, elsewhere: list<string>}>
+     */
+    public static function provideLiteralsSeveralCallsRead(): iterable
+    {
+        yield 'a variable preg_match() reads first' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_match_all(\$p, \$s);\n}", 'loops' => ['preg_match_all'], 'everyMatch' => null, 'elsewhere' => ['preg_match_all']];
+        yield 'a variable three loops read' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match_all(\$p, \$s);\npreg_replace(\$p, '', \$s);\npreg_split(\$p, \$s);\n}", 'loops' => ['preg_match_all', 'preg_replace', 'preg_split'], 'everyMatch' => 'preg_match_all', 'elsewhere' => ['preg_replace', 'preg_split']];
+        yield 'a variable the same loop reads twice' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match_all(\$p, \$s);\npreg_match_all(\$p, \$s, \$m);\n}", 'loops' => ['preg_match_all'], 'everyMatch' => 'preg_match_all', 'elsewhere' => []];
+        yield 'a variable a bounded call reads after preg_match()' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_replace(\$p, '', \$s, 1);\n}", 'loops' => [], 'everyMatch' => null, 'elsewhere' => []];
+        yield 'a constant preg_match() reads first' => ['code' => "const P = '/p/';\nfunction f(\$s) { preg_match(P, \$s); return preg_split(P, \$s); }", 'loops' => ['preg_split'], 'everyMatch' => null, 'elsewhere' => ['preg_split']];
+        yield 'a class constant preg_match() reads first' => ['code' => "class K { const Q = '/p/'; function g(\$s) { preg_match(self::Q, \$s); return preg_replace_callback(self::Q, static fn (\$m) => '', \$s); } }", 'loops' => ['preg_replace_callback'], 'everyMatch' => null, 'elsewhere' => ['preg_replace_callback']];
+        yield 'a variable a list reads after preg_match()' => ['code' => "function f(\$s) {\n\$p = '/p/';\npreg_match(\$p, \$s);\npreg_replace([\$p], '', \$s);\n}", 'loops' => ['preg_replace'], 'everyMatch' => null, 'elsewhere' => ['preg_replace']];
+    }
+
+    /**
      * Each pattern of a list runs in the loop of the call.
      */
     #[Test]
@@ -140,10 +184,16 @@ final class EveryMatchCallTest extends TestCase
     #[Test]
     public function test_the_copies_of_an_occurrence_keep_its_loop(): void
     {
-        $occurrence = new PatternOccurrence('/p/', 'file.php', 1, 'preg_split()', everyMatch: 'preg_split');
+        $occurrence = new PatternOccurrence('/p/', 'file.php', 1, 'preg_split()', everyMatch: 'preg_split', everyMatchElsewhere: ['preg_replace']);
 
         $this->assertSame('preg_split', $occurrence->ignoredWhole()->everyMatch);
         $this->assertSame('preg_split', $occurrence->analysed()->everyMatch);
+        $this->assertSame(['preg_replace'], $occurrence->ignoredWhole()->everyMatchElsewhere);
+        $this->assertSame(['preg_replace'], $occurrence->analysed()->everyMatchElsewhere);
+        $this->assertSame(['preg_replace'], $occurrence->guardedBy(TargetConstraint::phpFrom(80200, null))->everyMatchElsewhere);
+        $this->assertSame(['preg_split', 'preg_replace'], $occurrence->everyMatchCalls());
+        $this->assertSame(['preg_replace'], (new PatternOccurrence('/p/', 'file.php', 1, 'preg_match()', everyMatchElsewhere: ['preg_replace']))->everyMatchCalls());
+        $this->assertSame([], PatternOccurrence::found('/p/', 'file.php', 1)->everyMatchCalls());
     }
 
     /**
@@ -172,6 +222,24 @@ final class EveryMatchCallTest extends TestCase
         self::assertIsInt($made, 'Oracle: '.$function.' failed.');
 
         return $made;
+    }
+
+    /**
+     * The pattern, the loop of its call and those of the other calls of
+     * each occurrence the strategy reads.
+     *
+     * @return list<array{string, string|null, list<string>}>
+     */
+    private function readLoopsWith(ExtractorInterface $strategy, string $code): array
+    {
+        $directory = $this->makeProject(['subject.php' => $code]);
+        $read = [];
+        foreach ($strategy->extract([$directory.'/subject.php']) as $occurrence) {
+            $this->assertNull($occurrence->parserFallback, 'The parser refused the file: '.($occurrence->parserFallback ?? ''));
+            $read[] = [$occurrence->pattern, $occurrence->everyMatch, $occurrence->everyMatchElsewhere];
+        }
+
+        return $read;
     }
 
     /**

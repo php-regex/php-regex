@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Resolution\Hole;
 use PHPRegex\Parser\Resolution\PatternArgument;
 use PHPRegex\Parser\Text\Ascii;
@@ -506,9 +507,27 @@ final class InFileValueResolver
     private int $cuts = 0;
 
     /**
-     * @var array<string, true> the variables already read for a function, "scope|name|function"
+     * @var array<string, list<array{string, int, string}>> the variables already read for a function,
+     *                                                      "scope|name|function", with the literals their
+     *                                                      first read reached: file ("" for this one),
+     *                                                      offset and pattern
      */
     private array $variablesRead = [];
+
+    /**
+     * @var array<string, array<string, true>> the variables already read, by the preg functions looking for every
+     *                                         match whose later calls added their loop to what the first read reached
+     */
+    private array $variablesLooped = [];
+
+    /**
+     * @var array<string, array<int, array<string, array<string, true>>>> file ("" for this one) => offset =>
+     *                                                                    pattern => the preg functions of the
+     *                                                                    calls that read the literal once it was
+     *                                                                    reported and look for every match, in
+     *                                                                    the order of the calls
+     */
+    private array $everyMatchElsewhere = [];
 
     /**
      * @var array<string, array{list<ValueExpr>, int, string|null}> constant => its folded values, the constants they
@@ -939,10 +958,20 @@ final class InFileValueResolver
         if (ValueExpr::VARIABLE === $expr->kind && !$this->readsByPlace($expr)) {
             $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.$function->patternSuffix.'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true);
             if (isset($this->variablesRead[$key])) {
+                // Its call still runs them in its own loop: each function
+                // adds its loop to them once.
+                if (null !== $function->everyMatch && !isset($this->variablesLooped[$key][$function->everyMatch])) {
+                    $this->variablesLooped[$key][$function->everyMatch] = true;
+                    foreach ($this->variablesRead[$key] as $place) {
+                        $this->loopsAgain($place, $function);
+                    }
+                }
+
                 return [];
             }
 
-            $this->variablesRead[$key] = true;
+            $this->variablesRead[$key] = [];
+            unset($this->variablesLooped[$key]);
         }
 
         $patterns = [];
@@ -971,8 +1000,17 @@ final class InFileValueResolver
                 }
 
                 // A literal of another file is told from one of the file
-                // at the same offset: each file keeps its own.
+                // at the same offset: each file keeps its own. One reported
+                // already is reported where its first call read it, with the
+                // loop of this one.
+                $place = [$literal->file ?? '', $literal->offset, $pattern];
+                if (null !== $key && isset($this->variablesRead[$key])) {
+                    $this->variablesRead[$key][] = $place;
+                }
+
                 if (isset($this->reported[$literal->file ?? ''][$literal->offset][$pattern])) {
+                    $this->loopsAgain($place, $function);
+
                     continue;
                 }
 
@@ -982,6 +1020,34 @@ final class InFileValueResolver
         }
 
         return self::inByteOrder($patterns);
+    }
+
+    /**
+     * The occurrences, each with the preg functions of the other calls that
+     * read its literal once it was reported and look for every match, in
+     * the order of the calls, its own call's left out: the literal is
+     * reported once, and each of those calls runs it in its own loop.
+     *
+     * @param list<PatternOccurrence> $occurrences
+     * @param string                  $file        the file read, where a literal of its own stands
+     *
+     * @return list<PatternOccurrence>
+     */
+    public function withEveryMatchElsewhere(array $occurrences, string $file): array
+    {
+        if ([] === $this->everyMatchElsewhere) {
+            return $occurrences;
+        }
+
+        foreach ($occurrences as $index => $occurrence) {
+            $functions = null === $occurrence->fileOffset ? null : $this->everyMatchElsewhere[$file === $occurrence->file ? '' : $occurrence->file][$occurrence->fileOffset][$occurrence->pattern] ?? null;
+            $elsewhere = null === $functions ? [] : array_values(array_diff(array_keys($functions), [$occurrence->everyMatch]));
+            if ([] !== $elsewhere) {
+                $occurrences[$index] = $occurrence->withEveryMatchElsewhere($elsewhere);
+            }
+        }
+
+        return $occurrences;
     }
 
     /**
@@ -1002,6 +1068,20 @@ final class InFileValueResolver
         $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true).'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) $function->keysArePatterns.'|'.($function->replacementIndex ?? '');
 
         return $this->variableStates[$key] ??= $this->statesOf($expr, $function);
+    }
+
+    /**
+     * Notes the loop over every match of a call that reads a literal
+     * reported at an earlier one.
+     *
+     * @param array{string, int, string} $place the literal's file ("" for this one), offset and pattern
+     */
+    private function loopsAgain(array $place, PatternFunction $function): void
+    {
+        if (null !== $function->everyMatch) {
+            [$file, $offset, $pattern] = $place;
+            $this->everyMatchElsewhere[$file][$offset][$pattern][$function->everyMatch] = true;
+        }
     }
 
     /**
