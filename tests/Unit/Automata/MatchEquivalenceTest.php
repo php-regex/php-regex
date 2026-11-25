@@ -55,6 +55,13 @@ final class MatchEquivalenceTest extends TestCase
             $this->requiresPcre2('10.43', $left);
         }
 
+        // Before PCRE2 10.44 the JIT may keep what a possessive repeat of a
+        // group captured at an earlier start: the solver refuses the pair
+        // for those releases.
+        if ('/(a)++b/' === $left) {
+            $this->requiresPcre2('10.44', $left);
+        }
+
         $result = (new LanguageSolver())->matchEquivalent($left, $right);
 
         $this->assertTrue($result->isEquivalent, \sprintf('%s and %s write the same matches, yet %s was handed back.', $left, $right, json_encode($result->counterExample)));

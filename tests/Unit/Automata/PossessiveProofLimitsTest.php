@@ -19,6 +19,7 @@ use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\JitInAFreshProcess;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -79,7 +80,8 @@ final class PossessiveProofLimitsTest extends TestCase
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains(self::SKIPPED_GROUP);
 
-        (new LanguageSolver())->matchEquivalent($left, $right);
+        // Read for 10.44, where a capturing group is no refusal of its own.
+        self::solverFor('10.44')->matchEquivalent($left, $right);
     }
 
     /**
@@ -123,7 +125,8 @@ final class PossessiveProofLimitsTest extends TestCase
             $this->assertSame(self::matchesOf($left, $subject), self::matchesOf($right, $subject), \sprintf('%s and %s differ on %s.', $left, $right, json_encode($subject)));
         }
 
-        $this->assertTrue((new LanguageSolver())->matchEquivalent($left, $right)->isEquivalent);
+        // Read for 10.44, where a capturing group is no refusal of its own.
+        $this->assertTrue(self::solverFor('10.44')->matchEquivalent($left, $right)->isEquivalent);
     }
 
     /**
@@ -202,19 +205,19 @@ final class PossessiveProofLimitsTest extends TestCase
     public function test_a_possessive_repeat_of_a_capturing_group_is_refused_before_pcre2_10_44(string $left, string $right, string $witness, bool $jitKeepsTheGroup): void
     {
         $running = PcreTarget::runtime();
-        $jit = filter_var(\ini_get('pcre.jit'), \FILTER_VALIDATE_BOOL);
         $this->assertSame(self::matchesOf(PcreInterpreter::pattern($left), $witness), self::matchesOf(PcreInterpreter::pattern($right), $witness), 'The interpreter writes the same matches.');
-        if (!$jit || !$jitKeepsTheGroup || $running->pcreAtLeast('10.44')) {
-            $this->assertSame(self::matchesOf($left, $witness), self::matchesOf($right, $witness), 'The engine writes the same matches.');
+        $jit = [JitInAFreshProcess::matches($left, $witness), JitInAFreshProcess::matches($right, $witness)];
+        if (!$jitKeepsTheGroup || $running->pcreAtLeast('10.44')) {
+            $this->assertSame($jit[0], $jit[1], 'The JIT writes the same matches.');
         } elseif (!$running->pcreAtLeast('10.43')) {
-            $this->assertNotSame(self::matchesOf($left, $witness), self::matchesOf($right, $witness), 'The JIT keeps the group.');
+            $this->assertNotSame($jit[0], $jit[1], 'The JIT keeps the group.');
         }
 
-        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.44'])))->matchEquivalent($left, $right)->isEquivalent);
+        $this->assertTrue(self::solverFor('10.44')->matchEquivalent($left, $right)->isEquivalent);
 
         foreach (['10.39', '10.40', '10.42', '10.43'] as $release) {
             try {
-                (new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => $release])))->matchEquivalent($left, $right);
+                self::solverFor($release)->matchEquivalent($left, $right);
                 $this->fail(\sprintf('%s and %s were proven alike for PCRE2 %s.', $left, $right, $release));
             } catch (ComplexityException $refusal) {
                 $this->assertStringContainsString(self::POSSESSIVE_CAPTURE, $refusal->getMessage());
@@ -246,7 +249,7 @@ final class PossessiveProofLimitsTest extends TestCase
             $this->assertSame(self::matchesOf('/(?:ab)++c/', $subject), self::matchesOf('/(?:ab)+c/', $subject), \sprintf('The engine tells them apart on %s.', json_encode($subject)));
         }
 
-        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => '10.42'])))->matchEquivalent('/(?:ab)++c/', '/(?:ab)+c/')->isEquivalent);
+        $this->assertTrue(self::solverFor('10.42')->matchEquivalent('/(?:ab)++c/', '/(?:ab)+c/')->isEquivalent);
     }
 
     /**
@@ -404,6 +407,11 @@ final class PossessiveProofLimitsTest extends TestCase
         $solver = new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN]));
         $this->assertTrue($solver->matchEquivalent($left, $right)->isEquivalent);
         $this->assertTrue($solver->equivalent(self::whole($left), self::whole($right))->isEquivalent);
+    }
+
+    private static function solverFor(string $release): LanguageSolver
+    {
+        return new LanguageSolver(RegexParser::create(['cache' => null, 'pcre_version' => $release]));
     }
 
     /**

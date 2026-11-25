@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\JitInAFreshProcess;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -91,7 +92,7 @@ final class NewlineConventionAnchorsTest extends TestCase
     {
         $search = '/'.$options.$body.'/'.$flags;
         $whole = '/'.$options.'\A(?:'.$body.')\z/'.$flags;
-        $this->assertSame($withJit, preg_match($search, "\r\n"));
+        $this->assertSame($withJit, JitInAFreshProcess::matched($search, "\r\n"));
         $this->assertSame($withoutJit, preg_match('/(*NO_JIT)'.substr($search, 1), "\r\n"));
         $this->assertSame(1, preg_match($search, "\r\n", $matches, 0, 1));
         $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($search, 1), "\r\n", $matches, 0, 1));
