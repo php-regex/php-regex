@@ -147,6 +147,8 @@ final class PossessiveRepeatedGroupTest extends TestCase
         yield 'a literal' => ['pattern' => '/(?:ab)+c/', 'optimized' => '/(?:ab)++c/'];
         yield 'a literal after a character' => ['pattern' => '/c(?:ab)+e/', 'optimized' => '/c(?:ab)++e/'];
         yield 'a literal before the character it ends with' => ['pattern' => '/(?:ab)+b/', 'optimized' => '/(?:ab)++b/'];
+        // A DEFINE reads nothing where it stands: a run starts with the "a".
+        yield 'a DEFINE in the body' => ['pattern' => '/(?:(?(DEFINE)b)ab)+b/', 'optimized' => '/(?:(?(DEFINE)b)ab)++b/'];
         yield 'a literal before the character it ends with, from a count of two' => ['pattern' => '/(?:ab){2,}b/', 'optimized' => '/(?:ab){2,}+b/'];
         yield 'a letter and a class' => ['pattern' => '/(?:a[bc])+b/', 'optimized' => '/(?:a[bc])++b/'];
         yield 'a group in the body' => ['pattern' => '/(?:a(?:bc)e)+b/', 'optimized' => '/(?:a(?:bc)e)++b/'];

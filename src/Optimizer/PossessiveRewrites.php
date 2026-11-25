@@ -806,7 +806,7 @@ final class PossessiveRewrites
      * Whether every run of the node matches one way, adding to the list
      * the items it reads in order: characters, literals and comments, in a
      * sequence or a group that neither captures, looks around nor is
-     * atomic, and DEFINEs, which read nothing.
+     * atomic, and the DEFINE groups it skips, which read nothing.
      *
      * @param list<NodeInterface> $items
      */
