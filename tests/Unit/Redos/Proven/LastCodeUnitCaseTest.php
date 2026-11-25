@@ -77,4 +77,46 @@ final class LastCodeUnitCaseTest extends TestCase
         yield 'a k, UCP' => ['pattern' => '/(*UCP)xk/i', 'locale' => 'C', 'expected' => null, 'otherCase' => null];
         yield 'an s, UCP' => ['pattern' => '/(*UCP)a+s/i', 'locale' => 'C', 'expected' => null, 'otherCase' => null];
     }
+
+    /**
+     * Before PCRE2 10.35, "(*UCP)" without u leaves the case of every byte
+     * to the tables, as without it: none past ASCII under C, so the last
+     * code unit is case-sensitive there, a class of a byte and its Unicode
+     * capital stays a class, and "k", "s" and "\xb5", whose case sets hold
+     * three characters from 10.35, are characters of their own with the
+     * tables' case (pcre2_compile.c reads a case set under UTF alone
+     * there). Engine: on PCRE2 10.34 (php:7.4.10) and 10.49,
+     * "/(*NO_JIT)(*UCP)^(?:a|a)+" then the item, run on 30 "a", "!" and a
+     * unit, fails at once where the subject lacks the unit it requires, in
+     * either case where it looks for either, and gives up where it
+     * requires none: 10.34 fails at once without "\xe9" for "\xe9", "\xc9"
+     * included, and without "\xb5" for "\xb5", gives up on "[\xe9\xc9]"
+     * without either, and fails at once without "k" or "K" for "k".
+     */
+    #[Test]
+    #[DataProvider('provideRowsOfPcre2With1034')]
+    public function test_before_pcre2_10_35_ucp_leaves_the_case_of_a_byte_to_the_tables(string $pattern, ?int $expected, ?int $otherCase): void
+    {
+        $regex = RegexParser::create(['cache' => null])->parse($pattern);
+        $target = new PcreTarget(70400, '10.34', 'C');
+
+        $this->assertSame(null === $expected ? null : [$expected, $otherCase], LastCodeUnit::required($regex, $target), $pattern.' on PCRE2 10.34');
+        $this->assertSame(null === $expected ? null : [$expected, null !== $otherCase], LastCodeUnit::read($regex, $target), $pattern.' on PCRE2 10.34');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: ?int, otherCase: ?int}>
+     */
+    public static function provideRowsOfPcre2With1034(): iterable
+    {
+        yield 'a byte past ASCII' => ['pattern' => '/(*UCP)a+\xe9/i', 'expected' => 0xE9, 'otherCase' => null];
+        yield 'a class of both cases' => ['pattern' => '/(*UCP)x[\xe9\xc9]/', 'expected' => null, 'otherCase' => null];
+        yield 'a capital past a byte' => ['pattern' => '/(*UCP)a+\xff/i', 'expected' => 0xFF, 'otherCase' => null];
+        yield 'the sharp s' => ['pattern' => '/(*UCP)x\xdf/i', 'expected' => 0xDF, 'otherCase' => null];
+        yield 'a sign' => ['pattern' => '/(*UCP)x\xd7/i', 'expected' => 0xD7, 'otherCase' => null];
+        yield 'an ASCII letter' => ['pattern' => '/(*UCP)xA/i', 'expected' => 0x41, 'otherCase' => 0x61];
+        yield 'the micro sign' => ['pattern' => '/(*UCP)a+\xb5/i', 'expected' => 0xB5, 'otherCase' => null];
+        yield 'a k' => ['pattern' => '/(*UCP)xk/i', 'expected' => 0x6B, 'otherCase' => 0x4B];
+        yield 'an s' => ['pattern' => '/(*UCP)a+s/i', 'expected' => 0x73, 'otherCase' => 0x53];
+    }
 }

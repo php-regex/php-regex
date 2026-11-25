@@ -53,11 +53,30 @@ CHANGELOG
    other calls, and `everyMatchCalls()` all of them.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
+ * Without u, `regex.lint.overlap.charset`, where the bytes of the
+   branches decide as where PCRE judges them, and
+   `regex.lint.lookaround.impossible` read a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
    same value from 10.35, the tables' case before it.
-   `/(*UCP)(?:\xC9|\xE9|)+/i`, where `\xC9` matches itself alone on 10.34,
-   is no longer reported for PHP 7.4 with PCRE2 10.34, and
-   `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes `\xC9` there, is.
+   `/(*UCP)(?:\xC9|\xE9|)+/i` and `/(*UCP)(?:\xC9|\xE9)+$/i`, where `\xC9`
+   matches itself alone on 10.34, are no longer reported for PHP 7.4 with
+   PCRE2 10.34, and `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes
+   `\xC9` there, is. `/(*UCP)(?!\xC9)\xE9/i`, which 10.34 matches on
+   `\xE9`, is no longer reported impossible for that target, and
+   `/(*UCP)(?=\xC9)\xE9/i`, which it never matches, is.
+ * Without u, under another locale's tables, `regex.lint.overlap.charset`
+   and `regex.lint.lookaround.impossible` read a byte as every path of the
+   engine does: the interpreter compares a character matched alone by the
+   small letters of the tables, where the JIT and a repeat take the byte
+   and the other case the tables give it, and PCRE2 reads a class of a
+   byte and that other case as the byte, caseless. Where the paths read a
+   byte apart, a lookahead is not judged and two branches meet where
+   either path starts both with the same byte. Under macOS's
+   `tr_TR.ISO8859-9`, `/(?=\xFD)i/i`, which the JIT matches on `I`,
+   `/(?![\xFDI])I/` and `/(?=[Ii])\xDD/`, which the interpreter matches,
+   are no longer reported impossible, and under `el_GR.ISO8859-7`
+   `/(?:\xF2|\xD3)+/i`, whose branches the JIT starts both with `\xD3`,
+   is reported.
  * `regex.lint.redos.search` is raised at the calls of `preg_match_all()`,
    `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
    `preg_replace_callback_array()` and `preg_split()`, of their `Safe\`,

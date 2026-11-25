@@ -643,7 +643,9 @@ final class CharSetAnalyzerTest extends TestCase
                     preg_match('/^\w$/', "\xE9"),
                     preg_match('/^\W$/', "\xE9"),
                     preg_match("/^\xC9$/i", "\xE9"),
-                    preg_match('/(*UTF)^\w$/', 'é'),
+                    // What either path takes: the interpreter's start-up
+                    // study leaves "é" out, pcre.jit=0 included.
+                    max(preg_match('/(*UTF)^\w$/', 'é'), preg_match('/(*NO_JIT)(*NO_START_OPT)(*UTF)^\w$/', 'é')),
                     preg_match_all('/\d/', implode('', array_map(\chr(...), range(0, 0xFF)))),
                     preg_match('/^[[:alpha:]]$/', "\xE9"),
                     preg_match('/^[[:^alpha:]]$/', "\xE9"),
@@ -698,11 +700,13 @@ final class CharSetAnalyzerTest extends TestCase
      * Read under the tables of a locale the machine sets, a caseless item
      * takes the other case those tables give each byte, and under u or
      * (*UCP) each ASCII character: the set is what the engine matches, on
-     * the JIT as on the interpreter, ASCII letters included, and the
-     * complement of a class leaves out the pair alone. Above ASCII under u
-     * or (*UCP) the case is Unicode's: el_GR.ISO8859-7 pairs ς (0xF2) with
-     * Σ (0xD3), (*UCP) with Ò (0xD2). Under u a set knows a character by
-     * the byte it starts with.
+     * the JIT as on the interpreter, alone or repeated, ASCII letters
+     * included, and the complement of a class leaves out the pair alone.
+     * The interpreter reads ς (0xF2) alone under el_GR.ISO8859-7 as itself,
+     * which the JIT, and the interpreter's repeat, pair with Σ (0xD3): the
+     * set holds what either takes. Above ASCII under u or (*UCP) the case
+     * is Unicode's, (*UCP) pairing ς with Ò (0xD2). Under u a set knows a
+     * character by the byte it starts with.
      */
     #[Test]
     #[DataProvider('provideCaselessItemsUnderEachTables')]
@@ -716,13 +720,16 @@ final class CharSetAnalyzerTest extends TestCase
             $subjects[] = $utf ? (string) mb_chr($codePoint, 'UTF-8') : \chr($codePoint);
         }
 
-        // Oracle: the characters the item matches under the locale, on the
-        // JIT and on the interpreter, by the byte each starts with.
+        // Oracle: the characters the item matches under the locale, alone
+        // and repeated, on the JIT and on the interpreter, by the byte each
+        // starts with. The interpreter's repeat reads a character as the
+        // JIT does alone, which pcre.jit=0 leaves out.
         $taken = [];
         CharacterTables::under($locale, static function () use ($options, $atom, $flags, $subjects, &$taken): void {
             foreach ($subjects as $subject) {
                 foreach (['', '(*NO_JIT)(*NO_START_OPT)'] as $engine) {
-                    if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')$/'.$flags, $subject)) {
+                    if (1 === preg_match('/'.$engine.$options.'^(?:'.$atom.')$/'.$flags, $subject)
+                        || 1 === preg_match('/'.$engine.$options.'^'.$atom.'{2}$/'.$flags, $subject.$subject)) {
                         $taken[\ord($subject[0])] = true;
                     }
                 }
@@ -1039,6 +1046,77 @@ final class CharSetAnalyzerTest extends TestCase
         }
 
         $this->assertSame(\PHP_OS_FAMILY === 'Darwin', [] !== array_diff($reads['i']['alone'], $reads['i']['class']), 'Oracle: "i" alone under tr_TR.ISO8859-9.');
+    }
+
+    /**
+     * PCRE2 reads a class of two bytes, the second the other case the
+     * tables give the first, as the first, caseless (pcre2_compile.c), the
+     * pattern caseless or not: the interpreter compares it alone by the
+     * small letters of the tables, where the JIT, and the interpreter's
+     * repeat, take the two bytes. Under tr_TR.ISO8859-9 on macOS "[Ii]"
+     * takes 0xDD on the interpreter, and "[\xDDi]" takes "I": such a class
+     * is not known where the paths read the case of its first byte
+     * otherwise. Elsewhere it holds what either path takes: "[\xFDI]" both
+     * bytes, though the interpreter leaves "I" out.
+     *
+     * @param list<array{int, int}>|null $ranges the bytes either path takes, null where the set is not known
+     */
+    #[Test]
+    #[DataProvider('provideClassesOfTwoBytes')]
+    public function test_read_under_a_locales_tables_a_class_of_a_byte_and_its_other_case_holds_what_either_path_takes(string $class, string $locale, ?array $ranges): void
+    {
+        $this->requiresLocale($locale, 'A class of a byte and its other case');
+
+        // Oracle: the bytes the class takes, alone and twice in a row, on
+        // the JIT and on the interpreter, with and without the start
+        // optimizations.
+        $taken = ByteCharSet::empty();
+        $alone = ByteCharSet::empty();
+        CharacterTables::under($locale, static function () use ($class, &$taken, &$alone): void {
+            for ($byte = 0; $byte <= 0xFF; $byte++) {
+                foreach (['', '(*NO_JIT)', '(*NO_JIT)(*NO_START_OPT)'] as $engine) {
+                    foreach (['' => \chr($byte), '{2}' => \chr($byte).\chr($byte)] as $count => $text) {
+                        if (1 === preg_match('/'.$engine.'^'.$class.$count.'$/', $text)) {
+                            $taken = $taken->union(ByteCharSet::fromBytes($byte, $byte));
+                        }
+                    }
+                }
+
+                if (1 === preg_match('/(*NO_JIT)(*NO_START_OPT)^'.$class.'$/', \chr($byte))) {
+                    $alone = $alone->union(ByteCharSet::fromBytes($byte, $byte));
+                }
+            }
+        });
+
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables('/'.$class.'/', $locale);
+        $label = addcslashes($class, "\200..\377").' under '.$locale;
+        if (null === $ranges) {
+            $this->assertNotCount(2, array_merge(...array_map(static fn (array $range): array => range($range[0], $range[1]), $alone->ranges())), 'Oracle: the interpreter reads '.$label.' otherwise than its two bytes.');
+            $this->assertTrue($analyzer->firstChars($node)->isUnknown(), $label);
+
+            return;
+        }
+
+        $this->assertSame($ranges, $taken->ranges(), 'Oracle: '.$label);
+        $this->assertSame($ranges, $analyzer->firstChars($node)->ranges(), $label);
+    }
+
+    /**
+     * @return iterable<string, array{class: string, locale: string, ranges: list<array{int, int}>|null}>
+     */
+    public static function provideClassesOfTwoBytes(): iterable
+    {
+        $turkish = 'tr_TR.ISO8859-9';
+        yield 'I and i' => ['class' => '[Ii]', 'locale' => $turkish, 'ranges' => null];
+        yield 'i and I' => ['class' => '[iI]', 'locale' => $turkish, 'ranges' => null];
+        yield 'the dotted capital I and i' => ['class' => '[\xDDi]', 'locale' => $turkish, 'ranges' => null];
+        yield 'the dotless i and I' => ['class' => '[\xFDI]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0xFD, 0xFD]]];
+        yield 'I and the dotless i' => ['class' => '[I\xFD]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0xFD, 0xFD]]];
+        yield 'a and A' => ['class' => '[aA]', 'locale' => $turkish, 'ranges' => [[0x41, 0x41], [0x61, 0x61]]];
+        yield 'I, i and x, three bytes' => ['class' => '[Iix]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0x69, 0x69], [0x78, 0x78]]];
+        yield 'I written twice' => ['class' => '[II]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49]]];
+        yield 'the final sigma and the capital sigma' => ['class' => '[\xF2\xD3]', 'locale' => 'el_GR.ISO8859-7', 'ranges' => [[0xD3, 0xD3], [0xF2, 0xF2]]];
+        yield 'a Latin-1 capital and its small letter' => ['class' => "[\xC9\xE9]", 'locale' => 'fr_FR.ISO8859-1', 'ranges' => [[0xC9, 0xC9], [0xE9, 0xE9]]];
     }
 
     /**

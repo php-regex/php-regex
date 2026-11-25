@@ -457,8 +457,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
     /**
      * The characters PCRE gives the first atom of each branch, for sets
      * the byte sets cannot hold (above ASCII), as the target reads them:
-     * its properties, and without u the tables of its locale. None when a
-     * branch is not judged: its first character is not one atom, it may
+     * its properties, without u the tables of its locale, and under (*UCP)
+     * the case its release gives a byte. None when a branch is not judged:
+     * its first character is not one atom, its paths read it apart, it may
      * start with what follows it, or a lookahead before it cannot be read.
      *
      * @param array<array{list<array{NodeInterface, list<list<GroupNode>>|null}>, bool, list<list<GroupNode>>|null}> $starts the first atoms of each branch,
@@ -500,7 +501,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 $atom = self::spelledAtom($leaf, $context->pattern->unicodeMode, $context->pattern->source);
                 $atom = null === $atom ? null : ClassSetProvider::spelledFor($atom, $context->target);
 
-                return null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale);
+                return null === $atom ? null : ClassSetProvider::query($atom, $context->pattern->unicodeMode, $modifiers, $startVerbs, $unicodeFlag, $context->target->locale, $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
             };
 
             $set = [] === $leaves ? null : self::startSet($leaves, $atomSet, $context->pattern->unicodeMode);

@@ -4,6 +4,15 @@ CHANGELOG
 2.0
 ---
 
+ * Without u, the sets of a pattern are read as the target's PCRE2 reads
+   them: under `(*UCP)` a byte read caselessly has the tables' case before
+   10.35, `/(*UCP)\xC9/i` matching `\xC9` alone for PHP 7.4 with PCRE2
+   10.34; and under another locale's tables a class or a caseless byte
+   the engine's paths read apart, the interpreter comparing a character
+   alone by the small letters of the tables, is refused with a
+   `ComplexityException`, where the answer held for one path alone. Under
+   macOS's `tr_TR.ISO8859-9`, `intersection('/^\xFD$/i', '/^I$/')` was
+   empty, though the JIT matches `I` with `/\xFD/i`.
  * `Language` gains a boolean algebra: `union()`, `intersect()`, `minus()`,
    `complement()`, `isSubsetOf()` and `shortestExample()`, the least of the
    shortest strings. A language read as UTF-8 and one read as bytes are

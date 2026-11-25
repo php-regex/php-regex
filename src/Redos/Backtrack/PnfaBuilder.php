@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\Hir\Utf8;
@@ -39,6 +40,7 @@ use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
@@ -70,8 +72,9 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * force where its atom stands.
  *
  * The options a pattern opens with read nothing. Every set is asked of the
- * engine under "(*UCP)" and the newline convention, which the dot and "\N"
- * read. Under
+ * engine under "(*UCP)", whose case of a byte is the target's release's, and
+ * the newline convention, which the dot and "\N" read. Under another locale's
+ * tables, a set whose atom the engine's paths read apart is not known. Under
  * a convention other than LF an anchor that reads a newline, "$" but under D
  * alone, "\Z", and "^" and "$" under m, is outside the model; under "(*CRLF)"
  * the dot and "\N" are too, as they take a carriage return unless a line feed
@@ -270,6 +273,12 @@ final class PnfaBuilder
     private readonly ?string $locale;
 
     /**
+     * Whether the bytes are read under another locale's tables than
+     * PCRE2's own: without u, under a locale other than "C".
+     */
+    private readonly bool $localeTables;
+
+    /**
      * @param PcreTarget|null $target  the PHP, PCRE2 and locale the sets are
      *                                 read for, each property spelled as the
      *                                 running engine reads it; the running
@@ -287,6 +296,7 @@ final class PnfaBuilder
     ) {
         $this->locale = $target?->locale;
         $this->unicode = str_contains($regex->flags, 'u');
+        $this->localeTables = !$this->unicode && CharacterTables::BUILT_IN !== ($this->locale ?? CharacterTables::current());
         $this->dollarEndOnly = str_contains($regex->flags, 'D');
         $this->source = $regex->source ?? '';
         // Most patterns open with no option: nothing is read for them.
@@ -1156,9 +1166,12 @@ final class PnfaBuilder
         }
 
         if ($node instanceof CharClassNode) {
-            // Under xx "[a b]" is "[ab]": the engine reads such a class.
+            // Under xx "[a b]" is "[ab]": the engine reads such a class. So
+            // it does a class of a byte and the other case another locale's
+            // tables give it, which PCRE2 reads as the byte, caseless, and
+            // its paths apart (see ClassSetProvider).
             $readsItsSpaces = 0 === ($flags & self::EXTENDED_MORE) || false === strpbrk($this->text($node), " \t");
-            $direct = 0 === ($flags & self::CASELESS) && $readsItsSpaces ? $this->directClass($node) : null;
+            $direct = 0 === ($flags & self::CASELESS) && $readsItsSpaces && !$this->localeTables ? $this->directClass($node) : null;
             if (null !== $direct) {
                 return $direct;
             }
@@ -1384,7 +1397,7 @@ final class PnfaBuilder
         // what a class matches, "(*UCP)" without u the bytes past ASCII, and
         // so do the tables of the locale without u; the newline convention
         // what the dot and "\N" leave out.
-        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale);
+        $set = null === $atom ? null : ClassSetProvider::query($atom, $this->unicode, $modifiers, $this->startOptions, true, $this->locale, $this->target?->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
         if (null !== $set) {
             return $set;
         }

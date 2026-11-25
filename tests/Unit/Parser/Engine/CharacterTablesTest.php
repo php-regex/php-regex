@@ -102,13 +102,24 @@ final class CharacterTablesTest extends TestCase
             $subject .= \chr($byte);
         }
 
+        // What a class, and a character alone, take on the JIT: with
+        // pcre.jit=0 the interpreter's repeat, which reads a character as
+        // the JIT does alone, stands for it, without the start-up study,
+        // which looks for 0xFF in its own case alone (pcre2_compile.c reads
+        // a first code unit below 255 caseless).
+        $taken = static function (string $pattern) use ($subject): array {
+            preg_match_all($pattern, $subject, $matches);
+            preg_match_all('/(*NO_JIT)(*NO_START_OPT)'.substr($pattern, 1, -2).'+/i', $subject, $repeated);
+            $bytes = array_unique(array_map(\ord(...), str_split(implode('', [...$matches[0], ...$repeated[0]]))));
+            sort($bytes);
+
+            return $bytes;
+        };
         $reads = [];
-        CharacterTables::under($locale, static function () use ($subject, &$reads): void {
+        CharacterTables::under($locale, static function () use ($subject, $taken, &$reads): void {
             for ($byte = 0; $byte < 256; $byte++) {
-                preg_match_all(\sprintf('/[\x%02x]/i', $byte), $subject, $inClass);
-                preg_match_all(\sprintf('/\x%02x/i', $byte), $subject, $onJit);
                 preg_match_all(\sprintf('/(*NO_JIT)(*NO_START_OPT)\x%02x/i', $byte), $subject, $onInterpreter);
-                $reads[$byte] = ['class' => array_map(\ord(...), $inClass[0]), 'jit' => array_map(\ord(...), $onJit[0]), 'interpreter' => array_map(\ord(...), $onInterpreter[0])];
+                $reads[$byte] = ['class' => $taken(\sprintf('/[\x%02x]/i', $byte)), 'jit' => $taken(\sprintf('/\x%02x/i', $byte)), 'interpreter' => array_map(\ord(...), $onInterpreter[0])];
             }
         });
 
@@ -165,6 +176,13 @@ final class CharacterTablesTest extends TestCase
         $this->assertNull($tables->settledOtherCase(0xFF));
         $this->assertSame(0x78, $tables->otherCase(0xFF, new PcreTarget(80400, '10.42', 'C')));
         $this->assertSame(0xFF, $tables->otherCase(0xFF, new PcreTarget(80400, '10.43', 'C')));
+
+        // A byte pairs with the other case either side of 10.43 gives it.
+        $this->assertTrue($tables->mayPair(0xE9, 0xC9));
+        $this->assertTrue($tables->mayPair(0xDD, 0x69));
+        $this->assertTrue($tables->mayPair(0xFF, 0x78));
+        $this->assertFalse($tables->mayPair(0x49, 0xDD));
+        $this->assertFalse($tables->mayPair(0xE9, 0xE8));
 
         // Given one table alone, both sides of 10.43 read it.
         CharacterTables::useTables('xx_XX.GIVEN', $from1043);

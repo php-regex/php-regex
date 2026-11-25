@@ -51,6 +51,26 @@ CHANGELOG
    `/(*UCP)^((?:\xE9|\xC9)+)\1$/i`, which PCRE2 10.34 reads in 20 and 28
    steps on 8 and 12 `\xE9` then `!`, is medium for PHP 7.4 with PCRE2
    10.34, where it was critical, and stays critical from 10.35.
+ * The heuristics and the proof read a byte under `(*UCP)` without u as
+   the target's PCRE2 does: a Latin-1 letter meets its other case from
+   10.35 only, and before it has the tables' case, none above ASCII under
+   C. `/(*UCP)^((?:\xE9|\xC9)+)\1$/i`, which PCRE2 10.34 reads in 20 and
+   28 steps on 8 and 12 `\xE9` then `!`, is medium for PHP 7.4 with PCRE2
+   10.34, where it was critical, and stays critical from 10.35;
+   `/(*UCP)^(?:\xE9|\xC9)+x/i`, which 10.34 runs on 30 `\xE9` and `!`
+   within the backtrack limit, is safe (proven) for that target, where it
+   was critical (proven). The last code unit PCRE2 requires, which the
+   search cost reads, takes the tables' case there too.
+ * Without u, under another locale's tables, the proof reads a byte whose
+   case the engine's paths read apart as any character, listed in
+   `abstractions`, and the heuristics read what either path takes: a
+   class of a byte and its other case, which PCRE2 reads as the byte,
+   caseless, is not known where the interpreter reads the case of the
+   byte otherwise. Under `el_GR.ISO8859-7` `/^(?:\xF2|\xD3)+$/i`, whose
+   final sigma the JIT alone matches on `\xD3`, and under macOS's
+   `tr_TR.ISO8859-9` `/^(?:\xFD|I)+$/i` and `/^(?:[Ii]|\xDD)+$/`, which
+   exhaust the backtrack limit on 20 units and `!` on the JIT or the
+   interpreter, are critical, where they were safe (proven).
  * One attempt is safe (proven) only when it tries 1,024 paths at once at
    most, every path counted along the whole attempt: each epsilon route,
    where a list of states held each one twice at most; each route that
