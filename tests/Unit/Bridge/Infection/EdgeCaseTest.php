@@ -507,8 +507,8 @@ final class EdgeCaseTest extends TestCase
         // The engine agrees: the exponential pattern exhausts a hundred
         // thousand backtracks on 30 bytes, the polynomial one does not.
         $limits = new PcreLimits(100_000, 10_000);
-        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, (new PcreEngine())->match('/(a+)+$/', str_repeat('a', 29).'!', $limits)->errorCode);
-        $this->assertFalse((new PcreEngine())->match('/^a*a*\d*b$/', str_repeat('a', 29).'!', $limits)->matched);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, (new PcreEngine())->match('/(a+)+$/', str_repeat('a', 29).'!', limits: $limits)->pcreError);
+        $this->assertFalse((new PcreEngine())->match('/^a*a*\d*b$/', str_repeat('a', 29).'!', limits: $limits)->matched);
         // A backreference leaves the complexity unknown, with no error.
         $this->assertNull((new RedosGuard())->catastrophic('/(a)\1+/', new Budget()));
     }

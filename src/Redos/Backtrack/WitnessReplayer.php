@@ -163,13 +163,13 @@ final class WitnessReplayer
         $start = hrtime(true);
         $match = $withoutMatches
             ? $this->engine->test($regex, $input, $limits)
-            : $this->engine->match($regex, $input, $limits);
+            : $this->engine->match($regex, $input, limits: $limits);
         $durationMs = (hrtime(true) - $start) / 1_000_000;
         if (PcreEngine::limitsWereNotSet($match)) {
             return null;
         }
         $preview = $options->previewLength > 0 ? substr($input, 0, $options->previewLength) : null;
-        $code = \PREG_NO_ERROR === $match->errorCode ? null : $match->errorCode;
+        $code = \PREG_NO_ERROR === $match->pcreError ? null : $match->pcreError;
 
         return new ConfirmationSample(\strlen($input), $durationMs, $preview, $code, $match->error);
     }

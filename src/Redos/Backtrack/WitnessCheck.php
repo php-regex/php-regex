@@ -66,7 +66,7 @@ final class WitnessCheck
 
         $matched = null;
         CharacterTables::under($this->locale ?? CharacterTables::current(), function () use ($pinned, $subject, $offset, &$matched): void {
-            $matched = $this->engine->match($pinned, $subject, null, $offset)->matched;
+            $matched = $this->engine->match($pinned, $subject, offset: $offset)->matched;
         });
 
         return $matched;

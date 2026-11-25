@@ -127,14 +127,14 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
             for ($i = 0; $i < $options->iterations; $i++) {
                 $iterationsRun++;
                 $start = hrtime(true);
-                $match = $engine->match($regex, $input, $limits);
+                $match = $engine->match($regex, $input, limits: $limits);
                 $elapsed = (hrtime(true) - $start) / 1_000_000;
                 if (PcreEngine::limitsWereNotSet($match)) {
                     return WitnessReplayer::unavailable($options);
                 }
                 $durationMs += $elapsed;
 
-                $errorCode = $match->errorCode;
+                $errorCode = $match->pcreError;
                 if (\PREG_NO_ERROR !== $errorCode) {
                     $pregErrorCode = $errorCode;
                     $pregError = $match->error;

@@ -27,6 +27,10 @@ CHANGELOG
    the running engine, as the parser does; `forEveryRelease()` reads it
    for every PCRE2 release at once, both arms of a `(?(VERSION>=...)`
    condition kept.
+ * `Engine\PcreEngine::match()` takes its flags and its offset in
+   `preg_match()`'s order, then the limits: `match($regex, $subject, $flags,
+   $offset, $limits)`. `Engine\PcreMatch::$pcreError` holds the
+   `preg_last_error()` code. `matchAll()` is internal.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
