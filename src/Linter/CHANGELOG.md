@@ -761,7 +761,4 @@ CHANGELOG
    under it.
  * The target of the JSON report names where each of its parts came from:
    `source` the PHP's alone, `pcre_source` the PCRE2 release's and
-   `locale_source` the locale's, `null` when nothing named them, where
-   `source` joined the three in one string (`running PHP; --locale`).
-   `ProjectTarget::source()` returns the PHP's, `pcreSource()` and
-   `localeSource()` the others, `origins()` the three joined for people.
+   `locale_source` the locale's, `null` when nothing named them.
