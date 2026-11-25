@@ -234,18 +234,27 @@ final class Optimizer
      * PCRE2 makes a character repeated before a possessive or atomic group
      * that may match nothing possessive, as if the group could not be
      * skipped, and the brackets decide which. "/a+(?:b)?+a/" finds nothing
-     * in "aa", where "/a+b?+a/" finds it.
+     * in "aa", where "/a+b?+a/" finds it. Without "u", it makes a repeat of
+     * the byte 0xFF possessive before "\w", and one of "\w" before that
+     * byte, as if 0xFF were no word character: where the tables may hold it
+     * in "\w", a rewrite of a pattern that holds such a repeat, or that
+     * makes one, is checked.
      */
     private function movesAutoPossession(RegexNode $original, string $optimized): bool
     {
         try {
-            $rewritten = $this->parser->parse($optimized)->pattern;
+            $rewritten = $this->parser->parse($optimized);
         } catch (RegexException) {
             return true;
         }
 
-        return (null !== AutoPossession::repeatBeforeSkippableGroup($original->pattern) || null !== AutoPossession::repeatBeforeSkippableGroup($rewritten))
-            && AutoPossession::shape($original->pattern, false) !== AutoPossession::shape($rewritten, false);
+        $target = $this->parser->target();
+        if (null !== AutoPossession::repeatMadePossessiveBesideLastByte($original, $target) || null !== AutoPossession::repeatMadePossessiveBesideLastByte($rewritten, $target)) {
+            return true;
+        }
+
+        return (null !== AutoPossession::repeatBeforeSkippableGroup($original->pattern) || null !== AutoPossession::repeatBeforeSkippableGroup($rewritten->pattern))
+            && AutoPossession::shape($original->pattern, false) !== AutoPossession::shape($rewritten->pattern, false);
     }
 
     private function atomicityMarkers(string $pattern): int
