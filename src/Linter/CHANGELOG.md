@@ -15,13 +15,18 @@ CHANGELOG
    `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes `\xC9` there, is.
  * `regex.lint.redos.search` is raised at the calls of `preg_match_all()`,
    `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
-   `preg_replace_callback_array()` and `preg_split()`, and of their `Safe\`
-   and composer/pcre forms, on a pattern whose search costs them n² through
+   `preg_replace_callback_array()` and `preg_split()`, of their `Safe\`,
+   composer/pcre, nette/utils, spatie/regex and Laravel `Str` forms, and of
+   a `RegexIterator` built in the `ALL_MATCHES`, `SPLIT` or `REPLACE` mode,
+   on a pattern whose search costs them n² through
    PHP's retry after an empty match (`RedosAnalysis::$everyMatchSearchCost`),
    with the message `Quadratic search after an empty match: ...` naming the
-   function. A literal limit that bounds the call keeps it quiet, and so does
-   a `preg_match()` call. `PatternOccurrence::$everyMatch` names the function
-   whose loop the call runs. Severity `medium`: hidden at the default `high`
+   function, `preg_replace_callback()` for a replacement written as a
+   closure. A literal limit that bounds the call keeps it quiet, and so does
+   a `preg_match()` call, a lazy nette/utils `Strings::matchAll()` and a
+   `RegexIterator` mode the call does not spell out.
+   `PatternOccurrence::$everyMatch` names the function whose loop the call
+   runs. Severity `medium`: hidden at the default `high`
    threshold, shown from `--redos-threshold=medium`.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,

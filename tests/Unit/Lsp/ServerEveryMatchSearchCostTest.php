@@ -110,6 +110,9 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         yield 'preg_match' => ['code' => "preg_match('/(?:a+\\d)?/', \$s);", 'messages' => []];
         yield 'preg_replace bounded by a limit' => ['code' => "preg_replace('/(?:a+\\d)?/', '', \$s, 1);", 'messages' => []];
         yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
+        yield 'a RegexIterator splitting' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::SPLIT);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split')]];
+        yield 'a RegexIterator matching' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::GET_MATCH);", 'messages' => []];
+        yield 'a callback through Laravel\'s Str' => ['code' => "Illuminate\\Support\\Str::replaceMatches('/(?:a+\\d)?/', static fn (array \$m): string => '', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace_callback')]];
     }
 
     /**

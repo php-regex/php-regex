@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Extraction;
 
+use PHPRegex\Parser\Text\Ascii;
+
 /**
  * The preg functions taking a pattern, as the extractors and the static
  * analysis rules read their calls.
@@ -52,6 +54,20 @@ final class PregFunctions
     public const EVERY_MATCH = ['preg_match_all', 'preg_replace', 'preg_filter', 'preg_replace_callback', 'preg_replace_callback_array', 'preg_split'];
 
     /**
+     * The modes of RegexIterator and RecursiveRegexIterator under which
+     * accept() looks for every match, each with the function whose loop it
+     * runs, without a limit (ext/spl/spl_iterators.c): ALL_MATCHES that of
+     * preg_match_all(), SPLIT that of preg_split(), REPLACE that of
+     * preg_replace(). MATCH, the default, and GET_MATCH stop at the first
+     * match.
+     */
+    public const ITERATOR_LOOPS = [
+        \RegexIterator::ALL_MATCHES => 'preg_match_all',
+        \RegexIterator::SPLIT => 'preg_split',
+        \RegexIterator::REPLACE => 'preg_replace',
+    ];
+
+    /**
      * The position and name of the parameter holding what the pattern runs
      * on, preg_grep()'s array included; null for a function taking no
      * pattern.
@@ -80,6 +96,26 @@ final class PregFunctions
         $position = array_search('limit', self::PARAMETERS[$function] ?? [], true);
 
         return false === $position ? null : [$position, 'limit'];
+    }
+
+    /**
+     * The value of a constant of RegexIterator or of RecursiveRegexIterator,
+     * which inherits them, the class fully qualified as PHP resolves it;
+     * null for any other class, or a name neither declares. The names are
+     * compared as PHP compares them: the class in any case, the constant
+     * case included.
+     */
+    public static function iteratorConstant(string $class, string $constant): ?int
+    {
+        $class = Ascii::lower(ltrim($class, '\\'));
+        if ('regexiterator' !== $class && 'recursiveregexiterator' !== $class) {
+            return null;
+        }
+
+        $name = \RegexIterator::class.'::'.$constant;
+        $value = \defined($name) ? \constant($name) : null;
+
+        return \is_int($value) ? $value : null;
     }
 
     /**

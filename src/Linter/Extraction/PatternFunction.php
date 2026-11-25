@@ -81,41 +81,51 @@ final class PatternFunction
     public readonly array $moreParameterNames;
 
     /**
-     * @param string                          $label               name used in reports, e.g. "preg_match" or "Preg::match"
-     * @param int                             $argumentIndex       zero-based position of the pattern argument
-     * @param bool                            $keysArePatterns     when the argument is an array literal, whether its keys
-     *                                                             hold the patterns (preg_replace_callback_array) rather
-     *                                                             than its values (preg_replace)
-     * @param int|null                        $replacementIndex    with $keysArePatterns, the position of a replacement that
-     *                                                             decides between keys and values, as nette/utils'
-     *                                                             Strings::replace() does: the keys hold the patterns only
-     *                                                             when the array's first key is a string and the
-     *                                                             replacement is no callable; the values otherwise
-     * @param list<int>                       $moreArgumentIndexes the other arguments that carry a pattern, when the
-     *                                                             declarations of one function mark several
-     * @param list<string>                    $parameterNames      the names a call may pass the pattern argument under:
-     *                                                             several when declarations of one function name the
-     *                                                             position differently
-     * @param list<list<string>>              $moreParameterNames  the names of the arguments of $moreArgumentIndexes, in
-     *                                                             their order; "pattern" for one left out
-     * @param string                          $kind                how the call is written, one of the KIND_* constants
-     * @param list<string>                    $optionPath          the keys leading to the pattern when the argument is an
-     *                                                             array literal: ['options', 'regexp'] for filter_var()
-     * @param bool                            $optionPathRequired  whether the pattern is only found under $optionPath; when
-     *                                                             false, an argument that is no array literal is the pattern
-     * @param array{int, string, string}|null $filterArgument      the position, the parameter name and the constant an
-     *                                                             argument must name for the call to carry a pattern:
-     *                                                             filter_var()'s FILTER_VALIDATE_REGEXP
-     * @param array{int, string}|null         $utf8Argument        the position and the name of a parameter which, as the
-     *                                                             literal true, appends "u" to the pattern, as
-     *                                                             nette/utils does; anything but true or false leaves
-     *                                                             the pattern unknown
-     * @param string                          $patternSuffix       what the call appends to every pattern it reads
-     * @param string|null                     $everyMatch          the preg function the call runs its patterns in when
-     *                                                             that function looks for every match (PregFunctions::
-     *                                                             EVERY_MATCH); null when it stops at the first one
-     * @param array{int, string}|null         $limitArgument       with $everyMatch, the position and the name of the
-     *                                                             parameter bounding how many matches it makes
+     * @param string                                      $label               name used in reports, e.g. "preg_match" or "Preg::match"
+     * @param int                                         $argumentIndex       zero-based position of the pattern argument
+     * @param bool                                        $keysArePatterns     when the argument is an array literal, whether its keys
+     *                                                                         hold the patterns (preg_replace_callback_array) rather
+     *                                                                         than its values (preg_replace)
+     * @param int|null                                    $replacementIndex    with $keysArePatterns, the position of a replacement that
+     *                                                                         decides between keys and values, as nette/utils'
+     *                                                                         Strings::replace() does: the keys hold the patterns only
+     *                                                                         when the array's first key is a string and the
+     *                                                                         replacement is no callable; the values otherwise
+     * @param list<int>                                   $moreArgumentIndexes the other arguments that carry a pattern, when the
+     *                                                                         declarations of one function mark several
+     * @param list<string>                                $parameterNames      the names a call may pass the pattern argument under:
+     *                                                                         several when declarations of one function name the
+     *                                                                         position differently
+     * @param list<list<string>>                          $moreParameterNames  the names of the arguments of $moreArgumentIndexes, in
+     *                                                                         their order; "pattern" for one left out
+     * @param string                                      $kind                how the call is written, one of the KIND_* constants
+     * @param list<string>                                $optionPath          the keys leading to the pattern when the argument is an
+     *                                                                         array literal: ['options', 'regexp'] for filter_var()
+     * @param bool                                        $optionPathRequired  whether the pattern is only found under $optionPath; when
+     *                                                                         false, an argument that is no array literal is the pattern
+     * @param array{int, string, string}|null             $filterArgument      the position, the parameter name and the constant an
+     *                                                                         argument must name for the call to carry a pattern:
+     *                                                                         filter_var()'s FILTER_VALIDATE_REGEXP
+     * @param array{int, string}|null                     $utf8Argument        the position and the name of a parameter which, as the
+     *                                                                         literal true, appends "u" to the pattern, as
+     *                                                                         nette/utils does; anything but true or false leaves
+     *                                                                         the pattern unknown
+     * @param string                                      $patternSuffix       what the call appends to every pattern it reads
+     * @param string|null                                 $everyMatch          the preg function the call runs its patterns in when
+     *                                                                         that function looks for every match (PregFunctions::
+     *                                                                         EVERY_MATCH); null when it stops at the first one
+     * @param array{int, string}|null                     $limitArgument       with $everyMatch, the position and the name of the
+     *                                                                         parameter bounding how many matches it makes
+     * @param array{int, string, array<int, string>}|null $loopArgument        the position and the name of a parameter that
+     *                                                                         decides whether the call looks for every match, with,
+     *                                                                         for each value that makes it do so, the preg function
+     *                                                                         whose loop it runs, false and true read as 0 and 1 as
+     *                                                                         PHP converts them. Left out, the call runs
+     *                                                                         $everyMatch; any other value, or one the call does
+     *                                                                         not spell out, is read as stopping at the first match
+     * @param array{int, string}|null                     $callbackArgument    with $everyMatch preg_replace, the position and the
+     *                                                                         name of the replacement which, as a closure, makes
+     *                                                                         the call run preg_replace_callback() instead
      */
     public function __construct(
         public readonly string $label,
@@ -133,6 +143,8 @@ final class PatternFunction
         public readonly string $patternSuffix = '',
         public readonly ?string $everyMatch = null,
         public readonly ?array $limitArgument = null,
+        public readonly ?array $loopArgument = null,
+        public readonly ?array $callbackArgument = null,
     ) {
         // Sorted and without duplicates: the order the declarations were
         // read in makes no other function.
@@ -197,6 +209,26 @@ final class PatternFunction
     public function boundedBy(int $limit): bool
     {
         return null !== $this->everyMatch && PregFunctions::bounds($this->everyMatch, $limit);
+    }
+
+    /**
+     * The same function, the argument that decides whether it looks for
+     * every match holding a value: the function that value makes it run its
+     * loop in, none for any other value, and none for a value the call does
+     * not spell out (null).
+     */
+    public function decidedBy(?int $value): self
+    {
+        return $this->with(everyMatch: null === $value ? null : $this->loopArgument[2][$value] ?? null);
+    }
+
+    /**
+     * The same function, its replacement a closure: the call runs
+     * preg_replace_callback(), whose loop preg_replace() shares.
+     */
+    public function replacingThroughCallback(): self
+    {
+        return 'preg_replace' === $this->everyMatch ? $this->with(everyMatch: 'preg_replace_callback') : $this;
     }
 
     /**
@@ -279,6 +311,8 @@ final class PatternFunction
             $patternSuffix ?? $this->patternSuffix,
             false === $everyMatch ? $this->everyMatch : $everyMatch,
             $this->limitArgument,
+            $this->loopArgument,
+            $this->callbackArgument,
         );
     }
 }
