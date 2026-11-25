@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LimitMatchNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -86,21 +87,23 @@ use PHPRegex\Redos\RedosSearchCost;
  * a character more: "a+\K" gives back every "a+". Under
  * "(*NOTEMPTY_ATSTART)" a "\K" past the search start moves the empty match
  * past it, and the attempt succeeds. A possessive or atomic repeat of any
- * character moves to the end of the subject in one step: no run is read
- * through it.
+ * character moves to the end of the subject in one step, alone in a branch
+ * of the atomic group or with "\K": no run is read through it.
  *
  * The model reads a bounded repeat above the unrolling cutoff as unbounded:
  * no run is read through it, the engine's attempts there stop at the bound.
- * It does not keep a lookaround's condition and keeps an atomic body with
- * every way through it: such a witness is reported only when the engine
- * replay confirms it. A pinned replay cannot confirm a pattern holding "\G",
- * which holds at every pinned offset. The replay runs the pattern with each
- * character a repeat reads in a group of its own, which the engine's step
- * counter sees inside a possessive or atomic repeat too: "(*NOTEMPTY)a++\K"
- * and "(*NOTEMPTY)(?>a+\K)" read the rest of the run at every attempt and
- * give nothing back. The replay accepts a search that matches only where
- * the breaker starts or after it, unless "\K" may move there the match of
- * an earlier attempt.
+ * It reads an atomic body whose branches each hold one run, "\K" around
+ * it, and start with characters of their own as those runs, "(?>a+\K)" as
+ * "(?>a+)\K". It does not keep a lookaround's condition and keeps any other
+ * atomic body with every way through it: such a witness is reported only
+ * when the engine replay confirms it. A pinned replay cannot confirm a
+ * pattern holding "\G", which holds at every pinned offset. The replay runs
+ * the pattern with each character a repeat reads in a group of its own,
+ * which the engine's step counter sees inside a possessive or atomic repeat
+ * too: "(*NOTEMPTY)a++\K" and "(*NOTEMPTY)(?>a+\K)" read the rest of the
+ * run at every attempt and give nothing back. The replay accepts a search
+ * that matches only where the breaker starts or after it, unless "\K" may
+ * move there the match of an earlier attempt.
  *
  * The witness of short matches reads each call's first attempt in the
  * order PCRE2 tries its paths, on the items of the automaton, which list
@@ -784,8 +787,11 @@ final class SearchCostProver
     private static function jumps(NodeInterface $node, array $sets, bool $unicode, bool $caseless, array &$jumps): void
     {
         $atomic = $node instanceof GroupNode && GroupType::Atomic === $node->type;
-        $repeat = $atomic ? self::unwrap($node->child) : $node;
-        if ($repeat instanceof QuantifierNode && ($atomic || QuantifierType::Possessive === $repeat->type)) {
+        foreach ($atomic ? self::branchRepeats($node->child) : [$node] as $repeat) {
+            if (!$repeat instanceof QuantifierNode || (!$atomic && QuantifierType::Possessive !== $repeat->type)) {
+                continue;
+            }
+
             $bounds = $repeat->bounds;
             $offset = $repeat->node->getStartPosition();
             $set = $sets[$offset] ?? null;
@@ -800,10 +806,53 @@ final class SearchCostProver
         }
     }
 
+    /**
+     * The repeat each branch of an atomic body holds alone, "\K" and
+     * comments aside: once it has read the repeat the branch commits, and
+     * nothing backtracks into it. A body other than such branches is kept
+     * with every way through it, so no witness crosses it before the replay.
+     *
+     * @return list<NodeInterface>
+     */
+    private static function branchRepeats(NodeInterface $body): array
+    {
+        $body = self::unwrap($body);
+        $repeats = [];
+        foreach ($body instanceof AlternationNode ? $body->alternatives : [$body] as $branch) {
+            $items = array_values(array_filter(
+                self::branchItems($branch),
+                static fn (NodeInterface $item): bool => !$item instanceof KeepNode && !$item instanceof CommentNode && !($item instanceof LiteralNode && '' === $item->value),
+            ));
+            if (1 === \count($items)) {
+                $repeats[] = self::unwrap($items[0]);
+            }
+        }
+
+        return $repeats;
+    }
+
+    /**
+     * The items of a branch, without the groups and sequences around them.
+     *
+     * @return list<NodeInterface>
+     */
+    private static function branchItems(NodeInterface $node): array
+    {
+        $node = self::unwrap($node);
+        if (!$node instanceof SequenceNode) {
+            return [$node];
+        }
+
+        $items = [];
+        foreach ($node->children as $child) {
+            array_push($items, ...self::branchItems($child));
+        }
+
+        return $items;
+    }
+
     private static function unwrap(NodeInterface $node): NodeInterface
     {
-        // An atomic body other than one repeat is kept with every way through
-        // it, so no witness crosses it before the replay.
         while ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::BranchReset], true)) {
             $node = $node->child;
         }

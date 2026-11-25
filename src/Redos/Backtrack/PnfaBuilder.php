@@ -50,8 +50,11 @@ use PHPRegex\Redos\Exception\ModelLimitException;
  * leaves and a lazy one the other way round. A lookaround is a search of its
  * own, marked where it stands; its constraint is not kept. A possessive
  * quantifier or an atomic group over one character set reads the longest run
- * and leaves only before a character outside it; any other atomic body is
- * kept as it is, with every way through it. "$", "\z" and "\Z" keep their
+ * and leaves only before a character outside it. So does each branch of an
+ * atomic body whose branches each hold one such run, or one character, with
+ * nothing but "\K" around it, and start with characters no other branch
+ * starts with: "(?>a+\K|b)" is "(?>a+)\K|b". Any other atomic body is kept
+ * as it is, with every way through it. "$", "\z" and "\Z" keep their
  * constraint on the end of the subject, "^", "\A" and "\G" theirs on its
  * start; "\b", "\B" and "^" under /m are not kept. A bounded repeat is
  * unrolled up to the cutoff and read as unbounded past it.
@@ -605,6 +608,13 @@ final class PnfaBuilder
                     }
                 }
 
+                // Runs that start with characters of their own, "\K" around
+                // them: each branch is an atomic group of its own.
+                $branches = $this->atomicBranches($node->child, $flags);
+                if (null !== $branches) {
+                    return $this->atomicRuns($branches[0], $next, $flags, $pnfa, $search);
+                }
+
                 return $this->approximated($node->getStartPosition(), $node->child, $next, $flags, $pnfa, $search);
 
             default:
@@ -742,8 +752,162 @@ final class PnfaBuilder
     }
 
     /**
-     * An atomic body other than one run, kept as written: listed, and its
-     * reading states marked, so that a pump through it is not proven.
+     * The branches of an atomic body that commits to its first character:
+     * each holds one run of one character set read greedily, one character,
+     * or an atomic group read exactly, with nothing but "\K" and comments
+     * around it, and starts with characters no other branch starts with; a
+     * run that may read nothing stands alone. A run gives nothing back, and
+     * no other branch matches where one started: the body is the
+     * alternation of its runs, each an atomic group of its own, "(?>a+\K|b)"
+     * read as "(?>a+)\K|b". With the characters the body starts with, and
+     * whether it may read nothing; null for any other body.
+     *
+     * @return array{non-empty-list<non-empty-list<NodeInterface>>, CharSet, bool}|null
+     */
+    private function atomicBranches(NodeInterface $body, int $flags): ?array
+    {
+        $body = $this->unwrap($body);
+        $alternatives = $body instanceof AlternationNode ? $body->alternatives : [$body];
+        $branches = [];
+        $starts = null;
+        $empty = false;
+        foreach ($alternatives as $alternative) {
+            $items = $this->branchItems($alternative);
+            $run = null;
+            foreach ($items as $item) {
+                if ($item instanceof KeepNode || $item instanceof CommentNode || ($item instanceof LiteralNode && '' === $item->value)) {
+                    continue;
+                }
+
+                if (null !== $run) {
+                    return null;
+                }
+
+                $run = $item;
+            }
+
+            $start = null === $run ? null : $this->runStart($run, $flags);
+            if (null === $start || ($start[1] && \count($alternatives) > 1) || (null !== $starts && !$starts->intersect($start[0])->isEmpty())) {
+                return null;
+            }
+
+            $branches[] = $items;
+            $starts = $starts?->union($start[0]) ?? $start[0];
+            $empty = $start[1];
+        }
+
+        return null === $starts || [] === $branches ? null : [$branches, $starts, $empty];
+    }
+
+    /**
+     * The items of a branch, without the groups and sequences around them.
+     *
+     * @return non-empty-list<NodeInterface>
+     */
+    private function branchItems(NodeInterface $node): array
+    {
+        $node = $this->unwrap($node);
+        if (!$node instanceof SequenceNode || [] === $node->children) {
+            return [$node];
+        }
+
+        $items = [];
+        foreach ($node->children as $child) {
+            array_push($items, ...$this->branchItems($child));
+        }
+
+        return $items;
+    }
+
+    /**
+     * The characters a branch's run starts with, and whether it may read
+     * nothing: a greedy repeat of one character set, or of runs of one, a
+     * character, or an atomic group read exactly; null for any other item.
+     *
+     * @return array{CharSet, bool}|null
+     */
+    private function runStart(NodeInterface $item, int $flags): ?array
+    {
+        $item = $this->unwrap($item);
+        if ($item instanceof GroupNode && GroupType::Atomic === $item->type) {
+            return $this->atomicStart($item, $flags);
+        }
+
+        if (!$item instanceof QuantifierNode) {
+            $set = $this->runSet($item, $flags) ?? $this->unionOf($item, $flags);
+
+            return null === $set ? null : [$set, false];
+        }
+
+        $bounds = $item->bounds;
+        if (null === $bounds || $this->isLazy($item, $flags)) {
+            return null;
+        }
+
+        $set = $this->runSet($item->node, $flags) ?? $this->unionOf($item->node, $flags);
+        if (null !== $set) {
+            return [$set, 0 === $bounds->min || 0 === $bounds->max];
+        }
+
+        $nested = $this->nestedRun($item, $flags);
+
+        return null === $nested ? null : [$nested[0], 0 === $nested[2]];
+    }
+
+    /**
+     * The characters an atomic group the model reads exactly starts with,
+     * and whether it may read nothing, as group() reads it; null for one it
+     * keeps with every way through it.
+     *
+     * @return array{CharSet, bool}|null
+     */
+    private function atomicStart(GroupNode $node, int $flags): ?array
+    {
+        $union = $this->unionOf($node->child, $flags);
+        if (null !== $union) {
+            return [$union, false];
+        }
+
+        $child = $this->unwrap($node->child);
+        if ($child instanceof QuantifierNode && null !== $child->bounds && $this->isLazy($child, $flags)) {
+            $set = $this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags);
+
+            return null === $set ? null : [$set, 0 === $child->bounds->min];
+        }
+
+        $branches = $this->atomicBranches($node->child, $flags);
+
+        return null === $branches ? null : [$branches[1], $branches[2]];
+    }
+
+    /**
+     * The alternation of the branches of an atomic body that commits to its
+     * first character, each run read as an atomic group of its own.
+     *
+     * @param non-empty-list<non-empty-list<NodeInterface>> $branches the items of each branch
+     */
+    private function atomicRuns(array $branches, int $next, int $flags, Pnfa $pnfa, int $search): int
+    {
+        $targets = [];
+        foreach ($branches as $items) {
+            $entry = $next;
+            for ($index = \count($items) - 1; $index >= 0; $index--) {
+                $item = $this->unwrap($items[$index]);
+                $entry = $item instanceof QuantifierNode
+                    ? $this->quantifier($item, $entry, $flags, $pnfa, $search, true)
+                    : $this->node($item, $entry, $flags, $pnfa, $search);
+            }
+
+            $targets[] = $entry;
+        }
+
+        return 1 === \count($targets) ? $targets[0] : $pnfa->epsilon($targets);
+    }
+
+    /**
+     * An atomic body other than runs that start apart, kept as written:
+     * listed, and its reading states marked, so that a pump through it is
+     * not proven.
      */
     private function approximated(int $offset, NodeInterface $body, int $next, int $flags, Pnfa $pnfa, int $search): int
     {

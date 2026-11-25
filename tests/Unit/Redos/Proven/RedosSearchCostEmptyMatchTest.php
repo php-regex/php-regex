@@ -167,9 +167,11 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
      * the attempts take as many steps wherever they start. Read through a
      * group of its own, "(?:a)++", each character is counted once, and the
      * group changes no match: the replay counts the run that way, and
-     * confirms the witness. The model keeps an atomic body other than one
-     * run with every way through it: that witness is reported once the
-     * replay confirms it.
+     * confirms the witness. The model reads an atomic body whose branches
+     * each hold one run, "\K" around it, and start apart as those runs, each
+     * an atomic group of its own, "(?>a+\K)" as "(?>a+)\K"; it keeps any
+     * other body with every way through it, as one whose branches start
+     * alike: that witness is reported once the replay confirms it.
      */
     #[Test]
     #[DataProvider('provideRunsGivingNothingBackBeforeKeep')]
@@ -223,10 +225,11 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         yield '\K after a possessive counted run' => ['pattern' => '/(*NOTEMPTY)a{2,}+\K/', 'counted' => '/(*NOTEMPTY)(?:a){2,}+\K/', 'run' => 'a', 'exact' => true];
         yield '\K after a possessive run under u' => ['pattern' => '/(*NOTEMPTY)é++\K/u', 'counted' => '/(*NOTEMPTY)(?:é)++\K/u', 'run' => 'é', 'exact' => true];
         yield '\K after an atomic run' => ['pattern' => '/(*NOTEMPTY)(?>a+)\K/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+)\K/', 'run' => 'a', 'exact' => true];
-        yield '\K inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>a+\K)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K)/', 'run' => 'a', 'exact' => false];
-        yield '\K after an atomic run, inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+)\K)/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+)\K)/', 'run' => 'a', 'exact' => false];
-        yield '\K inside nested atomic groups' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+\K))/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+\K))/', 'run' => 'a', 'exact' => false];
-        yield '\K inside an atomic group, before another branch' => ['pattern' => '/(*NOTEMPTY)(?>a+\K|b)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K|b)/', 'run' => 'a', 'exact' => false];
+        yield '\K inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>a+\K)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K)/', 'run' => 'a', 'exact' => true];
+        yield '\K after an atomic run, inside an atomic group' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+)\K)/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+)\K)/', 'run' => 'a', 'exact' => true];
+        yield '\K inside nested atomic groups' => ['pattern' => '/(*NOTEMPTY)(?>(?>a+\K))/', 'counted' => '/(*NOTEMPTY)(?>(?>(?:a)+\K))/', 'run' => 'a', 'exact' => true];
+        yield '\K inside an atomic group, before another branch' => ['pattern' => '/(*NOTEMPTY)(?>a+\K|b)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K|b)/', 'run' => 'a', 'exact' => true];
+        yield '\K inside an atomic group, before a branch starting alike' => ['pattern' => '/(*NOTEMPTY)(?>a+\K|ab)/', 'counted' => '/(*NOTEMPTY)(?>(?:a)+\K|ab)/', 'run' => 'a', 'exact' => false];
     }
 
     /**
@@ -255,6 +258,56 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
         $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+    }
+
+    /**
+     * A greedy repeat of any character under s moves to the end of the
+     * subject in one step, and the atomic group around it gives nothing
+     * back: each attempt passes "\K" at the subject's end at once and
+     * fails, whatever is left of the run. The search is linear, 0.12, 0.21
+     * then 0.42 ms on 2 000, 4 000 then 8 000 "a" and "!" for
+     * "(*NOTEMPTY)(?>.*\K)" under s (pcre.jit=0, PHP 8.4.28, PCRE2 10.49),
+     * where the dot without s reads the run one character at a time: 50 ms
+     * on 8 000 "a". The atomic group read as the run it holds, no run is
+     * read through that repeat: nothing is reported.
+     */
+    #[Test]
+    #[DataProvider('provideRepeatsOfAnyCharacterBeforeKeep')]
+    public function test_search_cost_is_not_reported_through_a_repeat_of_any_character_in_an_atomic_group(string $pattern, string $possessive): void
+    {
+        $subject = str_repeat('a', 4 * self::QUARTER).'!';
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the run.');
+        $steps = [];
+        foreach ([0, 1, 2, 3] as $quarters) {
+            $offset = $quarters * self::QUARTER;
+            $steps[] = PcreAttemptSteps::steps(PcreAttemptSteps::pinned($pattern), $subject, $offset);
+            $this->assertSame(
+                preg_match(PcreInterpreter::pattern($possessive).'A', $subject, $expected, 0, $offset),
+                preg_match(PcreInterpreter::pattern($pattern).'A', $subject, $actual, 0, $offset),
+                \sprintf('Oracle: %s and %s disagree at offset %d.', $pattern, $possessive, $offset),
+            );
+            $this->assertSame($expected, $actual, \sprintf('Oracle: %s and %s disagree at offset %d.', $pattern, $possessive, $offset));
+        }
+        $this->assertSame([$steps[0], $steps[0], $steps[0], $steps[0]], $steps, 'Oracle: the attempts of '.$pattern.' take more steps where more of the run is left.');
+        $this->assertLessThanOrEqual(8, $steps[0], 'Oracle: the attempts of '.$pattern.' backtrack.');
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
+        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($possessive)->searchCost, $possessive);
+    }
+
+    /**
+     * Each row with the possessive repeat it amounts to.
+     *
+     * @return iterable<string, array{pattern: string, possessive: string}>
+     */
+    public static function provideRepeatsOfAnyCharacterBeforeKeep(): iterable
+    {
+        yield '\K after a dot-star' => ['pattern' => '/(*NOTEMPTY)(?>.*\K)/s', 'possessive' => '/(*NOTEMPTY).*+\K/s'];
+        yield '\K after an atomic dot-star' => ['pattern' => '/(*NOTEMPTY)(?>(?>.*)\K)/s', 'possessive' => '/(*NOTEMPTY).*+\K/s'];
+        yield '\K after a captured dot-star' => ['pattern' => '/(*NOTEMPTY)(?>(.*)\K)/s', 'possessive' => '/(*NOTEMPTY)(.*+)\K/s'];
+        yield '\K after a dot-star, after a literal' => ['pattern' => '/a(?>.*\K)[yz]/s', 'possessive' => '/a.*+\K[yz]/s'];
     }
 
     /**

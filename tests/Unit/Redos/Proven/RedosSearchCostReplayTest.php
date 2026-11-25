@@ -119,11 +119,11 @@ final class RedosSearchCostReplayTest extends TestCase
      * reads: the attempts of the pattern as written take as many steps
      * wherever they start. Each character read through a group of its own,
      * "(?:a)++", is counted once, and the group changes no match: the replay
-     * counts the run that way and confirms the witness. The model keeps an
-     * atomic body other than one run with every way through it, so that
-     * witness is reported once the replay confirms it. Under u, PCRE2 reads
-     * a class of every character one character at a time: it is counted
-     * too.
+     * counts the run that way and confirms the witness. The model reads an
+     * atomic body whose branches each hold one run and start apart as those
+     * runs, "(?>a+|c)" as "(?:(?>a+)|c)": that witness is reported before
+     * the replay too. Under u, PCRE2 reads a class of every character one
+     * character at a time: it is counted too.
      *
      * Oracle, pcre.jit=0, PHP 8.4.28, PCRE2 10.49, on the run word repeated
      * 2k/4k/8k times then the breaker: /a++b/ 1.0 / 4.1 / 17.0 ms,
@@ -163,7 +163,7 @@ final class RedosSearchCostReplayTest extends TestCase
     {
         yield 'possessive loop' => ['pattern' => '/a++b/', 'counted' => '/(?:a)++b/', 'run' => 'a', 'breaker' => '!b', 'exact' => true];
         yield 'atomic loop' => ['pattern' => '/(?>a+)b/', 'counted' => '/(?>(?:a)+)b/', 'run' => 'a', 'breaker' => '!b', 'exact' => true];
-        yield 'atomic loop before another branch' => ['pattern' => '/(?>a+|c)b/', 'counted' => '/(?>(?:a)+|c)b/', 'run' => 'a', 'breaker' => '!b', 'exact' => false];
+        yield 'atomic loop before another branch' => ['pattern' => '/(?>a+|c)b/', 'counted' => '/(?>(?:a)+|c)b/', 'run' => 'a', 'breaker' => '!b', 'exact' => true];
         yield 'possessive [\s\S]* under u' => ['pattern' => '/a[\s\S]*+b/u', 'counted' => '/a(?:[\s\S])*+b/u', 'run' => 'a', 'breaker' => 'b', 'exact' => true];
         yield 'atomic dot-star without s' => ['pattern' => '/(?>.*)[xy]/', 'counted' => '/(?>(?:.)*)[xy]/', 'run' => '!', 'breaker' => '', 'exact' => true];
         // Under m each line starts an attempt; without it only the first one
