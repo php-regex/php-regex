@@ -115,10 +115,10 @@ final class RangeDiff
      * target refuses is judged no further; one every target accepts has its
      * trees compared, unless $compareTrees is false.
      */
-    public function diff(string $pattern, bool $compareTrees = true): RangeVerdict
+    public function diff(string $regex, bool $compareTrees = true): RangeVerdict
     {
         $judgedWith = self::judgedWith($this->targets());
-        $from = new TargetVerdict($this->from->target(), $this->from->validate($pattern));
+        $from = new TargetVerdict($this->from->target(), $this->from->validate($regex));
         if (!$from->validation->isValid) {
             return new RangeVerdict($from, [], null, $judgedWith);
         }
@@ -126,15 +126,15 @@ final class RangeDiff
         $later = [];
         $refused = false;
         foreach ($this->later as $parser) {
-            $later[] = $verdict = new TargetVerdict($parser->target(), $parser->validate($pattern));
+            $later[] = $verdict = new TargetVerdict($parser->target(), $parser->validate($regex));
             $refused = $refused || !$verdict->validation->isValid;
         }
 
         $readsOtherwise = null;
         if ($compareTrees && !$refused && [] !== $this->later) {
-            $tree = $this->from->parse($pattern)->accept(new NodeDumper());
+            $tree = $this->from->parse($regex)->accept(new NodeDumper());
             foreach ($this->later as $parser) {
-                if ($parser->parse($pattern)->accept(new NodeDumper()) !== $tree) {
+                if ($parser->parse($regex)->accept(new NodeDumper()) !== $tree) {
                     $readsOtherwise = $parser->target();
 
                     break;

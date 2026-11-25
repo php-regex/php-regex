@@ -18,10 +18,14 @@ use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Analysis\InertCommitments;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Analysis\RequiredLiteralAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Printer\PatternFormatter;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -100,5 +104,10 @@ final class ParameterNamesTest extends TestCase
         yield 'PatternInfoAnalyzer::analyzePattern' => ['class' => PatternInfoAnalyzer::class, 'method' => 'analyzePattern', 'names' => ['parser', 'regex']];
         yield 'RequiredLiteralAnalyzer::analyze' => ['class' => RequiredLiteralAnalyzer::class, 'method' => 'analyze', 'names' => ['ast']];
         yield 'GroupNumberingCollector::collect' => ['class' => GroupNumberingCollector::class, 'method' => 'collect', 'names' => ['ast']];
+        yield 'InertCommitments::of' => ['class' => InertCommitments::class, 'method' => 'of', 'names' => ['ast']];
+        yield 'PatternFormatter::format' => ['class' => PatternFormatter::class, 'method' => 'format', 'names' => ['ast']];
+        yield 'PatternFormatter::compact' => ['class' => PatternFormatter::class, 'method' => 'compact', 'names' => ['ast']];
+        yield 'PatternPrinter::__construct' => ['class' => PatternPrinter::class, 'method' => '__construct', 'names' => ['pretty', 'collapseExtendedComments']];
+        yield 'RangeDiff::diff' => ['class' => RangeDiff::class, 'method' => 'diff', 'names' => ['regex', 'compareTrees']];
     }
 }
