@@ -20,6 +20,7 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 
 /**
@@ -412,7 +413,7 @@ final class PatternLab
      */
     private static function verdictFailure(RedosAnalysis $verdict): ?string
     {
-        if ($verdict->isProvenSafe() && null === $verdict->searchCost) {
+        if (RedosProof::Proven === $verdict->proof && RedosComplexity::Linear === $verdict->complexity && null === $verdict->searchCost) {
             return null;
         }
 

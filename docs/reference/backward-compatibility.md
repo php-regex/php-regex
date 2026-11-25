@@ -87,7 +87,7 @@ In short, the public surface is:
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `Exception\SampleGenerationException` |
 | `regex-infection` | `Mutator\RegexQuantifier`, `Mutator\RegexAnchor`, `Mutator\RegexCharClass`, `Mutator\RegexAlternation`, `Mutator\RegexFlag`, `Mutator\RegexEscape` |
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCell` |
-| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
+| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `SearchCostCause`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `Target\JavaScript\VModeCompatibility` |
 | `regex-linter` | `PatternLinter`, `LintSeverity`, `Exception\LintException`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `ExplainFormat`, `HighlightFormat` |
@@ -126,17 +126,19 @@ minimizers read. They stay on the public classes because the packages that
 ask them may use no internal class of `regex-automata`.
 
 In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
-`RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
-`Confirmation::wasSkipped()` and `Confirmation::LIMITS_UNAVAILABLE`.
-`isProvenSafe()` and `headline()` speak of one match attempt: a pattern whose
-unanchored search is quadratic stays `safe (proven)`, and carries that cost in
+`RedosAnalysis::isProvenSafe()`, `hasQuadraticSearch()` and `headline()`,
+`RedosSeverity::rank()`, and `Confirmation::wasSkipped()` and
+`Confirmation::LIMITS_UNAVAILABLE`. `headline()` and the severity speak of one
+match attempt: a pattern whose unanchored search is quadratic stays
+`safe (proven)`, and carries that cost in
 `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`null` when no witness was
 found, never a proof of a linear search). A pattern whose search is quadratic
 only in the functions that look for every match, through PHP's retry after an
 empty match or the attempt that finds each short match
-(`RedosSearchCost::$shortMatch`), carries that cost in
+(`RedosSearchCost::$cause` names which), carries that cost in
 `RedosAnalysis::$everyMatchSearchCost` instead, and `$searchCost` stays
-`null`.
+`null`. `hasQuadraticSearch()` says whether either cost was found;
+`isProvenSafe()` holds for a proven linear attempt without one.
 
 The bridges and tools carry more than their classes:
 

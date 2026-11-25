@@ -79,7 +79,7 @@ final class PublicSurface
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
-            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
+            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost', 'SearchCostCause',
             'IgnoreList',
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],

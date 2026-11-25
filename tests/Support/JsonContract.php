@@ -55,9 +55,9 @@ final class JsonContract
         'redos_analysis.findings[]' => ['severity', 'message', 'pattern', 'trigger', 'suggested_rewrite', 'confidence', 'false_positive_risk'],
         'redos_analysis.hotspots[]' => ['start', 'end', 'severity', 'pattern', 'trigger'],
         'redos_analysis.witness' => ['prefix', 'pump', 'suffix'],
-        'redos_analysis.search_cost' => ['degree', 'witness', 'replayed'],
+        'redos_analysis.search_cost' => ['degree', 'cause', 'witness', 'replayed'],
         'redos_analysis.search_cost.witness' => ['prefix', 'run', 'breaker'],
-        'redos_analysis.every_match_search_cost' => ['degree', 'witness', 'replayed'],
+        'redos_analysis.every_match_search_cost' => ['degree', 'cause', 'witness', 'replayed'],
         'redos_analysis.every_match_search_cost.witness' => ['prefix', 'run', 'breaker'],
         'redos_analysis.confirmation' => [
             'confirmed', 'samples', 'jit_setting', 'backtrack_limit', 'recursion_limit', 'iterations',

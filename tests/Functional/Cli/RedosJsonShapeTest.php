@@ -179,8 +179,9 @@ final class RedosJsonShapeTest extends TestCase
 
         if (null !== ($json['search_cost'] ?? null)) {
             $this->assertIsArray($json['search_cost']);
-            $this->assertSame(['degree', 'witness', 'replayed'], array_keys($json['search_cost']));
+            $this->assertSame(['degree', 'cause', 'witness', 'replayed'], array_keys($json['search_cost']));
             $this->assertSame(2, $json['search_cost']['degree']);
+            $this->assertSame('unanchored_search', $json['search_cost']['cause']);
             $this->assertIsArray($json['search_cost']['witness']);
             $this->assertSame(['prefix', 'run', 'breaker'], array_keys($json['search_cost']['witness']));
             self::assertOnlyStrings($json['search_cost']['witness']);

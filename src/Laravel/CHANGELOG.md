@@ -139,7 +139,8 @@ CHANGELOG
  * The `ValidRegex` rule validates a pattern a user submits, with the
    application's `Regex` service and the library's message; with
    `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is
-   refused too.
+   refused too. A pattern whose search is quadratic, as `/\s*$/`, ranks
+   `medium`.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

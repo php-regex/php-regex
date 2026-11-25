@@ -511,7 +511,8 @@ final class LintServiceTest extends TestCase
      */
     public static function provideHeuristicIssuesAgainstTheVerdict(): iterable
     {
-        // Proven linear: (c?)+$ on c{40}d takes 123 steps.
+        // Proven linear: (c?)+$ on c{40}d takes 123 steps. Its search is
+        // quadratic, which the heuristics do not guess at: they go all the same.
         yield 'nested, proven linear' => ['pattern' => '/(c?)+$/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
         yield 'nested and trailing, proven linear' => ['pattern' => '/(a+)+/', 'heuristic' => 'regex.lint.quantifier.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
         yield 'dot star, proven linear' => ['pattern' => '/(?:.*)+/', 'heuristic' => 'regex.lint.dotstar.nested', 'redos' => true, 'proof' => RedosProof::Proven, 'kept' => false];
@@ -534,7 +535,7 @@ final class LintServiceTest extends TestCase
         if (null !== $proof) {
             $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
             $this->assertSame($proof, $verdict->proof, 'The row no longer names the verdict the analysis gives.');
-            $this->assertSame(!$kept, $verdict->isProvenSafe());
+            $this->assertSame(!$kept, RedosProof::Proven === $verdict->proof && RedosComplexity::Linear === $verdict->complexity);
         }
 
         $issues = (new AnalysisService(RegexParser::create(), redosThreshold: 'low', redosEnabled: $redos))
@@ -597,7 +598,7 @@ final class LintServiceTest extends TestCase
 
         $verdict = (new RedosAnalyzer(RegexParser::create()))->analyze($pattern);
         $this->assertSame(RedosProof::Proven, $verdict->proof, $pattern.' is "'.$verdict->headline().'"');
-        $this->assertSame(!$exponential, $verdict->isProvenSafe(), $pattern.' is "'.$verdict->headline().'", the engine disagrees.');
+        $this->assertSame(!$exponential && !$verdict->hasQuadraticSearch(), $verdict->isProvenSafe(), $pattern.' is "'.$verdict->headline().'", the engine disagrees.');
         $this->assertSame($exponential ? RedosComplexity::Exponential : RedosComplexity::Linear, $verdict->complexity, $pattern);
 
         $linter = new PatternLinter();

@@ -1208,7 +1208,7 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `witness` | object \| null | The attack of a proven vulnerable verdict |
 | `replayed` | bool \| null | Whether the witness made the running PCRE fail; `null` when it was not replayed |
 | `abstractions` | list of strings | What the model analysed differently from the pattern as written |
-| `pcre_version` | string | The PCRE2 release the verdict was computed for, as `10.49` |
+| `pcre_version` | string | The PCRE2 release that ran the analysis, as `10.49`; the pattern is read for the target, which may name another PHP and PCRE2 |
 | `php_version` | string | The PHP release that ran the analysis, as `8.4.26`: under `iu` the proof reads a character's other case from its mbstring tables |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
@@ -1271,6 +1271,7 @@ under the JIT.
 | key | type | meaning |
 |---|---|---|
 | `degree` | int | The degree of the search's cost in the length of the run: `2` |
+| `cause` | string | What starts an attempt at each position of the run: `unanchored_search` |
 | `witness` | object | The attack: a [search witness](#search-witness-redos_analysissearch_costwitness) |
 | `replayed` | bool \| null | Whether the step replay without the JIT found attempts that take more steps the further they start from the end of the run; `null` when no replay was made (theoretical mode, or a confirmed analysis whose threshold is above `medium`) |
 
@@ -1310,6 +1311,7 @@ nowhere else.
 | key | type | meaning |
 |---|---|---|
 | `degree` | int | The degree of the cost in the length of the run: `2` |
+| `cause` | string | `empty_match_retry` for PHP's retry after an empty match, `short_match` for the attempt that ends each short match |
 | `witness` | object | The attack: an [every-match search witness](#every-match-search-witness-redos_analysisevery_match_search_costwitness) |
 | `replayed` | bool \| null | Whether the step replay of the retry, pinned and refusing an empty match at its start without the JIT, found retries that take more steps the further they start from the end of the run, or, for short matches, the replay of the attempt pinned without the JIT found attempts that do; `null` when no replay was made (theoretical mode, or a confirmed analysis whose threshold is above `medium`) |
 

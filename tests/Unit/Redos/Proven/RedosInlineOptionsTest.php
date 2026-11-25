@@ -477,7 +477,7 @@ final class RedosInlineOptionsTest extends TestCase
     {
         $this->assertSame(RedosProof::Proven, $analysis->proof, $message);
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $message);
-        $this->assertTrue($analysis->isProvenSafe(), $message);
+        $this->assertSame(!$analysis->hasQuadraticSearch(), $analysis->isProvenSafe(), $message);
     }
 
     private function assertEngineGrowth(string $pattern, string $unit, string $suffix, bool $exponential, string $subjectPrefix = ''): void

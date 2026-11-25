@@ -18,6 +18,7 @@ use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Laravel\Rules\ValidRegex;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -113,6 +114,8 @@ final class ValidRegexRuleTest extends LaravelTestCase
         yield 'medium under high' => ['pattern' => '/a*a*$/', 'threshold' => RedosSeverity::High];
         // Polynomial, degree 3: high, under critical.
         yield 'high under critical' => ['pattern' => '/x*x*x*$/', 'threshold' => 'critical'];
+        // A linear attempt, a quadratic search: medium, under high.
+        yield 'quadratic search under high' => ['pattern' => '/\s*$/', 'threshold' => RedosSeverity::High];
     }
 
     #[Test]
@@ -128,6 +131,25 @@ final class ValidRegexRuleTest extends LaravelTestCase
         $this->assertSame(
             ['The pattern field must not be open to catastrophic backtracking (ReDoS risk: medium).'],
             $this->errors('/a*a*$/', new ValidRegex(redos: true, redosThreshold: 'medium')),
+        );
+    }
+
+    /**
+     * One attempt of /\s*$/ is linear, but the search starts one at each
+     * position of a run of spaces, and each reads the rest of the run: the
+     * search is quadratic, a cost ranked medium.
+     */
+    #[Test]
+    public function test_a_quadratic_search_is_refused_from_a_medium_threshold(): void
+    {
+        $pinned = PcreAttemptSteps::pinned('/\s*$/');
+        $subject = str_repeat(' ', 1000).'!';
+        $this->assertSame(0, preg_match($pinned, $subject, $matches, 0, 500), 'Oracle: the attempt half-way through the run matches.');
+        $this->assertGreaterThanOrEqual(500, PcreAttemptSteps::steps($pinned, $subject) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempt does not read the rest of the run.');
+
+        $this->assertSame(
+            ['The pattern field must not be open to catastrophic backtracking (ReDoS risk: medium).'],
+            $this->errors('/\s*$/', new ValidRegex(redos: true, redosThreshold: RedosSeverity::Medium)),
         );
     }
 

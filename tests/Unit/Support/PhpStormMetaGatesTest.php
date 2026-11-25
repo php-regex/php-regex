@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\HighlightFormat;
 use PHPUnit\Framework\Attributes\Test;
@@ -112,8 +114,29 @@ final class PhpStormMetaGatesTest extends TestCase
     {
         $thresholds = $this->argumentsSet('redos_thresholds');
 
-        $this->assertStringContainsString('RedosSeverity::Safe', $thresholds);
-        $this->assertStringNotContainsString('RedosSeverity::SAFE', $thresholds);
+        $this->assertStringContainsString('RedosSeverity::Low', $thresholds);
+        $this->assertStringNotContainsString('RedosSeverity::LOW', $thresholds);
+    }
+
+    /**
+     * A threshold is low, medium, high or critical, as a configuration
+     * names it: safe and unknown are verdicts a pattern gets.
+     */
+    #[Test]
+    public function test_the_thresholds_the_ide_suggests_are_the_ones_a_configuration_names(): void
+    {
+        preg_match_all('/RedosSeverity::(\w+)/', $this->argumentsSet('redos_thresholds'), $matches);
+
+        $this->assertSame(['Low', 'Medium', 'High', 'Critical'], $matches[1]);
+        foreach (RedosSeverity::cases() as $severity) {
+            try {
+                $named = $severity === RedosSeverity::fromConfig($severity->value);
+            } catch (InvalidRegexOptionException) {
+                $named = false;
+            }
+
+            $this->assertSame($named, \in_array($severity->name, $matches[1], true), $severity->name);
+        }
     }
 
     /**

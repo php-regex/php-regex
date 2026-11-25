@@ -21,6 +21,7 @@ use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\SearchCostCause;
 
 /**
  * The words of a ReDoS verdict in a lint report: the analysis' headline
@@ -222,7 +223,7 @@ final class RedosVerdict
      */
     public static function everyMatchMessage(string $function, RedosSearchCost $cost): string
     {
-        if ($cost->shortMatch) {
+        if (SearchCostCause::ShortMatch === $cost->cause) {
             return \sprintf(
                 "Quadratic search over short matches: one attempt is linear (proven), but %s() finds a short match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: %s.",
                 $function,
@@ -251,12 +252,12 @@ final class RedosVerdict
         ];
 
         if (true === $cost->replayed) {
-            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: the %s at a position further from the end of the run takes more steps.', $pcreVersion, $cost->shortMatch ? 'attempt' : 'retry');
+            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: the %s at a position further from the end of the run takes more steps.', $pcreVersion, SearchCostCause::ShortMatch === $cost->cause ? 'attempt' : 'retry');
         } elseif (false === $cost->replayed) {
             $lines[] = \sprintf('Not confirmed by the step replay on PCRE2 %s.', $pcreVersion);
         }
 
-        if ($cost->shortMatch) {
+        if (SearchCostCause::ShortMatch === $cost->cause) {
             $lines[] = 'preg_match() and preg_grep() stop at the first match and read the run once.';
             $lines[] = 'Bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.';
 

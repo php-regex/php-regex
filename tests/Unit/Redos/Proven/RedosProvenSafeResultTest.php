@@ -75,7 +75,7 @@ final class RedosProvenSafeResultTest extends TestCase
     {
         $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Safe, $mode);
 
-        $this->assertTrue($analysis->isProvenSafe());
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity]);
         $this->assertSame('safe (proven)', $analysis->headline());
         $this->assertSame([], $analysis->findings);
         $this->assertSame([], $analysis->hotspots);

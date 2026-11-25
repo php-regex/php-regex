@@ -17,7 +17,9 @@ use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosOptions;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -56,7 +58,8 @@ final class RedosProofAloneTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
 
-        $this->assertSame($provenSafe, $analyzer->analyze($pattern)->isProvenSafe());
+        $analysis = $analyzer->analyze($pattern);
+        $this->assertSame($provenSafe, RedosProof::Proven === $analysis->proof && RedosComplexity::Linear === $analysis->complexity);
         $this->assertSame($provenSafe, $analyzer->provesSafe($pattern));
     }
 

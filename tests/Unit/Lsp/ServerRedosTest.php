@@ -138,7 +138,8 @@ final class ServerRedosTest extends TestCase
 
     /**
      * The nested quantifier the lint guesses risky goes once the analysis
-     * proves the pattern linear, as in `regex lint`.
+     * proves one attempt linear, as in `regex lint`: the search of
+     * /(c?)+$/ is quadratic, which the rule does not guess at.
      */
     #[Test]
     public function test_a_heuristic_warning_goes_when_the_analysis_proves_the_pattern_linear(): void

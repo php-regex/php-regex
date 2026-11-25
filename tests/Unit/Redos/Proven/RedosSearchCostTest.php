@@ -29,6 +29,8 @@ use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\SearchCostCause;
+use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -67,6 +69,7 @@ final class RedosSearchCostTest extends TestCase
         $cost = $analysis->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
+        $this->assertSame(SearchCostCause::UnanchoredSearch, $cost->cause, $pattern);
         $this->assertNotSame('', $cost->run, $pattern);
         // Without confirmation nothing ran on the engine.
         $this->assertNull($cost->replayed, $pattern);
@@ -74,8 +77,9 @@ final class RedosSearchCostTest extends TestCase
     }
 
     /**
-     * One attempt stays linear and proven: isProvenSafe(), headline() and the
-     * severity speak of one attempt and do not move.
+     * One attempt stays linear and proven: headline() and the severity speak
+     * of one attempt and do not move. The pattern is not proven safe: its
+     * search is quadratic.
      */
     #[Test]
     #[DataProvider('provideQuadraticSearches')]
@@ -87,9 +91,37 @@ final class RedosSearchCostTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
         $this->assertSame(RedosSeverity::Safe, $analysis->severity, $pattern);
-        $this->assertTrue($analysis->isProvenSafe(), $pattern);
         $this->assertSame('safe (proven)', $analysis->headline(), $pattern);
         $this->assertNull($analysis->witness, $pattern);
+        $this->assertTrue($analysis->hasQuadraticSearch(), $pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern);
+    }
+
+    /**
+     * /\s*$/ on " " x n . "!": one attempt reads the rest of the run and
+     * fails, at each start inside it; the steps of the attempt grow with
+     * what is left of the run (PcreAttemptSteps, interpreter). The severity
+     * of one attempt stays safe.
+     */
+    #[Test]
+    public function test_a_pattern_whose_search_is_quadratic_is_not_proven_safe(): void
+    {
+        $pinned = PcreAttemptSteps::pinned('/\s*$/');
+        $subject = str_repeat(' ', 1000).'!';
+        $this->assertSame(0, preg_match($pinned, $subject, $matches, 0, 500), 'Oracle: the attempt half-way through the run matches.');
+        $this->assertGreaterThanOrEqual(500, PcreAttemptSteps::steps($pinned, $subject) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempt does not read the rest of the run.');
+
+        $analysis = (new RedosAnalyzer())->analyze('/\s*$/');
+
+        $this->assertSame(RedosSeverity::Safe, $analysis->severity);
+        $this->assertSame('safe (proven)', $analysis->headline());
+        $this->assertInstanceOf(RedosSearchCost::class, $analysis->searchCost);
+        $this->assertTrue($analysis->hasQuadraticSearch());
+        $this->assertFalse($analysis->isProvenSafe());
+
+        $anchored = (new RedosAnalyzer())->analyze('/^\s*$/');
+        $this->assertFalse($anchored->hasQuadraticSearch());
+        $this->assertTrue($anchored->isProvenSafe());
     }
 
     /**
@@ -522,7 +554,8 @@ final class RedosSearchCostTest extends TestCase
     {
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
-        $this->assertTrue($analysis->isProvenSafe(), $pattern);
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
+        $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
         $cost = $analysis->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
@@ -585,9 +618,9 @@ final class RedosSearchCostTest extends TestCase
     #[Test]
     public function test_search_cost_renders_the_attack_like_the_attempt_witness(): void
     {
-        $this->assertSame('"x" . " " x n . "!"', (new RedosSearchCost(2, 'x', ' ', '!', false))->render());
-        $this->assertSame('" " x n . "!"', (new RedosSearchCost(2, '', ' ', '!', false))->render());
-        $this->assertSame('"\u{E9}" x n', (new RedosSearchCost(2, '', 'é', '', true))->render());
+        $this->assertSame('"x" . " " x n . "!"', (new RedosSearchCost(2, SearchCostCause::UnanchoredSearch, 'x', ' ', '!', false))->render());
+        $this->assertSame('" " x n . "!"', (new RedosSearchCost(2, SearchCostCause::UnanchoredSearch, '', ' ', '!', false))->render());
+        $this->assertSame('"\u{E9}" x n', (new RedosSearchCost(2, SearchCostCause::UnanchoredSearch, '', 'é', '', true))->render());
     }
 
     #[Test]
@@ -847,8 +880,9 @@ final class RedosSearchCostTest extends TestCase
         $this->assertArrayHasKey('search_cost', $json);
         $cost = $json['search_cost'];
         $this->assertIsArray($cost);
-        $this->assertSame(['degree', 'witness', 'replayed'], array_keys($cost));
+        $this->assertSame(['degree', 'cause', 'witness', 'replayed'], array_keys($cost));
         $this->assertSame(2, $cost['degree']);
+        $this->assertSame('unanchored_search', $cost['cause']);
         $this->assertIsArray($cost['witness']);
         $this->assertSame(['prefix', 'run', 'breaker'], array_keys($cost['witness']));
         $this->assertSame('', $cost['witness']['prefix']);
