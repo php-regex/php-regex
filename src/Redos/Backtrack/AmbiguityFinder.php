@@ -187,6 +187,24 @@ final class AmbiguityFinder
      */
     private array $entries = [];
 
+    /**
+     * @var array<int, array<int, int>> the epsilon paths from each reading
+     *                                  item to each item after it, once read
+     */
+    private array $routesFrom = [];
+
+    /**
+     * @var array<int, array<int, int>> the routes from each reading item
+     *                                  through each mark, once read
+     */
+    private array $marksFrom = [];
+
+    /**
+     * @var array<int, bool> whether reaching each item is a success the
+     *                       engine stops at, once read
+     */
+    private array $successes = [];
+
     private readonly int $size;
 
     /**
@@ -1064,76 +1082,80 @@ final class AmbiguityFinder
     {
         $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
         [$routes, $died, $passes, $slots, $loopReads] = $stretch;
-        // Each entry: a vector, the slots it stands in, whether its next
-        // vectors are still to read, its step, and how many characters from
-        // the first the loop it leaves reads too.
-        $queue = [[array_map(static fn (int $count): int => min($limit, $count), $routes), min($limit, $died), self::marks($passes), $slots, true, 0, 0]];
+        // Each entry: a vector, the routes that died and those through each
+        // mark on the way to it, the slots it stands in (by their number in
+        // $lists), whether its next vectors are still to read, its step, how
+        // many characters from the first the loop it leaves reads too, and
+        // the vector's number (-1 for the first one).
+        $lists = [$slots];
+        $queue = [[array_map(static fn (int $count): int => min($limit, $count), $routes), min($limit, $died), self::marks($passes), 0, true, 0, 0, -1]];
         $seen = [];
-        $steps = [];
-        $reached = [];
-        for ($head = 0; $head < \count($queue); $head++) {
-            [$current, $died, $at, $slots, $unread, $step, $alongside] = $queue[$head];
-            $tried = $died;
-            foreach ($current as $item => $count) {
-                if (isset($loops[$item])) {
-                    $at[$item] = ($at[$item] ?? 0) + $count;
-                }
-
-                // A success ends the attempt: one at most is ever reached.
-                if (!$this->succeeds($item)) {
-                    $tried += $count;
-                }
-            }
-
-            foreach ($slots as $slot) {
-                $steps[$step][$alongside][$slot] = max($steps[$step][$alongside][$slot] ?? 0, min($limit, $tried));
-                foreach ($at as $key => $ways) {
-                    $reached[$step][$alongside][$key][$slot] = max($reached[$step][$alongside][$key][$slot] ?? 0, min($limit, $ways));
-                }
+        // The most paths tried at each step and the most routes to each item
+        // of a loop and through each mark, by the list of slots they stand
+        // in, spread over those slots once every entry is read.
+        $tries = [];
+        $arrivals = [];
+        // The vectors met, by number: what each tries and reaches, and what
+        // reading it gives. A vector met again at another step reads the
+        // same, and takes the same steps from the budget.
+        $numbers = [];
+        $tallies = [];
+        $expansions = [];
+        for ($head = 0; isset($queue[$head]); $head++) {
+            [$current, $died, $at, $list, $unread, $step, $alongside, $number] = $queue[$head];
+            unset($queue[$head]);
+            [$alive, $loopItems] = $tallies[$number] ??= $this->tally($current, $loops);
+            $tried = $died + $alive;
+            $tries[$step][$alongside][$list] = max($tries[$step][$alongside][$list] ?? 0, min($limit, $tried));
+            foreach ($at + $loopItems as $key => $ways) {
+                $arrivals[$step][$alongside][$key][$list] = max($arrivals[$step][$alongside][$key][$list] ?? 0, min($limit, $ways));
             }
 
             if (!$unread || $tried > self::MAX_ACYCLIC_AMBIGUITY) {
                 continue;
             }
 
-            // Every class's next vector, in one pass over the items.
-            $nexts = [];
-            foreach (array_intersect_key($current, $reading) as $item => $count) {
-                $this->budget->step(1 + \count($reading[$item]));
-                $after = $this->routesOf($item);
-                $dies = $count * ($this->automaton->dead[$item] ?? 0);
-                $through = self::marks($this->automaton->markRoutes[$item] ?? []);
-                foreach ($reading[$item] as $class) {
-                    $next = $nexts[$class] ?? [[], 0, []];
-                    foreach ($after as $successor => $ways) {
-                        $next[0][$successor] = min($limit, ($next[0][$successor] ?? 0) + $count * $ways);
-                    }
-
-                    $next[1] = min($limit, $next[1] + $dies);
-                    foreach ($through as $key => $ways) {
-                        $next[2][$key] = min($limit, ($next[2][$key] ?? 0) + $count * $ways);
-                    }
-
-                    $nexts[$class] = $next;
+            if (isset($expansions[$number])) {
+                [$charges, $along, $apart] = $expansions[$number];
+                foreach ($charges as $charge) {
+                    $this->budget->step($charge);
                 }
+            } else {
+                [$charges, $along, $apart] = $this->expand($current, $reading, $loopReads, $numbers, $lists);
+                $expansions[$number] = [$charges, $along, $apart];
             }
 
             // A vector met again at one step stands in one more slot: its
             // next ones are read once.
-            $vectors = [];
-            $classes = [];
-            foreach ($nexts as $class => [$next, $dies, $through]) {
-                ksort($next);
-                ksort($through);
-                $further = $alongside === $step && isset($loopReads[$class]) ? $alongside + 1 : $alongside;
-                $key = ($step + 1).'|'.$further.'|'.implode(',', array_keys($next)).'|'.implode(',', $next).'|'.$dies.'|'.implode(',', array_keys($through)).'|'.implode(',', $through);
-                $vectors[$key] = [$next, $dies, $through, $further];
-                $classes[$key][] = $class;
-            }
-
-            foreach ($vectors as $key => [$next, $dies, $through, $further]) {
-                $queue[] = [$next, $dies, $through, $classes[$key], !isset($seen[$key]), $step + 1, $further];
+            foreach ($alongside === $step ? $along : $apart as [$classes, $next, $dies, $through, $nextNumber, $readAlong]) {
+                $further = $readAlong ? $alongside + 1 : $alongside;
+                $key = ($step + 1).'|'.$further.'|'.$nextNumber;
+                $queue[] = [$next, $dies, $through, $classes, !isset($seen[$key]), $step + 1, $further, $nextNumber];
                 $seen[$key] = true;
+            }
+        }
+
+        $steps = [];
+        foreach ($tries as $step => $byAlongside) {
+            foreach ($byAlongside as $alongside => $byList) {
+                foreach ($byList as $list => $tried) {
+                    foreach ($lists[$list] as $slot) {
+                        $steps[$step][$alongside][$slot] = max($steps[$step][$alongside][$slot] ?? 0, $tried);
+                    }
+                }
+            }
+        }
+
+        $reached = [];
+        foreach ($arrivals as $step => $byAlongside) {
+            foreach ($byAlongside as $alongside => $byKey) {
+                foreach ($byKey as $key => $byList) {
+                    foreach ($byList as $list => $ways) {
+                        foreach ($lists[$list] as $slot) {
+                            $reached[$step][$alongside][$key][$slot] = max($reached[$step][$alongside][$key][$slot] ?? 0, $ways);
+                        }
+                    }
+                }
             }
         }
 
@@ -1162,6 +1184,128 @@ final class AmbiguityFinder
     }
 
     /**
+     * What reading a vector gives: the steps it takes from the budget, one
+     * for each item that reads, then the vectors after it, with the classes
+     * read into each, in the order an attempt meets them; once with the
+     * classes the loop left reads apart from the others, for a step whose
+     * every character that loop read too, and once with them together. The
+     * classes the same items read share one next vector, numbered by what it
+     * holds in $numbers; each list of classes is numbered in $lists.
+     *
+     * @param array<int, int>       $vector
+     * @param array<int, list<int>> $reading
+     * @param array<int, true>|null $loopReads
+     * @param array<string, int>    $numbers
+     * @param list<list<int>>       $lists
+     *
+     * @param-out array<string, int> $numbers
+     * @param-out list<list<int>> $lists
+     *
+     * @throws ModelLimitException
+     *
+     * @return array{list<int>, list<array{int, array<int, int>, int, array<int, int>, int, bool}>, list<array{int, array<int, int>, int, array<int, int>, int, bool}>}
+     */
+    private function expand(array $vector, array $reading, ?array $loopReads, array &$numbers, array &$lists): array
+    {
+        $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
+        $charges = [];
+        $readers = [];
+        foreach (array_intersect_key($vector, $reading) as $item => $_) {
+            $charges[] = 1 + \count($reading[$item]);
+            $this->budget->step(1 + \count($reading[$item]));
+            foreach ($reading[$item] as $class) {
+                $readers[$class][] = $item;
+            }
+        }
+
+        $shared = [];
+        $along = [];
+        $apart = [];
+        foreach ($readers as $class => $items) {
+            $group = implode(',', $items);
+            if (!isset($shared[$group])) {
+                $next = [];
+                $dies = 0;
+                $through = [];
+                foreach ($items as $item) {
+                    $count = $vector[$item];
+                    foreach ($this->routesOf($item) as $successor => $ways) {
+                        $next[$successor] = min($limit, ($next[$successor] ?? 0) + $count * $ways);
+                    }
+
+                    $dies = min($limit, $dies + $count * ($this->automaton->dead[$item] ?? 0));
+                    foreach ($this->marksOf($item) as $key => $ways) {
+                        $through[$key] = min($limit, ($through[$key] ?? 0) + $count * $ways);
+                    }
+                }
+
+                ksort($next);
+                ksort($through);
+                $held = implode(',', array_keys($next)).'|'.implode(',', $next).'|'.$dies.'|'.implode(',', array_keys($through)).'|'.implode(',', $through);
+                $shared[$group] = [$next, $dies, $through, $numbers[$held] ??= \count($numbers)];
+            }
+
+            [$next, $dies, $through, $number] = $shared[$group];
+            $readAlong = isset($loopReads[$class]);
+            $key = $number.'|'.($readAlong ? 1 : 0);
+            $along[$key] ??= [[], $next, $dies, $through, $number, $readAlong];
+            $along[$key][0][] = $class;
+            $apart[$number] ??= [[], $next, $dies, $through, $number, false];
+            $apart[$number][0][] = $class;
+        }
+
+        return [$charges, self::numbered($along, $lists), self::numbered($apart, $lists)];
+    }
+
+    /**
+     * The next vectors with their list of classes numbered in $lists.
+     *
+     * @param array<array{list<int>, array<int, int>, int, array<int, int>, int, bool}> $groups
+     * @param list<list<int>>                                                           $lists
+     *
+     * @param-out list<list<int>> $lists
+     *
+     * @return list<array{int, array<int, int>, int, array<int, int>, int, bool}>
+     */
+    private static function numbered(array $groups, array &$lists): array
+    {
+        $numbered = [];
+        foreach ($groups as [$classes, $next, $dies, $through, $number, $readAlong]) {
+            $numbered[] = [\count($lists), $next, $dies, $through, $number, $readAlong];
+            $lists[] = $classes;
+        }
+
+        return $numbered;
+    }
+
+    /**
+     * What a vector tries at once: its paths, but those that reached a
+     * success the engine stops at, and its routes to each item of a loop.
+     *
+     * @param array<int, int> $vector
+     * @param array<int, int> $loops
+     *
+     * @return array{int, array<int, int>}
+     */
+    private function tally(array $vector, array $loops): array
+    {
+        $alive = 0;
+        $loopItems = [];
+        foreach ($vector as $item => $count) {
+            if (isset($loops[$item])) {
+                $loopItems[$item] = $count;
+            }
+
+            // A success ends the attempt: one at most is ever reached.
+            if (!$this->succeeds($item)) {
+                $alive += $count;
+            }
+        }
+
+        return [$alive, $loopItems];
+    }
+
+    /**
      * What the stretch out of a loop tries at one time, the loop left at
      * several: the paths at the shallowest step, with those at each deeper
      * step whose first characters, as many as the steps between, the loop
@@ -1174,30 +1318,34 @@ final class AmbiguityFinder
     private static function atOnceOut(array $steps): array
     {
         $limit = self::MAX_ACYCLIC_AMBIGUITY + 1;
-        $paths = [];
-        foreach ($steps as $shallowest => $byAlongside) {
-            $together = [];
-            foreach ($byAlongside as $bySlot) {
-                foreach ($bySlot as $slot => $tried) {
-                    $together[$slot] = max($together[$slot] ?? 0, $tried);
-                }
+        // At each step, by slot, the most paths whose first characters, as
+        // many at least as the index, the loop reads too.
+        $alongside = [];
+        foreach ($steps as $step => $byAlongside) {
+            $most = [];
+            $deepest = 0;
+            foreach ($byAlongside as $read => $_) {
+                $deepest = max($deepest, $read);
             }
 
-            foreach ($steps as $step => $deeper) {
+            for ($read = $deepest; $read >= 0; $read--) {
+                foreach ($byAlongside[$read] ?? [] as $slot => $tried) {
+                    $most[$slot] = max($most[$slot] ?? 0, $tried);
+                }
+
+                $alongside[$step][$read] = $most;
+            }
+        }
+
+        $paths = [];
+        foreach ($alongside as $shallowest => $atShallowest) {
+            $together = $atShallowest[0] ?? [];
+            foreach ($alongside as $step => $deeper) {
                 if ($step <= $shallowest) {
                     continue;
                 }
 
-                $most = [];
-                foreach ($deeper as $alongside => $bySlot) {
-                    if ($alongside >= $step - $shallowest) {
-                        foreach ($bySlot as $slot => $tried) {
-                            $most[$slot] = max($most[$slot] ?? 0, $tried);
-                        }
-                    }
-                }
-
-                foreach ($most as $slot => $tried) {
+                foreach ($deeper[$step - $shallowest] ?? [] as $slot => $tried) {
                     $together[$slot] = min($limit, ($together[$slot] ?? 0) + $tried);
                 }
             }
@@ -1244,7 +1392,7 @@ final class AmbiguityFinder
      */
     private function succeeds(int $item): bool
     {
-        return !$this->widens && $this->automaton->isUnconditional($item) && !$this->automaton->holdsUndecided([$item => true]);
+        return $this->successes[$item] ??= !$this->widens && $this->automaton->isUnconditional($item) && !$this->automaton->holdsUndecided([$item => true]);
     }
 
     /**
@@ -1498,7 +1646,18 @@ final class AmbiguityFinder
      */
     private function routesOf(int $item): array
     {
-        return self::routes($this->automaton->successors[$item], $this->automaton->routes[$item] ?? []);
+        return $this->routesFrom[$item] ??= self::routes($this->automaton->successors[$item], $this->automaton->routes[$item] ?? []);
+    }
+
+    /**
+     * The routes from a reading item through each mark, keyed apart from
+     * the items (marks()).
+     *
+     * @return array<int, int>
+     */
+    private function marksOf(int $item): array
+    {
+        return $this->marksFrom[$item] ??= self::marks($this->automaton->markRoutes[$item] ?? []);
     }
 
     /**

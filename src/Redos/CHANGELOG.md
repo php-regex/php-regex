@@ -31,6 +31,13 @@ CHANGELOG
    followed by five groups (1,280,001 steps on a thousand `a`) were safe
    (proven), and get the heuristics' verdict. An exponential or polynomial
    verdict stands.
+ * Counting those paths on one input reads each set of states once, however
+   many steps meet it again, and keeps what a step tries by the classes
+   that lead to it rather than class by class. The verdicts are the same,
+   and the analysis takes about a third of the instructions it took on
+   twenty-six loops each followed by `.{0,15}` (1.61 billion, now 491
+   million), and on groups `(?:b{0}|)` and `(?:b{0}|\K)` around loops and in
+   lookaheads, which run it out of budget (2.40 billion, now 723 million).
  * Under `m`, `^` holds after a newline only where a character follows,
    never at the end of the subject: `preg_match()` gives 0 for `/\n^/m` on
    `"a\n"`. The model counted a success there, and proved linear a loop
