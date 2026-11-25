@@ -266,7 +266,8 @@ $input: 'no'|'no\n'|'yes'|'yes\n'
 ```
 
 `$` matches before a final `"\n"` too, so `"yes\n"` is among them;
-`/^(?:yes|no)$/D` or `/^(?:yes|no)\z/` leaves it out. Under `/iu`, the
+`/^(?:yes|no)$/D` or `/^(?:yes|no)\z/` leaves it out. Psalm 7.20 and later
+print the same type as `"no\n"|"yes\n"|'no'|'yes'`. Under `/iu`, the
 strings follow Unicode case folding: `/^(?:ok)$/Diu` matches six, `k` folding
 with U+212A KELVIN SIGN. The strings are read only from offset 0, a call with
 no offset argument. A subject that holds literals already keeps them: where
