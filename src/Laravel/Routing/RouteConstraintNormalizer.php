@@ -21,14 +21,27 @@ use PHPRegex\Linter\Extraction\RouteRequirementCompiler;
  * compiles through Symfony's RouteCompiler, always under the utf8 option:
  * the constraint is sanitized and compiled as RouteRequirementCompiler
  * says, the path matched with "{^...$}sDu", the domain with "{^...$}sDiu".
+ * The name of a group goes as symfony/routing drops it, 6.4.51, 7.4.24 and
+ * 8.1.12 on: as the compiler the application's router runs does.
  *
  * @internal
  */
 final class RouteConstraintNormalizer
 {
+    private static ?bool $keepsNamedGroups = null;
+
     public function normalize(Route $route, string $parameter, string $constraint): string
     {
-        return RouteRequirementCompiler::compile(RouteRequirementCompiler::sanitize($constraint), $parameter, true, $this->isDomainParameter($route, $parameter));
+        return RouteRequirementCompiler::compile(RouteRequirementCompiler::sanitize($constraint), $parameter, true, $this->isDomainParameter($route, $parameter), self::keepsNamedGroups());
+    }
+
+    /**
+     * Whether the router compiles a constraint keeping the name of a group,
+     * as symfony/routing does before 6.4.51, 7.4.24 and 8.1.12.
+     */
+    private static function keepsNamedGroups(): bool
+    {
+        return self::$keepsNamedGroups ??= str_contains((new Route(['GET'], '{p}', []))->where('p', '(?<n>a)')->toSymfonyRoute()->compile()->getRegex(), '(?<n>');
     }
 
     /**
