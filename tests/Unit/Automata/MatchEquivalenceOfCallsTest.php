@@ -18,6 +18,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -297,9 +298,10 @@ final class MatchEquivalenceOfCallsTest extends TestCase
 
         $this->requiresJit($left);
 
-        $this->assertFalse(preg_match(self::compiledAnew($left), $deep), \sprintf('Oracle: %s keeps to the JIT stack on %d bytes of calls.', $left, \strlen($deep)));
-        $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, preg_last_error());
-        $this->assertSame(1, preg_match(self::compiledAnew($right), $deep), \sprintf('Oracle: %s finds no match in %d bytes of calls.', $right, \strlen($deep)));
+        [$answer, $error] = self::matchedInAFreshProcess($left, $deep);
+        $this->assertFalse($answer, \sprintf('Oracle: %s keeps to the JIT stack on %d bytes of calls.', $left, \strlen($deep)));
+        $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, $error);
+        $this->assertSame([1, \PREG_NO_ERROR], self::matchedInAFreshProcess($right, $deep), \sprintf('Oracle: %s finds no match in %d bytes of calls.', $right, \strlen($deep)));
     }
 
     /**
@@ -328,13 +330,27 @@ final class MatchEquivalenceOfCallsTest extends TestCase
     }
 
     /**
-     * The pattern between delimiters of its own: PHP keeps a compiled
-     * pattern by its text, and runs one another test compiled with
-     * pcre.jit off without the JIT.
+     * What preg_match() and preg_last_error() answer in a PHP of its own,
+     * the JIT on: the suite keeps compiled patterns, some compiled with
+     * pcre.jit off, and the JIT memory it filled, both of which change how
+     * deep a pattern runs.
+     *
+     * @return array{int|false|null, int|null}
      */
-    private static function compiledAnew(string $pattern): string
+    private static function matchedInAFreshProcess(string $pattern, string $subject): array
     {
-        return '~'.substr($pattern, 1, (int) strrpos($pattern, '/') - 1).'~'.substr($pattern, (int) strrpos($pattern, '/') + 1);
+        $code = 'echo json_encode([preg_match($argv[1], $argv[2]), preg_last_error()]);';
+        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'pcre.jit=1', '-r', $code, '--', $pattern, $subject], ProcessPipes::descriptors(), $pipes);
+        self::assertIsResource($process);
+        [$output] = ProcessPipes::drain($pipes);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        $answer = json_decode($output, true);
+        [$matched, $error] = \is_array($answer) ? $answer + [null, null] : [null, null];
+
+        return [\is_int($matched) || false === $matched ? $matched : null, \is_int($error) ? $error : null];
     }
 
     /**
