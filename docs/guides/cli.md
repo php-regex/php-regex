@@ -1462,8 +1462,10 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 The same issue is raised at a call of `preg_match_all()`, `preg_replace()`,
 `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()` or
-`preg_split()`, or a `Safe\` or composer/pcre form of one, that no literal limit
-bounds. The pattern is one whose `preg_match()` search stops at an empty match
+`preg_split()`, or a `Safe\`, composer/pcre, nette/utils, spatie/regex or
+Laravel `Str` form of one, or a `RegexIterator` built in the `ALL_MATCHES`,
+`SPLIT` or `REPLACE` mode, that no literal limit bounds (see the
+[ReDoS guide](redos.md#the-calls-that-run-the-loop) for the list). The pattern is one whose `preg_match()` search stops at an empty match
 inside a run: these functions go on after it, and PHP's retry of each empty match
 reads to the end of the run (see the
 [ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).

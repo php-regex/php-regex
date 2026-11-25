@@ -316,7 +316,7 @@ The patterns that stay linear are those whose retry does one of these:
 - reads one character at most, as `/x?/`, `/(?=a)/`, `/\b/` and `/$/` do;
 - reads a bounded run, as `/(?:a{1,50}\d)?/` does.
 
-`regex lint` and PHPStan report it as the search cost: `regex.lint.redos.search`, and `regex.redos.search` in PHPStan with the same message, `Quadratic search (ReDoS): <pattern>`. They report it at the calls that run such a loop: the six functions, their `Safe\` drop-ins and the composer/pcre methods that call them, unless a literal limit bounds the call. The language server does the same.
+`regex lint` and PHPStan report it as the search cost: `regex.lint.redos.search`, and `regex.redos.search` in PHPStan with the same message, `Quadratic search (ReDoS): <pattern>`. They report it at the calls that run such a loop, listed below, unless a literal limit bounds the call. The language server does the same.
 
 A `preg_match()` call, and a pattern analysed with no call, keep the verdict of one search. The severity, the threshold, the switches and confirmed mode are those of the search cost above. In confirmed mode the step replay pins the retry, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT.
 
@@ -339,6 +339,23 @@ A `preg_match()` call, and a pattern analysed with no call, keep the verdict of 
 The extractor reports a pattern that several calls read, as a constant or a variable, once, at its first call, and the cost follows that call.
 
 A match that is short but not empty costs the same loop the same way and is not reported, as in `/a*b|a/` above or `/a(?:a+\d)?/`.
+
+#### The calls that run the loop
+
+The message names the function whose loop the call runs. Each wrapper is read as its current release's source calls the function:
+
+| call | loop |
+|---|---|
+| `preg_match_all()`, `preg_replace()`, `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()`, `preg_split()`, and their `Safe\` drop-ins | the function itself |
+| composer/pcre's `matchAll()`, `isMatchAll()` and their `StrictGroups` and `WithOffsets` forms | `preg_match_all()` |
+| composer/pcre's `replace()`, `replaceCallback()` and `replaceCallbackStrictGroups()`, `replaceCallbackArray()`, `split()` and `splitWithOffsets()` | `preg_replace()`, `preg_replace_callback()`, `preg_replace_callback_array()`, `preg_split()` |
+| nette/utils' `Strings::matchAll()`, unless `lazy` | `preg_match_all()` |
+| nette/utils' `Strings::split()` | `preg_split()` |
+| nette/utils' `Strings::replace()`, spatie/regex's `Regex::replace()`, Laravel's `Str::replaceMatches()` | `preg_replace()`, or `preg_replace_callback()` when the replacement is a closure |
+| spatie/regex's `Regex::matchAll()`, Laravel's `Str::matchAll()` | `preg_match_all()` |
+| `new RegexIterator()` and `new RecursiveRegexIterator()` in the `ALL_MATCHES`, `SPLIT` or `REPLACE` mode | `preg_match_all()`, `preg_split()`, `preg_replace()` |
+
+The `preg_match()` forms of these libraries stop at the first match. Where an argument decides whether the call loops, only a value the call spells out counts: `lazy: true`, a `lazy` held in a variable, a `RegexIterator` mode held in a variable or left out (`MATCH`), and `GET_MATCH` leave the call unreported. A lazy `Strings::matchAll()` returns a generator that calls `preg_match()` from the end of each match, with no retry: the analysis does not price that loop, and leaves the call unreported. A mode changed later with `setMode()` is not read. PHPStan reads the static methods, a `lazy` whose type is `false` included, not the constructors.
 
 ## Outside the model: heuristics and budget
 
