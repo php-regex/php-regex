@@ -19,6 +19,7 @@ use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Hir\ClassSetProvider;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -112,6 +113,28 @@ final class ClassSetEnginePathsTest extends TestCase
         yield 'the final sigma, caseless' => ['atom' => '\x{F2}', 'modifiers' => 'i', 'locale' => $greek, 'ranges' => null];
         yield 'the small sigma, caseless' => ['atom' => '\x{F3}', 'modifiers' => 'i', 'locale' => $greek, 'ranges' => [[0xD3, 0xD3], [0xF3, 0xF3]]];
         yield 'a small e with acute, caseless' => ['atom' => '\x{E9}', 'modifiers' => 'i', 'locale' => 'fr_FR.ISO8859-1', 'ranges' => [[0xC9, 0xC9], [0xE9, 0xE9]]];
+        yield 'a class of three bytes, I and i among them' => ['atom' => '[Iix]', 'modifiers' => '', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0x69, 0x69], [0x78, 0x78]]];
+        yield 'a class behind a lookahead, read alone' => ['atom' => '(?=[\x80-\xFF])[\xE7a]', 'modifiers' => '', 'locale' => $turkish, 'ranges' => [[0xE7, 0xE7]]];
+    }
+
+    /**
+     * An atom the engine refuses repeated, which a repeat cannot read as
+     * the JIT does, is not known under another locale's tables, and read
+     * alone under PCRE2's own: "\b" reads no character, and "\b+" repeats
+     * no item.
+     */
+    #[Test]
+    public function test_an_atom_the_engine_refuses_repeated_is_not_known_under_another_locales_tables(): void
+    {
+        $locale = 'tr_TR.ISO8859-9';
+        $this->requiresLocale($locale, 'An atom refused repeated');
+
+        // Oracle: the engine takes "\b" alone and refuses it repeated.
+        $this->assertTrue(EngineProbe::compiles('/(?:\b)++/'));
+        $this->assertFalse(EngineProbe::compiles('/\b+/'));
+
+        $this->assertNull(ClassSetProvider::query('\b', false, '', '', false, $locale));
+        $this->assertSame([], ClassSetProvider::query('\b', false, '', '', false, CharacterTables::BUILT_IN)?->ranges);
     }
 
     /**
@@ -156,6 +179,35 @@ final class ClassSetEnginePathsTest extends TestCase
             yield $name.', on 10.34' => ['atom' => $atom, 'modifiers' => $modifiers, 'pcre' => '10.34', 'ranges' => $before];
             yield $name.', on 10.35' => ['atom' => $atom, 'modifiers' => $modifiers, 'pcre' => '10.35', 'ranges' => $from];
             yield $name.', on the running release' => ['atom' => $atom, 'modifiers' => $modifiers, 'pcre' => null, 'ranges' => $from];
+        }
+    }
+
+    /**
+     * Under (*UCP), for a target whose release reads the case of a byte
+     * otherwise than the running engine, a caseless atom is not known
+     * under another locale's tables, whose case of a byte above ASCII the
+     * engine reads only beside Unicode's types, nor where the engine
+     * refuses it.
+     */
+    #[Test]
+    public function test_under_ucp_an_atom_the_engine_cannot_read_as_the_release_of_the_target_is_not_known(): void
+    {
+        $latin1 = 'fr_FR.ISO8859-1';
+        $this->requiresLocale($latin1, 'A caseless byte under (*UCP) and the Latin-1 tables');
+        $before1035 = (new PcreTarget(70400, '10.34'))->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
+        $from1035 = (new PcreTarget(80000, '10.35'))->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
+        $releaseApart = PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf) ? $before1035 : $from1035;
+
+        // Oracle: the engine refuses a range written backwards, and the
+        // running one reads Unicode's case under (*UCP) and the Latin-1
+        // tables.
+        $this->assertFalse(EngineProbe::compiles('/(*UCP)(?i:[z-a])++/'));
+        $this->assertSame([[0xC9, 0xC9], [0xE9, 0xE9]], self::bytesTaken(['taken' => ['/(*NO_JIT)(*UCP)^\xE9$/i', false]], $latin1)['taken']);
+
+        $this->assertNull(ClassSetProvider::query('\x{E9}', false, 'i', '(*UCP)', false, $latin1, $releaseApart));
+        $this->assertNull(ClassSetProvider::query('[z-a]', false, 'i', '(*UCP)', false, CharacterTables::BUILT_IN, $releaseApart));
+        if (PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf)) {
+            $this->assertSame([[0xC9, 0xC9], [0xE9, 0xE9]], ClassSetProvider::query('\x{E9}', false, 'i', '(*UCP)', false, $latin1)?->ranges);
         }
     }
 

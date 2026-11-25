@@ -1113,6 +1113,8 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'the dotless i and I' => ['class' => '[\xFDI]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0xFD, 0xFD]]];
         yield 'I and the dotless i' => ['class' => '[I\xFD]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0xFD, 0xFD]]];
         yield 'a and A' => ['class' => '[aA]', 'locale' => $turkish, 'ranges' => [[0x41, 0x41], [0x61, 0x61]]];
+        yield 'I, i and x, three bytes' => ['class' => '[Iix]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49], [0x69, 0x69], [0x78, 0x78]]];
+        yield 'I written twice' => ['class' => '[II]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49]]];
         yield 'the final sigma and the capital sigma' => ['class' => '[\xF2\xD3]', 'locale' => 'el_GR.ISO8859-7', 'ranges' => [[0xD3, 0xD3], [0xF2, 0xF2]]];
         yield 'a Latin-1 capital and its small letter' => ['class' => "[\xC9\xE9]", 'locale' => 'fr_FR.ISO8859-1', 'ranges' => [[0xC9, 0xC9], [0xE9, 0xE9]]];
     }
