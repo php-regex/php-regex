@@ -26,7 +26,11 @@ use PHPRegex\Parser\Node\NodeInterface;
  * nothing in "aa" where "/a+b?+a/" finds it, and "/(?:a)+(?:b)?+a/" finds
  * "aa" where "/a+(?:b)?+a/" does not, with and without the JIT, from
  * PCRE2 10.34 to 10.49. An empty group the engine enters decides it as
- * well: "/a+(?>(?:)|b)a/" finds "aa", "/a+(?>|b)a/" nothing.
+ * well: "/a+(?>(?:)|b)a/" finds "aa", "/a+(?>|b)a/" nothing. So do the
+ * brackets beside a repeat PCRE2 makes possessive as if the byte 0xFF were
+ * no word character, where the tables of the target may hold it in "\w":
+ * under fr_FR.ISO8859-1 "/(?:\xFF)+\w/" finds "\xFF\xFF", "/\xFF+\w/"
+ * nothing.
  *
  * @internal
  */
@@ -56,6 +60,9 @@ final class PossessiveBrackets
      * the group stood, may be read otherwise by PCRE2's auto-possessification:
      * a character repeated before such a group stands in one of the two,
      * and the brackets that decide it differ. "(?>)" in "/a(?>)b/" can go.
+     * So may a pattern that, a group a repeat reads taken out, holds a
+     * repeat PCRE2 may make possessive as if the byte 0xFF were no word
+     * character (see AutoPossession::bracketsDecideBesideLastByte()).
      */
     public static function groupDecides(GroupNode $group, LintContext $context): bool
     {
@@ -63,9 +70,10 @@ final class PossessiveBrackets
         self::$shapes ??= new \WeakMap();
 
         // Taking a group out makes none the engine may skip: a pattern that
-        // holds none has nothing for the brackets to decide.
-        return [] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
-            && AutoPossession::groupDecides($pattern, $group);
+        // holds none has no such group for the brackets to decide.
+        return ([] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
+            && AutoPossession::groupDecides($pattern, $group))
+            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale);
     }
 
     /**
