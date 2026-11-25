@@ -71,7 +71,10 @@ final class Modernizer extends AbstractNodeVisitor
     private bool $utf = false;
 
     /**
-     * The tree of the pattern being modernized, as written.
+     * The tree of the pattern being modernized, as written, when it holds an
+     * atomic group or a possessive repeat of a group that may match
+     * nothing: only there do the brackets decide which repeats PCRE2 makes
+     * possessive, and taking a group out never makes such a group.
      */
     private ?NodeInterface $pattern = null;
 
@@ -89,7 +92,7 @@ final class Modernizer extends AbstractNodeVisitor
     {
         $this->unicodeProperties = UnicodeProperties::on($node);
         $this->utf = str_contains($node->flags, 'u');
-        $this->pattern = $node->pattern;
+        $this->pattern = [] !== AutoPossession::shape($node->pattern, false) ? $node->pattern : null;
 
         return new RegexNode(
             $node->pattern->accept($this),

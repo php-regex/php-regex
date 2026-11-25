@@ -162,14 +162,15 @@ final class Optimizer
             return null;
         }
 
-        if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || $this->movesAutoPossession($ast, $optimizedPattern))) {
+        if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || (!$options->verifyWithAutomata && $this->movesAutoPossession($ast, $optimizedPattern)))) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
             // possessive forms it cannot prove safe, and an unverified one can
             // change the language PCRE matches. This gate runs on its own, not
             // only under verifyWithAutomata, because the rewrite rules that
             // possessify are on by default. So does one that changes the
-            // brackets PCRE2 reads to make a repeat possessive.
+            // brackets PCRE2 reads to make a repeat possessive, which the
+            // next branch checks when the options ask for every check.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return null;
             }
