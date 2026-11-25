@@ -75,6 +75,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -342,7 +343,7 @@ final class LanguageSolver
             return null;
         }
 
-        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1], false)) {
+        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1], false, $this->parser->target())) {
             return [];
         }
 
@@ -404,7 +405,7 @@ final class LanguageSolver
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
 
-        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst), true);
+        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst), true, $this->parser->target());
     }
 
     /**
@@ -437,7 +438,8 @@ final class LanguageSolver
     {
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
-        if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)) {
+        if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
+            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)) {
             return false;
         }
 
@@ -671,11 +673,34 @@ final class LanguageSolver
         return 1 === $part->properties->minLength && 1 === $part->properties->maxLength ? $part->properties->first : null;
     }
 
-    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced): bool
+    /**
+     * Without "u", PCRE2 makes a repeat of the byte 0xFF or of "\w"
+     * possessive beside the other as if 0xFF were no word character, which
+     * the brackets of each decide and the normal form does not say: such a
+     * pattern reads like no other.
+     */
+    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced, PcreTarget $target): bool
     {
         return self::sameSettings($leftAst, $rightAst)
             && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
-            && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced);
+            && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced)
+            && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst);
+    }
+
+    /**
+     * Whether PCRE2 may make a repeat possessive in one of the patterns as
+     * if the byte 0xFF were no word character, where the target's tables
+     * may hold it in "\w".
+     */
+    private static function holdsRepeatMadePossessiveBesideLastByte(PcreTarget $target, RegexNode ...$asts): bool
+    {
+        foreach ($asts as $ast) {
+            if (null !== AutoPossession::repeatMadePossessiveBesideLastByte($ast, $target)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -968,6 +993,15 @@ final class LanguageSolver
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
         $target = $this->parser->target();
+
+        // Without "u", PCRE2 makes a repeat of the byte 0xFF possessive
+        // before "\w", and one of "\w" before that byte, as if 0xFF were no
+        // word character, whatever the tables say.
+        $lastByte = AutoPossession::repeatMadePossessiveBesideLastByte($ast, $target);
+        if (null !== $lastByte) {
+            throw new ComplexityException(PriorityNfaBuilder::LAST_BYTE_MESSAGE, $lastByte->getStartPosition(), $pattern);
+        }
+
         $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 

@@ -75,6 +75,8 @@ final class HirToNfaTransformer
 
     public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.';
 
+    public const LAST_BYTE_MESSAGE = 'Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;

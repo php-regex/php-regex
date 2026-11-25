@@ -123,6 +123,22 @@ CHANGELOG
    `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route host
    compiles, is still read. A target that names its locale is read under
    its tables.
+ * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
+   `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
+   as if 0xFF were no word character, whatever the tables say: under
+   fr_FR.ISO8859-1, where `\w` takes 0xFF, `/\xFF+\w/` finds nothing in
+   `\xFF\xFF` and `/\w+\xFF/` nothing in `a\xFF\xFF`, with and without the
+   JIT, in PCRE2 10.49, where `/\xFF+[\w]/`, `/(?:\xFF)+\w/` and
+   `/[\w]+\xFF/` find them. `/\xFF+\w/` and `/\xFF+[\w]/` were proven to
+   write the same `$matches`, and to match the same strings, and
+   `/(?:\xFF)+\w/` to read like `/\xFF+\w/`. `matchEquivalent()`,
+   `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` now refuse a pattern with such a repeat, of the byte, of a
+   class that names it, or of U+0178, which folds to it under UTF, with
+   `\w` outside a class, or that byte, anywhere after it, and such a
+   pattern no longer reads like another, unless the target names a locale
+   whose tables leave 0xFF out of `\w`. A target that names no locale but
+   C may run under any, and is refused too.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven
