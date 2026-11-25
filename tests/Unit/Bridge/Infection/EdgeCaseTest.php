@@ -391,6 +391,37 @@ final class EdgeCaseTest extends TestCase
     }
 
     /**
+     * PCRE2 makes a character repeated before a possessive group that may
+     * match nothing possessive, as if the group could not be skipped: on
+     * "aa", /a+(?:b)?+a/ finds nothing, with and without the JIT, where
+     * /a+(?:b)?a/ and /(?:a)+(?:b)?+a/ find "aa". No mutant that adds or
+     * drops such a possessive, or the brackets around one, is proven alike.
+     */
+    #[Test]
+    #[DataProvider('provideMutantsAroundAGroupTheEngineMaySkip')]
+    public function test_judge_proves_no_mutant_alike_around_a_group_the_engine_may_skip(string $pattern, string $mutant): void
+    {
+        $this->assertNotSame(preg_match($pattern, 'aa'), preg_match($mutant, 'aa'));
+        $this->assertNotSame(preg_match('/(*NO_JIT)'.substr($pattern, 1), 'aa'), preg_match('/(*NO_JIT)'.substr($mutant, 1), 'aa'));
+
+        $judge = new EquivalenceJudge();
+
+        $this->assertNotTrue($judge->judge(Observation::Matches, $pattern, $mutant, new Budget())->alike);
+        $this->assertNotTrue($judge->judge(Observation::Match, $pattern, $mutant, new Budget())->alike);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, mutant: string}>
+     */
+    public static function provideMutantsAroundAGroupTheEngineMaySkip(): iterable
+    {
+        yield 'a possessive added' => ['pattern' => '/a+(?:b)?a/', 'mutant' => '/a+(?:b)?+a/'];
+        yield 'a repeat ungrouped' => ['pattern' => '/(?:a)+(?:b)?+a/', 'mutant' => '/a+(?:b)?+a/'];
+        yield 'a group dropped' => ['pattern' => '/a+b?+a/', 'mutant' => '/a+(?:b)?+a/'];
+        yield 'anchored' => ['pattern' => '/^a+(?:b)?a$/', 'mutant' => '/^a+(?:b)?+a$/'];
+    }
+
+    /**
      * PCRE2 reads a group repeated no time to choose where it tries a
      * match: on "\tb", /(?:x|(?=a)){0}\w/ finds none where /\w/ finds "b".
      */

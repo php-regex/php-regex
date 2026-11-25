@@ -37,7 +37,9 @@ use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Solver\Utf8Reading;
 use PHPRegex\Automata\Support\WorkBudget;
+use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
+use PHPRegex\Automata\Transform\LocaleBoundClasses;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Hir\AlternationHir;
@@ -68,6 +70,7 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -308,7 +311,7 @@ final class LanguageSolver
         $hirs[] = $translator->translate($rightAst);
         $defined[] = $translator->defined();
 
-        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
+        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1], false)) {
             return [];
         }
 
@@ -370,7 +373,7 @@ final class LanguageSolver
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
 
-        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst));
+        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst), true);
     }
 
     /**
@@ -403,7 +406,7 @@ final class LanguageSolver
     {
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
-        if (!self::sameSettings($leftAst, $rightAst)) {
+        if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)) {
             return false;
         }
 
@@ -637,9 +640,11 @@ final class LanguageSolver
         return 1 === $part->properties->minLength && 1 === $part->properties->maxLength ? $part->properties->first : null;
     }
 
-    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir): bool
+    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced): bool
     {
-        return self::sameSettings($leftAst, $rightAst) && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir);
+        return self::sameSettings($leftAst, $rightAst)
+            && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
+            && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced);
     }
 
     /**
@@ -888,10 +893,25 @@ final class LanguageSolver
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
-        $translator = new HirTranslator($this->parser->target());
+        $target = $this->parser->target();
+        $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
+        // The JIT of PCRE2 10.39 to 10.42 keeps the groups of a possessive
+        // repeat from an earlier start, and 10.44, the first release PHP
+        // bundles after 10.42, clears them: the target is asked for 10.44 by
+        // the long group names it brought, 10.43 judged with the older
+        // ones. A target that names no locale but C may run under any:
+        // without "u" the tables a class is read under past ASCII are not
+        // known.
+        $builder = new PriorityNfaBuilder(
+            $options->maxNfaStates,
+            $pattern,
+            groupsOfPossessivesCleared: $target->supports(PcreFeature::LongGroupNames),
+            localeBound: LocaleBoundClasses::of($ast, $target),
+        );
+
+        return $builder->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
     }
 
     /**

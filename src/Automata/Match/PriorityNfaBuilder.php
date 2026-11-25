@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Match;
 
 use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\Transform\AutoPossession;
+use PHPRegex\Automata\Transform\LocaleBoundClasses;
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
@@ -76,6 +78,12 @@ final class PriorityNfaBuilder
 
     public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the match solver does not read.';
 
+    public const SKIPPED_GROUP_MESSAGE = 'PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the match solver does not read.';
+
+    public const POSSESSIVE_CAPTURE_MESSAGE = 'Before PCRE2 10.44 the JIT may leave a group of a possessive repeat set from an earlier start of the match, which the match solver does not read.';
+
+    public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier proven on a byte past ASCII against a class holds under the tables of C alone, and the target names no other locale.';
+
     /**
      * The copy of the whole pattern, beside the groups keyed by object id.
      */
@@ -84,13 +92,32 @@ final class PriorityNfaBuilder
     private PriorityNfa $nfa;
 
     /**
-     * The possessive quantifiers read as greedy ones, each with the first
-     * characters of its body and the state that follows it, checked once
-     * the whole automaton is built.
+     * The possessive quantifiers read as greedy ones, and the repeats PCRE2
+     * may make possessive, each with the first characters of its body, the
+     * class or the literal that reads them, the state that follows it and
+     * the refusal it meets where it may give back, checked once the whole
+     * automaton is built.
      *
-     * @var list<array{first: CharSet, next: int, position: int}>
+     * @var list<array{first: CharSet, class: Hir, next: int, position: int, message: string}>
      */
     private array $possessives = [];
+
+    /**
+     * The repeats of one character PCRE2 may make possessive, by the
+     * offset each starts at: those before a group it may skip. Read from
+     * the tree once a greedy repeat is built.
+     *
+     * @var array<int, true>|null
+     */
+    private ?array $madePossessive = null;
+
+    /**
+     * The class each character state reads, by state: without "u" the
+     * tables of the locale may decide what it takes past ASCII.
+     *
+     * @var array<int, ClassHir>
+     */
+    private array $classes = [];
 
     /**
      * The end anchors, each with the state that follows it, checked again
@@ -163,7 +190,21 @@ final class PriorityNfaBuilder
      */
     private array $copyCalls = [];
 
-    public function __construct(private readonly int $maxStates, private readonly string $pattern) {}
+    /**
+     * @param bool                    $groupsOfPossessivesCleared whether the PCRE2 judged clears the groups
+     *                                                            of a possessive repeat at each start of the
+     *                                                            match, as its JIT does from 10.44
+     * @param LocaleBoundClasses|null $localeBound                the classes whose characters past ASCII the
+     *                                                            tables of an unknown locale decide; null when
+     *                                                            the tables read are the ones the pattern
+     *                                                            runs under
+     */
+    public function __construct(
+        private readonly int $maxStates,
+        private readonly string $pattern,
+        private readonly bool $groupsOfPossessivesCleared = true,
+        private readonly ?LocaleBoundClasses $localeBound = null,
+    ) {}
 
     /**
      * @param NodeInterface $tree         the tree the form was translated
@@ -182,6 +223,8 @@ final class PriorityNfaBuilder
     {
         $this->nfa = new PriorityNfa($unicode);
         $this->possessives = [];
+        $this->classes = [];
+        $this->madePossessive = null;
         $this->endAnchors = [];
         $this->form = $hir;
         $this->defined = $defined;
@@ -225,7 +268,7 @@ final class PriorityNfaBuilder
         return match (true) {
             $hir instanceof EmptyHir => $next,
             $hir instanceof LiteralHir => $this->literal($hir->codePoints, $next),
-            $hir instanceof ClassHir => $this->char($hir->set, $next),
+            $hir instanceof ClassHir => $this->classChar($hir, $next),
             $hir instanceof ConcatHir => array_reduce(array_reverse($hir->parts), fn (int $after, Hir $part): int => $this->state($part, $after), $next),
             $hir instanceof AlternationHir => $this->split(array_map(fn (Hir $branch): int => $this->state($branch, $next), $hir->branches)),
             $hir instanceof RepetitionHir => $this->repetition($hir, $next),
@@ -393,6 +436,14 @@ final class PriorityNfaBuilder
         return $state;
     }
 
+    private function classChar(ClassHir $class, int $next): int
+    {
+        $state = $this->char($class->set, $next);
+        $this->classes[$state] = $class;
+
+        return $state;
+    }
+
     /**
      * @param list<int> $targets most preferred first
      */
@@ -419,7 +470,26 @@ final class PriorityNfaBuilder
                 throw new ComplexityException(self::ATOMIC_MESSAGE, $hir->startPosition, $this->pattern);
             }
 
-            $this->possessives[] = ['first' => $first, 'next' => $next, 'position' => $hir->startPosition];
+            // The JIT of PCRE2 10.39 to 10.42 keeps what "(a)*+" captured
+            // at an earlier start: "/a(a)*+b/" writes "a" to group 1 on
+            // "aacab".
+            if (!$this->groupsOfPossessivesCleared && self::captures($hir->body)) {
+                throw new ComplexityException(self::POSSESSIVE_CAPTURE_MESSAGE, $hir->startPosition, $this->pattern);
+            }
+
+            $this->possessives[] = ['first' => $first[0], 'class' => $first[1], 'next' => $next, 'position' => $hir->startPosition, 'message' => self::ATOMIC_MESSAGE];
+        } elseif (Greed::Greedy === $hir->greed && isset(($this->madePossessive ??= AutoPossession::repeatsBeforeSkippableGroups($this->tree))[$hir->startPosition])) {
+            // PCRE2 makes a character repeated before a possessive or atomic
+            // group that may match nothing possessive, as if the group could
+            // not be skipped: "/a+(?:b)?+a/" finds nothing in "aa". The
+            // repeat reads as written where its possessive spelling gives
+            // nothing back.
+            $first = self::fixedFirst($hir->body);
+            if (null === $first) {
+                throw new ComplexityException(self::SKIPPED_GROUP_MESSAGE, $hir->startPosition, $this->pattern);
+            }
+
+            $this->possessives[] = ['first' => $first[0], 'class' => $first[1], 'next' => $next, 'position' => $hir->startPosition, 'message' => self::SKIPPED_GROUP_MESSAGE];
         }
 
         // A call matches what the body of its group matches, which its own
@@ -559,22 +629,25 @@ final class PriorityNfaBuilder
     }
 
     /**
-     * The characters a body that matches one fixed way starts with: a
-     * class, a literal, or a sequence of them, through captures. Null for
-     * anything with a choice inside, which a greedy quantifier may undo.
+     * The characters a body that matches one fixed way starts with, and
+     * the class or the literal that reads them: a class, a literal, or a
+     * sequence of them, through captures. Null for anything with a choice
+     * inside, which a greedy quantifier may undo.
+     *
+     * @return array{CharSet, Hir}|null
      */
-    private static function fixedFirst(Hir $body): ?CharSet
+    private static function fixedFirst(Hir $body): ?array
     {
         while ($body instanceof CaptureHir) {
             $body = $body->body;
         }
 
         if ($body instanceof ClassHir) {
-            return $body->set->isEmpty() ? null : $body->set;
+            return $body->set->isEmpty() ? null : [$body->set, $body];
         }
 
         if ($body instanceof LiteralHir) {
-            return [] === $body->codePoints ? null : CharSet::single($body->codePoints[0]);
+            return [] === $body->codePoints ? null : [CharSet::single($body->codePoints[0]), $body];
         }
 
         if (!$body instanceof ConcatHir || [] === $body->parts) {
@@ -595,30 +668,70 @@ final class PriorityNfaBuilder
     }
 
     /**
+     * Whether the body holds a group, which its repeat captures again.
+     */
+    private static function captures(Hir $body): bool
+    {
+        $pending = [$body];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof CaptureHir) {
+                return true;
+            }
+
+            array_push($pending, ...$node->children());
+        }
+
+        return false;
+    }
+
+    /**
      * Each possessive quantifier read as a greedy one, checked against what
      * follows it now that the whole automaton is built.
+     *
+     * Without "u" the tables of the locale decide what a class takes past
+     * ASCII: under en_IE.ISO8859-1 "\w" takes "\xE9", and "/c\xE9++b?\w/"
+     * finds nothing in "c\xE9\xE9", where "/c\xE9+b?\w/" finds it. A
+     * proof that reads a byte past ASCII on one side and such a class on
+     * either holds only under the tables it was read under.
      *
      * @throws ComplexityException
      */
     private function assertPossessivesNeverGiveBack(): void
     {
         foreach ($this->possessives as $possessive) {
-            if (!$this->neverTakes($possessive['first'], $possessive['next'])) {
-                throw new ComplexityException(self::ATOMIC_MESSAGE, $possessive['position'], $this->pattern);
+            $read = $this->readFirst($possessive['first'], $possessive['next']);
+            if (null === $read) {
+                throw new ComplexityException($possessive['message'], $possessive['position'], $this->pattern);
+            }
+
+            if (null === $this->localeBound) {
+                continue;
+            }
+
+            foreach ($read as $state) {
+                if ((LocaleBoundClasses::pastAscii($possessive['first']) || LocaleBoundClasses::pastAscii($this->nfa->sets[$state]))
+                    && ($this->localeBound->binds($possessive['class']) || (isset($this->classes[$state]) && $this->localeBound->binds($this->classes[$state])))) {
+                    throw new ComplexityException(self::LOCALE_TABLES_MESSAGE, $possessive['position'], $this->pattern);
+                }
             }
         }
     }
 
     /**
-     * Whether nothing reached from the state, before it reads a character,
-     * can hold where a possessive quantifier's iteration started: the
-     * characters it reads first share none with the body's, and no anchor
-     * on the way could hold there and not after the last iteration. A
-     * greedy quantifier given back to such a place finds no match there, so
-     * it never gives back, and the possessive one writes what it writes.
+     * The character states reached from the state before it reads a
+     * character, or null when one of them, or an anchor on the way, could
+     * hold where a possessive quantifier's iteration started: the
+     * characters a state reads first share some with the body's, or the
+     * anchor could hold there and not after the last iteration. A greedy
+     * quantifier given back to a place none of them holds at finds no match
+     * there, so it never gives back, and the possessive one writes what it
+     * writes.
+     *
+     * @return list<int>|null
      */
-    private function neverTakes(CharSet $first, int $state): bool
+    private function readFirst(CharSet $first, int $state): ?array
     {
+        $read = [];
         $pending = [$state];
         $seen = [];
         while (null !== $state = array_pop($pending)) {
@@ -636,17 +749,18 @@ final class PriorityNfaBuilder
                     break;
                 case PriorityNfa::CHAR:
                     if (!$this->nfa->sets[$state]->intersect($first)->isEmpty()) {
-                        return false;
+                        return null;
                     }
+                    $read[] = $state;
 
                     break;
                 case PriorityNfa::START:
                     // "\A" holds before the first iteration as well as before none.
-                    return false;
+                    return null;
                 case PriorityNfa::END_OR_FINAL_NEWLINE:
                     // "$" holds before a final newline the body may have read.
                     if ($first->contains(0x0A)) {
-                        return false;
+                        return null;
                     }
                     $pending[] = $this->nfa->next[$state];
 
@@ -656,7 +770,7 @@ final class PriorityNfaBuilder
             }
         }
 
-        return true;
+        return $read;
     }
 
     private function readsMore(int $state): bool

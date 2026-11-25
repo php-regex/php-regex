@@ -18,7 +18,11 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -26,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 
 final class LanguageSolverSoundnessTest extends TestCase
 {
+    use InstalledLocales;
     use PcreGates;
     use PhpUnitForwardCompat;
 
@@ -218,6 +223,60 @@ final class LanguageSolverSoundnessTest extends TestCase
         yield 'a lazy run repeated' => ['atomic' => '/^(?>(?:a+?){2})b$/', 'plain' => '/^(?:a+?){2}b$/', 'subject' => 'aaab'];
         yield 'a longer branch the follower needs short' => ['atomic' => '/^(?>ab|a)b$/', 'plain' => '/^(?:ab|a)b$/', 'subject' => 'ab'];
         yield 'a newline after \R' => ['atomic' => "/^\\R\n$/", 'plain' => "/^(?:\r\n|\r|\n)\n$/", 'subject' => "\r\n"];
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped: each committed spelling finds nothing in the subject, with
+     * and without the JIT, where its plain spelling matches it whole.
+     */
+    #[Test]
+    #[DataProvider('provideRepeatsBeforeSkippableCommitments')]
+    public function test_a_repeat_before_a_commitment_that_may_match_nothing_is_refused(string $committed, string $plain, string $subject): void
+    {
+        $this->assertSame(0, preg_match($committed, $subject));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($committed), $subject));
+        $this->assertSame(1, preg_match($plain, $subject));
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('as if the group could not be skipped');
+
+        (new LanguageSolver())->equivalent($committed, $plain);
+    }
+
+    /**
+     * @return iterable<string, array{committed: string, plain: string, subject: string}>
+     */
+    public static function provideRepeatsBeforeSkippableCommitments(): iterable
+    {
+        yield 'an optional group repeated possessively' => ['committed' => '/^a+(?:b)?+a$/', 'plain' => '/^a+(?:b)?a$/', 'subject' => 'aa'];
+        yield 'an optional capturing group repeated possessively' => ['committed' => '/^a+(b)?+a$/', 'plain' => '/^a+(b)?a$/', 'subject' => 'aa'];
+        yield 'a group up to twice, possessively' => ['committed' => '/^a*(?:b){0,2}+a$/', 'plain' => '/^a*(?:b){0,2}a$/', 'subject' => 'aa'];
+        yield 'an optional group in an atomic group' => ['committed' => '/^a+(?>(?:b)?)a$/', 'plain' => '/^a+b?a$/', 'subject' => 'aa'];
+    }
+
+    /**
+     * Without "u", PHP hands PCRE2 the tables of the locale a program sets:
+     * under en_IE.ISO8859-1 "\w" takes "\xE9", and the possessive keeps
+     * what the follower needs. The target names no other locale than C, so
+     * the solver cannot know the tables, and refuses.
+     */
+    #[Test]
+    public function test_a_possessive_proven_past_ascii_against_a_class_of_the_locale_is_refused(): void
+    {
+        $this->requiresLocale('en_IE.ISO8859-1', 'The locale row');
+
+        $found = new \ArrayObject();
+        CharacterTables::under('en_IE.ISO8859-1', static function () use ($found): void {
+            $found[] = [preg_match('/^c\xE9++b?\w$/', "c\xE9\xE9"), preg_match('/^c\xE9+b?\w$/', "c\xE9\xE9")];
+        });
+        $this->assertSame([[0, 1]], $found->getArrayCopy());
+
+        $this->expectException(ComplexityException::class);
+        $this->expectExceptionMessageIsOrContains('the character tables of the locale');
+
+        (new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => 'C'])))->equivalent('/^c\xE9++b?\w$/', '/^c\xE9+b?\w$/');
     }
 
     /**
