@@ -69,8 +69,10 @@ return [
         'PHPRegex\Laravel\Command\LintCommand::normalizeOptimizations()' => ['validator-input', 1],
     ],
     'src/Laravel/PHPRegexServiceProvider.php' => [
+        'PHPRegex\Laravel\PHPRegexServiceProvider::atLeastOne()' => ['validator-input', 1],
+        'PHPRegex\Laravel\PHPRegexServiceProvider::customExtractor()' => ['validator-input', 1],
         'PHPRegex\Laravel\PHPRegexServiceProvider::mergeConfigWithNestedDefaults()' => ['open-options-bag', 1],
-        'PHPRegex\Laravel\PHPRegexServiceProvider::registerAnalysisServices()' => ['host-return', 1],
+        'PHPRegex\Laravel\PHPRegexServiceProvider::registerAnalysisServices()' => ['host-return', 2],
         'PHPRegex\Laravel\PHPRegexServiceProvider::withDefaults()' => ['open-options-bag', 3],
     ],
     'src/Laravel/Rules/ValidRegex.php' => [

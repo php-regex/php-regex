@@ -1545,6 +1545,8 @@ The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 | `exclude_paths`                         | `exclude`                                                  |
 | `analysis.ignore_patterns`              | `redos.ignored_patterns` (the two lists were merged anyway) |
 | `analysis.redos_threshold`              | removed: it was never read                                 |
+| `analysis.warning_threshold`            | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | —                                       | `php_version`, `pcre_version`: the target of `regex:lint`  |
 
 A 1.x key stops the container compile with Symfony's own unrecognized-option
@@ -1638,6 +1640,8 @@ The keys of `config/regex-parser.php` become, in `config/php-regex.php`:
 | `exclude_paths`                                  | `exclude`                                             |
 | `analysis.ignore_patterns`                       | `redos.ignored_patterns`                              |
 | `analysis.redos_threshold`                       | removed: it was never read                            |
+| `analysis.warning_threshold`                     | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | `REGEX_PARSER_IDE` in `.env`                     | `PHP_REGEX_IDE` (`APP_EDITOR` stays the fallback)     |
 | —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
 | `automata.*`, never read                         | the defaults of `regex:compare`                       |
@@ -1662,6 +1666,15 @@ and its JSON report gains a `target` key. The `Regex` service keeps judging for
 the running PHP. The lint and analysis services are resolved when a command
 uses them, so a setting they cannot use stops that command only. See
 [the Laravel guide](docs/guides/laravel.md).
+
+The provider binds `PHPRegex\Toolkit\Regex` and its `php-regex` alias, the
+two bindings an application resolves. The services behind the commands
+(`AnalysisService`, `LintService`, `FormatterRegistry`,
+`PatternSourceCollection`, the pattern sources) are bound under no class name,
+binding `ExtractorInterface` reads nothing, and `provides()` lists nothing: the
+provider is not deferred. Name an extractor of your own in `extractor`, a class
+or a binding implementing `ExtractorInterface`, as Symfony's
+`extractor_service` names one.
 
 #### The language server judges for the workspace's target
 

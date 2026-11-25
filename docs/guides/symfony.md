@@ -83,21 +83,26 @@ php_regex:
         enabled: false
         threshold: high    # low, medium, high or critical, in any case
         ignored_patterns: []
-    analysis:
-        complexity: false  # regex:lint reports complex patterns
-        warning_threshold: 50
+    # The complexity report, as "checks.complexity" of regex.json.
+    complexity:
+        enabled: false     # regex:lint reports complex patterns
+        threshold: 50      # the complexity score reported from, 1 or more
     automata:
         minimization_algorithm: hopcroft         # hopcroft or moore
         determinization_algorithm: subset-indexed # subset or subset-indexed
+    # The suggestions, as "checks.optimizations" of regex.json.
     optimizations:
-        digits: true
-        word: true
-        ranges: true
-        canonicalize_char_classes: true
-        possessive: false
-        factorize: false
-        min_quantifier_count: 4
-        verify_with_automata: true  # suggest only the rewrites the automata prove
+        enabled: true
+        min_savings: 1     # characters a rewrite saves; --min-savings overrides it
+        options:
+            digits: true
+            word: true
+            ranges: true
+            canonicalize_char_classes: true
+            possessive: false
+            factorize: false
+            min_quantifier_count: 4
+            verify_with_automata: true  # suggest only the rewrites the automata prove
     paths: [src]       # read from %kernel.project_dir%
     exclude: [vendor]  # a directory of the project, wherever it lies under the paths
     report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing
@@ -125,7 +130,7 @@ for one of `php_regex.paths`, which the message names.
 A value the bundle cannot read stops the container compile with the key
 named: an unknown ReDoS threshold, a `php_version` that is no version and
 no range `regex lint --php-version` takes, a `pcre_version` that is no
-release. `safe` and `unknown` are not thresholds:
+release, a `complexity.threshold` or an `optimizations.min_savings` below 1. `safe` and `unknown` are not thresholds:
 they are the verdicts a pattern gets.
 
 `redos.ignored_patterns` lists patterns, fragments of patterns or whole

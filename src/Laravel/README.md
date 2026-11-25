@@ -68,11 +68,13 @@ Every option lives in `config/php-regex.php`; unpublished keys take the package 
 | `locale` | `null` | `LC_CTYPE` locale `regex:lint` judges under (`"tr_TR.UTF-8"`); `null` for the one of the PHP running the command. The `Regex` service judges under the running PHP's |
 | `cache.store`, `cache.directory`, `cache.prefix` | `null`, `'{storage_path}/framework/cache/php-regex'`, `'regex_'` | Cache for parsed patterns: a Laravel store, else this directory |
 | `redos.enabled`, `redos.threshold`, `redos.ignored_patterns` | `false`, `'high'`, `[]` | ReDoS analysis on or off, minimum severity reported (`low` to `critical`), patterns skipped |
-| `analysis.complexity`, `analysis.warning_threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold, as `regex lint` does under `checks.complexity` |
+| `complexity.enabled`, `complexity.threshold` | `false`, `50` | `regex:lint` reports the patterns whose complexity score reaches the threshold (1 or more), as `regex lint` does under `checks.complexity` |
 | `automata.minimization_algorithm`, `automata.determinization_algorithm` | `'hopcroft'`, `'subset-indexed'` | Algorithms behind `regex:compare` |
-| `optimizations.*` | see the published file | Default optimization switches for `regex:lint` |
+| `optimizations.enabled`, `optimizations.min_savings` | `true`, `1` | `regex:lint` suggests the rewrites saving at least `min_savings` characters (`--min-savings` overrides it), as `regex lint` does under `checks.optimizations` |
+| `optimizations.options.*` | see the published file | What the optimizer may rewrite |
 | `paths`, `exclude`, `vendor_paths`, `ide` | `['app']`, `['vendor', 'node_modules', 'storage']`, `null`, `env('PHP_REGEX_IDE', env('APP_EDITOR'))` | What `regex:lint` scans and skips, read from `base_path()` whatever directory it runs from (paths given on the command line are read from the working directory); the libraries whose declared patterns it reads beside the scan paths, the application's `vendor/` by default and none as `[]`; and the editor behind its clickable links |
 | `report_unmatched_ignores` | `true` | `regex:lint` reports each `@regex-ignore` marker, or issue identifier it names, that silences nothing, as `regex.ignore.unmatched` |
+| `extractor` | `null` | A class or binding implementing `ExtractorInterface` that reads the patterns of the PHP files instead, as Symfony's `extractor_service`; `extraction` is then unused |
 | `extraction.interop`, `extraction.functions` | `null`, `[]` | The libraries whose calls `regex:lint` reads patterns from (`null` for every preset, those a later release adds included; a list for exactly those; `[]` for none of them), and your own helpers carrying a pattern, as `extraction` of `regex.json` |
 
 The package does not read `regex.json`: `extraction` is set here. A name in `extraction.interop` that is no preset stops `regex:lint` with `Invalid config/php-regex.php: Unknown extraction preset "…"`, naming the preset it most likely means.
@@ -129,6 +131,9 @@ The facade mirrors the whole service: `create`, `fromOptions`, `parse`, `parseTo
 
 One of those calls bypasses the configured singleton: `Regex::create()` returns a fresh instance, so the cache
 store and the ReDoS ignore-list from `config/php-regex.php` do not apply to it.
+
+The service is bound as `PHPRegex\Toolkit\Regex` and as `'php-regex'`: type-hint the class, or resolve either. These are
+the bindings the package supports; the services behind its commands are internal.
 
 Validate a pattern your users submit with the `ValidRegex` rule, judged by the same service:
 

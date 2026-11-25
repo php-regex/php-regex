@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Laravel;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPUnit\Framework\Attributes\Test;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Toolkit\Regex;
@@ -125,16 +127,6 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
     }
 
     #[Test]
-    public function test_formatter_registry_is_registered(): void
-    {
-        $this->assertTrue($this->application()->bound('php-regex.formatter-registry'));
-
-        /** @var \PHPRegex\Linter\Formatter\FormatterRegistry $registry */
-        $registry = $this->application()->make('php-regex.formatter-registry');
-        $this->assertInstanceOf(FormatterRegistry::class, $registry);
-    }
-
-    #[Test]
     public function test_pattern_sources_are_registered(): void
     {
         $this->assertTrue($this->application()->bound('php-regex.pattern-sources'));
@@ -147,10 +139,10 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
     #[Test]
     public function test_route_extractor_is_registered(): void
     {
-        $this->assertTrue($this->application()->bound(RoutePatternSource::class));
+        $this->assertTrue($this->application()->bound('php-regex.pattern-source.routes'));
 
         /** @var \PHPRegex\Laravel\Extractor\RoutePatternSource $extractor */
-        $extractor = $this->application()->make(RoutePatternSource::class);
+        $extractor = $this->application()->make('php-regex.pattern-source.routes');
         $this->assertInstanceOf(RoutePatternSource::class, $extractor);
         $this->assertSame('routes', $extractor->getName());
         $this->assertTrue($extractor->isSupported());
@@ -159,10 +151,10 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
     #[Test]
     public function test_validation_extractor_is_registered(): void
     {
-        $this->assertTrue($this->application()->bound(ValidationRulePatternSource::class));
+        $this->assertTrue($this->application()->bound('php-regex.pattern-source.validators'));
 
         /** @var \PHPRegex\Laravel\Extractor\ValidationRulePatternSource $extractor */
-        $extractor = $this->application()->make(ValidationRulePatternSource::class);
+        $extractor = $this->application()->make('php-regex.pattern-source.validators');
         $this->assertInstanceOf(ValidationRulePatternSource::class, $extractor);
         $this->assertSame('validators', $extractor->getName());
         $this->assertTrue($extractor->isSupported());
@@ -196,7 +188,8 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertArrayHasKey('max_lookbehind_length', $config);
         $this->assertArrayHasKey('cache', $config);
         $this->assertArrayHasKey('redos', $config);
-        $this->assertArrayHasKey('analysis', $config);
+        $this->assertArrayHasKey('complexity', $config);
+        $this->assertArrayNotHasKey('analysis', $config);
         $this->assertArrayHasKey('automata', $config);
         $this->assertArrayHasKey('optimizations', $config);
         $this->assertArrayHasKey('paths', $config);
@@ -242,17 +235,45 @@ final class RegexParserServiceProviderTest extends LaravelTestCase
         $this->assertInstanceOf(RegexNode::class, $ast);
     }
 
+    /**
+     * The provider registers its services when the application boots: it
+     * is not deferred, so it lists no service to be loaded for.
+     */
     #[Test]
-    public function test_service_provider_provides_list(): void
+    public function test_the_provider_is_not_deferred(): void
     {
         $provider = new PHPRegexServiceProvider($this->application());
-        $provides = $provider->provides();
 
-        $this->assertContains(Regex::class, $provides);
-        $this->assertContains('php-regex', $provides);
-        $this->assertContains('php-regex.cache', $provides);
-        $this->assertContains('php-regex.analysis', $provides);
-        $this->assertContains('php-regex.lint', $provides);
+        $this->assertFalse($provider->isDeferred());
+        $this->assertSame([], $provider->provides());
+    }
+
+    /**
+     * Regex and its "php-regex" alias are the services an application
+     * resolves; the classes the commands are built from are internal, and
+     * none is bound under its name.
+     *
+     * @return iterable<string, array{class: class-string}>
+     */
+    public static function provideInternalClasses(): iterable
+    {
+        yield 'AnalysisService' => ['class' => AnalysisService::class];
+        yield 'FormatterRegistry' => ['class' => FormatterRegistry::class];
+        yield 'RoutePatternSource' => ['class' => RoutePatternSource::class];
+        yield 'ValidationRulePatternSource' => ['class' => ValidationRulePatternSource::class];
+        yield 'PatternSourceCollection' => ['class' => PatternSourceCollection::class];
+        yield 'LintService' => ['class' => LintService::class];
+        yield 'ExtractorInterface' => ['class' => ExtractorInterface::class];
+    }
+
+    /**
+     * @param class-string $class
+     */
+    #[Test]
+    #[DataProvider('provideInternalClasses')]
+    public function test_an_internal_class_is_not_bound_under_its_name(string $class): void
+    {
+        $this->assertFalse($this->application()->bound($class), $class);
     }
 
     /**

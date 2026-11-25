@@ -52,11 +52,6 @@ final class ConsoleLintRunner
     private const FORMAT_CONSOLE = 'console';
 
     /**
-     * The steps of a run: the scan, the analysis and the optimizations.
-     */
-    private const STEPS = 3;
-
-    /**
      * @param bool|null $forking whether this PHP can fork the workers; null reads it from the pool
      */
     public function __construct(private readonly FormatterRegistry $formatters = new FormatterRegistry(), private readonly ?bool $forking = null) {}
@@ -109,6 +104,7 @@ final class ConsoleLintRunner
             excludePaths: $request->exclude,
             minSavings: $minSavings,
             disabledSources: $request->disabledSources,
+            checkOptimizations: $request->checkOptimizations,
             analysisWorkers: $jobs,
             optimizations: $request->optimizations,
             declarationPaths: $request->declarationPaths,
@@ -122,9 +118,10 @@ final class ConsoleLintRunner
         $startTime = microtime(true);
         $progress = null;
         if ($console && !$output->isQuiet()) {
-            // The bridges always suggest optimizations, a step of their own.
-            $progress = new LintProgressBar($output, self::STEPS);
-            $progress->writeln('  <fg=gray>[1/'.self::STEPS.'] Scanning files</>');
+            // The optimizations are a step of their own, when the run suggests them.
+            $steps = $request->checkOptimizations ? 3 : 2;
+            $progress = new LintProgressBar($output, $steps);
+            $progress->writeln('  <fg=gray>[1/'.$steps.'] Scanning files</>');
         }
 
         $runner = new LintRunner($setup->lint);

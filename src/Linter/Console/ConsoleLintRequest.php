@@ -37,11 +37,13 @@ final class ConsoleLintRequest
      * @param list<string>                        $exclude
      * @param string|null                         $excludeBase         the directory the excludes are read from; null reads
      *                                                                 them as the files are walked
-     * @param string|null                         $minSavings          --min-savings as given; null when it is not, for a
-     *                                                                 saving of 1 character
+     * @param string|null                         $minSavings          --min-savings as given, else the configured saving; null
+     *                                                                 for a saving of 1 character
      * @param string|null                         $jobs                --jobs as given; null when it is not, for one worker per
      *                                                                 CPU the run may use
      * @param list<string>                        $disabledSources     the pattern sources the run skips
+     * @param bool                                $checkOptimizations  whether the run suggests optimizations, a step of their
+     *                                                                 own
      * @param list<string>                        $declarationPaths    where the functions marked #[RegexPattern] are read
      * @param list<string>                        $vendorPaths         the libraries read the same way
      * @param string|null                         $displayBase         the directory the reports name files from; null for the
@@ -64,6 +66,7 @@ final class ConsoleLintRequest
         public readonly ?string $jobs,
         public readonly array $disabledSources,
         public readonly OptimizerOptions $optimizations,
+        public readonly bool $checkOptimizations,
         public readonly bool $checkRedos,
         public readonly bool $checkComplexity,
         public readonly bool $reportUnmatchedIgnores,

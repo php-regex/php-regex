@@ -131,8 +131,10 @@ final class ConfigurationVocabularyTest extends TestCase
     public static function provideRemovedKeys(): iterable
     {
         yield 'exclude_paths, renamed exclude in 1.x' => [['exclude_paths' => ['vendor']], 'exclude_paths', 'php_regex'];
-        yield 'analysis.ignore_patterns, merged into redos.ignored_patterns in 1.x' => [['analysis' => ['ignore_patterns' => ['foo']]], 'ignore_patterns', 'php_regex.analysis'];
-        yield 'analysis.redos_threshold, never read' => [['analysis' => ['redos_threshold' => 100]], 'redos_threshold', 'php_regex.analysis'];
+        yield 'analysis.ignore_patterns, merged into redos.ignored_patterns in 1.x' => [['analysis' => ['ignore_patterns' => ['foo']]], 'analysis', 'php_regex'];
+        yield 'analysis.redos_threshold, never read' => [['analysis' => ['redos_threshold' => 100]], 'analysis', 'php_regex'];
+        yield 'analysis.warning_threshold, now complexity.threshold' => [['analysis' => ['warning_threshold' => 50]], 'analysis', 'php_regex'];
+        yield 'optimizations.digits, now optimizations.options.digits' => [['optimizations' => ['digits' => false]], 'digits', 'php_regex.optimizations'];
         yield 'a key no release ever had' => [['poo' => 1], 'poo', 'php_regex'];
     }
 
@@ -162,18 +164,19 @@ final class ConfigurationVocabularyTest extends TestCase
     }
 
     #[Test]
-    public function test_analysis_keeps_its_warning_threshold(): void
+    public function test_complexity_has_its_switch_and_its_threshold(): void
     {
         // The switch that turns the complexity report of regex:lint on, off
-        // by default, and the score from which it reports a pattern.
+        // by default, and the score from which it reports a pattern, as
+        // regex.json's checks.complexity.
         $default = $this->process([]);
-        $this->assertIsArray($default['analysis']);
-        $this->assertSame(['complexity' => false, 'warning_threshold' => 50], $default['analysis']);
+        $this->assertIsArray($default['complexity']);
+        $this->assertSame(['enabled' => false, 'threshold' => 50], $default['complexity']);
 
-        $custom = $this->process(['analysis' => ['complexity' => true, 'warning_threshold' => 7]]);
-        $this->assertIsArray($custom['analysis']);
-        $this->assertTrue($custom['analysis']['complexity']);
-        $this->assertSame(7, $custom['analysis']['warning_threshold']);
+        $custom = $this->process(['complexity' => ['enabled' => true, 'threshold' => 7]]);
+        $this->assertIsArray($custom['complexity']);
+        $this->assertTrue($custom['complexity']['enabled']);
+        $this->assertSame(7, $custom['complexity']['threshold']);
     }
 
     #[Test]

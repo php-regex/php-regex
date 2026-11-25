@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `extractor` names a class, or a binding of the container, implementing
+   `ExtractorInterface`: `regex:lint` reads the patterns of the PHP files
+   with it, as the Symfony bundle's `extractor_service`.
+ * The provider binds `PHPRegex\Toolkit\Regex` and its `php-regex` alias:
+   the services behind the commands are bound under no class name, and
+   `provides()` is gone, the provider not being deferred.
  * `regex:lint` and `regex:routes` read a named group of a route constraint
    as non-capturing too where the installed `symfony/routing` drops its
    name, 6.4.51, 7.4.24 and 8.1.12 on: `->where('locale', '(?<l>en|fr)')`
@@ -47,9 +53,13 @@ CHANGELOG
  * The facade's `create()` and `optimize()` take the `OptionsArray` and
    `OptimizerOptionsArray` shapes of the toolkit, so PHPStan checks the
    options passed through them.
- * `analysis.complexity`, off by default, makes `regex:lint` report the
-   patterns whose complexity score reaches `analysis.warning_threshold`,
-   as `regex lint` does under `checks.complexity`.
+ * `complexity.enabled`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `complexity.threshold`, 1 or
+   more, as `regex lint` does under `checks.complexity`; `analysis` is gone.
+ * `optimizations` is nested as `checks.optimizations` of `regex.json`:
+   `enabled` switches the suggestions of `regex:lint`, `min_savings` is the
+   saving `--min-savings` defaults to, and `options` holds the optimizer
+   switches that sat at its top level.
  * `regex:compare --method intersection|subset|equivalence`, defaulting to
    `intersection` as the CLI and Symfony do; the JSON report names the
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.

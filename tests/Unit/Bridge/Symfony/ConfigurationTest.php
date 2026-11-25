@@ -36,9 +36,9 @@ final class ConfigurationTest extends TestCase
          *         prefix: string,
          *     },
          *     extractor_service: string|null,
-         *     analysis: array{
-         *         complexity: bool,
-         *         warning_threshold: int,
+         *     complexity: array{
+         *         enabled: bool,
+         *         threshold: int,
          *     },
          *     redos: array{
          *         enabled: bool,
@@ -50,14 +50,18 @@ final class ConfigurationTest extends TestCase
          *         determinization_algorithm: string
          *     },
          *     optimizations: array{
-         *         digits: bool,
-         *         word: bool,
-         *         ranges: bool,
-         *         canonicalize_char_classes: bool,
-         *         possessive: bool,
-         *         factorize: bool,
-         *         min_quantifier_count: int,
-         *         verify_with_automata: bool
+         *         enabled: bool,
+         *         min_savings: int,
+         *         options: array{
+         *             digits: bool,
+         *             word: bool,
+         *             ranges: bool,
+         *             canonicalize_char_classes: bool,
+         *             possessive: bool,
+         *             factorize: bool,
+         *             min_quantifier_count: int,
+         *             verify_with_automata: bool
+         *         }
          *     }
          * } $config
          */
@@ -68,20 +72,23 @@ final class ConfigurationTest extends TestCase
         $this->assertSame('%kernel.cache_dir%/php_regex', $config['cache']['directory']);
         $this->assertSame('regex_', $config['cache']['prefix']);
         $this->assertNull($config['extractor_service']);
-        $this->assertSame(50, $config['analysis']['warning_threshold']);
+        $this->assertFalse($config['complexity']['enabled']);
+        $this->assertSame(50, $config['complexity']['threshold']);
         // 2.0: no unread complexity score, one ignore list, under "redos".
-        $this->assertArrayNotHasKey('redos_threshold', $config['analysis']);
+        $this->assertArrayNotHasKey('analysis', $config);
         $this->assertSame([], $config['redos']['ignored_patterns']);
         $this->assertSame('hopcroft', $config['automata']['minimization_algorithm']);
         $this->assertSame('subset-indexed', $config['automata']['determinization_algorithm']);
-        $this->assertTrue($config['optimizations']['digits']);
-        $this->assertTrue($config['optimizations']['word']);
-        $this->assertTrue($config['optimizations']['ranges']);
-        $this->assertTrue($config['optimizations']['canonicalize_char_classes']);
-        $this->assertFalse($config['optimizations']['possessive']);
-        $this->assertFalse($config['optimizations']['factorize']);
-        $this->assertSame(4, $config['optimizations']['min_quantifier_count']);
-        $this->assertTrue($config['optimizations']['verify_with_automata']);
+        $this->assertTrue($config['optimizations']['enabled']);
+        $this->assertSame(1, $config['optimizations']['min_savings']);
+        $this->assertTrue($config['optimizations']['options']['digits']);
+        $this->assertTrue($config['optimizations']['options']['word']);
+        $this->assertTrue($config['optimizations']['options']['ranges']);
+        $this->assertTrue($config['optimizations']['options']['canonicalize_char_classes']);
+        $this->assertFalse($config['optimizations']['options']['possessive']);
+        $this->assertFalse($config['optimizations']['options']['factorize']);
+        $this->assertSame(4, $config['optimizations']['options']['min_quantifier_count']);
+        $this->assertTrue($config['optimizations']['options']['verify_with_automata']);
     }
 
     #[Test]
@@ -99,9 +106,9 @@ final class ConfigurationTest extends TestCase
          *         prefix: string,
          *     },
          *     extractor_service: string|null,
-         *     analysis: array{
-         *         complexity: bool,
-         *         warning_threshold: int,
+         *     complexity: array{
+         *         enabled: bool,
+         *         threshold: int,
          *     },
          *     redos: array{
          *         enabled: bool,
@@ -113,14 +120,18 @@ final class ConfigurationTest extends TestCase
          *         determinization_algorithm: string
          *     },
          *     optimizations: array{
-         *         digits: bool,
-         *         word: bool,
-         *         ranges: bool,
-         *         canonicalize_char_classes: bool,
-         *         possessive: bool,
-         *         factorize: bool,
-         *         min_quantifier_count: int,
-         *         verify_with_automata: bool
+         *         enabled: bool,
+         *         min_savings: int,
+         *         options: array{
+         *             digits: bool,
+         *             word: bool,
+         *             ranges: bool,
+         *             canonicalize_char_classes: bool,
+         *             possessive: bool,
+         *             factorize: bool,
+         *             min_quantifier_count: int,
+         *             verify_with_automata: bool
+         *         }
          *     }
          * } $config
          */
@@ -130,8 +141,9 @@ final class ConfigurationTest extends TestCase
                 'directory' => '/tmp/cache',
             ],
             'extractor_service' => 'my_custom_extractor',
-            'analysis' => [
-                'warning_threshold' => 1,
+            'complexity' => [
+                'enabled' => true,
+                'threshold' => 1,
             ],
             'redos' => [
                 'ignored_patterns' => ['foo', 'bar'],
@@ -141,14 +153,18 @@ final class ConfigurationTest extends TestCase
                 'determinization_algorithm' => 'subset',
             ],
             'optimizations' => [
-                'digits' => false,
-                'word' => false,
-                'ranges' => false,
-                'canonicalize_char_classes' => false,
-                'possessive' => true,
-                'factorize' => true,
-                'min_quantifier_count' => 6,
-                'verify_with_automata' => false,
+                'enabled' => false,
+                'min_savings' => 5,
+                'options' => [
+                    'digits' => false,
+                    'word' => false,
+                    'ranges' => false,
+                    'canonicalize_char_classes' => false,
+                    'possessive' => true,
+                    'factorize' => true,
+                    'min_quantifier_count' => 6,
+                    'verify_with_automata' => false,
+                ],
             ],
         ]]);
 
@@ -157,9 +173,9 @@ final class ConfigurationTest extends TestCase
          *     max_pattern_length: int,
          *     cache: string|null,
          *     extractor_service: string|null,
-         *     analysis: array{
-         *         complexity: bool,
-         *         warning_threshold: int,
+         *     complexity: array{
+         *         enabled: bool,
+         *         threshold: int,
          *     }
          * } $config
          */
@@ -169,17 +185,19 @@ final class ConfigurationTest extends TestCase
         $this->assertSame('/tmp/cache', $cacheConfig['directory']);
         $this->assertSame('my_custom_extractor', $config['extractor_service'] ?? 'should_not_exist');
         $this->assertSame(['foo', 'bar'], $config['redos']['ignored_patterns']);
-        $this->assertSame(1, $config['analysis']['warning_threshold'] ?? 0);
-        $this->assertArrayNotHasKey('redos_threshold', $config['analysis']);
+        $this->assertTrue($config['complexity']['enabled']);
+        $this->assertSame(1, $config['complexity']['threshold']);
         $this->assertSame('moore', $config['automata']['minimization_algorithm'] ?? '');
         $this->assertSame('subset', $config['automata']['determinization_algorithm'] ?? '');
-        $this->assertFalse($config['optimizations']['digits']);
-        $this->assertFalse($config['optimizations']['word']);
-        $this->assertFalse($config['optimizations']['ranges']);
-        $this->assertFalse($config['optimizations']['canonicalize_char_classes']);
-        $this->assertTrue($config['optimizations']['possessive']);
-        $this->assertTrue($config['optimizations']['factorize']);
-        $this->assertSame(6, $config['optimizations']['min_quantifier_count']);
-        $this->assertFalse($config['optimizations']['verify_with_automata']);
+        $this->assertFalse($config['optimizations']['enabled']);
+        $this->assertSame(5, $config['optimizations']['min_savings']);
+        $this->assertFalse($config['optimizations']['options']['digits']);
+        $this->assertFalse($config['optimizations']['options']['word']);
+        $this->assertFalse($config['optimizations']['options']['ranges']);
+        $this->assertFalse($config['optimizations']['options']['canonicalize_char_classes']);
+        $this->assertTrue($config['optimizations']['options']['possessive']);
+        $this->assertTrue($config['optimizations']['options']['factorize']);
+        $this->assertSame(6, $config['optimizations']['options']['min_quantifier_count']);
+        $this->assertFalse($config['optimizations']['options']['verify_with_automata']);
     }
 }

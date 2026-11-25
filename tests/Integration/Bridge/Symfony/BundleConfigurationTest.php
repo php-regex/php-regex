@@ -214,6 +214,43 @@ final class BundleConfigurationTest extends TestCase
         $this->compile(['redos' => ['threshold' => $threshold]]);
     }
 
+    /**
+     * The complexity and optimization settings are nested as regex.json
+     * nests them: the flat 1.x keys and the analysis node are refused, and
+     * so is a threshold or a saving below 1.
+     *
+     * @return iterable<string, array{config: array<string, mixed>, message: string}>
+     */
+    public static function provideRefusedSettings(): iterable
+    {
+        yield 'the analysis node' => ['config' => ['analysis' => ['complexity' => true]], 'message' => 'Unrecognized option "analysis" under "php_regex"'];
+        yield 'the 1.x complexity threshold' => ['config' => ['analysis' => ['warning_threshold' => 50]], 'message' => 'Unrecognized option "analysis" under "php_regex"'];
+        yield 'a complexity threshold of zero' => ['config' => ['complexity' => ['threshold' => 0]], 'message' => 'php_regex.complexity.threshold'];
+        yield 'a flat optimizer option' => ['config' => ['optimizations' => ['digits' => false]], 'message' => 'Unrecognized option "digits" under "php_regex.optimizations"'];
+        yield 'a saving of zero' => ['config' => ['optimizations' => ['min_savings' => 0]], 'message' => 'php_regex.optimizations.min_savings'];
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    #[Test]
+    #[DataProvider('provideRefusedSettings')]
+    public function test_the_container_refuses_a_setting_out_of_place(array $config, string $message): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageIsOrContains($message);
+
+        $this->compile($config);
+    }
+
+    #[Test]
+    public function test_the_container_takes_a_threshold_and_a_saving_of_one(): void
+    {
+        $container = $this->compile(['complexity' => ['threshold' => 1], 'optimizations' => ['min_savings' => 1]]);
+
+        $this->assertInstanceOf(LintCommand::class, $container->get('php_regex.command.lint'));
+    }
+
     #[Test]
     public function test_the_container_takes_an_upper_case_threshold(): void
     {

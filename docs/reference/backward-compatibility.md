@@ -162,7 +162,8 @@ The bridges and tools carry more than their classes:
   codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
-  code changes there in the same release — the `php-regex` configuration, the
+  code changes there in the same release — the `PHPRegex\Toolkit\Regex`
+  binding and its `php-regex` alias, the `php-regex` configuration, the
   commands' names and options, the `regex:routes` and `regex:compare` JSON
   reports ([every key](json-output.md#laravel-routes)), and the `ValidRegex`
   rule's options.

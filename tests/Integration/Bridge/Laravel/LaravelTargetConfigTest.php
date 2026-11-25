@@ -316,7 +316,7 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     public function test_analysis_redos_threshold_is_gone_from_the_config(): void
     {
         $this->assertFalse(config()->has('php-regex.analysis.redos_threshold'));
-        $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
+        $this->assertSame(50, config('php-regex.complexity.threshold'));
     }
 
     #[Test]
