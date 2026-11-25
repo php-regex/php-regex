@@ -28,6 +28,10 @@ use Psalm\Plugin\RegistrationInterface;
  * refuse as InvalidRegexPattern. A call a "@regex-target" marker covers is
  * judged for the versions it keeps of the series of Psalm's PHP; a marker
  * that cannot be read, or keeps none, is reported as InvalidRegexTarget.
+ * With <redos>true</redos>, the ReDoS findings the PHPStan extension reports
+ * are reported too, from <redosThreshold> on (high by default): RegexRedos
+ * for one attempt, RegexRedosSearch for the cost of a search, the loop of a
+ * function that looks for every match included.
  *
  * Patterns are judged for the PHP version Psalm analyses for, with the
  * PCRE2 it bundles, unless the plugin's options say otherwise; a PHP below
@@ -37,6 +41,8 @@ use Psalm\Plugin\RegistrationInterface;
  *         <phpVersion>8.4</phpVersion>
  *         <pcreVersion>10.44</pcreVersion>
  *         <locale>tr_TR.UTF-8</locale>
+ *         <redos>true</redos>
+ *         <redosThreshold>medium</redosThreshold>
  *     </pluginClass>
  *
  * <phpVersion> takes a version ("8.4"), a PHP_VERSION_ID (80400),
@@ -50,14 +56,15 @@ use Psalm\Plugin\RegistrationInterface;
 final class Plugin implements PluginEntryPointInterface
 {
     /**
-     * @throws InvalidRegexOptionException when <phpVersion>, <pcreVersion> or <locale> cannot be read; Psalm stops on it before reading any
-     *                                     file
+     * @throws InvalidRegexOptionException when <phpVersion>, <pcreVersion>, <locale>, <redos> or <redosThreshold> cannot be read;
+     *                                     Psalm stops on it before reading any file
      * @throws UnsupportedTargetException  when <phpVersion> names a PHP that ships PCRE1, or a range that allows
      *                                     none on PCRE2, as regex lint refuses it
      */
     public function __invoke(RegistrationInterface $registration, ?\SimpleXMLElement $config = null): void
     {
         CallTarget::configure(self::option($config, 'phpVersion'), self::option($config, 'pcreVersion'), self::option($config, 'locale'));
+        RedosFindings::configure(self::option($config, 'redos'), self::option($config, 'redosThreshold'));
         // What the engine answers about Unicode classes, kept in Psalm's
         // cache directory, which --clear-cache empties; none under --no-cache.
         $cacheDirectory = Config::getInstance()->getCacheDirectory();

@@ -8,6 +8,12 @@ CHANGELOG
    `preg_match_all()` from the pattern and reports invalid patterns as
    `InvalidRegexPattern`; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `<redos>true</redos>` reports the ReDoS findings of the PHPStan
+   extension at the `preg_*` calls, from the same analysis and in its words,
+   from `<redosThreshold>` on, `high` by default: `RegexRedos` for one
+   attempt (`regex.redos`), `RegexRedosSearch` for the cost of a search
+   (`regex.redos.search`), the loop of the functions that look for every
+   match included. A constant subject is not reported.
  * The callback of `preg_replace_callback()` keeps the shape of its matches
    on Psalm 7.7 and later, which type that callback with a provider of their
    own, asked before the plugins: the plugin's is asked first, and a call it
