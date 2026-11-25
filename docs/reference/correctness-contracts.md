@@ -131,9 +131,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   - **A match that is short but not empty** after a long read (`/a(?:a+\d)?/`, `/a*b|a/`) costs the same loop the
     same way and is not reported.
   - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
-    written, with one finding for each function of those calls that looks for every match. A variable holds every
-    value it is given in its function at each read: a call that reads it after it was given another literal is
-    counted for both.
+    written, with one finding for each function of those calls that looks for every match. Through a variable, a call
+    runs in its loop the value of the latest assignment before it, a statement in no branch and no loop that no later
+    assignment reaches through a loop: `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`.
+    Where an assignment in a branch or a loop may stand between, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 

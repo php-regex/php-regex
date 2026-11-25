@@ -113,6 +113,8 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
         yield 'a literal preg_match reads before preg_match_all' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match(\$p, \$s);\npreg_match_all(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
         yield 'a literal two loops read' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);\npreg_split(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all'), RedosVerdict::everyMatchMessage('preg_split')]];
+        yield 'a variable given another literal after the loop that reads it' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);\n\$p = '/(?:b+\\d)?/';\npreg_match(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
+        yield 'a variable a branch may give another literal' => ['code' => "function f(\$s, \$c) {\n\$p = '/(?:a+\\d)?/';\nif (\$c) { \$p = '/(?:b+\\d)?/'; }\npreg_match_all(\$p, \$s);\n}", 'messages' => []];
         yield 'a constant preg_match reads before preg_replace' => ['code' => "const P = '/(?:a+\\d)?/';\nfunction f(\$s) { preg_match(P, \$s); return preg_replace(P, '', \$s); }", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace')]];
     }
 

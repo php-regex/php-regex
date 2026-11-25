@@ -11,8 +11,11 @@ CHANGELOG
    the first call that reads it: `$p` read by `preg_match()` then
    `preg_match_all()` was not reported. The pattern is still reported once,
    where its literal is written, with one finding for each function of
-   those calls. `PatternOccurrence::$everyMatchElsewhere` names the
-   functions of the other calls, and `everyMatchCalls()` all of them.
+   those calls. Through a variable, a call runs in its loop the value of
+   the latest assignment before it, in no branch and no loop; where one in
+   a branch or a loop may stand between, the call names no loop.
+   `PatternOccurrence::$everyMatchElsewhere` names the functions of the
+   other calls, and `everyMatchCalls()` all of them.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the

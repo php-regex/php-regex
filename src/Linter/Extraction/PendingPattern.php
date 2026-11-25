@@ -100,7 +100,7 @@ final class PendingPattern
                 argumentOffset: null === $pattern['file'] ? null : $argument[0] ?? null,
                 argumentLength: null === $pattern['file'] ? null : $argument[1] ?? null,
                 variant: $pattern['variant'],
-                everyMatch: $this->function->everyMatch,
+                everyMatch: $pattern['loops'] ? $this->function->everyMatch : null,
             ))->guardedBy($pattern['guard']);
         }
 

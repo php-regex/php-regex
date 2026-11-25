@@ -153,6 +153,123 @@ final class EveryMatchCallTest extends TestCase
     }
 
     /**
+     * A call reads, through a variable, the value of the latest assignment
+     * before it in straight-line code: the loop over every match of the
+     * call is that literal's alone. Where an assignment in a branch or a
+     * loop may stand between, the call names no loop: it is no literal's
+     * more than another's.
+     *
+     * @param list<string>                                   $loops    the functions whose loop the oracle runs
+     * @param list<array{string, string|null, list<string>}> $expected
+     */
+    #[Test]
+    #[DataProvider('provideAssignmentsACallReads')]
+    public function test_extraction_names_the_loop_of_the_assignment_a_call_reads(string $code, array $loops, array $expected): void
+    {
+        foreach ($loops as $function) {
+            $this->assertGreaterThan(self::matchesMade($function, null, str_repeat('a', 1000)), self::matchesMade($function, null, str_repeat('a', 2000)), 'Oracle: '.$function.' stops early.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', null, str_repeat('a', 2000)), 'Oracle: preg_match() goes on.');
+
+        $code = "<?php\n\$s = 'x';\n".$code."\n";
+        $this->assertSame($expected, $this->readLoopsWith(new TokenBasedExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The token strategy.');
+        if (class_exists(ParserFactory::class)) {
+            $this->assertSame($expected, $this->readLoopsWith(new PhpParserExtractionStrategy([], PatternFunctionRegistry::native()), $code), 'The parser strategy.');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{code: string, loops: list<string>, expected: list<array{string, string|null, list<string>}>}>
+     */
+    public static function provideAssignmentsACallReads(): iterable
+    {
+        yield 'a variable given another literal after the loop that reads it' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; preg_match(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'a variable each loop reads with its own literal' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; preg_split(\$p, \$s); }",
+            'loops' => ['preg_match_all', 'preg_split'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, ['preg_split']]],
+        ];
+        yield 'a variable given its literal once, read by two loops' => [
+            'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); preg_split(\$p, \$s); }",
+            'loops' => ['preg_match_all', 'preg_split'],
+            'expected' => [['/p/', 'preg_match_all', ['preg_split']]],
+        ];
+        yield 'a variable a branch may give another literal' => [
+            'code' => "function f(\$s, \$c) { \$p = '/p/'; if (\$c) { \$p = '/q/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable each branch gives a literal' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; } else { \$p = '/q/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable a later turn of the loop gives another literal' => [
+            'code' => "function f(\$s, \$l) { \$p = '/p/'; foreach (\$l as \$x) { preg_match_all(\$p, \$s); \$p = '/q/'; } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable read through another one' => [
+            'code' => "function f(\$s) { \$q = '/p/'; \$p = \$q; preg_match(\$p, \$s); preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, ['preg_match_all']]],
+        ];
+        yield 'a variable read through another one given another literal later' => [
+            'code' => "function f(\$s) { \$q = '/p/'; \$p = \$q; preg_match_all(\$p, \$s); \$q = '/q/'; preg_match(\$q, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'a platform constant a loop reads through a variable' => [
+            'code' => 'function f($s) { $eol = PHP_EOL; return preg_split($eol, $s); }',
+            'loops' => ['preg_split'],
+            'expected' => [["\n", 'preg_split', []], ["\r\n", 'preg_split', []]],
+        ];
+        // The head of a loop assigns the variable at each turn.
+        yield 'a variable the head of a foreach gives each literal' => [
+            'code' => "function f(\$s) { foreach (['/p/', '/q/'] as \$p) { preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'a variable a goto may come back to' => [
+            'code' => "function f(\$s) { \$p = '/p/'; a: preg_match_all(\$p, \$s); goto a; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a parameter' => [
+            'code' => 'function f($p, $s) { preg_match_all($p, $s); }',
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        yield 'a variable read before its assignment' => [
+            'code' => "function f(\$s) { preg_match_all(\$p, \$s); \$p = '/p/'; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        yield 'a variable composed with another one' => [
+            'code' => "function f(\$s) { \$x = 'p'; \$p = '/'.\$x.'/'; preg_match(\$p, \$s); preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a variable holding a list of another one' => [
+            'code' => "function f(\$s) { \$x = '/p/'; \$l = [\$x]; preg_match(\$x, \$s); preg_replace(\$l, '', \$s); }",
+            'loops' => ['preg_replace'],
+            'expected' => [['/p/', null, []]],
+        ];
+        // At the file level a call between the first assignment and the
+        // read may write the variable: what the second call reads is not
+        // known.
+        yield 'a variable of the file level given another literal after the loop that reads it' => [
+            'code' => "\$p = '/p/';\npreg_match_all(\$p, \$s);\n\$p = '/q/';\npreg_match(\$p, \$s);",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+    }
+
+    /**
      * Each pattern of a list runs in the loop of the call.
      */
     #[Test]
