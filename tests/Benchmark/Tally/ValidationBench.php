@@ -20,6 +20,7 @@ use PHPRegex\Toolkit\Regex;
 use Tally\Attribute\Before;
 use Tally\Attribute\DataProvider;
 use Tally\Attribute\ExpectedFor;
+use Tally\Attribute\MetricTolerance;
 
 /**
  * The path every consumer takes first: a pattern tokenized, parsed and
@@ -113,8 +114,16 @@ final class ValidationBench
 
     /**
      * What a pipeline judging the same pattern twice pays the second time.
+     *
+     * A pattern longer than 256 bytes is kept under its SHA-256, which the
+     * call computes again, about 55 instructions a byte. The job has counted
+     * those two cases about 9,600 cycles apart on heads that leave the
+     * validation path alone, 141.1K or 150.6K and 84.51K or 94.18K, where a
+     * count in the same image on those heads gives each the lower figure.
+     * The cycles may move by 12,000; the instructions keep their 2 %.
      */
     #[DataProvider('validateCases')]
+    #[MetricTolerance(instructions: 0.02, cycles: 0.05, memory: 0.05, cyclesAtLeast: 12_000)]
     #[ExpectedFor('counted-4500', instructions: '2.458K', cycles: '21.65K', memory: '40B')]
     #[ExpectedFor('lookbehind-alternatives', instructions: '106.2K', cycles: '141.1K', memory: '192B')]
     #[ExpectedFor('many-backreferences', instructions: '52.16K', cycles: '94.18K', memory: '192B')]
