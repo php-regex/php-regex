@@ -780,9 +780,10 @@ The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
 `regex.syntax.empty` are gone (PHPStan reports those patterns as
 `regexp.pattern`), and ReDoS findings are reported as `regex.redos` whatever
 their severity, instead of `regex.redos.critical` and the like. Update
-`ignoreErrors` and baselines accordingly. The rule takes
-`new RegexPatternRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
-its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
+`ignoreErrors` and baselines accordingly. PHPStan builds the rules from
+`extension.neon`, and their constructors are `@internal`: configure them
+through `phpRegex`, never with `new RegexPatternRule(...)`. The
+`IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 `IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
 
 #### ReDoS verdicts are proven, and the PHPStan ReDoS message changed
@@ -951,16 +952,6 @@ new kind of node adds a method to the interface.
 return type; like every other node, they now declare none and return what
 the visitor gives, the `@return T` of `NodeInterface::accept()`. Code that
 reads the return type through reflection gets `null` for every node.
-
-#### The PHPStan rules take PHPStan's `phpVersion` as it is
-
-The last constructor parameter of `RegexPatternRule` and
-`RegexPatternArgumentRule`, `$phpVersionRange`, is typed
-`int|array|null`, an `int|array{min: int, max: int}|null` in its
-docblock, where it took `mixed`: PHPStan's `phpVersion` parameter, one
-version id or a `{min, max}` range. A rule built by hand with anything else
-throws `TypeError` from a file that declares `strict_types` (elsewhere PHP's
-own coercion applies), where the value was silently ignored.
 
 #### Sequences and alternations hold lists
 

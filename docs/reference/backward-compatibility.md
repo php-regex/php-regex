@@ -140,7 +140,8 @@ empty match or the attempt that finds each short match
 
 The bridges and tools carry more than their classes:
 
-- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
+- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`. PHPStan
+  builds the rules from it: their constructors are `@internal`.
 - `regex-psalm`: the `InvalidRegexPattern`, `RegexRedos` and
   `RegexRedosSearch` issue names and the plugin's `<phpVersion>`,
   `<pcreVersion>`, `<redos>` and `<redosThreshold>` options stay for all of
@@ -150,7 +151,8 @@ The bridges and tools carry more than their classes:
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
 - `regex-rector`: the rules keep their names for all of 2.x and take no
-  configuration, and `RegexSetList::STRING_FUNCTIONS`,
+  configuration (Rector builds them: their constructors are `@internal`), and
+  `RegexSetList::STRING_FUNCTIONS`,
   `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0` name the sets
   that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.

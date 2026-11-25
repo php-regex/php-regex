@@ -50,8 +50,8 @@ use PHPStan\Type\Type;
  * the running engine refuses); lint, ReDoS risks and optimizations on demand.
  *
  * The "phpRegex" parameter is ConfigArray, every key optional, as the
- * extension's schema shapes it; the constructors read it again, for a rule
- * built by hand.
+ * extension's schema shapes it; the constructors read again what the schema
+ * cannot check: a version, a threshold, a preset name.
  *
  * @phpstan-type ConfigArray array{
  *     phpVersion?: string|int|array{min: string|int, max: string|int}|null,
@@ -123,6 +123,8 @@ final class RegexPatternRule implements Rule
     private ?TrivialMatchClassifier $trivialMatches = null;
 
     /**
+     * @internal built by extension.neon; configure through `phpRegex`
+     *
      * @param ConfigArray                        $config             the "phpRegex" parameter: "phpVersion", "pcreVersion",
      *                                                               "interop" (the presets read, every one when null) and
      *                                                               "checks" ("lint", "redos", "optimizations"),

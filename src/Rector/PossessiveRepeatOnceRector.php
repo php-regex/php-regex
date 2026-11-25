@@ -57,6 +57,9 @@ final class PossessiveRepeatOnceRector extends AbstractRector
      */
     private const PHP_HONOURING_THE_REPEAT = 70406;
 
+    /**
+     * @internal built by Rector's container; the rule takes no configuration
+     */
     public function __construct(private readonly PhpVersionProvider $phpVersionProvider, private readonly ReflectionResolver $reflectionResolver) {}
 
     /**

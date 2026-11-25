@@ -26,6 +26,15 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\PHPStan\RegexPatternArgumentRule;
+use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
+use PHPRegex\Rector\EscapeLiteralBraceRector;
+use PHPRegex\Rector\EscapeNulByteRector;
+use PHPRegex\Rector\PossessiveRepeatOnceRector;
+use PHPRegex\Rector\PregMatchToStringComparisonRector;
+use PHPRegex\Rector\PregReplaceToStrReplaceRector;
+use PHPRegex\Rector\PregSplitToExplodeRector;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -73,6 +82,17 @@ final class InternalMembersTest extends TestCase
             TranspileException::class => ['__construct'],
             SampleGenerationException::class => ['__construct'],
             PatternOccurrence::class => ['__construct'],
+            // The rules PHPStan builds from extension.neon, and those Rector
+            // builds from the rule's class name.
+            RegexPatternRule::class => ['__construct'],
+            RegexPatternArgumentRule::class => ['__construct'],
+            PregMatchToStringComparisonRector::class => ['__construct'],
+            PregReplaceToStrReplaceRector::class => ['__construct'],
+            PregSplitToExplodeRector::class => ['__construct'],
+            EscapeLiteralBraceRector::class => ['__construct'],
+            AlphabeticAssertionToClassicRector::class => ['__construct'],
+            EscapeNulByteRector::class => ['__construct'],
+            PossessiveRepeatOnceRector::class => ['__construct'],
         ];
 
         foreach ($members as $class => $methods) {
