@@ -282,7 +282,15 @@ replay of a search cost. So `/^(?:\xE9|\xC9)+$/i` replays under
 `fr_FR.ISO8859-1`, where `\xC9` is the capital of `\xE9`, and
 `/^(?=[[:alpha:]])(?:\w|\xE9)+$/` is proven exponential there. The overlap of
 two branches, `regex.lint.overlap.charset`, reads them under its tables:
-`(?:\w|\xE9)+` overlaps there and not under `C`. The last code unit PCRE2
+`(?:\w|\xE9)+` overlaps there and not under `C`. So do, without `u`, the
+rules that compare two runs, or a loop with what follows it
+(`regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`):
+every byte as the tables give it, the other case of an ASCII letter included,
+unless the pattern reads a character caselessly where the engine's paths read
+some case otherwise, as macOS's `tr_TR.ISO8859-9` reads `i`, `I` and `\xDD`.
+Under glibc's `tr_TR.ISO-8859-9`, which pairs `i` with `\xDD` and `I` with
+`\xFD`, `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are reported under `C`
+alone, and `/i+\xDD+$/i` under that locale alone. The last code unit PCRE2
 requires before an attempt has the other case the tables give it, or under
 `(*UCP)` the one Unicode gives it: `/a+\xe9/i` looks for `\xE9` or `\xC9`
 there, for `\xE9` alone under `C`.

@@ -21,6 +21,8 @@ use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
+use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -28,7 +30,9 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal
@@ -69,6 +73,17 @@ final class LintContext
      * What can be matched after the nodes of the pattern.
      */
     private readonly Continuation $continuation;
+
+    /**
+     * The pattern's analyzer reading every byte under the tables of the
+     * target's locale, built at its first use.
+     */
+    private ?CharSetAnalyzer $everyByte = null;
+
+    /**
+     * Whether the rules compare the sets of two nodes every byte, read once.
+     */
+    private ?bool $comparesEveryByte = null;
 
     /**
      * @param (\Closure(string): bool)|null $ruleEnabled whether the configuration turns a rule on, by its
@@ -127,6 +142,71 @@ final class LintContext
     public function lastChars(NodeInterface $node, ?string $flags = null): ByteCharSet
     {
         return $this->charsInForce($node, $flags ?? $this->activeFlags, false);
+    }
+
+    /**
+     * Whether the rules read the characters of the pattern every byte,
+     * under the tables of the target's locale, where firstChars() reads
+     * them in ASCII alone, under PCRE2's own: under another locale than
+     * "C", whose tables give the other case of a letter, ASCII's included,
+     * and the bytes of "\d", "\s", "\w" and the POSIX classes above ASCII
+     * as its C library says, and without UTF, where a byte is a character.
+     * A set of bytes then holds every character the node takes; one the
+     * tables cannot tell is not known.
+     */
+    public function readsEveryByte(): bool
+    {
+        return CharacterTables::BUILT_IN !== $this->target->locale && !$this->pattern->unicodeMode;
+    }
+
+    /**
+     * Whether the rules that compare the characters of two nodes, a loop
+     * and what follows it or two runs, read them every byte: where the
+     * rules read every byte, unless the pattern reads a character
+     * caselessly where the case is not settled. Where the engine's paths
+     * read the case of a byte otherwise, as macOS's tr_TR.ISO8859-9 reads
+     * "I", "i" and 0xDD, every caseless set holding it, a caseless "[a-z]"
+     * among them, would not be known; Turkish casing reads "i" and "I"
+     * apart from the tables. The rules keep the ASCII read there.
+     */
+    public function comparesEveryByte(): bool
+    {
+        return $this->comparesEveryByte ??= $this->readsEveryByte()
+            && (!$this->readsCaselessly()
+                || (!str_contains(StartOptions::of($this->pattern->source), '(*TURKISH_CASING)') && CharacterTables::forLocale($this->target->locale)->settlesEveryCase()));
+    }
+
+    /**
+     * The characters the node can start with, read as firstChars() reads
+     * them, every byte under the tables of the target's locale.
+     */
+    public function firstBytes(NodeInterface $node, ?string $flags = null): ByteCharSet
+    {
+        return $this->charsInForce($node, $flags ?? $this->activeFlags, true, true);
+    }
+
+    /**
+     * The characters the node can end with, read as firstBytes() reads
+     * them.
+     */
+    public function lastBytes(NodeInterface $node, ?string $flags = null): ByteCharSet
+    {
+        return $this->charsInForce($node, $flags ?? $this->activeFlags, false, true);
+    }
+
+    /**
+     * The pattern's analyzer reading every byte under the tables of the
+     * target's locale, under the flags the pattern opens with.
+     */
+    public function everyByteAnalyzer(): CharSetAnalyzer
+    {
+        return $this->everyByte ??= new CharSetAnalyzer(
+            $this->pattern->flags,
+            StartOptions::of($this->pattern->source),
+            true,
+            locale: $this->target->locale,
+            ucpFoldsPastAscii: $this->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf),
+        );
     }
 
     /**
@@ -308,6 +388,17 @@ final class LintContext
     }
 
     /**
+     * Whether the pattern may read a character caselessly: under i, or
+     * after an option setting that may turn it on, "(?i)" or "(?mi:", read
+     * from the pattern as written, a "(?i" a class or an escape holds
+     * included.
+     */
+    private function readsCaselessly(): bool
+    {
+        return $this->pattern->hasFlag('i') || 1 === LibraryPcre::match('/\(\?\^?[a-zA-Z]*i/', $this->pattern->source);
+    }
+
+    /**
      * A group a subroutine call runs, between the node and the atomic group,
      * runs the node without the group around it: "(?1)" in
      * "(?>x((?:a+)+))|y(?1)$" retries the loop when "$" fails.
@@ -358,25 +449,26 @@ final class LintContext
      * and one with no inline flags inside, is read whole by the analyzer
      * under the flags at its start. A lookaround reads nothing, as the
      * analyzer has it, whatever options its body sets: "(?=(?i:b))b"
-     * starts with "b" alone.
+     * starts with "b" alone. With $everyByte, the analyzer reading every
+     * byte under the tables of the target's locale reads them.
      */
-    private function charsInForce(NodeInterface $node, string $flags, bool $fromStart): ByteCharSet
+    private function charsInForce(NodeInterface $node, string $flags, bool $fromStart, bool $everyByte = false): ByteCharSet
     {
         if (FlagScope::containsInlineFlags($node)) {
             if ($node instanceof GroupNode) {
                 return NodePredicates::isTransparentGroup($node->type)
-                    ? $this->charsInForce($node->child, FlagScope::flagsInside($node, $flags), $fromStart)
+                    ? $this->charsInForce($node->child, FlagScope::flagsInside($node, $flags), $fromStart, $everyByte)
                     : ByteCharSet::empty();
             }
 
             if ($node instanceof QuantifierNode) {
-                return $this->charsInForce($node->node, $flags, $fromStart);
+                return $this->charsInForce($node->node, $flags, $fromStart, $everyByte);
             }
 
             if ($node instanceof AlternationNode) {
                 $set = ByteCharSet::empty();
                 foreach ($this->flagsAtEachChild($node, $flags) as $index => $flagsAtAlternative) {
-                    $set = $set->union($this->charsInForce($node->alternatives[$index], $flagsAtAlternative, $fromStart));
+                    $set = $set->union($this->charsInForce($node->alternatives[$index], $flagsAtAlternative, $fromStart, $everyByte));
                 }
 
                 return $set;
@@ -387,7 +479,7 @@ final class LintContext
                 $indexes = $fromStart ? array_keys($flagsAtChild) : array_reverse(array_keys($flagsAtChild));
                 $set = ByteCharSet::empty();
                 foreach ($indexes as $index) {
-                    $set = $set->union($this->charsInForce($node->children[$index], $flagsAtChild[$index], $fromStart));
+                    $set = $set->union($this->charsInForce($node->children[$index], $flagsAtChild[$index], $fromStart, $everyByte));
                     if (!NodePredicates::isOptionalNode($node->children[$index])) {
                         break;
                     }
@@ -397,18 +489,19 @@ final class LintContext
             }
         }
 
-        $analyzer = $this->analyzerFor($flags);
+        $analyzer = $this->analyzerFor($flags, $everyByte);
 
         return $fromStart ? $analyzer->firstChars($node) : $analyzer->lastChars($node);
     }
 
     /**
-     * The pattern's analyzer under other flags. No inline flag turns the u
-     * modifier off: "(?^)" resets i, m, n, s and x only.
+     * The pattern's analyzer under other flags, the one reading every byte
+     * when asked. No inline flag turns the u modifier off: "(?^)" resets
+     * i, m, n, s and x only.
      */
-    private function analyzerFor(string $flags): CharSetAnalyzer
+    private function analyzerFor(string $flags, bool $everyByte = false): CharSetAnalyzer
     {
-        return $this->charSetAnalyzer->withFlags(str_contains($this->pattern->flags, 'u') ? $flags.'u' : $flags);
+        return ($everyByte ? $this->everyByteAnalyzer() : $this->charSetAnalyzer)->withFlags(str_contains($this->pattern->flags, 'u') ? $flags.'u' : $flags);
     }
 
     /**
