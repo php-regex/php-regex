@@ -98,8 +98,9 @@ final class LintContext
         ?PcreTarget $target = null,
     ) {
         // The restriction (*CASELESS_RESTRICT) sets is in force as r is,
-        // until an option setting lifts it.
-        $this->activeFlags = $charSetAnalyzer->flagsAtTheStart($pattern->flags);
+        // until an option setting lifts it. The modifiers count once each:
+        // "/xx" is "x", which an option setting alone turns into "xx".
+        $this->activeFlags = $charSetAnalyzer->flagsAtTheStart(NodePredicates::modifierFlags($pattern->flags));
         $this->continuation = new Continuation($groups);
         $this->dfas = $dfas ?? LanguageQuestions::dfas();
         $this->target = $target ?? PcreTarget::runtime();
