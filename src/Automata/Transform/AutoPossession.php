@@ -221,11 +221,10 @@ final class AutoPossession
     {
         return match (true) {
             self::oneCharacter($node) => 'c',
-            $node instanceof LiteralNode => 'e',
-            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, self::brackets($node->node)),
-            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, self::brackets($node->child)),
-            $node instanceof SequenceNode => 's('.implode(',', array_map(self::brackets(...), $node->children)).')',
-            $node instanceof AlternationNode => 'a('.implode('|', array_map(self::brackets(...), $node->alternatives)).')',
+            $node instanceof QuantifierNode => \sprintf('q%s%s(%s)', serialize($node->bounds), $node->type->name, self::brackets($node->node)),
+            $node instanceof GroupNode => \sprintf('g%s(%s)', $node->type->name, self::brackets($node->child)),
+            $node instanceof SequenceNode => \sprintf('s(%s)', implode(',', array_map(self::brackets(...), $node->children))),
+            $node instanceof AlternationNode => \sprintf('a(%s)', implode('|', array_map(self::brackets(...), $node->alternatives))),
             default => serialize(RewriteSites::shape($node)),
         };
     }

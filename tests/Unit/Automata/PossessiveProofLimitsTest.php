@@ -99,6 +99,7 @@ final class PossessiveProofLimitsTest extends TestCase
         yield 'the repeat inside a group' => ['left' => '/(a+)(?:b)?+a/', 'right' => '/(a+)(?:b)?a/', 'witness' => 'aa'];
         yield 'the optional group inside a group' => ['left' => '/a+(?:(?:b)?+)a/', 'right' => '/a+(?:(?:b)?)a/', 'witness' => 'aa'];
         yield 'the possessive on the right' => ['left' => '/b+(?:a){0,2}b/', 'right' => '/b+(?:a){0,2}+b/', 'witness' => 'bb'];
+        yield 'a repeat after the group as well' => ['left' => '/a+(?:b)?+ac+/', 'right' => '/a+(?:b)?ac+/', 'witness' => 'aac'];
         // PCRE2 reads the group repeated without a bound apart, and matches
         // alike: the whole class of groups the engine may skip is refused.
         yield 'a star over a group' => ['left' => '/a+(?:b)*+a/', 'right' => '/a+(?:b)*a/', 'witness' => null];
@@ -137,6 +138,58 @@ final class PossessiveProofLimitsTest extends TestCase
         // Made possessive, the repeat gives nothing back to what follows.
         yield 'a repeat nothing after takes from' => ['left' => '/a+(?:b)?+c/', 'right' => '/a+(?:b)?c/', 'letters' => 'abc'];
         yield 'an optional group at the end' => ['left' => '/[^a]{1,2}(ab)?+/', 'right' => '/[^a]{1,2}(ab)?/', 'letters' => 'abc'];
+    }
+
+    /**
+     * The brackets PCRE2 reads to make a repeat possessive read each
+     * character alike: "[0-9]" and "\d" in a group the engine may skip
+     * leave them the same, and so does a count of one in a group that
+     * always matches something, which the engine never skips. Spliced
+     * before an "a", the two parts write the same matches on every
+     * subject, with and without the JIT.
+     */
+    #[Test]
+    #[DataProvider('provideBracketsThatReadEachCharacterAlike')]
+    public function test_brackets_that_read_each_character_alike_read_alike(string $left, string $right): void
+    {
+        $spliced = static fn (string $pattern): string => substr($pattern, 0, -1).'a/';
+        foreach (self::subjects('a1b', 4) as $subject) {
+            $this->assertSame(self::matchesOf($spliced($left), $subject), self::matchesOf($spliced($right), $subject), \sprintf('%s and %s differ on %s.', $left, $right, json_encode($subject)));
+            $this->assertSame(self::matchesOf(PcreInterpreter::pattern($spliced($left)), $subject), self::matchesOf(PcreInterpreter::pattern($spliced($right)), $subject), \sprintf('%s and %s differ on %s without the JIT.', $left, $right, json_encode($subject)));
+        }
+
+        $this->assertTrue((new LanguageSolver())->readAlike($left, $right));
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string}>
+     */
+    public static function provideBracketsThatReadEachCharacterAlike(): iterable
+    {
+        yield 'a class repeated in an atomic group' => ['left' => '/a+(?>[0-9]*)/', 'right' => '/a+(?>\d*)/'];
+        yield 'a class in an optional group in an atomic group' => ['left' => '/a+(?>(?:[0-9])?)/', 'right' => '/a+(?>(?:\d)?)/'];
+        yield 'a class beside an empty branch' => ['left' => '/a+(?>[0-9]|b|)/', 'right' => '/a+(?>\d|b|)/'];
+        yield 'an optional class before an optional letter' => ['left' => '/a+(?>[0-9]?b?)/', 'right' => '/a+(?>\d?b?)/'];
+        yield 'a letter counted once in a group repeated possessively' => ['left' => '/a+(?:b{1})++/', 'right' => '/a+(?:b)++/'];
+    }
+
+    /**
+     * Spliced before a group the engine may skip, "(?:a)+" and "a+" run
+     * apart: PCRE2 makes the letter repeated possessive, never the group.
+     * Read whole, with nothing after them, they run alike in every call.
+     */
+    #[Test]
+    public function test_a_repeat_written_as_a_group_reads_apart_from_its_letter_where_it_is_spliced(): void
+    {
+        $this->assertSame([1, 0], [preg_match('/(?:a)+(?:b)?+a/', 'aa'), preg_match('/a+(?:b)?+a/', 'aa')]);
+        $this->assertSame([1, 0], [preg_match(PcreInterpreter::pattern('/(?:a)+(?:b)?+a/'), 'aa'), preg_match(PcreInterpreter::pattern('/a+(?:b)?+a/'), 'aa')]);
+        foreach (self::subjects('ab', 4) as $subject) {
+            $this->assertSame(self::matchesOf('/(?:a)+/', $subject), self::matchesOf('/a+/', $subject), 'On "'.$subject.'".');
+        }
+
+        $solver = new LanguageSolver();
+        $this->assertFalse($solver->readAlike('/(?:a)+/', '/a+/'));
+        $this->assertSame([], $solver->runsOfEveryCall('/(?:a)+/', '/a+/'));
     }
 
     /**
@@ -244,6 +297,43 @@ final class PossessiveProofLimitsTest extends TestCase
         yield 'two bytes past ASCII, caseless' => ['left' => '/\xC9++\xE9/i', 'right' => '/\xC9+\xE9/i', 'letters' => "\xC9\xE9", 'witness' => "\xC9\xC9"];
         yield 'two bytes past ASCII under an inline caseless option' => ['left' => '/(?i)\xC9++\xE9/', 'right' => '/(?i)\xC9+\xE9/', 'letters' => "\xC9\xE9", 'witness' => "\xC9\xC9"];
         yield 'a class that holds a word character' => ['left' => '/[\w-]++\xE9/', 'right' => '/[\w-]+\xE9/', 'letters' => "a-\xE9", 'witness' => "a\xE9\xE9"];
+        yield 'a byte past ASCII after a word character, a space class after' => ['left' => '/\w++\xE9\s/', 'right' => '/\w+\xE9\s/', 'letters' => "a\xE9 ", 'witness' => "a\xE9\xE9 "];
+        yield 'a word character after a class of bytes past ASCII' => ['left' => '/[\xC9\xE9]++\w/', 'right' => '/[\xC9\xE9]+\w/', 'letters' => "a\xC9\xE9", 'witness' => "\xC9\xE9"];
+        yield 'a byte past ASCII after a POSIX class' => ['left' => '/[[:alpha:]]++\xE9/', 'right' => '/[[:alpha:]]+\xE9/', 'letters' => "a\xE9", 'witness' => "a\xE9\xE9"];
+    }
+
+    /**
+     * A target that names no locale may run under any: on every machine
+     * the solver refuses the pairs the tables of a locale may tell apart,
+     * which C's tables write alike, the matches and the strings matched
+     * whole. The Latin-1 witness of each is checked above, where this
+     * machine can set that locale.
+     */
+    #[Test]
+    #[DataProvider('provideLocaleBoundPossessives')]
+    public function test_a_possessive_the_tables_may_decide_is_refused_for_a_target_of_no_locale(string $left, string $right, string $letters, string $witness): void
+    {
+        $alike = new \ArrayObject();
+        CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($left, $right, $letters, $alike): void {
+            foreach (self::subjects($letters, 4) as $subject) {
+                $alike[] = self::matchesOf($left, $subject) === self::matchesOf($right, $subject);
+            }
+        });
+        $this->assertNotContains(false, $alike->getArrayCopy(), 'C\'s tables write the same matches.');
+
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN]));
+        $proofs = [
+            'matches' => static fn (): bool => $solver->matchEquivalent($left, $right)->isEquivalent,
+            'strings matched whole' => static fn (): bool => $solver->equivalent(self::whole($left), self::whole($right))->isEquivalent,
+        ];
+        foreach ($proofs as $read => $proof) {
+            try {
+                $proof();
+                $this->fail(\sprintf('The %s of %s and %s, which the Latin-1 tables tell apart on %s, were proven alike.', $read, $left, $right, json_encode($witness)));
+            } catch (ComplexityException $refusal) {
+                $this->assertStringContainsString(self::LOCALE_TABLES, $refusal->getMessage());
+            }
+        }
     }
 
     /**
@@ -272,8 +362,7 @@ final class PossessiveProofLimitsTest extends TestCase
 
         // Read whole, the strings both match are the same under every
         // locale too.
-        $whole = static fn (string $pattern): string => $pattern[0].'^(?:'.substr($pattern, 1, (int) strrpos($pattern, $pattern[0]) - 1).')$'.substr($pattern, (int) strrpos($pattern, $pattern[0]));
-        $this->assertTrue($solver->equivalent($whole($left), $whole($right))->isEquivalent);
+        $this->assertTrue($solver->equivalent(self::whole($left), self::whole($right))->isEquivalent);
     }
 
     /**
@@ -288,6 +377,33 @@ final class PossessiveProofLimitsTest extends TestCase
         // apart from what the possessive and its follower decide.
         yield 'a host label before a dot, caseless' => ['left' => '/(?P<sub>[^\.]++)\.a\.com/i', 'right' => '/(?P<sub>[^\.]+)\.a\.com/i', 'letters' => "a.c\xE9"];
         yield 'a class of everything but a dot before it, caseless' => ['left' => '/[^.]++\.x/i', 'right' => '/[^.]+\.x/i', 'letters' => ".xX\xE9"];
+        yield 'a word character after a sign' => ['left' => '/c-++b?\w/', 'right' => '/c-+b?\w/', 'letters' => "c-b\xE9"];
+        // Every letter and every byte past ASCII, read caselessly: the
+        // tables give each the other case of one already in the class.
+        yield 'a caseless class of every letter and byte past ASCII' => ['left' => '/[A-Za-z\x80-\xFF]++\./i', 'right' => '/[A-Za-z\x80-\xFF]+\./i', 'letters' => "a.\xE9"];
+        yield 'a class past ASCII with the caseless option turned off' => ['left' => '/(?-i)[\xC9]++\xE9/', 'right' => '/(?-i)[\xC9]+\xE9/', 'letters' => "\xC9\xE9"];
+    }
+
+    /**
+     * Those pairs are proven on every machine for a target of no locale:
+     * C's tables write them alike, and the tables of Latin-1 are checked
+     * above, where this machine can set that locale.
+     */
+    #[Test]
+    #[DataProvider('provideLocaleFreePossessives')]
+    public function test_a_possessive_no_table_decides_is_proven_for_a_target_of_no_locale(string $left, string $right, string $letters): void
+    {
+        $alike = new \ArrayObject();
+        CharacterTables::under(CharacterTables::BUILT_IN, static function () use ($left, $right, $letters, $alike): void {
+            foreach (self::subjects($letters, 4) as $subject) {
+                $alike[] = self::matchesOf($left, $subject) === self::matchesOf($right, $subject);
+            }
+        });
+        $this->assertNotContains(false, $alike->getArrayCopy(), 'C\'s tables write the same matches.');
+
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN]));
+        $this->assertTrue($solver->matchEquivalent($left, $right)->isEquivalent);
+        $this->assertTrue($solver->equivalent(self::whole($left), self::whole($right))->isEquivalent);
     }
 
     /**
@@ -298,6 +414,16 @@ final class PossessiveProofLimitsTest extends TestCase
         $matches = [];
 
         return false === preg_match($pattern, $subject, $matches, self::FLAGS) ? false : $matches;
+    }
+
+    /**
+     * The pattern anchored at both ends: what it matches whole.
+     */
+    private static function whole(string $pattern): string
+    {
+        $end = (int) strrpos($pattern, $pattern[0]);
+
+        return $pattern[0].'^(?:'.substr($pattern, 1, $end - 1).')$'.substr($pattern, $end);
     }
 
     /**
