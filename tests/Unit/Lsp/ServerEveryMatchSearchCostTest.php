@@ -17,6 +17,7 @@ use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Text\Path;
+use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -105,11 +106,35 @@ final class ServerEveryMatchSearchCostTest extends TestCase
      */
     public static function provideCalls(): iterable
     {
-        yield 'preg_match_all' => ['code' => "preg_match_all('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
-        yield 'preg_split' => ['code' => "preg_split('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split')]];
+        yield 'preg_match_all' => ['code' => "preg_match_all('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+        yield 'preg_split' => ['code' => "preg_split('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
         yield 'preg_match' => ['code' => "preg_match('/(?:a+\\d)?/', \$s);", 'messages' => []];
         yield 'preg_replace bounded by a limit' => ['code' => "preg_replace('/(?:a+\\d)?/', '', \$s, 1);", 'messages' => []];
-        yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
+        yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+    }
+
+    /**
+     * Each short match of "a*b|a" on a run of "a" is found after "a*b"
+     * read the rest of the run: published at the call that loops, in the
+     * words of short matches, and not at preg_match().
+     */
+    #[Test]
+    public function test_the_every_match_search_cost_of_short_matches_is_published_where_the_call_loops(): void
+    {
+        $subject = str_repeat('a', 1000).'!';
+        $this->assertSame(1000, preg_match_all(PcreInterpreter::pattern('/a*b|a/'), $subject), 'Oracle: preg_match_all() reads the run in one match.');
+        $attempt = PcreAttemptSteps::pinned('/a*b|a/');
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($attempt, $subject, 250) - PcreAttemptSteps::steps($attempt, $subject, 500), 'Oracle: the attempt does not read the run.');
+
+        $published = array_values(array_filter($this->diagnostics("preg_match_all('/a*b|a/', \$s);"), static fn (array $diagnostic): bool => self::SEARCH === $diagnostic['code']));
+
+        $this->assertCount(1, $published);
+        $lines = explode("\n", \is_string($published[0]['message']) ? $published[0]['message'] : '');
+        $this->assertSame(RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, '', 'a', '', false, null, true)), $lines[0]);
+        $this->assertContains('Attack: "a" x n.', $lines);
+        $this->assertSame(2, $published[0]['severity'], 'A warning.');
+
+        $this->assertNotContains(self::SEARCH, array_column($this->diagnostics("preg_match('/a*b|a/', \$s);"), 'code'));
     }
 
     /**
@@ -123,6 +148,14 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         file_put_contents($this->root.'/regex.json', '{"checks": {"redos": {"enabled": true, "threshold": "medium"}, "lint": {"rules": {"redos.search": false}}}}');
 
         $this->assertNotContains(self::SEARCH, array_column($this->diagnostics("preg_match_all('/(?:a+\\d)?/', \$s);"), 'code'));
+    }
+
+    /**
+     * A cost paid by the retry after each empty match.
+     */
+    private static function retried(): RedosSearchCost
+    {
+        return new RedosSearchCost(2, '', 'a', '', false);
     }
 
     /**

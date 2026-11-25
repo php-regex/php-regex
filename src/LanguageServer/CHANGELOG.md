@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` at the calls that look for every match also
+   covers short matches, as `/a*b|a/` on a run of `a`, in the words of
+   `regex lint`: `Quadratic search over short matches`.
  * `regex.lint.redos.search` is published at the calls that look for every
    match, `preg_match_all()` or `preg_split()` for instance, on a pattern
    whose search costs them n² through PHP's retry after an empty match, as
