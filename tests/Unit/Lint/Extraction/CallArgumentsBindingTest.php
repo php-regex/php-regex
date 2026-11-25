@@ -279,12 +279,16 @@ final class CallArgumentsBindingTest extends TestCase
         yield 'a constant, fully qualified' => ['arguments' => '$it, $p, \RegexIterator::SPLIT', 'namespace' => 'App', 'value' => \RegexIterator::SPLIT];
         yield 'a constant the subclass inherits' => ['arguments' => '$it, $p, RecursiveRegexIterator::REPLACE', 'namespace' => '', 'value' => \RegexIterator::REPLACE];
         yield 'a constant in parentheses, by name' => ['arguments' => '$it, mode: (RegexIterator::GET_MATCH), pattern: $p', 'namespace' => '', 'value' => \RegexIterator::GET_MATCH];
+        yield 'the default mode, its class in lowercase' => ['arguments' => '$it, $p, regexiterator::MATCH', 'namespace' => '', 'value' => \RegexIterator::MATCH];
         yield 'a constant of an imported class' => ['arguments' => '$it, $p, R::ALL_MATCHES', 'namespace' => '', 'value' => \RegexIterator::ALL_MATCHES];
         yield 'a constant of the namespace\'s class' => ['arguments' => '$it, $p, RegexIterator::ALL_MATCHES', 'namespace' => 'App', 'value' => null];
         yield 'a constant of another class' => ['arguments' => '$it, $p, Modes::ALL_MATCHES', 'namespace' => '', 'value' => null];
         yield 'a constant the class does not declare' => ['arguments' => '$it, $p, RegexIterator::all_matches', 'namespace' => '', 'value' => null];
         yield 'the class name' => ['arguments' => '$it, $p, RegexIterator::class', 'namespace' => '', 'value' => null];
         yield 'a constant of static' => ['arguments' => '$it, $p, static::ALL_MATCHES', 'namespace' => '', 'value' => null];
+        yield 'a constant name after a dot' => ['arguments' => '$it, $p, RegexIterator . ALL_MATCHES', 'namespace' => '', 'value' => null];
+        yield 'a dynamic constant name' => ['arguments' => '$it, $p, RegexIterator::$mode', 'namespace' => '', 'value' => null];
+        yield 'a flag, which is no mode' => ['arguments' => '$it, $p, RegexIterator::USE_KEY', 'namespace' => '', 'value' => null];
         yield 'a constant, then more' => ['arguments' => '$it, $p, RegexIterator::ALL_MATCHES | 0', 'namespace' => '', 'value' => null];
         yield 'a variable' => ['arguments' => '$it, $p, $mode', 'namespace' => '', 'value' => null];
         yield 'a spread' => ['arguments' => '$it, ...$rest', 'namespace' => '', 'value' => null];

@@ -143,6 +143,7 @@ final class EveryMatchCallTest extends TestCase
         // or preg_replace_callback() for a Closure, with its $limit.
         yield 'illuminate/support matchAll' => ['call' => "\\Illuminate\\Support\\Str::matchAll('/p/', \$s);", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
         yield 'illuminate/support replaceMatches' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s);", 'function' => 'preg_replace', 'limit' => null, 'everyMatch' => 'preg_replace', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
+        yield 'illuminate/support replaceMatches with a limit' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s, 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
         yield 'illuminate/support replaceMatches with a named limit' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', '', \$s, limit: 1);", 'function' => 'preg_replace', 'limit' => 1, 'everyMatch' => null, 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
         yield 'illuminate/support replaceMatches with a callback' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches('/p/', static fn (array \$m): string => '', \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
         yield 'illuminate/support replaceMatches with a first-class callable' => ['call' => "\\Illuminate\\Support\\Str::replaceMatches(replace: \$this->replace(...), pattern: '/p/', subject: \$s);", 'function' => 'preg_replace_callback', 'limit' => null, 'everyMatch' => 'preg_replace_callback', 'presets' => [InteropPresets::ILLUMINATE_SUPPORT]];
@@ -228,6 +229,7 @@ final class EveryMatchCallTest extends TestCase
         yield 'a mode a spread may hold' => ['call' => "new RegexIterator(\$it, '/p/', ...\$rest);"];
         yield 'a mode computed' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::ALL_MATCHES | 0);"];
         yield 'a constant of another class' => ['call' => "new RegexIterator(\$it, '/p/', Modes::ALL_MATCHES);"];
+        yield 'a constant of an object' => ['call' => "new RegexIterator(\$it, '/p/', \$it::ALL_MATCHES);"];
         yield 'a namespace\'s class of the same name' => ['call' => "namespace App;\nnew \\RegexIterator(\$it, '/p/', RegexIterator::ALL_MATCHES);"];
         yield 'a constant RegexIterator does not declare' => ['call' => "new RegexIterator(\$it, '/p/', RegexIterator::EVERY_MATCH);"];
         yield 'lazy in a variable' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: \$lazy);", 'presets' => [InteropPresets::NETTE_UTILS]];

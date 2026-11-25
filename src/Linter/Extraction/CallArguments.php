@@ -285,13 +285,14 @@ final class CallArguments
         // RegexIterator::ALL_MATCHES, in parentheses or not.
         [$slice] = StringExpressionReader::stripParentheses(...PhpTokens::slice($tokens, $start, $end));
         $significant = array_values(array_filter($slice, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
-        if (3 !== \count($significant) || !PhpTokens::isDoubleColon($significant[1]) || !\is_array($significant[2]) || \T_STRING !== $significant[2][0]) {
+        if (3 !== \count($significant) || !PhpTokens::isDoubleColon($significant[1])) {
             return null;
         }
 
         $class = PhpTokens::name($significant[0]);
+        $constant = PhpTokens::identifier($significant[2]);
 
-        return null === $class ? null : PregFunctions::iteratorConstant($context->resolveClass($class), $significant[2][1]);
+        return null === $class || null === $constant ? null : PregFunctions::iteratorConstant($context->resolveClass($class), $constant);
     }
 
     /**

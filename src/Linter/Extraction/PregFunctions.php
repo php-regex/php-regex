@@ -68,6 +68,17 @@ final class PregFunctions
     ];
 
     /**
+     * The modes of RegexIterator, by name.
+     */
+    private const ITERATOR_MODES = [
+        'ALL_MATCHES' => \RegexIterator::ALL_MATCHES,
+        'SPLIT' => \RegexIterator::SPLIT,
+        'REPLACE' => \RegexIterator::REPLACE,
+        'GET_MATCH' => \RegexIterator::GET_MATCH,
+        'MATCH' => \RegexIterator::MATCH,
+    ];
+
+    /**
      * The position and name of the parameter holding what the pattern runs
      * on, preg_grep()'s array included; null for a function taking no
      * pattern.
@@ -99,23 +110,17 @@ final class PregFunctions
     }
 
     /**
-     * The value of a constant of RegexIterator or of RecursiveRegexIterator,
-     * which inherits them, the class fully qualified as PHP resolves it;
-     * null for any other class, or a name neither declares. The names are
-     * compared as PHP compares them: the class in any case, the constant
-     * case included.
+     * The value of a mode of RegexIterator, or of RecursiveRegexIterator,
+     * which inherits them, the class fully qualified as PHP resolves it,
+     * without a leading backslash; null for any other class or name. The
+     * names are compared as PHP compares them: the class in any case, the
+     * constant case included.
      */
     public static function iteratorConstant(string $class, string $constant): ?int
     {
-        $class = Ascii::lower(ltrim($class, '\\'));
-        if ('regexiterator' !== $class && 'recursiveregexiterator' !== $class) {
-            return null;
-        }
+        $class = Ascii::lower($class);
 
-        $name = \RegexIterator::class.'::'.$constant;
-        $value = \defined($name) ? \constant($name) : null;
-
-        return \is_int($value) ? $value : null;
+        return 'regexiterator' === $class || 'recursiveregexiterator' === $class ? self::ITERATOR_MODES[$constant] ?? null : null;
     }
 
     /**
