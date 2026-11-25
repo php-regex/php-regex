@@ -108,8 +108,12 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         yield 'preg_match_all' => ['code' => "preg_match_all('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
         yield 'preg_split' => ['code' => "preg_split('/(?:a+\\d)?/', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split')]];
         yield 'preg_match' => ['code' => "preg_match('/(?:a+\\d)?/', \$s);", 'messages' => []];
+        yield 'preg_match_all of a pattern whose loop is linear' => ['code' => "preg_match_all('/a/', \$s);", 'messages' => []];
         yield 'preg_replace bounded by a limit' => ['code' => "preg_replace('/(?:a+\\d)?/', '', \$s, 1);", 'messages' => []];
         yield 'a literal preg_match_all reads through a variable' => ['code' => "\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
+        yield 'a literal preg_match reads before preg_match_all' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match(\$p, \$s);\npreg_match_all(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all')]];
+        yield 'a literal two loops read' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\npreg_match_all(\$p, \$s);\npreg_split(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all'), RedosVerdict::everyMatchMessage('preg_split')]];
+        yield 'a constant preg_match reads before preg_replace' => ['code' => "const P = '/(?:a+\\d)?/';\nfunction f(\$s) { preg_match(P, \$s); return preg_replace(P, '', \$s); }", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace')]];
     }
 
     /**

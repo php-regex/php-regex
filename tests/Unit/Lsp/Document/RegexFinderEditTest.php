@@ -67,6 +67,7 @@ final class RegexFinderEditTest extends TestCase
         yield 'a constructor' => ['before' => "<?php\nnew \\Symfony\\Component\\Validator\\Constraints\\Regex('/a/');\n", 'after' => "<?php\nnew \\Symfony\\Component\\Validator\\Constraints\\Regex('/a\\d/');\n", 'readWhole' => false];
         yield 'after an argument holding parentheses' => ['before' => "<?php\nuse Nette\\Utils\\Strings;\nStrings::match(trim(\$s), '/a/', utf8: true);\n", 'after' => "<?php\nuse Nette\\Utils\\Strings;\nStrings::match(trim(\$s), '/ab/', utf8: true);\n", 'readWhole' => false];
         yield 'beside a line break the literal holds' => ['before' => $call("'/a\r\n/x'"), 'after' => $call("'/ab\r\n/x'"), 'readWhole' => false];
+        yield 'before a pattern several calls read' => ['before' => "<?php\npreg_match('/a/', \$s);\nfunction f(\$s) { \$re = '/v/'; preg_match(\$re, \$s); preg_match_all(\$re, \$s); }\n", 'after' => "<?php\npreg_match('/ab/', \$s);\nfunction f(\$s) { \$re = '/v/'; preg_match(\$re, \$s); preg_match_all(\$re, \$s); }\n", 'readWhole' => false];
         yield 'beside a pattern the file proves' => ['before' => "<?php\n\$re = '/v/';\npreg_match(\$re, \$s);\npreg_match('/a/', \$s);\n", 'after' => "<?php\n\$re = '/v/';\npreg_match(\$re, \$s);\npreg_match('/ab/', \$s);\n", 'readWhole' => false];
 
         // Read whole.

@@ -558,7 +558,7 @@ final class TextDocumentHandler
         }
 
         if (null !== $redos) {
-            array_push($diagnostics, ...$this->redosDiagnostics($redos, $span, $occurrence->everyMatch));
+            array_push($diagnostics, ...$this->redosDiagnostics($redos, $span, $occurrence->everyMatchCalls()));
         }
 
         return $diagnostics;
@@ -735,12 +735,12 @@ final class TextDocumentHandler
      * The verdict and the search cost `regex lint` reports for the analysis,
      * under the same ids, severities and words.
      *
-     * @param string|null $everyMatch the preg function the pattern runs in when a call reading it looks
-     *                                for every match
+     * @param list<string> $everyMatch the preg functions the pattern runs in at the calls reading it that look
+     *                                 for every match, each once
      *
      * @return list<Diagnostic>
      */
-    private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span, ?string $everyMatch): array
+    private function redosDiagnostics(RedosAnalysis $redos, PatternSpan $span, array $everyMatch): array
     {
         $diagnostics = [];
 
@@ -776,11 +776,16 @@ final class TextDocumentHandler
             );
         }
 
+        // One for each such call of the literal.
         $everyMatchCost = $redos->everyMatchSearchCost;
-        if (null !== $everyMatchCost && null !== $everyMatch) {
+        if (null === $everyMatchCost) {
+            return $diagnostics;
+        }
+
+        foreach ($everyMatch as $function) {
             $diagnostics[] = $this->diagnosticConverter->fromRedos(
                 RedosVerdict::SEARCH_ISSUE_ID,
-                RedosVerdict::everyMatchMessage($everyMatch),
+                RedosVerdict::everyMatchMessage($function),
                 RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion),
                 false,
                 $span,

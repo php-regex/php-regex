@@ -6,6 +6,9 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.redos.search` is published for each call that looks for
+   every match and reads a pattern through a variable or a constant, as
+   `regex lint` reports it, not only at the first call that reads it.
  * `regex.lint.redos.search` is published at the calls that look for every
    match, `preg_match_all()` or `preg_split()` for instance, on a pattern
    whose search costs them n² through PHP's retry after an empty match, as
