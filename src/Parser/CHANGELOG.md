@@ -19,6 +19,10 @@ CHANGELOG
  * `Validation\ValidationResult::isLimit()` tells a limit of the library,
    which says nothing of the pattern, from a verdict; `isPatternRefused()`
    is true for a pattern refused only, false for a valid one and at a limit.
+ * `Exception\InvalidRegexOptionException::$option` names the option a
+   `ParserOptions` or a `PcreTarget` refused, by its key (`"php_version"`,
+   `"pcre_version"`, `"locale"`, `"max_pattern_length"`, ...); null when
+   the fault is no single option's, as an unknown key.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for

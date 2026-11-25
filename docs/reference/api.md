@@ -177,7 +177,9 @@ DFA cache and the classes of the namespace that are public.
 
 ## Configuration Options
 
-All options are validated. Unknown keys throw `InvalidRegexOptionException`.
+All options are validated. Unknown keys throw `InvalidRegexOptionException`. The exception names the option at
+fault in `$option`, by its key (`"php_version"`, `"max_pattern_length"`), and null for unknown keys: read which
+option was refused there, never from the message.
 
 | Option                    | Type                                   | Default           | Description                    | Performance Impact              |
 |---------------------------|----------------------------------------|-------------------|--------------------------------|---------------------------------|

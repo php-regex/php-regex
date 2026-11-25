@@ -90,7 +90,7 @@ final class RedosFindings
         try {
             self::$threshold = null === $threshold ? 'high' : RedosFinding::threshold($threshold);
         } catch (InvalidRegexOptionException $e) {
-            throw new InvalidRegexOptionException(\sprintf('The <redosThreshold> option of %s must be low, medium, high or critical; got "%s".', Plugin::class, $threshold), 0, $e);
+            throw new InvalidRegexOptionException(\sprintf('The <redosThreshold> option of %s must be low, medium, high or critical; got "%s".', Plugin::class, $threshold), previous: $e);
         }
 
         self::$enabled = $enabled;

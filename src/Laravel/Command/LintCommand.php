@@ -199,7 +199,7 @@ final class LintCommand extends Command
         }
 
         // In lint's words, as for a text it cannot read.
-        throw new InvalidRegexOptionException(\sprintf('%s, not a %s.', str_replace('"php_version"', '"'.$key.'"', rtrim(TargetSpec::RANGE_EXPECTED, '.')), get_debug_type($value)));
+        throw new InvalidRegexOptionException(\sprintf('%s, not a %s.', str_replace('"php_version"', '"'.$key.'"', rtrim(TargetSpec::RANGE_EXPECTED, '.')), get_debug_type($value)), $key);
     }
 
     private function configRelease(string $key): ?string
@@ -209,7 +209,7 @@ final class LintCommand extends Command
             return $value;
         }
 
-        throw new InvalidRegexOptionException(\sprintf('"%s" must be a PCRE2 release string like "10.42", not a %s.', $key, get_debug_type($value)));
+        throw new InvalidRegexOptionException(\sprintf('"%s" must be a PCRE2 release string like "10.42", not a %s.', $key, get_debug_type($value)), $key);
     }
 
     private function configLocale(): ?string
@@ -219,7 +219,7 @@ final class LintCommand extends Command
             return $value;
         }
 
-        throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($value)));
+        throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($value)), 'locale');
     }
 
     /**

@@ -97,11 +97,11 @@ final class PcreTarget
     ) {
         $this->phpVersionId = $phpVersionId;
         if (null === self::releaseParts($pcreVersion)) {
-            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion), 'pcre_version');
         }
         [$major, $minor] = self::releaseParts($pcreVersion);
         if ((int) $major < 10) {
-            throw new InvalidRegexOptionException(\sprintf('"pcre_version" %s names no PCRE2 release: the first is 10.00.', trim($pcreVersion)));
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" %s names no PCRE2 release: the first is 10.00.', trim($pcreVersion)), 'pcre_version');
         }
         $this->release = (int) $major * 1000 + (int) $minor;
         $this->pcreVersion = (int) $major.'.'.$minor;

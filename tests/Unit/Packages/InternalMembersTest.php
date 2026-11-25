@@ -21,6 +21,7 @@ use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -66,6 +67,7 @@ final class InternalMembersTest extends TestCase
             // them may not reach an internal class of the solver's package.
             LanguageSolver::class => ['matchEquivalentIn', 'runsOfEveryCall', 'readAlike', 'rewritesAlikeInPlace', 'dfaCacheKey'],
             RegexException::class => ['__construct'],
+            InvalidRegexOptionException::class => ['__construct'],
             ParserException::class => ['__construct', 'withContext'],
             LexerException::class => ['__construct', 'withContext'],
             SemanticErrorException::class => ['__construct'],
