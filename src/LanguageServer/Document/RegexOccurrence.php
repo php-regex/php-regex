@@ -26,24 +26,27 @@ use PHPRegex\Linter\Config\TargetConstraint;
 final class RegexOccurrence
 {
     /**
-     * @param string                $pattern          the pattern, as PHP reads the literal
+     * @param string                $pattern             the pattern, as PHP reads the literal
      * @param Position              $start
      * @param Position              $end
-     * @param int                   $byteOffset       where the literal starts in the document
-     * @param string                $literal          the literal as the document spells it, quotes included
-     * @param bool                  $ignored          whether "@regex-ignore" or "@regex-ignore-next-line" naming no
-     *                                                issue silences its line: it gets no diagnostic
-     * @param int                   $line             the line the markers read the occurrence at, one-based: its
-     *                                                literal's, the declaration's for a pattern the file proves
-     * @param TargetConstraint|null $guard            the versions the guards on PHP_VERSION_ID around the literal keep
-     * @param string|null           $writtenElsewhere for a pattern another file writes, read through one of
-     *                                                its constants: the constant and where its literal stands,
-     *                                                "Patterns::RE, written in src/Patterns.php on line 9". The
-     *                                                occurrence then spans the argument naming it, which
-     *                                                $literal holds as written, and nothing edits it
-     * @param string|null           $everyMatch       the preg function the call the extractor reads the literal at runs
-     *                                                the pattern in when it looks for every match, whose loop PHP
-     *                                                retries after an empty match; null when it stops at the first
+     * @param int                   $byteOffset          where the literal starts in the document
+     * @param string                $literal             the literal as the document spells it, quotes included
+     * @param bool                  $ignored             whether "@regex-ignore" or "@regex-ignore-next-line" naming no
+     *                                                   issue silences its line: it gets no diagnostic
+     * @param int                   $line                the line the markers read the occurrence at, one-based: its
+     *                                                   literal's, the declaration's for a pattern the file proves
+     * @param TargetConstraint|null $guard               the versions the guards on PHP_VERSION_ID around the literal keep
+     * @param string|null           $writtenElsewhere    for a pattern another file writes, read through one of
+     *                                                   its constants: the constant and where its literal stands,
+     *                                                   "Patterns::RE, written in src/Patterns.php on line 9". The
+     *                                                   occurrence then spans the argument naming it, which
+     *                                                   $literal holds as written, and nothing edits it
+     * @param string|null           $everyMatch          the preg function the call the extractor reads the literal at
+     *                                                   runs the pattern in when it looks for every match, whose loop
+     *                                                   PHP retries after an empty match; null when it stops at the
+     *                                                   first
+     * @param list<string>          $everyMatchElsewhere the preg functions of the other calls that read the literal
+     *                                                   and look for every match, each once, in the order of the calls
      */
     public function __construct(
         public readonly string $pattern,
@@ -56,7 +59,21 @@ final class RegexOccurrence
         public readonly ?TargetConstraint $guard = null,
         public readonly ?string $writtenElsewhere = null,
         public readonly ?string $everyMatch = null,
+        public readonly array $everyMatchElsewhere = [],
     ) {}
+
+    /**
+     * The preg functions whose loop over every match runs the pattern, at
+     * the call the extractor reads the literal at and at the others, each
+     * once, in the order of the calls: the extractor names each function of
+     * the others once, the one of the call it reads the literal at left out.
+     *
+     * @return list<string>
+     */
+    public function everyMatchCalls(): array
+    {
+        return null === $this->everyMatch ? $this->everyMatchElsewhere : [$this->everyMatch, ...$this->everyMatchElsewhere];
+    }
 
     /**
      * Check if a position falls within this occurrence.

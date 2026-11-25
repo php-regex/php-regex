@@ -144,6 +144,66 @@ final class PsalmRun
     }
 
     /**
+     * The message of a Trace, "$var: type", its type written the way every
+     * Psalm the plugin supports agrees on: the members of a union sorted,
+     * each literal string between single quotes. Up to 7.19 Psalm prints
+     * 'no'|'no\n'|'yes'|'yes\n'; from 7.20 it writes a literal holding an
+     * escape between double quotes and sorts the members otherwise,
+     * "no\n"|"yes\n"|'no'|'yes', the same type. Only the members of the
+     * outer union move: one inside a shape or a list stays as printed.
+     */
+    public static function canonicalTrace(string $message): string
+    {
+        $separator = strpos($message, ': ');
+        if (false === $separator) {
+            return $message;
+        }
+
+        $members = [];
+        $member = '';
+        $quote = null;
+        $depth = 0;
+        $type = substr($message, $separator + 2);
+        for ($i = 0, $length = \strlen($type); $i < $length; $i++) {
+            $character = $type[$i];
+            if (null !== $quote) {
+                // An escaped character, the quote included, stays in the literal.
+                if ('\\' === $character) {
+                    $member .= $character.($type[++$i] ?? '');
+
+                    continue;
+                }
+
+                $quote = $character === $quote ? null : $quote;
+            } elseif ('"' === $character || "'" === $character) {
+                $quote = $character;
+            } elseif (str_contains('{[<(', $character)) {
+                $depth++;
+            } elseif (str_contains('}]>)', $character)) {
+                $depth--;
+            } elseif ('|' === $character && 0 === $depth) {
+                $members[] = $member;
+                $member = '';
+
+                continue;
+            }
+
+            $member .= $character;
+        }
+        $members[] = $member;
+
+        foreach ($members as &$literal) {
+            if (1 === preg_match('~\A"(.*)"\z~s', $literal, $text)) {
+                $literal = "'".str_replace(['\\"', "'"], ['"', "\\'"], $text[1])."'";
+            }
+        }
+        unset($literal);
+        sort($members, \SORT_STRING);
+
+        return substr($message, 0, $separator + 2).implode('|', $members);
+    }
+
+    /**
      * The InvalidRegexPattern issues by the argument they select, each with
      * its message; a Trace is left out, and any other issue fails the test.
      *

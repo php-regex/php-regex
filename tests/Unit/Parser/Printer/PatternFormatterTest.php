@@ -36,6 +36,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -1302,6 +1303,41 @@ final class PatternFormatterTest extends TestCase
         $again = $formatter->compact($regex->parse($result->pattern));
         $this->assertSame($result->pattern, $again->pattern);
         $this->assertFalse($again->changed);
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped, and an empty group inside the one it may skip decides it:
+     * entered, it stops the engine from reading on. Compact keeps it there
+     * as "(?:)". The pattern finds "aa", with and without the JIT, as its
+     * compacted form does; without the group the engine finds nothing.
+     */
+    #[Test]
+    #[DataProvider('provideCommentGroupsTheEngineReads')]
+    public function test_compact_keeps_a_group_of_comments_the_engine_reads_before_a_possessive(string $pattern, string $expected, string $dropped): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49, and 10.34 and 10.39.
+        foreach ([$pattern, $expected] as $kept) {
+            $this->assertSame(1, preg_match($kept, 'aa'));
+            $this->assertSame(1, preg_match(PcreInterpreter::pattern($kept), 'aa'));
+        }
+        $this->assertSame(0, preg_match($dropped, 'aa'));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($dropped), 'aa'));
+
+        $result = (new PatternFormatter())->compact($this->parse($pattern));
+
+        $this->assertNull($result->refusal);
+        $this->assertSame($expected, $result->pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, expected: string, dropped: string}>
+     */
+    public static function provideCommentGroupsTheEngineReads(): iterable
+    {
+        yield 'a first branch of an atomic group' => ['pattern' => "/a+(?>(?:#c\n)|b)a/x", 'expected' => '/a+(?>(?:)|b)a/', 'dropped' => '/a+(?>|b)a/'];
+        yield 'a first branch of a group repeated possessively' => ['pattern' => '/a+(?:(?:(?#c))|b)?+a/', 'expected' => '/a+(?:(?:)|b)?+a/', 'dropped' => '/a+(?:|b)?+a/'];
     }
 
     /**

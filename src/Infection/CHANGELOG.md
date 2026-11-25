@@ -16,6 +16,14 @@ include it.
  * First release: six Infection mutators for the regex literals of
    `preg_*()` calls — `RegexQuantifier`, `RegexAnchor`, `RegexCharClass`,
    `RegexAlternation`, `RegexFlag` and `RegexEscape`.
+ * The automata no longer prove a mutant alike where PCRE2 runs a
+   possessive otherwise than written, and such a mutant is produced: a
+   character repeated before a possessive or atomic group that may match
+   nothing, which PCRE2 makes possessive (`/a+(?:b)?+a/` finds nothing in
+   `aa`, where `/a+(?:b)?a/` finds it); a possessive repeat of a group that
+   captures, for a target before PCRE2 10.44, whose JIT keeps the group
+   from an earlier start; and, without `u`, a possessive proven on a byte
+   past ASCII against a class the tables of the locale decide.
  * A mutant the automata prove behaves as the original for the call is not
    produced: whether a match exists for `preg_match()` with a pattern and a
    subject alone and for `preg_grep()`, the matches in every run for every

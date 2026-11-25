@@ -45,7 +45,8 @@ final class UselessIFlagUnderUtfTest extends TestCase
      * and U+16EA0 with U+16EBB, with 10.48.
      */
     private const RELEASES = [
-        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu'],
+        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu'],
+        '10.43' => ['/(?r)[kK]/iu'],
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
     ];
 
@@ -95,14 +96,14 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'that sign alone' => ['pattern' => '/\x{F7}/iu', 'useless' => true, 'reported' => true];
         yield 'a range of ASCII signs' => ['pattern' => '/[{-\x{7F}]/iu', 'useless' => true, 'reported' => true];
         yield 'an ASCII sign' => ['pattern' => '/"/iu', 'useless' => true, 'reported' => true];
-        // Both cases of every character are in the range: the rule reads
-        // whether a character has a case, not where it folds to.
-        yield 'every character' => ['pattern' => '/[\x{0}-\x{10FFFF}]/iu', 'useless' => true, 'reported' => false];
+        // Both cases of every character are in the range.
+        yield 'every character' => ['pattern' => '/[\x{0}-\x{10FFFF}]/iu', 'useless' => true, 'reported' => true];
         // mbstring maps "ﬀ" to "FF", "ﬗ" to "ՄԽ" and "ŉ" to "ʼN", which
-        // PCRE2 does not fold, one character being two: read alone, or at
-        // an end of a range, as mbstring reads it, the flag is kept.
-        yield 'a range ending at a ligature' => ['pattern' => '/[\x{FAFF}-\x{FB00}]/iu', 'useless' => true, 'reported' => false];
-        yield 'a range starting at a ligature' => ['pattern' => '/[\x{FB17}-\x{FB1C}]/iu', 'useless' => true, 'reported' => false];
+        // PCRE2 does not fold, one character being two: in a class, which
+        // PCRE2's tables are read for, the flag is useless; read alone, as
+        // mbstring reads it, it is kept.
+        yield 'a range ending at a ligature' => ['pattern' => '/[\x{FAFF}-\x{FB00}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a range starting at a ligature' => ['pattern' => '/[\x{FB17}-\x{FB1C}]/iu', 'useless' => true, 'reported' => true];
         yield 'a letter whose capital is two characters' => ['pattern' => '/\x{149}/iu', 'useless' => true, 'reported' => false];
         // PCRE2 folds the long s with "s" and the Kelvin sign with "k",
         // which its tables give no other case from 10.43.
@@ -118,6 +119,47 @@ final class UselessIFlagUnderUtfTest extends TestCase
         // The Kelvin sign folds with "k" and "K": a class of both bytes
         // leaves it out without i.
         yield 'a small letter and its capital whose caseless set holds the Kelvin sign' => ['pattern' => '/[kK]/iu', 'useless' => false, 'reported' => false];
+        // A class holding every character PCRE2 folds each of its own with,
+        // its caseless set included: the Kelvin sign with "k" and "K", the
+        // long s with "s" and "S", the micro sign with the Greek mu.
+        yield 'a small letter and its capital' => ['pattern' => '/[aA]/iu', 'useless' => true, 'reported' => true];
+        yield 'a negated class of a small letter and its capital' => ['pattern' => '/[^aA]/iu', 'useless' => true, 'reported' => true];
+        yield 'the ASCII letters, without the Kelvin sign and the long s' => ['pattern' => '/[a-zA-Z]/iu', 'useless' => false, 'reported' => false];
+        yield 'the word characters of ASCII written out' => ['pattern' => '/[A-Za-z0-9_]/iu', 'useless' => false, 'reported' => false];
+        yield 'the ASCII letters with the Kelvin sign and the long s' => ['pattern' => '/[a-zA-Z\x{17F}\x{212A}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the ASCII letters with the Kelvin sign, the long s and the digits' => ['pattern' => '/[a-z\x{17F}\x{212A}A-Z\d]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter, its capital and the Kelvin sign' => ['pattern' => '/[kK\x{212A}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter, its capital and the long s' => ['pattern' => '/[sS\x{17F}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the micro sign and both cases of the Greek mu' => ['pattern' => '/[\x{B5}\x{39C}\x{3BC}]/iu', 'useless' => true, 'reported' => true];
+        yield 'both cases of the Greek mu without the micro sign' => ['pattern' => '/[\x{39C}\x{3BC}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the micro sign and the small mu without the capital' => ['pattern' => '/[\x{B5}\x{3BC}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the capital sigma and both small ones' => ['pattern' => '/[\x{3A3}\x{3C2}\x{3C3}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capital sigma without the final one' => ['pattern' => '/[\x{3A3}\x{3C3}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the A with ring above, its capital and the Angstrom sign' => ['pattern' => '/[\x{C5}\x{E5}\x{212B}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the A with ring above and its capital without the Angstrom sign' => ['pattern' => '/[\x{C5}\x{E5}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the capital, the title case and the small DZ with caron' => ['pattern' => '/[\x{1C4}-\x{1C6}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capital and the small DZ with caron without the title case' => ['pattern' => '/[\x{1C4}\x{1C6}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the sharp s and its capital' => ['pattern' => '/[\x{DF}\x{1E9E}]/iu', 'useless' => true, 'reported' => true];
+        yield 'two raw Latin-1 letters and their capitals' => ['pattern' => '/[ÀàÉé]/iu', 'useless' => true, 'reported' => true];
+        // The y with diaeresis, whose capital U+0178 is in the range.
+        yield 'the Latin Extended-A letters' => ['pattern' => '/[\x{100}-\x{17E}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the Latin Extended-A letters with the long s' => ['pattern' => '/[\x{100}-\x{17F}]/iu', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital with a script' => ['pattern' => '/[aA\p{Greek}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital with the word characters' => ['pattern' => '/[aA\w]/iu', 'useless' => true, 'reported' => true];
+        // Under u, [:upper:] reads as \p{Lu}, which i leaves as written in
+        // a class: the rule, which reads it as the capitals i widens without
+        // u, keeps the flag.
+        yield 'a small letter and its capital with the capitals' => ['pattern' => '/[aA[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // PCRE2 folds neither the dotted capital I nor the dotless small i
+        // with another character but under Turkish rules, which pair them
+        // with "i" and "I": the class is read under neither.
+        yield 'both cases of "i" and the Turkish ones' => ['pattern' => '/[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => true];
+        yield 'both cases of "i" and the Turkish ones under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => false];
+        yield 'both cases of "i" under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[iI]/iu', 'useless' => false, 'reported' => false];
+        // The rule reads the caseless sets whole, as a caseless class holds
+        // them where nothing restricts it: restricted to ASCII, the Kelvin
+        // sign folds with neither "k" nor "K", and the flag is kept.
+        yield 'a small letter and its capital whose caseless set holds the Kelvin sign, restricted' => ['pattern' => '/(?r)[kK]/iu', 'useless' => true, 'reported' => false];
         // An inline option decides the case of what follows it either way.
         yield 'a Latin-1 letter after i turned off' => ['pattern' => '/(?-i)\x{E9}/iu', 'useless' => true, 'reported' => true];
         yield 'a Latin-1 letter after i turned on again' => ['pattern' => '/(?i)\x{E9}/iu', 'useless' => true, 'reported' => true];

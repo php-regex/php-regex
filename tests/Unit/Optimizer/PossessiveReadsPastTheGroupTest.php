@@ -85,9 +85,9 @@ final class PossessiveReadsPastTheGroupTest extends TestCase
         yield 'a character after the group, extended' => ['pattern' => '/(a+ b?) a/x', 'possessive' => '/(a++ b?) a/x', 'subject' => 'aa', 'rewritten' => '/(a+ b?) a/x'];
         yield 'a newline past the end anchor' => ['pattern' => '/(\n+b?)$\n/', 'possessive' => '/(\n++b?)$\n/', 'subject' => "\n\n", 'rewritten' => '/(\n+b?)$\n/'];
         yield 'the body of a group that must run again' => ['pattern' => '/(?:a+b?){2}c/', 'possessive' => '/(?:a++b?){2}c/', 'subject' => 'aac', 'rewritten' => '/(?:a+b?){2}c/'];
-        // The group itself ends with a letter "c" is not: the repeat of it
-        // is made possessive.
-        yield 'the body of a group that must run at least twice' => ['pattern' => '/(?:a+b?){2,}c/', 'possessive' => '/(?:a++b?){2,}+c/', 'subject' => 'aac', 'rewritten' => '/(?:a+b?){2,}+c/'];
+        // A run of the group may end anywhere in its "a"s: the repeat of it
+        // stays greedy too.
+        yield 'the body of a group that must run at least twice' => ['pattern' => '/(?:a+b?){2,}c/', 'possessive' => '/(?:a++b?){2,}+c/', 'subject' => 'aac', 'rewritten' => '/(?:a+b?){2,}c/'];
         yield 'what follows the last run of a group that must run again' => ['pattern' => '/(?:ca+b?){2}a/', 'possessive' => '/(?:ca++b?){2}a/', 'subject' => 'cacaa', 'rewritten' => '/(?:ca+b?){2}a/'];
     }
 
@@ -122,9 +122,10 @@ final class PossessiveReadsPastTheGroupTest extends TestCase
         yield 'the end of an atomic group' => ['pattern' => '/(?>a+b?)a/', 'possessive' => '/(?>a++b?)a/'];
         yield 'the end of a lookahead' => ['pattern' => '/(?=a+b?)a/', 'possessive' => '/(?=a++b?)a/'];
         yield 'another character starting a group that must run again' => ['pattern' => '/(?:xa+b?){2}c/', 'possessive' => '/(?:xa++b?){2}c/'];
-        // The next run starts with the "a" the repetition gives back: the
-        // repetition stays greedy, the group made possessive.
-        yield 'a group that may run again' => ['pattern' => '/(?:a+b?)+c/', 'possessive' => '/(?:a+b?)++c/'];
+        // The next run starts with an "x" the repetition never gives back:
+        // the repetition is made possessive, the group, whose runs may end
+        // anywhere in their "a"s, stays greedy.
+        yield 'a group that may run again' => ['pattern' => '/(?:xa+b?)+c/', 'possessive' => '/(?:xa++b?)+c/'];
     }
 
     /**
@@ -257,7 +258,6 @@ final class PossessiveReadsPastTheGroupTest extends TestCase
     public static function provideOptimizationsOfRepetitionsEndingTheirSequence(): iterable
     {
         yield 'a repetition alone in its group' => ['pattern' => '/(a+)c/', 'expected' => '/(a++)c/', 'changes' => [Rewriter::POSSESSIVE]];
-        yield 'a repetition alone in a group a DEFINE holds' => ['pattern' => '/(?&n)x(?(DEFINE)(?<n>[0-9]+))/', 'expected' => '/(?&n)x(?(DEFINE)(?<n>\d++))/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
         yield 'a repetition ending the pattern' => ['pattern' => '/x[0-9]+/', 'expected' => '/x\d++/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
         // The sequence reads its repetition once the items after it are
         // rewritten.

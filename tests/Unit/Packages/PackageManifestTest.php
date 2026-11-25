@@ -117,6 +117,10 @@ final class PackageManifestTest extends TestCase
             // The match solver runs the body of the group a call names
             // where the call stands, found as PCRE numbers the groups.
             'Parser\Analysis\GroupIndex',
+            // A target that names no locale but C may run under the tables
+            // of any: a possessive proven past ASCII against a class they
+            // decide is refused.
+            'Parser\Engine\CharacterTables',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
         // where the class sets PCRE2 answered are kept between runs. The
@@ -205,10 +209,10 @@ final class PackageManifestTest extends TestCase
         // branches by the sets it is given. The rule on a useless i reads
         // the other case of a byte from the tables of the target's locale,
         // and under u of every character of a range from PCRE2's Unicode
-        // tables of the target's release.
+        // tables of the target's release, with its caseless sets.
         'Linter' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Cache\AstSerializer',
-            'Parser\Engine\CharacterTables', 'Parser\Validation\OtherCases',
+            'Parser\Engine\CharacterTables', 'Parser\Validation\OtherCases', 'Parser\Validation\PcreTables',
             'Parser\Hir\CharSet', 'Parser\Hir\ClassSetProvider',
             'Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Text\Path', 'Parser\Printer\DisplayEscaper',
             'Parser\Analysis\GroupIndex', 'Parser\Json\JsonDocument',
@@ -216,6 +220,9 @@ final class PackageManifestTest extends TestCase
             'Parser\Syntax\PropertyNames', 'Parser\Syntax\StartOptions', 'Parser\Cache\StaticCaches',
             'Parser\Lexer', 'Parser\NodeWalker', 'Parser\TraversalAction',
             'Parser\Resolution\ArgumentState', 'Parser\Resolution\Hole', 'Parser\Resolution\PatternArgument',
+            // A group whose brackets decide which repeats PCRE2 makes
+            // possessive is never called redundant.
+            'Automata\Transform\AutoPossession',
         ],
         // The tools answer the document the CLI prints: the same encoder
         // spells every string, an invalid byte as \xNN.
@@ -234,6 +241,9 @@ final class PackageManifestTest extends TestCase
         'Optimizer' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Analysis\GroupIndex', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser',
             'Parser\Syntax\StartOptions', 'Parser\NodeWalker', 'Parser\TraversalAction',
+            // A rewrite of the brackets that decide which repeats PCRE2
+            // makes possessive is checked, and the Modernizer keeps them.
+            'Automata\Transform\AutoPossession',
         ],
         'PHPStan' => [
             'Linter\AnalysisService', 'Linter\Config\JudgedRange', 'Linter\Config\ProjectTarget',
@@ -243,6 +253,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider',
             'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre',
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
+            // The words of a ReDoS finding, which the Psalm plugin gives too.
+            'Linter\RedosFinding',
             // phpRegex.phpVersion takes a Composer constraint or {min, max}:
             // the extension reads it as regex.json's phpVersion is read, to
             // keep it within PHPStan's own range, refused in lint's words.
@@ -260,6 +272,9 @@ final class PackageManifestTest extends TestCase
             // <phpVersion> takes a Composer constraint: the plugin reads it
             // as regex.json's phpVersion is read, refused in lint's words.
             'Linter\Config\TargetSpec',
+            // <redos> runs the analysis the PHPStan extension runs, and
+            // words its findings in the extension's words.
+            'Linter\AnalysisService', 'Linter\RedosFinding',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',

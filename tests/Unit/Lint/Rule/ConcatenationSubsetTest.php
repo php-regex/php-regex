@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -51,6 +52,35 @@ final class ConcatenationSubsetTest extends TestCase
         yield 'horizontal space before space and tab' => ['pattern' => '/^\h{1,3}[\t ]+\z/', 'rewrite' => '/^\h[\t ]+\z/', 'subject' => "\xA0\xA0 "];
         yield 'letter under i before a negated class' => ['pattern' => '/^A?[^a]*\z/i', 'rewrite' => '/^[^a]*\z/i', 'subject' => 'a'];
         yield 'letter under i before a group holding a negated class' => ['pattern' => '/^A?(?:[^a])*\z/i', 'rewrite' => '/^(?:[^a])*\z/i', 'subject' => 'a'];
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped: a run the hint drops, or fixes to its minimum, there gives
+     * the run before it back what PCRE2 took. The pattern finds nothing in
+     * the subject, with and without the JIT, where the rewrite the hint asks
+     * for finds it.
+     */
+    #[Test]
+    #[DataProvider('provideRunsBeforeAPossessiveGroup')]
+    public function test_a_run_pcre2_makes_possessive_is_not_reported(string $pattern, string $rewrite, string $subject): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49, and 10.34, 10.39 and 10.44.
+        $this->assertSame([0, 1], [preg_match($pattern, $subject), preg_match($rewrite, $subject)]);
+        $this->assertSame([0, 1], [preg_match(PcreInterpreter::pattern($pattern), $subject), preg_match(PcreInterpreter::pattern($rewrite), $subject)]);
+
+        $this->assertNotContains(self::RULE, $this->ids($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, rewrite: string, subject: string}>
+     */
+    public static function provideRunsBeforeAPossessiveGroup(): iterable
+    {
+        yield 'an optional letter dropped' => ['pattern' => '/[ab]{2,}a?(?:b){0,2}+a/', 'rewrite' => '/[ab]{2,}(?:b){0,2}+a/', 'subject' => 'aaa'];
+        yield 'a count fixed to its minimum' => ['pattern' => '/[ab]{2,}a{1,2}(?:b)?+a/', 'rewrite' => '/[ab]{2,}a(?:b)?+a/', 'subject' => 'aaaa'];
+        yield 'a run before an atomic group dropped' => ['pattern' => '/[ab]{2,}a{0,2}(?>(?:b)?)a/', 'rewrite' => '/[ab]{2,}(?>(?:b)?)a/', 'subject' => 'aaa'];
     }
 
     #[Test]

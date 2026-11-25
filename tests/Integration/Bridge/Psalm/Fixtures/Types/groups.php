@@ -119,12 +119,7 @@ function group_named_mark_beside_a_verb(string $s): void
          */
     }
 
-    if (preg_match('/(?<MARK>a)(*MARK:m)/', $s, $n, \PREG_OFFSET_CAPTURE)) {
-        /**
-         * @psalm-check-type-exact $n = array{0: list{'a', int<0, max>}, MARK: list{'a', int<0, max>}|'m', 1: list{'a', int<0, max>}}
-         * @psalm-trace $n
-         */
-    }
+    // Under PREG_OFFSET_CAPTURE, see Marks/group_named_mark_with_offsets.php.
 }
 
 function optional_groups(string $s): void

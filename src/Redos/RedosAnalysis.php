@@ -54,7 +54,7 @@ final class RedosAnalysis implements \JsonSerializable
      * @param string|null          $pcreVersion          the PCRE2 release; the running one when null
      * @param int|null             $upperBoundDegree     the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
      * @param RedosSearchCost|null $searchCost           the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
-     * @param RedosSearchCost|null $everyMatchSearchCost the witness of a search quadratic only in the functions that look for every match, through PHP's retry after an empty match, looked for only when one attempt is proven linear and $searchCost is null; null when none was found
+     * @param RedosSearchCost|null $everyMatchSearchCost the witness of a search quadratic only in the functions that look for every match, through PHP's retry after an empty match or the attempt that finds each short match, looked for only when one attempt is proven linear and $searchCost is null; null when none was found
      */
     public function __construct(
         public readonly RedosSeverity $severity,

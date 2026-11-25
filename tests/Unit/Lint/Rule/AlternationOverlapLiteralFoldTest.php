@@ -29,9 +29,11 @@ use PHPUnit\Framework\TestCase;
  * pair 0xC9 with 0xE9, "\xC9x" and "\xE9x" fold to the same text, and two
  * literal branches that do are reported as overlapping text, as "Ax" and
  * "ax" are in ASCII; under C, where neither byte has another case, they
- * stay apart. Branches that start with something else than literal text,
- * an escape among them, are still compared by their characters, and the
- * texts they start with fold the same way. A byte joins its other case
+ * stay apart. An escape that names one byte, "\xE9" or "\o{351}", is
+ * literal text, as the engine reads it: the texts fold alike whichever way
+ * their bytes are written. Branches that start with something else than
+ * literal text are still compared by their characters, and the texts they
+ * start with fold the same way. A byte joins its other case
  * where each is the other's, as the tables of the target's release pair
  * them and the JIT reads them, even where the interpreter matches a third
  * byte as well: "i" with "I" under tr_TR.ISO8859-9 on macOS, where
@@ -95,8 +97,8 @@ final class AlternationOverlapLiteralFoldTest extends TestCase
             yield 'a text that starts the other in the other case, '.$locale => ['pattern' => "/(?:\xE9x|\xC9xy)+/i", 'branches' => ["(?i:\xE9x)", "(?i:\xC9xy)"], 'subject' => "\xC9xy", 'locale' => $locale, 'rule' => $latin1 ? $text : null];
             yield 'a capital a group reads caselessly, then its small letter, '.$locale => ['pattern' => "/(?:(?i:\xC9)x|\xE9x)+/", 'branches' => ["(?i:\xC9)x", "\xE9x"], 'subject' => "\xE9x", 'locale' => $locale, 'rule' => $latin1 ? $text : null];
             yield 'leading texts a Latin-1 letter starts in either case, then items that meet, '.$locale => ['pattern' => "/(?:\xC9x\\d|\xE9x\\w)+/i", 'branches' => ["(?i:\xC9x\\d)", "(?i:\xE9x\\w)"], 'subject' => "\xE9x1", 'locale' => $locale, 'rule' => $latin1 ? $charset : null];
-            yield 'the same texts written as escapes, '.$locale => ['pattern' => '/(?:\xC9x|\xE9x)+/i', 'branches' => ['(?i:\xC9x)', '(?i:\xE9x)'], 'subject' => "\xE9x", 'locale' => $locale, 'rule' => $latin1 ? $charset : null];
-            yield 'a capital written as it is, then its small letter as an escape, '.$locale => ['pattern' => "/(?:\xC9x|\\o{351}x)+/i", 'branches' => ["(?i:\xC9x)", '(?i:\o{351}x)'], 'subject' => "\xE9x", 'locale' => $locale, 'rule' => $latin1 ? $charset : null];
+            yield 'the same texts written as escapes, '.$locale => ['pattern' => '/(?:\xC9x|\xE9x)+/i', 'branches' => ['(?i:\xC9x)', '(?i:\xE9x)'], 'subject' => "\xE9x", 'locale' => $locale, 'rule' => $latin1 ? $text : null];
+            yield 'a capital written as it is, then its small letter as an escape, '.$locale => ['pattern' => "/(?:\xC9x|\\o{351}x)+/i", 'branches' => ["(?i:\xC9x)", '(?i:\o{351}x)'], 'subject' => "\xE9x", 'locale' => $locale, 'rule' => $latin1 ? $text : null];
         }
 
         foreach ([CharacterTables::BUILT_IN, self::LATIN1] as $locale) {

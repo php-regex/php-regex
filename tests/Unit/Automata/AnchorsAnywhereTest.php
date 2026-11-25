@@ -65,7 +65,8 @@ final class AnchorsAnywhereTest extends TestCase
     /**
      * The convention moves what an anchor reads: on the witness, the
      * pattern finds a match, and finds none once the convention is gone
-     * and "\n" is the newline again.
+     * and "\n" is the newline again. Under (*CRLF) a line ends at "\r\n"
+     * alone, which the automata do not read.
      */
     #[Test]
     #[DataProvider('provideNewlineConventions')]
@@ -119,6 +120,14 @@ final class AnchorsAnywhereTest extends TestCase
         // the newline.
         yield 'a start under (*CR), multiline turned off' => ['pattern' => '/(*CR)(?-m)^a/'];
         yield 'a start under (*CR), multiline turned on and off' => ['pattern' => '/(*CR)(?m-m)^a/'];
+        // Every convention but (*CRLF) moves the anchors as the engine does.
+        yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/'];
+        yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m'];
+        // "(?m)" turns on what "/m" turns on.
+        yield 'cr inline multiline' => ['pattern' => '/(*CR)(?m)^a/'];
+        yield 'nul inline multiline among other options' => ['pattern' => '/(*NUL)(?im)^a/'];
+        yield 'cr multiline group' => ['pattern' => '/(*CR)(?m:^a)/'];
+        yield 'any multiline turned on after a reset' => ['pattern' => '/(*ANY)(?^m)b|^a/'];
     }
 
     /**
@@ -127,13 +136,11 @@ final class AnchorsAnywhereTest extends TestCase
     public static function provideNewlineConventions(): iterable
     {
         yield 'crlf dollar' => ['pattern' => '/(*CRLF)a$/', 'witness' => "a\r\n"];
-        yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/', 'witness' => "a\r"];
-        yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m', 'witness' => "\ra"];
+        yield 'crlf capital Z' => ['pattern' => '/(*CRLF)a\Z/', 'witness' => "a\r\n"];
         // "(?m)" turns on what "/m" turns on.
-        yield 'cr inline multiline' => ['pattern' => '/(*CR)(?m)^a/', 'witness' => "\ra"];
-        yield 'nul inline multiline among other options' => ['pattern' => '/(*NUL)(?im)^a/', 'witness' => "\0a"];
-        yield 'cr multiline group' => ['pattern' => '/(*CR)(?m:^a)/', 'witness' => "\ra"];
-        yield 'any multiline turned on after a reset' => ['pattern' => '/(*ANY)(?^m)b|^a/', 'witness' => "\ra"];
+        yield 'crlf inline multiline' => ['pattern' => '/(*CRLF)(?m)a$/', 'witness' => "a\r\nb"];
+        yield 'crlf multiline group' => ['pattern' => '/(*CRLF)(?m:a$)/', 'witness' => "a\r\nb"];
+        yield 'crlf multiline turned on after a reset' => ['pattern' => '/(*CRLF)(?^m)b|a$/', 'witness' => "a\r\n"];
     }
 
     private static function accepts(Dfa $dfa, string $subject): bool

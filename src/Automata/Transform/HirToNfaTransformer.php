@@ -71,6 +71,12 @@ final class HirToNfaTransformer
 
     public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.';
 
+    public const SKIPPED_GROUP_MESSAGE = 'PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.';
+
+    public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.';
+
+    public const LAST_BYTE_MESSAGE = 'Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;
@@ -108,15 +114,35 @@ final class HirToNfaTransformer
      */
     private array $edges = [];
 
-    public function __construct(private readonly string $pattern, private readonly bool $unicode)
-    {
+    /**
+     * The tree the refusal walk being run reads.
+     */
+    private ?Hir $root = null;
+
+    /**
+     * @param LocaleBoundClasses|null $localeBound the classes whose characters past ASCII the tables
+     *                                             of an unknown locale decide; null when the tables
+     *                                             read are the ones the pattern runs under
+     * @param string                  $newline     the newline convention the pattern's options set, as
+     *                                             StartOptions::newline() names it: where its lines end
+     */
+    public function __construct(
+        private readonly string $pattern,
+        private readonly bool $unicode,
+        private readonly ?LocaleBoundClasses $localeBound = null,
+        private readonly string $newline = 'LF'
+    ) {
         $this->inertia = new AtomicInertiaAnalyzer();
     }
 
     /**
+     * @param bool $skipsStartsBetweenCrAndLf whether a search leaves out the matches that start
+     *                                        between a "\r" and the "\n" after it, as PCRE2's
+     *                                        does under some patterns and conventions
+     *
      * @throws ComplexityException When the tree leaves the regular subset or a limit is reached
      */
-    public function transform(Hir $hir, SolverOptions $options): Nfa
+    public function transform(Hir $hir, SolverOptions $options, bool $skipsStartsBetweenCrAndLf = false): Nfa
     {
         $this->assertTranslatable($hir, $options);
 
@@ -127,6 +153,13 @@ final class HirToNfaTransformer
         [$startAnchored, $end, $this->edges] = $this->edgesOf($hir, $options->matchMode);
         $fragment = $this->buildNode($hir);
         if (MatchMode::Partial === $options->matchMode) {
+            if ($skipsStartsBetweenCrAndLf && !$startAnchored) {
+                // A match starts anywhere but after a "\r" and before a "\n".
+                $fragment = $this->concatenate($this->buildNode(new AlternationHir([
+                    new LookHir(new LiteralHir([0x0D]), LookKind::NegativeBehind),
+                    new LookHir(new LiteralHir([0x0A]), LookKind::NegativeAhead),
+                ])), $fragment);
+            }
             $fragment = $this->wrapPartialMatch($fragment, $startAnchored, $end);
         }
 
@@ -162,11 +195,17 @@ final class HirToNfaTransformer
      * per reason when it does not: nothing is built.
      *
      * @throws ComplexityException
+     *
+     * @return bool whether a possessive quantifier or an atomic group was
+     *              proven to read as its greedy, plain spelling
      */
-    public function assertTranslatable(Hir $hir, SolverOptions $options): void
+    public function assertTranslatable(Hir $hir, SolverOptions $options): bool
     {
         $this->vouched = [];
+        $this->root = $hir;
         $this->assertSequence([$hir], $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
+
+        return [] !== $this->vouched;
     }
 
     /**
@@ -352,6 +391,17 @@ final class HirToNfaTransformer
             throw new ComplexityException($commitment instanceof AtomicHir ? self::ATOMIC_MESSAGE : self::POSSESSIVE_MESSAGE, $commitment->startPosition, $this->pattern);
         }
 
+        // Without "u" a class takes the bytes past ASCII the tables of the
+        // locale give it: under en_IE.ISO8859-1 "\w" takes "\xE9", and
+        // "/^c\xE9++b?\w$/" no longer matches "c\xE9\xE9". A proof that
+        // reads such a byte, against such a class in the commitment or in
+        // what follows it, holds under the tables of C alone.
+        if (null !== $this->localeBound && null !== $this->root && null !== $follow
+            && (LocaleBoundClasses::pastAscii($follow) || LocaleBoundClasses::readsPastAscii($commitment))
+            && ($this->localeBound->bindsSomeIn($commitment) || $this->localeBound->bindsSomeMeeting($this->root, $follow))) {
+            throw new ComplexityException(self::LOCALE_TABLES_MESSAGE, $commitment->startPosition, $this->pattern);
+        }
+
         $this->vouched[spl_object_id($commitment)] = true;
     }
 
@@ -465,35 +515,79 @@ final class HirToNfaTransformer
     }
 
     /**
-     * An anchor away from the edges as the lookarounds it stands for, the
-     * newline being "\n": "\A" with nothing before, "\z" with nothing
-     * after, "$" and "\Z" before at most a final newline; under /m, "^"
-     * at the start or after a newline more follows, "$" before a newline
-     * or at the end.
+     * An anchor away from the edges as the lookarounds it stands for, under
+     * the newline convention: "\A" with nothing before, "\z" with nothing
+     * after, "$" and "\Z" before at most a newline that ends the subject;
+     * under /m, "^" at the start or after a newline more follows, "$"
+     * before a newline or at the end. Under "(*ANYCRLF)" and "(*ANY)" a
+     * "\r" ends a line and so does a "\n", and the two together end one:
+     * "^" holds between them, and "$" before the "\n".
      */
     private function anchorAsLookaround(AssertionHir $node): Hir
     {
         $any = new ClassHir(CharSet::universe($this->unicode));
-        $newline = new LiteralHir([0x0A]);
+        $ends = $this->lineEnds();
+        $newline = $this->crLfEndsALine() ? new ClassHir($ends) : new LiteralHir([$this->lineEnd()]);
+        $notNewline = new ClassHir($any->set->subtract($ends));
         $look = static fn (Hir $body, LookKind $kind): LookHir => new LookHir($body, $kind, true, $node->startPosition, $node->endPosition);
 
         return match ($node->kind) {
             AssertionKind::SubjectStart => $look($any, LookKind::NegativeBehind),
             AssertionKind::SubjectEnd => $look($any, LookKind::NegativeAhead),
-            AssertionKind::EndOrFinalNewline => $look(new AlternationHir([self::notNewline($any), new ConcatHir([$newline, $any])]), LookKind::NegativeAhead),
+            AssertionKind::EndOrFinalNewline => $look(new AlternationHir($this->crLfEndsALine()
+                ? [
+                    $notNewline,
+                    new ConcatHir([new LiteralHir([0x0D]), new ClassHir($any->set->subtract(CharSet::single(0x0A)))]),
+                    new ConcatHir([new LiteralHir([0x0D, 0x0A]), $any]),
+                    new ConcatHir([new ClassHir($ends->subtract(CharSet::single(0x0D))), $any]),
+                ]
+                : [$notNewline, new ConcatHir([$newline, $any])]), LookKind::NegativeAhead),
             AssertionKind::LineStart => new AlternationHir([
                 $look($any, LookKind::NegativeBehind),
                 new ConcatHir([$look($newline, LookKind::Behind), $look($any, LookKind::Ahead)]),
             ]),
-            AssertionKind::LineEnd => $look(self::notNewline($any), LookKind::NegativeAhead),
+            AssertionKind::LineEnd => $look($notNewline, LookKind::NegativeAhead),
             // The refusal walk lets no other kind through.
             default => new ConcatHir([]),
         };
     }
 
-    private static function notNewline(ClassHir $any): ClassHir
+    /**
+     * The characters that end a line under the convention, each alone: "\n"
+     * by default, "\r" under "(*CR)", NUL under "(*NUL)", either of the
+     * first two under "(*ANYCRLF)", and under "(*ANY)" the vertical tab,
+     * the form feed and NEL too, and the line and paragraph separators
+     * under /u. "(*CRLF)", whose lines end at "\r\n" alone, does not reach
+     * here.
+     */
+    private function lineEnds(): CharSet
     {
-        return new ClassHir($any->set->subtract(CharSet::single(0x0A)));
+        return match ($this->newline) {
+            'ANYCRLF' => CharSet::single(0x0A)->union(CharSet::single(0x0D)),
+            'ANY' => CharSet::range(0x0A, 0x0D)->union(CharSet::single(0x85))->union($this->unicode ? CharSet::range(0x2028, 0x2029) : CharSet::empty()),
+            default => CharSet::single($this->lineEnd()),
+        };
+    }
+
+    /**
+     * The one character that ends a line under a convention of one.
+     */
+    private function lineEnd(): int
+    {
+        return match ($this->newline) {
+            'CR' => 0x0D,
+            'NUL' => 0x00,
+            default => 0x0A,
+        };
+    }
+
+    /**
+     * Whether "\r\n" ends a line as one newline, besides each of its two
+     * characters alone.
+     */
+    private function crLfEndsALine(): bool
+    {
+        return 'ANYCRLF' === $this->newline || 'ANY' === $this->newline;
     }
 
     private static function isWordBoundary(AssertionHir $node): bool
@@ -743,12 +837,23 @@ final class HirToNfaTransformer
         }
 
         // Without /D, "$" and "\Z" also match before a newline that ends the
-        // subject: a search accepts that newline after the match.
+        // subject: a search accepts that newline after the match, "\r\n"
+        // too where it ends a line as one.
         $acceptStates = $fragment->acceptStates;
         if (AssertionKind::EndOrFinalNewline === $end) {
             $newline = $this->builder->createState();
+            $ends = $this->lineEnds();
+            $carriageReturn = null;
+            if ($this->crLfEndsALine()) {
+                $carriageReturn = $this->builder->createState();
+                $this->builder->addTransition($carriageReturn, CharSet::single(0x0A), $newline);
+                $acceptStates[] = $carriageReturn;
+            }
             foreach ($fragment->acceptStates as $acceptState) {
-                $this->builder->addTransition($acceptState, CharSet::single(0x0A), $newline);
+                $this->builder->addTransition($acceptState, $ends, $newline);
+                if (null !== $carriageReturn) {
+                    $this->builder->addTransition($acceptState, CharSet::single(0x0D), $carriageReturn);
+                }
             }
             $acceptStates[] = $newline;
         }

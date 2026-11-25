@@ -1,5 +1,5 @@
 ---
-description: "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what the plugin leaves to Psalm, and the PHP version patterns are judged for."
+description: "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what the plugin leaves to Psalm, its ReDoS findings, and the PHP version patterns are judged for."
 ---
 # Psalm
 
@@ -7,7 +7,8 @@ description: "The PHPRegex Psalm plugin: how $matches gets the shape of the patt
 `preg_*` call. Psalm types `$matches` the same way whatever the pattern,
 `array<array-key, string>`; with the plugin, where `preg_match()` returned 1,
 `$matches` is the shape of the pattern, and after `preg_match_all()` too. The
-plugin also reports the patterns the PHP you target refuses.
+plugin also reports the patterns the PHP you target refuses and, when asked,
+their ReDoS risks.
 
 {% include install.html package="php-regex/regex-psalm" dev=true %}
 
@@ -265,7 +266,8 @@ $input: 'no'|'no\n'|'yes'|'yes\n'
 ```
 
 `$` matches before a final `"\n"` too, so `"yes\n"` is among them;
-`/^(?:yes|no)$/D` or `/^(?:yes|no)\z/` leaves it out. Under `/iu`, the
+`/^(?:yes|no)$/D` or `/^(?:yes|no)\z/` leaves it out. Psalm 7.20 and later
+print the same type as `"no\n"|"yes\n"|'no'|'yes'`. Under `/iu`, the
 strings follow Unicode case folding: `/^(?:ok)$/Diu` matches six, `k` folding
 with U+212A KELVIN SIGN. The strings are read only from offset 0, a call with
 no offset argument. A subject that holds literals already keeps them: where
@@ -359,7 +361,7 @@ keeps the data flow of Psalm's.
 ### Compared with the PHPStan extension
 
 The plugin reads the same facts of a pattern as the
-[PHPStan extension](phpstan.md), and says less in two places:
+[PHPStan extension](phpstan.md), and says less in three places:
 
 - A group of digits is never a `numeric-string`. For
   `/^(\d+)-(?<y>\d+)?$/`, PHPStan types `$matches` as
@@ -375,6 +377,10 @@ The plugin reads the same facts of a pattern as the
   `preg_replace('/(a)/', '[$2]', 'xay')` returns `'x[]y'`: PHP replaces `$2`
   with nothing. The PHPStan extension reports it as
   `regex.replacement.undefinedGroup`.
+- The plugin reads the `preg_*` calls only. The static methods of the wrapper
+  libraries the extension reads under `phpRegex.interop`, composer/pcre's
+  `Preg::match()` or Laravel's `Str::isMatch()` for instance, are neither
+  validated nor checked for ReDoS.
 
 ## Invalid patterns
 
@@ -408,6 +414,93 @@ other:
 ```php
 /** @psalm-suppress InvalidRegexPattern */
 ```
+
+## ReDoS findings
+
+With `<redos>true</redos>`, the plugin also reports the
+[ReDoS findings](phpstan.md#redos-findings) of the PHPStan extension, from
+the same analysis and in the same words. The analysis is the expensive check,
+so it is off unless asked for, as in PHPStan:
+
+```xml
+<plugins>
+    <pluginClass class="PHPRegex\Psalm\Plugin">
+        <redos>true</redos>
+        <redosThreshold>medium</redosThreshold>
+    </pluginClass>
+</plugins>
+```
+
+`<redos>` takes `true` or `false`. `<redosThreshold>` takes `low`, `medium`,
+`high` or `critical`, `high` when unset, as everywhere else (see
+[the ReDoS guide](redos.md)). A value the plugin cannot read stops Psalm before
+it reads any file.
+
+A pattern one attempt of which backtracks at or above the threshold is
+`RegexRedos`, the extension's `regex.redos`. Its message is the extension's,
+`Exponential backtracking (ReDoS): <pattern>`, `Polynomial backtracking (ReDoS): <pattern>`
+or `Potential backtracking (ReDoS): <pattern>`, followed by what the extension
+prints in its tip: the severity and how it was reached, the attack, and a
+proven repair. In `app/Validator.php`:
+
+```php
+<?php
+
+function words(string $value): bool
+{
+    return 1 === preg_match('/^(\w+\s?)+$/', $value);
+}
+```
+
+```
+ERROR: RegexRedos - app/Validator.php:5:29 - Exponential backtracking (ReDoS): /^(\w+\s?)+$/. Severity: critical, exponential (proven). Attack: "0" x n . "!"
+```
+
+A pattern one attempt of which is proven linear while its unanchored search
+is quadratic in PCRE2's interpreter is `RegexRedosSearch`, the extension's
+`regex.redos.search`: `Quadratic search (ReDoS): <pattern>`, followed by what
+the cost means and its attack (see
+[the cost of an unanchored search](redos.md#the-cost-of-an-unanchored-search)).
+It is `medium`, so `<redosThreshold>medium</redosThreshold>` or `low` shows it.
+So is the cost of the loop of `preg_match_all()`, `preg_replace()`,
+`preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()`
+and `preg_split()`, which PHP retries after each empty match, on a pattern
+whose `preg_match()` search stops there (see
+[the search of the functions that look for every match](redos.md#the-search-of-the-functions-that-look-for-every-match)).
+The message then names the function. A `preg_match()` call of that pattern is
+not reported, and neither is a call whose limit, as its type says, bounds the
+matches. In `app/Fields.php`:
+
+```php
+<?php
+
+$fields = preg_split('/(?:[^,]*,)?/', $line);
+```
+
+```
+ERROR: RegexRedosSearch - app/Fields.php:3:22 - Quadratic search (ReDoS): /(?:[^,]*,)?/. Quadratic search after an empty match: one attempt is linear (proven), but preg_split() finds an empty match at each position of the run and, as PHP does after every empty match, tries that position again for a non-empty one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit. Severity: MEDIUM. Attack: "!" x n. pcre.backtrack_limit does not stop it: the limit counts each call apart. preg_match() and preg_grep() stop at the first match and make no such retry. Make every match read at least one character, or bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.
+```
+
+Each issue points at the pattern: the argument, the element of an array of
+patterns, or the key of `preg_replace_callback_array()`. A call whose subject
+Psalm knows to be constant, a literal or an array of literals, is not
+reported: it backtracks the same way on every run, or never, so no input can
+turn it into an attack. A pattern the target refuses is reported as
+`InvalidRegexPattern` alone, and one the PHP running Psalm does not compile is
+not analysed. The pattern is judged for the lowest version the call is judged
+for, under its guards and markers.
+
+Both are plugin issues, set and suppressed as any other, by name:
+
+```xml
+<issueHandlers>
+    <PluginIssue name="RegexRedosSearch" errorLevel="suppress"/>
+</issueHandlers>
+```
+
+The names stay for all of 2.x. Which patterns are reported is not frozen:
+when the analysis improves, a finding may appear, disappear or change class,
+and a Psalm baseline may need regenerating.
 
 ## The PHP version judged
 
@@ -608,5 +701,5 @@ vendor/bin/psalm --set-baseline=psalm-baseline.xml
 
 A minor release may type a pattern more narrowly than the one before, which
 may require regenerating the baseline; its CHANGELOG says so. The `Plugin`
-class, the `InvalidRegexPattern` name and the two options stay for all of
-2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).
+class, the `InvalidRegexPattern`, `RegexRedos` and `RegexRedosSearch` names
+and the options stay for all of 2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).

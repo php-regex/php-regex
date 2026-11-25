@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Extraction;
 
 use PHPRegex\Linter\Config\TargetConstraint;
+use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Parser\Resolution\Hole;
 use PHPRegex\Parser\Resolution\PatternArgument;
 use PHPRegex\Parser\Text\Ascii;
@@ -384,6 +385,13 @@ final class InFileValueResolver
     private array $certain = [];
 
     /**
+     * @var array<int, array<string, array<int, int>>> scope => variable => where the block ends that the
+     *                                                 assignments, by their rank, stand in as statements: a read
+     *                                                 in it after one runs it first
+     */
+    private array $blockEnds = [];
+
+    /**
      * @var array<int, array<string, array{list<int>, list<int>}>> scope => variable => where those assignments
      *                                                             are written and where they end, in order
      */
@@ -509,6 +517,21 @@ final class InFileValueResolver
      * @var array<string, true> the variables already read for a function, "scope|name|function"
      */
     private array $variablesRead = [];
+
+    /**
+     * @var array<string, array<string, true>> "value|suffix" => the literals a call reads through the value,
+     *                                         "file\0offset\0pattern"
+     */
+    private array $literalsGiven = [];
+
+    /**
+     * @var array<string, array<int, array<string, array<string, true>>>> file ("" for this one) => offset =>
+     *                                                                    pattern => the preg functions of the
+     *                                                                    calls that read the literal once it was
+     *                                                                    reported and look for every match, in
+     *                                                                    the order of the calls
+     */
+    private array $everyMatchElsewhere = [];
 
     /**
      * @var array<string, array{list<ValueExpr>, int, string|null}> constant => its folded values, the constants they
@@ -754,16 +777,24 @@ final class InFileValueResolver
     }
 
     /**
-     * @param int      $at      where the assignment is written
-     * @param int|null $end     where its value ends; null when it is not known, which reads as where it is
-     *                          written
-     * @param bool     $certain whether the assignment stands as a statement of the function body itself, or of
-     *                          the file, in no branch and no loop: every path to what follows it runs it
+     * @param int      $at       where the assignment is written
+     * @param int|null $end      where its value ends; null when it is not known, which reads as where it is
+     *                           written
+     * @param bool     $certain  whether the assignment stands as a statement of the function body itself, or of
+     *                           the file, in no branch and no loop: every path to what follows it runs it
+     * @param int|null $blockEnd where the block ends that the assignment stands in as a statement, a block of
+     *                           braces that is no switch: every path to what follows it in the block runs it;
+     *                           null when it stands in none
      */
-    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false): void
+    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false, ?int $blockEnd = null): void
     {
+        $rank = \count($this->assignments[$scope][$name] ?? []);
         if ($certain) {
-            $this->certain[$scope][$name][\count($this->assignments[$scope][$name] ?? [])] = true;
+            $this->certain[$scope][$name][$rank] = true;
+        }
+
+        if (null !== $blockEnd) {
+            $this->blockEnds[$scope][$name][$rank] = $blockEnd;
         }
 
         $this->assignments[$scope][$name][] = [$value, $at, max($at, $end ?? $at)];
@@ -928,17 +959,31 @@ final class InFileValueResolver
      * whole pattern gives none. The patterns reported at one place come
      * in the order of their bytes.
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}> each with the file, the column and the guard of its literal when it is another file's, and what it says of a constant of PHP whose value depends on the system
+     * A call that looks for every match runs in its loop the patterns it
+     * reads where it stands, "loops" says which: through a variable, only
+     * the literals of the assignment it reads (see literalsOf()).
+     *
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null, loops: bool}> each with the file, the column and the guard of its literal when it is another file's, and what it says of a constant of PHP whose value depends on the system
      */
     public function patterns(ValueExpr $expr, PatternFunction $function): array
     {
+        // The literals the call runs in its loop over every match: all of
+        // them, but through a variable, whose value is the one the call
+        // reads where it stands.
+        $looped = null === $function->everyMatch || !self::readsAVariable($expr) ? null : $this->literalsOf($expr, $function, 0) ?? [];
+
         // A variable read again the same way gives the patterns its first
-        // read reported: none is new. One read by its place holds other
-        // values at another read.
+        // read reported: none is new, but the call runs those it reads in
+        // its own loop. One read by its place holds other values at
+        // another read.
         $key = null;
         if (ValueExpr::VARIABLE === $expr->kind && !$this->readsByPlace($expr)) {
             $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.$function->patternSuffix.'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true);
             if (isset($this->variablesRead[$key])) {
+                foreach ($looped ?? [] as $place => $_) {
+                    $this->loopsAgain($place, $function);
+                }
+
                 return [];
             }
 
@@ -960,8 +1005,10 @@ final class InFileValueResolver
 
                 $pattern = $literal->value.$function->patternSuffix;
                 $variant = $this->variants[$literal] ?? null;
+                $place = ($literal->file ?? '')."\0".$literal->offset."\0".$pattern;
+                $loops = null === $looped || isset($looped[$place]);
                 if ($literal->offset < 0 && null === $literal->file) {
-                    $patterns[] = ['pattern' => $pattern, 'offset' => -1, 'line' => 0, 'location' => null, 'file' => null, 'column' => null, 'guard' => null, 'variant' => $variant];
+                    $patterns[] = ['pattern' => $pattern, 'offset' => -1, 'line' => 0, 'location' => null, 'file' => null, 'column' => null, 'guard' => null, 'variant' => $variant, 'loops' => $loops];
                     // The next argument naming the variable reports it too.
                     if (null !== $key) {
                         unset($this->variablesRead[$key]);
@@ -971,17 +1018,51 @@ final class InFileValueResolver
                 }
 
                 // A literal of another file is told from one of the file
-                // at the same offset: each file keeps its own.
+                // at the same offset: each file keeps its own. One reported
+                // already is reported where its first call read it, with the
+                // loop of this one.
                 if (isset($this->reported[$literal->file ?? ''][$literal->offset][$pattern])) {
+                    if ($loops) {
+                        $this->loopsAgain($place, $function);
+                    }
+
                     continue;
                 }
 
                 $this->reported[$literal->file ?? ''][$literal->offset][$pattern] = $literal;
-                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard, 'variant' => $variant];
+                $patterns[] = ['pattern' => $pattern, 'offset' => $literal->offset, 'line' => $literal->line, 'location' => $location, 'file' => $literal->file, 'column' => $literal->column, 'guard' => $literal->guard, 'variant' => $variant, 'loops' => $loops];
             }
         }
 
         return self::inByteOrder($patterns);
+    }
+
+    /**
+     * The occurrences, each with the preg functions of the other calls that
+     * read its literal once it was reported and look for every match, in
+     * the order of the calls, its own call's left out: the literal is
+     * reported once, and each of those calls runs it in its own loop.
+     *
+     * @param list<PatternOccurrence> $occurrences
+     * @param string                  $file        the file read, where a literal of its own stands
+     *
+     * @return list<PatternOccurrence>
+     */
+    public function withEveryMatchElsewhere(array $occurrences, string $file): array
+    {
+        if ([] === $this->everyMatchElsewhere) {
+            return $occurrences;
+        }
+
+        foreach ($occurrences as $index => $occurrence) {
+            $functions = null === $occurrence->fileOffset ? null : $this->everyMatchElsewhere[$file === $occurrence->file ? '' : $occurrence->file][$occurrence->fileOffset][$occurrence->pattern] ?? null;
+            $elsewhere = null === $functions ? [] : array_values(array_diff(array_keys($functions), [$occurrence->everyMatch]));
+            if ([] !== $elsewhere) {
+                $occurrences[$index] = $occurrence->withEveryMatchElsewhere($elsewhere);
+            }
+        }
+
+        return $occurrences;
     }
 
     /**
@@ -1002,6 +1083,165 @@ final class InFileValueResolver
         $key = ($expr->scope ?? -1).'|'.$expr->value.'|'.(int) \in_array($function->label, PregFunctions::PATTERN_LISTS, true).'|'.implode("\0", $function->optionPath).'|'.(int) $function->optionPathRequired.'|'.(int) $function->keysArePatterns.'|'.($function->replacementIndex ?? '');
 
         return $this->variableStates[$key] ??= $this->statesOf($expr, $function);
+    }
+
+    /**
+     * Notes the loop over every match of a call that reads a literal
+     * reported at an earlier one.
+     *
+     * @param string $place the literal's file ("" for this one), offset and pattern, "file\0offset\0pattern"
+     */
+    private function loopsAgain(string $place, PatternFunction $function): void
+    {
+        if (null !== $function->everyMatch) {
+            [$file, $offset, $pattern] = explode("\0", $place, 3) + ['', '', ''];
+            $this->everyMatchElsewhere[$file][(int) $offset][$pattern][$function->everyMatch] = true;
+        }
+    }
+
+    /**
+     * The literals a value gives where it stands, as
+     * "file\0offset\0pattern", when the code says which: a variable as
+     * literalsReadAt() reads it, a choice as each of its alternatives,
+     * and any other value whole when it reads no variable but through a
+     * composition, which joins what each one holds where it is read
+     * (composedValues()). Null when the code does not say.
+     *
+     * @return array<string, true>|null
+     */
+    private function literalsOf(ValueExpr $value, PatternFunction $function, int $depth): ?array
+    {
+        if (ValueExpr::VARIABLE === $value->kind) {
+            return $this->literalsReadAt($value, $function, $depth);
+        }
+
+        if (ValueExpr::SET === $value->kind) {
+            $literals = [];
+            foreach ($value->alternatives as $alternative) {
+                $given = $this->literalsOf($alternative, $function, $depth + 1);
+                if (null === $given) {
+                    return null;
+                }
+
+                $literals += $given;
+            }
+
+            return $literals;
+        }
+
+        return self::readsAVariable($value) ? null : $this->literalsIn($value, $function);
+    }
+
+    /**
+     * The literals the call reads through the value, as
+     * "file\0offset\0pattern".
+     *
+     * @return array<string, true>
+     */
+    private function literalsIn(ValueExpr $value, PatternFunction $function): array
+    {
+        $key = spl_object_id($value).'|'.$function->patternSuffix;
+        if (!isset($this->literalsGiven[$key])) {
+            $literals = [];
+            foreach ($this->arguments($value, $function) as $alternatives) {
+                foreach ($alternatives as [$literal]) {
+                    if (ValueExpr::LITERAL === $literal->kind) {
+                        $literals[($literal->file ?? '')."\0".$literal->offset."\0".$literal->value.$function->patternSuffix] = true;
+                    }
+                }
+            }
+
+            $this->literalsGiven[$key] = $literals;
+        }
+
+        return $this->literalsGiven[$key];
+    }
+
+    /**
+     * The literals a read of a variable reaches where it stands, when the
+     * code says which assignment it reads (see literalsOf()), of a
+     * variable nothing writes out of sight and in a body no goto runs
+     * again. Inside a foreach whose head assigns it, before the body
+     * writes it, those of the head, when it walks no variable. Otherwise
+     * the latest assignment written before the read, which runs first on
+     * every path to it: a statement of the body itself, or of the block
+     * of braces the read stands in, that no later assignment reaches
+     * through a loop the block holds. Null when the code does not say: an
+     * assignment in a branch or a loop of its own may stand between, in a
+     * switch, or a block of the alternative syntax.
+     *
+     * @return array<string, true>|null
+     */
+    private function literalsReadAt(ValueExpr $variable, PatternFunction $function, int $depth): ?array
+    {
+        $scope = $variable->scope;
+        $name = $variable->value;
+        $read = $variable->offset;
+        if (null === $scope || $read < 0 || $depth > self::MAX_DEPTH || isset($this->opaqueScopes[$scope]) || isset($this->jumpingScopes[$scope])
+            || isset($this->bailed[$scope][$name]) || isset($this->passedAt[$scope][$name]) || (self::FILE === $scope && $this->writtenOutOfSight())) {
+            return null;
+        }
+
+        // The head of a foreach gives the read what it walks, each value at
+        // a turn: targetValues() keeps none where the loop writes it again.
+        if (isset($this->targets[$scope][$name])) {
+            $head = $this->targets[$scope][$name][$this->loopRank($scope, $name, $read)] ?? null;
+
+            return null === $head || $head[3] < $read || self::readsAVariable($head[0]) ? null : $this->literalsIn($variable, $function);
+        }
+
+        // None written before the read says nothing of it there; nor does
+        // the assignment the read stands in, or one a branch or a loop of
+        // its own holds, nor one a later turn of a loop may replace.
+        $assignments = $this->assignments[$scope][$name] ?? [];
+        [$starts, , $order] = [] === $assignments ? [[], [], []] : $this->assignmentPlaces[$scope][$name] ??= self::inOrder($assignments);
+        $started = self::before($starts, $read);
+        $latest = $order[$started - 1] ?? -1;
+        $assignment = $assignments[$latest] ?? null;
+        $blockEnd = isset($this->certain[$scope][$name][$latest]) ? \PHP_INT_MAX : $this->blockEnds[$scope][$name][$latest] ?? -1;
+        if (null === $assignment || $assignment[2] >= $read || $blockEnd < $read) {
+            return null;
+        }
+
+        // A loop that holds the read and not the assignment runs the read
+        // again after what it writes later.
+        $replaced = $starts[$started] ?? \PHP_INT_MAX;
+        foreach ($this->loopsHolding($scope, $read) as [$start, $end]) {
+            if ($start > $assignment[1] && $replaced <= $end) {
+                return null;
+            }
+        }
+
+        return $this->literalsOf($assignment[0], $function, $depth + 1);
+    }
+
+    /**
+     * Whether the value reads a variable anywhere but in a composition,
+     * which joins what the variable holds where it is read.
+     */
+    private static function readsAVariable(ValueExpr $value): bool
+    {
+        if (ValueExpr::VARIABLE === $value->kind) {
+            return true;
+        }
+
+        if (ValueExpr::CONCAT === $value->kind) {
+            return false;
+        }
+
+        foreach ([...$value->parts, ...$value->alternatives] as $part) {
+            if (self::readsAVariable($part)) {
+                return true;
+            }
+        }
+
+        foreach ($value->items as [$key, $item]) {
+            if ((null !== $key && self::readsAVariable($key)) || self::readsAVariable($item)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1051,9 +1291,9 @@ final class InFileValueResolver
      * each place keeping its rank among the others: the patterns an
      * argument composes are listed the same way on every run.
      *
-     * @param list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}> $patterns
+     * @param list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null, loops: bool}> $patterns
      *
-     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null}>
+     * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null, loops: bool}>
      */
     private static function inByteOrder(array $patterns): array
     {

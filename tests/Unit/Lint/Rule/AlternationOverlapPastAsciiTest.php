@@ -87,9 +87,16 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     public function test_a_caseless_group_meets_the_other_case_under_u(): void
     {
         $this->assertSame(1, preg_match('/^(?i:öa)/u', 'Öa'));
-        $this->assertSame(1, preg_match('/^Öb/u', 'Öb'));
+        $this->assertSame(1, preg_match('/^Ö\w/u', 'Öa'));
 
-        $this->assertCount(1, $this->charsetOverlapMessages('/(?:(?i:öa)|Öb)+x/u'));
+        $this->assertCount(1, $this->charsetOverlapMessages('/(?:(?i:öa)|Ö\w)+x/u'));
+
+        // The texts are read in the case the group gives them: "a" and "b"
+        // tell the branches apart in either case.
+        $this->assertSame(0, preg_match('/^(?i:öa)/u', 'Öb'));
+        $this->assertSame(0, preg_match('/^Öb/u', 'Öa'));
+
+        $this->assertCount(0, $this->charsetOverlapMessages('/(?:(?i:öa)|Öb)+x/u'));
     }
 
     /**
@@ -106,7 +113,7 @@ final class AlternationOverlapPastAsciiTest extends TestCase
     public function test_the_first_characters_are_read_through_the_first_items(string $pattern, array $oracle, int $findings): void
     {
         // PCRE2 reads the options of "a" from 10.43.
-        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', '/(?:(?a:[ö])x|èy)+z/u', '/(?:(?a:\w)x|éy)+z/u', '/(?:(?aW:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/uD', '/(?:(?aS:\w)x|éy)+z/uS', '/(?:(?a:\w)x|éy)+z/uD', '/(?aD)(?:\wx|éy)+z/uD']]);
+        $this->requiresPcre2For($pattern, ['10.43' => ['/(?:(?a:ö)|è)+x/u', '/(?:(?a:öa)|öb)+x/u', '/(?:(?a:öa)|ö\w)+x/u', '/(?:(?ai:öa)|Öb)+x/u', '/(?:(?ai:öa)|Ö\w)+x/u', '/(?:(?a:\p{Lu})x|\p{L}y)+z/u', '/(?:(?a:[ö])x|èy)+z/u', '/(?:(?a:\w)x|éy)+z/u', '/(?:(?aW:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/u', '/(?:(?aD:\w)x|éy)+z/uD', '/(?:(?aS:\w)x|éy)+z/uS', '/(?:(?a:\w)x|éy)+z/uD', '/(?aD)(?:\wx|éy)+z/uD']]);
 
         foreach ($oracle as [$branch, $subject, $starts]) {
             $this->assertSame($starts, preg_match('/^(?:'.$branch.')/u', $subject), $branch.' on '.$subject);
@@ -126,8 +133,12 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'a branch reset group, apart' => ['pattern' => '/(?:(?|ö|ê)|è)+x/u', 'oracle' => [['(?|ö|ê)', 'ö', 1], ['(?|ö|ê)', 'ê', 1], ['(?|ö|ê)', 'è', 0]], 'findings' => 0];
         yield 'a branch reset group, meeting the other branch' => ['pattern' => '/(?:(?|ö|ê)a|êb)+x/u', 'oracle' => [['(?|ö|ê)a', 'êa', 1], ['êb', 'êb', 1]], 'findings' => 1];
         yield 'a character under the options of a, apart' => ['pattern' => '/(?:(?a:ö)|è)+x/u', 'oracle' => [['(?a:ö)', 'ö', 1], ['(?a:ö)', 'è', 0], ['è', 'ö', 0]], 'findings' => 0];
-        yield 'a character under the options of a, meeting the other branch' => ['pattern' => '/(?:(?a:öa)|öb)+x/u', 'oracle' => [['(?a:öa)', 'öa', 1], ['öb', 'öb', 1]], 'findings' => 1];
-        yield 'a bare option group before the first character' => ['pattern' => '/(?:(?i)öa|Öb)+x/u', 'oracle' => [['(?i)öa', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
+        yield 'a character under the options of a, meeting the other branch' => ['pattern' => '/(?:(?a:öa)|ö\w)+x/u', 'oracle' => [['(?a:öa)', 'öa', 1], ['ö\w', 'öa', 1]], 'findings' => 1];
+        yield 'a character under the options of a, then texts told apart' => ['pattern' => '/(?:(?a:öa)|öb)+x/u', 'oracle' => [['(?a:öa)', 'öa', 1], ['(?a:öa)', 'öb', 0], ['öb', 'öa', 0]], 'findings' => 0];
+        yield 'a bare option group before the first character' => ['pattern' => '/(?:(?i)ö\w|Öb)+x/u', 'oracle' => [['(?i)ö\w', 'Öb', 1], ['(?i)Öb', 'Öb', 1]], 'findings' => 1];
+        // The option carries into the next branch, whose text it reads
+        // caselessly too: the second letters tell the branches apart.
+        yield 'a bare option group before the first character, then texts told apart' => ['pattern' => '/(?:(?i)öa|Öb)+x/u', 'oracle' => [['(?i)öa', 'Öa', 1], ['(?i)Öb', 'öb', 1], ['(?i)öa', 'Öb', 0], ['(?i)Öb', 'Öa', 0]], 'findings' => 0];
         yield 'an alternation with an empty branch first' => ['pattern' => '/(?:(?:|ö)è|ê)+x/u', 'oracle' => [['(?:|ö)è', 'öè', 1], ['(?:|ö)è', 'è', 1], ['(?:|ö)è', 'ê', 0], ['ê', 'ö', 0], ['ê', 'è', 0]], 'findings' => 0];
         yield 'an item repeated no time first' => ['pattern' => '/(?:(?:x){0}öa|èb)+x/u', 'oracle' => [['(?:x){0}öa', 'öa', 1], ['(?:x){0}öa', 'è', 0], ['èb', 'ö', 0]], 'findings' => 0];
         // The options of "a" leave the Unicode properties as they are:
@@ -145,7 +156,8 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'the space option of a beside the pattern\'s /S, meeting the other branch' => ['pattern' => '/(?:(?aS:\w)x|éy)+z/uS', 'oracle' => [['(?aS:\w)x', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
         yield 'every option of a beside the pattern\'s /D, apart' => ['pattern' => '/(?:(?a:\w)x|éy)+z/uD', 'oracle' => [['(?a:\w)x', 'éx', 0], ['éy', 'éy', 1]], 'findings' => 0];
         yield 'the digit option of a set before the alternation, beside the pattern\'s /D' => ['pattern' => '/(?aD)(?:\wx|éy)+z/uD', 'oracle' => [['(?aD)\wx', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
-        yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Öb', 'Öb', 1]], 'findings' => 1];
+        yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Ö\w)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Ö\w', 'Öa', 1]], 'findings' => 1];
+        yield 'a caseless character under the options of a, then texts told apart' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'ÖA', 1], ['(?ai:öa)', 'Öb', 0], ['Öb', 'Öa', 0]], 'findings' => 0];
         yield 'a script run, meeting the other branch' => ['pattern' => '/(?:(*sr:öa)|öb)+x/u', 'oracle' => [['(*sr:öa)', 'öa', 1], ['öb', 'öb', 1]], 'findings' => 1];
         yield 'a script run of a class, apart' => ['pattern' => '/(?:(*sr:[öü]a)|èb)+x/u', 'oracle' => [['(*sr:[öü]a)', 'üa', 1], ['(*sr:[öü]a)', 'èa', 0], ['èb', 'öb', 0]], 'findings' => 0];
     }

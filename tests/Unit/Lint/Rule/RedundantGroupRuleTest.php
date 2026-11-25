@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -119,6 +120,92 @@ final class RedundantGroupRuleTest extends TestCase
         yield 'keep under a plus' => ['pattern' => '/(?:\K)+a/', 'without' => '/\K+a/', 'subject' => 'a'];
         // Without u the letter is two bytes, and the plus would repeat the second.
         yield 'multibyte letter without u' => ['pattern' => '/^(?:é)+$/', 'without' => '/^é+$/', 'subject' => 'éé'];
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped, and the brackets decide which: a repeat written as a group is
+     * never made possessive, a letter repeated possessively is skipped as it
+     * should be. The engine tells each pattern apart from the one without
+     * the group on "aa", with and without the JIT, and no group is reported.
+     */
+    #[Test]
+    #[DataProvider('provideBracketsTheEngineReads')]
+    public function test_a_group_whose_brackets_decide_a_possessive_is_not_reported(string $pattern, string $group, string $without): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49, and 10.34 and 10.39.
+        $this->assertNotSame(preg_match($pattern, 'aa'), preg_match($without, 'aa'));
+        $this->assertNotSame(preg_match(PcreInterpreter::pattern($pattern), 'aa'), preg_match(PcreInterpreter::pattern($without), 'aa'));
+
+        $linter = new PatternLinter();
+        Regex::create()->parse($pattern)->accept($linter);
+        $reported = array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id && str_contains($violation->message, '"'.$group.'"'));
+
+        $this->assertSame([], $reported);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, group: string, without: string}>
+     */
+    public static function provideBracketsTheEngineReads(): iterable
+    {
+        yield 'an optional group repeated possessively' => ['pattern' => '/a+(?:b)?+a/', 'group' => '(?:b)', 'without' => '/a+b?+a/'];
+        yield 'an optional group in an atomic group' => ['pattern' => '/a+(?>(?:b)?)a/', 'group' => '(?:b)', 'without' => '/a+(?>b?)a/'];
+        yield 'an optional group before an optional letter in an atomic group' => ['pattern' => '/a+(?>(?:b)?c?)a/', 'group' => '(?:b)', 'without' => '/a+(?>b?c?)a/'];
+        yield 'a repeat written as a group' => ['pattern' => '/(?:a)+(?:b)?+a/', 'group' => '(?:a)', 'without' => '/a+(?:b)?+a/'];
+    }
+
+    /**
+     * The group around the optional letter goes there: the repeat before it
+     * is written as a group, which PCRE2 never makes possessive, and the
+     * engine finds "aa" with or without it.
+     */
+    #[Test]
+    public function test_a_group_after_a_repeat_written_as_a_group_is_still_reported(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49.
+        $this->assertSame([1, 1], [preg_match('/(?:a)+(?:b)?+a/', 'aa'), preg_match('/(?:a)+b?+a/', 'aa')]);
+
+        $linter = new PatternLinter();
+        Regex::create()->parse('/(?:a)+(?:b)?+a/')->accept($linter);
+        $messages = array_map(static fn (RuleViolation $violation): string => $violation->message, array_filter($linter->getIssues(), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+
+        $this->assertSame(['Redundant non-capturing group "(?:b)" at offset 6; it can be removed without changing behavior.'], array_values($messages));
+    }
+
+    /**
+     * Where no possessive or atomic group that may match nothing stands,
+     * the brackets decide nothing, and the group is reported.
+     */
+    #[Test]
+    public function test_a_group_before_a_greedy_optional_group_is_still_reported(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49: the two match alike.
+        $this->assertSame([1, 1], [preg_match('/(?:a)+(?:b)?a/', 'aa'), preg_match('/a+(?:b)?a/', 'aa')]);
+
+        $this->assertInstanceOf(RuleViolation::class, $this->violation('/(?:a)+(?:b)?a/'));
+    }
+
+    /**
+     * Each pattern is read on its own: one linted after a pattern whose
+     * brackets decide a possessive, by the same facade, is judged by its
+     * own.
+     */
+    #[Test]
+    public function test_the_brackets_of_one_pattern_decide_nothing_for_the_next(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49.
+        $this->assertSame([0, 1], [preg_match('/a+(?:b)?+a/', 'aa'), preg_match('/a+b?+a/', 'aa')]);
+        $this->assertSame([1, 1], [preg_match('/a+(?:b)?a/', 'aa'), preg_match('/a+b?a/', 'aa')]);
+
+        $regex = Regex::create(['cache' => null]);
+        $reported = [];
+        foreach (['/a+(?:b)?+a/', '/a+(?:b)?a/', '/a+(?:b)?+a/'] as $pattern) {
+            $reported[] = \count(array_filter($regex->lint($pattern), static fn (RuleViolation $violation): bool => self::ID === $violation->id));
+        }
+
+        $this->assertSame([0, 1, 0], $reported);
     }
 
     #[Test]

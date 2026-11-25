@@ -15,6 +15,7 @@ namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\EscapeJoin;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
+use PHPRegex\Linter\Rule\Support\PossessiveBrackets;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -43,7 +44,9 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  * "a{(?:2)}", cannot go. A group a quantifier repeats goes only around one
  * character, as in "(?:a)+": without the group, "(?:\Qab\E)+" repeats the
  * "b" alone, "(?:é)+" without UTF mode the last byte of the letter, and
- * "(?:^)+" is refused.
+ * "(?:^)+" is refused. A group whose brackets decide which repeats PCRE2
+ * makes possessive stays: "/a+(?:b)?+a/" finds nothing in "aa", where
+ * "/a+b?+a/" finds it.
  *
  * @internal
  */
@@ -72,6 +75,7 @@ final class RedundantGroupRule extends AbstractLintRule
             || !$this->isRedundantGroup($node->child)
             || EscapeJoin::groupSeparatesAnEscape($node, $context)
             || (self::isQuantified($context) && !self::readsOneCharacter($node->child, $context))
+            || PossessiveBrackets::groupDecides($node, $context)
         ) {
             return [];
         }

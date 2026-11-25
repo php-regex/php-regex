@@ -222,6 +222,27 @@ final class CharacterTables
     }
 
     /**
+     * Whether the tables of either side of 10.43 give the second byte as
+     * the other case of the first.
+     */
+    public function mayPair(int $byte, int $other): bool
+    {
+        return \chr($other) === $this->casesFrom1043[$byte] || \chr($other) === $this->casesBefore143[$byte];
+    }
+
+    /**
+     * Whether every caseless item reads the other case of every byte alike
+     * on every release: no byte's settledOtherCase() is null. Those of
+     * glibc's tr_TR.ISO-8859-9 settle them all; those of macOS's
+     * tr_TR.ISO8859-9 leave "I", "i" and 0xDD, which its interpreter reads
+     * otherwise.
+     */
+    public function settlesEveryCase(): bool
+    {
+        return [] === $this->unsettled && $this->casesBefore143 === $this->casesFrom1043;
+    }
+
+    /**
      * The bytes a type ("d", "s", "w") or a POSIX name holds, as ranges.
      *
      * @return list<array{0: int, 1: int}>

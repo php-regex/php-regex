@@ -27,8 +27,8 @@ interface SearchCostReplayerInterface
 {
     /**
      * Whether the engine starts attempts inside the run that each read what
-     * is left of it, and matches nowhere; null when the limits of the
-     * options leave the replay unable to finish its count.
+     * is left of it, and matches nowhere before the breaker; null when
+     * the limits of the options leave the replay unable to finish its count.
      */
     public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
 
@@ -39,4 +39,12 @@ interface SearchCostReplayerInterface
      * limits of the options leave the replay unable to finish its count.
      */
     public function replaysEveryMatch(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
+
+    /**
+     * Whether the attempts of the loop of the functions that look for every
+     * match, started inside the run, each read what is left of it before
+     * they end on a short match past their start; null when the limits of
+     * the options leave the replay unable to finish its count.
+     */
+    public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
 }

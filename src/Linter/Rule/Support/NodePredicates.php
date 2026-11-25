@@ -23,6 +23,7 @@ use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ConditionalNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -62,7 +63,7 @@ final class NodePredicates
         if ($node instanceof DotNode) {
             return true;
         }
-        if ($node instanceof CharLiteralNode) {
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
             return true;
         }
         if ($node instanceof UnicodePropNode) {
@@ -343,6 +344,12 @@ final class NodePredicates
      * Fold an inline (?flags-flags) marker into the flags accumulated so
      * far. A leading ^ first resets i, m, n, r, s and x; the other
      * modifiers, such as U, u and D, stay.
+     *
+     * "xx" is an option of its own, which the flags hold as "xx": a class
+     * drops its spaces and tabs under it. PCRE2 reads the letters of a
+     * group together: "xx" in them turns it on, "x" alone takes it off
+     * ("(?xx)(?ix)" leaves a class's spaces in, "(?xxix)" does not), and
+     * "-x" or a reset takes both off.
      */
     public static function applyInlineFlags(string $baseFlags, string $inlineFlags): string
     {
@@ -357,25 +364,28 @@ final class NodePredicates
             : [$inlineFlags, ''];
 
         $flags = [];
-        foreach (Bytes::split($baseFlags) as $flag) {
-            if ('' !== $flag) {
-                $flags[$flag] = true;
-            }
-        }
-
-        foreach (Bytes::split($setFlags) as $flag) {
-            if ('' !== $flag) {
-                $flags[$flag] = true;
-            }
+        foreach ([...Bytes::split($baseFlags), ...Bytes::split($setFlags)] as $flag) {
+            $flags[$flag] = true;
         }
 
         foreach (Bytes::split($unsetFlags) as $flag) {
-            if ('' !== $flag) {
-                unset($flags[$flag]);
-            }
+            unset($flags[$flag]);
         }
 
-        return implode('', array_keys($flags));
+        $extendedMore = str_contains($setFlags, 'x') ? str_contains($setFlags, 'xx') : str_contains($baseFlags, 'xx');
+        $applied = implode('', array_keys($flags));
+
+        return $extendedMore ? str_replace('x', 'xx', $applied) : $applied;
+    }
+
+    /**
+     * The flags PHP compiles a pattern with from its modifiers, each once:
+     * the "x" modifier is "x" however many times it is written, "/xx" does
+     * not turn "xx" on.
+     */
+    public static function modifierFlags(string $modifiers): string
+    {
+        return implode('', array_keys(array_fill_keys(Bytes::split($modifiers), true)));
     }
 
     public static function unwrapTransparentNode(NodeInterface $node): NodeInterface

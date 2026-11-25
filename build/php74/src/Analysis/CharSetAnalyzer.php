@@ -242,6 +242,17 @@ final class CharSetAnalyzer
     }
 
     /**
+     * The characters "\w" takes, which "\b" and "\B" tell apart from the
+     * others: the tables' word characters without UCP, read as a set of
+     * "\w" is, not known under UCP, whose properties of Unicode the sets
+     * do not hold.
+     */
+    public function wordSet(): ByteCharSet
+    {
+        return $this->fromCharType('w');
+    }
+
+    /**
      * The flags a pattern whose modifiers are $flags opens under, those an
      * option setting changes: (*CASELESS_RESTRICT) holds from the start as
      * r does, and "(?-r)" or "(?^)" turns it off after.
@@ -308,6 +319,10 @@ final class CharSetAnalyzer
         }
 
         if ($node instanceof CharClassNode) {
+            if ($this->readsAsACaselessByteApart($node)) {
+                return ByteCharSet::unknown();
+            }
+
             $set = ByteCharSet::empty();
 
             $parts = $node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression];
@@ -709,6 +724,45 @@ final class CharSetAnalyzer
         }
 
         return $set;
+    }
+
+    /**
+     * Whether PCRE2 reads the class as a byte, caseless, which the engine's
+     * paths read apart: a class of two bytes, the second the other case
+     * another locale's tables give the first, is read so whether i holds
+     * or not (pcre2_compile.c), and the interpreter compares it alone by
+     * the small letters of the tables, where the JIT takes the two bytes
+     * written. Without UTF, and where the paths read the case of the first
+     * byte otherwise: under tr_TR.ISO8859-9 on macOS "[Ii]" takes "\xDD" on
+     * the interpreter, while "[I\xFD]", whose second byte is no case of the
+     * first, is read as written. Under i the class reads the cases of its
+     * bytes. Under tables not known, any class of two bytes may be one.
+     * Without UTF each character a class writes is a byte: a class of two
+     * is an alternation of them, and one of a code point above 0xFF,
+     * which PCRE2 refuses there, is not known either way.
+     */
+    private function readsAsACaselessByteApart(CharClassNode $node): bool
+    {
+        if ($this->ownTables || $this->utf || $this->caseless || $node->isNegated) {
+            return false;
+        }
+
+        $bytes = [];
+        foreach ($node->expression instanceof AlternationNode ? $node->expression->alternatives : [] as $part) {
+            if ($part instanceof CharLiteralNode || $part instanceof ControlCharNode) {
+                $bytes[] = $part->codePoint;
+            } elseif ($part instanceof LiteralNode) {
+                $bytes[] = \ord($part->value);
+            } else {
+                return false;
+            }
+        }
+
+        if (2 !== \count($bytes) || $bytes[0] === $bytes[1] || max($bytes) > 0xFF) {
+            return false;
+        }
+
+        return null === $this->tables || (null === $this->tables->settledOtherCase($bytes[0]) && $this->tables->mayPair($bytes[0], $bytes[1]));
     }
 
     /**

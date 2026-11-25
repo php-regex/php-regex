@@ -212,13 +212,24 @@ final class RedosVerdict
 
     /**
      * What the search cost of the functions that look for every match
-     * means at a call of one of them: one attempt is linear, the search of
-     * preg_match() stops at the first empty match, and the loop of the call
-     * retries each position of the run, in PCRE2's interpreter whatever
-     * the JIT setting, as the JIT takes no PCRE2_ANCHORED at match time.
+     * means at a call of one of them: one attempt is linear, and the search
+     * of preg_match() stops at the first match. After an empty match, the
+     * loop of the call retries each position of the run, in PCRE2's
+     * interpreter whatever the JIT setting, as the JIT takes no
+     * PCRE2_ANCHORED at match time. After a short one, the loop starts a
+     * call where it ends, whose attempt reads to the end of the run before
+     * it settles on the next.
      */
-    public static function everyMatchMessage(string $function): string
+    public static function everyMatchMessage(string $function, RedosSearchCost $cost): string
     {
+        if ($cost->shortMatch) {
+            return \sprintf(
+                "Quadratic search over short matches: one attempt is linear (proven), but %s() finds a short match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: %s.",
+                $function,
+                Ascii::upper(self::searchSeverity()->value),
+            );
+        }
+
         return \sprintf(
             "Quadratic search after an empty match: one attempt is linear (proven), but %s() finds an empty match at each position of the run and, as PHP does after every empty match, tries that position again for a non-empty one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit. Severity: %s.",
             $function,
@@ -228,7 +239,7 @@ final class RedosVerdict
 
     /**
      * The attack, why pcre.backtrack_limit does not stop it, what the
-     * replay of the retry found, and how to remove it.
+     * replay of the retry or of the attempt found, and how to remove it.
      *
      * @return list<string>
      */
@@ -240,9 +251,16 @@ final class RedosVerdict
         ];
 
         if (true === $cost->replayed) {
-            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: the retry at a position further from the end of the run takes more steps.', $pcreVersion);
+            $lines[] = \sprintf('Replayed on PCRE2 %s without the JIT: the %s at a position further from the end of the run takes more steps.', $pcreVersion, $cost->shortMatch ? 'attempt' : 'retry');
         } elseif (false === $cost->replayed) {
             $lines[] = \sprintf('Not confirmed by the step replay on PCRE2 %s.', $pcreVersion);
+        }
+
+        if ($cost->shortMatch) {
+            $lines[] = 'preg_match() and preg_grep() stop at the first match and read the run once.';
+            $lines[] = 'Bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.';
+
+            return $lines;
         }
 
         $lines[] = 'preg_match() and preg_grep() stop at the first match and make no such retry.';

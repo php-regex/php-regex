@@ -248,35 +248,71 @@ final class CallArguments
      */
     public static function utf8(array $tokens, int $startIndex, int $totalTokens, array $utf8, array $closers): ?bool
     {
-        $position = 0;
-        $value = null;
-        $argumentStart = $startIndex;
-        for ($i = $startIndex; $i < $totalTokens; $i++) {
-            $token = $tokens[$i];
-            if (')' === $token || ',' === $token) {
-                $argument = self::readArgument($tokens, $argumentStart, $i);
-                if (null !== $argument && $argument['spread']) {
-                    return null;
-                }
+        $value = self::given($tokens, $startIndex, $totalTokens, $utf8, $closers);
+        $literal = \is_array($value) ? self::boolean($tokens, $value[0], $value[1]) : $value;
 
-                if (null !== $argument && (null === $argument['name'] ? $position++ === $utf8[0] : $utf8[1] === $argument['name'])) {
-                    $value = [$argument['valueStart'], $i];
-                }
+        return null === $literal ? null : 1 === $literal;
+    }
 
-                if (')' === $token) {
-                    break;
-                }
-
-                $argumentStart = $i + 1;
-            } elseif (PhpTokens::opensNesting($token)) {
-                $i = $closers[$i] ?? $totalTokens;
-            }
+    /**
+     * The value the argument deciding whether a call looks for every match
+     * spells, by position or by name: an integer literal under its signs
+     * and parentheses, true or false read as 1 and 0, or a constant of
+     * RegexIterator, its class resolved as PHP resolves it. False when the
+     * call leaves it out; null for anything else, or what a spread may hold.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array{int, string}                         $parameter its position and its name
+     * @param array<int, int>                            $closers
+     */
+    public static function decision(array $tokens, int $startIndex, int $totalTokens, array $parameter, array $closers, NameResolutionContext $context): int|false|null
+    {
+        $value = self::given($tokens, $startIndex, $totalTokens, $parameter, $closers);
+        if (!\is_array($value)) {
+            return $value;
         }
 
-        $name = null === $value ? 'false' : self::soleName($tokens, $value[0], $value[1]);
-        $literal = null === $name || 1 < substr_count($name, '\\') ? null : Ascii::lower(ltrim($name, '\\'));
+        [$start, $end] = $value;
+        $integer = self::integer($tokens, $start, $end) ?? self::boolean($tokens, $start, $end);
+        if (null !== $integer) {
+            return $integer;
+        }
 
-        return 'true' === $literal ? true : ('false' === $literal ? false : null);
+        // RegexIterator::ALL_MATCHES, in parentheses or not.
+        [$slice] = StringExpressionReader::stripParentheses(...PhpTokens::slice($tokens, $start, $end));
+        $significant = array_values(array_filter($slice, static fn (array|string $token): bool => !PhpTokens::isIgnorable($token)));
+        if (3 !== \count($significant) || !PhpTokens::isDoubleColon($significant[1])) {
+            return null;
+        }
+
+        $class = PhpTokens::name($significant[0]);
+        $constant = PhpTokens::identifier($significant[2]);
+
+        return null === $class || null === $constant ? null : PregFunctions::iteratorConstant($context->resolveClass($class), $constant);
+    }
+
+    /**
+     * Whether the argument in [$start, $end) is a closure whatever its
+     * value: a closure, an arrow function, a first-class callable or
+     * Closure::fromCallable(), the whole argument.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array<int, int>                            $closers the closing index of each bracket
+     */
+    public static function isClosure(array $tokens, int $start, int $end, array $closers, NameResolutionContext $context): bool
+    {
+        $first = PhpTokens::nextSignificant($tokens, $start, $end) ?? $end;
+        $last = PhpTokens::previousSignificant($tokens, $end - 1) ?? $start;
+        while ('(' === ($tokens[$first] ?? null) && ($closers[$first] ?? null) === $last) {
+            $first = PhpTokens::nextSignificant($tokens, $first + 1, $last) ?? $last;
+            $last = PhpTokens::previousSignificant($tokens, $last - 1) ?? $first;
+        }
+
+        // closureEnd() is null for anything but a closure or an arrow
+        // function.
+        return self::closureEnd($tokens, $first, $last, $closers) === $last
+            || self::isClosureFromCallable($tokens, $first, PhpTokens::nextSignificant($tokens, $first + 1, $end) ?? $end, $last, $closers, $context)
+            || self::isFirstClassCallable($tokens, $first, $last, $closers);
     }
 
     /**
@@ -324,6 +360,62 @@ final class CallArguments
         };
 
         return $whole || self::isFirstClassCallable($tokens, $first, $last, $closers);
+    }
+
+    /**
+     * The argument of a parameter, by position or by name: where its value
+     * starts and where it ends; false when the call leaves it out, null when
+     * a spread may hold it.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     * @param array{int, string}                         $parameter its position and its name
+     * @param array<int, int>                            $closers
+     *
+     * @return array{int, int}|false|null
+     */
+    private static function given(array $tokens, int $startIndex, int $totalTokens, array $parameter, array $closers): array|false|null
+    {
+        $position = 0;
+        $value = false;
+        $argumentStart = $startIndex;
+        for ($i = $startIndex; $i < $totalTokens; $i++) {
+            $token = $tokens[$i];
+            if (')' === $token || ',' === $token) {
+                $argument = self::readArgument($tokens, $argumentStart, $i);
+                if (null !== $argument && $argument['spread']) {
+                    return null;
+                }
+
+                if (null !== $argument && (null === $argument['name'] ? $position++ === $parameter[0] : $parameter[1] === $argument['name'])) {
+                    $value = [$argument['valueStart'], $i];
+                }
+
+                if (')' === $token) {
+                    break;
+                }
+
+                $argumentStart = $i + 1;
+            } elseif (PhpTokens::opensNesting($token)) {
+                $i = $closers[$i] ?? $totalTokens;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * The literal true or false an argument in [$start, $end) is, as 1 and
+     * 0, in any case and with a leading backslash or none; null for
+     * anything else.
+     *
+     * @param array<int, array{int, string, int}|string> $tokens
+     */
+    private static function boolean(array $tokens, int $start, int $end): ?int
+    {
+        $name = self::soleName($tokens, $start, $end);
+        $literal = null === $name || 1 < substr_count($name, '\\') ? null : Ascii::lower(ltrim($name, '\\'));
+
+        return 'true' === $literal ? 1 : ('false' === $literal ? 0 : null);
     }
 
     /**

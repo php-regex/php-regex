@@ -226,6 +226,17 @@ final class TokenValueCollector
     private array $alternativeBlocks = [];
 
     /**
+     * @var list<array{int, int}> the braces open where the last token read stands, each with its closing one,
+     *                            from the outermost
+     */
+    private array $openBraces = [];
+
+    /**
+     * @var array<int, true> the braces that open the body of a switch, whose cases may be entered past a statement
+     */
+    private array $switchBraces = [];
+
+    /**
      * @param array<int, array{int, string, int}|string> $tokens
      * @param array<int, int>                            $offsets           the byte offset of each token
      * @param array<int, int>                            $closers           the closing index of each bracket
@@ -311,6 +322,7 @@ final class TokenValueCollector
             case \T_ENDFOREACH:
             case \T_ENDSWITCH:
             case \T_ENDDECLARE:
+                $this->openBrace($index, $id);
                 $this->nest($index, $id);
 
                 break;
@@ -655,6 +667,50 @@ final class TokenValueCollector
         $before = $this->previous($index - 1);
 
         return null !== PhpTokens::name($this->tokens[$index]) && null !== $before && $this->is($before, \T_NAMESPACE);
+    }
+
+    /**
+     * Keeps the brace among those open, and the one a switch opens its
+     * body with apart.
+     */
+    private function openBrace(int $index, int|string $id): void
+    {
+        if ('{' === $id) {
+            $this->openBraces[] = [$index, $this->closers[$index] ?? \PHP_INT_MAX];
+        } elseif (\T_SWITCH === $id) {
+            $body = $this->afterCondition($index);
+            if (null !== $body && '{' === $this->tokens[$body]) {
+                $this->switchBraces[$body] = true;
+            }
+        }
+    }
+
+    /**
+     * Where the block of braces ends, as a byte offset, that the
+     * assignment whose target is at $target and whose value ends before
+     * $end stands in as a statement: every path to what follows it in the
+     * block runs it. Null when it stands in none, in the body of a
+     * switch, or in a control structure of the alternative syntax, whose
+     * statements no brace delimits.
+     */
+    private function blockEnd(int $target, int $end): ?int
+    {
+        $body = $this->bodyAt($target);
+        $scope = null === $body ? InFileValueResolver::FILE : ($body['class'] ? null : $body['id']);
+        $before = $this->previous($target - 1);
+        if (null === $scope || 0 !== ($this->alternativeBlocks[$scope] ?? 0) || null === $before || !$this->endsStatement($before)
+            || !isset($this->tokens[$end]) || (';' !== $this->tokens[$end] && !$this->is($end, \T_CLOSE_TAG))
+            || (null !== $this->forHead && $target > $this->forHead[0] && $target < $this->forHead[1])) {
+            return null;
+        }
+
+        while ([] !== $this->openBraces && $this->openBraces[\count($this->openBraces) - 1][1] < $target) {
+            array_pop($this->openBraces);
+        }
+
+        $brace = $this->openBraces[\count($this->openBraces) - 1] ?? null;
+
+        return null === $brace || isset($this->switchBraces[$brace[0]]) ? null : $this->offsets[$brace[1]] ?? null;
     }
 
     /**
@@ -2274,7 +2330,7 @@ final class TokenValueCollector
                 $from = $to = $this->step[2];
             }
 
-            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $end, $context), $from, $to, $this->standsAmongStatements($target, $end));
+            $this->values->assign($scope, substr($token[1], 1), $this->assignedValue($value, $end, $context), $from, $to, $this->standsAmongStatements($target, $end), $this->blockEnd($target, $end));
         }
     }
 

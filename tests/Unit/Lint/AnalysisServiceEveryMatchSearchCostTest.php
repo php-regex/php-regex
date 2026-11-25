@@ -55,13 +55,14 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
 
         $this->assertCount(1, $issues);
         $this->assertSame('warning', $issues[0]->severity->level());
-        $this->assertSame(RedosVerdict::everyMatchMessage($function), $issues[0]->message);
-        $this->assertStringContainsString($function.'()', (string) $issues[0]->message);
         $analysis = $issues[0]->analysis;
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $this->assertNull($analysis->searchCost);
         $cost = $analysis->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertSame(RedosVerdict::everyMatchMessage($function, $cost), $issues[0]->message);
+        $this->assertStringContainsString($function.'()', (string) $issues[0]->message);
+        $this->assertStringStartsWith('Quadratic search after an empty match:', (string) $issues[0]->message);
         $this->assertSame(RedosVerdict::everyMatchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);
         $this->assertSame(implode(' ', $issues[0]->hints), $issues[0]->hint);
         $this->assertGreaterThanOrEqual(50, self::matchesMade($function, $cost->build(100)), 'The attack stops '.$function.'() before the end of the run.');
@@ -101,6 +102,33 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
         yield 'preg_match' => ['source' => 'preg_match()', 'function' => 'preg_match'];
         yield 'preg_grep' => ['source' => 'preg_grep()', 'function' => 'preg_grep'];
         yield 'no call' => ['source' => 'php', 'function' => 'preg_match'];
+    }
+
+    /**
+     * A literal several calls read is one occurrence, at its first call:
+     * each other call that looks for every match gets the cost of its own
+     * loop, named in its own issue, and a function named twice is raised
+     * once.
+     */
+    #[Test]
+    public function test_every_match_search_cost_is_raised_for_each_loop_the_literal_runs_in(): void
+    {
+        foreach (['preg_match_all', 'preg_split'] as $function) {
+            $this->assertGreaterThanOrEqual(100, self::matchesMade($function, str_repeat('a', 100).'!'), 'Oracle: '.$function.'() stops before the end of the run.');
+        }
+        $this->assertSame(1, self::matchesMade('preg_match', str_repeat('a', 100).'!'), 'Oracle: preg_match() goes on after the first match.');
+        self::assertRetriesGrow();
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_match()', everyMatchElsewhere: ['preg_match_all', 'preg_split']));
+
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, '', 'a', '', false)), RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
+        foreach ($issues as $issue) {
+            $this->assertSame('warning', $issue->severity->level());
+            $this->assertSame([1, 'file.php'], [$issue->line, $issue->file], 'Raised where the literal is written.');
+        }
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_split()', everyMatch: 'preg_split', everyMatchElsewhere: ['preg_split']));
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
     }
 
     #[Test]
@@ -190,7 +218,7 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
     {
         $this->assertSame(
             "Quadratic search after an empty match: one attempt is linear (proven), but preg_split() finds an empty match at each position of the run and, as PHP does after every empty match, tries that position again for a non-empty one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit. Severity: MEDIUM.",
-            RedosVerdict::everyMatchMessage('preg_split'),
+            RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false)),
         );
 
         $this->assertSame([
@@ -201,6 +229,61 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
         ], RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false), '10.49'));
 
         $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, false), '10.49'));
+    }
+
+    /**
+     * The words of the finding when each short match pays the run, frozen
+     * in the hints a report shows.
+     */
+    #[Test]
+    public function test_every_match_search_cost_words_of_short_matches(): void
+    {
+        $cost = new RedosSearchCost(2, '', 'a', '', false, null, true);
+
+        $this->assertSame(
+            "Quadratic search over short matches: one attempt is linear (proven), but preg_split() finds a short match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: MEDIUM.",
+            RedosVerdict::everyMatchMessage('preg_split', $cost),
+        );
+
+        $this->assertSame([
+            'Attack: "a" x n.',
+            'pcre.backtrack_limit does not stop it: the limit counts each call apart.',
+            'preg_match() and preg_grep() stop at the first match and read the run once.',
+            'Bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.',
+        ], RedosVerdict::everyMatchEvidence($cost, '10.49'));
+
+        $this->assertContains('Replayed on PCRE2 10.49 without the JIT: the attempt at a position further from the end of the run takes more steps.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, true, true), '10.49'));
+        $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, false, true), '10.49'));
+    }
+
+    /**
+     * Each short match of "a*b|a" on a run of "a" is found after "a*b"
+     * read the rest of the run: the cost is raised at the calls that loop,
+     * in the words of short matches, and not at preg_match().
+     */
+    #[Test]
+    public function test_every_match_search_cost_of_short_matches_is_raised_at_the_calls_that_loop(): void
+    {
+        $pattern = '/a*b|a/';
+        $subject = str_repeat('a', 1000).'!';
+        $this->assertSame(1000, preg_match_all(PcreInterpreter::pattern($pattern), $subject), 'Oracle: preg_match_all() reads the run in one match.');
+        $attempt = PcreAttemptSteps::pinned($pattern);
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($attempt, $subject, 250) - PcreAttemptSteps::steps($attempt, $subject, 500), 'Oracle: the attempt does not read the run.');
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence($pattern, 'file.php', 1, 'preg_match_all()', everyMatch: 'preg_match_all'));
+
+        $this->assertCount(1, $issues);
+        $this->assertSame('warning', $issues[0]->severity->level());
+        $analysis = $issues[0]->analysis;
+        $this->assertInstanceOf(RedosAnalysis::class, $analysis);
+        $cost = $analysis->everyMatchSearchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertTrue($cost->shortMatch);
+        $this->assertSame(RedosVerdict::everyMatchMessage('preg_match_all', $cost), $issues[0]->message);
+        $this->assertStringStartsWith('Quadratic search over short matches:', (string) $issues[0]->message);
+        $this->assertSame(RedosVerdict::everyMatchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);
+
+        $this->assertSame([], self::searchIssues(self::service('low'), new PatternOccurrence($pattern, 'file.php', 1, 'preg_match()')));
     }
 
     private static function service(string $redosThreshold): AnalysisService

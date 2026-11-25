@@ -169,13 +169,13 @@ final class NestedQuantifierRule extends AbstractLintRule
             }
 
             if ($readCaseless) {
-                $boundary = $this->fold($boundary, true);
+                $boundary = $this->fold($boundary, true, $context);
                 $caseless = $caseless?->union($boundary) ?? $boundary;
             } else {
                 $cased = $cased?->union($boundary) ?? $boundary;
             }
 
-            $aboveAscii = $aboveAscii || LoopShape::mayTakeACharacterAboveAscii($loop->node, $context);
+            $aboveAscii = $aboveAscii || LoopShape::mayTakeACharacterPastItsSet($loop->node, $context);
             $lastLoop = $index;
         }
 
@@ -197,14 +197,14 @@ final class NestedQuantifierRule extends AbstractLintRule
             return false;
         }
 
-        if ($aboveAscii && LoopShape::mayTakeACharacterAboveAscii($item, $context)) {
+        if ($aboveAscii && LoopShape::mayTakeACharacterPastItsSet($item, $context)) {
             return true;
         }
 
         if (self::isReadCaseless($item, $flags)) {
             $loops = $caseless;
             if (null !== $cased) {
-                $folded = $this->fold($cased, true);
+                $folded = $this->fold($cased, true, $context);
                 $loops = null === $loops ? $folded : $folded->union($loops);
             }
 
@@ -365,7 +365,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             return false;
         }
 
-        $innerTakesAboveAscii = LoopShape::mayTakeACharacterAboveAscii($nested->node, $context);
+        $innerTakesAboveAscii = LoopShape::mayTakeACharacterPastItsSet($nested->node, $context);
 
         $sequence = $sequenceInfo['sequence'];
         $children = $sequence->children;
@@ -413,7 +413,7 @@ final class NestedQuantifierRule extends AbstractLintRule
     {
         $caseless = $innerCaseless || self::isReadCaseless($item, $flags);
 
-        return $this->isExclusiveSeparator($item, $this->fold($innerBoundary, $caseless), $context, $caseless, $flags, $innerTakesAboveAscii, $mayMatchNothing);
+        return $this->isExclusiveSeparator($item, $this->fold($innerBoundary, $caseless, $context), $context, $caseless, $flags, $innerTakesAboveAscii, $mayMatchNothing);
     }
 
     /**
@@ -447,8 +447,8 @@ final class NestedQuantifierRule extends AbstractLintRule
 
             $caseless = $innerCaseless || self::isReadCaseless($item, $flags[$index]);
             $first = $this->correctlyFoldedFirstChars($item, $context, $flags[$index], $caseless);
-            if ($first->intersects($this->fold($innerBoundary, $caseless))
-                || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterAboveAscii($item, $context))
+            if ($first->intersects($this->fold($innerBoundary, $caseless, $context))
+                || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterPastItsSet($item, $context))
             ) {
                 return true;
             }
@@ -498,9 +498,16 @@ final class NestedQuantifierRule extends AbstractLintRule
         return null;
     }
 
+    /**
+     * The characters the node may start or end with: every byte under the
+     * tables of the target's locale where the rules read them so, ASCII's
+     * alone otherwise.
+     */
     private function boundaryCharSet(NodeInterface $node, LintContext $context, ?string $flags): ByteCharSet
     {
-        return $context->firstChars($node, $flags)->union($context->lastChars($node, $flags));
+        return $context->comparesEveryByte()
+            ? $context->firstBytes($node, $flags)->union($context->lastBytes($node, $flags))
+            : $context->firstChars($node, $flags)->union($context->lastChars($node, $flags));
     }
 
     /**
@@ -511,15 +518,17 @@ final class NestedQuantifierRule extends AbstractLintRule
      * folding that set adds `x` back in, making the boundary look like
      * "all ASCII". The correct fold is complement(fold(excluded_set)):
      * fold {x} to {x, X}, then negate to get "all ASCII except x and X".
+     * Where the rules read every byte, the set of the class is read under
+     * its own flags, and is the one the engine reads.
      */
     private function correctlyFoldedBoundary(NodeInterface $node, LintContext $context, ?string $flags, bool $caseless): ByteCharSet
     {
         $boundary = $this->boundaryCharSet($node, $context, $flags);
 
-        if ($caseless && $node instanceof CharClassNode && $node->isNegated) {
+        if ($caseless && $node instanceof CharClassNode && $node->isNegated && !$context->comparesEveryByte()) {
             $excludedSet = $context->firstChars($node->expression, $flags);
             if (!$excludedSet->isUnknown()) {
-                $foldedExcluded = $this->fold($excludedSet, true);
+                $foldedExcluded = $this->fold($excludedSet, true, $context);
                 if (!$foldedExcluded->isUnknown()) {
                     return $foldedExcluded->complement();
                 }
@@ -543,7 +552,7 @@ final class NestedQuantifierRule extends AbstractLintRule
 
         return $node instanceof CharClassNode && $node->isNegated
             ? $this->correctlyFoldedBoundary($node, $context, $flags, $caseless)
-            : $this->fold($context->firstChars($item, $flags), $caseless);
+            : $this->fold($context->comparesEveryByte() ? $context->firstBytes($item, $flags) : $context->firstChars($item, $flags), $caseless, $context);
     }
 
     /**
@@ -552,10 +561,14 @@ final class NestedQuantifierRule extends AbstractLintRule
      * hold (the Kelvin sign is a "k" under iu), so such a set is unknown.
      * The part of each range in "A" to "Z" or in "a" to "z" is added again
      * shifted to the other case: the rule asks it at every step of a walk.
+     * Where the rules read every byte, each set is read under the flags of
+     * its own item, a case as the tables of the target's locale give it,
+     * and folds no further: those tables may pair "i" with another byte
+     * than "I", as glibc's tr_TR.ISO-8859-9 pairs it with 0xDD.
      */
-    private function fold(ByteCharSet $set, bool $caseless): ByteCharSet
+    private function fold(ByteCharSet $set, bool $caseless, LintContext $context): ByteCharSet
     {
-        if (!$caseless || $set->isUnknown()) {
+        if (!$caseless || $set->isUnknown() || $context->comparesEveryByte()) {
             return $set;
         }
 
@@ -593,12 +606,12 @@ final class NestedQuantifierRule extends AbstractLintRule
     {
         if ((!$mayMatchNothing && NodePredicates::isOptionalNode($separator))
             || !NodePredicates::isConsuming($separator)
-            || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterAboveAscii($separator, $context))
+            || ($innerTakesAboveAscii && LoopShape::mayTakeACharacterPastItsSet($separator, $context))
         ) {
             return false;
         }
 
-        $separatorSet = $this->fold($this->boundaryCharSet($separator, $context, $flags), $caseless);
+        $separatorSet = $this->fold($this->boundaryCharSet($separator, $context, $flags), $caseless, $context);
         if ($separatorSet->isUnknown() || $separatorSet->isEmpty()) {
             return false;
         }

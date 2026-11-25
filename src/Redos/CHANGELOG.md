@@ -6,12 +6,71 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The confirmed mode counts the reads of a possessive or atomic run where
+   the pattern's delimiter is `?`, `:` or `)`, or where `\Q` quotes the
+   repeated character: the replay moves such a pattern to a delimiter its
+   body does not hold, and puts a quoted character's group outside the
+   quote, `\Q\E(?:\Qa\E)\E++`. `?a++b?`, `:a++b:` and `/\Qa\E++b/`
+   are replayed (`replayed: true`), where they stayed unconfirmed.
+ * `RedosAnalysis::$everyMatchSearchCost` also holds the cost of short
+   matches. When each call of the loop of every match ends on a short match
+   that is not empty, found after the paths its attempt tries first read to
+   the end of the run, the loop pays the run at each match: `/a(?:a+\d)?/`,
+   `/a*b|a/` and `/a\K(?:a+\d)?/` take 63 to 64 ms through `preg_match_all()`
+   on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
+   0.01 ms through `preg_match()`. `RedosSearchCost::$shortMatch` says so,
+   and confirmed mode replays the attempt pinned inside the run.
+ * The search cost lets the attempts after the run match: the search tries
+   those the breaker starts, and the one at the subject's end, once every
+   attempt of the run has read to its end and failed. `/\s*$/` (131, 521
+   then 2,093 ms on 5,000, 10,000 then 20,000 spaces and `!`),
+   `/(?:a+\d)?$/` (1.1, 4.1, 15.8 then 62 ms on 2,000 to 16,000 `a`),
+   `/(?:a\n)*(?:a{2}|b|\z)/m` (20, 79 then 321 ms on `a\n` 1,000, 2,000
+   then 4,000 times and `!`), `/(?:\w+\.)?x/` (1.2, 4.8 then 19 ms on
+   2,000, 4,000 then 8,000 `0` and `x`) and `/(.*)(?:ab)+|b/` (177, 728
+   then 2,856 ms on 5,000, 10,000 then 20,000 `!` and `b`), with
+   `pcre.jit=0`, were proven safe with no search cost, and are reported,
+   though `preg_match()` returns 1 on the attack. The breaker of
+   `/a+b|b$/` is `"!b"`, no longer `"!b!"`. The replay of confirmed mode
+   accepts a match that starts in the breaker or at the subject's end, but
+   in a pattern holding `\K`.
+ * An atomic group whose branches each hold one run of one character set,
+   or one character, with nothing but `\K` around it, and start with
+   characters no other branch starts with, is read as those runs, each an
+   atomic group of its own: `(?>a+\K)` as `(?>a+)\K`, `(?>a+|c)` as
+   `(?:(?>a+)|c)`. It is no longer listed among the abstractions, and the
+   theoretical mode reports the search cost of `/(*NOTEMPTY)(?>a+\K)/`,
+   `/(*NOTEMPTY)(?>(?>a+)\K)/`, `/(*NOTEMPTY)(?>a+\K|b)/` and `/(?>a+|c)b/`
+   (1.1, 4.1 then 16 ms on 2,000, 4,000 then 8,000 `a` with `pcre.jit=0`),
+   which confirmed mode alone reported. `/^(?:a|a)+(?>a+|b)a/` is proven
+   exponential. A body whose branches may start alike, as `(?>a+|ab)`,
+   is kept with every way through it as before.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.
    `/(*UCP)^((?:\xE9|\xC9)+)\1$/i`, which PCRE2 10.34 reads in 20 and 28
    steps on 8 and 12 `\xE9` then `!`, is medium for PHP 7.4 with PCRE2
    10.34, where it was critical, and stays critical from 10.35.
+ * The heuristics and the proof read a byte under `(*UCP)` without u as
+   the target's PCRE2 does: a Latin-1 letter meets its other case from
+   10.35 only, and before it has the tables' case, none above ASCII under
+   C. `/(*UCP)^((?:\xE9|\xC9)+)\1$/i`, which PCRE2 10.34 reads in 20 and
+   28 steps on 8 and 12 `\xE9` then `!`, is medium for PHP 7.4 with PCRE2
+   10.34, where it was critical, and stays critical from 10.35;
+   `/(*UCP)^(?:\xE9|\xC9)+x/i`, which 10.34 runs on 30 `\xE9` and `!`
+   within the backtrack limit, is safe (proven) for that target, where it
+   was critical (proven). The last code unit PCRE2 requires, which the
+   search cost reads, takes the tables' case there too.
+ * Without u, under another locale's tables, the proof reads a byte whose
+   case the engine's paths read apart as any character, listed in
+   `abstractions`, and the heuristics read what either path takes: a
+   class of a byte and its other case, which PCRE2 reads as the byte,
+   caseless, is not known where the interpreter reads the case of the
+   byte otherwise. Under `el_GR.ISO8859-7` `/^(?:\xF2|\xD3)+$/i`, whose
+   final sigma the JIT alone matches on `\xD3`, and under macOS's
+   `tr_TR.ISO8859-9` `/^(?:\xFD|I)+$/i` and `/^(?:[Ii]|\xDD)+$/`, which
+   exhaust the backtrack limit on 20 units and `!` on the JIT or the
+   interpreter, are critical, where they were safe (proven).
  * One attempt is safe (proven) only when it tries 1,024 paths at once at
    most, every path counted along the whole attempt: each epsilon route,
    where a list of states held each one twice at most; each route that
@@ -31,6 +90,13 @@ CHANGELOG
    followed by five groups (1,280,001 steps on a thousand `a`) were safe
    (proven), and get the heuristics' verdict. An exponential or polynomial
    verdict stands.
+ * Counting those paths on one input reads each set of states once, however
+   many steps meet it again, and keeps what a step tries by the classes
+   that lead to it rather than class by class. The verdicts are the same,
+   and the analysis takes about a third of the instructions it took on
+   twenty-six loops each followed by `.{0,15}` (1.61 billion, now 491
+   million), and on groups `(?:b{0}|)` and `(?:b{0}|\K)` around loops and in
+   lookaheads, which run it out of budget (2.40 billion, now 723 million).
  * Under `m`, `^` holds after a newline only where a character follows,
    never at the end of the subject: `preg_match()` gives 0 for `/\n^/m` on
    `"a\n"`. The model counted a success there, and proved linear a loop

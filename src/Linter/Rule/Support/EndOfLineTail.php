@@ -99,6 +99,14 @@ final class EndOfLineTail
     private readonly ByteCharSet $newlineStarts;
 
     /**
+     * The newline finalNewlineStops() reads the items over, and the
+     * convention that sets it.
+     */
+    private string $text = '';
+
+    private string $convention = 'LF';
+
+    /**
      * Whether a reference or a call is being read: its group matched
      * elsewhere, where nothing is known of what stands around it.
      */
@@ -123,6 +131,10 @@ final class EndOfLineTail
      *                                                                      nothing is known of it
      * @param bool                                          $wordAboveAscii whether a byte above ASCII may be a word character: under u,
      *                                                                      (*UCP) or another locale's tables; PCRE2's own hold none
+     * @param ByteCharSet|null                              $words          the bytes that are word characters, every byte read, where
+     *                                                                      another locale's tables tell them without UTF nor UCP: under
+     *                                                                      glibc's tr_TR.ISO-8859-9, 0xDD is one and 0xD7 is none; null
+     *                                                                      where $wordAboveAscii says
      */
     public function __construct(
         private readonly CharSetAnalyzer $analyzer,
@@ -131,6 +143,7 @@ final class EndOfLineTail
         private readonly ?\Closure $readsCharacter = null,
         private readonly ?ByteCharSet $before = null,
         private readonly bool $wordAboveAscii = false,
+        private readonly ?ByteCharSet $words = null,
     ) {
         $this->newlineStarts = self::setOf($newline);
     }
@@ -297,6 +310,207 @@ final class EndOfLineTail
     }
 
     /**
+     * Where the items may stop when they read the newline that ends the
+     * subject where a newline may be longer than one character: "\r\n"
+     * under "(*CRLF)", "\r\n", "\r" or "\n" under "(*ANYCRLF)", the
+     * continuation "$" without the m modifier and "\Z" allow before it.
+     * Each item is read over the newline at each place it may start, what
+     * stands around that place known: the character read before the
+     * anchor, the newline, the end of the subject. An item nothing here
+     * reads may stop anywhere after where it starts.
+     *
+     * @param array<int, NodeInterface> $nodes
+     *
+     * @return array{bool, bool} whether they may stop before the end of the subject, and at it
+     */
+    public function finalNewlineStops(array $nodes, string $convention, bool $dotAll): array
+    {
+        foreach ($nodes as $node) {
+            if (NodePredicates::holdsAccept($node)) {
+                return [true, true];
+            }
+        }
+
+        $this->convention = $convention;
+        $inside = false;
+        $atTheEnd = false;
+        foreach ('CRLF' === $convention ? ["\r\n"] : ["\r\n", "\r", "\n"] as $newline) {
+            $this->text = $newline;
+            $stops = $this->stopsOfSequence($nodes, [0 => true], $dotAll);
+            $atTheEnd = $atTheEnd || isset($stops[\strlen($newline)]);
+            unset($stops[\strlen($newline)]);
+            $inside = $inside || [] !== $stops;
+        }
+
+        return [$inside, $atTheEnd];
+    }
+
+    /**
+     * The places in the newline the items may stop at, started at each of
+     * $starts in turn.
+     *
+     * @param array<int, NodeInterface> $nodes
+     * @param array<int, true>          $starts
+     *
+     * @return array<int, true>
+     */
+    private function stopsOfSequence(array $nodes, array $starts, bool $dotAll): array
+    {
+        foreach ($nodes as $node) {
+            if (NodePredicates::isStandaloneInlineFlagsGroup($node)) {
+                $dotAll = self::dotAllAfter($node, $dotAll);
+
+                continue;
+            }
+
+            $stops = [];
+            foreach (array_keys($starts) as $start) {
+                $stops += $this->stops($node, $start, $dotAll);
+            }
+            $starts = $stops;
+        }
+
+        return $starts;
+    }
+
+    /**
+     * The places in the newline the node may stop at, started at $at.
+     *
+     * @return array<int, true>
+     */
+    private function stops(NodeInterface $node, int $at, bool $dotAll): array
+    {
+        $length = \strlen($this->text);
+        $here = [$at => true];
+
+        if ($node instanceof LiteralNode) {
+            return '' === $node->value || substr($this->text, $at, \strlen($node->value)) === $node->value ? [$at + \strlen($node->value) => true] : [];
+        }
+
+        if ($node instanceof DotNode || ($node instanceof CharTypeNode && 'N' === $node->value)) {
+            return $at < $length && (($node instanceof DotNode && $dotAll) || !$this->lineEndsAfter($at)) ? [$at + 1 => true] : [];
+        }
+
+        if ($node instanceof CharTypeNode && 'R' === $node->value) {
+            return ("\r\n" === substr($this->text, $at) ? [$at + 2 => true] : []) + ($at < $length ? [$at + 1 => true] : []);
+        }
+
+        if (self::readsOneCharacter($node) && !($node instanceof CharTypeNode && 'X' === $node->value)) {
+            return $at < $length && $this->atomReadsCharacter($node, $this->text[$at]) ? [$at + 1 => true] : [];
+        }
+
+        if ($node instanceof AnchorNode) {
+            return ('^' === $node->value ? $at < $length && $this->lineEndsBefore($at) : $at === $length || $this->lineEndsAfter($at)) ? $here : [];
+        }
+
+        if ($node instanceof AssertionNode) {
+            return match ($node->value) {
+                'z' => $at === $length,
+                'Z' => $at === $length || $this->lineEndsAfter($at),
+                'A', 'G' => 0 === $at && null === $this->before,
+                // A newline is no word character, nor is the end.
+                'b' => 0 === $at,
+                default => true,
+            } ? $here : [];
+        }
+
+        if ($node instanceof PcreVerbNode) {
+            return NodePredicates::alwaysFails($node) ? [] : $here;
+        }
+
+        if ($node instanceof QuantifierNode) {
+            // Each turn stops no earlier than it starts, so within a few turns
+            // over a newline of two characters the places stop moving: every
+            // turn after, up to the least count included, stops there too.
+            [$min, $max] = QuantifierMath::parseRange($node);
+            $stops = 0 === $min ? $here : [];
+            $starts = $here;
+            for ($count = 1; [] !== $starts && (null === $max || $count <= $max); $count++) {
+                $next = $this->stopsOfSequence([$node->node], $starts, $dotAll);
+                ksort($next);
+                if ($count >= $min || $next === $starts) {
+                    $stops += $next;
+                }
+
+                if ($next === $starts) {
+                    break;
+                }
+                $starts = $next;
+            }
+
+            return $stops;
+        }
+
+        if ($node instanceof GroupNode) {
+            if (NodePredicates::alwaysFails($node)) {
+                return [];
+            }
+
+            return NodePredicates::isConsuming($node) ? $this->stops($node->child, $at, self::dotAllInside($node, $dotAll)) : $here;
+        }
+
+        if ($node instanceof AlternationNode) {
+            $stops = [];
+            foreach ($node->alternatives as $alternative) {
+                $stops += $this->stops($alternative, $at, $dotAll);
+            }
+
+            return $stops;
+        }
+
+        if ($node instanceof SequenceNode) {
+            return $this->stopsOfSequence($node->children, $here, $dotAll);
+        }
+
+        if ($node instanceof ConditionalNode) {
+            return $this->stops($node->yes, $at, $dotAll) + $this->stops($node->no, $at, $dotAll);
+        }
+
+        // What reads nothing stops where it starts; a reference, a call, a
+        // script run, "\X" anywhere on.
+        return self::isZeroWidth($node) ? $here : array_fill_keys(range($at, $length), true);
+    }
+
+    /**
+     * Whether a line ends just before the place, where "^" under m holds:
+     * at the start of the newline, the character read before the anchor
+     * says; inside it, a "\r" ends a line under "(*ANYCRLF)" and nothing
+     * short of "\r\n" does under "(*CRLF)".
+     */
+    private function lineEndsBefore(int $at): bool
+    {
+        if (0 === $at) {
+            return null === $this->before || $this->before->intersects(self::setOf("\r\n"));
+        }
+
+        return 'CRLF' !== $this->convention;
+    }
+
+    /**
+     * Whether a newline starts at the place, short of the end: "$" holds
+     * there, and a dot reads the character only under s. "\r\n" under
+     * "(*CRLF)", either of its characters under "(*ANYCRLF)".
+     */
+    private function lineEndsAfter(int $at): bool
+    {
+        return 'CRLF' === $this->convention ? "\r\n" === substr($this->text, $at) : true;
+    }
+
+    /**
+     * Whether the atom may read the character: from the set the analyzer
+     * reads, else as the caller's question answers, else yes.
+     */
+    private function atomReadsCharacter(NodeInterface $atom, string $character): bool
+    {
+        $set = $this->analyzer->firstChars($atom);
+        if (!$set->isUnknown()) {
+            return $set->intersects(ByteCharSet::fromChar($character));
+        }
+
+        return null === $this->readsCharacter || false !== ($this->readsCharacter)($atom, $character);
+    }
+
+    /**
      * @param array<int, NodeInterface> $nodes
      */
     private function allMayBeEmpty(array $nodes, int $where, bool $dotAll): bool
@@ -430,6 +644,15 @@ final class EndOfLineTail
 
         if (null === $this->before) {
             return true;
+        }
+
+        // Where another locale's tables tell the word characters, every byte
+        // read, a byte is one or not as they say: "\B" holds after a byte
+        // they leave out.
+        if (null !== $this->words) {
+            return $boundary
+                ? $this->before->intersects($this->words)
+                : $this->before->intersect($this->words)->ranges() !== $this->before->ranges();
         }
 
         // A byte above ASCII, a literal written as it is, is no word

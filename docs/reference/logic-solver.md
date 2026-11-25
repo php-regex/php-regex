@@ -118,7 +118,11 @@ it matched (one whose body may match more than one way, or that something after 
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
 and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
-anywhere, under which the dot reads a `\r` alone but not one before a `\n`; `(*NOTEMPTY)` and
+anywhere, under which the dot reads a `\r` alone but not one before a `\n`; under
+`(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`, as a search
+may skip the start between a `\r` and the `\n` after it (without the JIT,
+`/(*ANYCRLF)\sa/` finds no match in `"\r\na"`, and `/(*ANYCRLF)\sa|[^\s\S]\n/`, whose
+dead branch writes a `\n`, finds `"\na"`); `(*NOTEMPTY)` and
 `(*NOTEMPTY_ATSTART)`, as `equivalent()` refuses them; an end anchor
 followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
@@ -128,27 +132,67 @@ reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/`
 write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
 still takes its number, and `/(?(DEFINE)(?<n>x))a/` and `/a/`, as a group a DEFINE holds does.
 
+Four more refusals follow from what the engine does on its own. PCRE2 makes a character
+repeated before an atomic group, or a possessive repeat of a group, that may match nothing
+possessive, as if the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,
+with and without the JIT, from PCRE2 10.34 to 10.49, where `/a+(?:b)?a/` finds `aa`. Such
+a repeat is read as written only where its possessive spelling gives nothing back, `*+`
+over a group included: `/a+(?:b)?+c/` is read, `/a+(?:b)?+a/` and `/a+(?:b)*+a/` are
+refused. A repeat written as a group, `/(?:a)+(?:b)?+a/`, and a letter repeated
+possessively, `/a+b?+a/`, are not made possessive, and two patterns whose brackets tell
+such a group apart never read alike. `equivalent()`, `intersection()` and `subsetOf()`
+refuse a character repeated before such a group. For a target before PCRE2 10.44, a
+possessive repeat of a group that holds a capturing group is refused: the JIT of 10.39 to
+10.42 leaves the group set from an earlier start of the match, and `/a(a)*+b/` writes `a` to
+group 1 on `aacab`, where `/a(a)*b/` leaves it unset. Without `u`, PHP hands
+PCRE2 the tables of the locale a program sets, so under a target that names no locale but
+C a possessive quantifier proven on a byte past ASCII against `\w`, `\s`, their negations,
+a POSIX class, or a class under `i` that holds some of the letters and the bytes past ASCII
+but not all, is refused: under en_IE.ISO8859-1 `\w` takes `\xE9`, and `/c\xE9++b?\w/` finds
+nothing in `c\xE9\xE9`, where `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route
+host compiles, is read. A target that names its locale is read under its tables.
+
+Without `u`, PCRE2 also makes a repeat of the byte 0xFF possessive before `\w`, and a
+repeat of `\w` possessive before that byte, lazy ones too, as if 0xFF were no word
+character, whatever the tables say. Under fr_FR.ISO8859-1, where `\w` takes 0xFF,
+`/\xFF+\w/` finds nothing in `\xFF\xFF` and `/\w+\xFF/` nothing in `a\xFF\xFF`, with and
+without the JIT, in PCRE2 10.49, where `/(?:\xFF)+\w/`, `/\xFF+[\w]/` and `/[\w]+\xFF/`
+find them: a repeat written as a group and a class are read as written. Both solvers refuse
+a pattern with such a repeat, of the byte written out or as an escape, of a class that names
+it, or of U+0178, which folds to it under UTF, with `\w` outside a class, or that byte,
+anywhere after it, and such a pattern never reads alike with another, unless the target
+names a locale whose tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does. A target that
+names no locale but C may run under any, and is refused too. `u` reads `\w` from the
+Unicode properties, and is read.
+
 Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
 body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
 release PHP bundles: the engine backtracks into the call (`/(a|ab)(?1)c/` matches `aabc`),
 the groups inside it are given back the values they held before it, and the body keeps the
 options the group was written under (`/(a)(?i)(?1)/` finds nothing in `aA`). A group a
 `(?(DEFINE)...)` holds runs only there, under the options in force where the DEFINE stands:
-`/(?i:(?(DEFINE)(?<n>a)))(?&n)/` finds `A`. A possessive quantifier in a called group is read
-wherever the group runs: `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` write the same `$matches`, and
-so do `/(?&n)c(?(DEFINE)(?<n>a+b?))/` and `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, while
-`/(a++b?)c(?1)a/` is refused, as the call gives an `a` back to what follows it.
+`/(?i:(?(DEFINE)(?<n>a)))(?&n)/` finds `A`.
+
+A pattern that holds a possessive quantifier inside a group a call runs, a group a DEFINE
+holds included, or anywhere in a pattern that calls itself whole, is refused, whatever
+follows the quantifier: PCRE2's JIT, which PHP runs by default, misses matches of such a
+pattern that its interpreter finds, and the match solver reads the interpreter. With
+`pcre.jit=1`, `/(a++)c(?1)d/` finds no match in `acacad`, where `/(a+)c(?1)d/` and the
+interpreter match `acad` (PCRE2 10.34 to 10.49), `/(a*+)c(?1)d/` none in `ccd`, and
+`/(xa++)c(?1)?d/` none in `xacxacd` (10.39 to 10.49): an attempt that ran the call fails,
+and no later start finds the match. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are refused as
+well, though no subject was found on which they differ. A possessive quantifier outside every
+group a call runs is read as before: `/a+;(x)(?1)/` and `/a++;(x)(?1)/` write the same
+`$matches`.
 
 A call that may run its own group again has no finite automaton, yet two patterns that differ
-only in possessive quantifiers over one character are still compared: every call is read
-through, a call that runs its group again leading back to where the group starts and the end
-of the group to every place a call of it returns to, however deep the calls run. A possessive quantifier
-that nothing following it there may start like gives nothing back, so
-`/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` write
-the same `$matches`, and so do `/x(?R)?ca+b?()/` and `/x(?R)?ca++b?()/`, while
-`/(x(?1)?ca++)(?1)a/` stays refused: the run of the group the second call makes gives an `a`
-back to what follows it. A possessive quantifier over a group, capturing or not, stays refused
-there too: it keeps a frame of the JIT for each run of the call around it, and
+only in possessive quantifiers over one character, outside every group a call runs, are still
+compared: every call is read through, a call that runs its group again leading back to where
+the group starts and the end of the group to every place a call of it returns to, however
+deep the calls run. A possessive quantifier that nothing following it there may start like
+gives nothing back, so `/a+b(x(?1)?y)/` and `/a++b(x(?1)?y)/` write the same `$matches`. A
+possessive quantifier over a group, capturing or not, in a group that calls itself is refused
+on two counts: it keeps a frame of the JIT for each run of the call around it, and
 `/x(?R)?(?:ab)++c/` runs out of the JIT stack some 3,000 calls deep where
 `/x(?R)?(?:ab)+c/` matches.
 
@@ -432,6 +476,23 @@ that more follows, and `$` before any newline or at the end. So `/a\Ab/` matches
 among many. Anchors at the edges, `\A` leading every alternative of a search or `\z`
 closing it, still cost nothing.
 
+The newline is the one the pattern's options set, the last of them holding: `\r` under
+`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*ANYCRLF)` a `\r` and a `\n`
+each end a line, and `\r\n` ends one too; under `(*ANY)` so do the vertical tab, the form
+feed and NEL (`\x85`, U+0085 under `/u`), and under `/u` the line and paragraph separators
+U+2028 and U+2029. So under the last two `^` holds between a `\r` and a `\n`, and `$`
+before the `\n`: `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`, and `\Z` holds before a final
+`"\r\n"`, `"\r"` or `"\n"`. A search under these two, or under `(*CRLF)`, may skip a match
+that starts between a `\r` and the `\n` after it, where the pattern writes neither, or after
+its first try where a `^` under `/m` or a `.*` leads it, which the JIT does not always do.
+It skips no other start, so the solver reads the search both ways, every start and every
+start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
+`/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
+`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
+of the whole string starts at its start, and is read whatever the pattern. `(*CRLF)`,
+under which a line ends at `\r\n` alone and the dot reads a `\r` alone but not one before
+a `\n`, stays out where an anchor or a dot reads it.
+
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
 and the [work budget](#safety-limits--work-budget) counts its moves.
@@ -452,9 +513,14 @@ verbatim:
 | an atomic group (and `\R`) the solver cannot prove inert | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
 | `\K` or `\G`                               | `\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
+| a character repeated before an atomic group or a possessive repeat of a group that may match nothing, `a+(?:b)?+a` | `PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.` |
+| without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
+| without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| a newline convention other than `\n`, such as `(*CR)`, with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
+| a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
@@ -745,9 +811,11 @@ Use this to surface safe failure messages in CI or tooling.
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` is refused, and so is a newline convention
-  other than `\n` where `$`, `\Z`, `/m` or `(?m)` would read it, and so are
-  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`.
+  change nothing a language says. `A` is refused, and so is `(*CRLF)` where `$`, `\Z`,
+  `/m`, `(?m)`, a dot or `\N` would read it, and a search under `(*CRLF)`, `(*ANYCRLF)` or
+  `(*ANY)` that may find a match only from between a `\r` and a `\n`, and so are
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. The other conventions move the anchors as the
+  engine does.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.

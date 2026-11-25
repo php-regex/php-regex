@@ -46,6 +46,8 @@ anlyze = "anlyze"
 valide = "valide"
 # Both spellings are English.
 unparseable = "unparseable"
+# PCRE2's opcode of a caseless character, OP_CHARI (pcre2_match.c).
+chari = "chari"
 
 [default.extend-identifiers]
 # Laravel's route property.

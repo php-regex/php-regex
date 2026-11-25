@@ -829,8 +829,11 @@ A pattern read through a name is reported once, where its literal is written,
 whatever the number of calls that use it: `regex lint` points at the line of
 `private const PATTERN`, and the JSON report gives the first call as `source`
 and the way it reached the literal as `location`, `via self::PATTERN` (see the
-[JSON output reference](../reference/json-output.md#result-lintresults)). The
-console shows it under the pattern:
+[JSON output reference](../reference/json-output.md#result-lintresults)). Each
+of those calls that looks for every match, `preg_match_all()` or `preg_split()`
+for instance, still gets the search cost of its own loop there, one
+`regex.lint.redos.search` for each such function. The console shows it under
+the pattern:
 
 ```
   app/Slug.php:14:22
@@ -1462,12 +1465,17 @@ or `"redos.search": false` in `checks.lint.rules`, turns it off.
 
 The same issue is raised at a call of `preg_match_all()`, `preg_replace()`,
 `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()` or
-`preg_split()`, or a `Safe\` or composer/pcre form of one, that no literal limit
-bounds. The pattern is one whose `preg_match()` search stops at an empty match
+`preg_split()`, or a `Safe\`, composer/pcre, nette/utils, spatie/regex or
+Laravel `Str` form of one, or a `RegexIterator` built in the `ALL_MATCHES`,
+`SPLIT` or `REPLACE` mode, that no literal limit bounds (see the
+[ReDoS guide](redos.md#the-calls-that-run-the-loop) for the list). The pattern is one whose `preg_match()` search stops at an empty match
 inside a run: these functions go on after it, and PHP's retry of each empty match
-reads to the end of the run (see the
+reads to the end of the run. Or it stops at a short match inside the run, which
+its attempt finds after it read to the end of the run: these functions start
+again where it ends, and pay the run at each match (see the
 [ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).
-Its attack is in the analysis' `every_match_search_cost`:
+The message then starts with `Quadratic search over short matches`. Its attack
+is in the analysis' `every_match_search_cost`:
 
 ```
   app/Fields.php:3:22

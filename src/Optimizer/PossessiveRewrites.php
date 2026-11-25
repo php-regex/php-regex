@@ -70,6 +70,19 @@ final class PossessiveRewrites
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative, GroupType::ScanSubstring];
 
     /**
+     * The limits a pattern may set on what PCRE2 spends on a match, beside
+     * "(*LIMIT_MATCH=n)", by the name a verb gives them.
+     */
+    private const LIMITS = ['LIMIT_DEPTH', 'LIMIT_RECURSION', 'LIMIT_HEAP'];
+
+    /**
+     * Whether the pattern visited whole sets a limit on what PCRE2 spends
+     * on a match, which a possessive group may spend more of: null until a
+     * repeated group needs it.
+     */
+    private ?bool $limited = null;
+
+    /**
      * The repeats whose group was dropped, "(?:a)+" written "a+".
      *
      * @var \WeakMap<QuantifierNode, true>
@@ -150,6 +163,7 @@ final class PossessiveRewrites
         $this->pattern = $node;
         $this->calls = null;
         $this->inForce = null;
+        $this->limited = null;
     }
 
     /**
@@ -306,6 +320,35 @@ final class PossessiveRewrites
         }
 
         return $children;
+    }
+
+    /**
+     * Whether the pattern visited whole sets a limit on what PCRE2 spends
+     * on a match; a tree visited without its pattern reads none.
+     */
+    private function limited(): bool
+    {
+        return $this->limited ??= null !== $this->pattern && self::setsLimit($this->pattern->pattern);
+    }
+
+    /**
+     * Whether the pattern sets a limit on what PCRE2 spends on a match:
+     * "(*LIMIT_MATCH=n)", "(*LIMIT_DEPTH=n)", its old name
+     * "(*LIMIT_RECURSION=n)", or "(*LIMIT_HEAP=n)".
+     */
+    private static function setsLimit(NodeInterface $node): bool
+    {
+        if ($node instanceof LimitMatchNode || ($node instanceof PcreVerbNode && \in_array($node->name, self::LIMITS, true))) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::setsLimit($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -707,25 +750,112 @@ final class PossessiveRewrites
     {
         // The sets stop at 0x7F: above it nothing is known disjoint.
         if (QuantifierType::Greedy !== $repeat->type || !$this->isPossessifyCandidate($repeat)
-            || $this->repeats->isCaptureSensitive($repeat->node) || $this->canMatchEmpty($repeat->node) || $this->mayTakeAboveAscii($repeat->node)) {
+            || $this->repeats->isCaptureSensitive($repeat->node) || $this->canMatchEmpty($repeat->node) || $this->mayTakeAboveAscii($repeat->node)
+            || $this->insideACalledGroup()) {
             return false;
         }
 
         // A repeated group gives back whole runs, which need not start with
         // a character it ends with: "((?:b|ba)*)c" ends a run of "ba" with
         // the "b" it gives back on "bac". One that ends its sequence stays
-        // greedy.
-        if ([] === $suffix && $repeat->node instanceof GroupNode) {
+        // greedy. So does one under a limit the pattern sets: PCRE2's
+        // interpreter spends a match call more on "c(?:ab)++e" than on
+        // "c(?:ab)+e" over "cababe", and a frame more on "c(?:ab){2,}+e",
+        // which a repeated character never does.
+        if ($repeat->node instanceof GroupNode && ([] === $suffix || $this->limited())) {
             return false;
         }
 
         try {
-            $followingChars = $this->charsAfter($suffix);
-            if (null !== $followingChars && !$analyzer->lastChars($repeat->node)->intersects($followingChars)) {
+            // A repeated character gives back the character it repeats, a
+            // repeated group the runs it matched, read from where each
+            // starts.
+            $givenBack = $repeat->node instanceof GroupNode ? $this->runStarts($repeat->node) : $analyzer->lastChars($repeat->node);
+            $followingChars = null === $givenBack ? null : $this->charsAfter($suffix);
+            if (null !== $givenBack && null !== $followingChars && !$givenBack->intersects($followingChars)) {
                 return true;
             }
         } catch (\Throwable) { // Not reached by any pattern read: the walks throw nothing of their own.
             // If analysis fails, don't optimize
+        }
+
+        return false;
+    }
+
+    /**
+     * The characters a run of the repeated group starts with, where every
+     * run of its body matches one way: the repeat then gives back whole
+     * runs, from the character each starts with. Null where a run may match
+     * another way, and end inside its body or past where the greedy one
+     * ended: "(?:b|ba)*c" takes "ba" as one run on "bac" once "b" alone
+     * left the "a" to the "c", and "(?:-[a-z]+)*$" ends a run anywhere in
+     * its letters.
+     */
+    private function runStarts(GroupNode $group): ?ByteCharSet
+    {
+        $items = [];
+        if (!$this->matchesOneWay($group, $items)) {
+            return null;
+        }
+
+        $chars = ByteCharSet::empty();
+
+        return true === $this->addFirstChars($items, $chars) ? $chars : null;
+    }
+
+    /**
+     * Whether every run of the node matches one way, adding to the list
+     * the items it reads in order: characters, literals and comments, in a
+     * sequence or a group that neither captures, looks around nor is
+     * atomic, and the DEFINE groups it skips, which read nothing.
+     *
+     * @param list<NodeInterface> $items
+     */
+    private function matchesOneWay(NodeInterface $node, array &$items): bool
+    {
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!$this->matchesOneWay($child, $items)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof GroupNode) {
+            return (GroupType::NonCapturing === $node->type || GroupType::InlineFlags === $node->type) && $this->matchesOneWay($node->child, $items);
+        }
+
+        if ($node instanceof LiteralNode || $node instanceof CommentNode || $this->repeats->isSingleCharacter($node)) {
+            $items[] = $node;
+
+            return true;
+        }
+
+        return $node instanceof DefineNode;
+    }
+
+    /**
+     * Whether the repeat the rewriter reads stands inside a group a call
+     * runs, a group a DEFINE holds included, or the pattern calls itself
+     * whole. PCRE2's JIT, which PHP runs by default, misses matches of a
+     * possessive quantifier there that its interpreter finds, once an
+     * attempt that ran the call failed: "/(a++)c(?1)d/" finds no match in
+     * "acacad" with the JIT, from PCRE2 10.34 to 10.49, where "/(a+)c(?1)d/"
+     * matches "acad". Such a repeat stays greedy, whatever follows it.
+     */
+    private function insideACalledGroup(): bool
+    {
+        $calls = $this->calls();
+        if (null !== $this->pattern && isset($calls[spl_object_id($this->pattern)])) {
+            return true;
+        }
+
+        foreach ($this->after as $frame) {
+            if ($frame instanceof GroupNode && isset($calls[spl_object_id($frame)])) {
+                return true;
+            }
         }
 
         return false;

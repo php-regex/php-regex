@@ -24,6 +24,7 @@ use PhpParser\Node\Expr\BinaryOp\Concat;
 use PhpParser\Node\Expr\CallLike;
 use PhpParser\Node\Expr\Cast\Array_ as ArrayCast;
 use PhpParser\Node\Expr\Cast\Object_;
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\Clone_;
 use PhpParser\Node\Expr\Closure;
 use PhpParser\Node\Expr\ConstFetch;
@@ -224,7 +225,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
 
             if (null === $collector) {
-                $collector = new AstValueCollector($this->patternArguments(...));
+                $collector = new AstValueCollector($this->patternArguments(...), $content);
                 // Tokenized when a variable of the file level is read, and
                 // only then.
                 $collector->values()->useFileLevel(new FileLevelCode($content));
@@ -268,7 +269,9 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
         }
 
-        return $occurrences;
+        // A literal several calls read is reported at the first, with the
+        // loops over every match of the others.
+        return $values?->withEveryMatchElsewhere($occurrences, $file) ?? $occurrences;
     }
 
     /**
@@ -439,6 +442,26 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
                 }
             }
 
+            // RegexIterator's mode and Nette's lazy decide whether the call
+            // looks for every match: only a value the call spells out says
+            // it does.
+            if (null !== $function->loopArgument) {
+                [$position, $name] = $function->loopArgument;
+                $decision = self::decision($args, [$position, $name]);
+                if (false !== $decision) {
+                    $function = $function->decidedBy($decision);
+                }
+            }
+
+            // A closure as replacement makes the call run
+            // preg_replace_callback().
+            if (null !== $function->callbackArgument) {
+                $replacement = self::given($args, $function->callbackArgument);
+                if ($replacement instanceof Expr && self::isClosure($replacement)) {
+                    $function = $function->replacingThroughCallback();
+                }
+            }
+
             // A literal limit bounds how many matches the call makes: its
             // loop no longer goes on after every match.
             if (null !== $function->limitArgument) {
@@ -589,25 +612,85 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
      */
     private static function utf8(array $args, array $utf8): ?bool
     {
-        $position = 0;
-        $value = null;
-        foreach ($args as $arg) {
-            if ($arg->unpack) {
-                return null;
-            }
-
-            if (null === $arg->name ? $position++ === $utf8[0] : $utf8[1] === $arg->name->toString()) {
-                $value = $arg->value;
-            }
-        }
-
-        if (null === $value) {
-            return false;
+        $value = self::given($args, $utf8);
+        if (!$value instanceof Expr) {
+            return null === $value ? null : false;
         }
 
         $name = $value instanceof ConstFetch ? $value->name->toLowerString() : null;
 
         return 'true' === $name ? true : ('false' === $name ? false : null);
+    }
+
+    /**
+     * The argument at the position or under the name: false when the call
+     * leaves it out, null when a spread may hold it.
+     *
+     * @param array<Arg>         $args
+     * @param array{int, string} $parameter its position and its name
+     */
+    private static function given(array $args, array $parameter): Expr|false|null
+    {
+        $position = 0;
+        $value = false;
+        foreach ($args as $arg) {
+            if ($arg->unpack) {
+                return null;
+            }
+
+            if (null === $arg->name ? $position++ === $parameter[0] : $parameter[1] === $arg->name->toString()) {
+                $value = $arg->value;
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * The value the argument deciding whether a call looks for every match
+     * spells: an integer literal under its signs, true or false as 1 and 0,
+     * or a constant of RegexIterator. False when the call leaves it out,
+     * null for anything else or what a spread may hold.
+     *
+     * @param array<Arg>         $args
+     * @param array{int, string} $parameter its position and its name
+     */
+    private static function decision(array $args, array $parameter): int|false|null
+    {
+        $value = self::given($args, $parameter);
+        if (!$value instanceof Expr) {
+            return $value;
+        }
+
+        if ($value instanceof ConstFetch) {
+            $name = $value->name->toLowerString();
+
+            return 'true' === $name ? 1 : ('false' === $name ? 0 : null);
+        }
+
+        if ($value instanceof ClassConstFetch) {
+            return $value->class instanceof Name && $value->name instanceof Identifier ? PregFunctions::iteratorConstant($value->class->toString(), $value->name->toString()) : null;
+        }
+
+        return self::integerOf($value);
+    }
+
+    /**
+     * Whether the expression is a closure whatever its value: a closure, an
+     * arrow function, a first-class callable or Closure::fromCallable().
+     */
+    private static function isClosure(Expr $expr): bool
+    {
+        if ($expr instanceof Closure || $expr instanceof ArrowFunction) {
+            return true;
+        }
+
+        if ($expr instanceof StaticCall && $expr->class instanceof Name && $expr->name instanceof Identifier
+            && 'closure' === $expr->class->toLowerString() && 'fromcallable' === $expr->name->toLowerString()) {
+            return true;
+        }
+
+        return $expr instanceof CallLike && $expr->isFirstClassCallable();
     }
 
     /**
@@ -620,18 +703,17 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
      */
     private static function integer(array $args, array $parameter): ?int
     {
-        $position = 0;
-        $value = null;
-        foreach ($args as $arg) {
-            if ($arg->unpack) {
-                return null;
-            }
+        $value = self::given($args, $parameter);
 
-            if (null === $arg->name ? $position++ === $parameter[0] : $parameter[1] === $arg->name->toString()) {
-                $value = $arg->value;
-            }
-        }
+        return $value instanceof Expr ? self::integerOf($value) : null;
+    }
 
+    /**
+     * The integer an expression writes as a literal, under its signs: 2,
+     * -1; null for anything else.
+     */
+    private static function integerOf(Expr $value): ?int
+    {
         $negative = false;
         while ($value instanceof UnaryMinus || $value instanceof UnaryPlus) {
             $negative = $negative !== $value instanceof UnaryMinus;

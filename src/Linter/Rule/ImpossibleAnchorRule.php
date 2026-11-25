@@ -21,14 +21,21 @@ use PHPRegex\Linter\Rule\Support\QuestionBudget;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Analysis\GroupIndex as PcreGroups;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
+use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\DefineNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
+use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Syntax\StartOptions;
 
@@ -174,15 +181,24 @@ final class ImpossibleAnchorRule extends AbstractLintRule
                         end: $child->getEndPosition(),
                     );
                 }
+
+                if ($skipForMultiline && !$accepted) {
+                    $issue = null;
+                    if (!$prefixCanBeEmpty) {
+                        $this->readUpTo($children, $flagsAtChild, $i, $read, $before, $context);
+                        $issue = $this->circumflexAfterNoLineEnd($child, $before, $context) ?? self::circumflexBesideTheEnd($child, $children, $i);
+                    }
+                    $issue ??= $this->circumflexWhereALookaheadEnds($child, $node, $i, $context);
+                    if (null !== $issue) {
+                        $issues[] = $issue;
+                    }
+                }
             }
 
             if (NodePredicates::isEndAnchorNode($child) && $i + 1 < $count) {
                 $tailCanBeEmpty ??= self::emptyFromEachItem($children);
-                for (; !$tailCanBeEmpty[$i + 1] && $read < $i; $read++) {
-                    $last = $this->lastCharacters($children[$read], $flagsAtChild[$read], $context);
-                    if (null === $last || !$last->isEmpty()) {
-                        $before = $last;
-                    }
+                if (!$tailCanBeEmpty[$i + 1]) {
+                    $this->readUpTo($children, $flagsAtChild, $i, $read, $before, $context);
                 }
 
                 if (!$tailCanBeEmpty[$i + 1]
@@ -221,6 +237,164 @@ final class ImpossibleAnchorRule extends AbstractLintRule
     }
 
     /**
+     * Reads the items from $read up to $upTo, keeping in $before the
+     * characters the last of them that reads any can end with: unknown
+     * (null) after an item that may read nothing.
+     *
+     * @param array<int, NodeInterface> $children
+     * @param array<int, string>        $flagsAtChild
+     */
+    private function readUpTo(array $children, array $flagsAtChild, int $upTo, int &$read, ?ByteCharSet &$before, LintContext $context): void
+    {
+        for (; $read < $upTo; $read++) {
+            $last = $this->lastCharacters($children[$read], $flagsAtChild[$read], $context);
+            if (null === $last || !$last->isEmpty()) {
+                $before = $last;
+            }
+        }
+    }
+
+    /**
+     * "^" under m after a character that ends no line under the newline
+     * convention: "\n" by default, "\r" under "(*CR)", NUL under "(*NUL)",
+     * the "\n" of "\r\n" under "(*CRLF)", either of them under "(*ANYCRLF)",
+     * and under "(*ANY)" the vertical tab, the form feed, NEL and the last
+     * byte of a separator too. "/a$^/m" matches nothing.
+     */
+    private function circumflexAfterNoLineEnd(AnchorNode|AssertionNode $anchor, ?ByteCharSet $before, LintContext $context): ?RuleViolation
+    {
+        if (null === $before || $before->isEmpty()) {
+            return null;
+        }
+
+        $ends = match (StartOptions::newline($context->pattern->source)) {
+            'CR' => ByteCharSet::fromChar("\r"),
+            'NUL' => ByteCharSet::fromChar("\0"),
+            'ANYCRLF' => ByteCharSet::fromChar("\r")->union(ByteCharSet::fromChar("\n")),
+            'ANY' => ByteCharSet::fromBytes(0x0A, 0x0D)->union(ByteCharSet::fromBytes(0x80, 0xFF)),
+            default => ByteCharSet::fromChar("\n"),
+        };
+
+        return $before->intersects($ends) ? null : self::circumflexViolation($anchor, "Start anchor '^' comes after a character that ends no line, making it impossible to match.");
+    }
+
+    /**
+     * "^" under m where "\z" holds, the items between reading nothing: at
+     * the end of the subject, after the items before it read a character,
+     * where "^" never holds. "/\n^\z/m" matches nothing.
+     *
+     * @param array<int, NodeInterface> $children
+     */
+    private static function circumflexBesideTheEnd(AnchorNode|AssertionNode $anchor, array $children, int $index): ?RuleViolation
+    {
+        foreach ([-1, 1] as $step) {
+            for ($at = $index + $step; isset($children[$at]); $at += $step) {
+                if ($children[$at] instanceof AssertionNode && 'z' === $children[$at]->value) {
+                    return self::circumflexAtTheEnd($anchor);
+                }
+
+                if (!self::readsNothing($children[$at])) {
+                    break;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * "^" under m in a lookahead, after items of a fixed length that read a
+     * character, where the items after the lookahead read as many before
+     * "\z": "^" then stands at the end of the subject. "/a(?=\n^)\n\z/m"
+     * matches nothing.
+     */
+    private function circumflexWhereALookaheadEnds(AnchorNode|AssertionNode $anchor, SequenceNode $body, int $index, LintContext $context): ?RuleViolation
+    {
+        $parents = $context->parents();
+        $lookahead = $parents[\count($parents) - 1] ?? null;
+        $outer = $parents[\count($parents) - 2] ?? null;
+        if (!$lookahead instanceof GroupNode || GroupType::LookaheadPositive !== $lookahead->type || $lookahead->child !== $body || !$outer instanceof SequenceNode) {
+            return null;
+        }
+
+        $lengths = new LengthRangeCalculator($context->pattern->unicodeMode);
+        $ahead = self::fixedLength(\array_slice($body->children, 0, $index), $lengths);
+        $at = array_search($lookahead, $outer->children, true);
+        if (null === $ahead || 0 === $ahead || !\is_int($at)) {
+            return null;
+        }
+
+        $after = 0;
+        foreach (\array_slice($outer->children, $at + 1) as $item) {
+            if ($item instanceof AssertionNode && 'z' === $item->value) {
+                return $after === $ahead ? self::circumflexAtTheEnd($anchor) : null;
+            }
+
+            $length = self::fixedLength([$item], $lengths);
+            if (null === $length) {
+                return null;
+            }
+            $after += $length;
+        }
+
+        return null;
+    }
+
+    /**
+     * The length every match of the items reads, null when it may vary or
+     * an "(*ACCEPT)" may end the match among them.
+     *
+     * @param array<int, NodeInterface> $items
+     */
+    private static function fixedLength(array $items, LengthRangeCalculator $lengths): ?int
+    {
+        $total = 0;
+        foreach ($items as $item) {
+            if (NodePredicates::holdsAccept($item)) {
+                return null;
+            }
+
+            [$min, $max] = $item->accept($lengths);
+            if ($min !== $max) {
+                return null;
+            }
+            $total += $min;
+        }
+
+        return $total;
+    }
+
+    /**
+     * Whether the item reads no character wherever it stands, and lets the
+     * match go on: an anchor, an assertion, a lookaround, an option
+     * setting, a verb other than "(*ACCEPT)".
+     */
+    private static function readsNothing(NodeInterface $item): bool
+    {
+        if (NodePredicates::holdsAccept($item)) {
+            return false;
+        }
+
+        return $item instanceof AnchorNode
+            || $item instanceof AssertionNode
+            || $item instanceof KeepNode
+            || $item instanceof CommentNode
+            || $item instanceof CalloutNode
+            || $item instanceof PcreVerbNode
+            || ($item instanceof GroupNode && (NodePredicates::isStandaloneInlineFlags($item) || \in_array($item->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)));
+    }
+
+    private static function circumflexAtTheEnd(AnchorNode|AssertionNode $anchor): RuleViolation
+    {
+        return self::circumflexViolation($anchor, "Start anchor '^' stands at the end of the subject after consuming characters, making it impossible to match.");
+    }
+
+    private static function circumflexViolation(AnchorNode|AssertionNode $anchor, string $message): RuleViolation
+    {
+        return new RuleViolation(self::ID_START, $message, $anchor->getStartPosition(), end: $anchor->getEndPosition());
+    }
+
+    /**
      * The characters the item reads last, as the analyzer of the context
      * reads them and as one reading every byte does: the first reads ASCII
      * alone, where "[^\x00-\x7F]" reads nothing and "[^\x00-\x7E]" reads
@@ -228,18 +402,25 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * ASCII too. Null where either cannot tell. Both read the item under
      * the flags in effect at it, $flags, and at each node inside it: under
      * i, "[^a-z]" leaves out the capitals, which it takes after "(?-i)".
+     * Where the rules read every byte, under the tables of the target's
+     * locale, the second read holds all the item reads, and alone: "\W"
+     * takes none of the letters those tables give above ASCII.
      */
     private function lastCharacters(NodeInterface $child, string $flags, LintContext $context): ?ByteCharSet
     {
         // The flags hold u wherever the pattern sets it: no inline flag turns
         // it off, "(?^)" resets i, m, n, r, s and x only.
-        $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
-        $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
-        if (null === $ascii) {
-            return null;
+        $tables = $context->readsEveryByte();
+        $ascii = ByteCharSet::empty();
+        if (!$tables) {
+            $this->ascii[$flags] ??= $context->charSetAnalyzer->withFlags($flags);
+            $ascii = self::lastCharactersUnder($child, $this->ascii[$flags]);
+            if (null === $ascii) {
+                return null;
+            }
         }
 
-        $this->everyByte ??= new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
+        $this->everyByte ??= $tables ? $context->everyByteAnalyzer() : new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true);
         $this->everyByteAt[$flags] ??= $this->everyByte->withFlags($flags);
         $everyByte = self::lastCharactersUnder($child, $this->everyByteAt[$flags]);
 
@@ -371,9 +552,11 @@ final class ImpossibleAnchorRule extends AbstractLintRule
      * the enclosing group.
      *
      * Under "(*CRLF)" a newline starts with "\r", under "(*ANYCRLF)" with
-     * "\r" or "\n": a tail that can continue a line end starts with one of
-     * them, which is all this checks. Under "(*ANY)" some newlines lie above
-     * ASCII, which the sets do not hold: the rule says nothing.
+     * "\r" or "\n": a tail that can continue a line end under m starts with
+     * one of them, which is all this checks; after "\Z", or "$" without m,
+     * it matches the newline that ends the subject whole. Under "(*ANY)"
+     * some newlines lie above ASCII, which the sets do not hold: the rule
+     * says nothing.
      *
      * @param ByteCharSet|null          $before the characters the item read just before the anchor can be, null
      *                                          when unknown or when the anchor may come first
@@ -408,8 +591,19 @@ final class ImpossibleAnchorRule extends AbstractLintRule
         }
 
         $dotAll = str_contains($flags, 's');
-        if (1 < \strlen($newline) || 'CRLF' === $convention || ($multiline && !$anchor instanceof AssertionNode)) {
+        if ($multiline && !$anchor instanceof AssertionNode) {
             return $tail->canStartWithNewline($nodes, $dotAll);
+        }
+
+        // "$" without the m modifier and "\Z" before the newline that ends
+        // the subject: "\r\n" under "(*CRLF)", one of "\r\n", "\r" and "\n"
+        // under "(*ANYCRLF)".
+        // A tail that stops inside the newline leaves the rest of it to what
+        // follows, one that reads it whole leaves the end of the subject.
+        if ('CRLF' === $convention || 'ANYCRLF' === $convention) {
+            [$inside, $whole] = $tail->finalNewlineStops($nodes, $convention, $dotAll);
+
+            return $inside || ($whole && $context->followersPass($sequence, $tail->canMatchNothingAtTheEnd(...)));
         }
 
         // The newline the tail matches is the subject's last character: what
@@ -458,11 +652,12 @@ final class ImpossibleAnchorRule extends AbstractLintRule
 
         // A byte above ASCII may be a word character under u, under (*UCP)
         // and under the tables of a locale other than PCRE2's own, the "C"
-        // locale of the target.
+        // locale of the target, which tell which bytes are where the rules
+        // read every byte and UCP does not hold.
+        $words = $context->readsEveryByte() ? $context->everyByteAnalyzer()->wordSet() : ByteCharSet::unknown();
         $wordAboveAscii = $context->pattern->unicodeMode
-            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)')
-            || 'C' !== $context->target->locale;
+            || str_contains(StartOptions::of($context->pattern->source), '(*UCP)');
 
-        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii);
+        return new EndOfLineTail($context->charSetAnalyzer, $newline, $context->groups->pcre ?? PcreGroups::empty(), $reads, $before, $wordAboveAscii, $words->isUnknown() ? null : $words);
     }
 }

@@ -69,6 +69,8 @@ final class AnalysisBench
     #[ExpectedFor('same-alternation-star', instructions: '2.348M', cycles: '4.724M', memory: '46.65KiB')]
     #[ExpectedFor('unicode-scripts', instructions: '723.1M', cycles: '778.6M', memory: '6.422MiB')]
     #[ExpectedFor('every-match-retry', instructions: '2.205M', cycles: '4.621M', memory: '34.15KiB')]
+    #[ExpectedFor('empty-groups-around-loops', instructions: '723.0M', cycles: '818.4M', memory: '3.301MiB')]
+    #[ExpectedFor('loop-chain', instructions: '491.4M', cycles: '536.6M', memory: '2.409MiB')]
     public function benchRedos(string $group, string $pattern, string $expected): void
     {
         Workloads::redos($pattern, $this->parser);

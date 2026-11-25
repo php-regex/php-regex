@@ -6,6 +6,27 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The brackets of a possessive repeat of a group, or of an atomic group,
+   that may match nothing stay as written after a repeated character that
+   could give back to what follows: PCRE2 makes that character possessive,
+   as if the group could not be skipped, and `/a+(?:b)?+a/` finds nothing in
+   `aa`, where `/a+b?+a/`, which the check proved alike and the optimizer
+   wrote, finds `aa`. The pattern now ships as written, and so do
+   `/a+(?:b|c)?+a/`, which became `/a+[bc]?+a/`, and `/a+(?>(?:b)?)a/`,
+   which became `/a+(?>b?)a/`. `/a+(?:b)?+c/` still becomes `/a+b?+c/`.
+   Such a rewrite is checked by the automata whatever `verifyWithAutomata`
+   says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
+   `/a+b?+a/`.
+ * The group around a repeat of the byte 0xFF before `\w`, or of `\w`
+   before that byte, stays as written without `u`: PCRE2 makes the repeat
+   possessive once the group is out, as if 0xFF were no word character,
+   and under fr_FR.ISO8859-1, where `\w` takes it, `/\xFF+\w/`, which the
+   check proved alike and the optimizer wrote for `/(?:\xFF)+\w/`, finds
+   nothing in `\xFF\xFF`, where `/(?:\xFF)+\w/` finds it. `/(?:\xFF)+?\w/`,
+   `/(?:\xFF)?\w/`, `/(?:\w)+\xFF/` and `/(?:\w)+?\xFF/` stay as well. The
+   rewrite ships only under a target that names a locale whose tables
+   leave 0xFF out of `\w`, as el_GR.ISO8859-7 does, and such a rewrite is
+   checked by the automata whatever `verifyWithAutomata` says.
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The
@@ -32,34 +53,29 @@ CHANGELOG
    and `\Z` read as the newline they may stand before, so `/^(\d+\s*)$/`
    still becomes `/^(\d++\s*)$/`, and `/[0-9]+\s*$/` now becomes
    `/\d++\s*$/`.
- * The possessive rewrite reads what follows a group at every place it
-   runs: where it stands, and after each call that runs it, `(?1)`,
-   `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)`, `\g<n>`, or `(?R)` for the whole
-   pattern, which gives back to what follows the call.
-   `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is no longer offered `a++b?`, which the
-   check of the result refused before the rewrite was made a second time
-   without the possessive step. A group in a DEFINE runs only where it is
-   called: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
-   `/(?(DEFINE)(?<n>a++b?))a/`. A group called inside a script run stays
-   greedy, as the check of the run reads what the call matched.
+ * The possessive rewrite leaves every repetition greedy inside a group a
+   call runs, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, a
+   group a DEFINE holds included, and everywhere in a pattern that calls
+   itself whole, `(?R)`, whatever follows it: PCRE2's JIT, which PHP runs
+   by default, misses matches of a possessive quantifier there that its
+   interpreter finds. `/(a++)c(?1)d/` finds no match in `acacad` with the
+   JIT, from PCRE2 10.34 to 10.49, where `/(a+)c(?1)d/` matches `acad`, so
+   `/(a+)c(?1)d/`, `/(a+b?)c(?1)d/`, `/(x(?1)?ca+b?)c/` and
+   `/(?&n)c(?(DEFINE)(?<n>a+b?))/` stay as written. A group in a DEFINE
+   that no call runs runs nowhere: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
+   `/(?(DEFINE)(?<n>a++b?))a/`. A repetition outside every group a call
+   runs reads what follows it as before: `/a+;(x)(?1)/` becomes
+   `/a++;(x)(?1)/`.
  * The check of the result runs the body of a group where each call of it
-   stands, and proves the possessive the rewrite offers there:
-   `/(a+b?)c(?1)d/` now becomes `/(a++b?)c(?1)d/` with the first rewrite,
-   where the check refused it and the rewrite made a second time without
-   the possessive step shipped the pattern unchanged. A group a DEFINE
-   holds runs there too, under the options in force where the DEFINE
-   stands: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` now becomes
-   `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, and `/(?(DEFINE)(?<n>a|b))x(?&n)/`
-   becomes `/(?(DEFINE)(?<n>[ab]))x(?&n)/`, a rewrite the check left
-   unproven. The calls the check proves a rewrite in read what a DEFINE
-   holds: `^` in a group it holds asks for the search past the start of
-   the subject. A group that calls itself and a call of the whole pattern
-   are read through every call, what may follow the group after each
-   return included: `/(x(?1)?ca+b?)c/` now becomes `/(x(?1)?ca++b?)c/`,
-   and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` gets `ca++b?`, where the
-   check refused them. A group repeated there stays greedy:
-   `/x(?R)?(?:ab)++c/` runs out of the JIT stack deep in the calls where
-   `/x(?R)?(?:ab)+c/` matches.
+   stands, a group a DEFINE holds included, under the options in force
+   where the DEFINE stands: `/(?(DEFINE)(?<n>a|b))x(?&n)/` becomes
+   `/(?(DEFINE)(?<n>[ab]))x(?&n)/`, a rewrite the check left unproven. The
+   calls the check proves a rewrite in read what a DEFINE holds: `^` in a
+   group it holds asks for the search past the start of the subject. A
+   group that calls itself is read through every call where the rewrite
+   changes a quantifier outside every group a call runs:
+   `/a+b(x(?1)?y)/` now becomes `/a++b(x(?1)?y)/`, where the check
+   refused it.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a
@@ -71,10 +87,8 @@ CHANGELOG
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
  * The possessive rewrite reads the flags in force where each item stands,
    and an option setting no longer keeps it out of the whole pattern:
-   `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` now becomes
-   `/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/`, and
-   `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` becomes
-   `/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/`, while `/(?i)a+b?A/` stays greedy.
+   `/(?i)a+b?c/` now becomes `/(?i)a++b?c/`, and `/(?i:a+b?)c/` becomes
+   `/(?i:a++b?)c/`, while `/(?i)a+b?A/` stays greedy.
    An option setting that names `U`, under which a plain quantifier is
    lazy, and a non-atomic lookaround, past whose end the engine reads from
    where it starts, still keep every quantifier of the pattern as written.
@@ -82,14 +96,35 @@ CHANGELOG
    sequence, or stands alone in its group, its branch or the pattern: what
    follows the group at every place it runs, the alternation or the
    conditional, up to the end of the pattern. `/(a+)c/` now becomes
-   `/(a++)c/`, `/(?&n)x(?(DEFINE)(?<n>[0-9]+))/` becomes
-   `/(?&n)x(?(DEFINE)(?<n>\d++))/`, and `/x[0-9]+/` becomes `/x\d++/`,
+   `/(a++)c/`, and `/x[0-9]+/` becomes `/x\d++/`,
    while `/(a+)a/`, `/(?:a+){2}/` and `/(a+)\1/` stay greedy. A repeated
    group that ends its sequence stays greedy, as it gives back whole runs.
    The next run of a group that may run again follows the repetition that
    ends it, as it did from a count of two: `/(b+|ba)*c/` stays greedy, and
    `/(?:a+b?)+c/` is no longer offered `a++`, which the check of the result
    refused.
+ * The possessive rewrite keeps every repeated group greedy in a pattern
+   that sets a limit on what PCRE2 spends on a match, `(*LIMIT_MATCH=n)`,
+   `(*LIMIT_DEPTH=n)`, its old name `(*LIMIT_RECURSION=n)`, or
+   `(*LIMIT_HEAP=n)`: without the JIT a possessive group may spend more of
+   it than the greedy one, and `/(*LIMIT_MATCH=4)c(?:ab)+e/`, which matches
+   `cababe`, is no longer rewritten `/(*LIMIT_MATCH=4)c(?:ab)++e/`, which
+   gives up on it. A repeated character or class spends no more of any of
+   them, and is still made possessive there:
+   `/(*LIMIT_MATCH=10)^[a-z]+(?:-[a-z]+)*$/` now becomes
+   `/(*LIMIT_MATCH=10)^[a-z]++(?:-[a-z]++)*$/`, where the check of the
+   result refused the possessive group offered with them.
+ * The possessive rewrite makes a repeated group possessive only where
+   every run of its body matches one way, characters and literals in a
+   row, and reads what follows the repeat against the character a run
+   starts with, as the repeat gives back whole runs: `/(?:b|ba)*c/` and
+   `/(?:ab)+ab/` are no longer offered `(?:b|ba)*+c` and `(?:ab)++ab`,
+   which miss `bac` and `abab`, while `/(?:ab)+b/` now becomes
+   `/(?:ab)++b/`. The possessive group the check of the result refused no
+   longer takes the other possessives of the pattern with it:
+   `/[a-z]+(?:-[a-z]+)*$/` now becomes `/[a-z]++(?:-[a-z]++)*$/`, and
+   `/(?:b|ba)*c[0-9]+;/` becomes `/(?:b|ba)*c\d++;/`, where they shipped
+   without a possessive.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer

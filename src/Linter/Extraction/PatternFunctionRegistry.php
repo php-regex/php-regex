@@ -103,10 +103,12 @@ final class PatternFunctionRegistry
         // own namespace with the same signature.
         $dropIns = array_fill_keys(array_keys($functions), true);
 
-        // RegexIterator::__construct(Iterator $iterator, string $pattern, ...).
+        // RegexIterator::__construct(Iterator $iterator, string $pattern,
+        // int $mode = self::MATCH, ...): the mode decides whether accept()
+        // looks for every match.
         $constructors = [
-            'regexiterator' => new PatternFunction('RegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR),
-            'recursiveregexiterator' => new PatternFunction('RecursiveRegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR),
+            'regexiterator' => new PatternFunction('RegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR, loopArgument: [2, 'mode', PregFunctions::ITERATOR_LOOPS]),
+            'recursiveregexiterator' => new PatternFunction('RecursiveRegexIterator', 1, kind: PatternFunction::KIND_CONSTRUCTOR, loopArgument: [2, 'mode', PregFunctions::ITERATOR_LOOPS]),
         ];
 
         return new self($functions, [], ['preg_', 'regexiterator', 'filter_validate_regexp'], $dropIns, constructors: $constructors);

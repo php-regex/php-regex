@@ -40,6 +40,7 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\ScriptRunNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -129,8 +130,9 @@ final class LastCodeUnit
     private bool $accepts = false;
 
     /**
-     * @param bool                 $ucp    whether the pattern opens with "(*UCP)" without u: the
-     *                                     other case of a byte past ASCII is then Unicode's
+     * @param bool                 $ucp    whether the pattern opens with "(*UCP)" without u, for
+     *                                     PCRE2 10.35 or later: the other case of a byte past
+     *                                     ASCII is then Unicode's
      * @param CharacterTables|null $tables the tables of the target's locale, which give the other
      *                                     case of a byte without u nor "(*UCP)"
      */
@@ -175,9 +177,10 @@ final class LastCodeUnit
      * The character of of(), and the other case PCRE2 also takes for its
      * code unit when it looks for either; null for the second when it looks
      * for the one. Without u the other case of a byte is the one the tables
-     * of the target's locale give it, and Unicode's under "(*UCP)": "\xE9"
-     * has "\xC9" under fr_FR.ISO8859-1 and under "(*UCP)", none under C, and
-     * "\xFF" has U+0178 under "(*UCP)", past any byte the subject holds.
+     * of the target's locale give it, and Unicode's under "(*UCP)" from
+     * PCRE2 10.35: "\xE9" has "\xC9" under fr_FR.ISO8859-1 and under
+     * "(*UCP)", none under C nor under "(*UCP)" before 10.35, and "\xFF" has
+     * U+0178 under "(*UCP)", past any byte the subject holds.
      *
      * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
      *                                the running engine's when null
@@ -190,7 +193,9 @@ final class LastCodeUnit
         $unicode = $regex->isUnicode();
         $source = $regex->source ?? '';
         $opening = str_starts_with($source, '(*') ? StartOptions::of($source) : '';
-        $ucp = !$unicode && str_contains($opening, '(*UCP)');
+        // Before PCRE2 10.35 "(*UCP)" leaves the case of a byte to the
+        // tables, as without it.
+        $ucp = !$unicode && str_contains($opening, '(*UCP)') && $target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
         $reader = new self($unicode, $source, $ucp, $unicode || $ucp ? null : CharacterTables::forLocale($target->locale), $target);
         // "(*CASELESS_RESTRICT)" is a pattern-wide r.
         $options = str_contains($opening, '(*CASELESS_RESTRICT)') ? self::RESTRICT : 0;

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Optimizer;
 
+use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
@@ -69,6 +70,14 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private bool $utf = false;
 
+    /**
+     * The tree of the pattern being modernized, as written, when it holds an
+     * atomic group or a possessive repeat of a group that may match
+     * nothing: only there do the brackets decide which repeats PCRE2 makes
+     * possessive, and taking a group out never makes such a group.
+     */
+    private ?NodeInterface $pattern = null;
+
     public function __construct(
         /**
          * The LC_CTYPE locale the pattern runs under, when it is known:
@@ -83,6 +92,7 @@ final class Modernizer extends AbstractNodeVisitor
     {
         $this->unicodeProperties = UnicodeProperties::on($node);
         $this->utf = str_contains($node->flags, 'u');
+        $this->pattern = [] !== AutoPossession::shape($node->pattern, false) ? $node->pattern : null;
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -145,7 +155,12 @@ final class Modernizer extends AbstractNodeVisitor
         // (including anchors) bound to every alternative when printed, and
         // an option set with no colon, "(?i)", holds to the end of the group
         // it stands in: unwrapped, "(?:(?i)a)b" would read "b" without case.
-        if (self::isPlain($node) && !$child instanceof AlternationNode && !self::setsOption($child)) {
+        // PCRE2 makes a character repeated before a possessive or atomic
+        // group that may match nothing possessive, as if the group could
+        // not be skipped, and the brackets decide which: "/a+(?:b)?+a/"
+        // finds nothing in "aa", where "/a+b?+a/" finds it.
+        if (self::isPlain($node) && !$child instanceof AlternationNode && !self::setsOption($child)
+            && (null === $this->pattern || !AutoPossession::groupDecides($this->pattern, $node))) {
             return $child;
         }
 

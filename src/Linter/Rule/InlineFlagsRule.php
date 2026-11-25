@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule;
 
+use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -71,11 +72,23 @@ final class InlineFlagsRule extends AbstractLintRule
         $baseFlags = $resetAll ? str_replace(['i', 'm', 'n', 'r', 's', 'x'], '', $context->activeFlags()) : $context->activeFlags();
         $issues = [];
 
+        // "xx" is an option of its own, set by the letters together: a
+        // second "x" adds nothing to read, "(?xx)" is redundant where xx is
+        // in force already, and "(?x)" only where x is in force without it,
+        // which it takes off.
+        $extendedMore = str_contains($baseFlags, 'xx');
+        $readX = false;
         foreach (Bytes::split($set) as $flag) {
-            if ('' === $flag) {
-                continue;
+            if ('x' === $flag) {
+                if ($readX) {
+                    continue;
+                }
+
+                $readX = true;
+                $flag = str_contains($set, 'xx') ? 'xx' : 'x';
             }
-            if (str_contains($baseFlags, $flag)) {
+
+            if ('xx' === $flag ? $extendedMore : str_contains($baseFlags, $flag) && ('x' !== $flag || !$extendedMore)) {
                 $issues[] = new RuleViolation(
                     self::ID_REDUNDANT,
                     \sprintf(
@@ -126,7 +139,7 @@ final class InlineFlagsRule extends AbstractLintRule
      */
     private function originOf(string $flag, LintContext $context, bool $resetAll): string
     {
-        return (!$resetAll || !str_contains('imnrsx', $flag)) && str_contains($context->pattern->flags, $flag)
+        return (!$resetAll || !str_contains('imnrsx', $flag)) && str_contains(NodePredicates::modifierFlags($context->pattern->flags), $flag)
             ? 'set globally'
             : 'set by an earlier inline flag group';
     }

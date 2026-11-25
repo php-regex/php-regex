@@ -55,8 +55,6 @@ final class InlineFlagsPossessificationTest extends TestCase
      */
     public static function provideRepeatsUnderInlineFlagsFollowedByWhatTheyNeverGiveBack(): iterable
     {
-        yield 'a group a scoped caseless option holds, called before another letter' => ['pattern' => '/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/', 'expected' => '/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/'];
-        yield 'a group defined after a caseless option, called before it' => ['pattern' => '/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/', 'expected' => '/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/'];
         yield 'a caseless option before the repeat' => ['pattern' => '/(?i)a+b?c/', 'expected' => '/(?i)a++b?c/'];
         yield 'a caseless option after the repeat' => ['pattern' => '/a+b?(?i)C/', 'expected' => '/a++b?(?i)C/'];
         yield 'a scoped caseless option around the repeat' => ['pattern' => '/(?i:a+b?)c/', 'expected' => '/(?i:a++b?)c/'];
@@ -138,8 +136,6 @@ final class InlineFlagsPossessificationTest extends TestCase
      */
     public static function provideOptimizationsUnderInlineFlags(): iterable
     {
-        yield 'a group a scoped caseless option holds, called before another letter' => ['pattern' => '/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/', 'expected' => '/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/', 'changes' => [Rewriter::POSSESSIVE]];
-        yield 'a group defined after a caseless option, called before it' => ['pattern' => '/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/', 'expected' => '/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
         yield 'a caseless option, a class written as a shorthand' => ['pattern' => '/(?i)[0-9]+b?c/', 'expected' => '/(?i)\d++b?c/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
     }
 

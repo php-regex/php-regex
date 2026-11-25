@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\PossessiveBrackets;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -140,6 +141,18 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             if (null === $leftMax && $this->isKnownSubset($right->node, $rightSet, $left->node, $leftSet, $context, $flags[$i])
                 && ([] === $leftGuards || ($rightMin > 0 && $this->guardsHoldBefore($leftGuards, $rightSet, $context, $flags[$i])))
             ) {
+                // A run PCRE2 may make possessive before a group it may skip
+                // stays as written: dropped or fixed to a count, it gives
+                // back to the run before it what PCRE2 took. Read last, as
+                // it walks the whole pattern. The first run tightened above
+                // never stands before that group: the second does, made
+                // possessive alike with or without the change, and ends
+                // where the run of their characters ends either way.
+                $madePossessive = PossessiveBrackets::repeatsMadePossessive($node, $context);
+                if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
+                    continue;
+                }
+
                 $issues[] = new RuleViolation(
                     self::ID,
                     'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
@@ -170,10 +183,19 @@ final class QuantifierConcatenationRule extends AbstractLintRule
      * folding a complement directly. In UTF mode a caseless "k" or "s" also
      * takes the Kelvin sign or the long s, which a case-sensitive run does
      * not hold.
+     *
+     * Where the rules read every byte, under the tables of the target's
+     * locale, each set holds every byte its run takes, a case as those
+     * tables give it, which may pair "i" with another byte than "I": under
+     * glibc's tr_TR.ISO-8859-9 a caseless "i" takes 0xDD, and no "I".
      */
     private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
     {
-        if (LoopShape::mayTakeACharacterAboveAscii($run, $context) && !LoopShape::takesEveryCharacterAboveAscii($other, $context)) {
+        if ($context->comparesEveryByte()) {
+            return $set->intersect($otherSet)->ranges() === $set->ranges();
+        }
+
+        if (LoopShape::mayTakeACharacterPastItsSet($run, $context) && !LoopShape::takesEveryCharacterAboveAscii($other, $context)) {
             return false;
         }
 
@@ -359,7 +381,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return null;
         }
 
-        $set = $context->firstChars($core, $flags);
+        $set = $context->comparesEveryByte() ? $context->firstBytes($core, $flags) : $context->firstChars($core, $flags);
 
         if ($set->isUnknown() || $set->isEmpty()) {
             return null;
@@ -387,7 +409,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             }
 
             [$min] = $guard->accept(new LengthRangeCalculator());
-            $first = $context->firstChars($guard, $flags);
+            $first = $context->comparesEveryByte() ? $context->firstBytes($guard, $flags) : $context->firstChars($guard, $flags);
             if (0 === $min || $first->isUnknown() || $first->intersects($next)) {
                 return false;
             }

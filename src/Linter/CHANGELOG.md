@@ -6,22 +6,138 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The overlap rules read an escape that names one character, `\x41`,
+   `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
+   literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported
+   by `regex.lint.alternation.overlap`, with the message of
+   `/(?:Ax|ax)+/i`, where `regex.lint.overlap.charset` reported it, and so
+   are `'/(?:\xC9x|\xE9x)+/i'` and `'/(?:\xC9|\xE9|)+/i'` under
+   fr_FR.ISO8859-1, as their raw bytes are; `'/(?:\xC9x|\xE9y)+/i'` there
+   and `/(?:\x{E9}a|\x{E9}b)+/u`, whose texts tell the branches apart as
+   those of `/(?:éa|éb)+/u` do, are no longer reported. Under u, where the
+   engine judges no branch, a character past ASCII is known by the byte it
+   starts with, written as it is, as an escape or in a range:
+   `/(?:[a-z]|\x{E9}|[a-c]|)+/u` and `/(?:[a-z]|[é-ÿ]|[a-c]|)+/u` are
+   reported by `regex.lint.overlap.charset`, as `/(?:[a-z]|é|[a-c]|)+/u` is;
+   neither was.
+ * The overlap rules read each character of a branch in the case the
+   options in force where it stands give it, where they read the whole
+   branch caselessly once i held at its start or a group in it turned i on:
+   `/(?:(?-i)Ax|(?-i)ax)+/i`, `/(?:(?-i)Ax|ax)+/i`, `/(?:a(?-i)B|A(?-i)b)+/i`,
+   `/(?:(?-i:AA)|AB)+/i` and `/(?:(?i:A)x|aX)+/` are no longer reported, as
+   no input starts both branches, nor under fr_FR.ISO8859-1
+   `"/(?:(?-i)\xC9x|(?-i)\xE9x)+/i"`; `/(?:(?i:A)x|ax)+/` still is. The texts
+   that tell branches apart go on past an option setting and through a
+   group setting options: `/(?:a(?i)b\d|a(?i)c\w)+/` and
+   `/(?:(?i:öa)|Öb)+x/u` are no longer reported.
+ * `\cA` reads one character in every rule, as `\x01` does:
+   `/^(?:a+\cA)+$/` no longer reports nested quantifiers, and `/\cA+\cA+$/`
+   reports `regex.lint.quantifier.concatenation`, as `/\x01+\x01+$/` does.
+ * `regex.lint.redos.search` at the calls that look for every match also
+   covers short matches, as `/a*b|a/` on a run of `a`: the attempt that
+   finds each one reads to the end of the run first. The message then
+   starts with `Quadratic search over short matches`.
+ * `regex.lint.redos.search` is raised for each call that looks for every
+   match and reads a pattern through a variable or a constant, not only at
+   the first call that reads it: `$p` read by `preg_match()` then
+   `preg_match_all()` was not reported. The pattern is still reported once,
+   where its literal is written, with one finding for each function of
+   those calls. Through a variable, a call runs in its loop the value of
+   the latest assignment before it when that one runs first on every path
+   to it: a statement of the body or of the block of braces the call
+   stands in, the head of a `foreach` over literals, or a composition of
+   such values. Where one in a branch or a loop of its own may stand
+   between, in a `switch` or in a block of the alternative syntax, the
+   call names no loop.
+   `PatternOccurrence::$everyMatchElsewhere` names the functions of the
+   other calls, and `everyMatchCalls()` all of them.
+ * Without u, under another locale's tables than PCRE2's own,
+   `regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`
+   and `regex.lint.overlap.charset` read the characters of a run or a
+   branch every byte as the target's tables give them, the other case of an
+   ASCII letter and the bytes of `\w`, `\d` and `\s` above ASCII included,
+   where they folded ASCII letters by PCRE2's own pairs. Under glibc's
+   tr_TR.ISO-8859-9, which pairs `i` with `\xDD` and `I` with `\xFD`,
+   `/(?:i|I)+$/i`, `/(?:i+I)+$/i` and `/i+I+$/i` are no longer reported,
+   and `/i+\xDD+$/i` and `"/(?:\w+\xDD)+$/"`, with the byte written as it
+   is, are; under fr_FR.ISO8859-1, `"/\xC9+\xE9+$/i"` is reported and
+   `"/(?:\xC9+\xEA)+$/i"` no longer. Where the engine's paths read the case
+   of a byte otherwise, as macOS's tr_TR.ISO8859-9 reads `i`, `I` and
+   `\xDD`, a pattern read caselessly is read in ASCII as before, every
+   caseless set holding such a byte, a caseless `[a-z]` among them, being
+   unknown otherwise. Nothing changes under C.
+ * Without u nor UCP, under another locale's tables than PCRE2's own,
+   `regex.lint.anchor.impossible.end` reads which bytes are word
+   characters from the target's tables, where it took every byte above
+   ASCII for both: under glibc's tr_TR.ISO-8859-9, `/\W$\b\n/` and
+   `/\xDD$\B\n/`, which never match there, are reported, as
+   `"/\xE9$\B\n/"` is under fr_FR.ISO8859-1. Nothing changes under C.
+ * The rules read `(?xx)` apart from `(?x)`, as PCRE2 does: a class drops
+   its spaces and tabs under it, a group setting `x` alone takes it off,
+   and `(?-x)` and `(?^)` take both off, while PHP's `x` modifier is `x`
+   however many times it is written. `regex.lint.overlap.charset` no
+   longer reports `/(?xx)(?:[a b]|\x20|\xE9)+/`, whose class takes no
+   space, and reports `/(?:[a b]|\x20|\xE9)+/xx`, whose class does;
+   `regex.lint.flag.redundant` no longer calls `(?x)` redundant after
+   `(?xx)`, nor `(?xx)` under the `x` modifier, and names `(?xx)` once
+   where it is.
+ * `regex.lint.group.redundant`, `regex.lint.group.empty` and
+   `regex.lint.quantifier.concatenation` no longer advise a change of the
+   brackets or the repeats PCRE2 reads to make a repeat possessive: PCRE2
+   makes a character repeated before an atomic group, or a possessive
+   repeat of a group, that may match nothing possessive, as if the group
+   could not be skipped. `(?:b)` in `/a+(?:b)?+a/`, `(?:a)` in
+   `/(?:a)+(?:b)?+a/`, `(?:)` in `/a+(?>(?:)|b)a/` and `a?` in
+   `/[ab]{2,}a?(?:b){0,2}+a/` were reported, where the pattern without them
+   matches otherwise.
+ * `regex.lint.anchor.impossible.start` reports `^` under `m` after a
+   character that ends no line under the newline convention (`/a$^/m`,
+   `/(*CRLF)a$\r^\n/m`), beside `\z` once a character was read (`/a\z^/m`,
+   `/\n^\z/m`), and in a lookahead after characters the items after it read
+   as many of before `\z` (`/a(?=\n^)\n\z/m`). Under `(*CRLF)` and
+   `(*ANYCRLF)`, `regex.lint.anchor.impossible.end` reads the newline that
+   ends the subject after `\Z` and `$` without `m`: `/(*CRLF)a\Z\r\n^/m` is
+   reported, and `/(*ANYCRLF)a\Z\r^/m`, which matches `"a\r\n"`, is not.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
+ * Without u, `regex.lint.overlap.charset`, where the bytes of the
+   branches decide as where PCRE judges them, and
+   `regex.lint.lookaround.impossible` read a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
    same value from 10.35, the tables' case before it.
-   `/(*UCP)(?:\xC9|\xE9|)+/i`, where `\xC9` matches itself alone on 10.34,
-   is no longer reported for PHP 7.4 with PCRE2 10.34, and
-   `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes `\xC9` there, is.
+   `/(*UCP)(?:\xC9|\xE9|)+/i` and `/(*UCP)(?:\xC9|\xE9)+$/i`, where `\xC9`
+   matches itself alone on 10.34, are no longer reported for PHP 7.4 with
+   PCRE2 10.34, and `/(*UCP)(?:[^\xE9]|\xC9|)+/i`, where `[^\xE9]` takes
+   `\xC9` there, is. `/(*UCP)(?!\xC9)\xE9/i`, which 10.34 matches on
+   `\xE9`, is no longer reported impossible for that target, and
+   `/(*UCP)(?=\xC9)\xE9/i`, which it never matches, is.
+ * Without u, under another locale's tables, `regex.lint.overlap.charset`
+   and `regex.lint.lookaround.impossible` read a byte as every path of the
+   engine does: the interpreter compares a character matched alone by the
+   small letters of the tables, where the JIT and a repeat take the byte
+   and the other case the tables give it, and PCRE2 reads a class of a
+   byte and that other case as the byte, caseless. Where the paths read a
+   byte apart, a lookahead is not judged and two branches meet where
+   either path starts both with the same byte. Under macOS's
+   `tr_TR.ISO8859-9`, `/(?=\xFD)i/i`, which the JIT matches on `I`,
+   `/(?![\xFDI])I/` and `/(?=[Ii])\xDD/`, which the interpreter matches,
+   are no longer reported impossible, and under `el_GR.ISO8859-7`
+   `/(?:\xF2|\xD3)+/i`, whose branches the JIT starts both with `\xD3`,
+   is reported.
  * `regex.lint.redos.search` is raised at the calls of `preg_match_all()`,
    `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
-   `preg_replace_callback_array()` and `preg_split()`, and of their `Safe\`
-   and composer/pcre forms, on a pattern whose search costs them n² through
+   `preg_replace_callback_array()` and `preg_split()`, of their `Safe\`,
+   composer/pcre, nette/utils, spatie/regex and Laravel `Str` forms, and of
+   a `RegexIterator` built in the `ALL_MATCHES`, `SPLIT` or `REPLACE` mode,
+   on a pattern whose search costs them n² through
    PHP's retry after an empty match (`RedosAnalysis::$everyMatchSearchCost`),
    with the message `Quadratic search after an empty match: ...` naming the
-   function. A literal limit that bounds the call keeps it quiet, and so does
-   a `preg_match()` call. `PatternOccurrence::$everyMatch` names the function
-   whose loop the call runs. Severity `medium`: hidden at the default `high`
+   function, `preg_replace_callback()` for a replacement written as a
+   closure. A literal limit that bounds the call keeps it quiet, and so does
+   a `preg_match()` call, a lazy nette/utils `Strings::matchAll()` and a
+   `RegexIterator` mode the call does not spell out.
+   `PatternOccurrence::$everyMatch` names the function whose loop the call
+   runs. Severity `medium`: hidden at the default `high`
    threshold, shown from `--redos-threshold=medium`.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
@@ -85,8 +201,8 @@ CHANGELOG
    `regex.lint.overlap.charset` reads a byte above ASCII written as an
    escape, `\xE9`, `\x{E9}`, `\351` or `\o{351}`, as the byte written as
    it is, where it left the branches unjudged: `'/(?:\W|\xE9|)+/'` is
-   reported under C, and `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'`
-   under fr_FR.ISO8859-1; none was.
+   reported under C, and `'/(?:\w|\xE9|)+/'` under fr_FR.ISO8859-1;
+   neither was.
  * The rules that compare first and last characters read a POSIX class
    without u, `[[:alpha:]]` or `[[:^alpha:]]`, where they left it unknown:
    in ASCII as they read `\w`, so `#^(?:[[:alnum:]_]+/)+$#`, which PCRE
@@ -145,6 +261,23 @@ CHANGELOG
    again, keeps it no more, the flag deciding nothing there: `/(?-i)a/i`,
    `/(*UCP)(?i)\xE9/i` and `/(?-i)a|b/i`, where the option holds for the
    alternatives after its own, are reported; `/(?:(?-i)a|b)c/i` is not.
+ * Under u, `regex.lint.flag.useless.i` reports a class that holds every
+   character the target's PCRE2 folds each of its own with, its caseless
+   set included, which matches the same characters with i: `/[aA]/iu`,
+   `/[kK\x{212A}]/iu` and `/[a-zA-Z\x{17F}\x{212A}]/iu` are reported,
+   `/[kK]/iu` and `/[a-zA-Z]/iu`, which match the Kelvin sign and the long
+   s only with i, are not. Under (*UCP) with another locale's tables, a
+   class reads a byte above ASCII as the character of the same value, and
+   an ASCII letter where the tables pair it as Unicode does:
+   `/(*UCP)[\xC9\xE9]/i` is reported under fr_FR.ISO8859-1. A
+   backreference to a group that captures nothing with a case,
+   `/(1)\1/i` or `/(\d)\1/i`, is read without one. `\p{Lu}`, `\p{Ll}` and
+   `\p{Lt}` are read caseless before PCRE2 10.45, where i leaves them as
+   written: `/\p{Lu}/i` is reported for PHP 8.4 with PCRE2 10.44. `\p{Lc}`,
+   `\p{L&}`, `\p{Upper}` and `\p{Lower}`, which i changes on no release,
+   no longer keep the flag, and `\P{Lu}` and `\p{^Lu}` keep it from 10.45,
+   where i changes them: `/\P{Lu}/iu` was reported though it matches 2,314
+   characters fewer with i on PCRE2 10.49.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

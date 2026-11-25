@@ -424,13 +424,17 @@ and is `medium`, like a proven quadratic attempt, so `threshold: medium` or
 
 The same identifier and message cover the calls that look for every match:
 `preg_match_all()`, `preg_replace()`, `preg_filter()`, `preg_replace_callback()`,
-`preg_replace_callback_array()` and `preg_split()`, their `Safe\` drop-ins and the
-composer/pcre methods that call them. A pattern such as `/(?:a+\d)?/` stops the
+`preg_replace_callback_array()` and `preg_split()`, their `Safe\` drop-ins, and the
+composer/pcre, nette/utils, spatie/regex and Laravel `Str` methods that call them
+([the list](redos.md#the-calls-that-run-the-loop)). A pattern such as `/(?:a+\d)?/` stops the
 search of `preg_match()` at an empty match, but these functions go on, and PHP's
 retry after each empty match reads to the end of the run (see the
 [ReDoS guide](redos.md#the-search-of-the-functions-that-look-for-every-match)).
 The tip then starts with `Quadratic search after an empty match` and names the
-function. A `preg_match()` call of that pattern is not reported, and neither is
+function. A pattern such as `/a*b|a/` stops the search of `preg_match()` at a
+short match, found after `a*b` read to the end of the run, and these functions
+start again where it ends: the tip then starts with `Quadratic search over short
+matches`. A `preg_match()` call of such a pattern is not reported, and neither is
 a call whose limit, as its type says, bounds the matches.
 
 ```php

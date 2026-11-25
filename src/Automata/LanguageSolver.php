@@ -37,9 +37,13 @@ use PHPRegex\Automata\Solver\RewriteSites;
 use PHPRegex\Automata\Solver\SubsetResult;
 use PHPRegex\Automata\Solver\Utf8Reading;
 use PHPRegex\Automata\Support\WorkBudget;
+use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
+use PHPRegex\Automata\Transform\LocaleBoundClasses;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -65,9 +69,13 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\KeepNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PcreVerbNode;
+use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -86,6 +94,11 @@ use PHPRegex\Parser\TraversalAction;
  */
 final class LanguageSolver
 {
+    /**
+     * @internal
+     */
+    public const START_BETWEEN_CR_AND_LF_MESSAGE = 'A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.';
+
     private const MAX_BYTE = 255;
 
     /**
@@ -95,6 +108,13 @@ final class LanguageSolver
      * observed.
      */
     private const DEAD = -1;
+
+    /**
+     * Why the match solver reads no pattern that holds a possessive
+     * quantifier inside a group a call runs: PCRE2's JIT, which PHP runs by
+     * default, misses matches of it that the interpreter finds.
+     */
+    private const JIT_MESSAGE = 'A possessive quantifier inside a group a call runs, or in a pattern that calls itself whole, makes PCRE2\'s JIT miss matches its interpreter finds, and the match solver reads the interpreter: /(a++)c(?1)d/ finds no match in "acacad" with the JIT.';
 
     /**
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
@@ -229,7 +249,10 @@ final class LanguageSolver
      * shortest subject the two treat differently.
      *
      * The match mode of the options does not apply: the question is what
-     * preg_match() does.
+     * preg_match() does. A pattern that holds a possessive quantifier inside
+     * a group a call runs, or anywhere when it calls itself whole, is not
+     * read: PCRE2's JIT, which PHP runs by default, misses matches of it
+     * that the interpreter finds, "/(a++)c(?1)d/" none in "acacad".
      *
      * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
@@ -250,6 +273,12 @@ final class LanguageSolver
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
         $options ??= new SolverOptions();
+
+        foreach ([$left, $right] as $pattern) {
+            if (self::possessiveWhereACallRuns($pattern, $this->parser)) {
+                throw new ComplexityException(self::JIT_MESSAGE, 0, $pattern);
+            }
+        }
 
         try {
             $leftNfa = $this->priorityNfa($left, $options);
@@ -280,8 +309,10 @@ final class LanguageSolver
     /**
      * The runs that prove two patterns write the same results in every
      * preg_*() call, or null when no run does: a pattern that reads the text
-     * before where a search starts (a lookbehind, "\b", "\B", "^" under /m)
-     * or that reports a match start of its own ("\K").
+     * before where a search starts (a lookbehind, "\b", "\B", "^" under /m),
+     * that reports a match start of its own ("\K"), or that holds a
+     * possessive quantifier inside a group a call runs, of which PCRE2's JIT
+     * misses matches the interpreter finds (see matchEquivalent()).
      *
      * A search from an offset reads the subject from there as one from 0
      * reads what follows, but for "^" and "\A", which never hold past the
@@ -308,7 +339,11 @@ final class LanguageSolver
         $hirs[] = $translator->translate($rightAst);
         $defined[] = $translator->defined();
 
-        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1])) {
+        if (self::possessiveWhereACallRuns($left, $this->parser) || self::possessiveWhereACallRuns($right, $this->parser)) {
+            return null;
+        }
+
+        if (self::readsAlike($leftAst, $rightAst, $hirs[0], $hirs[1], false, $this->parser->target())) {
             return [];
         }
 
@@ -370,7 +405,7 @@ final class LanguageSolver
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
 
-        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst));
+        return self::readsAlike($leftAst, $rightAst, $translator->translate($leftAst), $translator->translate($rightAst), true, $this->parser->target());
     }
 
     /**
@@ -403,7 +438,8 @@ final class LanguageSolver
     {
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
-        if (!self::sameSettings($leftAst, $rightAst)) {
+        if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
+            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)) {
             return false;
         }
 
@@ -637,9 +673,34 @@ final class LanguageSolver
         return 1 === $part->properties->minLength && 1 === $part->properties->maxLength ? $part->properties->first : null;
     }
 
-    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir): bool
+    /**
+     * Without "u", PCRE2 makes a repeat of the byte 0xFF or of "\w"
+     * possessive beside the other as if 0xFF were no word character, which
+     * the brackets of each decide and the normal form does not say: such a
+     * pattern reads like no other.
+     */
+    private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced, PcreTarget $target): bool
     {
-        return self::sameSettings($leftAst, $rightAst) && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir);
+        return self::sameSettings($leftAst, $rightAst)
+            && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
+            && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced)
+            && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst);
+    }
+
+    /**
+     * Whether PCRE2 may make a repeat possessive in one of the patterns as
+     * if the byte 0xFF were no word character, where the target's tables
+     * may hold it in "\w".
+     */
+    private static function holdsRepeatMadePossessiveBesideLastByte(PcreTarget $target, RegexNode ...$asts): bool
+    {
+        foreach ($asts as $ast) {
+            if (null !== AutoPossession::repeatMadePossessiveBesideLastByte($ast, $target)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -865,6 +926,49 @@ final class LanguageSolver
     }
 
     /**
+     * Whether a possessive quantifier stands inside a group a subroutine
+     * call runs, or anywhere in a pattern that calls itself whole. PCRE2's
+     * JIT misses matches of such a pattern that its interpreter, which the
+     * match solver reads, finds, once an attempt that ran the call failed:
+     * /(a++)c(?1)d/ finds nothing in "acacad" with the JIT, from PCRE2 10.34
+     * to 10.49, where the interpreter and /(a+)c(?1)d/ match "acad". The
+     * possessive need give nothing back: no pattern of this shape is read.
+     */
+    private static function possessiveWhereACallRuns(string $pattern, RegexParser $parser): bool
+    {
+        // A pattern whose text holds no call, most of them, is not read
+        // again: "(?1)", "(?-1)", "(?+1)", "(?R)", "(?&n)", "(?P>n)", "\g<n>".
+        if (1 !== LibraryPcre::match('/\(\?(?:[R0-9+&-]|P>)|\\\\g[<\']/', $pattern)) {
+            return false;
+        }
+
+        $ast = $parser->parse($pattern);
+        $groups = GroupIndex::of($ast->pattern);
+        foreach ($groups->recursesWhole() ? [$ast->pattern] : $groups->subroutineTargets() as $called) {
+            if (self::holdsPossessive($called)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function holdsPossessive(NodeInterface $node): bool
+    {
+        if ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsPossessive($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * @param bool $throughCalls whether a call that runs its own group again
      *                           is read through, for an automaton never run
      *                           for a match
@@ -888,10 +992,51 @@ final class LanguageSolver
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
-        $translator = new HirTranslator($this->parser->target());
+        $target = $this->parser->target();
+
+        // Without "u", PCRE2 makes a repeat of the byte 0xFF possessive
+        // before "\w", and one of "\w" before that byte, as if 0xFF were no
+        // word character, whatever the tables say.
+        $lastByte = AutoPossession::repeatMadePossessiveBesideLastByte($ast, $target);
+        if (null !== $lastByte) {
+            throw new ComplexityException(PriorityNfaBuilder::LAST_BYTE_MESSAGE, $lastByte->getStartPosition(), $pattern);
+        }
+
+        $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 
-        return (new PriorityNfaBuilder($options->maxNfaStates, $pattern))->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
+        // The search may skip the start between a "\r" and the "\n" after
+        // it, and the JIT not always where the interpreter does: a match
+        // that may start there, with a "\n" or empty, moves with what the
+        // pattern writes and with the JIT.
+        if (\in_array(StartOptions::newline($ast->source ?? ''), ['ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form)) {
+            throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
+        }
+
+        // The JIT of PCRE2 10.39 to 10.42 keeps the groups of a possessive
+        // repeat from an earlier start, and 10.44, the first release PHP
+        // bundles after 10.42, clears them: the target is asked for 10.44 by
+        // the long group names it brought, 10.43 judged with the older
+        // ones. A target that names no locale but C may run under any:
+        // without "u" the tables a class is read under past ASCII are not
+        // known.
+        $builder = new PriorityNfaBuilder(
+            $options->maxNfaStates,
+            $pattern,
+            groupsOfPossessivesCleared: $target->supports(PcreFeature::LongGroupNames),
+            localeBound: LocaleBoundClasses::of($ast, $target),
+        );
+
+        return $builder->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
+    }
+
+    /**
+     * Whether a match may start between a "\r" and the "\n" after it: one
+     * may be empty, or start with a "\n".
+     */
+    private static function mayStartBetweenCrAndLf(Hir $form): bool
+    {
+        return false !== $form->properties->nullable || null === $form->properties->first || $form->properties->first->contains(0x0A);
     }
 
     /**
@@ -954,8 +1099,26 @@ final class LanguageSolver
     private function buildNfa(string $pattern, RegexNode $ast, SolverOptions $options): Nfa
     {
         $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
+        $newline = StartOptions::newline($ast->source ?? '');
+        $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast), newline: $newline);
+        $nfa = $transformer->transform($hir, $options);
 
-        return (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast)))->transform($hir, $options);
+        // Under these conventions a search may skip the start between a
+        // "\r" and the "\n" after it: where the pattern writes neither, and
+        // after its first try where a "^" under /m or a ".*" leads it, which
+        // the JIT does not always follow. It skips no other start, so where
+        // no match starts there but where another starts too, the subjects
+        // a match is found in are the same whatever the engine skips.
+        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir)) {
+            $builder = new DfaBuilder();
+            $skipping = $builder->determinize($transformer->transform($hir, $options, true), $options);
+            $differ = static fn (bool $left, bool $right): bool => $left !== $right;
+            if (null !== $this->findExample($builder->determinize($nfa, $options), $skipping, $differ, $options)) {
+                throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
+            }
+        }
+
+        return $nfa;
     }
 
     /**

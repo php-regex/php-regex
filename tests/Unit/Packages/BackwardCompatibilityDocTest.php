@@ -101,8 +101,12 @@ final class BackwardCompatibilityDocTest extends TestCase
         // An issue name and XML options are no class: Psalm configurations,
         // suppressions and baselines name them, so the text freezes them.
         $this->assertStringContainsString('`InvalidRegexPattern`', $doc);
+        $this->assertStringContainsString('`RegexRedos`', $doc);
+        $this->assertStringContainsString('`RegexRedosSearch`', $doc);
         $this->assertStringContainsString('`<phpVersion>`', $doc);
         $this->assertStringContainsString('`<pcreVersion>`', $doc);
+        $this->assertStringContainsString('`<redos>`', $doc);
+        $this->assertStringContainsString('`<redosThreshold>`', $doc);
         $this->assertStringContainsString('Psalm baseline', $doc);
     }
 

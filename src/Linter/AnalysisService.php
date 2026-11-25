@@ -544,12 +544,15 @@ final class AnalysisService
             $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::searchMessage($searchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
         }
 
-        // The search of preg_match() stops at the first empty match; the
-        // call that looks for every match retries after each one.
+        // The search of preg_match() stops at the first empty match; each
+        // call that looks for every match retries after each one, the other
+        // calls that read the literal included.
         $everyMatchCost = $redos->everyMatchSearchCost;
-        if (null !== $everyMatchCost && null !== $occurrence->everyMatch && $this->shouldReportSearchCost()) {
+        if (null !== $everyMatchCost && $this->shouldReportSearchCost()) {
             $evidence = RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion);
-            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage($occurrence->everyMatch), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
+            foreach ($occurrence->everyMatchCalls() as $function) {
+                $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage($function, $everyMatchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
+            }
         }
 
         return $issues;

@@ -68,9 +68,11 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Semantics:** For a pattern whose one attempt is proven linear, a witness `prefix . run x n . breaker` read from the
   same automaton: every attempt started inside the run reads to its end without matching, then fails on the breaker,
   which holds the last code unit PCRE2 requires before any attempt, read as its compiler reads it: the one every
-  alternative ends with included (`b` for `/a+b|cb/`). The prefix keeps the first attempt from matching the bare run
-  (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in PCRE2's interpreter (`pcre.jit=0`,
-  a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
+  alternative ends with included (`b` for `/a+b|cb/`). No attempt started before the breaker matches; those the
+  breaker starts, and the one at the subject's end, come after them and may match (`"0" x n . "x"` for
+  `/(?:\w+\.)?x/`, `"a" x n . "!b"` for `/a+b|b$/`, `" " x n . "!"` for `/\s*$/`). The prefix keeps the first
+  attempt from matching the bare run (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in
+  PCRE2's interpreter (`pcre.jit=0`, a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
   [`regex.lint.redos.search`](rules.md) and the PHPStan identifier
   [`regex.redos.search`](../guides/phpstan.md), at severity `medium`, a warning.
 - **Guarantee:** None in the other direction: `search_cost: null` means no witness was found, not that the search is
@@ -104,8 +106,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     character set (`/a++b/`), so the replay runs the pattern with each such character in a group of its own
     (`/(?:a)++b/`), which changes no match and which the counter sees, as it sees a repeat of a longer word
     (`/(?:ab)++c/`, `/(?>a+b)+c/`). A repeat of every character that PCRE2 moves to the end of the subject in one step
-    (`.*+` under `s`) stays as written, and so does a pattern where `\Q` may quote the group or whose delimiter is its
-    `?`, `:` or `)`: a witness through such a repeat, read exactly by the model, is reported with `replayed: false`.
+    (`.*+` under `s`) stays as written: a witness through such a repeat, read exactly by the model, is reported with
+    `replayed: false`. A character `\Q` quotes takes its group outside the quote (`/\Qa\E++b/` replayed as
+    `/\Q\E(?:\Qa\E)\E++b/`), and a pattern whose delimiter is the group's `?`, `:` or `)` moves to a delimiter its
+    body does not hold (`?a++b?` replayed between `\x01`), as the engine does for `(*NO_JIT)`.
   - **Errors**: a library failure inside the search proof leaves `search_cost` null and the per-attempt verdict as
     proven; any other error is a bug, and the analysis reports it as an error.
 
@@ -119,19 +123,41 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   (`ext/pcre/php_pcre.c`, since PHP 5.6.13), then move one character on: about n² steps. Each search of the loop
   starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing; `^` without `m` and
   `\A` do. It is reported as `every_match_search_cost`, and as the lint issue `regex.lint.redos.search` and the
-  PHPStan identifier `regex.redos.search` at the calls of those functions that no literal limit bounds, at severity
+  PHPStan identifier `regex.redos.search` at the calls that run the loop of one of those functions, wrappers and `RegexIterator` modes included, that no literal limit bounds, at severity
   `medium`, a warning. Measured with PHP 8.4.28 and PCRE2 10.49, `/(?:a+\d)?/` on `"a" x n`, n = 2,000 / 4,000 /
   8,000 / 16,000: `preg_match_all()` 2.3 / 8.6 / 34 / 131 ms with `pcre.jit=0`, 1.8 / 6.8 / 27 / 106 ms with
   `pcre.jit=1`; `preg_match()` 0.01 ms.
+- **Semantics, short matches:** Or a witness on which the first attempt of each call of the loop, read in the order
+  PCRE2 tries its paths, first tries paths that read to the end of the run and fail there, then succeeds after one
+  character at least and four run words at most: the search of `preg_match()` stops at that short match, and each
+  call of the loop starts where the last match ended, inside the run. `RedosSearchCost::$shortMatch` is `true`, and the
+  lint message starts with `Quadratic search over short matches`. A match `\K` leaves empty makes PHP retry where it
+  ends, refusing an empty match at its start only: that retry ends on the next short match the same way. Measured with
+  PHP 8.4.28 and PCRE2 10.49 on `"a" x n`, n = 2,000 / 4,000 / 8,000 / 16,000, `preg_match_all()` with
+  `pcre.jit=0`: `/a(?:a+\d)?/` 1.1 / 4.1 / 16 / 63 ms, `/a*b|a/` 1.2 / 4.3 / 17 / 64 ms, `/a\K(?:a+\d)?/` 1.1 / 4.3
+  / 17 / 64 ms; with `pcre.jit=1` 0.7 / 2.8 / 11 / 43 ms, 0.7 / 2.8 / 11 / 43 ms and 1.1 / 4.2 / 16 / 65 ms.
 - **Guarantee:** None in the other direction, as for `search_cost`. Confirmed mode replays the retry pinned at two
-  offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`).
+  offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`); for short matches, the attempt
+  pinned at two offsets, which must match within four run words.
 - **Limits:**
-  - **The JIT** does not avoid it: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the retry always runs in
-    the interpreter.
-  - **A match that is short but not empty** after a long read (`/a(?:a+\d)?/`, `/a*b|a/`) costs the same loop the
-    same way and is not reported.
-  - **A pattern several calls read**, through a constant or a variable, is reported at its first call, and its cost
-    follows that call.
+  - **The JIT** does not avoid the cost of the retry: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the
+    retry always runs in the interpreter. It may avoid the cost of short matches for some patterns.
+  - **Short matches** are looked for with no prefix: the first call, at the subject's start, must end on a short
+    match too. A call whose first attempt fails, and whose later attempt matches, is not read, nor is a match past
+    four run words.
+  - **A call whose loop an argument decides** is reported only when the call spells out a value that makes it loop:
+    a `RegexIterator` mode in a variable, or changed later with `setMode()`, is not read. A lazy `Strings::matchAll()`
+    of nette/utils loops through `preg_match()` from the end of each match, with no retry: that loop is not priced,
+    though `/(?:a+\d)?/` costs it n² too (1.2 / 3.6 / 12.5 ms on n = 2,000 / 4,000 / 8,000, PHP 8.4.28, PCRE2
+    10.49).
+  - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
+    written, with one finding for each function of those calls that looks for every match. Through a variable, a call
+    runs in its loop the value of the latest assignment before it when that one runs first on every path to the call:
+    a statement of the body, or of the block of braces the call stands in, that no later assignment reaches through a
+    loop the block holds. `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`. The head of a
+    `foreach` over literals gives each of them to a call in its body the body does not write it in first, and a
+    composition joins what each variable holds where it is read. Where an assignment in a branch or a loop of its own
+    may stand between, in a `switch` or in a block of the alternative syntax, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 

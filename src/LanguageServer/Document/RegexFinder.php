@@ -205,7 +205,7 @@ final class RegexFinder
                 $read[] = $occurrence;
             } elseif ($occurrence->byteOffset === $at) {
                 // The edit stays inside the literal: the call reading it is the same.
-                $read[] = new RegexOccurrence(array_shift($patterns) ?? '', $occurrence->start, $end, $at, $literal, $occurrence->ignored, $occurrence->line, $occurrence->guard, everyMatch: $occurrence->everyMatch);
+                $read[] = new RegexOccurrence(array_shift($patterns) ?? '', $occurrence->start, $end, $at, $literal, $occurrence->ignored, $occurrence->line, $occurrence->guard, everyMatch: $occurrence->everyMatch, everyMatchElsewhere: $occurrence->everyMatchElsewhere);
             } else {
                 // Past the literal on its last line, the columns moved.
                 $offset = $occurrence->byteOffset + $delta;
@@ -220,6 +220,7 @@ final class RegexFinder
                     $occurrence->guard,
                     $occurrence->writtenElsewhere,
                     $occurrence->everyMatch,
+                    $occurrence->everyMatchElsewhere,
                 );
             }
         }
@@ -416,6 +417,7 @@ final class RegexFinder
                     line: $start['line'] + 1,
                     guard: $occurrence->guard,
                     everyMatch: $occurrence->everyMatch,
+                    everyMatchElsewhere: $occurrence->everyMatchElsewhere,
                     writtenElsewhere: \sprintf(
                         '%s, written in %s on line %d',
                         str_starts_with($location, 'via ') ? substr($location, 4) : $location,
@@ -453,6 +455,7 @@ final class RegexFinder
                 line: $occurrence->line,
                 guard: $occurrence->guard,
                 everyMatch: $occurrence->everyMatch,
+                everyMatchElsewhere: $occurrence->everyMatchElsewhere,
             );
         }
 

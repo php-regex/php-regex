@@ -255,6 +255,11 @@ final class PcreFeature implements UnitEnum
         return self::$instances['CaselessReferenceHoldsItsCaseRules'] ??= new self('CaselessReferenceHoldsItsCaseRules');
     }
 
+    public static function CaselessCasePropertiesMatchCasedLetters(): self
+    {
+        return self::$instances['CaselessCasePropertiesMatchCasedLetters'] ??= new self('CaselessCasePropertiesMatchCasedLetters');
+    }
+
     public static function VersionConditionWholeNumbers(): self
     {
         return self::$instances['VersionConditionWholeNumbers'] ??= new self('VersionConditionWholeNumbers');
@@ -393,6 +398,7 @@ final class PcreFeature implements UnitEnum
             self::NamedCharacterBraceRefusedInClass(),
             self::ClassesCompiledFromMergedRanges(),
             self::CaselessReferenceHoldsItsCaseRules(),
+            self::CaselessCasePropertiesMatchCasedLetters(),
             self::VersionConditionWholeNumbers(),
             self::CallsReturnCaptureGroups(),
             self::GroupListErrors(),
@@ -463,6 +469,7 @@ final class PcreFeature implements UnitEnum
             'NamedCharacterBraceRefusedInClass' => '10.45',
             'ClassesCompiledFromMergedRanges' => '10.45',
             'CaselessReferenceHoldsItsCaseRules' => '10.45',
+            'CaselessCasePropertiesMatchCasedLetters' => '10.45',
             'VersionConditionWholeNumbers' => '10.47',
             'CallsReturnCaptureGroups' => '10.47',
             'GroupListErrors' => '10.47',

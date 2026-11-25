@@ -21,8 +21,11 @@ use PHPRegex\Parser\Hir\CharSet;
  *
  * Two branches overlap when the characters they can start with meet and
  * the text one starts with starts the text of the other, both texts read
- * in one case when either branch is caseless. A branch that starts with no
- * text overlaps every branch its characters meet.
+ * in one case when either branch is caseless. A text read in two cases,
+ * "a(?-i)B" under i, is read character by character: two characters meet
+ * when they are the same, or one letter in two cases where either is read
+ * caselessly. A branch that starts with no text overlaps every branch its
+ * characters meet.
  *
  * Comparing each branch with every later one costs the square of their
  * number: seconds for a list of two thousand names. The pair that
@@ -39,16 +42,20 @@ final class BranchOverlaps
     private int $compared = 0;
 
     /**
-     * @param list<string>  $texts    the text each branch starts with, "" for a branch that starts with no literal
-     * @param list<string>  $folded   the same texts with their letters in one case
-     * @param list<bool>    $caseless whether each branch reads its start in either case
-     * @param list<CharSet> $sets     the characters each branch can start with
+     * @param list<string>                                 $texts    the text each branch starts with, "" for a branch that starts with no literal
+     * @param list<string>                                 $folded   the same texts with their letters in one case
+     * @param list<bool>                                   $caseless whether each branch reads a character of its text in either case
+     * @param list<CharSet>                                $sets     the characters each branch can start with
+     * @param list<list<array{string, string, bool}>>|null $units    each text character by character, as written, in one
+     *                                                               case, and whether it is read in either case; null where
+     *                                                               each text is read in one case throughout
      */
     public function __construct(
         private readonly array $texts,
         private readonly array $folded,
         private readonly array $caseless,
         private readonly array $sets,
+        private readonly ?array $units = null,
     ) {}
 
     /**
@@ -81,6 +88,11 @@ final class BranchOverlaps
         $this->compared++;
         if ($this->sets[$one]->intersect($this->sets[$other])->isEmpty()) {
             return false;
+        }
+
+        // A text read in two cases meets the other character by character.
+        if (null !== $this->units && ($this->caseless[$one] || $this->caseless[$other])) {
+            return self::meet($this->units[$one] ?? [], $this->units[$other] ?? []);
         }
 
         // A caseless branch meets the other in either case.
@@ -254,6 +266,26 @@ final class BranchOverlaps
         }
 
         return [$any, $toMarked];
+    }
+
+    /**
+     * Whether one text starts the other, read character by character: the
+     * same character, or one letter in two cases where either is read
+     * caselessly.
+     *
+     * @param list<array{string, string, bool}> $one
+     * @param list<array{string, string, bool}> $other
+     */
+    private static function meet(array $one, array $other): bool
+    {
+        foreach (array_slice($one, 0, \count($other)) as $at => [$written, $folded, $caseless]) {
+            [$otherWritten, $otherFolded, $otherCaseless] = $other[$at];
+            if ($written !== $otherWritten && (!($caseless || $otherCaseless) || $folded !== $otherFolded)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function starts(string $start, string $text): bool
