@@ -41,6 +41,7 @@ use PHPStan\Reflection\ReflectionProvider;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\Rule;
 use PHPStan\Type\Constant\ConstantArrayType;
+use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 
 /**
@@ -553,6 +554,18 @@ final class RegexPatternRule implements Rule
      */
     private static function everyMatch(PatternFunction $function, array $args, Scope $scope): ?string
     {
+        if (null !== $function->loopArgument) {
+            $function = self::decided($function, $args, $scope);
+        }
+
+        // A closure as replacement makes the call run preg_replace_callback().
+        if (null !== $function->callbackArgument) {
+            $replacement = self::argument($args, ...$function->callbackArgument);
+            if (null !== $replacement && (new ObjectType(\Closure::class))->isSuperTypeOf($scope->getType($replacement))->yes()) {
+                $function = $function->replacingThroughCallback();
+            }
+        }
+
         if (null === $function->everyMatch || null === $function->limitArgument) {
             return $function->everyMatch;
         }
@@ -566,6 +579,42 @@ final class RegexPatternRule implements Rule
         }
 
         return [] === $values ? $function->everyMatch : null;
+    }
+
+    /**
+     * The function as the argument that decides whether it looks for every
+     * match leaves it, Nette's lazy for one: left out, as it is; given, the
+     * loop its value makes it run, as its type says, and none when the type
+     * allows a value that makes it run none, or another loop.
+     *
+     * @param array<Arg> $args
+     */
+    private static function decided(PatternFunction $function, array $args, Scope $scope): PatternFunction
+    {
+        [$position, $name] = $function->loopArgument ?? [0, ''];
+        $argument = self::argument($args, $position, $name);
+        if (null === $argument) {
+            // A spread may hold it.
+            foreach ($args as $arg) {
+                if ($arg->unpack) {
+                    return $function->decidedBy(null);
+                }
+            }
+
+            return $function;
+        }
+
+        $decided = null;
+        foreach ($scope->getType($argument)->getConstantScalarValues() as $value) {
+            $each = $function->decidedBy(\is_bool($value) ? (int) $value : (\is_int($value) ? $value : null));
+            if (null === $each->everyMatch || (null !== $decided && $decided->everyMatch !== $each->everyMatch)) {
+                return $function->decidedBy(null);
+            }
+
+            $decided = $each;
+        }
+
+        return $decided ?? $function->decidedBy(null);
     }
 
     private function formatSource(string $functionName): string

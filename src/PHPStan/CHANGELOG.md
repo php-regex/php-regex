@@ -9,8 +9,9 @@ CHANGELOG
  * `regex.redos.search`, with its message `Quadratic search (ReDoS): %s`,
    also covers the calls of `preg_match_all()`, `preg_replace()`,
    `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()`
-   and `preg_split()`, their `Safe\` drop-ins and the composer/pcre methods
-   that call them, on a pattern whose search costs them n² through PHP's
+   and `preg_split()`, their `Safe\` drop-ins and the composer/pcre,
+   nette/utils, spatie/regex and Laravel `Str` methods that call them, on a
+   pattern whose search costs them n² through PHP's
    retry after an empty match; the tip names the function. A limit whose
    type bounds the call keeps it quiet. Severity `medium`: hidden at the
    default `high` threshold, shown from `threshold: medium`, where a baseline
