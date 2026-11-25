@@ -91,12 +91,16 @@ final class PatternLinterTest extends TestCase
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
     }
 
+    /**
+     * From PCRE2 10.45, "\p{Lu}" under i matches every cased letter; before
+     * it, it matches as written, so the flag changes nothing there.
+     */
     #[Test]
     public function test_i_flag_not_useless_on_unicode_property(): void
     {
-        $regex = Regex::create()->parse('/\\p{Lu}/iu');
-        $linter = new PatternLinter();
-        $regex->accept($linter);
+        $regex = Regex::create(['pcre_version' => '10.45']);
+        $linter = new PatternLinter([], $regex->target());
+        $regex->parse('/\\p{Lu}/iu')->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 
         $this->assertNotContains("Flag 'i' is useless: the pattern contains no case-sensitive characters.", $warnings);
