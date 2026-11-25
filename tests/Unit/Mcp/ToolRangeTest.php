@@ -47,7 +47,7 @@ final class ToolRangeTest extends TestCase
         self::assertEngineKeepInLookbehind();
         self::assertEngineReadsQuantifierWithoutMin();
 
-        $result = ToolCatalog::v1()->get($tool)->tool->execute(['pattern' => $pattern, 'php_version' => '>=8.1', ...$arguments]);
+        $result = ToolCatalog::create()->get($tool)->tool->execute(['pattern' => $pattern, 'php_version' => '>=8.1', ...$arguments]);
 
         $this->assertFalse($result->isError, $result->text);
         self::assertTargetFrom81($result->structured, $tool);
@@ -67,7 +67,7 @@ final class ToolRangeTest extends TestCase
         self::assertEngineKeepInLookbehind();
         self::assertEngineReadsQuantifierWithoutMin();
 
-        $result = ToolCatalog::v1(['php_version' => '>=8.1'])->get($tool)->tool->execute(['pattern' => $pattern, ...$arguments]);
+        $result = ToolCatalog::create(['php_version' => '>=8.1'])->get($tool)->tool->execute(['pattern' => $pattern, ...$arguments]);
 
         $this->assertFalse($result->isError, $result->text);
         self::assertTargetFrom81($result->structured, $tool);
@@ -97,7 +97,7 @@ final class ToolRangeTest extends TestCase
     {
         self::assertEngineKeepInLookbehind();
 
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => RangePatterns::KEEP_IN_LOOKBEHIND, 'php_version' => '>=8.1']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => RangePatterns::KEEP_IN_LOOKBEHIND, 'php_version' => '>=8.1']);
 
         $this->assertFalse($result->isError, $result->text);
         $this->assertTrue(JsonContract::asArray($result->structured['validation'] ?? null)['is_valid'] ?? null);
@@ -118,7 +118,7 @@ final class ToolRangeTest extends TestCase
         self::assertEngineKeepInLookbehind();
         self::assertEngineReadsQuantifierWithoutMin();
 
-        $result = ToolCatalog::v1()->get($tool)->tool->execute(['pattern' => $pattern, 'php_version' => '>=8.1', ...$arguments]);
+        $result = ToolCatalog::create()->get($tool)->tool->execute(['pattern' => $pattern, 'php_version' => '>=8.1', ...$arguments]);
 
         $this->assertFalse($result->isError, $result->text);
         $finding = RangePatterns::KEEP_IN_LOOKBEHIND === $pattern
@@ -137,7 +137,7 @@ final class ToolRangeTest extends TestCase
     {
         self::assertEngineBacktracksIntoSelfReference();
 
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/^(a|ab|\1x)+b$/', 'php_version' => '>=7.4 <8.1']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/^(a|ab|\1x)+b$/', 'php_version' => '>=7.4 <8.1']);
 
         $this->assertFalse($result->isError);
         $this->assertStringContainsString("\nWarning: From PHP 8.0 (PCRE2 ".self::judgedPcre(80000).') a group that holds a reference to itself may be backtracked into', $result->text);
@@ -152,7 +152,7 @@ final class ToolRangeTest extends TestCase
     {
         self::assertEngineKeepInLookbehind();
 
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => RangePatterns::KEEP_IN_LOOKBEHIND, 'php_version' => '>=8.1']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => RangePatterns::KEEP_IN_LOOKBEHIND, 'php_version' => '>=8.1']);
 
         $this->assertFalse($result->isError, $result->text);
         $this->assertNotSame('Valid.', $result->text);
@@ -170,7 +170,7 @@ final class ToolRangeTest extends TestCase
     #[DataProvider('provideToolsOnAValidPattern')]
     public function test_the_text_answer_carries_the_resolver_notices(string $tool, array $arguments): void
     {
-        $result = ToolCatalog::v1()->get($tool)->tool->execute(['pattern' => '/a/', 'php_version' => '>=7.0', ...$arguments]);
+        $result = ToolCatalog::create()->get($tool)->tool->execute(['pattern' => '/a/', 'php_version' => '>=7.0', ...$arguments]);
 
         $this->assertFalse($result->isError, $result->text);
         $this->assertStringContainsString('allows PHP 7.0, and PHP 7.2 and earlier ship PCRE1, which this library does not judge: judging from PHP 7.3, the lowest version it allows on PCRE2.', $result->text, $tool);
@@ -195,7 +195,7 @@ final class ToolRangeTest extends TestCase
     #[Test]
     public function test_an_unreadable_constraint_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => '<8.4']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a/', 'php_version' => '<8.4']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage'] ?? null);
@@ -214,7 +214,7 @@ final class ToolRangeTest extends TestCase
     #[DataProvider('provideToolsOnARange')]
     public function test_the_output_schema_declares_and_accepts_the_target_and_the_range(string $tool, array $arguments, string $pattern): void
     {
-        $definition = ToolCatalog::v1()->get($tool);
+        $definition = ToolCatalog::create()->get($tool);
         $success = JsonContract::asArray(JsonContract::asArray($definition->outputSchema['oneOf'] ?? null)[0] ?? null, $tool);
         $properties = JsonContract::asArray($success['properties'] ?? null, $tool);
         $required = JsonContract::asArray($success['required'] ?? null, $tool);

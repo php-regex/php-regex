@@ -97,12 +97,14 @@ use PHPRegex\Mcp\Application;
 exit((new Application())->run(['php_version' => '8.2']));
 ```
 
-The tools run without the protocol: `ToolCatalog::v1()` lists them, and each one answers a `ToolResult` from an array of arguments, which is how they are tested.
+`run()` serves the catalog built for the target; `serve()` serves a `ToolCatalog` built beforehand, as `(new Application())->serve(ToolCatalog::create(['php_version' => '8.2']))`. A minor release may add tools to the catalog.
+
+The tools run without the protocol: `ToolCatalog::create()` lists them, and each one answers a `ToolResult` from an array of arguments, which is how they are tested.
 
 ```php
 use PHPRegex\Mcp\ToolCatalog;
 
-$result = ToolCatalog::v1(['php_version' => '8.2'])->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
+$result = ToolCatalog::create(['php_version' => '8.2'])->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
 $result->text;       // "Valid."
 $result->structured; // ['pattern' => '/a+/', 'validation' => [...], 'target' => [...], 'range' => [...]]
 $result->isError;    // false

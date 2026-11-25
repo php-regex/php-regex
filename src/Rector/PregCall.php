@@ -27,7 +27,9 @@ use PhpParser\Node\Name\FullyQualified;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use Rector\ValueObject\PhpVersion;
 
@@ -50,6 +52,14 @@ final class PregCall
      * The bytes a single-quoted PHP string shows as they are.
      */
     private const PRINTABLE = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+
+    /**
+     * The PCRE2 release each composer.json read pins, by path: Rector reads
+     * one project per run, and every call asks.
+     *
+     * @var array<string, string|null>
+     */
+    private static array $pinnedPcre = [];
 
     /**
      * The argument values of the call, by position, or null when they cannot
@@ -112,7 +122,7 @@ final class PregCall
 
     /**
      * Whether the PHP the code targets compiles the pattern, as the library
-     * judges it for that PHP and the PCRE2 its sources bundle: "n" arrived
+     * judges it for that PHP and its PCRE2 (target()): "n" arrived
      * in 8.2, "r" in 8.4. PHP also refuses a NUL byte in a pattern before
      * 8.2 ("Null byte in regex"), where a string function would answer.
      */
@@ -127,17 +137,53 @@ final class PregCall
 
     /**
      * The parser that reads patterns as the PHP the code targets does,
-     * with the PCRE2 its sources bundle, under the locale Rector runs with:
-     * Rector names no other, and a rule rewrites no pattern whose answer
-     * moves with the locale (see TrivialMatchClassifier). Rector takes
-     * targets from PHP 5.3 to PHP 10.0, which the library judges from PHP
-     * 7.0 to PHP 9.99.
+     * with its PCRE2 (target()), under the locale Rector runs with: Rector
+     * names no other, and a rule rewrites no pattern whose answer moves
+     * with the locale (see TrivialMatchClassifier).
      */
     public static function targetParser(int $phpVersion): RegexParser
     {
+        $target = self::target($phpVersion);
+
+        return RegexParser::create(['php_version' => $target->phpVersionId, 'pcre_version' => $target->pcreVersion]);
+    }
+
+    /**
+     * The PHP the code targets with the PCRE2 it runs, as `regex lint`
+     * resolves it: the release the project's composer.json pins in
+     * config.platform.lib-pcre, else the running PCRE2 when the PHP is the
+     * running one's minor version, else the one the PHP bundles. Rector
+     * takes targets from PHP 5.3 to PHP 10.0, which the library judges from
+     * PHP 7.0 to PHP 9.99.
+     */
+    public static function target(int $phpVersion): PcreTarget
+    {
         $phpVersion = min(max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID), ParserOptions::LATEST_PHP_VERSION_ID);
 
-        return RegexParser::create(['php_version' => $phpVersion]);
+        return ParserOptions::resolveTarget($phpVersion, self::pinnedPcre(), null, true);
+    }
+
+    /**
+     * The PCRE2 release config.platform.lib-pcre pins in the composer.json
+     * Rector runs beside, or in the file the COMPOSER variable names: null
+     * when the file cannot be read, pins none, or pins what names no
+     * release, which is passed over as `regex lint` passes it over.
+     */
+    public static function pinnedPcre(): ?string
+    {
+        $name = getenv('COMPOSER');
+        $name = \is_string($name) && '' !== $name ? $name : 'composer.json';
+
+        if (!\array_key_exists($name, self::$pinnedPcre)) {
+            $contents = is_file($name) ? file_get_contents($name) : false;
+            $value = false === $contents ? null : json_decode($contents, true);
+            foreach (['config', 'platform', 'lib-pcre'] as $key) {
+                $value = \is_array($value) ? $value[$key] ?? null : null;
+            }
+            self::$pinnedPcre[$name] = \is_string($value) ? self::release($value) : null;
+        }
+
+        return self::$pinnedPcre[$name];
     }
 
     /**
@@ -189,5 +235,25 @@ final class PregCall
     public static function call(string $function, array $arguments): FuncCall
     {
         return new FuncCall(new FullyQualified($function), array_map(static fn (Expr $value): Arg => new Arg($value), $arguments));
+    }
+
+    /**
+     * The PCRE2 release a platform version names: Composer spells one with
+     * up to four numbers, "10.42.0", and a PCRE2 release has two. Null when
+     * it names none.
+     */
+    private static function release(string $written): ?string
+    {
+        $parts = explode('.', $written, 3);
+        $patch = $parts[2] ?? '';
+        if (\count(explode('.', $patch)) <= 2 && strspn($patch, '0123456789.') === \strlen($patch)) {
+            $written = $parts[0].'.'.($parts[1] ?? '');
+        }
+
+        try {
+            return (new PcreTarget(\PHP_VERSION_ID, $written))->pcreVersion;
+        } catch (InvalidRegexOptionException) {
+            return null;
+        }
     }
 }

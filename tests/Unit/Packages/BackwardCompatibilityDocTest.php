@@ -101,13 +101,29 @@ final class BackwardCompatibilityDocTest extends TestCase
         // An issue name and XML options are no class: Psalm configurations,
         // suppressions and baselines name them, so the text freezes them.
         $this->assertStringContainsString('`InvalidRegexPattern`', $doc);
+        $this->assertStringContainsString('`InvalidRegexTarget`', $doc);
         $this->assertStringContainsString('`RegexRedos`', $doc);
         $this->assertStringContainsString('`RegexRedosSearch`', $doc);
         $this->assertStringContainsString('`<phpVersion>`', $doc);
         $this->assertStringContainsString('`<pcreVersion>`', $doc);
         $this->assertStringContainsString('`<redos>`', $doc);
         $this->assertStringContainsString('`<redosThreshold>`', $doc);
+        $this->assertStringContainsString('`<locale>`', $doc);
         $this->assertStringContainsString('Psalm baseline', $doc);
+    }
+
+    /**
+     * The identifiers of the "@regex-target" markers and the path of the
+     * opt-in rules are no class either: ignore lists and includes name them.
+     */
+    #[Test]
+    public function test_bc_doc_names_the_phpstan_marker_identifiers_and_the_rules_file(): void
+    {
+        $doc = (string) file_get_contents(self::root().'/'.self::DOC);
+
+        $this->assertStringContainsString('`regex.target.invalid`', $doc);
+        $this->assertStringContainsString('`regex.target.empty`', $doc);
+        $this->assertStringContainsString('`rules.neon`', $doc);
     }
 
     /**

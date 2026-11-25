@@ -20,9 +20,9 @@ use PHPRegex\Laravel\Command\LintCommand;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
- * The optimization settings of config/php-regex.php reach the optimizer
- * under the names the config gives them: in 1.x only digits, word and
- * ranges did, the snake_case ones were dropped on the way.
+ * The optimizer options of config/php-regex.php, optimizations.options,
+ * reach the optimizer under the names the config gives them: in 1.x only
+ * digits, word and ranges did, the snake_case ones were dropped on the way.
  */
 final class OptimizationConfigTest extends LaravelTestCase
 {

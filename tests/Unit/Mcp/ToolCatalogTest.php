@@ -35,9 +35,9 @@ final class ToolCatalogTest extends TestCase
     private const SDK_NAME_RULE = '/^[a-zA-Z0-9._\/-]{1,64}$/';
 
     #[Test]
-    public function test_v1_serves_five_tools_with_the_regex_prefix(): void
+    public function test_create_serves_five_tools_with_the_regex_prefix(): void
     {
-        $names = array_map(static fn (ToolDefinition $tool): string => $tool->name, ToolCatalog::v1()->tools());
+        $names = array_map(static fn (ToolDefinition $tool): string => $tool->name, ToolCatalog::create()->tools());
 
         $this->assertSame(['regex_validate', 'regex_explain', 'regex_format', 'regex_transpile', 'regex_redos'], $names);
     }
@@ -54,7 +54,7 @@ final class ToolCatalogTest extends TestCase
         $this->assertIsArray($pinned);
 
         $actual = [];
-        foreach (ToolCatalog::v1()->tools() as $definition) {
+        foreach (ToolCatalog::create()->tools() as $definition) {
             $actual[$definition->name] = [
                 'title' => $definition->title,
                 'description' => $definition->description,
@@ -77,7 +77,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_every_output_schema_is_an_object_at_its_root(): void
     {
-        foreach (ToolCatalog::v1()->tools() as $tool) {
+        foreach (ToolCatalog::create()->tools() as $tool) {
             $this->assertSame('object', $tool->outputSchema['type'] ?? null, $tool->name);
             $this->assertSame('object', $tool->inputSchema['type'] ?? null, $tool->name);
         }
@@ -86,7 +86,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_every_name_follows_the_sdk_rule(): void
     {
-        foreach (ToolCatalog::v1()->tools() as $tool) {
+        foreach (ToolCatalog::create()->tools() as $tool) {
             $this->assertMatchesRegularExpression(self::SDK_NAME_RULE, $tool->name);
         }
     }
@@ -94,7 +94,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_every_tool_is_read_only_and_idempotent(): void
     {
-        foreach (ToolCatalog::v1()->tools() as $tool) {
+        foreach (ToolCatalog::create()->tools() as $tool) {
             $this->assertSame(
                 ['readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true, 'openWorldHint' => false],
                 $tool->annotations,
@@ -106,7 +106,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_every_tool_says_the_pattern_is_delimited(): void
     {
-        foreach (ToolCatalog::v1()->tools() as $tool) {
+        foreach (ToolCatalog::create()->tools() as $tool) {
             $this->assertStringContainsString('/…/flags', $tool->description, $tool->name);
             $properties = JsonContract::asArray($tool->inputSchema['properties'] ?? null, $tool->name);
             $pattern = JsonContract::asArray($properties['pattern'] ?? null, $tool->name);
@@ -120,7 +120,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_every_tool_takes_the_target_arguments_but_no_locale(): void
     {
-        foreach (ToolCatalog::v1()->tools() as $tool) {
+        foreach (ToolCatalog::create()->tools() as $tool) {
             $properties = JsonContract::asArray($tool->inputSchema['properties'] ?? null, $tool->name);
             $this->assertArrayHasKey('php_version', $properties, $tool->name);
             $this->assertArrayHasKey('pcre_version', $properties, $tool->name);
@@ -131,7 +131,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_get_answers_a_tool_by_name_and_refuses_an_unknown_one(): void
     {
-        $catalog = ToolCatalog::v1();
+        $catalog = ToolCatalog::create();
 
         $this->assertSame('regex_format', $catalog->get('regex_format')->name);
         $this->assertTrue($catalog->has('regex_redos'));
@@ -155,7 +155,7 @@ final class ToolCatalogTest extends TestCase
     #[DataProvider('provideAnswers')]
     public function test_the_output_schema_accepts_the_real_answer(string $tool, array $arguments, bool $isError): void
     {
-        $definition = ToolCatalog::v1()->get($tool);
+        $definition = ToolCatalog::create()->get($tool);
         $result = $definition->tool->execute($arguments);
 
         $this->assertSame($isError, $result->isError);
@@ -193,7 +193,7 @@ final class ToolCatalogTest extends TestCase
     #[Test]
     public function test_the_server_locale_reaches_every_tool(): void
     {
-        $result = ToolCatalog::v1(['locale' => 'C'])->get('regex_validate')->tool->execute(['pattern' => '/\w+/']);
+        $result = ToolCatalog::create(['locale' => 'C'])->get('regex_validate')->tool->execute(['pattern' => '/\w+/']);
 
         $this->assertFalse($result->isError);
         $this->assertTrue(JsonContract::asArray($result->structured['validation'])['is_valid']);
@@ -204,10 +204,10 @@ final class ToolCatalogTest extends TestCase
     {
         // \p{Script=Latin} is a property name PCRE2 10.35, which PHP 8.0
         // bundles, does not know; 10.40, bundled by PHP 8.2, reads it.
-        $onEight = ToolCatalog::v1(['php_version' => '8.0'])->get('regex_validate')->tool->execute(['pattern' => '/\p{Script=Latin}/u']);
+        $onEight = ToolCatalog::create(['php_version' => '8.0'])->get('regex_validate')->tool->execute(['pattern' => '/\p{Script=Latin}/u']);
         $this->assertFalse(JsonContract::asArray($onEight->structured['validation'])['is_valid']);
 
-        $overridden = ToolCatalog::v1(['php_version' => '8.0'])->get('regex_validate')->tool->execute(['pattern' => '/\p{Script=Latin}/u', 'php_version' => '8.2']);
+        $overridden = ToolCatalog::create(['php_version' => '8.0'])->get('regex_validate')->tool->execute(['pattern' => '/\p{Script=Latin}/u', 'php_version' => '8.2']);
         $this->assertTrue(JsonContract::asArray($overridden->structured['validation'])['is_valid']);
     }
 }

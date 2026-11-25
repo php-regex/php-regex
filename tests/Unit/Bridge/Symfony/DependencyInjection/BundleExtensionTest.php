@@ -44,8 +44,8 @@ final class BundleExtensionTest extends TestCase
             'cache' => [
                 'directory' => '/tmp/cache',
             ],
-            'analysis' => [
-                'warning_threshold' => 1,
+            'complexity' => [
+                'threshold' => 1,
             ],
             'redos' => [
                 'ignored_patterns' => ['foo'],

@@ -116,6 +116,7 @@ final class ConsoleLintRunnerEmptySummaryTest extends TestCase
             jobs: '1',
             disabledSources: ['routes'],
             optimizations: new OptimizerOptions(verifyWithAutomata: true),
+            checkOptimizations: true,
             checkRedos: false,
             checkComplexity: false,
             reportUnmatchedIgnores: true,

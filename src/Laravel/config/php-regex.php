@@ -61,8 +61,10 @@ return [
     | "^8.1 <8.7") is judged from its lowest PHP, then at every later PHP it
     | allows where a pattern can be refused or read otherwise.
     | Left null, the PHP version is the lowest one composer.json allows
-    | (base_path('composer.json')), else the running PHP, the PCRE2 release
-    | is the one that PHP bundles, and the locale is the one of the PHP
+    | (base_path('composer.json')), else the running PHP; the PCRE2 release
+    | is the one composer.json pins in config.platform.lib-pcre, else the
+    | running PCRE2 when the PHP judged is the running PHP's minor version,
+    | else the one that PHP bundles; and the locale is the one of the PHP
     | running the command. The locale's character tables decide the size of
     | some classes. The Regex service always judges for the running PHP,
     | under its locale: it is the one the application runs on.
@@ -123,24 +125,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Analysis Settings
+    | Complexity
     |--------------------------------------------------------------------------
     |
-    | Configuration for regex complexity analysis.
+    | The complexity report of regex:lint, as regex.json's
+    | "checks.complexity".
     |
     */
-    'analysis' => [
+    'complexity' => [
         /*
         | Whether regex:lint reports the patterns whose complexity score
-        | reaches the threshold below.
+        | reaches the threshold below. Setting the threshold does not switch
+        | it on.
         */
-        'complexity' => false,
+        'enabled' => false,
 
         /*
-        | Complexity score from which regex:lint reports a pattern, once
-        | "complexity" is on.
+        | Complexity score from which regex:lint reports a pattern: the
+        | complexityScore of Regex::validate(). An integer of at least 1.
         */
-        'warning_threshold' => 50,
+        'threshold' => 50,
     ],
 
     /*
@@ -167,55 +171,87 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Optimization Options
+    | Optimizations
     |--------------------------------------------------------------------------
     |
-    | Default optimization options for regex:lint command.
+    | The optimization suggestions of regex:lint, as regex.json's
+    | "checks.optimizations".
     |
     */
     'optimizations' => [
         /*
-        | Optimize digit character classes (e.g., [0-9] -> \d).
+        | Whether regex:lint suggests optimizations. Setting min_savings or
+        | options does not switch them on.
         */
-        'digits' => true,
+        'enabled' => true,
 
         /*
-        | Write [A-Za-z0-9_] as \w where they match alike: never today, as \w
-        | follows the locale without u and Unicode with it.
+        | Characters a rewrite must save to be suggested, unless
+        | --min-savings says otherwise. An integer of at least 1.
         */
-        'word' => true,
+        'min_savings' => 1,
 
         /*
-        | Allow range merging inside character classes.
+        | What the optimizer may rewrite.
         */
-        'ranges' => true,
+        'options' => [
+            /*
+            | Optimize digit character classes (e.g., [0-9] -> \d).
+            */
+            'digits' => true,
 
-        /*
-        | Normalize character class order and deduplicate elements.
-        */
-        'canonicalize_char_classes' => true,
+            /*
+            | Write [A-Za-z0-9_] as \w where they match alike: never today, as
+            | \w follows the locale without u and Unicode with it.
+            */
+            'word' => true,
 
-        /*
-        | Enable auto-possessive quantifier optimizations.
-        */
-        'possessive' => false,
+            /*
+            | Allow range merging inside character classes.
+            */
+            'ranges' => true,
 
-        /*
-        | Enable alternation factorization optimizations.
-        */
-        'factorize' => false,
+            /*
+            | Normalize character class order and deduplicate elements.
+            */
+            'canonicalize_char_classes' => true,
 
-        /*
-        | Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).
-        */
-        'min_quantifier_count' => 4,
+            /*
+            | Enable auto-possessive quantifier optimizations.
+            */
+            'possessive' => false,
 
-        /*
-        | Suggest only the rewrites the automata prove to match the same
-        | subjects.
-        */
-        'verify_with_automata' => true,
+            /*
+            | Enable alternation factorization optimizations.
+            */
+            'factorize' => false,
+
+            /*
+            | Minimum repeated quantifier count before collapsing (e.g., aaaa
+            | -> a{4}).
+            */
+            'min_quantifier_count' => 4,
+
+            /*
+            | Suggest only the rewrites the automata prove to match the same
+            | subjects.
+            */
+            'verify_with_automata' => true,
+        ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Extractor
+    |--------------------------------------------------------------------------
+    |
+    | A class, or a binding of the container, implementing
+    | PHPRegex\Linter\Extraction\ExtractorInterface: regex:lint reads the
+    | patterns of the PHP files with it, and "extraction" below is unused.
+    | null reads them with the package's own extractor.
+    |
+    */
+    'extractor' => null,
 
     /*
     |--------------------------------------------------------------------------

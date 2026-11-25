@@ -87,12 +87,13 @@ final class ToolCatalog
     private function __construct(private readonly array $tools) {}
 
     /**
-     * The first catalog: validate, explain, format, transpile and the ReDoS
-     * verdict, each judged for the target given unless a call names its own.
+     * The library's catalog: validate, explain, format, transpile and the
+     * ReDoS verdict, each judged for the target given unless a call names
+     * its own. A minor release may add tools.
      *
      * @param Target $target
      */
-    public static function v1(array $target = []): self
+    public static function create(array $target = []): self
     {
         $regexes = new RegexFactory($target);
         $catalog = new self([]);
@@ -186,6 +187,8 @@ final class ToolCatalog
 
     /**
      * This catalog with one more tool, or one replaced by name.
+     *
+     * @internal every tool of the catalog is announced read-only and idempotent: the library's own only
      */
     public function with(ToolDefinition $tool): self
     {

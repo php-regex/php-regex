@@ -42,7 +42,7 @@ final class PublicSurface
         'Infection' => ['Mutator/RegexQuantifier', 'Mutator/RegexAnchor', 'Mutator/RegexCharClass', 'Mutator/RegexAlternation', 'Mutator/RegexFlag', 'Mutator/RegexEscape'],
         'LanguageServer' => [],
         'Mcp' => [
-            'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult', 'ServerInterface',
+            'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult',
             'Exception/ExceptionInterface', 'Exception/UnknownToolException', 'Exception/TargetException',
         ],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],

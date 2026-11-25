@@ -59,7 +59,7 @@ final class LintCommand extends Command
     protected $signature = 'regex:lint
         {paths?* : The paths to analyze, read from the working directory (default: the configured paths, read from the base path)}
         {--exclude=* : Paths to exclude}
-        {--min-savings=1 : Minimum optimization savings in characters}
+        {--min-savings= : Minimum optimization savings in characters (default: optimizations.min_savings)}
         {--j|jobs= : Parallel workers for analysis (auto-detected if not specified)}
         {--no-routes : Skip route validation}
         {--no-validators : Skip validator validation}
@@ -103,6 +103,15 @@ final class LintCommand extends Command
         $jobs = $this->option('jobs');
         $minSavings = $this->option('min-savings');
 
+        // A setting the run cannot use is reported by the setup, as every
+        // other setting of config/php-regex.php is: it is read again there,
+        // and until then the run takes the defaults.
+        try {
+            [$checkOptimizations, $configuredSavings, $optimizerOptions] = self::optimizations();
+        } catch (InvalidRegexOptionException) {
+            [$checkOptimizations, $configuredSavings, $optimizerOptions] = [true, 1, new OptimizerOptions(verifyWithAutomata: true)];
+        }
+
         return (new ConsoleLintRunner($this->formatterRegistry))->run(new ConsoleLintRequest(
             format: $this->stringOption('format'),
             paths: $configured ? self::fromBasePath([] === $defaultPaths ? ['app'] : $defaultPaths) : $givenPaths,
@@ -112,12 +121,14 @@ final class LintCommand extends Command
             // same name above it, where the application lives (Testbench's
             // skeleton lives under vendor/), excludes nothing.
             excludeBase: $configured ? base_path() : null,
-            minSavings: \is_string($minSavings) ? $minSavings : null,
+            // Without --min-savings, optimizations.min_savings.
+            minSavings: \is_string($minSavings) ? $minSavings : (string) $configuredSavings,
             jobs: null === $jobs ? null : (\is_string($jobs) ? $jobs : ''),
             disabledSources: array_keys(array_filter(['routes' => (bool) $this->option('no-routes'), 'validators' => $skipValidators])),
-            optimizations: self::normalizeOptimizations(config('php-regex.optimizations', [])),
+            optimizations: $optimizerOptions,
+            checkOptimizations: $checkOptimizations,
             checkRedos: true === config('php-regex.redos.enabled'),
-            checkComplexity: true === config('php-regex.analysis.complexity'),
+            checkComplexity: true === config('php-regex.complexity.enabled'),
             reportUnmatchedIgnores: false !== config('php-regex.report_unmatched_ignores'),
             // The functions marked #[RegexPattern] are read in the
             // configured paths, the linted ones when none are, as
@@ -141,14 +152,21 @@ final class LintCommand extends Command
                     getenv(),
                     ['config php-regex.locale' => $this->configLocale()],
                 );
+                // Read again: a setting the run cannot use stops it here,
+                // as the others do.
+                self::optimizations();
                 /** @var AnalysisService $analysis */
                 $analysis = $this->laravel->make('php-regex.analysis');
                 /** @var LintService $lint */
                 $lint = $this->laravel->make('php-regex.lint');
 
                 // What config/php-regex.php holds that the run ignores: one
-                // warning each, and the run goes on.
-                return LintSetup::forTarget($target, PHPRegexServiceProvider::regexOptions($this->laravel), $analysis, $lint, PHPRegexServiceProvider::extraction($this->laravel)['warnings']);
+                // warning each, and the run goes on. An extractor of the
+                // application's own leaves "extraction" unused.
+                $extractor = config('php-regex.extractor');
+                $warnings = null === $extractor || '' === $extractor ? PHPRegexServiceProvider::extraction($this->laravel)['warnings'] : [];
+
+                return LintSetup::forTarget($target, PHPRegexServiceProvider::regexOptions($this->laravel), $analysis, $lint, $warnings);
             },
             invalidOptionPrefix: 'Invalid config/php-regex.php: ',
             version: Regex::VERSION,
@@ -166,7 +184,7 @@ final class LintCommand extends Command
     private function unreadFileResults(): array
     {
         /** @var ValidationRulePatternSource $validators */
-        $validators = $this->laravel->make(ValidationRulePatternSource::class);
+        $validators = $this->laravel->make('php-regex.pattern-source.validators');
 
         $results = [];
         foreach ($validators->failures() as $failure) {
@@ -237,10 +255,36 @@ final class LintCommand extends Command
     }
 
     /**
-     * The optimizations of config/php-regex.php, keyed in snake_case as
-     * the optimizer reads them. Lint checks every rewrite with the automata
-     * unless verify_with_automata says otherwise, a config published before
-     * it was listed included.
+     * The optimizations of config/php-regex.php, read as regex.json's
+     * checks.optimizations: whether the run suggests any, the saving a
+     * suggestion needs, and what the optimizer may rewrite.
+     *
+     * @throws InvalidRegexOptionException when "enabled" is no boolean, "min_savings" no integer of at least 1,
+     *                                     or "options" names an option the optimizer does not take
+     *
+     * @return array{bool, int, OptimizerOptions}
+     */
+    private static function optimizations(): array
+    {
+        $optimizations = config('php-regex.optimizations');
+        $optimizations = \is_array($optimizations) ? $optimizations : [];
+        $enabled = $optimizations['enabled'] ?? true;
+        if (!\is_bool($enabled)) {
+            throw new InvalidRegexOptionException(\sprintf('"optimizations.enabled" must be true or false, not a %s.', get_debug_type($enabled)));
+        }
+
+        return [
+            $enabled,
+            PHPRegexServiceProvider::atLeastOne('optimizations.min_savings', $optimizations['min_savings'] ?? 1),
+            self::normalizeOptimizations($optimizations['options'] ?? []),
+        ];
+    }
+
+    /**
+     * The optimizer options of config/php-regex.php, optimizations.options,
+     * keyed in snake_case as the optimizer reads them. Lint checks every
+     * rewrite with the automata unless verify_with_automata says otherwise,
+     * a config published before it was listed included.
      */
     private static function normalizeOptimizations(mixed $optimizations): OptimizerOptions
     {

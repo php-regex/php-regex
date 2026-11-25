@@ -32,7 +32,6 @@ use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
-use PHPRegex\Linter\Formatter\FormatterRegistry;
 use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternExtractor;
 use PHPRegex\Linter\Source\PatternSourceCollection;
@@ -47,6 +46,9 @@ use PHPRegex\Toolkit\Regex;
 
 /**
  * Laravel Service Provider for the PHPRegex library.
+ *
+ * An application resolves `PHPRegex\Toolkit\Regex`, or its `php-regex`
+ * alias; the other services are the commands' own.
  *
  * @phpstan-import-type OptionsArray from ParserOptions
  */
@@ -85,27 +87,6 @@ final class PHPRegexServiceProvider extends ServiceProvider
                 TranspileCommand::class,
             ]);
         }
-    }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return list<string>
-     */
-    public function provides(): array
-    {
-        return [
-            Regex::class,
-            'php-regex',
-            'php-regex.cache',
-            'php-regex.extractor',
-            'php-regex.analysis',
-            'php-regex.lint',
-            'php-regex.formatter-registry',
-            'php-regex.pattern-sources',
-            RoutePatternSource::class,
-            ValidationRulePatternSource::class,
-        ];
     }
 
     /**
@@ -218,6 +199,23 @@ final class PHPRegexServiceProvider extends ServiceProvider
         ];
     }
 
+    /**
+     * An integer setting of config/php-regex.php that takes 1 or more, as
+     * regex.json takes it.
+     *
+     * @internal
+     *
+     * @throws InvalidRegexOptionException when it is no integer, or one below 1
+     */
+    public static function atLeastOne(string $key, mixed $value): int
+    {
+        if (!\is_int($value) || $value < 1) {
+            throw new InvalidRegexOptionException(\sprintf('"%s" must be an integer of at least 1, not %s.', $key, \is_int($value) ? (string) $value : 'a '.get_debug_type($value)));
+        }
+
+        return $value;
+    }
+
     private function configPath(): string
     {
         return __DIR__.'/config/php-regex.php';
@@ -270,6 +268,13 @@ final class PHPRegexServiceProvider extends ServiceProvider
     private function registerExtractor(): void
     {
         $this->app->singleton('php-regex.extractor.strategy', static function (Application $app): ExtractorInterface {
+            // The application's own extractor reads its own calls, and
+            // php-regex.extraction is unused.
+            $extractor = self::config($app)->get('php-regex.extractor');
+            if (null !== $extractor && '' !== $extractor) {
+                return self::customExtractor($app, $extractor);
+            }
+
             $extraction = self::extraction($app);
             $registry = PatternFunctionRegistry::create($extraction['interop'], $extraction['functions']);
 
@@ -289,8 +294,28 @@ final class PHPRegexServiceProvider extends ServiceProvider
 
             return new PatternExtractor($strategy);
         });
+    }
 
-        $this->app->alias('php-regex.extractor.strategy', ExtractorInterface::class);
+    /**
+     * The extractor php-regex.extractor names: a binding of the container,
+     * else a class it builds.
+     *
+     * @throws InvalidRegexOptionException when it names neither, or something that is no extractor
+     */
+    private static function customExtractor(Application $app, mixed $extractor): ExtractorInterface
+    {
+        $expected = '"extractor" must name a class or a binding implementing '.ExtractorInterface::class;
+        if (!\is_string($extractor)) {
+            throw new InvalidRegexOptionException(\sprintf('%s, not %s.', $expected, \is_array($extractor) ? 'an array' : 'a '.get_debug_type($extractor)));
+        }
+
+        if (!$app->bound($extractor) && !class_exists($extractor)) {
+            throw new InvalidRegexOptionException(\sprintf('%s: %s is neither.', $expected, $extractor));
+        }
+
+        $instance = $app->make($extractor);
+
+        return $instance instanceof ExtractorInterface ? $instance : throw new InvalidRegexOptionException(\sprintf('%s, not %s.', $expected, get_debug_type($instance)));
     }
 
     private function registerRegex(): void
@@ -311,7 +336,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
         // unknown ReDoS threshold stops the command that analyses, not every
         // artisan command.
         $this->app->singleton('php-regex.analysis', static function (Application $app): AnalysisService {
-            /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, analysis: array{warning_threshold: int}} $config */
+            /** @var array{redos: array{enabled: bool, threshold: mixed, ignored_patterns: array<string>}, complexity: array{threshold: mixed}} $config */
             $config = self::config($app)->get('php-regex');
             /** @var \PHPRegex\Toolkit\Regex $regex */
             $regex = $app->make(Regex::class);
@@ -322,42 +347,39 @@ final class PHPRegexServiceProvider extends ServiceProvider
             return new AnalysisService(
                 $regex->parser(),
                 $extractor,
-                warningThreshold: $config['analysis']['warning_threshold'],
+                warningThreshold: self::atLeastOne('complexity.threshold', $config['complexity']['threshold']),
                 redosThreshold: \is_string($threshold) ? $threshold : throw new InvalidRegexOptionException(\sprintf('The ReDoS threshold must be low, medium, high or critical, not a %s.', get_debug_type($threshold))),
                 redosIgnoredPatterns: $config['redos']['ignored_patterns'],
                 redosEnabled: $config['redos']['enabled'],
             );
         });
-
-        $this->app->alias('php-regex.analysis', AnalysisService::class);
-
-        $this->app->singleton('php-regex.formatter-registry', static fn (): FormatterRegistry => new FormatterRegistry());
-        $this->app->alias('php-regex.formatter-registry', FormatterRegistry::class);
     }
 
     private function registerPatternSources(): void
     {
-        $this->app->singleton(RoutePatternSource::class, static function (Application $app): RoutePatternSource {
+        $this->app->singleton('php-regex.pattern-source.routes', static function (Application $app): RoutePatternSource {
             /** @var \Illuminate\Routing\Router $router */
             $router = $app->make('router');
 
             return new RoutePatternSource($router);
         });
 
-        $this->app->singleton(ValidationRulePatternSource::class, static fn (): ValidationRulePatternSource => new ValidationRulePatternSource());
+        $this->app->singleton('php-regex.pattern-source.validators', static fn (): ValidationRulePatternSource => new ValidationRulePatternSource());
 
         $this->app->singleton('php-regex.pattern-sources', static function (Application $app): PatternSourceCollection {
             /** @var \PHPRegex\Linter\PatternExtractor $extractor */
             $extractor = $app->make('php-regex.extractor');
+            /** @var RoutePatternSource $routes */
+            $routes = $app->make('php-regex.pattern-source.routes');
+            /** @var ValidationRulePatternSource $validators */
+            $validators = $app->make('php-regex.pattern-source.validators');
 
             return new PatternSourceCollection([
                 new PhpFilePatternSource($extractor),
-                $app->make(RoutePatternSource::class),
-                $app->make(ValidationRulePatternSource::class),
+                $routes,
+                $validators,
             ]);
         });
-
-        $this->app->alias('php-regex.pattern-sources', PatternSourceCollection::class);
     }
 
     private function registerLintService(): void
@@ -370,8 +392,6 @@ final class PHPRegexServiceProvider extends ServiceProvider
 
             return new LintService($analysis, $sources);
         });
-
-        $this->app->alias('php-regex.lint', LintService::class);
     }
 
     /**

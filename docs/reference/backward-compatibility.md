@@ -99,7 +99,7 @@ In short, the public surface is:
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |
-| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `ServerInterface`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
+| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
 
 Each path is relative to the package namespace: `Analysis\CaptureShape` in
 `regex-parser` is `PHPRegex\Parser\Analysis\CaptureShape`. `Node\*` is every
@@ -140,17 +140,22 @@ empty match or the attempt that finds each short match
 
 The bridges and tools carry more than their classes:
 
-- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
-- `regex-psalm`: the `InvalidRegexPattern`, `RegexRedos` and
-  `RegexRedosSearch` issue names and the plugin's `<phpVersion>`,
-  `<pcreVersion>`, `<redos>` and `<redosThreshold>` options stay for all of
-  2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
+- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`, the
+  `rules.neon` file that turns lint and ReDoS on, and the identifiers of the
+  `@regex-target` markers, `regex.target.invalid` and `regex.target.empty`.
+  PHPStan builds the rules from `extension.neon`: their constructors are
+  `@internal`.
+- `regex-psalm`: the `InvalidRegexPattern`, `InvalidRegexTarget`,
+  `RegexRedos` and `RegexRedosSearch` issue names and the plugin's
+  `<phpVersion>`, `<pcreVersion>`, `<locale>`, `<redos>` and
+  `<redosThreshold>` options stay for all of 2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
   ReDoS analysis. The
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
-- `regex-rector`: the rules keep their names for all of 2.x and take no
-  configuration, and `RegexSetList::STRING_FUNCTIONS`,
+- `regex-rector`: the rules keep their names for all of 2.x; they take no
+  configuration in 2.0, and a minor release may add one (Rector builds them:
+  their constructors are `@internal`). `RegexSetList::STRING_FUNCTIONS`,
   `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0` name the sets
   that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
@@ -160,7 +165,8 @@ The bridges and tools carry more than their classes:
   codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
-  code changes there in the same release — the `php-regex` configuration, the
+  code changes there in the same release — the `PHPRegex\Toolkit\Regex`
+  binding and its `php-regex` alias, the `php-regex` configuration, the
   commands' names and options, the `regex:routes` and `regex:compare` JSON
   reports ([every key](json-output.md#laravel-routes)), and the `ValidRegex`
   rule's options.
@@ -168,7 +174,10 @@ The bridges and tools carry more than their classes:
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
 - `regex-mcp`: the tools' names, arguments and the documents they answer
-  ([every key](json-output.md)), and the classes above. The `mcp/sdk`
+  ([every key](json-output.md)), and the classes above.
+  `ToolCatalog::create()` serves the library's tools, and a minor release may
+  add one; `ToolCatalog::with()` and the constructor of `ToolDefinition` are
+  `@internal`, as every tool is announced read-only and idempotent. The `mcp/sdk`
   constraint is not covered: the SDK is experimental, pinned to the minors
   the server is tested with, and a minor release of PHPRegex may add the
   SDK's next minor to the pin or drop the oldest.
@@ -267,11 +276,17 @@ add one to yet.
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
 - **Which patterns are read**: a minor release may read patterns the lint, the
-  language server, the bridges or the PHPStan extension did not read before: a
+  language server or the other bridges did not read before: a
   new preset, a call kind, a pattern reached through a name. More patterns
   read means more findings on unchanged code; the CHANGELOG says what is read
   that was not. A preset a minor adds is on by default, unless your
   configuration lists its presets: a list means exactly that list.
+- **New PHPStan findings, behind bleeding edge**: a minor release adds what
+  the PHPStan extension reports (a new identifier, a call kind read, a rule
+  that reads wider) behind PHPStan's `%featureToggles.bleedingEdge%`, as
+  PHPStan itself does: a project that includes `bleedingEdge.neon` gets them
+  at once, every other one in 3.0, where they are on by default. What an
+  improved analysis finds under an existing identifier is not held back.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
   with the replacement named. A deprecated class, method, option or
   configuration key carries `@deprecated since <package> <version>, use <replacement>`

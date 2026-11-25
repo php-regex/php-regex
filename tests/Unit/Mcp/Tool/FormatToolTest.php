@@ -45,7 +45,7 @@ final class FormatToolTest extends TestCase
     #[DataProvider('provideFormats')]
     public function test_the_answer_is_the_cli_document(array $arguments, array $cli): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute($arguments);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute($arguments);
 
         [, $stdout] = $this->runRegex([...$cli, '--json']);
 
@@ -69,7 +69,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_the_laid_out_pattern_is_the_cli_output(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => self::DATE, 'width' => 24]);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => self::DATE, 'width' => 24]);
 
         $this->assertSame(self::DATE_AT_24, $result->structured['formatted']);
         $this->assertTrue($result->structured['changed']);
@@ -78,7 +78,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_a_refusal_is_read_in_the_text(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => '/a{ 1,2 }(?:bcdefghij)/', 'width' => 10]);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => '/a{ 1,2 }(?:bcdefghij)/', 'width' => 10]);
 
         $this->assertSame('spaced_quantifier', $result->structured['refusal']);
         $this->assertStringContainsString('left as written', $result->text);
@@ -93,7 +93,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_the_width_defaults_to_eighty(): void
     {
-        $tool = ToolCatalog::v1()->get('regex_format')->tool;
+        $tool = ToolCatalog::create()->get('regex_format')->tool;
         $eighty = '/'.str_repeat('a', 78).'/';
         $eightyOne = '/'.str_repeat('a', 79).'/';
 
@@ -110,7 +110,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_a_pattern_the_lexer_or_the_limits_refuse_is_a_pattern_failure(): void
     {
-        $tool = ToolCatalog::v1()->get('regex_format')->tool;
+        $tool = ToolCatalog::create()->get('regex_format')->tool;
 
         $unclosed = $tool->execute(['pattern' => '/[/']);
         $this->assertTrue($unclosed->isError);
@@ -128,7 +128,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_an_invalid_pattern_is_the_envelope_without_validation(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => '/(a/']);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => '/(a/']);
 
         [, $stdout] = $this->runRegex(['format', '/(a/', '--json']);
 
@@ -140,7 +140,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_a_missing_pattern_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['width' => 24]);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['width' => 24]);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -149,7 +149,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_compact_that_is_no_boolean_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => '/a/', 'compact' => 'yes']);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => '/a/', 'compact' => 'yes']);
 
         $this->assertTrue($result->isError);
         $this->assertSame(['error' => 'The "compact" argument must be true or false.', 'stage' => 'usage'], $result->structured);
@@ -158,7 +158,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_a_php_that_ships_pcre1_is_refused(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => '/a/', 'php_version' => '7.1']);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => '/a/', 'php_version' => '7.1']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('target', $result->structured['stage']);
@@ -167,7 +167,7 @@ final class FormatToolTest extends TestCase
     #[Test]
     public function test_a_width_below_one_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_format')->tool->execute(['pattern' => '/a/', 'width' => 0]);
+        $result = ToolCatalog::create()->get('regex_format')->tool->execute(['pattern' => '/a/', 'width' => 0]);
 
         $this->assertTrue($result->isError);
         $this->assertSame(['error' => 'The "width" argument must be a positive integer.', 'stage' => 'usage'], $result->structured);

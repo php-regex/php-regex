@@ -26,12 +26,15 @@ parametersSchema:
         # its character tables decide the size of some classes; null for
         # the locale of the PHP running PHPStan
         locale: schema(string(), nullable()),
-        # Libraries whose static methods carry a pattern, as the lint's
-        # extraction.interop; null for every preset, [] for the native
-        # functions only. A name that is no preset stops the analysis when
-        # the rule is built, naming the preset it most likely means: left
-        # out, it would leave a list that reads fewer calls than meant
-        interop: schema(listOf(string()), nullable()),
+        extraction: structure([
+            # Libraries whose static methods carry a pattern, as the lint's
+            # extraction.interop; null for every preset, [] for the native
+            # functions only. A name that is no preset stops the analysis
+            # when the rule is built, naming the preset it most likely
+            # means: left out, it would leave a list that reads fewer calls
+            # than meant
+            interop: schema(listOf(string()), nullable())
+        ]),
         checks: structure([
             lint: structure([
                 enabled: bool()
@@ -79,7 +82,8 @@ parameters:
         phpVersion: null
         pcreVersion: null
         locale: null
-        interop: null
+        extraction:
+            interop: null
 
         # Off by default; rules.neon turns lint and ReDoS on, and leaves
         # optimizations and complexity off.

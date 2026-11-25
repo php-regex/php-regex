@@ -786,9 +786,10 @@ The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
 `regex.syntax.empty` are gone (PHPStan reports those patterns as
 `regexp.pattern`), and ReDoS findings are reported as `regex.redos` whatever
 their severity, instead of `regex.redos.critical` and the like. Update
-`ignoreErrors` and baselines accordingly. The rule takes
-`new RegexPatternRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
-its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
+`ignoreErrors` and baselines accordingly. PHPStan builds the rules from
+`extension.neon`, and their constructors are `@internal`: configure them
+through `phpRegex`, never with `new RegexPatternRule(...)`. The
+`IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 `IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
 
 #### ReDoS verdicts are proven, and the PHPStan ReDoS message changed
@@ -957,16 +958,6 @@ new kind of node adds a method to the interface.
 return type; like every other node, they now declare none and return what
 the visitor gives, the `@return T` of `NodeInterface::accept()`. Code that
 reads the return type through reflection gets `null` for every node.
-
-#### The PHPStan rules take PHPStan's `phpVersion` as it is
-
-The last constructor parameter of `RegexPatternRule` and
-`RegexPatternArgumentRule`, `$phpVersionRange`, is typed
-`int|array|null`, an `int|array{min: int, max: int}|null` in its
-docblock, where it took `mixed`: PHPStan's `phpVersion` parameter, one
-version id or a `{min, max}` range. A rule built by hand with anything else
-throws `TypeError` from a file that declares `strict_types` (elsewhere PHP's
-own coercion applies), where the value was silently ignored.
 
 #### Sequences and alternations hold lists
 
@@ -1282,7 +1273,7 @@ a later 2.x release adds stays off for you:
 `[]` (or `--no-interop`) reads the native calls only. The Laravel package
 takes the same list under `extraction.interop` in `config/php-regex.php`, the
 Symfony bundle under `php_regex.extraction.interop`, the PHPStan extension
-under `phpRegex.interop`. A name that is no preset is a configuration error
+under `phpRegex.extraction.interop`. A name that is no preset is a configuration error
 everywhere, which names the preset it most likely means: `regex lint` and
 `regex debug` exit with code 2, the Symfony bundle throws
 `InvalidConfigurationException` as the container is built, Laravel's
@@ -1568,6 +1559,8 @@ The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 | `exclude_paths`                         | `exclude`                                                  |
 | `analysis.ignore_patterns`              | `redos.ignored_patterns` (the two lists were merged anyway) |
 | `analysis.redos_threshold`              | removed: it was never read                                 |
+| `analysis.warning_threshold`            | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | —                                       | `php_version`, `pcre_version`: the target of `regex:lint`  |
 
 A 1.x key stops the container compile with Symfony's own unrecognized-option
@@ -1661,6 +1654,8 @@ The keys of `config/regex-parser.php` become, in `config/php-regex.php`:
 | `exclude_paths`                                  | `exclude`                                             |
 | `analysis.ignore_patterns`                       | `redos.ignored_patterns`                              |
 | `analysis.redos_threshold`                       | removed: it was never read                            |
+| `analysis.warning_threshold`                     | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | `REGEX_PARSER_IDE` in `.env`                     | `PHP_REGEX_IDE` (`APP_EDITOR` stays the fallback)     |
 | —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
 | `automata.*`, never read                         | the defaults of `regex:compare`                       |
@@ -1686,13 +1681,22 @@ the running PHP. The lint and analysis services are resolved when a command
 uses them, so a setting they cannot use stops that command only. See
 [the Laravel guide](docs/guides/laravel.md).
 
+The provider binds `PHPRegex\Toolkit\Regex` and its `php-regex` alias, the
+two bindings an application resolves. The services behind the commands
+(`AnalysisService`, `LintService`, `FormatterRegistry`,
+`PatternSourceCollection`, the pattern sources) are bound under no class name,
+binding `ExtractorInterface` reads nothing, and `provides()` lists nothing: the
+provider is not deferred. Name an extractor of your own in `extractor`, a class
+or a binding implementing `ExtractorInterface`, as Symfony's
+`extractor_service` names one.
+
 #### The language server judges for the workspace's target
 
 1.x judged for the PHP running the server. The server now resolves the target
 at `initialize`, for the first workspace folder (else `rootUri`):
 `initializationOptions.phpVersion` / `pcreVersion`, else `regex.json` there,
 else `composer.json` there, else the running PHP. It logs the target with
-`window/logMessage`. A `Regex` passed to `new Server($regex)` is used as it is.
+`window/logMessage`.
 See [the language server guide](docs/guides/lsp.md#target-php-and-pcre2).
 
 #### The ReDoS confirmation has no JIT switch

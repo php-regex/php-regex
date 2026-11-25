@@ -137,8 +137,10 @@ final class ConfigurationTargetTest extends TestCase
     public static function provideRemovedKeys(): iterable
     {
         yield 'exclude_paths' => [['exclude_paths' => ['vendor']], 'exclude_paths', 'php_regex', 'Available options are'];
-        yield 'analysis.ignore_patterns' => [['analysis' => ['ignore_patterns' => ['foo']]], 'ignore_patterns', 'php_regex.analysis', 'Available options are'];
-        yield 'analysis.redos_threshold' => [['analysis' => ['redos_threshold' => 100]], 'redos_threshold', 'php_regex.analysis', 'Available options are'];
+        yield 'analysis.ignore_patterns' => [['analysis' => ['ignore_patterns' => ['foo']]], 'analysis', 'php_regex', 'Available options are'];
+        yield 'analysis.redos_threshold' => [['analysis' => ['redos_threshold' => 100]], 'analysis', 'php_regex', 'Available options are'];
+        yield 'analysis.warning_threshold' => [['analysis' => ['warning_threshold' => 50]], 'analysis', 'php_regex', 'Available options are'];
+        yield 'optimizations.digits' => [['optimizations' => ['digits' => false]], 'digits', 'php_regex.optimizations', 'Available options are'];
     }
 
     /**

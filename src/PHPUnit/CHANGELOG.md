@@ -11,7 +11,7 @@ CHANGELOG
    characters and ended with `…`: a large or shared array subject no longer
    exhausts memory while the message is written.
  * Four assertions: `assertPatternMatches()` runs one guarded match attempt
-   and judges a capture expectation against the pattern's own groups,
+   and judges a capture expectation, `$captures`, against the pattern's own groups,
    `assertPatternDoesNotMatch()` asserts no match, `assertPatternCompiles()`
    asks the running engine, and `assertPatternIsLinear()` asks the ReDoS
    analysis for a proof.

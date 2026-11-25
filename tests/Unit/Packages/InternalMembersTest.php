@@ -19,6 +19,8 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Mcp\ToolCatalog;
+use PHPRegex\Mcp\ToolDefinition;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\LexerException;
@@ -26,6 +28,15 @@ use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\PHPStan\RegexPatternArgumentRule;
+use PHPRegex\PHPStan\RegexPatternRule;
+use PHPRegex\Rector\AlphabeticAssertionToClassicRector;
+use PHPRegex\Rector\EscapeLiteralBraceRector;
+use PHPRegex\Rector\EscapeNulByteRector;
+use PHPRegex\Rector\PossessiveRepeatOnceRector;
+use PHPRegex\Rector\PregMatchToStringComparisonRector;
+use PHPRegex\Rector\PregReplaceToStrReplaceRector;
+use PHPRegex\Rector\PregSplitToExplodeRector;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -73,6 +84,21 @@ final class InternalMembersTest extends TestCase
             TranspileException::class => ['__construct'],
             SampleGenerationException::class => ['__construct'],
             PatternOccurrence::class => ['__construct'],
+            // The rules PHPStan builds from extension.neon, and those Rector
+            // builds from the rule's class name.
+            RegexPatternRule::class => ['__construct'],
+            RegexPatternArgumentRule::class => ['__construct'],
+            PregMatchToStringComparisonRector::class => ['__construct'],
+            PregReplaceToStrReplaceRector::class => ['__construct'],
+            PregSplitToExplodeRector::class => ['__construct'],
+            EscapeLiteralBraceRector::class => ['__construct'],
+            AlphabeticAssertionToClassicRector::class => ['__construct'],
+            EscapeNulByteRector::class => ['__construct'],
+            PossessiveRepeatOnceRector::class => ['__construct'],
+            // Every tool of the catalog is announced read-only: a tool of
+            // the application's own is no extension point.
+            ToolCatalog::class => ['with'],
+            ToolDefinition::class => ['__construct'],
         ];
 
         foreach ($members as $class => $methods) {

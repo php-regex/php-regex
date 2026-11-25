@@ -132,7 +132,7 @@ final class StdioServerTest extends TestCase
                 throw new \RuntimeException('boom');
             }
         };
-        $catalog = ToolCatalog::v1()->with(new ToolDefinition('regex_boom', 'Boom', 'Throws.', ['type' => 'object', 'properties' => [], 'additionalProperties' => false], ['type' => 'object'], $throwing));
+        $catalog = ToolCatalog::create()->with(new ToolDefinition('regex_boom', 'Boom', 'Throws.', ['type' => 'object', 'properties' => [], 'additionalProperties' => false], ['type' => 'object'], $throwing));
 
         $answers = $this->serve([
             self::request(1, 'initialize', self::INITIALIZE),
@@ -165,7 +165,7 @@ final class StdioServerTest extends TestCase
         rewind($input);
 
         try {
-            $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $output);
+            $exitCode = (new Application(new StderrLogger($errors)))->run([], $input, $output);
             $answer = (string) file_get_contents($path);
         } finally {
             @unlink($path);
@@ -210,7 +210,7 @@ final class StdioServerTest extends TestCase
 
             $input = 'input' === $which ? $closed : $open;
             $output = 'output' === $which ? $closed : $open;
-            $this->assertSame(1, (new Application(null, new StderrLogger($errors)))->run([], $input, $output), $which);
+            $this->assertSame(1, (new Application(new StderrLogger($errors)))->run([], $input, $output), $which);
             rewind($errors);
             $this->assertSame('', stream_get_contents($errors), 'A closed '.$which.' is refused before the server runs, so nothing is logged.');
         }
@@ -261,7 +261,7 @@ final class StdioServerTest extends TestCase
             $this->assertIsResource($output);
             $this->assertIsResource($errors);
 
-            $exitCode = (new Application(null, new StderrLogger($errors)))->run([], $input, $output);
+            $exitCode = (new Application(new StderrLogger($errors)))->run([], $input, $output);
         } finally {
             stream_wrapper_unregister('regex-mcp-broken');
         }
@@ -381,7 +381,10 @@ final class StdioServerTest extends TestCase
             // byte on stderr fails a run under the mutation tool.
             $errors = fopen('php://memory', 'w+');
             $this->assertIsResource($errors);
-            $exitCode = (new Application($catalog, new StderrLogger($errors)))->run($target, $serverReads, $serverWrites);
+            $application = new Application(new StderrLogger($errors));
+            // A catalog of the test's own is served as it is; else the one
+            // built for the target.
+            $exitCode = null === $catalog ? $application->run($target, $serverReads, $serverWrites) : $application->serve($catalog, $serverReads, $serverWrites);
             // The transport closes the streams it was given when the session ends.
             foreach ([$serverReads, $serverWrites] as $stream) {
                 if (\is_resource($stream)) {

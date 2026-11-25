@@ -40,7 +40,7 @@ final class PublishedConfigTest extends LaravelTestCase
         'redos' => ['enabled' => true],
         'analysis' => ['redos_threshold' => 100],
         'automata' => ['minimization_algorithm' => 'moore'],
-        'optimizations' => ['digits' => false],
+        'optimizations' => ['options' => ['digits' => false]],
         'paths' => ['app'],
     ];
 
@@ -72,18 +72,20 @@ final class PublishedConfigTest extends LaravelTestCase
         $this->assertSame(1000, config('php-regex.max_pattern_length'));
         $this->assertTrue(config('php-regex.redos.enabled'));
         $this->assertSame('moore', config('php-regex.automata.minimization_algorithm'));
-        $this->assertFalse(config('php-regex.optimizations.digits'));
+        $this->assertFalse(config('php-regex.optimizations.options.digits'));
 
         // What it lacks comes from the package.
         $this->assertSame('high', config('php-regex.redos.threshold'));
         $this->assertSame([], config('php-regex.redos.ignored_patterns'));
-        $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
-        $this->assertFalse(config('php-regex.analysis.complexity'));
+        $this->assertSame(50, config('php-regex.complexity.threshold'));
+        $this->assertFalse(config('php-regex.complexity.enabled'));
         $this->assertSame('subset-indexed', config('php-regex.automata.determinization_algorithm'));
         $this->assertSame('regex_', config('php-regex.cache.prefix'));
-        $this->assertTrue(config('php-regex.optimizations.word'));
-        $this->assertSame(4, config('php-regex.optimizations.min_quantifier_count'));
-        $this->assertTrue(config('php-regex.optimizations.verify_with_automata'));
+        $this->assertTrue(config('php-regex.optimizations.enabled'));
+        $this->assertSame(1, config('php-regex.optimizations.min_savings'));
+        $this->assertTrue(config('php-regex.optimizations.options.word'));
+        $this->assertSame(4, config('php-regex.optimizations.options.min_quantifier_count'));
+        $this->assertTrue(config('php-regex.optimizations.options.verify_with_automata'));
         $this->assertSame(Regex::DEFAULT_MAX_LOOKBEHIND_LENGTH, config('php-regex.max_lookbehind_length'));
         $this->assertNull(config('php-regex.php_version'));
     }
