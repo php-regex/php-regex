@@ -65,7 +65,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | `reportDynamic` | `false` | List each pattern argument built at run time, which no rule can verify, as an info: `regex.lint.source.dynamic`, `regex.lint.source.dynamicPart` or `regex.lint.source.quotedPart` |
 | `extraction.interop` | every preset | Libraries whose calls carry a pattern: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; a list reads exactly those, `[]` none of them (the native calls and your own functions are still read), an unknown name is an error that names the preset it most likely means |
 | `extraction.functions` | `[]` | Project helpers carrying a pattern, as `App\Support\Str::matches#1` |
-| `checks.validation` | `true` | Syntax and semantic validation |
+| `checks.validation.enabled` | `true` | Syntax and semantic validation |
 | `checks.redos.enabled` | `false` | ReDoS analysis |
 | `checks.redos.mode`, `checks.redos.threshold` | `theoretical`, `high` | Analysis mode, and the lowest severity reported |
 | `checks.optimizations.enabled`, `checks.optimizations.minSavings` | `true`, `1` | Optimization suggestions, and the minimum characters saved to report one |

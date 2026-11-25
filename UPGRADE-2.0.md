@@ -1195,7 +1195,7 @@ spellings; 2.0 refuses them with a plain unknown-key error naming the key
 
 | 1.x | 2.0 |
 |---|---|
-| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": true, "optimizations": {"enabled": false}}` |
+| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": {"enabled": true}, "optimizations": {"enabled": false}}` |
 | `"redosMode": "confirmed"` | `"checks": {"redos": {"mode": "confirmed"}}` |
 | `"redosThreshold": "high"` | `"checks": {"redos": {"threshold": "high"}}` |
 | `"redosNoJit": true`, `"checks": {"redos": {"noJit": true}}` | nothing: the confirmation always runs without JIT |

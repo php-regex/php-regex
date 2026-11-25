@@ -112,6 +112,7 @@ final class LintConfigSchema
                     ],
                 ],
                 'optimizationOptions' => self::optimizationOptions(),
+                'checksValidation' => self::checksValidation(),
                 'checksRedos' => self::checksRedos(),
                 'checksOptimizations' => self::checksOptimizations(),
                 'checksLint' => self::checksLint(),
@@ -186,9 +187,8 @@ final class LintConfigSchema
                     'additionalProperties' => false,
                     'properties' => [
                         'validation' => [
-                            'type' => 'boolean',
-                            'description' => 'Enable regex syntax validation.',
-                            'default' => true,
+                            '$ref' => '#/$defs/checksValidation',
+                            'description' => 'Syntax validation settings.',
                         ],
                         'redos' => [
                             '$ref' => '#/$defs/checksRedos',
@@ -219,7 +219,9 @@ final class LintConfigSchema
                     'jobs' => 4,
                     'ide' => 'phpstorm',
                     'checks' => [
-                        'validation' => true,
+                        'validation' => [
+                            'enabled' => true,
+                        ],
                         'redos' => [
                             'enabled' => true,
                             'mode' => 'theoretical',
@@ -328,6 +330,24 @@ final class LintConfigSchema
                     'default' => 4,
                 ],
                 'verifyWithAutomata' => $flag('Verify optimization suggestions with the automata solver when possible.', true),
+            ],
+        ];
+    }
+
+    /**
+     * @return array{type: 'object', additionalProperties: false, properties: array{enabled: array{type: 'boolean', description: string, default: true}}}
+     */
+    private static function checksValidation(): array
+    {
+        return [
+            'type' => 'object',
+            'additionalProperties' => false,
+            'properties' => [
+                'enabled' => [
+                    'type' => 'boolean',
+                    'description' => 'Enable regex syntax validation: report the patterns PCRE2 refuses for the target. The --no-validate option turns it off for one run.',
+                    'default' => true,
+                ],
             ],
         ];
     }

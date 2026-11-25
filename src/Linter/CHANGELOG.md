@@ -571,6 +571,8 @@ CHANGELOG
  * `PatternLinter` throws `UnknownLintRuleException` for a rules map naming
    a rule it does not run, the nearest rule named, where a typo turned
    nothing off; the map takes each id short or in full.
+ * `checks.validation` in `regex.json` is an object, `{"enabled": false}`,
+   as every other check: a boolean is refused, the object it means named.
  * `checks.lint.rules` takes a rule id in full as well as short, and a
    misspelt id is told the nearest one, in `regex.json` and on the command
    line; an inline marker reads a short id as that issue, where it was a

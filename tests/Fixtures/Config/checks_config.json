@@ -1,6 +1,8 @@
 {
     "checks": {
-        "validation": false,
+        "validation": {
+            "enabled": false
+        },
         "redos": {
             "enabled": true,
             "mode": "confirmed",

@@ -210,6 +210,10 @@ final class LintConfigSchemaTest extends TestCase
         yield 'jobs below 1' => ['json' => '{"jobs": 0}'];
         yield 'locale as a number' => ['json' => '{"locale": 5}'];
         yield 'empty locale' => ['json' => '{"locale": ""}'];
+        yield 'validation as a boolean' => ['json' => '{"checks": {"validation": true}}'];
+        yield 'validation off as a boolean' => ['json' => '{"checks": {"validation": false}}'];
+        yield 'validation enabled as a string' => ['json' => '{"checks": {"validation": {"enabled": "no"}}}'];
+        yield 'unknown validation key' => ['json' => '{"checks": {"validation": {"strict": true}}}'];
         yield 'complexity as a boolean' => ['json' => '{"checks": {"complexity": true}}'];
         yield 'complexity off as a boolean' => ['json' => '{"checks": {"complexity": false}}'];
         yield 'complexity threshold zero' => ['json' => '{"checks": {"complexity": {"threshold": 0}}}'];
@@ -314,7 +318,7 @@ final class LintConfigSchemaTest extends TestCase
         yield 'schema pointer' => ['json' => '{"$schema": "./regex.schema.json"}'];
         yield 'target as strings' => ['json' => '{"phpVersion": "8.3", "pcreVersion": "10.42"}'];
         yield 'target as a PHP_VERSION_ID' => ['json' => '{"phpVersion": 80300}'];
-        yield 'every check as an object' => ['json' => '{"checks": {"validation": true, "redos": {"enabled": true, "mode": "confirmed", "threshold": "high"}, "optimizations": {"enabled": true, "minSavings": 2, "options": {"digits": true, "minQuantifierCount": 2}}, "lint": {"enabled": true, "rules": {"unicode.shorthandWithoutU": true}}}}'];
+        yield 'every check as an object' => ['json' => '{"checks": {"validation": {"enabled": true}, "redos": {"enabled": true, "mode": "confirmed", "threshold": "high"}, "optimizations": {"enabled": true, "minSavings": 2, "options": {"digits": true, "minQuantifierCount": 2}}, "lint": {"enabled": true, "rules": {"unicode.shorthandWithoutU": true}}}}'];
         yield 'complexity on with a threshold' => ['json' => '{"checks": {"complexity": {"enabled": true, "threshold": 20}}}'];
         yield 'complexity off' => ['json' => '{"checks": {"complexity": {"enabled": false}}}'];
         yield 'complexity threshold of one' => ['json' => '{"checks": {"complexity": {"threshold": 1}}}'];

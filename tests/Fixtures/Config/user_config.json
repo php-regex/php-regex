@@ -1,1 +1,1 @@
-{"paths":["src"],"exclude":["vendor"],"format":"json","checks":{"validation":true,"optimizations":{"enabled":false}}}
+{"paths":["src"],"exclude":["vendor"],"format":"json","checks":{"validation":{"enabled":true},"optimizations":{"enabled":false}}}

@@ -72,6 +72,17 @@
         }
       }
     },
+    "checksValidation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable regex syntax validation: report the patterns PCRE2 refuses for the target. The --no-validate option turns it off for one run.",
+          "default": true
+        }
+      }
+    },
     "checksRedos": {
       "type": "object",
       "additionalProperties": false,
@@ -799,9 +810,8 @@
       "additionalProperties": false,
       "properties": {
         "validation": {
-          "type": "boolean",
-          "description": "Enable regex syntax validation.",
-          "default": true
+          "$ref": "#/$defs/checksValidation",
+          "description": "Syntax validation settings."
         },
         "redos": {
           "$ref": "#/$defs/checksRedos",
@@ -837,7 +847,9 @@
       "jobs": 4,
       "ide": "phpstorm",
       "checks": {
-        "validation": true,
+        "validation": {
+          "enabled": true
+        },
         "redos": {
           "enabled": true,
           "mode": "theoretical",
