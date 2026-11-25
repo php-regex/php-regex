@@ -324,10 +324,14 @@ request goes to `phpstan/phpstan-src`.
   stays greedy even where the group never starts with what the repeat
   gives back, `/(xa+)c(?1)+d/`: the walk reads no first characters of a
   call.
-- A group that calls itself is still refused, in a DEFINE or not:
-  `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` is offered `ca++b?`, refused
-  with the call message, and ships unchanged, though the engine finds the
-  possessive form the same.
+- Since #454 the check reads a group that calls itself through every
+  call, yet three such groups stay greedy where the engine finds the
+  possessive form the same (every subject of `abcx` up to 7 characters,
+  10.49, JIT on and off): one called inside a lookahead,
+  `/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/`; one a backreference reads
+  back after it, `/(x(?1)?ca+b?)c\1/`; and one that holds `(*ACCEPT)`,
+  `/(?&n)a(?(DEFINE)(?<n>x(?&n)?ca+(*ACCEPT)b?))/`. A call that returns
+  groups, `(?1(2))` or `(?R(1))`, is not read through at all.
 - `LanguageSolver::matchEquivalent()` calls three pairs equivalent that
   the engine matches differently, with or without calls; the optimizer
   never ships them, but the mutation judge reads the same verdict:
