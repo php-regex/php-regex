@@ -181,3 +181,9 @@ CHANGELOG
    one baseline serves a run from any directory. A file on another drive is
    named absolute, and a baseline behind a stream wrapper names its files
    from the working directory.
+ * `regex lint --redos-mode` takes `off`, `theoretical` or `confirmed`, as
+   `analyze` and `debug` do: `off` skips the analysis, as `--no-redos` does.
+   `--redos-threshold` says what it sets in one wording everywhere: the
+   lowest severity replayed and failing the run, and, for `lint`, reported.
+ * `regex lint --enable-rule` and `--disable-rule` take their id after a
+   space too, as every other option that takes a value.

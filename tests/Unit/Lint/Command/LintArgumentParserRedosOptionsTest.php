@@ -20,9 +20,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The ReDoS options of the lint command: --redos-mode takes theoretical or
- * confirmed, and the two 1.x spellings that had a config twin are refused
- * with what to use instead.
+ * The ReDoS options of the lint command: --redos-mode takes off,
+ * theoretical or confirmed, off as --no-redos, and the 1.x spelling that
+ * had a config twin is refused.
  */
 final class LintArgumentParserRedosOptionsTest extends TestCase
 {
@@ -69,9 +69,36 @@ final class LintArgumentParserRedosOptionsTest extends TestCase
      */
     public static function provideRefusedOptions(): iterable
     {
-        yield '--redos-mode=off names --no-redos' => [['--redos-mode=off'], '--no-redos'];
-        yield '--redos-mode off names --no-redos' => [['--redos-mode', 'OFF'], '--no-redos'];
         yield '--redos-no-jit' => [['--redos-no-jit'], 'Unknown option: --redos-no-jit'];
-        yield 'unknown mode' => [['--redos-mode=fast'], 'expected theoretical or confirmed'];
+        yield 'unknown mode' => [['--redos-mode=fast'], 'Invalid value for --redos-mode: expected off, theoretical or confirmed.'];
+    }
+
+    /**
+     * --redos-mode=off skips the analysis, as --no-redos does, whatever
+     * regex.json says; the last option of the two kinds wins.
+     *
+     * @param list<string> $args
+     */
+    #[Test]
+    #[DataProvider('provideModesOff')]
+    public function test_parse_reads_the_mode_off_as_no_redos(array $args, bool $checkRedos): void
+    {
+        $result = (new LintArgumentParser())->parse($args, ['checkRedos' => true]);
+
+        $this->assertNull($result->error);
+        $this->assertInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame($checkRedos, $result->arguments->checkRedos);
+    }
+
+    /**
+     * @return iterable<string, array{list<string>, bool}>
+     */
+    public static function provideModesOff(): iterable
+    {
+        yield 'equals form' => [['--redos-mode=off'], false];
+        yield 'separate value, any case' => [['--redos-mode', 'OFF'], false];
+        yield 'after --redos' => [['--redos', '--redos-mode=off'], false];
+        yield 'before --redos' => [['--redos-mode=off', '--redos'], true];
+        yield 'before another mode' => [['--redos-mode=off', '--redos-mode=confirmed'], true];
     }
 }

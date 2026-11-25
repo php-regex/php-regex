@@ -1306,8 +1306,8 @@ on the line of its literal, not on the call. See
 - Exit code 2 now means the configuration or the command line cannot be used
   (1.x returned 1, as for a pattern error). This covers an invalid
   `regex.json`, an unknown option or `--format`, and the removed options below.
-- `--redos-mode=off` is refused: use `--no-redos`. `--redos-no-jit` is refused:
-  the confirmation always runs without JIT.
+- `--redos-no-jit` is refused: the confirmation always runs without JIT.
+  `--redos-mode=off` skips the analysis, as `--no-redos` does.
 - Errors go to stderr. With `--format=json` they go to stdout as the error
   envelope, `{"error": "...", "stage": "..."}`, and the progress and status
   lines stay out of stdout, so that stdout always holds one JSON document (see

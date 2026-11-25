@@ -50,14 +50,14 @@ final class LintArgumentParser
             Option::flag('--report-dynamic', 'Report each pattern argument built at run time as an info'),
             Option::flag('--redos', 'Run the ReDoS risk analysis, off by default'),
             Option::flag('--no-redos', 'Skip the ReDoS risk analysis when regex.json turns it on'),
-            Option::value('--redos-mode', '<mode>', 'ReDoS mode (theoretical, confirmed)'),
-            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity reported (low, medium, high, critical)'),
+            Option::value('--redos-mode', '<mode>', 'ReDoS mode (off, theoretical, confirmed)'),
+            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity replayed and failing the run, and reported (low, medium, high, critical)'),
             Option::flag('--no-validate', 'Skip validation errors (structural lint only)'),
             Option::flag('--no-optimize', 'Disable optimization suggestions'),
             Option::flag('--lint', 'Run the lint rules (the default)'),
             Option::flag('--no-lint', 'Skip the lint rules'),
-            Option::value('--enable-rule', '<id>', 'Turn a lint rule on (repeatable)')->attachedOnly(),
-            Option::value('--disable-rule', '<id>', 'Turn a lint rule off (repeatable)')->attachedOnly(),
+            Option::value('--enable-rule', '<id>', 'Turn a lint rule on (repeatable)'),
+            Option::value('--disable-rule', '<id>', 'Turn a lint rule off (repeatable)'),
             Option::value('--interop', '<presets>', 'Libraries to read patterns from, all by default (composer-pcre, nette-utils, spatie-regex, illuminate-support, phpunit, webmozart-assert, beberlei-assert, symfony-validator, none)')->takingAnyValue(),
             Option::flag('--no-interop', 'Read patterns from the native calls only (preg_*, RegexIterator, filter_var())'),
             Option::flag('--no-twig', 'Skip the "matches" patterns of the Twig templates under the paths'),
@@ -69,7 +69,7 @@ final class LintArgumentParser
             Option::flag('--no-report-unmatched-ignores')->hide(),
             Option::flag('--no-report-dynamic')->hide(),
             Option::flag('--help', '', ['-h'])->hide(),
-        ], "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--report-dynamic] [--redos] [--no-redos] [--redos-mode=theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule=<id>] [--disable-rule=<id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
+        ], "Usage: regex lint [paths...] [--exclude <path>] [--min-savings <n>] [--jobs <n>] [--format console|json|github|checkstyle|junit] [--json] [--output <file>] [--baseline <file>] [--generate-baseline <file>] [--no-report-unmatched-ignores] [--report-dynamic] [--redos] [--no-redos] [--redos-mode=off|theoretical|confirmed] [--redos-threshold=low|medium|high|critical] [--no-validate] [--no-optimize] [--lint|--no-lint] [--enable-rule <id>] [--disable-rule <id>] [--interop <presets>] [--no-interop] [--pattern-function <spec>] [--verbose|--debug|--quiet]\n");
     }
 
     /**
@@ -172,11 +172,19 @@ final class LintArgumentParser
         return \is_string($interop) ? $interop : $this->withInterop($arguments, $interop);
     }
 
+    /**
+     * The arguments with the mode set and the analysis on; "off" turns it
+     * off, as --no-redos does.
+     */
     private function withRedosMode(LintArguments $arguments, string $value): LintArguments|string
     {
-        $mode = $this->redosMode($value);
+        $mode = RedosMode::tryFrom(Ascii::lower($value));
 
-        return \is_string($mode) ? $mode : $arguments->with(checkRedos: true, redosMode: $mode->value);
+        return match ($mode) {
+            null => 'Invalid value for --redos-mode: expected off, theoretical or confirmed.',
+            RedosMode::Off => $arguments->with(checkRedos: false),
+            default => $arguments->with(checkRedos: true, redosMode: $mode->value),
+        };
     }
 
     private function withRedosThreshold(LintArguments $arguments, string $value): LintArguments|string
@@ -186,20 +194,6 @@ final class LintArgumentParser
         } catch (InvalidRegexOptionException $e) {
             return 'Invalid value for --redos-threshold: '.$e->getMessage();
         }
-    }
-
-    /**
-     * A --redos-mode value, or the message refusing it.
-     */
-    private function redosMode(string $value): RedosMode|string
-    {
-        $mode = RedosMode::tryFrom(Ascii::lower($value));
-
-        return match ($mode) {
-            null => 'Invalid value for --redos-mode: expected theoretical or confirmed.',
-            RedosMode::Off => 'Invalid value for --redos-mode: expected theoretical or confirmed; --no-redos skips the analysis.',
-            default => $mode,
-        };
     }
 
     private function withFormat(LintArguments $arguments, string $format): LintArguments

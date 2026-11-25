@@ -19,9 +19,9 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * The threshold says what it does where it is given: lint reports the
- * verdicts at or above it; analyze and debug report the one pattern they
- * are given, and replay its verdict in confirmed mode from it.
+ * The threshold says what it does in one wording wherever it is given: the
+ * lowest severity confirmed mode replays and the run fails on, and, for
+ * lint, the lowest it reports.
  */
 final class RedosThresholdHelpTest extends TestCase
 {
@@ -41,8 +41,31 @@ final class RedosThresholdHelpTest extends TestCase
      */
     public static function provideHelps(): iterable
     {
-        yield 'lint' => ['command' => 'lint', 'line' => 'Lowest ReDoS severity reported (low, medium, high, critical)'];
-        yield 'analyze' => ['command' => 'analyze', 'line' => 'Lowest ReDoS severity confirmed mode replays (low, medium, high, critical)'];
-        yield 'debug' => ['command' => 'debug', 'line' => 'Lowest ReDoS severity confirmed mode replays (low, medium, high, critical)'];
+        yield 'lint' => ['command' => 'lint', 'line' => 'Lowest ReDoS severity replayed and failing the run, and reported (low, medium, high, critical)'];
+        yield 'analyze' => ['command' => 'analyze', 'line' => 'Lowest ReDoS severity replayed and failing the run (low, medium, high, critical)'];
+        yield 'debug' => ['command' => 'debug', 'line' => 'Lowest ReDoS severity replayed and failing the run (low, medium, high, critical)'];
+    }
+
+    /**
+     * --redos-mode takes the same three modes in every command that reads
+     * it, off included.
+     */
+    #[Test]
+    #[DataProvider('provideCommands')]
+    public function test_the_help_names_the_same_modes(string $command): void
+    {
+        [, $output] = $this->runRegex([$command, '--help']);
+
+        $this->assertMatchesRegularExpression('/--redos-mode <mode>\s+ReDoS mode \(off, theoretical, confirmed\)/', $output);
+    }
+
+    /**
+     * @return iterable<string, array{command: string}>
+     */
+    public static function provideCommands(): iterable
+    {
+        yield 'lint' => ['command' => 'lint'];
+        yield 'analyze' => ['command' => 'analyze'];
+        yield 'debug' => ['command' => 'debug'];
     }
 }

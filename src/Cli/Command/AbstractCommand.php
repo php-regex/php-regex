@@ -162,7 +162,7 @@ abstract class AbstractCommand implements CommandInterface
     {
         return [
             Option::value('--redos-mode', '<mode>', 'ReDoS mode (off, theoretical, confirmed)'),
-            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity confirmed mode replays (low, medium, high, critical)'),
+            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity replayed and failing the run (low, medium, high, critical)'),
         ];
     }
 

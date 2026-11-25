@@ -2574,14 +2574,14 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--no-report-dynamic` | Do not list them when `regex.json` turns the list on (the default) |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
-| `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
-| `--redos-threshold <sev>` | Lowest severity reported: low, medium, high, critical |
+| `--redos-mode <mode>` | `off`, `theoretical` or `confirmed`; `off` is `--no-redos` |
+| `--redos-threshold <sev>` | Lowest severity replayed and failing the run, and reported: low, medium, high, critical |
 | `--no-validate`     | Skip validation                                    |
 | `--no-optimize`     | Disable optimization suggestions                   |
 | `--lint`            | Run the lint rules (the default)                   |
 | `--no-lint`         | Skip the lint rules                                |
-| `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
-| `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
+| `--enable-rule <id>` | Turn a lint rule on (repeatable)                  |
+| `--disable-rule <id>` | Turn a lint rule off (repeatable)                |
 | `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` turns every preset off, as `--no-interop` does) |
 | `--no-interop`      | Turn off every wrapper preset; the native calls (`preg_*`, `RegexIterator`, `filter_var()`) and the functions you configure are still read |
 | `--no-twig`         | Skip the `matches` patterns of the Twig templates under the paths |
@@ -2591,12 +2591,14 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration. The default threshold is `high`: a proven quadratic pattern is `medium`, and is reported with `--redos-threshold=medium` only.
 
-`--redos-mode` takes `theoretical` or `confirmed`, and `--no-redos` skips the
-analysis; the confirmation always runs without JIT. Any other mode is a usage
+`--redos-mode` takes `off`, `theoretical` or `confirmed`, as in `analyze`
+and `debug`; `off` skips the analysis, as `--no-redos` does, and the last of
+them wins. The confirmation always runs without JIT. Any other mode is a usage
 error (exit code 2), as is an unknown `--format`, and an `--enable-rule` or
 `--disable-rule` id that `checks.lint.rules` in `regex.json` would refuse
 (`Unknown lint rule "quantifer.nested" in --disable-rule. Did you mean "quantifier.nested"?`).
-Both options take the id without `regex.lint.` or in full.
+Both options take the id without `regex.lint.` or in full, after a space or
+an `=`.
 
 `--report-dynamic` adds one issue of severity `info` per pattern argument
 built at run time, and leaves the exit code as it is. With
