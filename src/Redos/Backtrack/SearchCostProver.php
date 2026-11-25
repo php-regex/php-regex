@@ -55,11 +55,14 @@ use PHPRegex\Redos\RedosSearchCost;
  * automaton, and a breaker. On the prefix, the run repeated n times, then
  * the breaker: an attempt started at any word of the run reads it from
  * there to its end (the word enters its own cycle from an attempt's start),
- * no attempt started anywhere succeeds, and every one fails on the breaker,
- * which holds the last code unit PCRE2 requires before it tries an
- * attempt, with a character after it when an alternative would match it at
- * the end. The search then starts n attempts, each linear in what is left
- * of the run: quadratic. The prefix is there when the first attempt would
+ * no attempt started before the subject's end succeeds, and every one fails
+ * on the breaker, which holds the last code unit PCRE2 requires before it
+ * tries an attempt, with a character after it when an alternative would
+ * match it at the end. The search then starts n attempts, each linear in
+ * what is left of the run: quadratic. The attempt at the subject's end
+ * comes after all of them and may match the empty string there, as in
+ * "(?:a+\d)?$" and "\s*$": preg_match() then returns 1, once the attempts
+ * of the run have each read to its end. The prefix is there when the first attempt would
  * match the bare run, as "^\s+" does in the trim regex "/^\s+|\s+$/". The
  * run word is one character, a cycle's word, or up to four characters of
  * different classes, so that a "\b" holds inside the run.
@@ -93,7 +96,9 @@ use PHPRegex\Redos\RedosSearchCost;
  * character a repeat reads in a group of its own, which the engine's step
  * counter sees inside a possessive or atomic repeat too: "(*NOTEMPTY)a++\K"
  * and "(*NOTEMPTY)(?>a+\K)" read the rest of the run at every attempt and
- * give nothing back.
+ * give nothing back. The replay accepts a search that ends on the empty
+ * string at the subject's end, unless "\K" may move that match there from
+ * an earlier attempt.
  *
  * @internal
  */
@@ -745,8 +750,9 @@ final class SearchCostProver
 
     /**
      * The first run word that enters its own cycle and that no attempt
-     * succeeds on, after the shortest prefix that keeps the first attempt
-     * from succeeding, with the breakers found after it, in characters.
+     * succeeds on before the subject's end, after the shortest prefix that
+     * keeps the first attempt from succeeding, with the breakers found after
+     * it, in characters.
      *
      * @param array{int, ?int}|null $required     the code unit PCRE2 requires, as a character, and its other case
      *                                            when PCRE2 looks for either
@@ -786,12 +792,12 @@ final class SearchCostProver
                 $first = [] === $prefix
                     ? self::attempt($automaton, $automaton->initials[0]['items'], $refused, self::EMPTY_REFUSED_AT_START)
                     : self::later($automaton, $automaton->representatives[$prefix[\count($prefix) - 1]], $refused);
-                $after = $this->entersItself($automaton, $budget, $first, $word, $jumps) ? $this->runEnd($automaton, $prefix, $word, $refused) : null;
-                if (null === $after) {
+                $inside = $this->entersItself($automaton, $budget, $first, $word, $jumps) ? $this->runEnd($automaton, $prefix, $word, $refused) : null;
+                if (null === $inside) {
                     continue;
                 }
 
-                $breakers = $this->breakers($automaton, $budget, $after, $missing, $finalNewline ? $last : null, $refused);
+                $breakers = $this->breakers($automaton, $budget, $inside, $later, $missing, $finalNewline ? $last : null, $refused);
                 if ([] !== $breakers) {
                     return [
                         'prefix' => array_map(static fn (int $class): int => $automaton->representatives[$class], $prefix),
@@ -1178,9 +1184,9 @@ final class SearchCostProver
 
     /**
      * The items of every attempt of the search at the end of the run, an
-     * attempt started at each character of the prefix and of the run,
-     * whatever the run's length (one word at least); null when one of them
-     * succeeds before the run ends.
+     * attempt started at each character of the prefix and of the run, the
+     * one started at its end aside, whatever the run's length (one word at
+     * least); null when one of them succeeds before the run ends.
      *
      * @param list<int>           $prefix  classes
      * @param non-empty-list<int> $word
@@ -1210,7 +1216,7 @@ final class SearchCostProver
         }
 
         $seen = [];
-        $after = [];
+        $inside = [];
         while (true) {
             foreach ($word as $index => $class) {
                 if ($index > 0) {
@@ -1223,17 +1229,19 @@ final class SearchCostProver
                 }
             }
 
+            // The run ends here at this length: the attempt it starts there
+            // is not yet one of those it started.
+            $inside += $current;
             $current += $later[0];
             ksort($current);
             $key = implode(',', array_keys($current));
             if (isset($seen[$key])) {
-                ksort($after);
+                ksort($inside);
 
-                return $after;
+                return $inside;
             }
 
             $seen[$key] = true;
-            $after += $current;
         }
     }
 
@@ -1242,12 +1250,15 @@ final class SearchCostProver
      * the run has failed, then the code unit PCRE2 requires when the run
      * does not hold it, and one more character when an attempt would match
      * that code unit at the end, as the second alternative of "/a+b|b$/"
-     * does. With them, no attempt started anywhere succeeds. When "$" or
-     * "\Z" may hold before a final newline, a witness ending with a newline
-     * gets one more character: the model reads such a newline into the
-     * anchor, where a pattern item may read it instead.
+     * does. With them, no attempt started before the subject's end
+     * succeeds: the one started there comes after every other, and may
+     * match the empty string, as "$" does. When "$" or "\Z" may hold before
+     * a final newline, a witness ending with a newline gets one more
+     * character: the model reads such a newline into the anchor, where a
+     * pattern item may read it instead.
      *
-     * @param array<int, true> $after
+     * @param array<int, true> $inside  the items of the attempts the run started, at its end
+     * @param array<int, true> $start   the items of the attempt started at the run's end
      * @param list<int>        $missing characters
      * @param int|null         $runEnd  the run's last character, when the witness must not end with a newline
      * @param int              $refused the attempts that refuse an empty match
@@ -1256,9 +1267,11 @@ final class SearchCostProver
      *
      * @return list<list<int>>
      */
-    private function breakers(ItemAutomaton $automaton, Budget $budget, array $after, array $missing, ?int $runEnd, int $refused): array
+    private function breakers(ItemAutomaton $automaton, Budget $budget, array $inside, array $start, array $missing, ?int $runEnd, int $refused): array
     {
         $found = [];
+        $after = $inside + $start;
+        ksort($after);
         // The code unit with a character after it only when it fails last.
         foreach ([] === $missing ? [false] : [false, true] as $trailing) {
             $queue = [[$after, []]];
@@ -1266,7 +1279,7 @@ final class SearchCostProver
             for ($head = 0; $head < \count($queue) && $head < self::MAX_BREAKER_NODES && \count($found) < self::MAX_BREAKERS; $head++) {
                 $budget->step();
                 [$current, $path] = $queue[$head];
-                $this->collect($automaton, $after, $path, $missing, $runEnd, $trailing, $refused, $found);
+                $this->collect($automaton, $inside, $start, $path, $missing, $runEnd, $trailing, $refused, $found);
                 if (\count($path) >= self::MAX_BREAKER_LENGTH) {
                     continue;
                 }
@@ -1278,7 +1291,7 @@ final class SearchCostProver
                     }
 
                     if ([] === $next) {
-                        $this->collect($automaton, $after, [...$path, $class], $missing, $runEnd, $trailing, $refused, $found);
+                        $this->collect($automaton, $inside, $start, [...$path, $class], $missing, $runEnd, $trailing, $refused, $found);
 
                         continue;
                     }
@@ -1304,7 +1317,8 @@ final class SearchCostProver
      * model rejects it; trailing, the first of a few with one more
      * character the model rejects.
      *
-     * @param array<int, true> $after
+     * @param array<int, true> $inside   the items of the attempts the run started, at its end
+     * @param array<int, true> $start    the items of the attempt started at the run's end
      * @param list<int>        $path     classes
      * @param list<int>        $missing  characters
      * @param bool             $trailing whether a character comes after the missing code unit
@@ -1315,7 +1329,7 @@ final class SearchCostProver
      *
      * @throws ModelLimitException
      */
-    private function collect(ItemAutomaton $automaton, array $after, array $path, array $missing, ?int $runEnd, bool $trailing, int $refused, array &$found): void
+    private function collect(ItemAutomaton $automaton, array $inside, array $start, array $path, array $missing, ?int $runEnd, bool $trailing, int $refused, array &$found): void
     {
         $breaker = [...array_map(static fn (int $class): int => $automaton->representatives[$class], $path), ...$missing];
         $newline = null !== $runEnd && 0x0A === ([] === $breaker ? $runEnd : $breaker[\count($breaker) - 1]);
@@ -1331,7 +1345,7 @@ final class SearchCostProver
                 return;
             }
 
-            if ($this->rejects($automaton, $after, $candidate, $refused)) {
+            if ($this->rejects($automaton, $inside, $start, $candidate, $refused)) {
                 $found[] = $candidate;
 
                 return;
@@ -1341,33 +1355,29 @@ final class SearchCostProver
 
     /**
      * Whether the attempts of the run fail on the breaker, and no attempt
-     * started inside it succeeds.
+     * started inside it succeeds. The attempt started at the subject's end
+     * is tried after every other, once each attempt of the run has read to
+     * its end and failed: it may match the empty string there.
      *
-     * @param array<int, true> $after
+     * @param array<int, true> $inside  the items of the attempts the run started, at its end
+     * @param array<int, true> $start   the items of the attempt started at the run's end
      * @param list<int>        $breaker characters
      * @param int              $refused the attempts that refuse an empty match
      *
      * @throws ModelLimitException
      */
-    private function rejects(ItemAutomaton $automaton, array $after, array $breaker, int $refused): bool
+    private function rejects(ItemAutomaton $automaton, array $inside, array $start, array $breaker, int $refused): bool
     {
-        $current = $after;
+        $current = $inside;
         $previous = null;
         foreach ($breaker as $character) {
-            if (null !== $previous) {
-                $current += self::later($automaton, $previous, $refused);
-            }
-
+            $current += null === $previous ? $start : self::later($automaton, $previous, $refused);
             $current = $automaton->stepSet($current, $automaton->classOf($character));
             if (null === $current) {
                 return false;
             }
 
             $previous = $character;
-        }
-
-        if (null !== $previous) {
-            $current += self::later($automaton, $previous, $refused);
         }
 
         return !$automaton->acceptsAtEnd($current);

@@ -6,6 +6,15 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The search cost lets the attempt at the subject's end match the empty
+   string: the search tries it last, once every attempt of the run has
+   read to its end and failed. `/\s*$/` (131, 521 then 2,093 ms on 5,000,
+   10,000 then 20,000 spaces and `!`), `/(?:a+\d)?$/` (1.1, 4.1, 15.8 then
+   62 ms on 2,000 to 16,000 `a`) and `/(?:a\n)*(?:a{2}|b|\z)/m` (20, 79
+   then 321 ms on `a\n` 1,000, 2,000 then 4,000 times and `!`), with
+   `pcre.jit=0`, were proven safe with no search cost, and are reported,
+   though `preg_match()` returns 1 on the attack. The replay of confirmed
+   mode accepts that empty match at the end, but in a pattern holding `\K`.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.

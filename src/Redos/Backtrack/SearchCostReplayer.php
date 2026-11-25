@@ -28,9 +28,9 @@ use PHPRegex\Redos\ConfirmationOptions;
  * "(*NO_AUTO_POSSESS)": PCRE2 makes most single loops possessive, which reads
  * the same characters but counts none of them.
  *
- * The witness replays when the search on it matches nowhere and an attempt
- * started further from the breaker takes at least one more step per run
- * word. The counter sees nothing inside an atomic or possessive repeat of a
+ * The witness replays when the search on it matches nowhere, but on the
+ * empty string at the subject's end, and an attempt started further from
+ * the breaker takes at least one more step per run word. The counter sees nothing inside an atomic or possessive repeat of a
  * single character set ("a++", "(?>a+)"), and counts a repeat of a group,
  * "(?:a)++" or "(?>a+b)+", at each pass: the search proof hands over the
  * pattern with each such character in a group of its own, which changes no
@@ -60,9 +60,10 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
     /**
      * Whether the engine, without its JIT, starts attempts inside the run
-     * that each read what is left of it, and matches nowhere; null when the
-     * engine cannot count: the limits of the options stop the search or a
-     * pinned attempt before it ends, or ini_set() cannot set them.
+     * that each read what is left of it, and matches nowhere before the
+     * subject's end; null when the engine cannot count: the limits of the
+     * options stop the search or a pinned attempt before it ends, or
+     * ini_set() cannot set them.
      */
     #[\Override]
     public function replays(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
@@ -73,13 +74,17 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
             return false;
         }
 
-        // A search that matches the witness fails none of its attempts there.
+        // A search that matches the witness ends there, before the attempts
+        // the run starts after that match. The empty match at the subject's
+        // end comes after every one of them when the attempt there made it:
+        // "\K" may report one an earlier attempt made, so a pattern holding
+        // it matches nowhere.
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
-        $search = self::counts($counted, $subject, 0, self::MAX_STEPS, $options);
+        $search = self::counts($counted, $subject, 0, self::MAX_STEPS, $options, \PREG_OFFSET_CAPTURE);
         if (null === $search->matched) {
             return null;
         }
-        if ($search->matched) {
+        if ($search->matched && (str_contains($pattern, '\K') || ['', \strlen($subject)] !== ($search->groups[0] ?? null))) {
             return false;
         }
 

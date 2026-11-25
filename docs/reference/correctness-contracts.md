@@ -68,9 +68,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Semantics:** For a pattern whose one attempt is proven linear, a witness `prefix . run x n . breaker` read from the
   same automaton: every attempt started inside the run reads to its end without matching, then fails on the breaker,
   which holds the last code unit PCRE2 requires before any attempt, read as its compiler reads it: the one every
-  alternative ends with included (`b` for `/a+b|cb/`). The prefix keeps the first attempt from matching the bare run
-  (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in PCRE2's interpreter (`pcre.jit=0`,
-  a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
+  alternative ends with included (`b` for `/a+b|cb/`). No attempt started before the subject's end matches; the one
+  started there comes last, and may match the empty string (`" " x n . "!"` for `/\s*$/`). The prefix keeps the first
+  attempt from matching the bare run (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in
+  PCRE2's interpreter (`pcre.jit=0`, a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
   [`regex.lint.redos.search`](rules.md) and the PHPStan identifier
   [`regex.redos.search`](../guides/phpstan.md), at severity `medium`, a warning.
 - **Guarantee:** None in the other direction: `search_cost: null` means no witness was found, not that the search is

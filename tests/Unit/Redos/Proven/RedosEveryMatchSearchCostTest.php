@@ -240,9 +240,8 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         yield 'trailing white space' => ['pattern' => '/\s+$/', 'run' => ' ', 'searchCost' => true];
         // The empty match holds at the subject's end alone, after every
         // attempt inside the run failed: preg_match() is quadratic, and the
-        // search proof, which wants no attempt to match anywhere, finds no
-        // witness.
-        yield 'optional group before the dollar' => ['pattern' => '/(?:a+\d)?$/', 'run' => 'a', 'searchCost' => false];
+        // search proof finds its witness.
+        yield 'optional group before the dollar' => ['pattern' => '/(?:a+\d)?$/', 'run' => 'a', 'searchCost' => true];
     }
 
     /**
