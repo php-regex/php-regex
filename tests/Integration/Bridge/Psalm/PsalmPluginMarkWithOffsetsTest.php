@@ -39,7 +39,11 @@ final class PsalmPluginMarkWithOffsetsTest extends TestCase
     public function test_a_group_named_mark_beside_a_verb_holds_the_mark_under_offset_capture(): void
     {
         $this->assertSame(1, preg_match(self::PATTERN, 'a', $matches, \PREG_OFFSET_CAPTURE));
-        $this->assertSame([['a', 0], 'MARK' => 'm', ['a', 0]], $matches);
+        // PHP 8.5 writes the key MARK twice, the pair then the mark; a read
+        // of the key gives the mark on every PHP.
+        $this->assertSame(['a', 0], $matches[0]);
+        $this->assertSame(['a', 0], $matches[1]);
+        $this->assertSame('m', $matches['MARK']);
 
         PsalmTypes::codebase();
         $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44'])->parse(self::PATTERN));
