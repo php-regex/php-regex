@@ -160,7 +160,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                 'pattern' => $pattern,
                 'runtime' => $runtime,
                 'validation' => $validation,
-                'analysis' => null,
+                'redos' => null,
                 'input' => [
                     'value' => $inputValue,
                     'source' => null === $inputValue ? null : 'user',
@@ -219,7 +219,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
                     'pattern' => $pattern,
                     'runtime' => $runtime,
                     'validation' => $validation,
-                    'analysis' => $analysis,
+                    'redos' => $analysis,
                     'input' => [
                         'value' => $inputValue,
                         'source' => $inputSourceLabel,

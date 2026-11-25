@@ -251,7 +251,7 @@ final class LintBaseline
                     continue;
                 }
 
-                $message = \sprintf('The baseline entry for %s matches no issue any more: remove it, or generate the baseline again.', '' === $issueId ? 'an issue' : $issueId);
+                $message = \sprintf('The baseline entry for %s matches no issue any more: remove it, or generate the baseline again.', $issueId);
                 $hint = 'An entry left in place would take out the next issue of its kind unseen.';
                 $results[] = [
                     'file' => $file,
@@ -446,7 +446,7 @@ final class LintBaseline
      */
     private static function issueId(LintIssue $issue): string
     {
-        return self::escape($issue->id() ?? '');
+        return self::escape($issue->id());
     }
 
     private static function hash(string $pattern): string

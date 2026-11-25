@@ -753,3 +753,9 @@ CHANGELOG
    each reader of the file, in the middle of the report of `regex lint`, a
    checkstyle, JUnit or GitHub document included, and of the JSON report of
    `php artisan regex:lint`.
+ * A lint issue of the JSON report places itself in the pattern body with
+   `offset` and `end`, exclusive, the span of the node a lint rule names,
+   `null` where unknown; its `issue_id` is always a string, an invalid
+   pattern refused without an error code of its own reported as
+   `regex.pcre.runtime`, as the language server reports it, and baselined
+   under it.

@@ -1359,6 +1359,7 @@ prints one error envelope. The
 | lint result, issue and optimization entry | `fileOffset` | `file_offset` |
 | lint issue | `issueId` | `issue_id` |
 | lint issue | `type` | `severity` |
+| lint issue | `position` | `offset`, with `end` beside it |
 | lint issue `validation` | `isValid` | `is_valid` |
 | lint issue `validation` | `complexityScore` | `complexity_score` |
 | lint issue `validation` | `caretSnippet` | `caret_snippet` |
@@ -1382,19 +1383,21 @@ keys of `json_encode()` on an `OptimizationResult` or a `TranspileResult` do
 not change.
 
 - Every lint issue carries every key, `null` when it does not apply:
-  `severity, file, line, column, file_offset, position, issue_id, message,
-  hint, tip, source, validation, analysis`. An invalid pattern's `issue_id`
-  is its error code, such as `regex.group.unclosed`. `column` is `null` when
-  unknown, where 1.x printed `1`.
+  `severity, file, line, column, file_offset, offset, end, issue_id, message,
+  hint, tip, source, validation, analysis`. `end` is where the issue ends in
+  the pattern body, exclusive. `issue_id` is always a string: an invalid
+  pattern's is its error code, such as `regex.group.unclosed`. `column` is
+  `null` when unknown, where 1.x printed `1`.
 - The lint report ends with a newline, lists its results sorted by file, line
   and column whatever `--jobs` says, and gives `file` relative to the working
   directory with `/`. `stats` gains `redos_errors`, `infos`, `lint_errors`
   and `parser_fallbacks`; the report gains `target`.
-- `analyze` on an invalid pattern prints its document, with `parse.ok` false,
-  `validation` saying why, and `redos` and `explain` null. `debug` always
-  carries `validation`; on an invalid pattern its `analysis` is null and it
-  exits with 1, where 1.x printed an analysis of severity `unknown` and
-  exited with 0.
+- `analyze` on an invalid pattern prints its document, with `validation`
+  saying why, and `redos` and `explain` null; its `parse` object is gone,
+  `validation.is_valid` says the same. `debug` always carries `validation`,
+  and its ReDoS verdict is `redos`, as in `analyze`, where 1.x wrote
+  `analysis`; on an invalid pattern `redos` is null and it exits with 1,
+  where 1.x printed an analysis of severity `unknown` and exited with 0.
 - `transpile` and `redos` on an invalid pattern print the envelope with stage
   `pattern` and the `validation` object, and exit with 1. `transpile`
   validates the pattern first, so a pattern that parses but PHP refuses, such
@@ -1402,6 +1405,11 @@ not change.
   target cannot express prints the envelope with stage `pattern` and no
   `validation`. `redos --format=json` no longer prints a benchmark of a
   pattern PHP refuses; its console output still measures it.
+- `redos --format=json` names the measurement of the pattern
+  `bench.pattern`, labelled `pattern`, where 1.x wrote `vuln`. A measurement
+  writes `error` and `error_code`, `null` without an error, where 1.x wrote
+  `err_msg` (`-`) and `err_code` (`0`), and its `result` is `no_match` where
+  1.x wrote `no`.
 - Symfony's and Laravel's `regex:transpile` validate the pattern first, and
   in JSON print the CLI's document and envelope. Laravel's
   `{source, target, result, flags, warnings, compatible}` is gone: read

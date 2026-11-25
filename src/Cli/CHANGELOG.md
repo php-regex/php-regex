@@ -167,3 +167,9 @@ CHANGELOG
    `internal`, however long the shutdown takes: PHP stopped the shutdown
    too once the limit had run out again, and the run then exited with 255
    and printed nothing.
+ * The JSON documents name one thing one way: the ReDoS verdict of
+   `regex debug` is `redos`, as in `regex analyze`; `regex analyze` carries
+   no `parse` object, `validation.is_valid` says it; a measurement of
+   `regex redos` sits under `bench.pattern`, labelled `pattern`, writes
+   `error` and `error_code`, `null` without an error, and its `result` is
+   `match`, `no_match` or `error`.

@@ -37,8 +37,9 @@ use PHPRegex\Redos\RedosAnalysis;
  *     line: int,
  *     column: int|null,
  *     file_offset: int|null,
- *     position: int|null,
- *     issue_id: string|null,
+ *     offset: int|null,
+ *     end: int|null,
+ *     issue_id: string,
  *     docs_url: string|null,
  *     message: string,
  *     hint: string|null,
@@ -171,7 +172,10 @@ final class JsonFormatter extends AbstractOutputFormatter
             'line' => $issue->line,
             'column' => $issue->column,
             'file_offset' => $issue->fileOffset,
-            'position' => $issue->position,
+            // Where in the pattern's body the finding lies, its end
+            // exclusive; null where unknown.
+            'offset' => $issue->offset,
+            'end' => $issue->end,
             'issue_id' => $issue->id(),
             // The section of the docs that explains the issue.
             'docs_url' => $issue->docsUrl(),

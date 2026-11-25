@@ -1568,9 +1568,9 @@ vendor/bin/regex redos '/(a+)+$/'
   Preview      : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
 
   [3/3] Benchmark
-case     | result |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
---------------------------------------------------------------------------------------------
-vuln     | error  |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
+case     | result   |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
+----------------------------------------------------------------------------------------------
+pattern  | error    |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
 ```
 
 The input is the witness of a proven verdict, 32 pumps of an exponential one and 1,000 of a polynomial one, so it holds
@@ -2448,7 +2448,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "line": 3,
                     "column": 12,
                     "file_offset": 18,
-                    "position": 0,
+                    "offset": 0,
+                    "end": null,
                     "issue_id": "regex.lookbehind.unbounded",
                     "docs_url": null,
                     "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",

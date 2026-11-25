@@ -190,7 +190,7 @@ final class JsonFormatterTest extends TestCase
             'pattern' => '/test1/',
             'source' => 'preg_match',
             'location' => 'function call',
-            'issues' => [new LintIssue(LintSeverity::Error, 'Error 1', 'file1.php', 10)],
+            'issues' => [new LintIssue(LintSeverity::Error, 'Error 1', 'file1.php', 10, issueId: 'regex.lint.example')],
             'optimizations' => [['file' => 'file1.php', 'line' => 10, 'optimization' => new OptimizationResult('/test1/', '/optimized/', ['test']), 'savings' => 5]],
         ];
 
@@ -233,8 +233,9 @@ final class JsonFormatterTest extends TestCase
             'line' => 10,
             'column' => null,
             'file_offset' => null,
-            'position' => null,
-            'issue_id' => null,
+            'offset' => null,
+            'end' => null,
+            'issue_id' => 'regex.lint.example',
             'docs_url' => null,
             'message' => 'Error 1',
             'hint' => null,
@@ -416,6 +417,6 @@ final class JsonFormatterTest extends TestCase
         $this->assertIsArray($mapped);
         $this->assertArrayHasKey('docs_url', $mapped);
         $this->assertSame($url, $mapped['docs_url']);
-        $this->assertSame(['issue_id', 'docs_url', 'message'], \array_slice(array_keys($mapped), 6, 3));
+        $this->assertSame(['issue_id', 'docs_url', 'message'], \array_slice(array_keys($mapped), 7, 3));
     }
 }

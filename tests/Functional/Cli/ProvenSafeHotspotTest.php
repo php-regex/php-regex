@@ -156,10 +156,10 @@ final class ProvenSafeHotspotTest extends TestCase
     {
         $document = json_decode($this->runCommand(new DebugCommand(), 'debug', [...$arguments, '--format=json']), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($document);
-        $this->assertIsArray($document['analysis'] ?? null);
+        $this->assertIsArray($document['redos'] ?? null);
         $this->assertIsArray($document['input'] ?? null);
 
-        return ['severity' => $document['analysis']['severity'] ?? null, 'input' => $document['input']];
+        return ['severity' => $document['redos']['severity'] ?? null, 'input' => $document['input']];
     }
 
     /**

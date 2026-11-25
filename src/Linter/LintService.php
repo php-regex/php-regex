@@ -301,7 +301,7 @@ final class LintService
         $raisedBy = [];
         foreach ($issues as $issue) {
             if (null !== $issue->variant) {
-                $raisedBy[$this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset)][(string) $issue->id()][$issue->variant] = true;
+                $raisedBy[$this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset)][$issue->id()][$issue->variant] = true;
             }
         }
 
@@ -311,7 +311,7 @@ final class LintService
             }
 
             $place = $this->createPatternKey($issue->file, $issue->line, $issue->source, $issue->fileOffset);
-            if (\count($raisedBy[$place][(string) $issue->id()]) < \count($variants[$place] ?? [])) {
+            if (\count($raisedBy[$place][$issue->id()]) < \count($variants[$place] ?? [])) {
                 $issues[$index] = $issue->onVariantAlone();
             }
         }
@@ -370,7 +370,7 @@ final class LintService
      * @param list<T>                                        $entries
      * @param array<string, list<IgnoreMarker>>              $markers
      * @param array<string, array<int, array<string, true>>> $used    by file, the index of the marker, then the identifier
-     * @param \Closure(T): array{string, int, ?string}       $locate  the file, the line and the identifier of an entry
+     * @param \Closure(T): array{string, int, string}        $locate  the file, the line and the identifier of an entry
      *
      * @return list<T>
      */
@@ -392,7 +392,7 @@ final class LintService
                 if ([] === $marker->identifiers) {
                     $used[$file][$index][''] = true;
                     $silenced = true;
-                } elseif (null !== $id && $marker->silences($id)) {
+                } elseif ($marker->silences($id)) {
                     $used[$file][$index][$id] = true;
                     $silenced = true;
                 }
@@ -570,7 +570,7 @@ final class LintService
         $unique = [];
 
         foreach ($issues as $issue) {
-            $key = implode("\0", [$issue->file, $issue->line, $issue->column, $issue->fileOffset, $issue->position, $issue->issueId, $issue->message, $issue->pattern]);
+            $key = implode("\0", [$issue->file, $issue->line, $issue->column, $issue->fileOffset, $issue->offset, $issue->issueId, $issue->message, $issue->pattern]);
             if (isset($seen[$key])) {
                 continue;
             }
@@ -657,8 +657,8 @@ final class LintService
      */
     private static function compareIssues(LintIssue $left, LintIssue $right): int
     {
-        return [self::nullFirst($left->position), self::nullFirst($left->id())]
-            <=> [self::nullFirst($right->position), self::nullFirst($right->id())];
+        return [self::nullFirst($left->offset), $left->id()]
+            <=> [self::nullFirst($right->offset), $right->id()];
     }
 
     /**

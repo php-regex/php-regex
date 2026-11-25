@@ -202,7 +202,7 @@ final class JsonOutputContractTest extends TestCase
 
         $this->assertSame(0, $exitCode);
         $document = JsonContract::decodeDocument($stdout);
-        $this->assertSame(['ok' => true], $document['parse'] ?? null);
+        $this->assertArrayNotHasKey('parse', $document);
         $validation = $document['validation'] ?? null;
         $this->assertIsArray($validation);
         $this->assertTrue($validation['is_valid'] ?? null);
@@ -231,7 +231,7 @@ final class JsonOutputContractTest extends TestCase
         $document = JsonContract::decodeDocument($stdout);
         JsonContract::assertShape('analyze', $document);
         $this->assertSame($pattern, $document['pattern']);
-        $this->assertSame(['ok' => false], $document['parse']);
+        $this->assertArrayNotHasKey('parse', $document);
         $this->assertInvalidValidation($document['validation'], $offset, $errorCode, $category);
         $this->assertNull($document['redos']);
         $this->assertNull($document['explain']);
@@ -249,7 +249,7 @@ final class JsonOutputContractTest extends TestCase
         JsonContract::assertShape('debug', $document);
         $this->assertSame($pattern, $document['pattern']);
         $this->assertInvalidValidation($document['validation'], $offset, $errorCode, $category);
-        $this->assertNull($document['analysis']);
+        $this->assertNull($document['redos']);
     }
 
     /**
@@ -301,7 +301,7 @@ final class JsonOutputContractTest extends TestCase
         $validation = $document['validation'] ?? null;
         $this->assertIsArray($validation);
         $this->assertTrue($validation['is_valid'] ?? null);
-        $this->assertIsArray($document['analysis'] ?? null);
+        $this->assertIsArray($document['redos'] ?? null);
     }
 
     /**
@@ -387,13 +387,17 @@ final class JsonOutputContractTest extends TestCase
         // The invalid pattern: its ErrorCode is its issue id.
         $invalid = self::onlyIssue($byPattern['/(a/']['issues'], 'regex.group.unclosed');
         $this->assertSame('error', $invalid['severity']);
-        $this->assertSame(2, $invalid['position']);
+        // Where PCRE puts the error; how far it reaches is unknown.
+        $this->assertSame(2, $invalid['offset']);
+        $this->assertNull($invalid['end']);
         $this->assertInvalidValidation($invalid['validation'], 2, 'regex.group.unclosed', 'syntax');
         $this->assertNull($invalid['analysis']);
 
         // A lint rule: no validation, no analysis.
         $lint = self::onlyIssue($byPattern['/a{1}/']['issues'], 'regex.lint.quantifier.useless');
         $this->assertSame('warning', $lint['severity']);
+        // The span of the node the rule names, "a{1}", its end exclusive.
+        $this->assertSame([0, 4], [$lint['offset'], $lint['end']]);
         $this->assertNull($lint['validation']);
         $this->assertNull($lint['analysis']);
         $this->assertIsString($lint['hint']);
@@ -472,8 +476,10 @@ final class JsonOutputContractTest extends TestCase
             $issue = JsonContract::asArray($issues[0]);
             $this->assertSame([$result['file'], $result['line'], $result['column'], $result['file_offset']], [$issue['file'], $issue['line'], $issue['column'], $issue['file_offset']]);
             // No pattern is read: the issue stands at no offset of one.
-            $this->assertArrayHasKey('position', $issue);
-            $this->assertNull($issue['position']);
+            $this->assertArrayHasKey('offset', $issue);
+            $this->assertNull($issue['offset']);
+            $this->assertArrayHasKey('end', $issue);
+            $this->assertNull($issue['end']);
             $this->assertNull($issue['validation']);
             $this->assertNull($issue['analysis']);
             $this->assertIsString($issue['docs_url']);
@@ -563,7 +569,7 @@ final class JsonOutputContractTest extends TestCase
     public static function provideConfirmations(): iterable
     {
         yield 'analyze' => ['arguments' => ['analyze', '/(a+)+$/', '--format=json', '--redos-mode=confirmed'], 'path' => 'redos'];
-        yield 'debug' => ['arguments' => ['debug', '/(a+)+$/', '--format=json', '--redos-mode=confirmed'], 'path' => 'analysis'];
+        yield 'debug' => ['arguments' => ['debug', '/(a+)+$/', '--format=json', '--redos-mode=confirmed'], 'path' => 'redos'];
         yield 'lint' => ['arguments' => [...self::LINT, '--redos-mode=confirmed'], 'path' => 'lint'];
     }
 

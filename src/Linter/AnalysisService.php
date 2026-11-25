@@ -413,12 +413,12 @@ final class AnalysisService
     private function validationIssues(PatternOccurrence $occurrence, ValidationResult $validation): array
     {
         if (ValidationErrorCategory::Limit === $validation->category) {
-            return [LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), position: $validation->offset, tip: $validation->hint, validation: $validation)];
+            return [LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), offset: $validation->offset, tip: $validation->hint, validation: $validation)];
         }
 
         $message = $validation->error ?? 'Invalid regex.';
 
-        return [LintIssue::at($occurrence, LintSeverity::Error, $message, position: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation)];
+        return [LintIssue::at($occurrence, LintSeverity::Error, $message, offset: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation)];
     }
 
     /**
@@ -442,7 +442,7 @@ final class AnalysisService
                 $occurrence,
                 LintSeverity::Error,
                 $message,
-                position: $rangeValidation->offset,
+                offset: $rangeValidation->offset,
                 tip: $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
                 validation: $rangeValidation,
                 target: ProjectTarget::describe($refusedBy->target),
@@ -513,7 +513,7 @@ final class AnalysisService
                 }
             }
 
-            $issues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->hint);
+            $issues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->end, $issue->hint);
         }
 
         return $issues;
