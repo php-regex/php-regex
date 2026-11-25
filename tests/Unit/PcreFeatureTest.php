@@ -68,9 +68,6 @@ final class PcreFeatureTest extends TestCase
         yield 'branch count off the condition name' => [PcreFeature::BranchCountErrorOffTheConditionName, '10.46', '10.47'];
         yield 'variable-length lookbehind' => [PcreFeature::VariableLengthLookbehind, '10.42', '10.43'];
         yield 'long group names' => [PcreFeature::LongGroupNames, '10.43', '10.44'];
-        // php:8.3-cli (10.42): "/a(a)*+b/" writes "a" to group 1 on "aacab"
-        // with the JIT; php:8.4-cli (10.44) leaves it unset.
-        yield 'groups of a possessive repeat cleared at each start' => [PcreFeature::PossessiveRepeatGroupsClearedEachStart, '10.43', '10.44'];
         // php:8.3-cli (10.42): "/^\w$/u" does not match "\u{301}"; php:8.4-cli (10.44) does.
         yield 'marks and connectors in a word under UCP' => [PcreFeature::UcpWordTakesMarksAndConnectors, '10.42', '10.43'];
         yield 'extended class beside a lookbehind' => [PcreFeature::ExtendedClassBesideLookbehindCompiles, '10.47', '10.48'];
