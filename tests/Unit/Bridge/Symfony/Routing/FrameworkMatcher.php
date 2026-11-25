@@ -19,6 +19,7 @@ use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
 use Symfony\Component\Routing\Matcher\RedirectableUrlMatcherInterface;
 use Symfony\Component\Routing\RequestContext;
+use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
 /**
@@ -27,6 +28,21 @@ use Symfony\Component\Routing\RouteCollection;
  */
 final class FrameworkMatcher
 {
+    /**
+     * Whether the matcher looks a route with no variable up by its path
+     * with every trailing slash of the request trimmed off, as
+     * symfony/routing does before 6.4.51, 7.4.24 and 8.1.12, and on 8.0:
+     * "/a/" then takes "/a//". Since those releases, it looks a route up
+     * for a request with one trailing slash at most.
+     */
+    public static function trimsEveryTrailingSlash(): bool
+    {
+        $routes = new RouteCollection();
+        $routes->add('a', new Route('/a/'));
+
+        return 'a' === self::reached($routes, 'GET', '/a//');
+    }
+
     /**
      * The route a request reaches: the route of the redirect when the
      * matcher redirects, null when no route takes the request.
