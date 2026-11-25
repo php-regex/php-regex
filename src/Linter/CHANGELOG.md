@@ -33,6 +33,10 @@ CHANGELOG
  * `\cA` reads one character in every rule, as `\x01` does:
    `/^(?:a+\cA)+$/` no longer reports nested quantifiers, and `/\cA+\cA+$/`
    reports `regex.lint.quantifier.concatenation`, as `/\x01+\x01+$/` does.
+ * `regex.lint.redos.search` at the calls that look for every match also
+   covers short matches, as `/a*b|a/` on a run of `a`: the attempt that
+   finds each one reads to the end of the run first. The message then
+   starts with `Quadratic search over short matches`.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the

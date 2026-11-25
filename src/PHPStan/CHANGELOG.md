@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.redos.search` at the calls that look for every match also covers
+   short matches, as `/a*b|a/` on a run of `a`, whose attempt reads to the
+   end of the run before each one; the tip then starts with `Quadratic
+   search over short matches`.
  * `regex.redos.search`, with its message `Quadratic search (ReDoS): %s`,
    also covers the calls of `preg_match_all()`, `preg_replace()`,
    `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()`

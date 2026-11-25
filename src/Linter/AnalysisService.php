@@ -549,7 +549,7 @@ final class AnalysisService
         $everyMatchCost = $redos->everyMatchSearchCost;
         if (null !== $everyMatchCost && null !== $occurrence->everyMatch && $this->shouldReportSearchCost()) {
             $evidence = RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion);
-            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage($occurrence->everyMatch), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
+            $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage($occurrence->everyMatch, $everyMatchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
         }
 
         return $issues;

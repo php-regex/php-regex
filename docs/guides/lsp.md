@@ -266,7 +266,8 @@ The quadratic cost of an unanchored search whose every attempt is linear
 is `regex.lint.redos.search`, a Warning, at a threshold of `medium` or
 `low`. So is the cost of the loop of a call that looks for every match,
 `preg_match_all()` or `preg_split()` for instance, on a pattern whose search
-stops at an empty match inside a run, as on the command line. Once the analysis proves a pattern linear, the lint warnings that
+stops at an empty match inside a run, or at a short match its attempt finds
+after it read to the end of the run, as on the command line. Once the analysis proves a pattern linear, the lint warnings that
 guess at backtracking (`quantifier.nested`, `dotstar.nested`,
 `overlap.charset`) are no longer published for it. The analysis is bounded
 as on the command line: a pattern past its budget says so in the verdict.

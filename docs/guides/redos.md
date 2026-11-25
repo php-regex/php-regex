@@ -114,7 +114,7 @@ heuristics decide, though `"!" x n . "a" x n . "\nb"` is cubic.
 
 The limits of the guarantee, each one deliberate:
 
-- **One match attempt.** The verdict covers one match attempt, at one start position. When it fails, `preg_match()` tries again at the next start position the search allows: a search is *unanchored* as long as it can start later. A `^` or `\A` in one alternative only does not anchor it (`/^z|a+$/` matches at offset 1 of `"baaa"`), a `^` under `/m` also matches after a newline, and PCRE2 may skip positions it can rule out. `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply the cost of an attempt by the length of the subject: a degree-k per-attempt verdict costs up to n^(k+1) steps over an unanchored search. When one attempt is proven linear, the analysis looks for the run that makes the search quadratic: see [The cost of an unanchored search](#the-cost-of-an-unanchored-search). A pattern that matches inside the run is not reported there: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication. The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential. Measured without the JIT, `/a*a*$/`, quadratic per attempt, takes:
+- **One match attempt.** The verdict covers one match attempt, at one start position. When it fails, `preg_match()` tries again at the next start position the search allows: a search is *unanchored* as long as it can start later. A `^` or `\A` in one alternative only does not anchor it (`/^z|a+$/` matches at offset 1 of `"baaa"`), a `^` under `/m` also matches after a newline, and PCRE2 may skip positions it can rule out. `preg_match_all()`, `preg_replace()` and `preg_split()` look for every match. Those retries can multiply the cost of an attempt by the length of the subject: a degree-k per-attempt verdict costs up to n^(k+1) steps over an unanchored search. When one attempt is proven linear, the analysis looks for the run that makes the search quadratic: see [The cost of an unanchored search](#the-cost-of-an-unanchored-search). A pattern that matches inside the run is not reported there: `/a*b|a/` is `safe (proven)`, and the `preg_match_all()` figure above is that multiplication, reported at the calls that look for every match (see [The search of the functions that look for every match](#the-search-of-the-functions-that-look-for-every-match)). The second search `preg_match()` runs without `$matches` after an empty match is covered: for a pattern that can match empty, the analysis also models an attempt where an empty match at its start does not count, which is why `/a*|(b+)+$/` is exponential. Measured without the JIT, `/a*a*$/`, quadratic per attempt, takes:
 
   - 12 ms on 500 `a` and a `b`,
   - 87 ms on 1,000 `a` and a `b`,
@@ -339,7 +339,34 @@ A `preg_match()` call, and a pattern analysed with no call, keep the verdict of 
 
 The extractor reports a pattern that several calls read, as a constant or a variable, once, at its first call, and the cost follows that call.
 
-A match that is short but not empty costs the same loop the same way and is not reported, as in `/a*b|a/` above or `/a(?:a+\d)?/`.
+A match that is short and not empty costs the same loop the same way when the attempt that finds it first tries a branch that reads to the end of the run. Each call of the loop starts where the last match ended, inside the run, and its attempt reads the rest of the run again before it settles on the next short match. `/a(?:a+\d)?/`, `/a*b|a/` and `/a\K(?:a+\d)?/` are the type. Measured with PHP 8.4.28 and PCRE2 10.49 on `"a" x n`, where `preg_match()` takes 0.01 ms:
+
+| `preg_match_all()` | `pcre.jit=0`, n = 2,000 / 4,000 / 8,000 / 16,000 | `pcre.jit=1` |
+|---|---|---|
+| `/a(?:a+\d)?/` | 1.1, 4.1, 16, 63 ms | 0.7, 2.8, 11, 43 ms |
+| `/a*b\|a/` | 1.2, 4.3, 17, 64 ms | 0.7, 2.8, 11, 43 ms |
+| `/a\K(?:a+\d)?/` | 1.1, 4.3, 17, 64 ms | 1.1, 4.2, 16, 65 ms |
+
+The analysis looks for this witness when the retry after an empty match gives none. It reads the first attempt of each call in the order PCRE2 tries its paths: the first success it meets must read one character at least and four run words at most, and every path tried before it must read to the end of the run and fail there. The first call starts the subject, each other one where a match ended. The witness is the same `RedosSearchCost`, with `$shortMatch` set to `true`, and the finding starts with `Quadratic search over short matches`. `\G` and the `A` modifier do not stop it either: `/\Ga(?:a+\d)?/` and `/a(?:a+\d)?/A` are quadratic in `preg_match_all()`. A match that `\K` leaves empty, as in `/a\K(?:a+\d)?/`, makes PHP retry where it ends; the retry refuses an empty match at its start only, and finds the next short match the same way. In confirmed mode the step replay pins the attempt itself, with the `A` modifier, without the JIT. The patterns that stay linear are those whose attempt:
+
+- matches before it tries the long branch, as `/a(?:a+\d)??/` and `/a|a*b/` do;
+- reads a bounded run in that branch, as `/a(?:a{1,3}\d)?/` does;
+- matches the whole run, as `/a+\d?/` does, or fails inside it, as `/\b\w(?:\w+\d)?/` does.
+
+`vendor/bin/regex lint app --redos --redos-threshold=medium` on `$count = preg_match_all('/\s(?:\s*,)?/', $line);` prints:
+
+```
+  app/Fields.php:3:25
+      → /\s(?:\s*,)?/
+    WARN Quadratic search over short matches: one attempt is linear (proven), but preg_match_all() finds a short match
+         at each position of the run, and each attempt reads to the end of the run before it settles on it; that is
+         quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for
+         some patterns. Severity: MEDIUM.
+         ↳ Attack: " " x n.
+         ↳ pcre.backtrack_limit does not stop it: the limit counts each call apart.
+         ↳ preg_match() and preg_grep() stop at the first match and read the run once.
+         ↳ Bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.
+```
 
 #### The calls that run the loop
 

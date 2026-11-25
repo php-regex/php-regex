@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -72,7 +73,7 @@ final class PsalmPluginRedosTest extends TestCase
         );
         foreach (self::MEDIUM as $index => [$line, , , $function]) {
             if (null !== $function) {
-                $this->assertStringContainsString(RedosVerdict::everyMatchMessage($function), $found[$index][3], 'Line '.$line);
+                $this->assertStringContainsString(RedosVerdict::everyMatchMessage($function, self::retried()), $found[$index][3], 'Line '.$line);
             }
         }
     }
@@ -93,7 +94,7 @@ final class PsalmPluginRedosTest extends TestCase
         $this->assertSame('Potential backtracking (ReDoS): /^(a+)+\1$/. Severity: critical, heuristic.', $messages[23]);
         $this->assertStringStartsWith("Quadratic search (ReDoS): /\\s+$/. Quadratic search: one attempt is linear (proven); an unanchored search is quadratic in PCRE2's interpreter", $messages[25]);
         $this->assertStringContainsString('Attack: " " x n . "!".', $messages[25]);
-        $this->assertStringStartsWith('Quadratic search (ReDoS): /(?:a+\d)?/. '.RedosVerdict::everyMatchMessage('preg_match_all').' ', $messages[26]);
+        $this->assertStringStartsWith('Quadratic search (ReDoS): /(?:a+\d)?/. '.RedosVerdict::everyMatchMessage('preg_match_all', self::retried()).' ', $messages[26]);
         $this->assertStringContainsString('Attack: "a" x n.', $messages[26]);
         foreach ($messages as $line => $message) {
             $this->assertStringNotContainsString("\n", $message, 'Line '.$line.': one line, as every report of Psalm prints it.');
@@ -197,5 +198,13 @@ final class PsalmPluginRedosTest extends TestCase
     private function issues(array $options): array
     {
         return PsalmRun::reported(PsalmRun::inFile(PsalmRun::issues([self::FILE], '8.4', $options), self::FILE));
+    }
+
+    /**
+     * The every-match cost of a pattern whose empty match PHP tries again.
+     */
+    private static function retried(): RedosSearchCost
+    {
+        return new RedosSearchCost(2, '', 'a', '', false);
     }
 }

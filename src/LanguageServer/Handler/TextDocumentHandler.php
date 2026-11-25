@@ -780,7 +780,7 @@ final class TextDocumentHandler
         if (null !== $everyMatchCost && null !== $everyMatch) {
             $diagnostics[] = $this->diagnosticConverter->fromRedos(
                 RedosVerdict::SEARCH_ISSUE_ID,
-                RedosVerdict::everyMatchMessage($everyMatch),
+                RedosVerdict::everyMatchMessage($everyMatch, $everyMatchCost),
                 RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion),
                 false,
                 $span,

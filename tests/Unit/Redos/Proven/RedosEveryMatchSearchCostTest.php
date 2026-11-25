@@ -53,6 +53,15 @@ use PHPUnit\Framework\TestCase;
  * 1.75, 6.75, 26.74 and 105.54 ms with pcre.jit=1, preg_match() 0.01 ms; the
  * retry pinned at the run's start then half-way takes 2 002 then 1 002
  * steps on 2 000 "a" (auto-possession off, PcreAttemptSteps).
+ *
+ * A short match that is not empty costs the loop the same way when the
+ * attempt that finds it first tries a branch that reads to the end of the
+ * run: each call of the loop starts where the last match ended, inside the
+ * run. "a(?:a+\d)?", "a*b|a" and "a\K(?:a+\d)?" on the same runs:
+ * preg_match_all() 1.08, 4.09, 15.82 and 62.77 ms, 1.15, 4.34, 17.02 and
+ * 63.81 ms, 1.12, 4.28, 16.60 and 64.42 ms with pcre.jit=0, 0.72, 2.75,
+ * 10.72 and 43.35 ms, 0.73, 2.77, 10.83 and 42.73 ms, 1.11, 4.19, 16.15 and
+ * 64.81 ms with pcre.jit=1, preg_match() 0.01 ms.
  */
 final class RedosEveryMatchSearchCostTest extends TestCase
 {
@@ -96,6 +105,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
+        $this->assertFalse($confirmed->shortMatch, $pattern.': the retry after an empty match pays the run.');
 
         $cost = $analysis->everyMatchSearchCost;
         if (!$exact) {
@@ -108,7 +118,230 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $this->assertSame(2, $cost->degree, $pattern);
         $this->assertSame(['', $run], [$cost->prefix, $cost->run], $pattern);
         $this->assertNull($cost->replayed, $pattern);
+        $this->assertFalse($cost->shortMatch, $pattern.': the retry after an empty match pays the run.');
         $this->assertGreaterThanOrEqual(50, preg_match_all($interpreted, $cost->build(100)), $pattern.' skips most positions of the witness on 100 run words.');
+    }
+
+    /**
+     * Each call of the loop starts inside the run, where the last match
+     * ended, and its first attempt tries a branch that reads to the end of
+     * the run and fails there before it settles on a short match that is
+     * not empty: preg_match() pays the run once, the loop at each match.
+     * The cost is reported for the functions that look for every match, as
+     * a cost of short matches.
+     */
+    #[Test]
+    #[DataProvider('provideShortMatches')]
+    public function test_every_match_search_cost_is_reported_when_each_short_match_reads_the_run(string $pattern, string $run, bool $exact, ?string $counting = null): void
+    {
+        $interpreted = PcreInterpreter::pattern($pattern);
+        $subject = str_repeat($run, 100).'!';
+        $this->assertSame(1, preg_match($interpreted, $subject, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: '.$pattern.' finds no match.');
+        $end = $matches[0][1] + \strlen($matches[0][0]);
+        $this->assertGreaterThan(0, $end, 'Oracle: the first match of '.$pattern.' reads nothing.');
+        $this->assertLessThanOrEqual(4 * \strlen($run), $end, 'Oracle: the first match of '.$pattern.' reads past four run words.');
+        $this->assertGreaterThanOrEqual(25, preg_match_all($interpreted, $subject), 'Oracle: preg_match_all() skips most of the run with '.$pattern.'.');
+
+        // The attempt that ends each match reads the rest of the run; the
+        // replay counts it with each character a repeat reads in a group of
+        // its own, which the counter sees.
+        $this->assertAttemptsGrowWithTheRestOfTheRun($counting ?? $pattern, $run);
+
+        $analyzer = new RedosAnalyzer();
+        $analysis = $analyzer->analyze($pattern);
+        $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
+        $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
+        $this->assertNull($analysis->searchCost, $pattern.': preg_match() stops at the first short match.');
+
+        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
+        $this->assertTrue($confirmed->replayed, $pattern);
+        $this->assertTrue($confirmed->shortMatch, $pattern);
+
+        $cost = $analysis->everyMatchSearchCost;
+        if (!$exact) {
+            $this->assertNull($cost, $pattern.' is reported before the engine replay.');
+
+            return;
+        }
+
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame(2, $cost->degree, $pattern);
+        $this->assertSame(['', $run], [$cost->prefix, $cost->run], $pattern);
+        $this->assertNull($cost->replayed, $pattern);
+        $this->assertTrue($cost->shortMatch, $pattern);
+        $witness = $cost->build(100);
+        $this->assertGreaterThanOrEqual(25, preg_match_all($interpreted, $witness), $pattern.' skips most of the witness on 100 run words.');
+        $this->assertSame(1, preg_match($interpreted, $witness, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: '.$pattern.' finds no match in its witness.');
+        $this->assertLessThanOrEqual(4 * \strlen($run), $matches[0][1] + \strlen($matches[0][0]), $pattern.': the first match of the witness reads past four run words.');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, run: string, exact: bool, counting?: string}>
+     */
+    public static function provideShortMatches(): iterable
+    {
+        yield 'optional group after a character' => ['pattern' => '/a(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'first branch reads the run' => ['pattern' => '/a*b|a/', 'run' => 'a', 'exact' => true];
+        yield '\K before an optional group' => ['pattern' => '/a\K(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'lazy loop before a literal' => ['pattern' => '/a*?b|a/', 'run' => 'a', 'exact' => true];
+        yield 'optional group before a character' => ['pattern' => '/(?:a+\d)?a/', 'run' => 'a', 'exact' => true];
+        yield 'two characters before the optional group' => ['pattern' => '/aa(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'class before the optional group' => ['pattern' => '/[ab](?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'dollar after the run' => ['pattern' => '/a(?:a+$)?/', 'run' => 'a', 'exact' => true];
+        yield 'empty match refused everywhere' => ['pattern' => '/(*NOTEMPTY)a(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'A modifier' => ['pattern' => '/a(?:a+\d)?/A', 'run' => 'a', 'exact' => true];
+        yield '\G' => ['pattern' => '/\Ga(?:a+\d)?/', 'run' => 'a', 'exact' => true];
+        yield 'optional group under u' => ['pattern' => '/é(?:é+\d)?/u', 'run' => 'é', 'exact' => true];
+        yield 'run word of two characters' => ['pattern' => '/ab(?:(?:ab)+\d)?/', 'run' => 'ab', 'exact' => true];
+        // The step counter sees nothing inside a possessive repeat of one
+        // set, though the attempt reads the run: 1.17, 4.37, 17.12 and
+        // 64.65 ms through preg_match_all() on 2 000 to 16 000 "a" with
+        // pcre.jit=0.
+        yield 'possessive run' => ['pattern' => '/a(?:a*+\d)?/', 'run' => 'a', 'exact' => true, 'counting' => '/a(?:(?:a)*+\d)?/'];
+        yield 'lookahead after the run' => ['pattern' => '/a(?:[a-z]+(?=\d))?/', 'run' => 'a', 'exact' => false];
+        // The model keeps an atomic body with every way through it: 1.14,
+        // 4.32, 25.13 and 106.70 ms, 1.20, 4.38, 16.60 and 85.22 ms with
+        // pcre.jit=0.
+        yield 'atomic optional group' => ['pattern' => '/a(?>a+\d)?/', 'run' => 'a', 'exact' => false];
+        yield 'possessive optional group' => ['pattern' => '/a(?:a+\d)?+/', 'run' => 'a', 'exact' => false];
+    }
+
+    /**
+     * The attempt reads no run before its match, or its match reads the
+     * run, or no attempt inside the run matches: the loop of every match is
+     * linear, and nothing is reported.
+     */
+    #[Test]
+    #[DataProvider('provideShortMatchesReadingNoRun')]
+    public function test_every_match_search_cost_is_not_reported_when_no_short_match_reads_the_run(string $pattern, string $run): void
+    {
+        $subject = str_repeat($run, 4 * self::QUARTER).'!';
+        $found = preg_match(PcreInterpreter::pattern($pattern), $subject, $matches, \PREG_OFFSET_CAPTURE);
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $far = PcreAttemptSteps::steps($pinned, $subject, self::QUARTER * \strlen($run));
+        $near = PcreAttemptSteps::steps($pinned, $subject, 2 * self::QUARTER * \strlen($run));
+        $covers = 1 === $found && $matches[0][1] + \strlen($matches[0][0]) >= 2 * self::QUARTER * \strlen($run);
+        $this->assertTrue($far - $near < self::QUARTER || $covers, \sprintf('Oracle: the attempt of %s grows with the rest of the run (%d then %d steps), and its match stops inside it.', $pattern, $far, $near));
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertNull($analyzer->analyze($pattern)->everyMatchSearchCost, $pattern);
+        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost, $pattern.' in confirmed mode');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, run: string}>
+     */
+    public static function provideShortMatchesReadingNoRun(): iterable
+    {
+        yield 'optional group of a fixed length' => ['pattern' => '/a(?:a\d)?/', 'run' => 'a'];
+        yield 'optional group of another character' => ['pattern' => '/a(?:b+\d)?/', 'run' => 'a'];
+        yield 'bounded repeat in the optional group' => ['pattern' => '/a(?:a{1,3}\d)?/', 'run' => 'a'];
+        yield 'lazy optional group' => ['pattern' => '/a(?:a+\d)??/', 'run' => 'a'];
+        yield 'short branch first' => ['pattern' => '/a|a*b/', 'run' => 'a'];
+        yield 'match that reads the run' => ['pattern' => '/a+(?:a+\d)?/', 'run' => 'a'];
+        yield 'possessive repeat of every character' => ['pattern' => '/a(?:.*+\d)?/s', 'run' => 'a'];
+        yield 'word boundary inside the run' => ['pattern' => '/\b\w(?:\w+\d)?/', 'run' => 'a'];
+        yield 'caret' => ['pattern' => '/^a(?:a+\d)?/', 'run' => 'a'];
+        // The paths tried before the match succeed later, through the
+        // possessive dot: the match reads the run.
+        yield 'possessive repeat of every character in a later branch' => ['pattern' => '/a(?:a+\d|.*+)?/s', 'run' => 'a'];
+        // The paths tried before the match fail on the next character.
+        yield 'run word of two characters the paths tried before fail inside' => ['pattern' => '/ab(?:ac)?|(?:ab)+\d/', 'run' => 'ab'];
+    }
+
+    /**
+     * The replay of a short match pins the attempt a quarter and half-way
+     * through the run: it must match within four run words, and take one
+     * more step at least per run word left; the limits may leave it unable
+     * to count.
+     *
+     * @param array{backtrackLimit?: int} $options
+     */
+    #[Test]
+    #[DataProvider('provideShortMatchReplays')]
+    public function test_replay_of_short_matches_says_what_the_engine_shows(string $pattern, array $options, ?bool $replays): void
+    {
+        $subject = str_repeat('a', 256);
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $far = PcreAttemptSteps::steps($pinned, $subject, 64);
+        $near = PcreAttemptSteps::steps($pinned, $subject, 128);
+        $found = preg_match($pinned, $subject, $matches, \PREG_OFFSET_CAPTURE, 64);
+        $short = 1 === $found && $matches[0][1] + \strlen($matches[0][0]) > 64 && $matches[0][1] + \strlen($matches[0][0]) <= 68;
+        if ('/a+\d/' === $pattern) {
+            $this->assertSame(0, $found, 'Oracle: the attempt of '.$pattern.' matches.');
+        }
+        // The oracle of each outcome, as the engine gives it.
+        if (true === $replays) {
+            $this->assertTrue($short && $far - $near >= 64, \sprintf('Oracle: the attempt of %s at a quarter of the run matches past four characters, or does not read the run (%d then %d steps).', $pattern, $far, $near));
+        } elseif (false === $replays) {
+            $this->assertTrue(!$short || $far - $near < 64, \sprintf('Oracle: the attempt of %s reads the run before a short match (%d then %d steps).', $pattern, $far, $near));
+        } else {
+            $this->assertGreaterThan($options['backtrackLimit'] ?? 0, $far, 'Oracle: the attempt of '.$pattern.' fits the limit.');
+        }
+
+        $this->assertSame($replays, (new SearchCostReplayer())->replaysShortMatches($pattern, '', 'a', '', new ConfirmationOptions(...$options)), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, options: array{backtrackLimit?: int}, replays: bool|null}>
+     */
+    public static function provideShortMatchReplays(): iterable
+    {
+        yield 'each attempt reads the rest of the run' => ['pattern' => '/a(?:a+\d)?/', 'options' => [], 'replays' => true];
+        yield 'each attempt reads the rest of the run past a \K' => ['pattern' => '/a\K(?:a+\d)?/', 'options' => [], 'replays' => true];
+        yield 'the attempt reads no run' => ['pattern' => '/a(?:a+\d)??/', 'options' => [], 'replays' => false];
+        yield 'the match reads the run' => ['pattern' => '/a+(?:a+\d)?/', 'options' => [], 'replays' => false];
+        yield 'the match is empty' => ['pattern' => '/(?:a+\d)?/', 'options' => [], 'replays' => false];
+        yield 'the attempt fails' => ['pattern' => '/a+\d/', 'options' => [], 'replays' => false];
+        yield 'limits too low for the attempt' => ['pattern' => '/a(?:a+\d)?/', 'options' => ['backtrackLimit' => 50], 'replays' => null];
+    }
+
+    /**
+     * After a match "\K" leaves empty PHP retries where it ends, refusing
+     * an empty match at its start: a retry that then reads the run moves
+     * the loop past it, and one the limits stop cannot be counted. On a
+     * run of "ab", "(?<=b)a\K" leaves an empty match after each "a", where
+     * "(?=b)" would match empty and "b(?:ab)+" reads the rest of the run.
+     *
+     * @param array{backtrackLimit?: int} $options
+     */
+    #[Test]
+    #[DataProvider('provideRetriesAfterAKeptEmptyMatch')]
+    public function test_replay_of_short_matches_follows_the_retry_after_a_kept_empty_match(array $options, ?bool $replays): void
+    {
+        $pattern = '/(?<=b)a\K|(?=b)|b(?:ab)+/';
+        $subject = str_repeat('ab', 256);
+        $this->assertSame(1, preg_match(PcreAttemptSteps::pinned($pattern), $subject, $matches, \PREG_OFFSET_CAPTURE, 128), 'Oracle: the attempt a quarter through the run fails.');
+        $this->assertSame(['', 129], $matches[0], 'Oracle: the attempt does not stop on an empty match after one character.');
+        $retry = PcreAttemptSteps::pinned('/(*NOTEMPTY_ATSTART)'.substr($pattern, 1));
+        $this->assertSame(1, preg_match($retry, $subject, $retried, \PREG_OFFSET_CAPTURE, 129), 'Oracle: the retry fails.');
+        $this->assertSame(512, $retried[0][1] + \strlen($retried[0][0]), 'Oracle: the retry stops before the end of the run.');
+        if (isset($options['backtrackLimit'])) {
+            $this->assertGreaterThan($options['backtrackLimit'], PcreAttemptSteps::steps($retry, $subject, 129), 'Oracle: the retry fits the limit.');
+            $this->assertLessThan($options['backtrackLimit'], PcreAttemptSteps::steps(PcreAttemptSteps::pinned($pattern), $subject, 128), 'Oracle: the attempt needs more than the limit.');
+        }
+
+        $this->assertSame($replays, (new SearchCostReplayer())->replaysShortMatches($pattern, '', 'ab', '', new ConfirmationOptions(...$options)));
+    }
+
+    /**
+     * @return iterable<string, array{options: array{backtrackLimit?: int}, replays: bool|null}>
+     */
+    public static function provideRetriesAfterAKeptEmptyMatch(): iterable
+    {
+        yield 'the retry reads the run' => ['options' => [], 'replays' => false];
+        yield 'limits too low for the retry' => ['options' => ['backtrackLimit' => 50], 'replays' => null];
+    }
+
+    /**
+     * A pattern that leaves no delimiter for the counting verbs cannot be
+     * replayed.
+     */
+    #[Test]
+    public function test_replay_of_short_matches_needs_a_place_for_its_verbs(): void
+    {
+        $this->assertFalse((new SearchCostReplayer())->replaysShortMatches("_a(?:a+\\d)?|[\x01#~%!@;,)}>[]_", '', 'a', ''));
     }
 
     /**
@@ -367,10 +600,42 @@ final class RedosEveryMatchSearchCostTest extends TestCase
 
                 throw new ResourceLimitException('The replay ran out of its limits.', ErrorCode::PatternTooLong);
             }
+
+            public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                $this->called = true;
+
+                throw new ResourceLimitException('The replay ran out of its limits.', ErrorCode::PatternTooLong);
+            }
         };
 
         $this->assertNull(self::findEveryMatch('/(?:a+\d)?/', $failing));
         $this->assertTrue($failing->called, 'The failure was met inside the proof.');
+
+        // The replay of short matches fails the same way.
+        $failing->called = false;
+        $this->assertInstanceOf(RedosSearchCost::class, self::findEveryMatch('/a(?:a+\d)?/', new SearchCostReplayer()), 'control: the witness of short matches is found and replayed');
+        $this->assertNull(self::findEveryMatch('/a(?:a+\d)?/', $failing));
+        $this->assertTrue($failing->called, 'The failure was met inside the proof of short matches.');
+    }
+
+    /**
+     * The attempt pinned 750, 500 and 250 run words before the end matches,
+     * and takes at least one more step per run word than the next.
+     */
+    private function assertAttemptsGrowWithTheRestOfTheRun(string $pattern, string $run): void
+    {
+        $subject = str_repeat($run, 4 * self::QUARTER).'!';
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $steps = [];
+        foreach ([3, 2, 1] as $quarters) {
+            $offset = (4 - $quarters) * self::QUARTER * \strlen($run);
+            $this->assertSame(1, preg_match($pinned, $subject, $matches, 0, $offset), \sprintf('Oracle: the attempt of %s %d run words before the end fails.', $pattern, $quarters * self::QUARTER));
+            $steps[] = PcreAttemptSteps::steps($pinned, $subject, $offset);
+        }
+
+        $this->assertGreaterThanOrEqual(self::QUARTER, $steps[0] - $steps[1], \sprintf('Oracle: the attempts of %s take %s steps.', $pattern, implode(', ', $steps)));
+        $this->assertGreaterThanOrEqual(self::QUARTER, $steps[1] - $steps[2], \sprintf('Oracle: the attempts of %s take %s steps.', $pattern, implode(', ', $steps)));
     }
 
     /**

@@ -12,6 +12,14 @@ CHANGELOG
    body does not hold, and puts a quoted character's group outside the
    quote, `\Q\E(?:\Qa\E)\E++`. `?a++b?`, `:a++b:` and `/\Qa\E++b/`
    are replayed (`replayed: true`), where they stayed unconfirmed.
+ * `RedosAnalysis::$everyMatchSearchCost` also holds the cost of short
+   matches. When each call of the loop of every match ends on a short match
+   that is not empty, found after the paths its attempt tries first read to
+   the end of the run, the loop pays the run at each match: `/a(?:a+\d)?/`,
+   `/a*b|a/` and `/a\K(?:a+\d)?/` take 63 to 64 ms through `preg_match_all()`
+   on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
+   0.01 ms through `preg_match()`. `RedosSearchCost::$shortMatch` says so,
+   and confirmed mode replays the attempt pinned inside the run.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.
