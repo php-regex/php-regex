@@ -46,7 +46,9 @@ use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
@@ -535,8 +537,8 @@ final class TextDocumentHandler
         $spelling = null;
         foreach ($issues as $issue) {
             // The heuristic rules guess what the analysis just proved:
-            // once it shows the pattern linear, their warnings go.
-            if (true === $redos?->isProvenSafe() && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
+            // once it shows one attempt linear, their warnings go.
+            if (null !== $redos && RedosProof::Proven === $redos->proof && RedosComplexity::Linear === $redos->complexity && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                 continue;
             }
 

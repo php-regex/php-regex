@@ -252,6 +252,7 @@ CHANGELOG
    bundle's `Regex` service: the library's message and hint as `{{ error }}`
    and `{{ hint }}`, and with `redos: true` a ReDoS severity from
    `redosThreshold` (`high`) up refused too. Needs `symfony/validator`.
+   A pattern whose search is quadratic, as `/\s*$/`, ranks `medium`.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

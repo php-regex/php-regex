@@ -24,14 +24,14 @@ final class PublicSurface
      */
     public const CLASSES = [
         'Automata' => [
-            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode', 'Options/SolverStrategy',
+            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode',
             'Determinization/DeterminizationAlgorithm', 'Minimization/MinimizationAlgorithm',
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',
             'Exception/ComplexityException',
             'Exception/IncompatibleArgumentException',
             'TrivialMatchClassifier', 'TrivialMatch', 'TrivialMatchKind', 'Language',
-            'Ordered/FirstMatchPartition', 'Ordered/FirstMatchCell',
+            'Ordered/FirstMatchPartition', 'Ordered/FirstMatchCandidate', 'Ordered/FirstMatchCell',
         ],
         'Cli' => [],
         'Explain' => [
@@ -79,7 +79,7 @@ final class PublicSurface
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
-            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
+            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost', 'SearchCostCause',
             'IgnoreList',
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],

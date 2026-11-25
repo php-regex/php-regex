@@ -18,6 +18,7 @@ use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\InstalledLocales;
@@ -268,7 +269,7 @@ final class LastBytePossessionRewriteTest extends TestCase
 
     private static function modernized(string $pattern, ?string $locale): string
     {
-        return RegexParser::create(['cache' => null])->parse($pattern)->accept(new Modernizer($locale))->accept(PatternPrinter::asWritten());
+        return RegexParser::create(['cache' => null])->parse($pattern)->accept(new Modernizer(null === $locale ? null : PcreTarget::runtime()->withLocale($locale)))->accept(PatternPrinter::asWritten());
     }
 
     /**

@@ -584,7 +584,7 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertSame(0, proc_close($process), $errors.$output);
 
         $this->assertSame(
-            ['ini_set' => false, 'cost' => ['degree' => 2, 'witness' => ['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], 'replayed' => null]],
+            ['ini_set' => false, 'cost' => ['degree' => 2, 'cause' => 'unanchored_search', 'witness' => ['prefix' => '', 'run' => 'ab', 'breaker' => '!c'], 'replayed' => null]],
             json_decode($output, true),
         );
     }

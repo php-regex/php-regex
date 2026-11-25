@@ -48,7 +48,9 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\IgnoreList;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -392,8 +394,8 @@ final class AnalysisService
         );
 
         // The heuristic rules guess what the analysis just proved: once it
-        // shows the pattern linear, their warnings go.
-        if ($redos->isProvenSafe()) {
+        // shows one attempt linear, their warnings go.
+        if (RedosProof::Proven === $redos->proof && RedosComplexity::Linear === $redos->complexity) {
             $lintIssues = array_values(array_filter(
                 $lintIssues,
                 static fn (LintIssue $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[(string) $issue->issueId]),

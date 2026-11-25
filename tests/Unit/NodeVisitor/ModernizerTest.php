@@ -42,6 +42,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -352,7 +353,7 @@ final class ModernizerTest extends TestCase
         );
 
         // Under the C locale only: another one may give "\s" the byte 0xA0.
-        $result = $whitespaceClass->accept(new Modernizer('C'));
+        $result = $whitespaceClass->accept(new Modernizer(PcreTarget::runtime()->withLocale('C')));
 
         $this->assertInstanceOf(CharTypeNode::class, $result);
         $this->assertSame('s', $result->value);

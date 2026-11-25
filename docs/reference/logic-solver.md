@@ -368,11 +368,11 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 | `subsetOf($left, $right, $options = null)`     | `SubsetResult`       | `isSubset`        | `counterExample`: only the left matches  |
 | `equivalent($left, $right, $options = null)`   | `EquivalenceResult`  | `isEquivalent`    | `leftOnlyExample`, `rightOnlyExample`    |
 | `matchEquivalent($left, $right, $options = null)` | `MatchEquivalenceResult` | `isEquivalent` | `counterExample`: the shortest subject with other `$matches` |
-| `acceptsPrefix($pattern, $input, $options = null)` | `bool`          | whether some string starting with `$input` matches | — |
-| `compile($pattern, $options = null)`           | `Dfa`                | the pattern's DFA | stored in the DFA cache when one is set  |
+| `acceptsPrefix($regex, $prefix, $options = null)` | `bool`          | whether some string starting with `$prefix` matches | — |
+| `compile($regex, $options = null)`           | `Dfa`                | the pattern's DFA | stored in the DFA cache when one is set  |
 
 Each of the four result objects also carries `pcreVersion`, the PCRE2 release
-the answer was computed with (`"10.49"` on the engine this page's examples ran
+that ran the solver (`"10.49"` on the engine this page's examples ran
 on). Two results with different stamps describe two engines' languages; compare
 them only knowing that.
 
@@ -620,12 +620,8 @@ patterns under its own limits: the answer is the eager one's, and so is a
 refusal. With a DFA cache, whose compiled DFAs it reuses, or for a pattern
 read as UTF-8 beside one read as bytes, the search is the eager one.
 
-```php
-use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Options\SolverStrategy;
-
-$options = new SolverOptions(strategy: SolverStrategy::Eager);
-```
+The strategy is the solver's own choice: `Options\SolverStrategy` and
+`SolverOptions::$strategy` are `@internal`, and a minor release may change them.
 
 ## Determinization Strategies
 

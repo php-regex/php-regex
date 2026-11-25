@@ -45,7 +45,7 @@ final class AcceptsPrefixTest extends TestCase
             $this->assertSame(1, preg_match($pattern, $input.$completion), \sprintf('"%s" completes "%s" for %s.', $completion, $input, $pattern));
         }
 
-        $this->assertSame($viable, (new LanguageSolver())->acceptsPrefix($pattern, $input));
+        $this->assertSame($viable, (new LanguageSolver())->acceptsPrefix(regex: $pattern, prefix: $input));
     }
 
     #[Test]

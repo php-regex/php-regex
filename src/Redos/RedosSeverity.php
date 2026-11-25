@@ -32,14 +32,14 @@ enum RedosSeverity: string
     case Low = 'low';
 
     /**
-     * Medium risk.
-     */
-    case Medium = 'medium';
-
-    /**
      * Analysis could not determine the risk.
      */
     case Unknown = 'unknown';
+
+    /**
+     * Medium risk.
+     */
+    case Medium = 'medium';
 
     /**
      * High risk.

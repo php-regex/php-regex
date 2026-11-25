@@ -47,6 +47,16 @@ final class RedosSeverityRankTest extends TestCase
         yield 'critical' => [RedosSeverity::Critical, 5];
     }
 
+    /**
+     * The cases are listed in the order they rank, as a reader of the enum
+     * expects them.
+     */
+    #[Test]
+    public function test_severity_cases_are_declared_in_rank_order(): void
+    {
+        $this->assertSame([0, 1, 2, 3, 4, 5], array_map(static fn (RedosSeverity $severity): int => $severity->rank(), RedosSeverity::cases()));
+    }
+
     #[Test]
     #[DataProvider('provideSeverityPairs')]
     public function test_severity_threshold_follows_the_rank(RedosSeverity $severity, RedosSeverity $threshold): void

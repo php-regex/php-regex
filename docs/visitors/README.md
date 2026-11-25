@@ -243,12 +243,12 @@ echo $optimizer->optimize('/a{0,1}/')->optimized;  // '/a?/'
 | `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing; one around an alternation stays, <code>^(?:a&#124;b)$</code> is not <code>^a&#124;b$</code>, so does one a quantifier repeats unless it holds one item, `(?:a+)?` is not `a+?`, and one that sets an option with no colon: `(?:(?i)a)b` is not `(?i)ab` |
 | `\-`       | `-`         | An escape of a character that needs none  |
 | `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |
-| `[\t\n\x0B\f\r ]` | `\s` | The same six characters under the `C` locale: only with `new Modernizer('C')` or `'POSIX'`, and kept under `/u` and `(*UCP)`, where `\s` matches more |
+| `[\t\n\x0B\f\r ]` | `\s` | The same six characters under the `C` locale: only with a target whose locale is `C` or `POSIX`, `new Modernizer($parser->target())`, and kept under `/u` and `(*UCP)`, where `\s` matches more |
 
 Without `u`, PHP builds the table of `\s` from `LC_CTYPE` once a program
 calls `setlocale()`, and many locales give it the no-break space, byte `0xA0`:
 more than half of those macOS installs. The Modernizer writes `\s` only
-when told the pattern runs under `C` or `POSIX`, its one constructor argument;
+when its one constructor argument, a `PcreTarget`, names `C` or `POSIX`;
 by default the class stays as written. `\d` is the ten ASCII digits under every
 locale, so `[0-9]` becomes `\d` without it.
 

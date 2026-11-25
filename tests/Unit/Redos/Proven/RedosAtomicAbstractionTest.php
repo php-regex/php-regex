@@ -116,7 +116,7 @@ final class RedosAtomicAbstractionTest extends TestCase
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
-        $this->assertTrue($analysis->isProvenSafe(), $pattern);
+        $this->assertSame(!$analysis->hasQuadraticSearch(), $analysis->isProvenSafe(), $pattern);
         $this->assertSame([], $analysis->abstractions, $pattern);
     }
 

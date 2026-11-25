@@ -46,6 +46,7 @@ use PHPRegex\Parser\Text\Bytes;
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\Exception\ModelLimitException;
 use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Redos\SearchCostCause;
 
 /**
  * The cost of an unanchored search whose every attempt is proven linear,
@@ -234,7 +235,7 @@ final class SearchCostProver
      * stops at a short match inside the run, which the attempt finds after
      * the paths it tries first read to the end of the run and fail, as in
      * "a(?:a+\d)?" or "a*b|a", and each call of the loop starts where the
-     * last match ended. Its RedosSearchCost says $shortMatch.
+     * last match ended. Its RedosSearchCost names SearchCostCause::ShortMatch.
      *
      * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for; the
      *                                running engine's when null
@@ -299,7 +300,7 @@ final class SearchCostProver
         // Each call of the loop of every match refuses an empty match at its
         // start under either option.
         $emptyRefused = \in_array('NOTEMPTY', $startOptions, true) || \in_array('NOTEMPTY_ATSTART', $startOptions, true);
-        $shortMatch = false;
+        $cause = $everyMatch ? SearchCostCause::EmptyMatchRetry : SearchCostCause::UnanchoredSearch;
         $exact = [] === $pnfa->marks && [] === $pnfa->approximated;
 
         try {
@@ -317,7 +318,7 @@ final class SearchCostProver
             // that match ends.
             if ($everyMatch && null === $found) {
                 $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused);
-                $shortMatch = null !== $found;
+                $cause = SearchCostCause::ShortMatch;
                 $exact = $exact && null !== $found && $found['exact'];
             }
         } catch (ModelLimitException) {
@@ -333,7 +334,7 @@ final class SearchCostProver
         $breakers = array_map(static fn (array $breaker): string => Utf8::encode($breaker, $unicode), $found['breakers']);
 
         if (!$replay) {
-            return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, null, $shortMatch) : null;
+            return $exact ? new RedosSearchCost(2, $cause, $prefix, $run, $breakers[0], $unicode) : null;
         }
 
         // Replayed under the tables of the target's locale, as the pattern
@@ -344,12 +345,12 @@ final class SearchCostProver
         $counted = self::countingReads($pattern, $regex, $sets, $unicode, $caseless);
         $replayed = null;
         $measured = true;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $counted, $prefix, $run, $options, $everyMatch, $shortMatch, &$replayed, &$measured): void {
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $counted, $prefix, $run, $options, $cause, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
-                $replays = match (true) {
-                    $shortMatch => $this->replayer->replaysShortMatches($counted, $prefix, $run, $breaker, $options),
-                    $everyMatch => $this->replayer->replaysEveryMatch($counted, $prefix, $run, $breaker, $options),
-                    default => $this->replayer->replays($counted, $prefix, $run, $breaker, $options),
+                $replays = match ($cause) {
+                    SearchCostCause::ShortMatch => $this->replayer->replaysShortMatches($counted, $prefix, $run, $breaker, $options),
+                    SearchCostCause::EmptyMatchRetry => $this->replayer->replaysEveryMatch($counted, $prefix, $run, $breaker, $options),
+                    SearchCostCause::UnanchoredSearch => $this->replayer->replays($counted, $prefix, $run, $breaker, $options),
                 };
                 if (true === $replays) {
                     $replayed = $breaker;
@@ -361,12 +362,12 @@ final class SearchCostProver
         });
 
         if (null !== $replayed) {
-            return new RedosSearchCost(2, $prefix, $run, $replayed, $unicode, true, $shortMatch);
+            return new RedosSearchCost(2, $cause, $prefix, $run, $replayed, $unicode, true);
         }
 
         // Under limits too low to count, the replay neither confirms nor
         // refutes the witness: "replayed" is null, as for a skipped replay.
-        return $exact ? new RedosSearchCost(2, $prefix, $run, $breakers[0], $unicode, $measured ? false : null, $shortMatch) : null;
+        return $exact ? new RedosSearchCost(2, $cause, $prefix, $run, $breakers[0], $unicode, $measured ? false : null) : null;
     }
 
     /**

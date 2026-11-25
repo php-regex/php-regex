@@ -19,6 +19,11 @@ namespace PHPRegex\Automata\Solver;
  */
 final class MatchEquivalenceResult
 {
+    /**
+     * The PCRE2 release that ran the solver, which it asks what the classes
+     * of the patterns hold. The patterns are read for the target of the
+     * solver's parser, which may be another PHP and PCRE2.
+     */
     public readonly string $pcreVersion;
 
     /**
@@ -26,7 +31,7 @@ final class MatchEquivalenceResult
      *
      * @param bool        $isEquivalent   Whether every subject gets the same answer, match and groups from both
      * @param string|null $counterExample The shortest subject that gets different ones
-     * @param string|null $pcreVersion    The PCRE2 release the answer was computed with
+     * @param string|null $pcreVersion    The PCRE2 release that ran the solver; the running one when null
      */
     public function __construct(
         public readonly bool $isEquivalent,

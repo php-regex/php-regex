@@ -351,6 +351,8 @@ final class SearchFilter
   `/a*a*$/` (`medium`) passes. `redosMessage` takes {% raw %}`{{ value }}`{% endraw %} and
   {% raw %}`{{ severity }}`{% endraw %}; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
   is never analysed for ReDoS.
+  A pattern whose [search is quadratic](redos.md#the-cost-of-an-unanchored-search), as
+  `/\s*$/`, ranks `medium`: one attempt is linear, the search is not.
 - Null and the empty string are valid, as for every Symfony constraint: add
   `NotBlank` to refuse them.
 - `message` and `redosMessage` are translation keys of the `validators`

@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Redos\SearchCostCause;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -205,6 +206,6 @@ final class PsalmPluginRedosTest extends TestCase
      */
     private static function retried(): RedosSearchCost
     {
-        return new RedosSearchCost(2, '', 'a', '', false);
+        return new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false);
     }
 }

@@ -24,6 +24,8 @@ use PHPRegex\Parser\Lexing\BodyEnds;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\TestUtils\LexerAccessor;
 use PHPRegex\Toolkit\Regex;
@@ -162,10 +164,10 @@ final class RedosCallerPcreLimitsTest extends TestCase
         });
         $after = (new RedosAnalyzer($parser))->analyze($pattern);
 
-        $this->assertTrue($fresh->isProvenSafe(), 'The row no longer names the verdict a fresh process gives.');
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$fresh->proof, $fresh->complexity], 'The row no longer names the verdict a fresh process gives.');
         $this->assertTrue($bites);
         $this->assertSame($fresh->headline(), $after->headline());
-        $this->assertTrue($after->isProvenSafe());
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$after->proof, $after->complexity]);
     }
 
     /**
@@ -190,7 +192,7 @@ final class RedosCallerPcreLimitsTest extends TestCase
         }
         $after = (new RedosAnalyzer($parser))->analyze($pattern);
 
-        $this->assertTrue($fresh->isProvenSafe());
+        $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$fresh->proof, $fresh->complexity]);
         $this->assertSame($fresh->headline(), $after->headline());
     }
 

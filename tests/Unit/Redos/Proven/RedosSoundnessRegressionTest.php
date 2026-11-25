@@ -324,7 +324,7 @@ final class RedosSoundnessRegressionTest extends TestCase
         $analysis = (new RedosAnalyzer())->analyze($pattern);
 
         $this->assertTrue(
-            RedosProof::Proven !== $analysis->proof || $analysis->isProvenSafe() || [] !== $analysis->abstractions,
+            RedosProof::Proven !== $analysis->proof || RedosComplexity::Linear === $analysis->complexity || [] !== $analysis->abstractions,
             \sprintf('%s is "%s" with no abstraction listed, but the engine never fails on it', $pattern, $analysis->headline()),
         );
     }

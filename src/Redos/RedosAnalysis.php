@@ -30,8 +30,11 @@ use PHPRegex\Parser\Node\NodeInterface;
 final class RedosAnalysis implements \JsonSerializable
 {
     /**
-     * The PCRE2 release the verdict was computed with: verdicts are
-     * deterministic per release and analysis version.
+     * The PCRE2 release that ran the analysis, which the proof asks what
+     * the classes of the pattern hold. The pattern is read for the target
+     * of the analyzer's parser, which may be another PHP: under one
+     * release, "/^(?:a{,3}b?)+$/" is exponential for PHP 8.4 and linear for
+     * PHP 8.2, where "{,3}" is no quantifier.
      */
     public readonly string $pcreVersion;
 
@@ -51,7 +54,7 @@ final class RedosAnalysis implements \JsonSerializable
      * @param int|null             $degree               the degree of a polynomial verdict, 2 or more; null otherwise
      * @param bool|null            $replayed             whether the witness made the running engine fail; null when no replay was attempted
      * @param list<string>         $abstractions         what the model analysed differently from the pattern as written
-     * @param string|null          $pcreVersion          the PCRE2 release; the running one when null
+     * @param string|null          $pcreVersion          the PCRE2 release that ran the analysis; the running one when null
      * @param int|null             $upperBoundDegree     the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
      * @param RedosSearchCost|null $searchCost           the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
      * @param RedosSearchCost|null $everyMatchSearchCost the witness of a search quadratic only in the functions that look for every match, through PHP's retry after an empty match or the attempt that finds each short match, looked for only when one attempt is proven linear and $searchCost is null; null when none was found
@@ -169,11 +172,23 @@ final class RedosAnalysis implements \JsonSerializable
 
     /**
      * Whether the model proved that no input drives one match attempt
-     * beyond a linear number of steps.
+     * beyond a linear number of steps, and found no input on which the
+     * search that retries it is quadratic: hasQuadraticSearch() is false.
+     * The search was looked for, not proven linear.
      */
     public function isProvenSafe(): bool
     {
-        return RedosProof::Proven === $this->proof && RedosComplexity::Linear === $this->complexity;
+        return RedosProof::Proven === $this->proof && RedosComplexity::Linear === $this->complexity && !$this->hasQuadraticSearch();
+    }
+
+    /**
+     * Whether an input makes the search quadratic while each of its
+     * attempts is linear: $searchCost for every search, or
+     * $everyMatchSearchCost for the functions that look for every match.
+     */
+    public function hasQuadraticSearch(): bool
+    {
+        return null !== $this->searchCost || null !== $this->everyMatchSearchCost;
     }
 
     /**

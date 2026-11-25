@@ -46,6 +46,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
@@ -86,14 +87,20 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private bool $bracketsDecideBesideLastByte = false;
 
-    public function __construct(
-        /**
-         * The LC_CTYPE locale the pattern runs under, when it is known:
-         * "\s" stands for "[\t\n\x0B\f\r ]" under "C" and "POSIX" only,
-         * and null, the locale unknown, writes no "\s".
-         */
-        private readonly ?string $locale = null,
-    ) {}
+    /**
+     * The LC_CTYPE locale the pattern runs under, when it is known: "\s"
+     * stands for "[\t\n\x0B\f\r ]" under "C" and "POSIX" only.
+     */
+    private readonly ?string $locale;
+
+    /**
+     * @param PcreTarget|null $target the PHP, the PCRE2 and the locale the pattern runs under; null, the release
+     *                                and the locale unknown, writes no "\s"
+     */
+    public function __construct(?PcreTarget $target = null)
+    {
+        $this->locale = $target?->locale;
+    }
 
     #[\Override]
     public function visitRegex(RegexNode $node)

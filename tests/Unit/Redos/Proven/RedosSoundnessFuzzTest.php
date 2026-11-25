@@ -497,7 +497,8 @@ final class RedosSoundnessFuzzTest extends TestCase
             if (!\is_array($entry) || !\is_string($entry['pattern'] ?? null)) {
                 continue;
             }
-            if ($analyzer->analyze($entry['pattern'])->isProvenSafe()) {
+            $analysis = $analyzer->analyze($entry['pattern']);
+            if (RedosProof::Proven === $analysis->proof && RedosComplexity::Linear === $analysis->complexity) {
                 $safe++;
                 // Every Nth proven-safe pattern, in corpus order: the sample
                 // moves with the corpus and the model, and stays fixed
@@ -571,7 +572,8 @@ final class RedosSoundnessFuzzTest extends TestCase
         $hits = [];
 
         foreach ($patterns as $pattern) {
-            if (!$analyzer->analyze($pattern)->isProvenSafe()) {
+            $analysis = $analyzer->analyze($pattern);
+            if (RedosProof::Proven !== $analysis->proof || RedosComplexity::Linear !== $analysis->complexity) {
                 continue;
             }
             $attacked++;

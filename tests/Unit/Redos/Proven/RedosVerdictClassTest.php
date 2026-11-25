@@ -134,7 +134,7 @@ final class RedosVerdictClassTest extends TestCase
         $this->assertNull($analysis->witness, $pattern);
         $this->assertSame(RedosSeverity::Safe, $analysis->severity, $pattern);
         $this->assertSame(RedosConfidence::High, $analysis->confidence, $pattern);
-        $this->assertTrue($analysis->isProvenSafe(), $pattern);
+        $this->assertSame(!$analysis->hasQuadraticSearch(), $analysis->isProvenSafe(), $pattern);
         $this->assertTrue($analysis->isSafe(), $pattern);
     }
 

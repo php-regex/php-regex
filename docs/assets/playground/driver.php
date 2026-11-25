@@ -1114,8 +1114,10 @@ if (!\function_exists('phpregex_playground_run')) {
 
         $verdict['replay_error'] = $replayError;
         // The rule regex-phpunit's assertPatternIsLinear() applies: a linear
-        // attempt and a linear unanchored search.
-        $verdict['linear'] = $analysis->isProvenSafe() && null === $analysis->searchCost;
+        // attempt and a linear unanchored search, whatever the functions
+        // that look for every match cost. The verdict of the attempt is read
+        // as its JSON spells it.
+        $verdict['linear'] = 'proven' === $analysis->proof->value && 'linear' === $analysis->complexity->value && null === $analysis->searchCost;
         // The witness as bytes, built here: its JSON spelling is escaped text.
         $verdict['attack'] = null;
         $witness = $analysis->witness;
@@ -1484,7 +1486,7 @@ if (!\function_exists('phpregex_playground_run')) {
         }
 
         $analysis = $library->redos($regex);
-        $linear = $analysis->isProvenSafe() && null === $analysis->searchCost;
+        $linear = 'proven' === $analysis->proof->value && 'linear' === $analysis->complexity->value && null === $analysis->searchCost;
 
         // A name owning two numbers, under (?J), is asserted by number alone.
         $names = phpregex_playground_group_names($library->parse($regex)->accept(new JsonDumper()));

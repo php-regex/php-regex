@@ -261,6 +261,8 @@ $request->validate([
   `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
   string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
   `/a*a*$/` (`medium`) passes. An invalid pattern is never analysed for ReDoS.
+  A pattern whose [search is quadratic](redos.md#the-cost-of-an-unanchored-search), as
+  `/\s*$/`, ranks `medium`: one attempt is linear, the search is not.
 - Like every rule, it leaves an empty value to `required`.
 
 ## The service and the lint judge for different targets
