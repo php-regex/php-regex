@@ -756,8 +756,12 @@ final class PossessiveRewrites
         }
 
         try {
-            $followingChars = $this->charsAfter($suffix);
-            if (null !== $followingChars && !$analyzer->lastChars($repeat->node)->intersects($followingChars)) {
+            // A repeated character gives back the character it repeats, a
+            // repeated group the runs it matched, read from where each
+            // starts.
+            $givenBack = $repeat->node instanceof GroupNode ? $this->runStarts($repeat->node) : $analyzer->lastChars($repeat->node);
+            $followingChars = null === $givenBack ? null : $this->charsAfter($suffix);
+            if (null !== $givenBack && null !== $followingChars && !$givenBack->intersects($followingChars)) {
                 return true;
             }
         } catch (\Throwable) { // Not reached by any pattern read: the walks throw nothing of their own.
@@ -765,6 +769,60 @@ final class PossessiveRewrites
         }
 
         return false;
+    }
+
+    /**
+     * The characters a run of the repeated group starts with, where every
+     * run of its body matches one way: the repeat then gives back whole
+     * runs, from the character each starts with. Null where a run may match
+     * another way, and end inside its body or past where the greedy one
+     * ended: "(?:b|ba)*c" takes "ba" as one run on "bac" once "b" alone
+     * left the "a" to the "c", and "(?:-[a-z]+)*$" ends a run anywhere in
+     * its letters.
+     */
+    private function runStarts(GroupNode $group): ?ByteCharSet
+    {
+        $items = [];
+        if (!$this->matchesOneWay($group, $items)) {
+            return null;
+        }
+
+        $chars = ByteCharSet::empty();
+
+        return true === $this->addFirstChars($items, $chars) ? $chars : null;
+    }
+
+    /**
+     * Whether every run of the node matches one way, adding to the list
+     * the items it reads in order: characters, literals and comments, in a
+     * sequence or a group that neither captures, looks around nor is
+     * atomic, and DEFINEs, which read nothing.
+     *
+     * @param list<NodeInterface> $items
+     */
+    private function matchesOneWay(NodeInterface $node, array &$items): bool
+    {
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!$this->matchesOneWay($child, $items)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof GroupNode) {
+            return (GroupType::NonCapturing === $node->type || GroupType::InlineFlags === $node->type) && $this->matchesOneWay($node->child, $items);
+        }
+
+        if ($node instanceof LiteralNode || $node instanceof CommentNode || $this->repeats->isSingleCharacter($node)) {
+            $items[] = $node;
+
+            return true;
+        }
+
+        return $node instanceof DefineNode;
     }
 
     /**

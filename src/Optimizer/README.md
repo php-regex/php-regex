@@ -94,10 +94,15 @@ rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
 names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
 written. A repetition that ends its group reads what follows the group, every
 call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
-`/(a+)a/` stays greedy. Under a limit the pattern sets on what PCRE2 spends on
-a match, `(*LIMIT_MATCH=n)`, `(*LIMIT_DEPTH=n)` or `(*LIMIT_HEAP=n)`, every
-repeated group stays greedy, as a possessive one may spend more of it without
-the JIT: `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
+`/(a+)a/` stays greedy. A repeated group is made possessive only where every
+run of its body matches one way, characters and literals in a row, and what
+follows never starts as a run does: `/(?:ab)+b/` becomes `/(?:ab)++b/`, while
+`/(?:b|ba)*c/` stays greedy, as a run of `ba` may follow one of `b`, and
+`/[a-z]+(?:-[a-z]+)*$/` becomes `/[a-z]++(?:-[a-z]++)*$/`. Under a limit the
+pattern sets on what PCRE2 spends on a match, `(*LIMIT_MATCH=n)`,
+`(*LIMIT_DEPTH=n)` or `(*LIMIT_HEAP=n)`, every repeated group stays greedy, as a
+possessive one may spend more of it without the JIT:
+`/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
 `/(*LIMIT_MATCH=4)c(?:ab)++e/` gives up. A repeated character or class spends
 no more, and is still made possessive there.
 

@@ -101,6 +101,17 @@ CHANGELOG
    `/(*LIMIT_MATCH=10)^[a-z]+(?:-[a-z]+)*$/` now becomes
    `/(*LIMIT_MATCH=10)^[a-z]++(?:-[a-z]++)*$/`, where the check of the
    result refused the possessive group offered with them.
+ * The possessive rewrite makes a repeated group possessive only where
+   every run of its body matches one way, characters and literals in a
+   row, and reads what follows the repeat against the character a run
+   starts with, as the repeat gives back whole runs: `/(?:b|ba)*c/` and
+   `/(?:ab)+ab/` are no longer offered `(?:b|ba)*+c` and `(?:ab)++ab`,
+   which miss `bac` and `abab`, while `/(?:ab)+b/` now becomes
+   `/(?:ab)++b/`. The possessive group the check of the result refused no
+   longer takes the other possessives of the pattern with it:
+   `/[a-z]+(?:-[a-z]+)*$/` now becomes `/[a-z]++(?:-[a-z]++)*$/`, and
+   `/(?:b|ba)*c[0-9]+;/` becomes `/(?:b|ba)*c\d++;/`, where they shipped
+   without a possessive.
  * `RedosRepairer::firstRepair()` returns the repair `repair()` offers first,
    or null, and stops at the first rewrite certified that writes the same
    `$matches`: the rewrites after it are not proven, nor is the optimizer
