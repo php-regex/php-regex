@@ -55,13 +55,25 @@ final class NoJit
             return $open.self::VERB.$body.$close.$flags;
         }
 
+        $replacement = self::delimiterOutside($body);
+
+        return null === $replacement ? $regex : $replacement.self::VERB.$body.$replacement.$flags;
+    }
+
+    /**
+     * A delimiter the body does not hold, which a pattern moves to where
+     * what goes in it would end the pattern at its own: null where the body
+     * holds every one.
+     */
+    public static function delimiterOutside(string $body): ?string
+    {
         foreach (self::REPLACEMENTS as $replacement) {
             if (!str_contains($body, $replacement)) {
-                return $replacement.self::VERB.$body.$replacement.$flags;
+                return $replacement;
             }
         }
 
-        return $regex;
+        return null;
     }
 
     /**

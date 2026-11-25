@@ -104,8 +104,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     character set (`/a++b/`), so the replay runs the pattern with each such character in a group of its own
     (`/(?:a)++b/`), which changes no match and which the counter sees, as it sees a repeat of a longer word
     (`/(?:ab)++c/`, `/(?>a+b)+c/`). A repeat of every character that PCRE2 moves to the end of the subject in one step
-    (`.*+` under `s`) stays as written, and so does a pattern where `\Q` may quote the group or whose delimiter is its
-    `?`, `:` or `)`: a witness through such a repeat, read exactly by the model, is reported with `replayed: false`.
+    (`.*+` under `s`) stays as written: a witness through such a repeat, read exactly by the model, is reported with
+    `replayed: false`. A character `\Q` quotes takes its group outside the quote (`/\Qa\E++b/` replayed as
+    `/\Q\E(?:\Qa\E)\E++b/`), and a pattern whose delimiter is the group's `?`, `:` or `)` moves to a delimiter its
+    body does not hold (`?a++b?` replayed between `\x01`), as the engine does for `(*NO_JIT)`.
   - **Errors**: a library failure inside the search proof leaves `search_cost` null and the per-attempt verdict as
     proven; any other error is a bug, and the analysis reports it as an error.
 

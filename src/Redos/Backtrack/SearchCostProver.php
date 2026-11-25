@@ -139,6 +139,12 @@ final class SearchCostProver
     private const EVERY_CALL = 4;
 
     /**
+     * The delimiters a group around a repeated character would end the
+     * pattern at: its "?", ":" and ")".
+     */
+    private const HELD_BY_A_GROUP = '?:)';
+
+    /**
      * The characters of "\h" and of "\v" (pcre2pattern, "Generic character
      * types"), whatever u.
      */
@@ -325,26 +331,42 @@ final class SearchCostProver
      * through it. A character of a set of every character that PCRE2 may
      * read as its any character stays as written: a possessive or atomic
      * repeat of it moves to the end of the subject in one step, which the
-     * group would count as a read of each character. So does the whole
-     * pattern where "\Q" may quote a group, or where the group's "?", ":"
-     * or ")" is the delimiter.
+     * group would count as a read of each character. A character "\Q"
+     * quotes, which "\E" follows where a repeat does, takes its group
+     * outside the quote, quoted inside it: "\Qa\E++" read as
+     * "\Q\E(?:\Qa\E)\E++", the last "\E" then ending no quote. Where the
+     * group's "?", ":" or ")" is the delimiter, the pattern moves to one its
+     * body does not hold, and stays as written where it holds every one.
      *
      * @param array<int, CharSet> $sets the set the automaton reads for the atom at each offset
      */
     private static function countingReads(string $pattern, RegexNode $regex, array $sets, bool $unicode, bool $caseless): string
     {
         $parts = NoJit::split($pattern);
-        if (null === $parts || str_contains('?:)', $parts[0]) || str_contains($parts[1], '\Q')) {
+        if (null === $parts) {
             return $pattern;
         }
 
         [$open, $body, $close, $flags] = $parts;
+        if (str_contains(self::HELD_BY_A_GROUP, $open)) {
+            $moved = NoJit::delimiterOutside($body);
+            if (null === $moved) {
+                return $pattern;
+            }
+
+            [$open, $close] = [$moved, $moved];
+        }
+
         $universe = CharSet::universe($unicode);
         $atoms = [];
         self::repeatedCharacters($regex->pattern, $sets, $universe, $unicode, $caseless, $atoms);
         krsort($atoms);
-        foreach ($atoms as $start => $end) {
-            $body = substr($body, 0, $start).'(?:'.substr($body, $start, $end - $start).')'.substr($body, $end);
+        foreach ($atoms as $start => [$end, $literal]) {
+            $atom = substr($body, $start, $end - $start);
+            // A quoted character is written as it is read, and ends where
+            // "\E" ends the quote.
+            $group = $atom === $literal && '\E' === substr($body, $end, 2) ? '\E(?:\Q'.$atom.'\E)' : '(?:'.$atom.')';
+            $body = substr($body, 0, $start).$group.substr($body, $end);
         }
 
         return $open.$body.$close.$flags;
@@ -355,10 +377,11 @@ final class SearchCostProver
      * each repeat the automaton reads as one set, but a set of every
      * character PCRE2 may read as its any character.
      *
-     * @param array<int, CharSet> $sets
-     * @param array<int, int>     $atoms the end of each such atom, by its start
+     * @param array<int, CharSet>                 $sets
+     * @param array<int, array{int, string|null}> $atoms the end of each such atom, by its start, and the
+     *                                                   character it is where it is a literal one
      *
-     * @param-out array<int, int> $atoms
+     * @param-out array<int, array{int, string|null}> $atoms
      */
     private static function repeatedCharacters(NodeInterface $node, array $sets, CharSet $universe, bool $unicode, bool $caseless, array &$atoms): void
     {
@@ -366,7 +389,7 @@ final class SearchCostProver
             $atom = $node->node;
             $set = $sets[$atom->getStartPosition()] ?? null;
             if (null !== $set && (!$universe->subtract($set)->isEmpty() || false === self::isAnyCharacter($atom, $unicode, $caseless))) {
-                $atoms[$atom->getStartPosition()] = $atom->getEndPosition();
+                $atoms[$atom->getStartPosition()] = [$atom->getEndPosition(), $atom instanceof LiteralNode ? $atom->value : null];
             }
         }
 

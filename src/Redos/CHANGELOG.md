@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The confirmed mode counts the reads of a possessive or atomic run where
+   the pattern's delimiter is `?`, `:` or `)`, or where `\Q` quotes the
+   repeated character: the replay moves such a pattern to a delimiter its
+   body does not hold, and puts a quoted character's group outside the
+   quote, `\Q\E(?:\Qa\E)\E++`. `?a++b?`, `:a++b:` and `/\Qa\E++b/`
+   are replayed (`replayed: true`), where they stayed unconfirmed.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.

@@ -205,9 +205,8 @@ final class RedosSearchCostReplayTest extends TestCase
      *
      * The "_" delimiter and a body holding every other delimiter leave no
      * place for the counting verbs (the pattern itself costs 23.8 / 94.2 ms
-     * on "a"x10k/20k, pcre.jit=0). A group cannot go where its "?", ":" or
-     * ")" is the delimiter: the possessive run is replayed as written there,
-     * and the step counter sees none of its reads.
+     * on "a"x10k/20k, pcre.jit=0), nor a "?" delimiter for the group that
+     * counts a possessive run.
      */
     #[Test]
     #[DataProvider('provideWitnessesTheReplayCannotCount')]
@@ -232,38 +231,90 @@ final class RedosSearchCostReplayTest extends TestCase
     public static function provideWitnessesTheReplayCannotCount(): iterable
     {
         yield 'no place for the counting verbs' => ['pattern' => "_a+b|[\x01#~%!@;,)}>[]_"];
-        yield 'possessive loop, "?" as the delimiter' => ['pattern' => '?a++b?'];
-        yield 'possessive loop, ":" as the delimiter' => ['pattern' => ':a++b:'];
+        // A group cannot go where its "?" is the delimiter, and the body
+        // leaves no other delimiter to move to: the possessive run is
+        // replayed as written, and the step counter sees none of its reads.
+        yield 'possessive loop, "?" as the delimiter, the body holding every other one' => ['pattern' => "?a++b|[\x01#~%!@;,]?"];
     }
 
     /**
-     * A repeat after "\E" repeats the last character "\Q" quoted, and a
-     * group put around it would be quoted too: the pattern is replayed as
-     * written. The step counter then counts a greedy repeat, which gives
-     * the run back, and sees none of the reads of a possessive one, which
-     * gives nothing back: the replay confirms the first witness alone.
+     * A group cannot go where its "?", ":" or ")" is the delimiter: the
+     * replay moves the pattern to a delimiter its body does not hold, as the
+     * engine does for its own verb, and counts the possessive run through
+     * the group there. The pattern matches what it matches between slashes.
+     *
+     * Oracle, pcre.jit=0, PHP 8.4.28, PCRE2 10.49 (and 10.34, 10.39, 10.40):
+     * "?a++b?", ":a++b:" and ")a++b)" match "aab" and not "a"x10."!b".
      */
     #[Test]
-    #[DataProvider('provideQuotedRepeats')]
-    public function test_replay_keeps_a_quoted_repeat_as_written(string $pattern): void
+    #[DataProvider('provideDelimitersAGroupHolds')]
+    public function test_confirmed_mode_moves_the_delimiter_a_group_would_end(string $pattern): void
     {
         $subject = str_repeat('a', 1000).'!b';
-        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the witness.');
-        $pinned = PcreAttemptSteps::pinned($pattern);
-        $counted = PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500) >= 250;
+        $slashes = '/'.substr($pattern, 1, -1).'/';
+        foreach (['aab', 'b', $subject] as $tried) {
+            $this->assertSame(preg_match($slashes, $tried), preg_match($pattern, $tried), \sprintf('Oracle: %s and %s disagree on %s.', $pattern, $slashes, substr($tried, 0, 8)));
+        }
+        $pinned = PcreAttemptSteps::pinned('/(?:a)++b/');
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempts of /(?:a)++b/ do not grow with the rest of the run.');
 
         $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
-        $this->assertSame(['a', $counted], [$cost->run, $cost->replayed], $pattern);
+        $this->assertSame([2, 'a', true], [$cost->degree, $cost->run, $cost->replayed], $pattern);
     }
 
     /**
      * @return iterable<string, array{pattern: string}>
      */
+    public static function provideDelimitersAGroupHolds(): iterable
+    {
+        yield 'possessive loop, "?" as the delimiter' => ['pattern' => '?a++b?'];
+        yield 'possessive loop, ":" as the delimiter' => ['pattern' => ':a++b:'];
+        yield 'possessive loop, ")" as the delimiter' => ['pattern' => ')a++b)'];
+        // The body holds the first delimiter tried.
+        yield 'possessive loop holding a control character, "?" as the delimiter' => ['pattern' => "?a++b|\x01?"];
+    }
+
+    /**
+     * A repeat after "\E" repeats the last character "\Q" quoted, which a
+     * group put where it stands would quote too: the replay ends the quote
+     * before the group and quotes the character inside it, "\E(?:\Qa\E)",
+     * the "\E" after it then ending no quote. The group changes no match,
+     * and the step counter sees each character the possessive repeat reads
+     * through it, as it sees those of the greedy one.
+     *
+     * Oracle, pcre.jit=0, PHP 8.4.28, PCRE2 10.49 (and 10.34, 10.39, 10.40):
+     * "/\Q\E(?:\Qa\E)\E++b/" matches "aab" and not "..b", as "/\Qa\E++b/"
+     * does, and "/\Q\E(?:\Q.\E)\E++b/" "..b" and not "aab".
+     */
+    #[Test]
+    #[DataProvider('provideQuotedRepeats')]
+    public function test_replay_reads_a_quoted_repeat_through_a_group_of_its_own(string $pattern, string $counted, string $run): void
+    {
+        $subject = str_repeat($run, 1000).'!b';
+        foreach ([$run.$run.'b', 'xb', $subject] as $tried) {
+            $this->assertSame(preg_match(PcreInterpreter::pattern($pattern), $tried), preg_match(PcreInterpreter::pattern($counted), $tried), \sprintf('Oracle: %s and %s disagree on %s.', $pattern, $counted, substr($tried, 0, 8)));
+        }
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches the witness.');
+        $pinned = PcreAttemptSteps::pinned($counted);
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempts of '.$counted.' do not grow with the rest of the run.');
+
+        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame([$run, true], [$cost->run, $cost->replayed], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, counted: string, run: string}>
+     */
     public static function provideQuotedRepeats(): iterable
     {
-        yield 'greedy' => ['pattern' => '/\Qa\E+b/'];
-        yield 'possessive' => ['pattern' => '/\Qa\E++b/'];
+        yield 'greedy' => ['pattern' => '/\Qa\E+b/', 'counted' => '/\Q\E(?:\Qa\E)\E+b/', 'run' => 'a'];
+        yield 'possessive' => ['pattern' => '/\Qa\E++b/', 'counted' => '/\Q\E(?:\Qa\E)\E++b/', 'run' => 'a'];
+        yield 'possessive, a quote left empty before the repeat' => ['pattern' => '/\Qa\E\Q\E++b/', 'counted' => '/\Q\E(?:\Qa\E)\E\Q\E++b/', 'run' => 'a'];
+        yield 'possessive of a sign the quote keeps' => ['pattern' => '/\Q.\E++b/', 'counted' => '/\Q\E(?:\Q.\E)\E++b/', 'run' => '.'];
+        // The quote stands elsewhere: the repeated character takes a plain group.
+        yield 'possessive before a quoted branch' => ['pattern' => '/a++b|\Qx\E/', 'counted' => '/(?:a)++b|\Qx\E/', 'run' => 'a'];
     }
 
     /**
