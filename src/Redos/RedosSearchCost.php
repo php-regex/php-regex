@@ -41,7 +41,7 @@ use PHPRegex\Redos\Backtrack\WitnessRenderer;
  *
  * @api
  *
- * @phpstan-type SearchCostArray array{degree: int, cause: string, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
+ * @phpstan-type SearchCostArray array{degree: int, cause: value-of<SearchCostCause>, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
  */
 final class RedosSearchCost
 {
