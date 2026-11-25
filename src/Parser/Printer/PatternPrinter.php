@@ -309,10 +309,12 @@ final class PatternPrinter extends AbstractNodeVisitor
     private array $droppedGroups = [];
 
     /**
-     * How many atomic groups and possessive repeats the node being printed
-     * stands in.
+     * The groups compact reads inside an atomic group or a possessive
+     * repeat, by object id.
+     *
+     * @var array<int, true>
      */
-    private int $commitments = 0;
+    private array $committedGroups = [];
 
     /**
      * The source span of the last braces joined that hold a space or a tab
@@ -449,7 +451,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->keptComments = [];
         $this->keptQuotedBrackets = [];
         $this->droppedGroups = [];
-        $this->commitments = 0;
+        $this->committedGroups = [];
         $this->bracketMark = null;
         $this->spacedBraces = null;
     }
@@ -666,10 +668,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         $this->countCapture($node);
 
-        $atomic = GroupType::Atomic === $node->type;
-        $this->commitments += $atomic ? 1 : 0;
         $child = $this->compileGroupChild($node, $flags);
-        $this->commitments -= $atomic ? 1 : 0;
 
         // A non-capturing group holding nothing but comments matches the
         // empty string once compact drops them, and sets nothing: it goes
@@ -681,7 +680,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         // reading on: "/a+(?:(?:)|b)?+a/" finds "aa", "/a+(?:|b)?+a/"
         // nothing.
         if ('' === $child && self::MODE_COMPACT === $this->mode && GroupType::NonCapturing === $node->type && !PatternLayout::isEmpty($node->child)) {
-            if ($this->commitments > 0) {
+            if (isset($this->committedGroups[spl_object_id($node)])) {
                 return '(?:)';
             }
 
@@ -1420,10 +1419,7 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private function quantified(QuantifierNode $node, string $between): string
     {
-        $possessive = QuantifierType::Possessive === $node->type;
-        $this->commitments += $possessive ? 1 : 0;
         $nodeCompiled = $node->node->accept($this);
-        $this->commitments -= $possessive ? 1 : 0;
 
         // A group compact dropped, "(?:#c\n)*", still carries the quantifier.
         if ('' === $nodeCompiled && $node->node instanceof GroupNode) {
@@ -2166,6 +2162,35 @@ final class PatternPrinter extends AbstractNodeVisitor
     }
 
     /**
+     * The groups that stand inside an atomic group or a possessive repeat,
+     * by object id: PCRE2 makes a character repeated before such a group
+     * possessive as if the group could not be skipped, and an empty group
+     * it enters there stops it, so compact keeps one of comments as "(?:)".
+     *
+     * @return array<int, true>
+     */
+    private static function groupsInCommitments(NodeInterface $pattern): array
+    {
+        $groups = [];
+        $pending = [[$pattern, false]];
+        while (null !== $entry = array_pop($pending)) {
+            [$node, $inside] = $entry;
+            if ($inside && $node instanceof GroupNode) {
+                $groups[spl_object_id($node)] = true;
+            }
+
+            $inside = $inside
+                || ($node instanceof GroupNode && GroupType::Atomic === $node->type)
+                || ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type);
+            foreach ($node->getChildren() as $child) {
+                $pending[] = [$child, $inside];
+            }
+        }
+
+        return $groups;
+    }
+
+    /**
      * Format, compact or pretty-print a whole pattern.
      *
      * A pattern that fits the width and nests at most two groups stays on
@@ -2182,7 +2207,7 @@ final class PatternPrinter extends AbstractNodeVisitor
         $this->keptComments = [];
         $this->keptQuotedBrackets = [];
         $this->droppedGroups = [];
-        $this->commitments = 0;
+        $this->committedGroups = [];
         $this->spacedBraces = null;
         $this->delimiter = $node->delimiter;
         $this->closingDelimiter = Delimiters::closing($node->delimiter);
@@ -2216,6 +2241,7 @@ final class PatternPrinter extends AbstractNodeVisitor
 
         if (self::MODE_COMPACT === $this->mode) {
             [$this->keptComments, $this->keptQuotedBrackets] = DelimiterBrackets::asWritten($node, $this->source, $this->quotedSpans(), true);
+            $this->committedGroups = self::groupsInCommitments($node->pattern);
 
             // A "(?#...)" ends at the first ")": a "#" comment holding the
             // one the balance needs cannot become one.
