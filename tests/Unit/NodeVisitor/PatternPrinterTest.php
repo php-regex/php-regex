@@ -601,13 +601,13 @@ final class PatternPrinterTest extends TestCase
 
         $printed = [
             'as written' => [$asWritten, $tree->accept(PatternPrinter::asWritten()), $tree->accept(new PatternPrinter())],
-            'normalized' => [$normalized, $tree->accept(PatternPrinter::normalized()), $tree->accept(new PatternPrinter(false, false, false))],
+            'normalized' => [$normalized, $tree->accept(PatternPrinter::normalized()), null],
             'pretty' => [$pretty, $tree->accept(PatternPrinter::pretty()), $tree->accept(new PatternPrinter(true))],
         ];
 
         foreach ($printed as $mode => [$expected, $named, $constructed]) {
             $this->assertSame($expected, $named, $mode);
-            $this->assertSame($constructed, $named, $mode.', as the constructor prints it');
+            $this->assertSame($constructed ?? $named, $named, $mode.', as the constructor prints it');
             foreach ($subjects as $subject => $matches) {
                 $this->assertSame($matches, preg_match($pattern, (string) $subject), 'The oracle on the input, '.json_encode((string) $subject));
                 $this->assertSame($matches, preg_match($named, (string) $subject), $mode.': '.$named.' on '.json_encode((string) $subject));
@@ -658,6 +658,16 @@ final class PatternPrinterTest extends TestCase
         $this->assertSame("a# c\\ \nb", $tree->pattern->accept($printer));
     }
 
+    /**
+     * The constructor takes the two switches a caller sets; the spelling a
+     * printer writes in is chosen by its named constructor.
+     */
+    #[Test]
+    public function test_the_constructor_takes_the_layout_and_the_comment_switches_only(): void
+    {
+        $this->assertSame(2, (new \ReflectionMethod(PatternPrinter::class, '__construct'))->getNumberOfParameters());
+    }
+
     #[Test]
     public function test_named_constructors_give_a_new_printer_each_time(): void
     {
@@ -677,11 +687,12 @@ final class PatternPrinterTest extends TestCase
     {
         $this->assertSame(1, preg_match($pattern, $subject), 'The oracle on the input.');
         $ast = Regex::create(['cache' => null])->parse($pattern);
-        $reset = new PatternPrinter(preserveSpelling: $preserveSpelling);
+        $printer = static fn (): PatternPrinter => $preserveSpelling ? PatternPrinter::asWritten() : PatternPrinter::normalized();
+        $reset = $printer();
         $reset->resetState();
 
         $this->assertSame($pattern, $ast->accept($reset));
-        $this->assertSame($ast->accept(new PatternPrinter(preserveSpelling: $preserveSpelling)), $ast->accept($reset));
+        $this->assertSame($ast->accept($printer()), $ast->accept($reset));
     }
 
     /**

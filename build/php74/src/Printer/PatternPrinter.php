@@ -93,10 +93,6 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     private bool $inExtendedClass = false;
     /**
-     * In a class inside "(?[...])", read under "xx", where a space is skipped.
-     */
-    private bool $inClassOfExtendedClass = false;
-    /**
      * The flags a non-atomic lookaround carries: "(?*...)" and "(?<*...)".
      */
     private const NON_ATOMIC_FLAG = '*';
@@ -181,6 +177,11 @@ final class PatternPrinter extends AbstractNodeVisitor
     private const CHAR_CLASS_META = [
         '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true,
     ];
+
+    /**
+     * In a class inside "(?[...])", read under "xx", where a space is skipped.
+     */
+    private bool $inClassOfExtendedClass = false;
 
     private string $delimiter = '/';
 
@@ -321,25 +322,28 @@ final class PatternPrinter extends AbstractNodeVisitor
      * @var array{int, int}|null
      */
     private ?array $spacedBraces = null;
+
+    /**
+     * When false, escapes and comment syntax are normalized instead of
+     * being given back the way the pattern spelled them: normalized() sets
+     * it, as comparing two patterns needs that form.
+     */
+    private bool $preserveSpelling = true;
     /**
      */
     private bool $pretty = false;
     /**
      */
     private bool $collapseExtendedComments = false;
-    /**
-     */
-    private bool $preserveSpelling = true;
 
     /**
-     * asWritten(), normalized() and pretty() name the printer each flag set
-     * here gives. $collapseExtendedComments gives one more: a normalized
+     * asWritten() and pretty() name the printer each flag set here gives,
+     * normalized() one more. $collapseExtendedComments gives a normalized
      * printer that writes every comment under x as "(?#...)".
      */
     public function __construct(
         bool $pretty = false,
-        bool $collapseExtendedComments = false,
-        bool $preserveSpelling = true
+        bool $collapseExtendedComments = false
     ) {
         /**
          * When true, escapes are normalized and, under x only, the pattern
@@ -354,12 +358,6 @@ final class PatternPrinter extends AbstractNodeVisitor
          * representation of verbose regexes without leaking full comment text.
          */
         $this->collapseExtendedComments = $collapseExtendedComments;
-        /**
-         * When false, escapes and comment syntax are normalized instead of
-         * being given back the way the pattern spelled them. Comparing two
-         * patterns needs that normalized form.
-         */
-        $this->preserveSpelling = $preserveSpelling;
         $this->mode = $this->pretty ? self::MODE_PRETTY : self::MODE_OFF;
     }
 
@@ -384,7 +382,10 @@ final class PatternPrinter extends AbstractNodeVisitor
      */
     public static function normalized(): self
     {
-        return new self(false, false, false);
+        $printer = new self();
+        $printer->preserveSpelling = false;
+
+        return $printer;
     }
 
     /**
@@ -1418,24 +1419,24 @@ final class PatternPrinter extends AbstractNodeVisitor
             ) {
                 $result .= ($this->bracketMarkFor($char) ?? '\\').$char;
             } elseif (\ord($char) < 32 || 127 === \ord($char) || (!$unicodeMode && \ord($char) >= 128)) {
-                $matchSubject1428 = \ord($char);
+                $matchSubject1427 = \ord($char);
                 switch (true) {
-                    case 8 === $matchSubject1428:
+                    case 8 === $matchSubject1427:
                         $escape = $this->inCharClass ? '\\b' : '\\x08';
                         break;
-                    case 9 === $matchSubject1428:
+                    case 9 === $matchSubject1427:
                         $escape = '\\t';
                         break;
-                    case 10 === $matchSubject1428:
+                    case 10 === $matchSubject1427:
                         $escape = '\\n';
                         break;
-                    case 13 === $matchSubject1428:
+                    case 13 === $matchSubject1427:
                         $escape = '\\r';
                         break;
-                    case 12 === $matchSubject1428:
+                    case 12 === $matchSubject1427:
                         $escape = '\\f';
                         break;
-                    case 27 === $matchSubject1428:
+                    case 27 === $matchSubject1427:
                         $escape = '\\e';
                         break;
                     default:
