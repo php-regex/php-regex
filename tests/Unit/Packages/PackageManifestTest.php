@@ -117,6 +117,10 @@ final class PackageManifestTest extends TestCase
             // The match solver runs the body of the group a call names
             // where the call stands, found as PCRE numbers the groups.
             'Parser\Analysis\GroupIndex',
+            // A target that names no locale but C may run under the tables
+            // of any: a possessive proven past ASCII against a class they
+            // decide is refused.
+            'Parser\Engine\CharacterTables',
         ],
         // The CLI, the PHPStan rule and the Psalm plugin name the directory
         // where the class sets PCRE2 answered are kept between runs. The

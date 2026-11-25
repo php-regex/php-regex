@@ -80,6 +80,33 @@ CHANGELOG
    over a group, capturing or not, keeps a frame of the JIT for each run of
    the call around it, and `/x(?R)?(?:ab)++c/` runs out of the JIT stack
    some 3,000 calls deep where `/x(?R)?(?:ab)+c/` matches.
+ * PCRE2 makes a character repeated before an atomic group, or a
+   possessive repeat of a group, that may match nothing possessive, as if
+   the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,
+   with and without the JIT, from PCRE2 10.34 to 10.49, where `/a+(?:b)?a/`
+   finds `aa`. The two were proven to write the same `$matches`, and
+   `/^a+(?:b)?+a$/` to match the strings of `/^a+(?:b)?a$/`.
+   `matchEquivalent()` now proves such a repeat only where its possessive
+   spelling gives nothing back, `/a+(?:b)?+c/` and `/a+(?:b)?c/` alike, and
+   `equivalent()`, `intersection()` and `subsetOf()` refuse it. Two
+   patterns whose brackets tell such a group apart no longer read alike:
+   `/(?:a)+(?:b)?+a/` and `/a+b?+a/` match `aa`, where `/a+(?:b)?+a/` does
+   not. The optimizer no longer rewrites `/a+(?:b|c)?+a/` into
+   `/a+[bc]?+a/`, which matches `aa`.
+ * `matchEquivalent()` refuses a possessive repeat of a group that holds a
+   capturing group for a target before PCRE2 10.44: the JIT of 10.39 to
+   10.42 leaves the group set from an earlier start of the match, and
+   `/a(a)*+b/` writes `a` to group 1 on `aacab`, where `/a(a)*b/` leaves it
+   unset.
+ * Without `u`, under a target that names no locale but C,
+   `matchEquivalent()` refuses a possessive quantifier proven on a byte past
+   ASCII against `\w`, `\s`, their negations, a POSIX class or a class under
+   `i`, and `equivalent()`, `intersection()` and `subsetOf()` refuse such a
+   possessive quantifier or atomic group beside one of them: PHP hands
+   PCRE2 the tables of the locale a program sets, and under
+   en_IE.ISO8859-1 `/c\xE9++b?\w/` finds nothing in `c\xE9\xE9`, where
+   `/c\xE9+b?\w/` finds it whole. A target that names its locale is read
+   under its tables.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

@@ -22,6 +22,7 @@ use PHPRegex\Optimizer\OptimizerOptions;
 use PHPRegex\Optimizer\RewriteCheck;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -435,6 +436,70 @@ final class RewriteVerificationTest extends TestCase
         yield 'a repeated part dropped' => ['original' => '/(?<!y)a\d\d/', 'rewrite' => '/(?<!y)a\d/', 'subject' => 'a12'];
         yield 'a possessive part only a second DEFINE holds' => ['original' => '/(?(DEFINE)(?<a>x))(?(DEFINE)(?<n>\d+))(?&n)1/', 'rewrite' => '/(?(DEFINE)(?<a>x))(?(DEFINE)(?<n>\d++))(?&n)1/', 'subject' => '21'];
         yield 'a possessive part only a DEFINE holds' => ['original' => '/(?(DEFINE)(?<n>\d+))(?&n)1/', 'rewrite' => '/(?(DEFINE)(?<n>\d++))(?&n)1/', 'subject' => '21'];
+    }
+
+    /**
+     * PCRE2 makes a character repeated before a possessive or atomic group
+     * that may match nothing possessive, as if the group could not be
+     * skipped, where a repeat written as a group, or a letter repeated
+     * possessively, keeps what it can give back: the brackets the normal
+     * form leaves out decide. The engine tells each pair apart on the
+     * subject, with and without the JIT; no check proves the rewrite, and
+     * the optimizer keeps the pattern as written.
+     */
+    #[Test]
+    #[DataProvider('provideRewritesOfGroupsTheEngineMaySkip')]
+    public function test_a_rewrite_of_the_brackets_around_a_group_the_engine_may_skip_is_not_proven(string $original, string $rewrite, string $subject): void
+    {
+        $this->assertNotSame(self::called('preg_match', $original, $subject), self::called('preg_match', $rewrite, $subject), 'The engine tells them apart.');
+        $this->assertNotSame(self::called('preg_match', PcreInterpreter::pattern($original), $subject), self::called('preg_match', PcreInterpreter::pattern($rewrite), $subject), 'The interpreter tells them apart.');
+
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null]));
+        $this->assertFalse($solver->readAlike($original, $rewrite));
+        $this->assertNotSame([], $solver->runsOfEveryCall($original, $rewrite));
+        $this->assertFalse($solver->rewritesAlikeInPlace($original, $rewrite));
+
+        $verify = new \ReflectionMethod(Optimizer::class, 'verifyOptimizedPatternWithAutomata');
+        $this->assertFalse($verify->invoke(new Optimizer(RegexParser::create(['cache' => null])), $original, $rewrite));
+
+        $optimized = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($original)->optimized;
+        $this->assertSame(self::called('preg_match', $original, $subject), self::called('preg_match', $optimized, $subject), \sprintf('%s writes other matches than %s.', $optimized, $original));
+    }
+
+    /**
+     * Where the repeat before the group gives nothing back to what follows,
+     * made possessive or not, the brackets decide nothing: the engine writes
+     * the same matches for the pattern and its rewrite on every subject, and
+     * the rewrite ships.
+     */
+    #[Test]
+    public function test_the_brackets_of_a_group_after_a_repeat_that_gives_nothing_back_are_still_rewritten(): void
+    {
+        $subjects = [''];
+        $layer = [''];
+        for ($length = 1; $length <= 4; $length++) {
+            $layer = array_merge(...array_map(static fn (string $prefix): array => [$prefix.'a', $prefix.'b', $prefix.'c'], $layer));
+            $subjects = [...$subjects, ...$layer];
+        }
+        foreach ($subjects as $subject) {
+            $this->assertSame(self::called('preg_match', '/a+(?:b)?+c/', $subject), self::called('preg_match', '/a+b?+c/', $subject), 'On '.json_encode($subject));
+        }
+
+        $this->assertSame('/a+b?+c/', (new Optimizer(RegexParser::create(['cache' => null])))->optimize('/a+(?:b)?+c/')->optimized);
+    }
+
+    /**
+     * @return iterable<string, array{original: string, rewrite: string, subject: string}>
+     */
+    public static function provideRewritesOfGroupsTheEngineMaySkip(): iterable
+    {
+        yield 'a group repeated possessively, the group dropped' => ['original' => '/a+(?:b)?+a/', 'rewrite' => '/a+b?+a/', 'subject' => 'aa'];
+        yield 'an alternation repeated possessively, made a class' => ['original' => '/a+(?:b|c)?+a/', 'rewrite' => '/a+[bc]?+a/', 'subject' => 'aa'];
+        yield 'a group repeated possessively, made a letter' => ['original' => '/a+(?:b){0,1}+a/', 'rewrite' => '/a+b?+a/', 'subject' => 'aa'];
+        yield 'a class in a group repeated possessively, the group dropped' => ['original' => '/a+(?:[b])?+a/', 'rewrite' => '/a+[b]?+a/', 'subject' => 'aa'];
+        yield 'an alternation in an atomic group, made a class' => ['original' => '/a+(?>(?:b|c)?)a/', 'rewrite' => '/a+(?>[bc]?)a/', 'subject' => 'aa'];
+        yield 'a repeat written as a group, the group dropped' => ['original' => '/(?:a)+(?:b)?+a/', 'rewrite' => '/a+(?:b)?+a/', 'subject' => 'aa'];
+        yield 'beside a lookbehind' => ['original' => '/(?<!x)a+(?:b|c)?+a/', 'rewrite' => '/(?<!x)a+[bc]?+a/', 'subject' => 'aa'];
     }
 
     /**

@@ -52,8 +52,17 @@ final class RegularSubsetValidator
         self::assertEmptyMatchesAllowed($regex, $pattern);
 
         $hir = (new HirTranslator($target))->translate($regex);
-        (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex)))
+        // A target that names no locale but C may run under any: without
+        // "u" the tables a class is read under past ASCII are not known.
+        $committed = (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex), LocaleBoundClasses::of($regex, $target ?? PcreTarget::runtime())))
             ->assertTranslatable($hir, $options);
+
+        // The language reads a proven commitment as written, where PCRE2
+        // makes a repeat possessive before a group it may skip.
+        $skipped = $committed ? AutoPossession::repeatBeforeSkippableGroup($regex->pattern) : null;
+        if (null !== $skipped) {
+            throw new ComplexityException(HirToNfaTransformer::SKIPPED_GROUP_MESSAGE, $skipped->getStartPosition(), $pattern);
+        }
 
         return $hir;
     }

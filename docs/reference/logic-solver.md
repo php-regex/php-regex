@@ -128,6 +128,25 @@ reads UTF-8 and the other bytes. Groups count by number and by name: `/(?<n>a)/`
 write different `$matches`, and so do `/(?<n>a){0}b/` and `/b/`, as a group repeated no time
 still takes its number, and `/(?(DEFINE)(?<n>x))a/` and `/a/`, as a group a DEFINE holds does.
 
+Three more refusals follow from what the engine does on its own. PCRE2 makes a character
+repeated before an atomic group, or a possessive repeat of a group, that may match nothing
+possessive, as if the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,
+with and without the JIT, from PCRE2 10.34 to 10.49, where `/a+(?:b)?a/` finds `aa`. Such
+a repeat is read as written only where its possessive spelling gives nothing back, `*+`
+over a group included: `/a+(?:b)?+c/` is read, `/a+(?:b)?+a/` and `/a+(?:b)*+a/` are
+refused. A repeat written as a group, `/(?:a)+(?:b)?+a/`, and a letter repeated
+possessively, `/a+b?+a/`, are not made possessive, and two patterns whose brackets tell
+such a group apart never read alike. `equivalent()`, `intersection()` and `subsetOf()`
+refuse a character repeated before such a group. For a target before PCRE2 10.44, a
+possessive repeat of a group that holds a capturing group is refused: the JIT of 10.39 to
+10.42 leaves the group set from an earlier start of the match, and `/a(a)*+b/` writes `a` to
+group 1 on `aacab`, where `/a(a)*b/` leaves it unset. Without `u`, PHP hands
+PCRE2 the tables of the locale a program sets, so under a target that names no locale but
+C a possessive quantifier proven on a byte past ASCII against `\w`, `\s`, their negations,
+a POSIX class or a class under `i` is refused: under en_IE.ISO8859-1 `\w` takes `\xE9`, and
+`/c\xE9++b?\w/` finds nothing in `c\xE9\xE9`, where `/c\xE9+b?\w/` finds it whole. A target
+that names its locale is read under its tables.
+
 Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
 body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
 release PHP bundles: the engine backtracks into the call (`/(a|ab)(?1)c/` matches `aabc`),
@@ -452,6 +471,8 @@ verbatim:
 | an atomic group (and `\R`) the solver cannot prove inert | `Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.` |
 | `\K` or `\G`                               | `\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.` |
 | a possessive quantifier the solver cannot prove inert | `Possessive quantifiers never give back what they matched, which is ordered behaviour the solver cannot read as a pure language.` |
+| a character repeated before an atomic group or a possessive repeat of a group that may match nothing, `a+(?:b)?+a` | `PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.` |
+| without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII beside `\w`, `\s`, a POSIX class or a class under `i` | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | a newline convention other than `\n`, such as `(*CR)`, with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |

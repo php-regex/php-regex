@@ -71,6 +71,10 @@ final class HirToNfaTransformer
 
     public const ZERO_REPEAT_ASSERTION_MESSAGE = 'An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.';
 
+    public const SKIPPED_GROUP_MESSAGE = 'PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.';
+
+    public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;
@@ -108,8 +112,27 @@ final class HirToNfaTransformer
      */
     private array $edges = [];
 
-    public function __construct(private readonly string $pattern, private readonly bool $unicode)
-    {
+    /**
+     * Whether the tree holds a class whose bytes past ASCII the tables of
+     * an unknown locale decide, read once a commitment is proven.
+     */
+    private ?bool $holdsBoundClass = null;
+
+    /**
+     * The tree the refusal walk being run reads.
+     */
+    private ?Hir $root = null;
+
+    /**
+     * @param LocaleBoundClasses|null $localeBound the classes whose characters past ASCII the tables
+     *                                             of an unknown locale decide; null when the tables
+     *                                             read are the ones the pattern runs under
+     */
+    public function __construct(
+        private readonly string $pattern,
+        private readonly bool $unicode,
+        private readonly ?LocaleBoundClasses $localeBound = null
+    ) {
         $this->inertia = new AtomicInertiaAnalyzer();
     }
 
@@ -162,11 +185,18 @@ final class HirToNfaTransformer
      * per reason when it does not: nothing is built.
      *
      * @throws ComplexityException
+     *
+     * @return bool whether a possessive quantifier or an atomic group was
+     *              proven to read as its greedy, plain spelling
      */
-    public function assertTranslatable(Hir $hir, SolverOptions $options): void
+    public function assertTranslatable(Hir $hir, SolverOptions $options): bool
     {
         $this->vouched = [];
+        $this->holdsBoundClass = null;
+        $this->root = $hir;
         $this->assertSequence([$hir], $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
+
+        return [] !== $this->vouched;
     }
 
     /**
@@ -350,6 +380,17 @@ final class HirToNfaTransformer
     {
         if (!$this->inertia->commitmentIsInert($commitment, $follow, $commitsBeyond)) {
             throw new ComplexityException($commitment instanceof AtomicHir ? self::ATOMIC_MESSAGE : self::POSSESSIVE_MESSAGE, $commitment->startPosition, $this->pattern);
+        }
+
+        // Without "u" a class takes the bytes past ASCII the tables of the
+        // locale give it: under en_IE.ISO8859-1 "\w" takes "\xE9", and
+        // "/^c\xE9++b?\w$/" no longer matches "c\xE9\xE9". A proof that
+        // reads such a byte, where such a class stands, holds under the
+        // tables of C alone.
+        if (null !== $this->localeBound && null !== $this->root
+            && ((null !== $follow && LocaleBoundClasses::pastAscii($follow)) || LocaleBoundClasses::readsPastAscii($commitment))
+            && ($this->holdsBoundClass ??= $this->localeBound->bindsSomeIn($this->root))) {
+            throw new ComplexityException(self::LOCALE_TABLES_MESSAGE, $commitment->startPosition, $this->pattern);
         }
 
         $this->vouched[spl_object_id($commitment)] = true;

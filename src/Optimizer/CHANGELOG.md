@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The brackets of a possessive repeat of a group, or of an atomic group,
+   that may match nothing stay as written after a repeated character that
+   could give back to what follows: PCRE2 makes that character possessive,
+   as if the group could not be skipped, and `/a+(?:b)?+a/` finds nothing in
+   `aa`, where `/a+b?+a/`, which the check proved alike and the optimizer
+   wrote, finds `aa`. The pattern now ships as written, and so do
+   `/a+(?:b|c)?+a/`, which became `/a+[bc]?+a/`, and `/a+(?>(?:b)?)a/`,
+   which became `/a+(?>b?)a/`. `/a+(?:b)?+c/` still becomes `/a+b?+c/`.
  * The possessive rewrite leaves a repetition greedy before a lookaround,
    which reads nothing yet looks at the characters the repetition would
    give back: `/a+(?!b)/` matches `a` in `aab`, `/a++(?!b)/` nothing. The
