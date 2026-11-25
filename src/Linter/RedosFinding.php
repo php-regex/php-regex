@@ -153,11 +153,11 @@ final class RedosFinding
             if ('\\' !== $rendered[$offset]) {
                 continue;
             }
+            // A sequence past the cut moves the cut before it; the loop,
+            // past the sequence, ends.
             $end = self::escapeSequenceEnd($rendered, $offset);
             if ($end > $cut) {
                 $cut = $offset;
-
-                break;
             }
             $offset = $end - 1;
         }
@@ -200,9 +200,10 @@ final class RedosFinding
      */
     private static function escapeSequenceEnd(string $text, int $offset): int
     {
-        // The operand is optional: a lone backslash is a sequence of one.
+        // The operand is optional: a lone backslash is a sequence of one,
+        // and the backslash at $offset always matches.
         LibraryPcre::match('/\G\\\\(?:x(?:\{[^}]*\}?|[0-9A-Fa-f]{0,2})|[No]\{[^}]*\}?|[Pp](?:\{[^}]*\}?|[A-Za-z])|[gk](?:\{[^}]*\}?|<[^>]*>?|\'[^\']*\'?)|g[+-]?[0-9]+|c(?:[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?|0[0-7]{0,2}|[1-9][0-9]*|[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?/', $text, $match, 0, $offset);
 
-        return $offset + max(1, \strlen($match[0] ?? ''));
+        return $offset + \strlen($match[0]);
     }
 }
