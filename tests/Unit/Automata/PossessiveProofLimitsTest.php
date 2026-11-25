@@ -267,7 +267,13 @@ final class PossessiveProofLimitsTest extends TestCase
             $this->assertNotContains(false, $alike->getArrayCopy(), \sprintf('The tables of %s write the same matches.', $locale));
         }
 
-        $this->assertTrue((new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN])))->matchEquivalent($left, $right)->isEquivalent);
+        $solver = new LanguageSolver(RegexParser::create(['cache' => null, 'locale' => CharacterTables::BUILT_IN]));
+        $this->assertTrue($solver->matchEquivalent($left, $right)->isEquivalent);
+
+        // Read whole, the strings both match are the same under every
+        // locale too.
+        $whole = static fn (string $pattern): string => $pattern[0].'^(?:'.substr($pattern, 1, (int) strrpos($pattern, $pattern[0]) - 1).')$'.substr($pattern, (int) strrpos($pattern, $pattern[0]));
+        $this->assertTrue($solver->equivalent($whole($left), $whole($right))->isEquivalent);
     }
 
     /**
@@ -278,6 +284,10 @@ final class PossessiveProofLimitsTest extends TestCase
         yield 'a letter after a byte past ASCII' => ['left' => '/c\xE9++b?x/', 'right' => '/c\xE9+b?x/', 'letters' => "cbx\xE9"];
         yield 'two classes within ASCII' => ['left' => '/\s++\w/', 'right' => '/\s+\w/', 'letters' => " a\xE9"];
         yield 'a code point past ASCII under u' => ['left' => '/c\x{D7}++b?\w/u', 'right' => '/c\x{D7}+b?\w/u', 'letters' => "cb\u{D7}"];
+        // The host a route compiles: the letters the option folds stand
+        // apart from what the possessive and its follower decide.
+        yield 'a host label before a dot, caseless' => ['left' => '/(?P<sub>[^\.]++)\.a\.com/i', 'right' => '/(?P<sub>[^\.]+)\.a\.com/i', 'letters' => "a.c\xE9"];
+        yield 'a class of everything but a dot before it, caseless' => ['left' => '/[^.]++\.x/i', 'right' => '/[^.]+\.x/i', 'letters' => ".xX\xE9"];
     }
 
     /**

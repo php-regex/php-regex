@@ -97,16 +97,18 @@ CHANGELOG
    capturing group for a target before PCRE2 10.44: the JIT of 10.39 to
    10.42 leaves the group set from an earlier start of the match, and
    `/a(a)*+b/` writes `a` to group 1 on `aacab`, where `/a(a)*b/` leaves it
-   unset.
+   unset. The target answers it as
+   `PcreFeature::PossessiveRepeatGroupsClearedEachStart`.
  * Without `u`, under a target that names no locale but C,
-   `matchEquivalent()` refuses a possessive quantifier proven on a byte past
-   ASCII against `\w`, `\s`, their negations, a POSIX class or a class under
-   `i`, and `equivalent()`, `intersection()` and `subsetOf()` refuse such a
-   possessive quantifier or atomic group beside one of them: PHP hands
-   PCRE2 the tables of the locale a program sets, and under
+   `matchEquivalent()`, `equivalent()`, `intersection()` and `subsetOf()`
+   refuse a possessive quantifier, or an atomic group, proven on a byte past
+   ASCII against `\w`, `\s`, their negations, a POSIX class, or a class
+   under `i` that holds some of the letters and the bytes past ASCII but not
+   all: PHP hands PCRE2 the tables of the locale a program sets, and under
    en_IE.ISO8859-1 `/c\xE9++b?\w/` finds nothing in `c\xE9\xE9`, where
-   `/c\xE9+b?\w/` finds it whole. A target that names its locale is read
-   under its tables.
+   `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route host
+   compiles, is still read. A target that names its locale is read under
+   its tables.
  * `matchEquivalent()` refuses an end anchor inside a loop that may run no
    time, `*`, `*?` or `{0,}`, as it refuses one inside `+`, when another turn
    of the loop or what follows it reads more: `/(?:a$)*\n/` was proven

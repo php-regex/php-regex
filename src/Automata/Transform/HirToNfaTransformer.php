@@ -113,12 +113,6 @@ final class HirToNfaTransformer
     private array $edges = [];
 
     /**
-     * Whether the tree holds a class whose bytes past ASCII the tables of
-     * an unknown locale decide, read once a commitment is proven.
-     */
-    private ?bool $holdsBoundClass = null;
-
-    /**
      * The tree the refusal walk being run reads.
      */
     private ?Hir $root = null;
@@ -192,7 +186,6 @@ final class HirToNfaTransformer
     public function assertTranslatable(Hir $hir, SolverOptions $options): bool
     {
         $this->vouched = [];
-        $this->holdsBoundClass = null;
         $this->root = $hir;
         $this->assertSequence([$hir], $options, MatchMode::Full === $options->matchMode ? CharSet::empty() : null);
 
@@ -385,11 +378,11 @@ final class HirToNfaTransformer
         // Without "u" a class takes the bytes past ASCII the tables of the
         // locale give it: under en_IE.ISO8859-1 "\w" takes "\xE9", and
         // "/^c\xE9++b?\w$/" no longer matches "c\xE9\xE9". A proof that
-        // reads such a byte, where such a class stands, holds under the
-        // tables of C alone.
-        if (null !== $this->localeBound && null !== $this->root
-            && ((null !== $follow && LocaleBoundClasses::pastAscii($follow)) || LocaleBoundClasses::readsPastAscii($commitment))
-            && ($this->holdsBoundClass ??= $this->localeBound->bindsSomeIn($this->root))) {
+        // reads such a byte, against such a class in the commitment or in
+        // what follows it, holds under the tables of C alone.
+        if (null !== $this->localeBound && null !== $this->root && null !== $follow
+            && (LocaleBoundClasses::pastAscii($follow) || LocaleBoundClasses::readsPastAscii($commitment))
+            && ($this->localeBound->bindsSomeIn($commitment) || $this->localeBound->bindsSomeMeeting($this->root, $follow))) {
             throw new ComplexityException(self::LOCALE_TABLES_MESSAGE, $commitment->startPosition, $this->pattern);
         }
 

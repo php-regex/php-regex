@@ -70,6 +70,7 @@ use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
+use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -897,13 +898,13 @@ final class LanguageSolver
         $form = $translator->translate($ast);
 
         // The JIT of PCRE2 10.39 to 10.42 keeps the groups of a possessive
-        // repeat from an earlier start; 10.43 is judged with them. A target
-        // that names no locale but C may run under any: without "u" the
-        // tables a class is read under past ASCII are not known.
+        // repeat from an earlier start. A target that names no locale but C
+        // may run under any: without "u" the tables a class is read under
+        // past ASCII are not known.
         $builder = new PriorityNfaBuilder(
             $options->maxNfaStates,
             $pattern,
-            groupsOfPossessivesCleared: $target->pcreAtLeast('10.44'),
+            groupsOfPossessivesCleared: $target->supports(PcreFeature::PossessiveRepeatGroupsClearedEachStart),
             localeBound: LocaleBoundClasses::of($ast, $target),
         );
 

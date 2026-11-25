@@ -168,6 +168,11 @@ enum PcreFeature
     case LongGroupNames;
 
     /**
+     * The JIT clears the groups of a possessive repeat at each start of the match, where 10.39 to 10.42 left one set from an earlier start: "/a(a)*+b/" leaves group 1 unset on "aacab". Judged from 10.44, the first release PHP bundles with it.
+     */
+    case PossessiveRepeatGroupsClearedEachStart;
+
+    /**
      * "(*scan_substring:(1)...)", or "(*scs:": a match read inside a capture.
      */
     case ScanSubstring;
@@ -377,7 +382,8 @@ enum PcreFeature
             self::AsciiOptions,
             self::UcpWordTakesMarksAndConnectors,
             self::CallCapturesGivenBack => '10.43',
-            self::LongGroupNames => '10.44',
+            self::LongGroupNames,
+            self::PossessiveRepeatGroupsClearedEachStart => '10.44',
             self::ScanSubstring,
             self::ExtendedCharClass,
             self::CasingSettingVerbs,

@@ -36,9 +36,11 @@ use PHPRegex\Parser\PcreTarget;
  * under any; one that names another was read under its tables.
  *
  * "\w", "\s", their negations and the POSIX classes are read from the
- * tables, and every class under a caseless option is. The digits, "\h",
- * "\v", "\R", the dot and a class of characters written out are the same
- * under every locale.
+ * tables, and so is a class under a caseless option that holds some of the
+ * letters and the bytes past ASCII but not all: the tables give each its
+ * other case. "[^.]" under "i" holds all of them under every locale. The
+ * digits, "\h", "\v", "\R", the dot and a class of characters written out
+ * are the same under every locale.
  *
  * @internal
  */
@@ -47,14 +49,23 @@ final class LocaleBoundClasses
     private const TYPES = ['w', 'W', 's', 'S'];
 
     /**
-     * Where each class the tables decide starts, read once a class is
-     * asked about; null when every class is, under a caseless option.
+     * Where each class whose members the tables decide starts, read once a
+     * class is asked about.
      *
      * @var array<int, true>|null
      */
     private ?array $positions = null;
 
-    private bool $read = false;
+    /**
+     * Whether a caseless option holds anywhere, read with the positions.
+     */
+    private bool $caseless = false;
+
+    /**
+     * The characters the tables may give another case: the ASCII letters
+     * and the bytes past ASCII.
+     */
+    private ?CharSet $foldable = null;
 
     private function __construct(private readonly RegexNode $regex) {}
 
@@ -77,12 +88,23 @@ final class LocaleBoundClasses
             return false;
         }
 
-        if (!$this->read) {
+        if (null === $this->positions) {
             $this->positions = self::positionsIn($this->regex);
-            $this->read = true;
+            $this->caseless = str_contains($this->regex->flags, 'i') || self::turnsCaselessOn($this->regex->pattern);
         }
 
-        return null === $this->positions || isset($this->positions[$node->startPosition]);
+        if (isset($this->positions[$node->startPosition])) {
+            return true;
+        }
+
+        if (!$this->caseless) {
+            return false;
+        }
+
+        $this->foldable ??= CharSet::fromRanges([[0x41, 0x5A], [0x61, 0x7A], [0x80, 0xFF]]);
+        $held = $node->set->intersect($this->foldable);
+
+        return !$held->isEmpty() && $held->key() !== $this->foldable->key();
     }
 
     /**
@@ -94,6 +116,26 @@ final class LocaleBoundClasses
         $pending = [$root];
         while (null !== $node = array_pop($pending)) {
             if ($this->binds($node)) {
+                return true;
+            }
+
+            array_push($pending, ...$node->children());
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether some class under the root the tables decide may read one of
+     * the characters, as a class that stands right after a commitment
+     * gives all it reads to what follows the commitment. A class of no
+     * character under C's tables may read some under another's.
+     */
+    public function bindsSomeMeeting(Hir $root, CharSet $chars): bool
+    {
+        $pending = [$root];
+        while (null !== $node = array_pop($pending)) {
+            if ($node instanceof ClassHir && $this->binds($node) && ($node->set->isEmpty() || !$node->set->intersect($chars)->isEmpty())) {
                 return true;
             }
 
@@ -131,14 +173,10 @@ final class LocaleBoundClasses
     }
 
     /**
-     * @return array<int, true>|null
+     * @return array<int, true>
      */
-    private static function positionsIn(RegexNode $regex): ?array
+    private static function positionsIn(RegexNode $regex): array
     {
-        if (str_contains($regex->flags, 'i') || self::turnsCaselessOn($regex->pattern)) {
-            return null;
-        }
-
         $positions = [];
         $pending = [$regex->pattern];
         while (null !== $node = array_pop($pending)) {

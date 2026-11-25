@@ -488,6 +488,7 @@ and a target has it from the release it arrived in on
 | `UcpWordTakesMarksAndConnectors` | 10.43 | Under UCP "\w" matches a non-spacing mark (\p{Mn}) and a connector punctuation (\p{Pc}) too, as "\u{301}". |
 | `CallCapturesGivenBack` | 10.43 | After a subroutine call the interpreter gives the groups inside the called one their earlier values back, as the JIT does: "(?(DEFINE)(?<p>(\d)))(?&p)" leaves group 2 unset. |
 | `LongGroupNames` | 10.44 | A group name may be 128 code units long, not 32. |
+| `PossessiveRepeatGroupsClearedEachStart` | 10.44 | The JIT clears the groups of a possessive repeat at each start of the match, where 10.39 to 10.42 left one set from an earlier start: "/a(a)*+b/" leaves group 1 unset on "aacab". Judged from 10.44, the first release PHP bundles with it. |
 | `ScanSubstring` | 10.45 | "(*scan_substring:(1)...)", or "(*scs:": a match read inside a capture. |
 | `ExtendedCharClass` | 10.45 | Perl extended character classes, "(?[ ... ])". |
 | `CasingSettingVerbs` | 10.45 | "(*CASELESS_RESTRICT)" and "(*TURKISH_CASING)". |
