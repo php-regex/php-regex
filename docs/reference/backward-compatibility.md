@@ -150,9 +150,9 @@ The bridges and tools carry more than their classes:
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
-- `regex-rector`: the rules keep their names for all of 2.x and take no
-  configuration (Rector builds them: their constructors are `@internal`), and
-  `RegexSetList::STRING_FUNCTIONS`,
+- `regex-rector`: the rules keep their names for all of 2.x; they take no
+  configuration in 2.0, and a minor release may add one (Rector builds them:
+  their constructors are `@internal`). `RegexSetList::STRING_FUNCTIONS`,
   `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0` name the sets
   that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.

@@ -49,9 +49,12 @@ PHP 8.4's PCRE2 reads otherwise: `EscapeLiteralBraceRector` turns `/a{,3}/`,
 the text `a{,3}` before PCRE2 10.43 and a quantifier from it, into `/a\{,3}/`,
 which reads as the text on both. It needs no configuration: it judges every
 PHP version from the one Rector targets to the newest the library knows, each
-with the PCRE2 its sources bundle, and rewrites a call only when one of them
-reads the pattern otherwise and the rewritten pattern reads alike on all of
-them. Code that targets PHP 8.4 or later is left as it is:
+with its PCRE2 as `regex lint` resolves it (the release `composer.json` pins
+in `config.platform.lib-pcre`, else the running PCRE2 for the running PHP's
+minor version, else the one the PHP bundles), and rewrites a call only when
+one of them reads the pattern otherwise and the rewritten pattern reads alike
+on all of them. Code that targets PHP 8.4 or later is left as it is, and so
+is code whose `composer.json` pins PCRE2 10.43 or later:
 
 ```php
 return RectorConfig::configure()
@@ -105,7 +108,7 @@ return RectorConfig::configure()
     ->withRules([PregSplitToExplodeRector::class]);
 ```
 
-The rules take no configuration. After upgrading the package, run Rector once
+The rules take no configuration in 2.0; a minor release may add one. After upgrading the package, run Rector once
 with `--clear-cache`: Rector skips the files it found nothing to change in, and
 a new release may prove patterns the previous one could not.
 
@@ -209,8 +212,10 @@ written.
 
 The pattern must be one constant string, written as a literal or a constant,
 and compile on the PHP running Rector and on the PHP your code targets. The
-proof is made twice: with the PCRE2 the running PHP links, and with the one
-the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for 8.0, 10.39
+proof is made twice: with the PCRE2 the running PHP links, and with the
+target PHP's: the release `composer.json` pins in `config.platform.lib-pcre`,
+else the running one when the target is the running PHP's minor version, else
+the one the target PHP bundles (10.32 for PHP 7.3, 10.33 for 7.4, 10.35 for 8.0, 10.39
 for 8.1, 10.40 for 8.2, 10.42 for 8.3, 10.44 for 8.4 and 8.5); the call is rewritten only when both name the same function and
 strings.
 

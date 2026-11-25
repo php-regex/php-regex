@@ -15,18 +15,17 @@ namespace PHPRegex\Rector;
 
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
-use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 
 /**
  * What the automata prove of a pattern, asked once per pattern and target:
  * a project repeats its patterns, the proof costs a solver run. The target
- * is the PHP version the code targets, with the PCRE2 it bundles, under the
- * locale Rector runs with, which may change between two calls.
+ * is the PHP version the code targets, with its PCRE2 (PregCall::target()),
+ * under the locale Rector runs with, which may change between two calls.
  *
  * A verdict holds only when the PHP the code targets reads the pattern as
  * the running engine does: the pattern compiles there, and the automata,
- * reading it with the PCRE2 that PHP bundles, prove the same answer. Before
+ * reading it with the PCRE2 of that PHP, prove the same answer. Before
  * PCRE2 10.43, "a{,0}b" is the text "a{,0}b", not "b".
  *
  * @internal
@@ -120,11 +119,11 @@ final class ProvenLiterals
     }
 
     /**
-     * The PHP version the code targets, the PCRE2 it bundles and the
-     * locale Rector runs with: a proof under one locale is not another's.
+     * The PHP version the code targets, its PCRE2 and the locale Rector
+     * runs with: a proof under one locale is not another's.
      */
     private static function targetKey(int $phpVersion): string
     {
-        return ParserOptions::resolveTarget($phpVersion)->key();
+        return PregCall::target($phpVersion)->key();
     }
 }

@@ -54,7 +54,7 @@ Features
   class, enum case and renamed method, with `RegexSetList::UPGRADE_2_0`.
 * Seven rules and three sets, `RegexSetList::STRING_FUNCTIONS`,
   `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0`. The rule names
-  and the sets stay the same for all of 2.x; the rules take no configuration.
+  and the sets stay the same for all of 2.x; the rules take no configuration in 2.0, and a minor release may add one.
 
 Installation
 ------------
@@ -222,7 +222,9 @@ Left alone, and why:
 * Code that targets PHP below 8.0, which has no `str_contains()`.
 * A pattern the PHP your code targets refuses: `n` before 8.2, `r` before
   8.4, a raw NUL byte before 8.2 (`\x00`, the escape, is fine). Or one it
-  reads otherwise: the proof is made again with the PCRE2 that PHP bundles,
+  reads otherwise: the proof is made again with the PCRE2 of that PHP (the
+  release `composer.json` pins in `config.platform.lib-pcre`, else the running
+  one for the running PHP's minor version, else the one that PHP bundles),
   and with the PCRE2 of PHP 8.3 and older `/a{,0}b/` is the text `a{,0}b`,
   not `b`. This holds for the three rules.
 
@@ -345,7 +347,9 @@ preg_match('/a\{,3}/', $subject);  // finds "a{,3}" on both
 The rule reads the range itself, with nothing to configure: from the PHP your
 code targets (`withPhpVersion()`, else `composer.json`) to the newest PHP the
 library knows, through every PHP version where a verdict may change, each with
-the PCRE2 its sources bundle. A backslash goes before each brace read as text
+its PCRE2: the release `composer.json` pins in `config.platform.lib-pcre`, else
+the running one for the running PHP's minor version, else the one the PHP
+bundles. A backslash goes before each brace read as text
 outside a class, and the call changes only when a PHP of that range reads the
 pattern otherwise, and the rewritten pattern then reads alike on every PHP of
 it. Left alone: code that targets PHP 8.4 or later, where the pattern already
