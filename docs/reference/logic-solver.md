@@ -118,7 +118,11 @@ it matched (one whose body may match more than one way, or that something after 
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
 and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
-anywhere, under which the dot reads a `\r` alone but not one before a `\n`; `(*NOTEMPTY)` and
+anywhere, under which the dot reads a `\r` alone but not one before a `\n`; under
+`(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`, as a search
+may skip the start between a `\r` and the `\n` after it (without the JIT,
+`/(*ANYCRLF)\sa/` finds no match in `"\r\na"`, and `/(*ANYCRLF)\sa|[^\s\S]\n/`, whose
+dead branch writes a `\n`, finds `"\na"`); `(*NOTEMPTY)` and
 `(*NOTEMPTY_ATSTART)`, as `equivalent()` refuses them; an end anchor
 followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
@@ -452,6 +456,23 @@ that more follows, and `$` before any newline or at the end. So `/a\Ab/` matches
 among many. Anchors at the edges, `\A` leading every alternative of a search or `\z`
 closing it, still cost nothing.
 
+The newline is the one the pattern's options set, the last of them holding: `\r` under
+`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*ANYCRLF)` a `\r` and a `\n`
+each end a line, and `\r\n` ends one too; under `(*ANY)` so do the vertical tab, the form
+feed and NEL (`\x85`, U+0085 under `/u`), and under `/u` the line and paragraph separators
+U+2028 and U+2029. So under the last two `^` holds between a `\r` and a `\n`, and `$`
+before the `\n`: `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`, and `\Z` holds before a final
+`"\r\n"`, `"\r"` or `"\n"`. A search under these two, or under `(*CRLF)`, may skip a match
+that starts between a `\r` and the `\n` after it, where the pattern writes neither, or after
+its first try where a `^` under `/m` or a `.*` leads it, which the JIT does not always do.
+It skips no other start, so the solver reads the search both ways, every start and every
+start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
+`/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
+`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
+of the whole string starts at its start, and is read whatever the pattern. `(*CRLF)`,
+under which a line ends at `\r\n` alone and the dot reads a `\r` alone but not one before
+a `\n`, stays out where an anchor or a dot reads it.
+
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
 and the [work budget](#safety-limits--work-budget) counts its moves.
@@ -476,7 +497,9 @@ verbatim:
 | without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| a newline convention other than `\n`, such as `(*CR)`, with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
+| `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
+| a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
@@ -767,9 +790,11 @@ Use this to surface safe failure messages in CI or tooling.
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` is refused, and so is a newline convention
-  other than `\n` where `$`, `\Z`, `/m` or `(?m)` would read it, and so are
-  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`.
+  change nothing a language says. `A` is refused, and so is `(*CRLF)` where `$`, `\Z`,
+  `/m`, `(?m)`, a dot or `\N` would read it, and a search under `(*CRLF)`, `(*ANYCRLF)` or
+  `(*ANY)` that may find a match only from between a `\r` and a `\n`, and so are
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. The other conventions move the anchors as the
+  engine does.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.

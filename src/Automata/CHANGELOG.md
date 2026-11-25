@@ -123,6 +123,28 @@ CHANGELOG
    to write the `$matches` of `/\n/`, where `preg_match()` takes `a\n` at 0
    for the one and `\n` at 1 for the other. The optimizer no longer offers
    such a rewrite.
+ * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` read `^` and `$` under `m`, and `$` and `\Z`, under `(*CR)`,
+   `(*NUL)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they were
+   refused: a line ends at `\r` under the first, at NUL under the second,
+   and under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
+   at the vertical tab, the form feed and NEL too, and at U+2028 and U+2029
+   under `/u`. `^` then holds between a `\r` and a `\n`:
+   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`. `(*CRLF)` stays refused there.
+ * A search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match
+   only from between a `\r` and the `\n` after it is refused: PCRE2 skips
+   that start where the pattern writes neither, and after its first try
+   where a `^` under `m` or a `.*` leads it, which the JIT does not always
+   do. `/(*CRLF)(?<=\s)\s/` was read as finding `"\n"` in `"\r\n"`, where
+   `preg_match()` finds nothing; the whole string is still read.
+   `matchEquivalent()` refuses a pattern under `(*ANYCRLF)` or `(*ANY)` that
+   may match empty or start with a `\n`: `/(*ANYCRLF)\sa/` was proven to
+   write the `$matches` of `/(*ANYCRLF)\sa|[^\s\S]\n/`, where without the
+   JIT the one finds nothing in `"\r\na"` and the other `"\na"`.
+ * `equivalent()`, `intersection()` and `subsetOf()` refuse a dot or `\N`
+   under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`:
+   `/(*CRLF)a.\n/` was read as matching `"a\r\n"`, where `preg_match()`
+   finds nothing.
  * `matchEquivalent()` refuses a newline convention other than `\n`, such as
    `(*CR)`, where `$` or `\Z` reads it, as `equivalent()` does:
    `/(*CR)a$/` was proven to write the `$matches` of `/a$/`, where

@@ -89,6 +89,11 @@ use PHPRegex\Parser\TraversalAction;
  */
 final class LanguageSolver
 {
+    /**
+     * @internal
+     */
+    public const START_BETWEEN_CR_AND_LF_MESSAGE = 'A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.';
+
     private const MAX_BYTE = 255;
 
     /**
@@ -897,6 +902,14 @@ final class LanguageSolver
         $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 
+        // The search may skip the start between a "\r" and the "\n" after
+        // it, and the JIT not always where the interpreter does: a match
+        // that may start there, with a "\n" or empty, moves with what the
+        // pattern writes and with the JIT.
+        if (\in_array(StartOptions::newline($ast->source ?? ''), ['ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form)) {
+            throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
+        }
+
         // The JIT of PCRE2 10.39 to 10.42 keeps the groups of a possessive
         // repeat from an earlier start, and 10.44, the first release PHP
         // bundles after 10.42, clears them: the target is asked for 10.44 by
@@ -912,6 +925,15 @@ final class LanguageSolver
         );
 
         return $builder->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
+    }
+
+    /**
+     * Whether a match may start between a "\r" and the "\n" after it: one
+     * may be empty, or start with a "\n".
+     */
+    private static function mayStartBetweenCrAndLf(Hir $form): bool
+    {
+        return false !== $form->properties->nullable || null === $form->properties->first || $form->properties->first->contains(0x0A);
     }
 
     /**
@@ -974,8 +996,26 @@ final class LanguageSolver
     private function buildNfa(string $pattern, RegexNode $ast, SolverOptions $options): Nfa
     {
         $hir = (new RegularSubsetValidator())->assertSupported($ast, $pattern, $options, $this->parser->target());
+        $newline = StartOptions::newline($ast->source ?? '');
+        $transformer = new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast), newline: $newline);
+        $nfa = $transformer->transform($hir, $options);
 
-        return (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($ast)))->transform($hir, $options);
+        // Under these conventions a search may skip the start between a
+        // "\r" and the "\n" after it: where the pattern writes neither, and
+        // after its first try where a "^" under /m or a ".*" leads it, which
+        // the JIT does not always follow. It skips no other start, so where
+        // no match starts there but where another starts too, the subjects
+        // a match is found in are the same whatever the engine skips.
+        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir)) {
+            $builder = new DfaBuilder();
+            $skipping = $builder->determinize($transformer->transform($hir, $options, true), $options);
+            $differ = static fn (bool $left, bool $right): bool => $left !== $right;
+            if (null !== $this->findExample($builder->determinize($nfa, $options), $skipping, $differ, $options)) {
+                throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
+            }
+        }
+
+        return $nfa;
     }
 
     /**

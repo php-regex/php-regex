@@ -381,6 +381,14 @@ final class MatchEquivalenceTest extends TestCase
         // does not match: the dot reads a "\r" alone but not one before a
         // "\n".
         yield 'a dot under (*CRLF)' => ['left' => '/(*CRLF)(.*)(\r?)\n/', 'right' => '/(*CRLF)(.*)()\n/', 'reason' => 'Under (*CRLF)', 'witness' => "ab\r\n"];
+        // A search skips the start between "\r" and "\n" after a try at the
+        // "\r" where the pattern writes neither, which the dead branch does:
+        // without the JIT, on "\r\na" the left one finds no match, the right
+        // one "\na" at 1. With the JIT both find "\na".
+        $between = 'may skip a match that starts between "\r" and "\n"';
+        yield 'a space before a letter under (*ANYCRLF)' => ['left' => '/(*NO_JIT)(*ANYCRLF)\sa/', 'right' => '/(*NO_JIT)(*ANYCRLF)\sa|[^\s\S]\n/', 'reason' => $between, 'witness' => "\r\na"];
+        yield 'a space before a letter under (*ANY)' => ['left' => '/(*NO_JIT)(*ANY)\sa/', 'right' => '/(*NO_JIT)(*ANY)\sa|[^\s\S]\n/', 'reason' => $between, 'witness' => "\r\na"];
+        yield 'an empty match under (*ANYCRLF)' => ['left' => '/(*ANYCRLF)a?/', 'right' => '/(*ANYCRLF)a??/', 'reason' => $between];
         // "$" and "\Z" stand before the final newline the convention sets.
         // On "a\n" the left one finds no match under (*CR) and (*NUL), the
         // right one "a"; on "a\r" the left one finds "a" under (*ANYCRLF)
