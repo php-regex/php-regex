@@ -145,7 +145,7 @@ final class LinterGrowthBench
     public function benchLookaheadsBeforeTheLoopsOfABody(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/(?:'.str_repeat('(?=b)', $size).'b?c+)+$/'));
-        $tree->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+        $tree->accept(new PatternLinter(rules: ['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
     }
 
     /**
@@ -159,7 +159,7 @@ final class LinterGrowthBench
     public function benchRulesOnLookaheadsBeforeTheLoopsOfABody(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/(?:'.str_repeat('(?=b)', $size).'b?c+)+$/'));
-        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+        $tree->accept(new PatternLinter(rules: array_fill_keys(RuleCatalog::lintRuleIds(), true)));
     }
 
     /**
@@ -172,7 +172,7 @@ final class LinterGrowthBench
     public function benchRulesOnOptionalGroups(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/'.str_repeat('(a)?', $size).'/'));
-        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+        $tree->accept(new PatternLinter(rules: array_fill_keys(RuleCatalog::lintRuleIds(), true)));
     }
 
     /**
@@ -185,6 +185,6 @@ final class LinterGrowthBench
     public function benchRulesOnLazyQuantifiers(int $size): void
     {
         $tree = $this->meter->exclude(static fn (): RegexNode => ColdStart::regex()->parse('/'.str_repeat('a*?', $size).'/'));
-        $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+        $tree->accept(new PatternLinter(rules: array_fill_keys(RuleCatalog::lintRuleIds(), true)));
     }
 }

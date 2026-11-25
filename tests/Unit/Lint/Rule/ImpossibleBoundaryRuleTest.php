@@ -150,7 +150,7 @@ final class ImpossibleBoundaryRuleTest extends TestCase
             }
 
             $cache = self::countingCache();
-            $linter = PatternLinter::withDfaCache([], $cache);
+            $linter = PatternLinter::withDfaCache($cache);
 
             Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 

@@ -16,7 +16,11 @@ namespace PHPRegex\Tests\Unit\Lsp;
 use PHPRegex\LanguageServer\Protocol\Transport;
 use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\Config\ProjectTarget;
+use PHPRegex\Linter\Rule\ImpossibleLookaroundRule;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\PcreRule;
 use PHPRegex\Tests\Support\RangeFixtureReadings;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -175,6 +179,48 @@ final class ServerTargetTest extends TestCase
         $runningAccepts = Regex::create()->validate(self::NEWER_ENGINE_ONLY)->isValid;
         $this->assertSame($runningAccepts, [] === $this->diagnostics());
         $this->assertStringContainsString('running PHP', $this->targetLog());
+    }
+
+    /**
+     * The lint rules read a pattern for the target the validation beside
+     * them reads it for, not for the PHP the editor runs: without u,
+     * (*UCP) reads a byte above ASCII caselessly as the other case of its
+     * character from PCRE2 10.35 alone, so "/(*UCP)(?=\xC9)\xE9/i" matches
+     * "\xE9" on the running engine and nothing on 10.34, where its
+     * lookahead is impossible, and "/(*UCP)(?!\xC9)\xE9/i" the reverse.
+     *
+     * Engine: the running one, with the JIT and without it, in the test;
+     * 10.34 (php:7.4.10, under C) as ImpossibleLookaroundUnderUcpTest
+     * records it.
+     */
+    #[Test]
+    #[DataProvider('provideUcpLookaheads')]
+    public function test_the_lint_rules_judge_for_the_target(string $pattern, bool $matchesHere): void
+    {
+        $this->assertTrue(PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf), 'The running engine reads (*UCP) as 10.35 does.');
+        foreach ([$pattern, PcreInterpreter::pattern($pattern)] as $engine) {
+            $this->assertSame($matchesHere ? 1 : 0, preg_match($engine, "\xE9"), 'Oracle: '.$engine);
+        }
+
+        $this->serve(['rootUri' => $this->rootUri(), 'initializationOptions' => ['pcreVersion' => '10.34']], pattern: $pattern);
+        $this->assertSame($matchesHere, \in_array(ImpossibleLookaroundRule::ID, $this->codes(), true), 'On PCRE2 10.34.');
+
+        fclose($this->output);
+        $output = fopen('php://memory', 'r+');
+        $this->assertIsResource($output);
+        $this->output = $output;
+
+        $this->serve(['rootUri' => $this->rootUri()], pattern: $pattern);
+        $this->assertSame(!$matchesHere, \in_array(ImpossibleLookaroundRule::ID, $this->codes(), true), 'On the running engine.');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, matchesHere: bool}>
+     */
+    public static function provideUcpLookaheads(): iterable
+    {
+        yield 'a Latin-1 capital ahead, then its small letter' => ['pattern' => '/(*UCP)(?=\xC9)\xE9/i', 'matchesHere' => true];
+        yield 'no Latin-1 capital ahead, then its small letter' => ['pattern' => '/(*UCP)(?!\xC9)\xE9/i', 'matchesHere' => false];
     }
 
     /**
@@ -441,6 +487,14 @@ final class ServerTargetTest extends TestCase
         }
 
         return $last ?? self::fail('The server published no diagnostics for the document.');
+    }
+
+    /**
+     * @return list<mixed>
+     */
+    private function codes(): array
+    {
+        return array_map(static fn (mixed $diagnostic): mixed => \is_array($diagnostic) ? $diagnostic['code'] ?? null : null, $this->diagnostics());
     }
 
     private function targetLog(): string

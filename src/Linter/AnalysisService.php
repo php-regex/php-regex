@@ -488,7 +488,7 @@ final class AnalysisService
      */
     private function lintIssues(PatternOccurrence $occurrence, RegexNode $ast, bool $skipRiskAnalysis, array &$files): array
     {
-        $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
+        $linter = PatternLinter::withDfaCache($this->dfas(), $this->regex->target(), $this->lintRules);
         $ast->accept($linter);
 
         $issues = [];

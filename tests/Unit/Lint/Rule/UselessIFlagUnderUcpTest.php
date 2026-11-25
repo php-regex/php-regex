@@ -224,7 +224,7 @@ final class UselessIFlagUnderUcpTest extends TestCase
     private static function reports(string $pattern, array $options): bool
     {
         $regex = Regex::create(['cache' => null] + $options);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return \in_array(self::ID, array_map(static fn ($issue): string => $issue->id, $linter->getIssues()), true);

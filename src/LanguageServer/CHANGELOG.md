@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The lint rules read a pattern for the workspace's target, as the
+   validation beside them does, where they read it for the PHP and the
+   locale the server runs on: `/(*UCP)(?=\xC9)\xE9/i` is reported by
+   `regex.lint.lookaround.impossible` for PCRE2 10.34 only.
  * `regex.lint.redos.search` is published for each call that looks for
    every match and reads a pattern through a variable or a constant, as
    `regex lint` reports it, not only at the first call that reads it.

@@ -167,7 +167,7 @@ final class LintRuleExamplesTest extends TestCase
      */
     private function lint(string $pattern): array
     {
-        $visitor = new PatternLinter(self::ENABLE_ALL);
+        $visitor = new PatternLinter(rules: self::ENABLE_ALL);
         Regex::create()->parse($pattern)->accept($visitor);
 
         return array_values(array_map(static fn (object $issue): string => $issue->id, $visitor->getIssues()));

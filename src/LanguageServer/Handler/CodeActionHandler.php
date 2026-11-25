@@ -252,7 +252,7 @@ final class CodeActionHandler
             // Also check by running the linter
             try {
                 $ast = $this->regex->parse($occurrence->pattern);
-                $linter = new PatternLinter($this->lintRules);
+                $linter = new PatternLinter($this->regex->target(), $this->lintRules);
                 $ast->accept($linter);
 
                 foreach ($linter->getIssues() as $issue) {

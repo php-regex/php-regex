@@ -95,17 +95,17 @@ regex.lint.quantifier.nested: Nested quantifiers in capturing group 1 "(a+)" can
 regex.lint.group.quantifiedCapture: Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
 
-The constructor takes the target second, `new PatternLinter([], $parser->target())`: a rule that asks what a
+The constructor takes the target first, `new PatternLinter($parser->target())`: a rule that asks what a
 part of the pattern matches then reads it as that PHP and PCRE2 read it, the running ones without it. With the
 toolkit installed, `Regex::create()->lint('/(a+)+b/')` runs the rules for the facade's target in one call.
 
-Turn rules on or off by id — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
+Turn rules on or off by id with the second argument, `rules` — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
 
 ```php
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\RegexParser;
 
-$linter = new PatternLinter([
+$linter = new PatternLinter(rules: [
     'quantifier.nested' => false,        // disable one rule
     'unicode.shorthandWithoutU' => true, // enable the opt-in rule
 ]);

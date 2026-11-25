@@ -81,7 +81,7 @@ final class DisabledRuleDispatchTest extends TestCase
         $registry = new LintRuleRegistry();
         $registry->register($rule);
 
-        $linter = PatternLinter::withRegistry($enabled, $registry);
+        $linter = PatternLinter::withRegistry($registry, $enabled);
         Regex::create(['cache' => null])->parse('/ab/')->accept($linter);
 
         $this->assertSame($runs ? 4 : 0, $rule->calls);

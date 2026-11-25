@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
@@ -90,6 +91,7 @@ final class ParameterNamesTest extends TestCase
         yield 'TrivialMatchClassifier::classify' => ['class' => TrivialMatchClassifier::class, 'method' => 'classify', 'names' => ['regex']];
         yield 'TrivialMatchClassifier::matchedLiteral' => ['class' => TrivialMatchClassifier::class, 'method' => 'matchedLiteral', 'names' => ['regex']];
         yield 'RedosRepairer::repair' => ['class' => RedosRepairer::class, 'method' => 'repair', 'names' => ['regex']];
+        yield 'PatternLinter::__construct' => ['class' => PatternLinter::class, 'method' => '__construct', 'names' => ['target', 'rules']];
         yield 'PcreEngine::compile' => ['class' => PcreEngine::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject']];
         yield 'PcreEngine::test' => ['class' => PcreEngine::class, 'method' => 'test', 'names' => ['regex', 'subject']];

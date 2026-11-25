@@ -134,7 +134,7 @@ final class InvisibleCharacterTest extends TestCase
     #[Test]
     public function test_the_rule_can_be_turned_off(): void
     {
-        $linter = new PatternLinter(['literal.invisible' => false]);
+        $linter = new PatternLinter(rules: ['literal.invisible' => false]);
         Regex::create(['cache' => null])->parse("/a\tb/")->accept($linter);
 
         $this->assertSame([], array_values(array_filter($linter->getIssues(), static fn (RuleViolation $issue): bool => self::RULE === $issue->id)));

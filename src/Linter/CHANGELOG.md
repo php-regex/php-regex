@@ -562,6 +562,9 @@ CHANGELOG
  * `PatternOccurrence` is read through `$pattern`, `$file`, `$line`,
    `$column` and `$source`, the five an extractor of your own gives
    `found()`; its other properties are `@internal`.
+ * `new PatternLinter($target, $rules)` takes the `PcreTarget` its rules read
+   the pattern for, the running PHP's when null, and then the map turning
+   rules on and off, as `checks.lint.rules` does.
  * `PatternLinter` throws `UnknownLintRuleException` for a rules map naming
    a rule it does not run, the nearest rule named, where a typo turned
    nothing off; the map takes each id short or in full.

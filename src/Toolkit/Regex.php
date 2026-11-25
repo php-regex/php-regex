@@ -293,7 +293,7 @@ final class Regex
      */
     public function lint(string $regex): array
     {
-        $linter = new PatternLinter([], $this->parser->target());
+        $linter = new PatternLinter($this->parser->target());
         $this->parser->parse($regex)->accept($linter);
 
         return $linter->getIssues();

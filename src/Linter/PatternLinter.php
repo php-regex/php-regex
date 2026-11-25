@@ -127,18 +127,17 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $enabledRules;
 
     /**
-     * @param array<string, bool> $enabledRules the rules to turn on or off by id, as regex.json's
-     *                                          checks.lint.rules names them, without "regex.lint." or
-     *                                          in full; the others keep their default
-     * @param PcreTarget|null     $target       the PHP, PCRE2 and locale the rules read the pattern
-     *                                          for, as RegexParser::target() gives them; the running
-     *                                          ones when null
+     * @param PcreTarget|null     $target the PHP, PCRE2 and locale the rules read the pattern for, as
+     *                                    RegexParser::target() gives them; the running ones when null
+     * @param array<string, bool> $rules  the rules to turn on or off by id, as regex.json's
+     *                                    checks.lint.rules names them, without "regex.lint." or in
+     *                                    full; the others keep their default
      *
      * @throws UnknownLintRuleException when the map names a rule the linter does not run
      */
-    public function __construct(array $enabledRules = [], private readonly ?PcreTarget $target = null)
+    public function __construct(private readonly ?PcreTarget $target = null, array $rules = [])
     {
-        $this->enabledRules = self::known($enabledRules);
+        $this->enabledRules = self::known($rules);
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->groups = PcreGroups::empty();
         $this->useRules(new LintRuleRegistry());
@@ -150,12 +149,12 @@ final class PatternLinter extends AbstractNodeVisitor
      *
      * @internal custom rule registries are not a public extension point
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      */
-    public static function withRegistry(array $enabledRules, LintRuleRegistry $registry): self
+    public static function withRegistry(LintRuleRegistry $registry, array $rules = []): self
     {
         $linter = new self();
-        $linter->enabledRules = self::known($enabledRules, $registry);
+        $linter->enabledRules = self::known($rules, $registry);
         $linter->useRules($registry);
 
         return $linter;
@@ -168,11 +167,11 @@ final class PatternLinter extends AbstractNodeVisitor
      *
      * @internal the DFA cache and the target of a run are the analysis service's business
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      */
-    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache, ?PcreTarget $target = null): self
+    public static function withDfaCache(DfaCacheInterface $dfaCache, ?PcreTarget $target = null, array $rules = []): self
     {
-        $linter = new self($enabledRules, $target);
+        $linter = new self($target, $rules);
         $linter->dfaCache = $dfaCache;
 
         return $linter;
@@ -403,27 +402,27 @@ final class PatternLinter extends AbstractNodeVisitor
      * The rules map, each identifier of which a rules map may name or a
      * rule of the registry reports, short or in full.
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      *
      * @throws UnknownLintRuleException
      *
      * @return array<string, bool>
      */
-    private static function known(array $enabledRules, ?LintRuleRegistry $registry = null): array
+    private static function known(array $rules, ?LintRuleRegistry $registry = null): array
     {
         $reported = [];
         foreach ($registry?->all() ?? [] as $rule) {
             array_push($reported, ...$rule->getRuleIds());
         }
 
-        foreach (array_keys($enabledRules) as $id) {
+        foreach (array_keys($rules) as $id) {
             $id = (string) $id;
             if (!RuleCatalog::isConfigurable($id) && !\in_array(RuleId::full($id), $reported, true)) {
                 throw new UnknownLintRuleException($id, RuleCatalog::suggestion($id));
             }
         }
 
-        return $enabledRules;
+        return $rules;
     }
 
     /**

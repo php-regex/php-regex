@@ -620,7 +620,7 @@ final class TextDocumentHandler
             if (!$validation->isValid && null !== $validation->errorCode) {
                 $analysis = ['invalid', $validation];
             } else {
-                $linter = new PatternLinter($this->lintRules);
+                $linter = new PatternLinter($regex->target(), $this->lintRules);
                 $ast->accept($linter);
 
                 $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);

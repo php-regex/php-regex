@@ -229,7 +229,7 @@ final class AlternationOverlapEscapedTextTest extends TestCase
     private static function findings(string $pattern, string $locale): array
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         $findings = [];

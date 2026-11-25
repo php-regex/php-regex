@@ -248,7 +248,7 @@ final class LinterUnicodeRulesTest extends TestCase
     {
         $regex = Regex::create()->parse($pattern);
         $rules = $enableShorthandRule ? ['unicode.shorthandWithoutU' => true] : [];
-        $linter = new PatternLinter($rules);
+        $linter = new PatternLinter(rules: $rules);
         $regex->accept($linter);
 
         return $linter->getIssues();

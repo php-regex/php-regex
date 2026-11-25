@@ -366,7 +366,7 @@ final class EmptyRepeatRuleTest extends TestCase
     #[Test]
     public function test_the_rule_reports_a_repeat_whose_owner_is_off_once(): void
     {
-        $linter = new PatternLinter(['quantifier.nested' => false]);
+        $linter = new PatternLinter(rules: ['quantifier.nested' => false]);
         Regex::create()->parse('/(?:a*)*b/')->accept($linter);
 
         $this->assertSame([self::ID], array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues()));
@@ -402,7 +402,7 @@ final class EmptyRepeatRuleTest extends TestCase
     #[DataProvider('provideOwnersTurnedOff')]
     public function test_a_repeat_whose_owner_is_turned_off_is_reported(string $pattern, array $rules): void
     {
-        $linter = new PatternLinter($rules);
+        $linter = new PatternLinter(rules: $rules);
         Regex::create()->parse($pattern)->accept($linter);
         $ids = array_map(static fn (RuleViolation $issue): string => $issue->id, $linter->getIssues());
 

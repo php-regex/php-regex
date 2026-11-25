@@ -113,12 +113,12 @@ final class RegexLintTest extends TestCase
     public function test_the_pattern_linter_reads_the_questions_for_its_target(): void
     {
         $regex = Regex::create(['cache' => null, 'pcre_version' => '10.42']);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse(self::TARGET_DEPENDENT)->accept($linter);
 
         $this->assertSame(['regex.lint.lookaround.impossible'], self::ids($linter->getIssues()));
 
-        $cached = PatternLinter::withDfaCache([], new InMemoryDfaCache(), $regex->target());
+        $cached = PatternLinter::withDfaCache(new InMemoryDfaCache(), $regex->target());
         $regex->parse(self::TARGET_DEPENDENT)->accept($cached);
 
         $this->assertSame(['regex.lint.lookaround.impossible'], self::ids($cached->getIssues()), 'A linter keeping its DFAs reads for its target too.');

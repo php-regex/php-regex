@@ -1112,11 +1112,11 @@ instead.
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).
 
-`new PatternLinter($rules)` (1.x `LinterNodeVisitor`) checks the keys of
-the map: one naming a rule the linter does not run throws
+`new PatternLinter(rules: $rules)` (1.x `LinterNodeVisitor`, which took no
+argument) checks the keys of the map: one naming a rule the linter does not run throws
 `UnknownLintRuleException`, which names the nearest rule, where a typo turned
 nothing off. Each key is a rule id without `regex.lint.` or in full.
-`new PatternLinter($rules, $target)` asks its rules' questions for that
+`new PatternLinter($target, $rules)` asks its rules' questions for that
 `PcreTarget`; `Regex::lint($regex)` runs the rules for the facade's target.
 
 #### `Regex::highlight()` refuses an unknown format
