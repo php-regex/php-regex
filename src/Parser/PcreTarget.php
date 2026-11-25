@@ -302,6 +302,8 @@ final class PcreTarget
      * that depend on a patch release, such as "\C" under "u" from PHP
      * 8.4.25, belong to the validator, which runs on every call, cached
      * tree or not.
+     *
+     * @internal the parser, the solver and the lint key their caches by it
      */
     public function cacheKey(): string
     {

@@ -19,13 +19,16 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Linter\PatternOccurrence;
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Analysis\LiteralSet;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -57,7 +60,10 @@ final class InternalMembersTest extends TestCase
     public static function provideInternalMembers(): iterable
     {
         $members = [
-            PcreEngine::class => ['prepare'],
+            PcreEngine::class => ['prepare', 'matchAll'],
+            PcreTarget::class => ['cacheKey'],
+            LengthRangeCalculator::class => ['followingCalls'],
+            FormattingException::class => ['__construct'],
             PatternPrinter::class => ['forFormatting', 'forCompacting', 'refusal', 'resetState', 'flags', 'underFlags', 'scope', 'restoreScope', 'countCapture', 'groupOpening', 'conditionText', 'quotedRunPieces', 'separator', 'opensConstruct', 'escapeString'],
             LiteralSet::class => ['__construct', 'empty', 'fromString', 'concat', 'unite'],
             Dfa::class => ['__construct'],

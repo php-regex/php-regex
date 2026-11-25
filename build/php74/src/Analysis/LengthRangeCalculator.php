@@ -63,13 +63,6 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
      * @var \SplObjectStorage<NodeInterface, LengthRange>
      */
     private \SplObjectStorage $lengths;
-    /**
-     * Whether an "(*ACCEPT)" in each node read so far may end the match,
-     * made when a sequence first asks: most calculators never do.
-     *
-     * @var \SplObjectStorage<NodeInterface, bool>|null
-     */
-    private ?\SplObjectStorage $accepts = null;
     private const MAX_WORK = 100_000;
 
     /**
@@ -97,30 +90,54 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
         ];
     }
 
+    /**
+     * Whether an "(*ACCEPT)" in each node read so far may end the match,
+     * made when a sequence first asks: most calculators never do.
+     *
+     * @var \SplObjectStorage<NodeInterface, bool>|null
+     */
+    private ?\SplObjectStorage $accepts = null;
+
     private int $work = 0;
 
     private int $callDepth = 0;
-    private bool $unicode = false;
-    /**
-     * @var \Closure(SubroutineNode): ?NodeInterface|null
-     *
-     */
-    private ?\Closure $calledBody = null;
 
     /**
-     * A call reads as unbounded from zero, unless $calledBody gives the body
-     * it runs: the call then reads as long as that body. It must give none
-     * for a recursion, whose length is unknown. A call followed past 1024
-     * nested calls, or past 100,000 measured nodes, reads as unbounded.
+     * The body a call runs, or null where it is unknown (followingCalls()).
      *
-     * @param bool                                            $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
-     * @param (\Closure(SubroutineNode): ?NodeInterface)|null $calledBody the body a call runs, or null where it is unknown
+     * @var (\Closure(SubroutineNode): ?NodeInterface)|null
      */
-    public function __construct(bool $unicode = false, ?\Closure $calledBody = null)
+    private ?\Closure $calledBody = null;
+    private bool $unicode = false;
+
+    /**
+     * A call reads as unbounded from zero.
+     *
+     * @param bool $unicode whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
+     */
+    public function __construct(bool $unicode = false)
     {
         $this->unicode = $unicode;
-        $this->calledBody = $calledBody;
         $this->lengths = new \SplObjectStorage();
+    }
+
+    /**
+     * A calculator that reads a call as long as the body $calledBody gives
+     * for it. It must give none for a recursion, whose length is unknown:
+     * the call then reads as unbounded from zero. A call followed past 1024
+     * nested calls, or past 100,000 measured nodes, reads as unbounded.
+     *
+     * @internal the capture shape measures a call through the group it runs
+     *
+     * @param bool                                     $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
+     * @param \Closure(SubroutineNode): ?NodeInterface $calledBody the body a call runs, or null where it is unknown
+     */
+    public static function followingCalls(bool $unicode, \Closure $calledBody): self
+    {
+        $calculator = new self($unicode);
+        $calculator->calledBody = $calledBody;
+
+        return $calculator;
     }
 
     #[\Override]

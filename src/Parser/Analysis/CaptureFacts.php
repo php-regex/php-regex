@@ -202,7 +202,7 @@ final class CaptureFacts
         private readonly bool $ucp = false,
         private readonly ?GroupIndex $groups = null,
     ) {
-        $this->calculator = new LengthRangeCalculator($unicode, $this->calledBody(...));
+        $this->calculator = LengthRangeCalculator::followingCalls($unicode, $this->calledBody(...));
         $this->lengths = new \WeakMap();
         $this->facts = new \WeakMap();
         $this->groupFacts = new \WeakMap();

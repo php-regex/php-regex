@@ -93,17 +93,39 @@ final class LengthRangeCalculator extends AbstractNodeVisitor
     private int $callDepth = 0;
 
     /**
-     * A call reads as unbounded from zero, unless $calledBody gives the body
-     * it runs: the call then reads as long as that body. It must give none
-     * for a recursion, whose length is unknown. A call followed past 1024
-     * nested calls, or past 100,000 measured nodes, reads as unbounded.
+     * The body a call runs, or null where it is unknown (followingCalls()).
      *
-     * @param bool                                            $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
-     * @param (\Closure(SubroutineNode): ?NodeInterface)|null $calledBody the body a call runs, or null where it is unknown
+     * @var (\Closure(SubroutineNode): ?NodeInterface)|null
      */
-    public function __construct(private bool $unicode = false, private readonly ?\Closure $calledBody = null)
+    private ?\Closure $calledBody = null;
+
+    /**
+     * A call reads as unbounded from zero.
+     *
+     * @param bool $unicode whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
+     */
+    public function __construct(private bool $unicode = false)
     {
         $this->lengths = new \WeakMap();
+    }
+
+    /**
+     * A calculator that reads a call as long as the body $calledBody gives
+     * for it. It must give none for a recursion, whose length is unknown:
+     * the call then reads as unbounded from zero. A call followed past 1024
+     * nested calls, or past 100,000 measured nodes, reads as unbounded.
+     *
+     * @internal the capture shape measures a call through the group it runs
+     *
+     * @param bool                                     $unicode    whether lengths count UTF-8 characters rather than bytes; a whole pattern sets it from its flags
+     * @param \Closure(SubroutineNode): ?NodeInterface $calledBody the body a call runs, or null where it is unknown
+     */
+    public static function followingCalls(bool $unicode, \Closure $calledBody): self
+    {
+        $calculator = new self($unicode);
+        $calculator->calledBody = $calledBody;
+
+        return $calculator;
     }
 
     #[\Override]
