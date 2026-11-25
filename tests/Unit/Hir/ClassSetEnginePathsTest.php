@@ -212,6 +212,24 @@ final class ClassSetEnginePathsTest extends TestCase
     }
 
     /**
+     * The same atom is not known for such a target under any locale's
+     * tables but PCRE2's own, which the engine cannot read as the release
+     * of the target does: on every machine, the locale installed or not,
+     * as the answer reads no table.
+     */
+    #[Test]
+    public function test_under_ucp_an_atom_under_another_locales_tables_is_not_known_for_a_release_apart_on_every_machine(): void
+    {
+        $before1035 = (new PcreTarget(70400, '10.34'))->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
+        $from1035 = (new PcreTarget(80000, '10.35'))->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf);
+        $releaseApart = PcreTarget::runtime()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf) ? $before1035 : $from1035;
+
+        foreach (['fr_FR.ISO8859-1', 'fr_FR.ISO8859-15', 'el_GR.ISO8859-7', 'tr_TR.ISO8859-9', 'ru_RU.KOI8-R', 'xx_YY.NOWHERE'] as $locale) {
+            $this->assertNull(ClassSetProvider::query('\x{C9}', false, 'i', '(*UCP)', false, $locale, $releaseApart), $locale);
+        }
+    }
+
+    /**
      * The bytes each pattern takes under the locale, as ranges: a byte, or
      * the byte twice for a pattern that repeats it.
      *

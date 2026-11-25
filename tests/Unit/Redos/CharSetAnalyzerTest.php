@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Engine\CharacterTables;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -1117,6 +1118,154 @@ final class CharSetAnalyzerTest extends TestCase
         yield 'I written twice' => ['class' => '[II]', 'locale' => $turkish, 'ranges' => [[0x49, 0x49]]];
         yield 'the final sigma and the capital sigma' => ['class' => '[\xF2\xD3]', 'locale' => 'el_GR.ISO8859-7', 'ranges' => [[0xD3, 0xD3], [0xF2, 0xF2]]];
         yield 'a Latin-1 capital and its small letter' => ['class' => "[\xC9\xE9]", 'locale' => 'fr_FR.ISO8859-1', 'ranges' => [[0xC9, 0xC9], [0xE9, 0xE9]]];
+    }
+
+    /**
+     * Where the tables are not known, the locale not named or one the
+     * machine cannot set, any class of two bytes may be one whose second
+     * byte they give as the other case of the first, which the engine's
+     * paths read apart (see the rows above): it is not known, its bytes
+     * written as letters, as escapes, or as the two bytes of "é" without
+     * UTF. A class of one byte written twice, of three bytes, or holding a
+     * range is no such class: it holds the bytes it writes, which C's
+     * tables take, and those of tr_TR.ISO8859-9 too where the machine can
+     * set them.
+     *
+     * @param list<array{int, int}>|null $ranges the bytes of the set, null where it is not known
+     */
+    #[Test]
+    #[DataProvider('provideClassesOfTwoBytesWhereTheTablesAreNotKnown')]
+    public function test_read_where_the_tables_are_not_known_a_class_of_two_bytes_is_not_known(string $pattern, ?array $ranges): void
+    {
+        if (null !== $ranges) {
+            $locales = [CharacterTables::BUILT_IN];
+
+            try {
+                $locales[] = CharacterTables::forLocale('tr_TR.ISO8859-9')->locale;
+            } catch (InvalidRegexOptionException) {
+                // The machine cannot set them: C's tables answer alone.
+            }
+
+            foreach ($locales as $locale) {
+                $taken = ByteCharSet::empty();
+                CharacterTables::under($locale, static function () use ($pattern, &$taken): void {
+                    foreach (['', '(*NO_JIT)'] as $engine) {
+                        for ($byte = 0; $byte <= 0xFF; $byte++) {
+                            if (1 === preg_match('/'.$engine.'^'.substr($pattern, 1, -1).'$/', \chr($byte))) {
+                                $taken = $taken->union(ByteCharSet::fromBytes($byte, $byte));
+                            }
+                        }
+                    }
+                });
+                $this->assertSame($ranges, $taken->ranges(), 'Oracle: '.$pattern.' under '.$locale);
+            }
+        }
+
+        foreach ([null, 'xx_YY.NOWHERE'] as $locale) {
+            [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, $locale);
+            $set = $analyzer->firstChars($node);
+            if (null === $ranges) {
+                $this->assertTrue($set->isUnknown(), $pattern);
+
+                continue;
+            }
+
+            $this->assertSame($ranges, $set->ranges(), $pattern);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ranges: list<array{int, int}>|null}>
+     */
+    public static function provideClassesOfTwoBytesWhereTheTablesAreNotKnown(): iterable
+    {
+        yield 'two letters' => ['pattern' => '/[Ii]/', 'ranges' => null];
+        yield 'two escapes' => ['pattern' => '/[\x49\x69]/', 'ranges' => null];
+        yield 'an escape and a letter' => ['pattern' => '/[\x49i]/', 'ranges' => null];
+        yield 'the last byte and a letter' => ['pattern' => '/[\xFFI]/', 'ranges' => null];
+        yield 'the two bytes of a character without UTF' => ['pattern' => "/[\u{E9}]/", 'ranges' => null];
+        yield 'a letter written twice' => ['pattern' => '/[II]/', 'ranges' => [[0x49, 0x49]]];
+        yield 'three letters' => ['pattern' => '/[Iix]/', 'ranges' => [[0x49, 0x49], [0x69, 0x69], [0x78, 0x78]]];
+        yield 'two letters and a range' => ['pattern' => '/[0-1Ii]/', 'ranges' => [[0x30, 0x31], [0x49, 0x49], [0x69, 0x69]]];
+    }
+
+    /**
+     * Under tables a test gives, a class of two bytes is not known where
+     * its second byte is the other case of the first on some release, and
+     * the paths or the releases read the case of that first byte
+     * otherwise: "[\xFFx]", whose 0xFF the tables before 10.43 alone pair
+     * with "x". A class whose first byte every path and release reads
+     * alike, "[aA]", or whose second byte is no case of the first on any
+     * release, "[\xB5a]", holds the bytes it writes, though the
+     * interpreter reads the case of 0xB5 otherwise.
+     *
+     * @param list<array{int, int}>|null $ranges the bytes of the set, null where it is not known
+     */
+    #[Test]
+    #[DataProvider('provideClassesOfTwoBytesUnderGivenTables')]
+    public function test_read_under_given_tables_a_class_of_two_bytes_is_not_known_where_the_case_of_its_first_is_not_settled(string $pattern, ?array $ranges): void
+    {
+        self::giveTables();
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, self::GIVEN);
+        $set = $analyzer->firstChars($node);
+
+        if (null === $ranges) {
+            $this->assertTrue($set->isUnknown(), $pattern);
+
+            return;
+        }
+
+        $this->assertSame($ranges, $set->ranges(), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, ranges: list<array{int, int}>|null}>
+     */
+    public static function provideClassesOfTwoBytesUnderGivenTables(): iterable
+    {
+        yield 'a byte a release reads otherwise, then its other case there' => ['pattern' => '/[\xFFx]/', 'ranges' => null];
+        yield 'an ASCII letter, then its other case' => ['pattern' => '/[aA]/', 'ranges' => [[0x41, 0x41], [0x61, 0x61]]];
+        yield 'a byte the interpreter reads otherwise, then no case of it' => ['pattern' => '/[\xB5a]/', 'ranges' => [[0x61, 0x61], [0xB5, 0xB5]]];
+    }
+
+    /**
+     * Without UTF, PCRE2 refuses a code point above 0xFF, which the parser
+     * reads: a class of it and a byte is not known, and reading it under
+     * another locale's tables raises no warning, whichever of the two
+     * comes first.
+     */
+    #[Test]
+    #[DataProvider('provideClassesOfACodePointAboveAByte')]
+    public function test_read_under_given_tables_a_class_of_a_code_point_above_a_byte_without_utf_is_not_known(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE2 refuses the code point without UTF.');
+
+        self::giveTables();
+        [$analyzer, $node] = self::atomUnderAnotherLocalesTables($pattern, self::GIVEN);
+        $warnings = [];
+        set_error_handler(static function (int $level, string $message) use (&$warnings): bool {
+            $warnings[] = $message;
+
+            return true;
+        });
+
+        try {
+            $set = $analyzer->firstChars($node);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertSame([], $warnings, $pattern);
+        $this->assertTrue($set->isUnknown(), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideClassesOfACodePointAboveAByte(): iterable
+    {
+        yield 'the code point first' => ['pattern' => '/[\x{100}I]/'];
+        yield 'the code point after a byte a release reads otherwise' => ['pattern' => '/[\xFF\x{100}]/'];
     }
 
     /**

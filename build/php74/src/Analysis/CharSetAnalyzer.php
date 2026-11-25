@@ -737,6 +737,9 @@ final class CharSetAnalyzer
      * the interpreter, while "[I\xFD]", whose second byte is no case of the
      * first, is read as written. Under i the class reads the cases of its
      * bytes. Under tables not known, any class of two bytes may be one.
+     * Without UTF each character a class writes is a byte: a class of two
+     * is an alternation of them, and one of a code point above 0xFF,
+     * which PCRE2 refuses there, is not known either way.
      */
     private function readsAsACaselessByteApart(CharClassNode $node): bool
     {
@@ -745,17 +748,17 @@ final class CharSetAnalyzer
         }
 
         $bytes = [];
-        foreach ($node->expression instanceof AlternationNode ? $node->expression->alternatives : [$node->expression] as $part) {
+        foreach ($node->expression instanceof AlternationNode ? $node->expression->alternatives : [] as $part) {
             if ($part instanceof CharLiteralNode || $part instanceof ControlCharNode) {
                 $bytes[] = $part->codePoint;
             } elseif ($part instanceof LiteralNode) {
-                $bytes = array_merge($bytes, array_map(\Closure::fromCallable('ord'), Bytes::split($part->value)));
+                $bytes[] = \ord($part->value);
             } else {
                 return false;
             }
         }
 
-        if (2 !== \count($bytes) || $bytes[0] === $bytes[1] || $bytes[0] > 0xFF || $bytes[1] > 0xFF) {
+        if (2 !== \count($bytes) || $bytes[0] === $bytes[1] || max($bytes) > 0xFF) {
             return false;
         }
 
