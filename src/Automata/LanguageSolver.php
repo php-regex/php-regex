@@ -41,6 +41,7 @@ use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -265,7 +266,7 @@ final class LanguageSolver
         $options ??= new SolverOptions();
 
         foreach ([$left, $right] as $pattern) {
-            if (self::possessiveWhereACallRuns($this->parser->parse($pattern))) {
+            if (self::possessiveWhereACallRuns($pattern, $this->parser)) {
                 throw new ComplexityException(self::JIT_MESSAGE, 0, $pattern);
             }
         }
@@ -329,7 +330,7 @@ final class LanguageSolver
         $hirs[] = $translator->translate($rightAst);
         $defined[] = $translator->defined();
 
-        if (self::possessiveWhereACallRuns($leftAst) || self::possessiveWhereACallRuns($rightAst)) {
+        if (self::possessiveWhereACallRuns($left, $this->parser) || self::possessiveWhereACallRuns($right, $this->parser)) {
             return null;
         }
 
@@ -898,8 +899,15 @@ final class LanguageSolver
      * to 10.49, where the interpreter and /(a+)c(?1)d/ match "acad". The
      * possessive need give nothing back: no pattern of this shape is read.
      */
-    private static function possessiveWhereACallRuns(RegexNode $ast): bool
+    private static function possessiveWhereACallRuns(string $pattern, RegexParser $parser): bool
     {
+        // A pattern whose text holds no call, most of them, is not read
+        // again: "(?1)", "(?-1)", "(?+1)", "(?R)", "(?&n)", "(?P>n)", "\g<n>".
+        if (1 !== LibraryPcre::match('/\(\?(?:[R0-9+&-]|P>)|\\\\g[<\']/', $pattern)) {
+            return false;
+        }
+
+        $ast = $parser->parse($pattern);
         $groups = GroupIndex::of($ast->pattern);
         foreach ($groups->recursesWhole() ? [$ast->pattern] : $groups->subroutineTargets() as $called) {
             if (self::holdsPossessive($called)) {
