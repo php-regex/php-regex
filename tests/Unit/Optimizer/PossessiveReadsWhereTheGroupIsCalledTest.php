@@ -19,6 +19,7 @@ use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -277,19 +278,27 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
         yield 'a call of a group a DEFINE holds, beside another rewrite' => ['pattern' => '/(?&n)c(?:d)(?(DEFINE)(?<n>a+b?))/', 'optimized' => '/(?&n)cd(?(DEFINE)(?<n>a++b?))/', 'changes' => [Rewriter::GROUP_REMOVED, Rewriter::POSSESSIVE]];
         yield 'a call of a group a DEFINE holds, from another it holds' => ['pattern' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a+b?))/', 'optimized' => '/(?&o)c(?(DEFINE)(?<o>x(?&i))(?<i>a++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
         yield 'a group a DEFINE holds, never called' => ['pattern' => '/(?(DEFINE)(?<n>a+b?))a/', 'optimized' => '/(?(DEFINE)(?<n>a++b?))a/', 'changes' => [Rewriter::POSSESSIVE]];
+        // A group that runs itself again is read through every call: what
+        // may follow the "a"s, inside the group or after any call of it.
+        yield 'a group a DEFINE holds calling itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'a group calling itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'optimized' => '/(x(?1)?ca++b?)c/', 'changes' => [Rewriter::POSSESSIVE]];
+        yield 'the whole pattern recursed' => ['pattern' => '/x(?R)?ca+b?()/', 'optimized' => '/x(?R)?ca++b?()/', 'changes' => [Rewriter::POSSESSIVE]];
     }
 
     /**
      * A call the check does not run in place leaves its proof to the
      * rewrite without the possessive step, though the possessive gives
-     * nothing back: a group that calls itself, a DEFINE holding it or not,
-     * and a call of the whole pattern.
+     * nothing back: a group that calls itself inside a lookahead, or that
+     * a backreference reads back, and a possessive group inside a group
+     * that calls itself, which keeps a frame of the JIT for each run of the
+     * call: deep in the calls, its stack runs out where the greedy group
+     * matches.
      *
      * @param list<string> $changes
      */
     #[Test]
     #[DataProvider('provideGroupsTheCheckDoesNotRunWhereTheyAreCalled')]
-    public function test_a_possessive_in_a_group_the_check_does_not_run_where_it_is_called_stays_greedy(string $pattern, string $possessive, string $optimized, array $changes): void
+    public function test_a_possessive_in_a_group_the_check_does_not_run_where_it_is_called_stays_greedy(string $pattern, string $possessive, string $optimized, array $changes, ?string $deep = null): void
     {
         $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($possessive), \sprintf('Oracle: %s and %s differ.', $pattern, $possessive));
         $this->assertSame(self::matchedOnEverySubject($pattern), self::matchedOnEverySubject($optimized), \sprintf('Oracle: %s and %s differ.', $pattern, $optimized));
@@ -299,16 +308,26 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
 
         $this->assertSame($optimized, $result->optimized);
         $this->assertSame($changes, $result->changes);
+
+        if (null !== $deep) {
+            $this->requiresJit($pattern);
+
+            $this->assertSame([1, \PREG_NO_ERROR], self::matchedInAFreshProcess($pattern, $deep), \sprintf('Oracle: %s finds no match in %d bytes of calls.', $pattern, \strlen($deep)));
+            [$answer, $error] = self::matchedInAFreshProcess($possessive, $deep);
+            $this->assertFalse($answer, \sprintf('Oracle: %s keeps to the JIT stack on %d bytes of calls.', $possessive, \strlen($deep)));
+            $this->assertSame(\PREG_JIT_STACKLIMIT_ERROR, $error);
+        }
     }
 
     /**
-     * @return iterable<string, array{pattern: string, possessive: string, optimized: string, changes: list<string>}>
+     * @return iterable<string, array{pattern: string, possessive: string, optimized: string, changes: list<string>, deep?: string}>
      */
     public static function provideGroupsTheCheckDoesNotRunWhereTheyAreCalled(): iterable
     {
-        yield 'a group a DEFINE holds calling itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
-        yield 'a group calling itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'possessive' => '/(x(?1)?ca++b?)c/', 'optimized' => '/(x(?1)?ca+b?)c/', 'changes' => []];
-        yield 'the whole pattern recursed' => ['pattern' => '/x(?R)?ca+b?()/', 'possessive' => '/x(?R)?ca++b?()/', 'optimized' => '/x(?R)?ca+b?()/', 'changes' => []];
+        yield 'a group a DEFINE holds calling itself, called inside a lookahead' => ['pattern' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'optimized' => '/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
+        yield 'a group calling itself, read back by a backreference' => ['pattern' => '/(x(?1)?ca+b?)c\1/', 'possessive' => '/(x(?1)?ca++b?)c\1/', 'optimized' => '/(x(?1)?ca+b?)c\1/', 'changes' => []];
+        yield 'a group repeated in a pattern that calls itself whole' => ['pattern' => '/x(?R)?(?:ab)+c/', 'possessive' => '/x(?R)?(?:ab)++c/', 'optimized' => '/x(?R)?(?:ab)+c/', 'changes' => [], 'deep' => str_repeat('x', 3_100).str_repeat('abc', 3_100)];
+        yield 'a group repeated in a group that calls itself' => ['pattern' => '/(x(?1)?c(?:ab)+d?)e/', 'possessive' => '/(x(?1)?c(?:ab)++d?)e/', 'optimized' => '/(x(?1)?c(?:ab)+d?)e/', 'changes' => [], 'deep' => str_repeat('x', 3_100).str_repeat('cab', 3_100).'e'];
     }
 
     /**
@@ -339,6 +358,30 @@ final class PossessiveReadsWhereTheGroupIsCalledTest extends TestCase
     private static function rewrite(string $pattern): string
     {
         return Regex::create(['cache' => null])->parse($pattern)->accept(new Rewriter(possessive: true))->accept(new PatternPrinter());
+    }
+
+    /**
+     * What preg_match() and preg_last_error() answer in a PHP of its own,
+     * the JIT on: the suite keeps compiled patterns, some compiled with
+     * pcre.jit off, and the JIT memory it filled, both of which change how
+     * deep a pattern runs.
+     *
+     * @return array{int|false|null, int|null}
+     */
+    private static function matchedInAFreshProcess(string $pattern, string $subject): array
+    {
+        $code = 'echo json_encode([preg_match($argv[1], $argv[2]), preg_last_error()]);';
+        $process = proc_open([\PHP_BINARY, '-d', 'auto_prepend_file=', '-d', 'pcre.jit=1', '-r', $code, '--', $pattern, $subject], ProcessPipes::descriptors(), $pipes);
+        self::assertIsResource($process);
+        [$output] = ProcessPipes::drain($pipes);
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+
+        $answer = json_decode($output, true);
+        [$matched, $error] = \is_array($answer) ? $answer + [null, null] : [null, null];
+
+        return [\is_int($matched) || false === $matched ? $matched : null, \is_int($error) ? $error : null];
     }
 
     /**

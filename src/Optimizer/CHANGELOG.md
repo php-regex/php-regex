@@ -54,8 +54,12 @@ CHANGELOG
    unproven. The calls the check proves a rewrite in read what a DEFINE
    holds: `^` in a group it holds asks for the search past the start of
    the subject. A group that calls itself and a call of the whole pattern
-   are not run there: `/(x(?1)?ca+b?)c/` is still offered `ca++b?`, which
-   the check refuses.
+   are read through every call, what may follow the group after each
+   return included: `/(x(?1)?ca+b?)c/` now becomes `/(x(?1)?ca++b?)c/`,
+   and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` gets `ca++b?`, where the
+   check refused them. A group repeated there stays greedy:
+   `/x(?R)?(?:ab)++c/` runs out of the JIT stack deep in the calls where
+   `/x(?R)?(?:ab)+c/` matches.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a

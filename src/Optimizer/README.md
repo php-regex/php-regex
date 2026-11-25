@@ -85,13 +85,16 @@ lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
 the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
 DEFINE holds is read there under the options in force where the DEFINE stands:
 `/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
-recursive call is not, and leaves the group greedy. The rewrite reads the flags
-in force where each item stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while
-`/(?i)a+b?A/` stays greedy, and an option setting that names `U` or a
-non-atomic lookaround keeps every quantifier of the pattern as written. A
-repetition that ends its group reads what follows the group, every call of it
-and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and `/(a+)a/` stays
-greedy.
+group that calls itself is read through every call, what may follow it after
+each return included: `/(x(?1)?ca+b?)c/` becomes `/(x(?1)?ca++b?)c/`, while a
+group repeated there stays greedy, as the possessive one runs out of the JIT
+stack first deep in the calls. The
+rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
+`/(?i)a++b?c/`, while `/(?i)a+b?A/` stays greedy, and an option setting that
+names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
+written. A repetition that ends its group reads what follows the group, every
+call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
+`/(a+)a/` stays greedy.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program
