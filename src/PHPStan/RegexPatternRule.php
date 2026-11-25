@@ -554,8 +554,9 @@ final class RegexPatternRule implements Rule
      */
     private static function everyMatch(PatternFunction $function, array $args, Scope $scope): ?string
     {
-        if (null !== $function->loopArgument) {
-            $function = self::decided($function, $args, $scope);
+        $loop = $function->loopArgument;
+        if (null !== $loop) {
+            $function = self::decided($function, $loop[0], $loop[1], $args, $scope);
         }
 
         // A closure as replacement makes the call run preg_replace_callback().
@@ -582,16 +583,16 @@ final class RegexPatternRule implements Rule
     }
 
     /**
-     * The function as the argument that decides whether it looks for every
-     * match leaves it, Nette's lazy for one: left out, as it is; given, the
-     * loop its value makes it run, as its type says, and none when the type
-     * allows a value that makes it run none, or another loop.
+     * The function as the argument at the position or under the name that
+     * decides whether it looks for every match leaves it, Nette's lazy for
+     * one: left out, as it is; given, the loop its value makes it run, as
+     * its type says, and none when the type allows a value that makes it
+     * run none, or one that is no boolean.
      *
      * @param array<Arg> $args
      */
-    private static function decided(PatternFunction $function, array $args, Scope $scope): PatternFunction
+    private static function decided(PatternFunction $function, int $position, string $name, array $args, Scope $scope): PatternFunction
     {
-        [$position, $name] = $function->loopArgument ?? [0, ''];
         $argument = self::argument($args, $position, $name);
         if (null === $argument) {
             // A spread may hold it.
@@ -604,17 +605,15 @@ final class RegexPatternRule implements Rule
             return $function;
         }
 
-        $decided = null;
+        $decided = $function->decidedBy(null);
         foreach ($scope->getType($argument)->getConstantScalarValues() as $value) {
-            $each = $function->decidedBy(\is_bool($value) ? (int) $value : (\is_int($value) ? $value : null));
-            if (null === $each->everyMatch || (null !== $decided && $decided->everyMatch !== $each->everyMatch)) {
-                return $function->decidedBy(null);
+            $decided = $function->decidedBy(\is_bool($value) ? (int) $value : null);
+            if (null === $decided->everyMatch) {
+                return $decided;
             }
-
-            $decided = $each;
         }
 
-        return $decided ?? $function->decidedBy(null);
+        return $decided;
     }
 
     private function formatSource(string $functionName): string
