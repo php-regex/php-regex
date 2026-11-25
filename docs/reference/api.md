@@ -46,12 +46,16 @@ $result = $regex->validate('/foo|bar/');
 echo $result->isValid ? 'Valid' : 'Invalid';
 ```
 
-The options are a closed shape, `OptionsArray` (imported from
-`PHPRegex\Parser\ParserOptions`): PHPStan reports a misspelt key or a value
+The options are a closed shape, `RegexOptionsArray` (imported from
+`PHPRegex\Toolkit\Regex`): the parser's `OptionsArray` (imported from
+`PHPRegex\Parser\ParserOptions`), which `RegexParser::create()` takes, and
+`redos_ignored_patterns`, which the facade hands to the analyzer of `redos()`
+and `analyze()`. PHPStan reports a misspelt key or a value
 of the wrong type where the array is written, and `create()` checks the
 ranges when it reads them. Options read from a configuration file go through
 `ParserOptions::fromArray()`, which checks every key and value, then to
-`Regex::fromOptions()` (or `RegexParser::fromOptions()`):
+`Regex::fromOptions()` (or `RegexParser::fromOptions()`), whose ReDoS analysis
+skips no pattern:
 
 ```php
 use PHPRegex\Parser\ParserOptions;
@@ -185,7 +189,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `max_pattern_length`      | `int`                                  | `100_000`         | Maximum length of the regex as written, in bytes, delimiters and modifiers included | Low - prevents abuse            |
 | `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
-| `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
+| `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns `redos()` and `analyze()` skip; `Regex::create()` only: `RegexParser::create()` refuses it, `RedosAnalyzer` takes them as `$ignoredPatterns` | Low - reduces false positives   |
 | `max_recursion_depth`     | `int`                                  | `512`             | Parser recursion guard         | Low - prevents stack overflow   |
 | `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
@@ -1148,6 +1152,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 |---|---|---|
 | `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
 | `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
+| `RegexOptionsArray` | `Toolkit\Regex` | the eight configuration keys and `redos_ignored_patterns`, each optional, as `Regex::create()` reads them |
 | `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional, as `OptimizerOptions::fromArray()` reads them |
 | `ConfigArray` | `PHPStan\RegexPatternRule` | the `phpRegex` parameter of the PHPStan extension, every key optional |
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |

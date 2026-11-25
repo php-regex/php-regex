@@ -38,14 +38,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  * run itself is the one the Laravel package's regex:lint makes.
  *
  * The options patterns are read with are RegexOptions: those of
- * Regex::create() but the target, which is the project's, and the runtime
- * validation, which only the running PHP can do.
+ * RegexParser::create() but the target, which is the project's, and the
+ * runtime validation, which only the running PHP can do.
  *
  * @phpstan-type RegexOptions array{
  *     max_pattern_length?: int,
  *     max_lookbehind_length?: int,
  *     cache?: CacheInterface|string|null,
- *     redos_ignored_patterns?: array<string>,
  *     max_recursion_depth?: int,
  * }
  *
@@ -73,8 +72,8 @@ final class LintCommand extends Command
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
      * @param array<string, bool|int> $defaultOptimizations   the bundle's optimizations, in snake_case
-     * @param RegexOptions            $regexOptions           what Regex::create() takes, but the target and the
-     *                                                        runtime validation: the settings patterns are read with
+     * @param RegexOptions            $regexOptions           what RegexParser::create() takes, but the target and
+     *                                                        the runtime validation: the settings patterns are read with
      * @param string|int|null         $phpVersion             the bundle's php_version
      * @param string|null             $pcreVersion            the bundle's pcre_version
      * @param string|null             $projectDir             where composer.json is read; null reads none

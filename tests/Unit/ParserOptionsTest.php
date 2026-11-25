@@ -341,27 +341,24 @@ final class ParserOptionsTest extends TestCase
         $this->assertInstanceOf(FilesystemCache::class, $options->cache);
     }
 
+    /**
+     * The patterns the ReDoS analysis skips are no parser option: the
+     * parser never read them, and RegexParser::create() dropped them.
+     */
     #[Test]
-    public function test_from_array_invalid_redos_ignored_patterns(): void
+    public function test_from_array_refuses_the_redos_ignored_patterns(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must be a list of strings.');
-        ParserOptions::fromArray(['redos_ignored_patterns' => 'invalid']);
+        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" is no parser option: pass the patterns to RedosAnalyzer\'s $ignoredPatterns argument, or to Regex::create().');
+        ParserOptions::fromArray(['redos_ignored_patterns' => ['/(a+)+$/']]);
     }
 
     #[Test]
-    public function test_from_array_invalid_redos_ignored_patterns_elements(): void
+    public function test_from_array_lists_the_parser_options_it_takes(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must contain only strings.');
-        ParserOptions::fromArray(['redos_ignored_patterns' => [123]]);
-    }
-
-    #[Test]
-    public function test_from_array_redos_ignored_patterns_deduplicates(): void
-    {
-        $options = ParserOptions::fromArray(['redos_ignored_patterns' => ['/a/', '/a/', '/b/']]);
-        $this->assertSame(['/a/', '/b/'], $options->redosIgnoredPatterns);
+        $this->expectExceptionMessageIsOrContains('Unknown option(s): unknown_option. Allowed options are: max_pattern_length, max_lookbehind_length, cache, runtime_pcre_validation, max_recursion_depth, php_version, pcre_version, locale.');
+        ParserOptions::fromArray(['unknown_option' => true]);
     }
 
     #[Test]

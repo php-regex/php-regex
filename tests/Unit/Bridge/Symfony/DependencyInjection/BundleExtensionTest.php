@@ -91,7 +91,8 @@ final class BundleExtensionTest extends TestCase
     /**
      * regex:lint reads patterns with the bundle's settings, never with its
      * target or its runtime validation: the target is the project's, and
-     * only the running PHP can validate at run time.
+     * only the running PHP can validate at run time. The patterns the
+     * ReDoS analysis skips go to the analysis, never to the parser.
      */
     #[Test]
     public function test_the_lint_command_takes_the_settings_patterns_are_read_with(): void
@@ -102,7 +103,7 @@ final class BundleExtensionTest extends TestCase
 
         $regexOptions = $container->getDefinition('php_regex.command.lint')->getArgument('$regexOptions');
         $this->assertIsArray($regexOptions);
-        $this->assertSame(['max_pattern_length', 'max_lookbehind_length', 'cache', 'redos_ignored_patterns'], array_keys($regexOptions));
+        $this->assertSame(['max_pattern_length', 'max_lookbehind_length', 'cache'], array_keys($regexOptions));
     }
 
     /**

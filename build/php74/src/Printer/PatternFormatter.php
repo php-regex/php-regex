@@ -161,6 +161,6 @@ final class PatternFormatter
     {
         $length = max(\strlen($output), ParserOptions::DEFAULT_MAX_PATTERN_LENGTH);
 
-        return RegexParser::fromOptions(new ParserOptions($length, \PHP_INT_MAX, new NullCache(), [], false, max($length, ParserOptions::DEFAULT_MAX_RECURSION_DEPTH), $this->target));
+        return RegexParser::fromOptions(new ParserOptions($length, \PHP_INT_MAX, new NullCache(), false, max($length, ParserOptions::DEFAULT_MAX_RECURSION_DEPTH), $this->target));
     }
 }

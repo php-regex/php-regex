@@ -739,6 +739,20 @@ It compiles with the running PHP, so combining it with a target that is another
 engine now throws `InvalidRegexOptionException` instead of judging with the
 wrong one. Drop one of the two options.
 
+#### `redos_ignored_patterns` is an option of the facade, not of the parser
+
+The patterns the ReDoS analysis skips were an option of `RegexOptions`, which
+the parser never read: `RegexParser::create()` dropped them without a word.
+`ParserOptions` has no such property, and `ParserOptions::fromArray()` and
+`RegexParser::create()` refuse the key with `InvalidRegexOptionException`.
+`Regex::create()` still takes it, its options the closed shape
+`RegexOptionsArray`, and hands the patterns to the analyzer `redos()` and
+`analyze()` use.
+
+| before | after |
+|---|---|
+| `RegexOptions::$redosIgnoredPatterns` | `Regex::create(['redos_ignored_patterns' => [...]])`, or `new RedosAnalyzer($parser, ignoredPatterns: [...])` |
+
 #### The PHPStan extension judges for PHPStan's `phpVersion`
 
 The rule used to judge for the PHP running PHPStan and the PCRE2 it links; it
@@ -902,7 +916,8 @@ Reading and judging a pattern moved from the `Regex` facade into
   - `new AnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
 
 Pass `$regex->parser()` where you passed a `Regex`, or build one with
-`RegexParser::create()`, which takes the options `Regex::create()` takes.
+`RegexParser::create()`, which takes the options `Regex::create()` takes but
+[`redos_ignored_patterns`](#redos_ignored_patterns-is-an-option-of-the-facade-not-of-the-parser).
 `CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
 `PHPRegex\Parser\Hir\CharSet` and `PHPRegex\Parser\Analysis\CharSetAnalyzer`.
 

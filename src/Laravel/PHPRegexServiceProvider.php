@@ -139,9 +139,10 @@ final class PHPRegexServiceProvider extends ServiceProvider
     }
 
     /**
-     * What Regex::create() takes from config/php-regex.php, the target
+     * What RegexParser::create() takes from config/php-regex.php, the target
      * and the runtime validation left out: the settings patterns are read
-     * with, by the Regex service and by regex:lint alike.
+     * with, by the Regex service and by regex:lint alike. The patterns the
+     * ReDoS analysis skips go to each analyzer built.
      *
      * @internal
      *
@@ -149,7 +150,7 @@ final class PHPRegexServiceProvider extends ServiceProvider
      */
     public static function regexOptions(Application $app): array
     {
-        /** @var array{max_pattern_length: int, max_lookbehind_length: int, redos: array{ignored_patterns: array<string>}} $config */
+        /** @var array{max_pattern_length: int, max_lookbehind_length: int} $config */
         $config = self::config($app)->get('php-regex');
         /** @var CacheInterface $cache */
         $cache = $app->make('php-regex.cache');
@@ -158,7 +159,6 @@ final class PHPRegexServiceProvider extends ServiceProvider
             'max_pattern_length' => $config['max_pattern_length'],
             'max_lookbehind_length' => $config['max_lookbehind_length'],
             'cache' => $cache,
-            'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
         ];
     }
 
@@ -298,9 +298,15 @@ final class PHPRegexServiceProvider extends ServiceProvider
         // The application's own service: it judges for the running PHP,
         // under its locale, whatever php_version / pcre_version / locale say
         // (they drive regex:lint).
-        $this->app->singleton(Regex::class, static fn (Application $app): Regex => Regex::create(self::regexOptions($app) + [
-            'runtime_pcre_validation' => true === self::config($app)->get('php-regex.runtime_pcre_validation'),
-        ]));
+        $this->app->singleton(Regex::class, static function (Application $app): Regex {
+            /** @var array{redos: array{ignored_patterns: array<string>}} $config */
+            $config = self::config($app)->get('php-regex');
+
+            return Regex::create(self::regexOptions($app) + [
+                'runtime_pcre_validation' => true === self::config($app)->get('php-regex.runtime_pcre_validation'),
+                'redos_ignored_patterns' => $config['redos']['ignored_patterns'],
+            ]);
+        });
 
         $this->app->alias(Regex::class, 'php-regex');
     }

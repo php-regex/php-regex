@@ -26,6 +26,7 @@ use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InternalFailureException;
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
@@ -102,7 +103,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-f43fdbf92b16361611c7ad4fce0bdf01';
+    public const CACHE_VERSION = 'ast-0a75d2e39cca8f8f9df7e2a4e19caa06';
 
     /**
      * ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, by the name the parser gave it first.
@@ -178,7 +179,11 @@ final class RegexParser
     }
 
     /**
-     * @param OptionsArray $options The options Regex::create() takes
+     * @param OptionsArray $options The options Regex::create() takes, but the patterns the ReDoS analysis skips,
+     *                              which RedosAnalyzer takes
+     *
+     * @throws InvalidRegexOptionException when an option is unknown, "redos_ignored_patterns" included, or holds a
+     *                                     value of the wrong type or range
      */
     public static function create(array $options = []): self
     {

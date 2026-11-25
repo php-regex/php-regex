@@ -330,20 +330,23 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
         $minimization = $config['automata']['minimization_algorithm'];
         $determinization = $config['automata']['determinization_algorithm'];
         $redosThreshold = $config['redos']['threshold'];
-        // What patterns are read with, as Regex::create() takes it; the lint
-        // judges for the project's target with these settings, but never with
-        // the runtime validation, which only the running PHP can do.
+        // What patterns are read with, as RegexParser::create() takes it; the
+        // lint judges for the project's target with these settings, but never
+        // with the runtime validation, which only the running PHP can do. The
+        // patterns the ReDoS analysis skips go to each analyzer built.
         $readOptions = [
             'max_pattern_length' => $config['max_pattern_length'],
             'max_lookbehind_length' => $config['max_lookbehind_length'],
             'cache' => new Reference('php_regex.cache'),
-            'redos_ignored_patterns' => $ignoredPatterns,
         ];
 
         $builder->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
         $builder->getDefinition('php_regex.regex')
-            ->setArgument('$options', $readOptions + ['runtime_pcre_validation' => $config['runtime_pcre_validation']]);
+            ->setArgument('$options', $readOptions + [
+                'runtime_pcre_validation' => $config['runtime_pcre_validation'],
+                'redos_ignored_patterns' => $ignoredPatterns,
+            ]);
 
         $builder->getDefinition('php_regex.service.regex_analysis')
             ->setArgument('$warningThreshold', $config['analysis']['warning_threshold'])

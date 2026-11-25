@@ -25,7 +25,9 @@ use PHPRegex\Parser\Text\Ascii;
  * Configuration options for Regex parser.
  *
  * Provides a simple, validated way to configure regex parsing behavior
- * including limits, caching, and ReDoS pattern exclusions.
+ * including limits, caching and the target judged. The patterns the ReDoS
+ * analysis skips are no parser option: RedosAnalyzer takes them, and
+ * Regex::create() hands them to the analyzer it builds.
  *
  * The keys are closed and each value has its type; the ranges (a positive
  * length, a version that names a release) are checked where the options
@@ -35,7 +37,6 @@ use PHPRegex\Parser\Text\Ascii;
  *     max_pattern_length?: int,
  *     max_lookbehind_length?: int,
  *     cache?: CacheInterface|string|null,
- *     redos_ignored_patterns?: array<string>,
  *     runtime_pcre_validation?: bool,
  *     max_recursion_depth?: int,
  *     php_version?: int|string|null,
@@ -87,7 +88,6 @@ final class ParserOptions
         'max_pattern_length',
         'max_lookbehind_length',
         'cache',
-        'redos_ignored_patterns',
         'runtime_pcre_validation',
         'max_recursion_depth',
         'php_version',
@@ -107,8 +107,7 @@ final class ParserOptions
      * @param int             $maxPatternLength      Maximum allowed regex pattern length
      * @param int             $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
      *                                               fixed-length one is only limited by PCRE's 65535
-     * @param CacheInterface  $cache                 Cache implementation to use
-     * @param array<string>   $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
+     * @param CacheInterface  $cache                 Cache implementation to use, a new ArrayCache when left out
      * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
      * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
      * @param PcreTarget|null $target                The PHP, PCRE2 and locale judged; the running ones when null
@@ -116,10 +115,9 @@ final class ParserOptions
      * @throws InvalidRegexOptionException when a length or a depth is out of its range
      */
     public function __construct(
-        public readonly int $maxPatternLength,
-        public readonly int $maxLookbehindLength,
-        public readonly CacheInterface $cache,
-        public readonly array $redosIgnoredPatterns = [],
+        public readonly int $maxPatternLength = self::DEFAULT_MAX_PATTERN_LENGTH,
+        public readonly int $maxLookbehindLength = self::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+        public readonly CacheInterface $cache = new ArrayCache(),
         public readonly bool $runtimePcreValidation = false,
         public readonly int $maxRecursionDepth = self::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
@@ -167,7 +165,7 @@ final class ParserOptions
     public static function fromArray(array $options): self
     {
         if ([] === $options) {
-            return self::createDefault();
+            return new self();
         }
 
         self::validateOptionKeys($options);
@@ -175,12 +173,11 @@ final class ParserOptions
         $maxLength = self::getPatternLength($options);
         $lookbehindLength = self::getLookbehindLength($options);
         $cache = self::createCache($options);
-        $patterns = self::getIgnoredPatterns($options);
         $runtimeValidation = self::getRuntimePcreValidation($options);
         $recursionDepth = self::getRecursionDepth($options);
         $target = self::getTarget($options);
 
-        return new self($maxLength, $lookbehindLength, $cache, $patterns, $runtimeValidation, $recursionDepth, $target);
+        return new self($maxLength, $lookbehindLength, $cache, $runtimeValidation, $recursionDepth, $target);
     }
 
     /**
@@ -273,28 +270,17 @@ final class ParserOptions
     }
 
     /**
-     * Create default configuration with no custom options.
-     *
-     * @return self Default configuration instance
-     */
-    private static function createDefault(): self
-    {
-        return new self(
-            self::DEFAULT_MAX_PATTERN_LENGTH,
-            self::DEFAULT_MAX_LOOKBEHIND_LENGTH,
-            new ArrayCache(),
-            [],
-            false,
-        );
-    }
-
-    /**
      * Validate that all provided option keys are supported.
      *
      * @param array<string, mixed> $options Options to validate
      */
     private static function validateOptionKeys(array $options): void
     {
+        // The parser never read them: the analyzer that skips them takes them.
+        if (\array_key_exists('redos_ignored_patterns', $options)) {
+            throw new InvalidRegexOptionException('"redos_ignored_patterns" is no parser option: pass the patterns to RedosAnalyzer\'s $ignoredPatterns argument, or to Regex::create().');
+        }
+
         $invalidKeys = array_diff(
             array_keys($options),
             self::VALID_OPTIONS,
@@ -504,52 +490,5 @@ final class ParserOptions
         }
 
         return new FilesystemCache($trimmedPath);
-    }
-
-    /**
-     * Get ignored ReDoS patterns from options.
-     *
-     * @param array<string, mixed> $options Configuration options
-     *
-     * @return array<string> List of ignored patterns
-     */
-    private static function getIgnoredPatterns(array $options): array
-    {
-        $patterns = $options['redos_ignored_patterns'] ?? [];
-
-        if (!\is_array($patterns)) {
-            throw new InvalidRegexOptionException(
-                '"redos_ignored_patterns" must be a list of strings.',
-            );
-        }
-
-        if ([] === $patterns) {
-            return [];
-        }
-
-        self::validatePatternStrings($patterns);
-
-        /** @var array<string> $result */
-        $result = array_values(array_unique($patterns));
-
-        return $result;
-    }
-
-    /**
-     * Validate that all patterns are strings.
-     *
-     * @param array<mixed> $patterns Patterns to validate
-     *
-     * @phpstan-assert array<string> $patterns
-     */
-    private static function validatePatternStrings(array $patterns): void
-    {
-        foreach ($patterns as $pattern) {
-            if (!\is_string($pattern)) {
-                throw new InvalidRegexOptionException(
-                    '"redos_ignored_patterns" must contain only strings.',
-                );
-            }
-        }
     }
 }
