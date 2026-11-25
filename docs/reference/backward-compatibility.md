@@ -299,8 +299,18 @@ add one to yet.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, `regex.redos.search`, …), with the **lint issue ids**
-  (`regex.lint.redos`, `regex.lint.redos.search`, …): baselines and ignore
-  lists keep working.
+  (`regex.lint.redos`, `regex.lint.redos.search`, …), among them
+  `regex.lint.source.*`, the issues of a file the lint cannot read and of a
+  pattern built at run time, and the ids of the inline markers' own issues,
+  `regex.ignore.unmatched` and `regex.target.*`: baselines and ignore lists
+  keep working.
+- The **inline markers** `@regex-ignore`, `@regex-ignore-next-line`,
+  `@regex-target` and `@regex-target-next-line`, in a PHP comment and in a
+  Twig one (`{# @regex-ignore #}`), with the lines each covers and the
+  [grammar](../guides/cli.md#inline-comments) of the issues a
+  `@regex-ignore` names: a marker that silences an issue, or narrows the
+  versions a pattern is judged for, in 2.0 does the same in every 2.x. A
+  minor release may add a marker.
 - The **text of the PHPStan ReDoS messages**: `Exponential backtracking
   (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
   backtracking (ReDoS): %s`, and the one of a quadratic unanchored search,

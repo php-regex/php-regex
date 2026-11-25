@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Packages;
 
+use PHPRegex\Linter\LintService;
+use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Tests\Support\PublicSurface;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -124,6 +126,32 @@ final class BackwardCompatibilityDocTest extends TestCase
         $this->assertStringContainsString('`regex.redos.search`', $doc);
         $this->assertStringContainsString('`search_cost`', $doc);
         $this->assertStringContainsString('`RedosSearchCost`', $doc);
+    }
+
+    /**
+     * The inline markers, and the issue ids of the markers and of the
+     * sources the lint cannot verify, are written in code, baselines and
+     * ignore lists: the document freezes them with what stays for all of
+     * 2.x, under the ids the lint reports.
+     */
+    #[Test]
+    public function test_bc_doc_freezes_the_inline_markers_and_their_issue_ids(): void
+    {
+        $doc = (string) file_get_contents(self::root().'/'.self::DOC);
+        $start = (int) strpos($doc, '## What stays for all of 2.x');
+        $stays = substr($doc, $start, (int) strpos($doc, "\n## ", $start + 1) - $start);
+
+        foreach (['@regex-ignore', '@regex-ignore-next-line', '@regex-target', '@regex-target-next-line', '{# @regex-ignore #}', LintService::ISSUE_ID_UNMATCHED_IGNORE, 'regex.lint.source.*', 'regex.target.*'] as $name) {
+            $this->assertStringContainsString('`'.$name.'`', $stays, $name);
+        }
+        $this->assertStringContainsString('(../guides/cli.md#inline-comments)', $stays);
+
+        foreach ([RuleCatalog::SOURCE_UNREADABLE, RuleCatalog::SOURCE_DYNAMIC, RuleCatalog::SOURCE_DYNAMIC_PART, RuleCatalog::SOURCE_QUOTED_PART] as $id) {
+            $this->assertStringStartsWith('regex.lint.source.', $id);
+        }
+        foreach ([LintService::ISSUE_ID_TARGET_INVALID, LintService::ISSUE_ID_TARGET_EMPTY] as $id) {
+            $this->assertStringStartsWith('regex.target.', $id);
+        }
     }
 
     #[Test]
