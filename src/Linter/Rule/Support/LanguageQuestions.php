@@ -108,9 +108,9 @@ final class LanguageQuestions
      * The inline flags the questions about the linted pattern spell out:
      * i, m, s and x, and r in a pattern that uses it anywhere (a parser for
      * a PCRE2 older than 10.43 refuses the letter). Null when the pattern
-     * sets an option the flags in force do not follow, whose questions
+     * sets an option the flags spelled do not carry, whose questions
      * would then be asked under the wrong one: the ASCII options ("(?a)",
-     * "(?aD)", ...), kept to none of the flags, and "(?xx)", kept as "x".
+     * "(?aD)", ...), and "(?xx)", which they would spell as "x".
      *
      * @param NodeInterface $node the node the rule checks, the root when no
      *                            parent holds it

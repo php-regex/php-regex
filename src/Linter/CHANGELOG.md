@@ -6,6 +6,15 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The rules read `(?xx)` apart from `(?x)`, as PCRE2 does: a class drops
+   its spaces and tabs under it, a group setting `x` alone takes it off,
+   and `(?-x)` and `(?^)` take both off, while PHP's `x` modifier is `x`
+   however many times it is written. `regex.lint.overlap.charset` no
+   longer reports `/(?xx)(?:[a b]|\x20|\xE9)+/`, whose class takes no
+   space, and reports `/(?:[a b]|\x20|\xE9)+/xx`, whose class does;
+   `regex.lint.flag.redundant` no longer calls `(?x)` redundant after
+   `(?xx)`, nor `(?xx)` under the `x` modifier, and names `(?xx)` once
+   where it is.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
