@@ -42,7 +42,8 @@ use Psalm\Type\Union;
 /**
  * Reads every call of a global preg_* function once Psalm analysed it.
  *
- * It reports the constant pattern the targeted PHP and PCRE2 refuse. For a
+ * It reports the constant pattern the targeted PHP and PCRE2 refuse, and,
+ * when asked, the ReDoS findings of one it accepts (RedosFindings). For a
  * pattern they accept and the running engine compiles, it types $matches:
  * where preg_match() returned 1, the pattern's shape, where it did not, []
  * (no match writes [], and so does a match error), unless the call is
@@ -197,6 +198,9 @@ final class PregCallAnalyzer implements AfterExpressionAnalysisInterface
             $error = PatternVerdicts::firstError($judgedBy, $pattern);
             if (null !== $error) {
                 IssueBuffer::maybeAdd(new InvalidRegexPattern($error, new CodeLocation($source, $node)), $source->getSuppressedIssues());
+            } elseif ([] !== $judgedBy) {
+                // Judged for the lowest version the call runs on, as the PHPStan extension judges it.
+                RedosFindings::report($function, $arguments, $pattern, $node, $judgedBy[0], $parser, $source);
             }
         }
 

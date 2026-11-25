@@ -15,14 +15,13 @@ namespace PHPRegex\PHPStan;
 
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Linter\Extraction\TargetMarker;
+use PHPRegex\Linter\RedosFinding;
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Optimizer\RedosRepair;
 use PHPRegex\Parser\Analysis\GroupNumbering;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Redos\RedosAnalysis;
-use PHPRegex\Redos\RedosComplexity;
-use PHPRegex\Redos\RedosProof;
 use PHPStan\Rules\IdentifierRuleError;
 use PHPStan\Rules\RuleErrorBuilder;
 
@@ -37,8 +36,6 @@ use PHPStan\Rules\RuleErrorBuilder;
  */
 final class ErrorFactory
 {
-    private const MAX_PATTERN_DISPLAY_LENGTH = 50;
-
     private const DOC_LINKS = [
         'catastrophic backtracking' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking',
         'possessive quantifiers' => 'https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers',
@@ -95,10 +92,7 @@ final class ErrorFactory
      */
     public static function redos(string $pattern, RedosAnalysis $analysis, ?RedosRepair $repair, int $lineNumber): IdentifierRuleError
     {
-        return RuleErrorBuilder::message(\sprintf(
-            self::redosMessageFormat($analysis),
-            self::displayPattern($pattern),
-        ))
+        return RuleErrorBuilder::message(RedosFinding::headline($pattern, $analysis))
             ->line($lineNumber)
             ->tip(self::redosTip($analysis, $repair))
             ->identifier(RegexPatternRule::IDENTIFIER_REDOS)
@@ -114,7 +108,7 @@ final class ErrorFactory
      */
     public static function searchCost(string $pattern, string $message, ?string $hint, int $lineNumber): IdentifierRuleError
     {
-        return RuleErrorBuilder::message(\sprintf('Quadratic search (ReDoS): %s', self::displayPattern($pattern)))
+        return RuleErrorBuilder::message(RedosFinding::searchHeadline($pattern))
             ->line($lineNumber)
             ->tip(self::searchCostTip($message, $hint))
             ->identifier(RegexPatternRule::IDENTIFIER_REDOS_SEARCH)
@@ -275,29 +269,9 @@ final class ErrorFactory
      * an escape sequence such as "\x{202E}", "\xC2", "\p{L}", "\pL" or "\d": the
      * text stops before the sequence it would otherwise fall inside.
      */
-    public static function displayPattern(string $pattern, int $length = self::MAX_PATTERN_DISPLAY_LENGTH): string
+    public static function displayPattern(string $pattern, int $length = RedosFinding::MAX_PATTERN_DISPLAY_LENGTH): string
     {
-        $rendered = DisplayEscaper::escape($pattern);
-        $modifiers = 1 === LibraryPcre::match('//u', $rendered) ? 'su' : 's';
-        if (1 !== LibraryPcre::match('/\A.{'.$length.'}(?=.)/'.$modifiers, $rendered, $head)) {
-            return $rendered;
-        }
-
-        $cut = \strlen($head[0]);
-        for ($offset = 0; $offset < $cut; $offset++) {
-            if ('\\' !== $rendered[$offset]) {
-                continue;
-            }
-            $end = self::escapeSequenceEnd($rendered, $offset);
-            if ($end > $cut) {
-                $cut = $offset;
-
-                break;
-            }
-            $offset = $end - 1;
-        }
-
-        return substr($rendered, 0, $cut).'...';
+        return RedosFinding::displayPattern($pattern, $length);
     }
 
     /**
@@ -313,78 +287,13 @@ final class ErrorFactory
     }
 
     /**
-     * The offset just past the escape sequence a backslash at $offset opens:
-     * "\x" with its braced code point or up to two hex digits; "\N" or "\o"
-     * with its braced operand ("\N{U+41}"); "\p" or "\P" with its braced
-     * operand ("\p{L}") or the one letter naming a property ("\pL", "\pZs"
-     * being "\pZ" then "s"); "\g" or
-     * "\k" with its operand in braces, angle brackets or quotes ("\g{1}",
-     * "\k<n>", "\k'n'"), or "\g" with an optionally signed number ("\g1",
-     * "\g-1", "\g+1"); "\c" with the character it controls; "\0" with up
-     * to two more octal digits; "\1" to "\9" with every digit after it, the
-     * octal escape or back reference PCRE reads there being no longer; an
-     * operand left open runs to the end of the text. Otherwise the backslash
-     * and the whole character after it.
-     */
-    private static function escapeSequenceEnd(string $text, int $offset): int
-    {
-        // The operand is optional: a lone backslash is a sequence of one.
-        LibraryPcre::match('/\G\\\\(?:x(?:\{[^}]*\}?|[0-9A-Fa-f]{0,2})|[No]\{[^}]*\}?|[Pp](?:\{[^}]*\}?|[A-Za-z])|[gk](?:\{[^}]*\}?|<[^>]*>?|\'[^\']*\'?)|g[+-]?[0-9]+|c(?:[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?|0[0-7]{0,2}|[1-9][0-9]*|[\xC0-\xFF][\x80-\xBF]*|[\x00-\xFF])?/', $text, $match, 0, $offset);
-
-        return $offset + max(1, \strlen($match[0] ?? ''));
-    }
-
-    /**
-     * The message of a ReDoS error, frozen for 2.x so that a verdict fix never
-     * breaks a baseline: the class only when the model proved it.
-     */
-    private static function redosMessageFormat(RedosAnalysis $analysis): string
-    {
-        if (RedosProof::Proven === $analysis->proof) {
-            if (RedosComplexity::Exponential === $analysis->complexity) {
-                return 'Exponential backtracking (ReDoS): %s';
-            }
-
-            if (RedosComplexity::Polynomial === $analysis->complexity) {
-                return 'Polynomial backtracking (ReDoS): %s';
-            }
-        }
-
-        return 'Potential backtracking (ReDoS): %s';
-    }
-
-    /**
-     * "critical, exponential (proven)", "high, polynomial degree 3 (proven)",
-     * "medium, heuristic": the severity, then how the verdict was reached.
-     */
-    private static function redosVerdict(RedosAnalysis $analysis): string
-    {
-        $how = match ($analysis->proof) {
-            // The degree is only set on a polynomial.
-            RedosProof::Proven => $analysis->complexity->value
-                .(null === $analysis->degree ? '' : ' degree '.$analysis->degree)
-                .' (proven)',
-            RedosProof::Heuristic => 'heuristic',
-            RedosProof::BudgetExceeded => 'heuristic (budget exceeded)',
-            RedosProof::NotAnalyzed => 'not analyzed',
-        };
-
-        return $analysis->severity->value.', '.$how;
-    }
-
-    /**
      * What the search cost means and its attack, as the lint issue says
      * them, then the documentation link. A "<" is written "\x3C", as in the
      * per-attempt tip.
      */
     private static function searchCostTip(string $message, ?string $hint): string
     {
-        $lines = [str_replace('<', '\x3C', $message)];
-        if (null !== $hint && '' !== $hint) {
-            $lines[] = str_replace('<', '\x3C', $hint);
-        }
-
-        return implode("\n", $lines)."\n\nRead more about catastrophic backtracking: ".self::DOC_LINKS['catastrophic backtracking'];
+        return implode("\n", RedosFinding::searchDetails($message, $hint))."\n\nRead more about catastrophic backtracking: ".self::DOC_LINKS['catastrophic backtracking'];
     }
 
     /**
@@ -394,18 +303,9 @@ final class ErrorFactory
      */
     private static function redosTip(RedosAnalysis $analysis, ?RedosRepair $repair): string
     {
-        $lines = ['Severity: '.self::redosVerdict($analysis).'.'];
-        if (null !== $analysis->witness) {
-            // A "<" would open console markup in PHPStan's table output: written
-            // "\x3C", the literal stays valid PHP for the same bytes. The renderer
-            // prints "<" raw and never inside one of its escape sequences.
-            $lines[] = 'Attack: '.str_replace('<', '\x3C', $analysis->witness->render());
-        }
-
-        // A rewrite proven to match the same subjects and proven linear.
-        if (null !== $repair && $repair->isCertified()) {
-            $lines[] = \sprintf('Proven repair: %s (same subjects%s, linear).', str_replace('<', '\x3C', $repair->pattern), true === $repair->sameMatches ? ', same matches' : '');
-        }
+        // A "<" would open console markup in PHPStan's table output: the
+        // details write it "\x3C".
+        $lines = RedosFinding::details($analysis, $repair);
 
         $recommendations = implode("\n", $analysis->recommendations);
         if ('' !== $recommendations) {

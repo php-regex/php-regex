@@ -60,6 +60,12 @@ Features
   `preg_match_all()`, `preg_replace()`, `preg_replace_callback()`,
   `preg_replace_callback_array()` (its keys), `preg_split()`, `preg_grep()` and
   `preg_filter()`.
+* With `<redos>true</redos>`, the ReDoS findings of the PHPStan extension are
+  reported at the `preg_*` calls, from the same analysis and in its words:
+  `RegexRedos` for one attempt that backtracks past the threshold,
+  `RegexRedosSearch` for a search whose cost is quadratic, the loop of
+  `preg_match_all()`, `preg_replace()` or `preg_split()` after an empty match
+  included.
 * Patterns are judged for the PHP version Psalm analyses for, with the PCRE2
   release that PHP bundles: a pattern your PHP 8.4 accepts but PHP 8.2 refuses
   is reported on a project that targets 8.2.
@@ -336,7 +342,7 @@ patterns.
 ### Compared with the PHPStan extension
 
 The plugin reads the same facts of a pattern as the PHPStan extension, and
-says less in two places:
+says less in three places:
 
 * A group of digits is never a `numeric-string`. For
   `/^(\d+)-(?<y>\d+)?$/`, PHPStan types `$matches` as
@@ -351,6 +357,9 @@ says less in two places:
   the pattern does not have is not reported. `preg_replace('/(a)/', '[$2]', 'xay')`
   returns `'x[]y'`: PHP replaces `$2` with nothing. The PHPStan extension
   reports it as `regex.replacement.undefinedGroup`.
+* The plugin reads the `preg_*` calls only: the static methods of the wrapper
+  libraries the extension reads, composer/pcre's `Preg::match()` for
+  instance, are neither validated nor checked for ReDoS.
 
 Configuration
 -------------
@@ -394,6 +403,10 @@ The plugin's options override the version and the release:
   PCRE2 than the one it bundles, as some Linux distributions do.
 * `<locale>`: the `LC_CTYPE` locale the patterns run under (`tr_TR.UTF-8`),
   the one of the PHP running Psalm by default.
+* `<redos>`: `true` to report the ReDoS findings, off by default, as the
+  analysis is the expensive check (see below).
+* `<redosThreshold>`: the lowest severity reported, `low`, `medium`, `high`
+  (the default) or `critical`.
 
 A value the plugin cannot read, or a locale this machine cannot set, stops
 Psalm before any file is analysed.
@@ -441,6 +454,36 @@ It is a plugin issue: set its level, or suppress it, as any other.
 /** @psalm-suppress InvalidRegexPattern */
 ```
 
+### The `RegexRedos` and `RegexRedosSearch` issues
+
+With `<redos>true</redos>`, a pattern one attempt of which backtracks at or
+above `<redosThreshold>` is `RegexRedos`, the PHPStan extension's
+`regex.redos`; one whose attempt is linear while its search is quadratic is
+`RegexRedosSearch`, the extension's `regex.redos.search`, at severity
+`medium`, so `<redosThreshold>medium</redosThreshold>` shows it. The message is
+the extension's, followed by what its tip says: the severity, the attack and
+a proven repair, or what the search cost means. In `app/Validator.php`:
+
+```php
+<?php
+
+function words(string $value): bool
+{
+    return 1 === preg_match('/^(\w+\s?)+$/', $value);
+}
+```
+
+```
+ERROR: RegexRedos - app/Validator.php:5:29 - Exponential backtracking (ReDoS): /^(\w+\s?)+$/. Severity: critical, exponential (proven). Attack: "0" x n . "!"
+```
+
+The cost of the loop of `preg_match_all()`, `preg_replace()`, `preg_filter()`,
+`preg_replace_callback()`, `preg_replace_callback_array()` and `preg_split()`
+after an empty match is `RegexRedosSearch` too, unless a limit the type of the
+argument knows bounds the call. A call whose subject Psalm knows to be
+constant is not reported. Both are plugin issues, set and suppressed as any
+other. See [the Psalm guide](https://php-regex.com/guides/psalm/#redos-findings).
+
 Adopting on an existing project
 -------------------------------
 
@@ -478,14 +521,15 @@ says when.
 Backward compatibility
 ----------------------
 
-The `Plugin` class, the `InvalidRegexPattern` issue name and the
-`<phpVersion>` and `<pcreVersion>` options stay for all of 2.x. See
+The `Plugin` class, the `InvalidRegexPattern`, `RegexRedos` and
+`RegexRedosSearch` issue names and the `<phpVersion>`, `<pcreVersion>`,
+`<redos>` and `<redosThreshold>` options stay for all of 2.x. See
 [the backward compatibility promise](https://php-regex.com/reference/backward-compatibility/).
 
 Documentation
 -------------
 
-* [Psalm guide](https://php-regex.com/guides/psalm/) — the shape of `$matches`, the invalid patterns, the PHP version judged, adopting the plugin
+* [Psalm guide](https://php-regex.com/guides/psalm/) — the shape of `$matches`, the invalid patterns, the ReDoS findings, the PHP version judged, adopting the plugin
 * [Diagnostics](https://php-regex.com/reference/diagnostics/) — how findings are reported and how to read them
 
 Resources

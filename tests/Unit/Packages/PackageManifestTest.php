@@ -243,6 +243,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\TargetMarkers', 'Parser\Hir\ClassSetProvider',
             'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre',
             'Linter\Extraction\PatternAttributeScanner', 'Linter\Extraction\PregFunctions', 'Linter\Rule\RuleCatalog',
+            // The words of a ReDoS finding, which the Psalm plugin gives too.
+            'Linter\RedosFinding',
             // phpRegex.phpVersion takes a Composer constraint or {min, max}:
             // the extension reads it as regex.json's phpVersion is read, to
             // keep it within PHPStan's own range, refused in lint's words.
@@ -260,6 +262,9 @@ final class PackageManifestTest extends TestCase
             // <phpVersion> takes a Composer constraint: the plugin reads it
             // as regex.json's phpVersion is read, refused in lint's words.
             'Linter\Config\TargetSpec',
+            // <redos> runs the analysis the PHPStan extension runs, and
+            // words its findings in the extension's words.
+            'Linter\AnalysisService', 'Linter\RedosFinding',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',

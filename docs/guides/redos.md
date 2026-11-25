@@ -255,7 +255,7 @@ Only a verdict the engine reproduced, or a proven one it could not replay becaus
 
 ## Severity and thresholds
 
-Severities are ordered `safe` < `low` < `unknown` < `medium` < `high` < `critical` (`RedosSeverity::rank()`). A threshold is `low`, `medium`, `high` or `critical`; a pattern is reported at or above it. The default is `high` everywhere: the linter, Symfony, Laravel, PHPStan and the language server.
+Severities are ordered `safe` < `low` < `unknown` < `medium` < `high` < `critical` (`RedosSeverity::rank()`). A threshold is `low`, `medium`, `high` or `critical`; a pattern is reported at or above it. The default is `high` everywhere: the linter, Symfony, Laravel, PHPStan, Psalm and the language server.
 
 A proven quadratic pattern (`/\d+\d+$/`, `/(\w+)(\w+)$/`) is `medium`: below the default thresholds. Lower the threshold to `medium` to see them.
 
@@ -280,6 +280,7 @@ The result is `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`degree` 2, the
 
 - `regex lint --redos` reports it as `regex.lint.redos.search` from `--redos-threshold=medium` (or `checks.redos.threshold` set to `medium` in `regex.json`); `--disable-rule=regex.lint.redos.search`, or `"redos.search": false` in `checks.lint.rules`, turns it off. The per-attempt verdict keeps its own id, `regex.lint.redos`.
 - PHPStan reports it as `regex.redos.search`, with the message `Quadratic search (ReDoS): <pattern>`, from `threshold: medium`.
+- The Psalm plugin reports it as `RegexRedosSearch`, with the same message, from `<redosThreshold>medium</redosThreshold>` (see [the Psalm guide](psalm.md#redos-findings)), at the `preg_*` calls, the loop of the functions that look for every match included.
 
 `vendor/bin/regex lint app --redos --redos-threshold=medium -v` on `preg_match('/\s+$/', $subject);` prints the whole hint:
 

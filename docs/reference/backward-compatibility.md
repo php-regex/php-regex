@@ -139,8 +139,11 @@ instead, and `$searchCost` stays `null`.
 The bridges and tools carry more than their classes:
 
 - `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
-- `regex-psalm`: the `InvalidRegexPattern` issue name and the plugin's
-  `<phpVersion>` and `<pcreVersion>` options stay for all of 2.x. The
+- `regex-psalm`: the `InvalidRegexPattern`, `RegexRedos` and
+  `RegexRedosSearch` issue names and the plugin's `<phpVersion>`,
+  `<pcreVersion>`, `<redos>` and `<redosThreshold>` options stay for all of
+  2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
+  ReDoS analysis. The
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
