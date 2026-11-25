@@ -28,16 +28,17 @@ use PHPRegex\Redos\ConfirmationOptions;
  * "(*NO_AUTO_POSSESS)": PCRE2 makes most single loops possessive, which reads
  * the same characters but counts none of them.
  *
- * The witness replays when the search on it matches nowhere, but on the
- * empty string at the subject's end, and an attempt started further from
- * the breaker takes at least one more step per run word. The counter sees nothing inside an atomic or possessive repeat of a
- * single character set ("a++", "(?>a+)"), and counts a repeat of a group,
- * "(?:a)++" or "(?>a+b)+", at each pass: the search proof hands over the
- * pattern with each such character in a group of its own, which changes no
- * match. A pattern that leaves no delimiter for the counting verbs does not
- * replay, whatever it costs. The subject holds 256 run words: a bounded repeat
- * above that would look unbounded to it, so the prover never brings a run
- * read through a bounded repeat it reads as unbounded.
+ * The witness replays when the search on it matches nowhere before the
+ * breaker, and an attempt started further from the breaker takes at least
+ * one more step per run word. The counter sees nothing inside an atomic or
+ * possessive repeat of a single character set ("a++", "(?>a+)"), and
+ * counts a repeat of a group, "(?:a)++" or "(?>a+b)+", at each pass: the
+ * search proof hands over the pattern with each such character in a group
+ * of its own, which changes no match. A pattern that leaves no delimiter
+ * for the counting verbs does not replay, whatever it costs. The subject
+ * holds 256 run words: a bounded repeat above that would look unbounded to
+ * it, so the prover never brings a run read through a bounded repeat it
+ * reads as unbounded.
  *
  * The JIT is not measured: under it some pattern and subject pairs crash PHP
  * (PCRE2 10.40 to 10.49), so every run goes through the engine, which turns
@@ -61,7 +62,7 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
     /**
      * Whether the engine, without its JIT, starts attempts inside the run
      * that each read what is left of it, and matches nowhere before the
-     * subject's end; null when the engine cannot count: the limits of the
+     * breaker; null when the engine cannot count: the limits of the
      * options stop the search or a pinned attempt before it ends, or
      * ini_set() cannot set them.
      */
@@ -75,16 +76,17 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
         }
 
         // A search that matches the witness ends there, before the attempts
-        // the run starts after that match. The empty match at the subject's
-        // end comes after every one of them when the attempt there made it:
-        // "\K" may report one an earlier attempt made, so a pattern holding
-        // it matches nowhere.
+        // the run starts after that match. A match that starts in the
+        // breaker or at the subject's end comes after every one of them,
+        // when an attempt started there made it: "\K" may report there one
+        // an earlier attempt made, so a pattern holding it matches nowhere.
         $subject = $prefix.str_repeat($run, self::WORDS).$breaker;
         $search = self::counts($counted, $subject, 0, self::MAX_STEPS, $options, \PREG_OFFSET_CAPTURE);
         if (null === $search->matched) {
             return null;
         }
-        if ($search->matched && (str_contains($pattern, '\K') || ['', \strlen($subject)] !== ($search->groups[0] ?? null))) {
+        $found = $search->groups[0] ?? null;
+        if ($search->matched && (str_contains($pattern, '\K') || !\is_array($found) || $found[1] < \strlen($subject) - \strlen($breaker))) {
             return false;
         }
 

@@ -68,8 +68,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Semantics:** For a pattern whose one attempt is proven linear, a witness `prefix . run x n . breaker` read from the
   same automaton: every attempt started inside the run reads to its end without matching, then fails on the breaker,
   which holds the last code unit PCRE2 requires before any attempt, read as its compiler reads it: the one every
-  alternative ends with included (`b` for `/a+b|cb/`). No attempt started before the subject's end matches; the one
-  started there comes last, and may match the empty string (`" " x n . "!"` for `/\s*$/`). The prefix keeps the first
+  alternative ends with included (`b` for `/a+b|cb/`). No attempt started before the breaker matches; those the
+  breaker starts, and the one at the subject's end, come after them and may match (`"0" x n . "x"` for
+  `/(?:\w+\.)?x/`, `"a" x n . "!b"` for `/a+b|b$/`, `" " x n . "!"` for `/\s*$/`). The prefix keeps the first
   attempt from matching the bare run (`"!"` for `/^\s+|\s+$/`). The unanchored search then costs about n²/2 steps in
   PCRE2's interpreter (`pcre.jit=0`, a build without JIT, `(*NO_JIT)`). It is reported as `search_cost`, the lint issue
   [`regex.lint.redos.search`](rules.md) and the PHPStan identifier

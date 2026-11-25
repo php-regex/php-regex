@@ -1284,7 +1284,7 @@ builds the attack.
 |---|---|---|
 | `prefix` | string | What comes before the run, often empty: the first attempt fails on it where it would match the bare run (`"!"` for `/^\s+\|\s+$/`) |
 | `run` | string | The part repeated: every attempt started in it reads to its end |
-| `breaker` | string | What comes after the run and fails every attempt started before the subject's end, where one may match the empty string after all of them (`"!"` for `/\s*$/`); it holds the last code unit PCRE2 requires, read as its compiler reads it, when the run does not, as PCRE2 gives up at once on a subject without it (`">"` for `/\s*=>/`), with a character after it when an alternative would match it at the end (`"!b!"` for `/a+b\|b$/`) |
+| `breaker` | string | What comes after the run and fails every attempt the run starts; an attempt the breaker starts may match it after all of them (`"!b"` for `/a+b\|b$/`, whose second alternative matches the `b`), and so may the one at the subject's end (`"!"` for `/\s*$/`). It holds the last code unit PCRE2 requires, read as its compiler reads it, when the run does not, as PCRE2 gives up at once on a subject without it (`">"` for `/\s*=>/`, `"x"` for `/(?:\w+\.)?x/`), with a character after it when an attempt of the run would match it at the end |
 
 ### Every-match search cost: `redos_analysis.every_match_search_cost`
 
