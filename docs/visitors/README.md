@@ -314,14 +314,17 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Linter\PatternLinter;
 
 $linter = new PatternLinter();
-Regex::create()->parse('/(a+)+b/')->accept($linter);
 
-foreach ($linter->getIssues() as $issue) {
+foreach ($linter->analyze(Regex::create()->parse('/(a+)+b/')) as $issue) {
     echo $issue->message, "\n";
 }
 // Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
 // Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
+
+`analyze()` takes the root of the tree, the `RegexNode` `parse()` gives: the rules read the groups and the flags of
+the whole pattern, so a node below the root is no pattern to lint. `getIssues()` gives the findings of the last pattern
+read again, and the `visit*()` methods are `@internal`.
 
 The lint rules read the shape of the pattern. The ReDoS verdict comes from `Regex::redos()`, below.
 

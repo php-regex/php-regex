@@ -356,7 +356,7 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         $tree = $regex->parse($pattern);
         StaticCaches::clear();
 
-        $tree->accept(new PatternLinter([], $regex->target()));
+        $tree->accept(new PatternLinter($regex->target()));
 
         $this->assertSame($read, [] !== (new \ReflectionClass(OtherCases::class))->getStaticPropertyValue('tables'), $pattern);
     }
@@ -418,7 +418,7 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
     private static function reports(string $pattern, string $locale, ?string $pcre = null): bool
     {
         $regex = Regex::create(['cache' => null, 'locale' => $locale] + (null === $pcre ? [] : ['pcre_version' => $pcre]));
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return \in_array(self::ID, array_map(static fn ($issue): string => $issue->id, $linter->getIssues()), true);

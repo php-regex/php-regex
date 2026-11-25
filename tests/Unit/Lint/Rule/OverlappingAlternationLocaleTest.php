@@ -80,7 +80,7 @@ final class OverlappingAlternationLocaleTest extends TestCase
         $this->assertSame($reported, [1, 1] === $taken->getArrayCopy(), \sprintf('Oracle: %s under %s takes the byte 0xE9 in %s.', addcslashes($pattern, "\200..\377"), $locale, json_encode($taken->getArrayCopy())));
 
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         $ids = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

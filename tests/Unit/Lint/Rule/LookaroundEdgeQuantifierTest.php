@@ -167,7 +167,7 @@ final class LookaroundEdgeQuantifierTest extends TestCase
      */
     private function messages(string $pattern, bool $enabled): array
     {
-        $linter = new PatternLinter($enabled ? ['lookaround.edgeQuantifier' => true] : []);
+        $linter = new PatternLinter(rules: $enabled ? ['lookaround.edgeQuantifier' => true] : []);
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
         $messages = [];

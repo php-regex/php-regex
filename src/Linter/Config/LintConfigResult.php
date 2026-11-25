@@ -32,7 +32,7 @@ namespace PHPRegex\Linter\Config;
  *     reportUnmatchedIgnores?: bool,
  *     reportDynamic?: bool,
  *     checks?: array{
- *         validation?: bool,
+ *         validation?: array{enabled?: bool},
  *         redos?: array{enabled?: bool, mode?: string, threshold?: string},
  *         optimizations?: array{
  *             enabled?: bool,

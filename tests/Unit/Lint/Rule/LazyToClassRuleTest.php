@@ -148,7 +148,7 @@ final class LazyToClassRuleTest extends TestCase
      */
     private function violation(string $pattern, array $rules): ?RuleViolation
     {
-        $linter = new PatternLinter($rules);
+        $linter = new PatternLinter(rules: $rules);
         Regex::create()->parse($pattern)->accept($linter);
 
         foreach ($linter->getIssues() as $violation) {

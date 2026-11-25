@@ -1652,7 +1652,9 @@ Create `regex.json` or `regex.dist.json` in your project root:
   "ide": "phpstorm",
   "phpVersion": "8.2",
   "checks": {
-    "validation": true,
+    "validation": {
+      "enabled": true
+    },
     "redos": {
       "enabled": true,
       "mode": "theoretical",
@@ -1695,14 +1697,14 @@ merged key by key, and anything else, a list included, is replaced whole. So
 | `locale`                        | string           | `LC_CTYPE` locale the patterns run under: `"tr_TR.UTF-8"` (default: the one of the PHP running the command) |
 | `extraction.interop`            | array            | Libraries whose calls carry patterns (default: every preset; a list reads exactly those, `[]` none: the native calls, configured functions and Twig templates are still read) |
 | `extraction.functions`          | array            | Project helpers carrying patterns                        |
-| `checks.validation`             | boolean          | Report patterns PCRE2 refuses (default `true`)           |
+| `checks.validation`             | object           | `enabled` (default `true`): report the patterns PCRE2 refuses |
 | `checks.redos`                  | object           | `enabled` (default `false`), `mode` (`theoretical` or `confirmed`), `threshold` (`low`, `medium`, `high`, `critical`) |
 | `checks.optimizations`          | object           | `enabled` (default `true`), `minSavings`, `options`      |
 | `checks.optimizations.options`  | object           | digits, word, ranges, canonicalizeCharClasses, possessive, factorize, minQuantifierCount, verifyWithAutomata |
 | `checks.lint`                   | object           | `enabled` (default `true`) and `rules`, a map of rule id to `true` or `false`, the id written without `regex.lint.` (`quantifier.useless`) or in full (`regex.lint.quantifier.useless`); `redos.search` turns the search cost of the ReDoS check off |
 | `checks.complexity`             | object           | `enabled` (default `false`) and `threshold`, an integer of at least 1 (default `50`): a warning, `regex.lint.complexity`, for each pattern whose complexity score reaches it |
 
-`checks.redos`, `checks.optimizations`, `checks.lint` and `checks.complexity`
+`checks.validation`, `checks.redos`, `checks.optimizations`, `checks.lint` and `checks.complexity`
 are objects, and only their `enabled` key switches a check on or off: setting
 `threshold`, `mode`, `minSavings`, `options` or `rules` alone never enables it. `mode` and
 `threshold` are read whatever their case.
@@ -1724,7 +1726,7 @@ key is close). The table says where each setting went:
 
 | 1.x key                 | Use instead                                                  |
 |-------------------------|--------------------------------------------------------------|
-| `rules`                 | `checks` (`rules.optimization` is `checks.optimizations.enabled`) |
+| `rules`                 | `checks` (`rules.optimization` is `checks.optimizations.enabled`, `rules.validation` is `checks.validation.enabled`) |
 | `redosMode`             | `checks.redos.mode`                                          |
 | `redosThreshold`        | `checks.redos.threshold`                                     |
 | `redosNoJit`            | nothing: the ReDoS confirmation always runs without JIT      |
@@ -1732,7 +1734,7 @@ key is close). The table says where each setting went:
 | `minSavings`            | `checks.optimizations.minSavings`                            |
 | `checks.redos.noJit`    | nothing: the ReDoS confirmation always runs without JIT      |
 | `checks.redos.mode: "off"` | `checks.redos.enabled: false`                             |
-| `checks.redos: true` (and the other boolean forms) | `checks.redos: {"enabled": true}`  |
+| `checks.redos: true`, `checks.validation: true` (and the other boolean forms) | `checks.redos: {"enabled": true}`, `checks.validation: {"enabled": true}` |
 
 ### Schema
 

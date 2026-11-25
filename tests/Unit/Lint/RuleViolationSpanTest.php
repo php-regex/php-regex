@@ -37,7 +37,7 @@ final class RuleViolationSpanTest extends TestCase
         $parser = RegexParser::create();
         $ids = [];
         foreach (self::PATTERNS as $pattern) {
-            $linter = new PatternLinter(['unicode.shorthandWithoutU' => true, 'charclass.single' => true, 'literal.multipleSpaces' => true, 'quantifier.lazyToClass' => true]);
+            $linter = new PatternLinter(rules: ['unicode.shorthandWithoutU' => true, 'charclass.single' => true, 'literal.multipleSpaces' => true, 'quantifier.lazyToClass' => true]);
             $parser->parse($pattern)->accept($linter);
 
             foreach ($linter->getIssues() as $issue) {

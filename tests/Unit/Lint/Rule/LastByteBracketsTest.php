@@ -214,7 +214,7 @@ final class LastByteBracketsTest extends TestCase
     {
         // Parsed before: only the reading of the rules is timed.
         $tree = Regex::create(['cache' => null])->parse('/'.str_repeat('(?:\w)', 4 * 1000).$tail.'/');
-        $linter = new PatternLinter(['group.redundant' => true, 'group.empty' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false));
+        $linter = new PatternLinter(rules: ['group.redundant' => true, 'group.empty' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false));
 
         $this->assertLinearTime(static function () use ($tree, $linter): void {
             $tree->accept($linter);

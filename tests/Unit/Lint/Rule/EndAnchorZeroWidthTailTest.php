@@ -227,7 +227,7 @@ final class EndAnchorZeroWidthTailTest extends TestCase
     private function issueIds(string $pattern, ?string $locale = null): array
     {
         $regex = Regex::create(null === $locale ? ['cache' => null] : ['cache' => null, 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

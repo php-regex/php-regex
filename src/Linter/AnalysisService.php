@@ -488,12 +488,11 @@ final class AnalysisService
      */
     private function lintIssues(PatternOccurrence $occurrence, RegexNode $ast, bool $skipRiskAnalysis, array &$files): array
     {
-        $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
-        $ast->accept($linter);
+        $linter = PatternLinter::withDfaCache($this->dfas(), $this->regex->target(), $this->lintRules);
 
         $issues = [];
         $spelling = null;
-        foreach ($linter->getIssues() as $issue) {
+        foreach ($linter->analyze($ast) as $issue) {
             if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                 continue;
             }

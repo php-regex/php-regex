@@ -219,6 +219,45 @@ An occurrence your extractor builds carries no inline marker of its own:
 its line silences it as it silences a pattern the built-in extractors find,
 and a marker that silences nothing is reported the same way.
 
+To read your calls beside the native ones and the presets, leave
+`extractor_service` out and decorate the built-in extractor, the service
+`php_regex.extractor.instance`: yours is handed it, and returns its
+occurrences with your own.
+
+```php
+namespace App\Regex;
+
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\PatternOccurrence;
+
+final class RuleExtractor implements ExtractorInterface
+{
+    public function __construct(private readonly ExtractorInterface $inner) {}
+
+    public function extract(array $files): array
+    {
+        $occurrences = $this->inner->extract($files);
+        foreach ($files as $file) {
+            foreach (file($file) ?: [] as $index => $line) {
+                if (1 === preg_match("~Rule::matches\\('([^']*)'~", $line, $match, \PREG_OFFSET_CAPTURE)) {
+                    $occurrences[] = PatternOccurrence::found($match[1][0], $file, $index + 1, $match[1][1], 'Rule::matches()');
+                }
+            }
+        }
+
+        return $occurrences;
+    }
+}
+```
+
+```yaml
+# config/services.yaml
+services:
+    App\Regex\RuleExtractor:
+        decorates: php_regex.extractor.instance
+        arguments: ['@.inner']
+```
+
 `regex:lint` reads the `Regex` constraints of the validator mapping files
 FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
 the files and directories of `framework.validation.mapping.paths`, and the

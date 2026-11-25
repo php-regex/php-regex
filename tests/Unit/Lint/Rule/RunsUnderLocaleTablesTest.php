@@ -256,7 +256,7 @@ final class RunsUnderLocaleTablesTest extends TestCase
         }
 
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter($others, $regex->target());
+        $linter = new PatternLinter($regex->target(), $others);
         $regex->parse($pattern)->accept($linter);
 
         $ids = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

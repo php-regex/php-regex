@@ -55,7 +55,7 @@ A few 1.3 classes map to a 2.0 class marked `@internal`, which the
 [backward compatibility promise](docs/reference/backward-compatibility.md)
 does not cover: `RegexProblem` and `ProblemType` became `Linter\Diagnostic`
 and `Linter\DiagnosticType`, built only by the lint commands. Read lint
-results through `PatternLinter::getIssues()` (`Rule\RuleViolation`) or the
+results through `PatternLinter::analyze()` (`Rule\RuleViolation`) or the
 CLI's JSON output.
 
 A Rector set makes these changes in your code. It ships with the Rector
@@ -1124,11 +1124,11 @@ instead.
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).
 
-`new PatternLinter($rules)` (1.x `LinterNodeVisitor`) checks the keys of
-the map: one naming a rule the linter does not run throws
+`new PatternLinter(rules: $rules)` (1.x `LinterNodeVisitor`, which took no
+argument) checks the keys of the map: one naming a rule the linter does not run throws
 `UnknownLintRuleException`, which names the nearest rule, where a typo turned
 nothing off. Each key is a rule id without `regex.lint.` or in full.
-`new PatternLinter($rules, $target)` asks its rules' questions for that
+`new PatternLinter($target, $rules)` asks its rules' questions for that
 `PcreTarget`; `Regex::lint($regex)` runs the rules for the facade's target.
 
 #### `Regex::highlight()` refuses an unknown format
@@ -1207,7 +1207,7 @@ spellings; 2.0 refuses them with a plain unknown-key error naming the key
 
 | 1.x | 2.0 |
 |---|---|
-| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": true, "optimizations": {"enabled": false}}` |
+| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": {"enabled": true}, "optimizations": {"enabled": false}}` |
 | `"redosMode": "confirmed"` | `"checks": {"redos": {"mode": "confirmed"}}` |
 | `"redosThreshold": "high"` | `"checks": {"redos": {"threshold": "high"}}` |
 | `"redosNoJit": true`, `"checks": {"redos": {"noJit": true}}` | nothing: the confirmation always runs without JIT |

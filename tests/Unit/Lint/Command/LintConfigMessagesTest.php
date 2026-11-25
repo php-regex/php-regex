@@ -63,7 +63,7 @@ final class LintConfigMessagesTest extends TestCase
         yield 'one rule named twice' => ['{"checks": {"lint": {"rules": {"quantifier.useless": true, "regex.lint.quantifier.useless": false}}}}', 'Lint rule "quantifier.useless" is named twice in checks.lint.rules of '];
         yield 'integer minimum' => ['{"jobs": "four"}', 'expected an integer >= 1'];
         yield 'enum' => ['{"format": "xml"}', 'expected one of console, json, github, checkstyle, junit'];
-        yield 'boolean' => ['{"checks": {"validation": "yes"}}', 'expected a boolean'];
+        yield 'boolean' => ['{"reportDynamic": "yes"}', 'expected a boolean'];
         yield 'object' => ['{"extraction": []}', 'expected an object'];
         yield 'duplicate preset' => ['{"extraction": {"interop": ["nette-utils", "nette-utils"]}}', 'a list of distinct presets'];
         yield 'duplicate function' => ['{"extraction": {"functions": ["a", "a"]}}', 'a list of distinct non-empty strings'];
@@ -73,6 +73,8 @@ final class LintConfigMessagesTest extends TestCase
         yield '1.x key, once removed with its replacement named' => ['{"minSavings": 2}', 'Unknown key "minSavings"'];
         yield '1.x key without a replacement' => ['{"redosNoJit": true}', 'Unknown key "redosNoJit"'];
         yield 'boolean complexity form' => ['{"checks": {"complexity": false}}', 'expected an object (write {"enabled": false})'];
+        yield 'boolean validation form' => ['{"checks": {"validation": true}}', 'expected an object (write {"enabled": true})'];
+        yield 'validation enabled as a string' => ['{"checks": {"validation": {"enabled": "yes"}}}', 'Invalid "checks.validation.enabled" in '];
         yield 'complexity threshold below 1' => ['{"checks": {"complexity": {"threshold": 0}}}', 'Invalid "checks.complexity.threshold" in '];
         yield 'PHP_VERSION_ID too small' => ['{"phpVersion": 83}', 'a PHP_VERSION_ID like 80300'];
         yield 'PHP_VERSION_ID below PHP 7' => ['{"phpVersion": 69999}', 'a PHP_VERSION_ID like 80300'];

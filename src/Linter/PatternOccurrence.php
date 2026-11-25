@@ -68,7 +68,7 @@ use PHPRegex\Linter\Extraction\TargetMarker;
  *
  * An extractor of your own builds its occurrences with found(), and reads
  * $pattern, $file, $line, $column and $source; the other members are the
- * library's.
+ * library's, and say @internal.
  */
 final class PatternOccurrence
 {
@@ -80,29 +80,74 @@ final class PatternOccurrence
         public readonly string $file,
         public readonly int $line,
         public readonly string $source,
+        /**
+         * @internal
+         */
         public readonly ?string $displayPattern = null,
+        /**
+         * @internal
+         */
         public readonly ?string $location = null,
+        /**
+         * @internal
+         */
         public readonly bool $isIgnored = false,
         public readonly ?int $column = null,
+        /**
+         * @internal
+         */
         public readonly ?int $fileOffset = null,
+        /**
+         * @internal
+         */
         public readonly ?string $unread = null,
+        /**
+         * @internal
+         */
         public readonly ?string $parserFallback = null,
         /**
+         * @internal
+         *
          * @var list<IgnoreMarker>|null
          */
         public readonly ?array $ignores = null,
+        /**
+         * @internal
+         */
         public readonly ?TargetConstraint $guard = null,
         /**
+         * @internal
+         *
          * @var list<TargetMarker>
          */
         public readonly array $targets = [],
+        /**
+         * @internal
+         */
         public readonly ?int $argumentOffset = null,
+        /**
+         * @internal
+         */
         public readonly ?int $argumentLength = null,
+        /**
+         * @internal
+         */
         public readonly ?string $state = null,
+        /**
+         * @internal
+         */
         public readonly ?string $expression = null,
+        /**
+         * @internal
+         */
         public readonly ?string $variant = null,
+        /**
+         * @internal
+         */
         public readonly ?string $everyMatch = null,
         /**
+         * @internal
+         *
          * @var list<string>
          */
         public readonly array $everyMatchElsewhere = [],

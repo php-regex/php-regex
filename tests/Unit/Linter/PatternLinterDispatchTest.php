@@ -54,7 +54,7 @@ final class PatternLinterDispatchTest extends TestCase
         $registry = new LintRuleRegistry();
         $registry->register($rule);
 
-        $linter = PatternLinter::withRegistry([], $registry);
+        $linter = PatternLinter::withRegistry($registry);
         Regex::create(['php_version' => '8.4', 'pcre_version' => '10.45'])->parse('/(?[ [a-z] & [aeiou] ])/')->accept($linter);
 
         $this->assertSame(

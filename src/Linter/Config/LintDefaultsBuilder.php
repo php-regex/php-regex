@@ -99,8 +99,9 @@ final class LintDefaultsBuilder
         }
 
         $checks = $config['checks'] ?? [];
-        if (isset($checks['validation'])) {
-            $defaults['checkValidation'] = $checks['validation'];
+        $validation = $checks['validation'] ?? [];
+        if (isset($validation['enabled'])) {
+            $defaults['checkValidation'] = $validation['enabled'];
         }
 
         $redos = $checks['redos'] ?? [];

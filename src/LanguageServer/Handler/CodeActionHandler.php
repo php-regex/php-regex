@@ -251,11 +251,9 @@ final class CodeActionHandler
         if (!$hasUnicodeIssue) {
             // Also check by running the linter
             try {
-                $ast = $this->regex->parse($occurrence->pattern);
-                $linter = new PatternLinter($this->lintRules);
-                $ast->accept($linter);
+                $linter = new PatternLinter($this->regex->target(), $this->lintRules);
 
-                foreach ($linter->getIssues() as $issue) {
+                foreach ($linter->analyze($this->regex->parse($occurrence->pattern)) as $issue) {
                     if (\in_array($issue->id, self::UNICODE_LINT_IDS, true)) {
                         $hasUnicodeIssue = true;
 

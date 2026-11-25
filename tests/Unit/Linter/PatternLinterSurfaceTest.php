@@ -17,7 +17,10 @@ use PHPRegex\Linter\Exception\UnknownLintRuleException;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\Rule\LintRuleRegistry;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Linter\Rule\UndefinedBackrefRule;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -32,18 +35,82 @@ use PHPUnit\Framework\TestCase;
 final class PatternLinterSurfaceTest extends TestCase
 {
     /**
-     * The target comes after the rules, in the order withDfaCache() takes
-     * them: the questions a rule asks are read for it.
+     * The target comes first, as every analyzer of the library takes it,
+     * and the rules map after it: a caller that turns no rule on or off
+     * passes the target alone.
      */
     #[Test]
-    public function test_the_constructor_takes_the_enabled_rules_and_the_target(): void
+    public function test_the_constructor_takes_the_target_and_the_rules(): void
     {
         $constructor = new \ReflectionMethod(PatternLinter::class, '__construct');
 
-        $this->assertSame(['enabledRules', 'target'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $constructor->getParameters()));
-        $this->assertSame('?'.PcreTarget::class, (string) $constructor->getParameters()[1]->getType());
-        $this->assertNull($constructor->getParameters()[1]->getDefaultValue());
+        $this->assertSame(['target', 'rules'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $constructor->getParameters()));
+        $this->assertSame('?'.PcreTarget::class, (string) $constructor->getParameters()[0]->getType());
+        $this->assertNull($constructor->getParameters()[0]->getDefaultValue());
+        $this->assertSame('array', (string) $constructor->getParameters()[1]->getType());
+        $this->assertSame([], $constructor->getParameters()[1]->getDefaultValue());
+        $this->assertStringContainsString('@param array<string, bool> $rules', (string) $constructor->getDocComment());
         $this->assertStringContainsString('@internal', (string) (new \ReflectionMethod(PatternLinter::class, 'withRegistry'))->getDocComment());
+    }
+
+    /**
+     * analyze() reads a pattern from its root, the tree parse() gives, and
+     * returns its findings; getIssues() gives them again until the next
+     * pattern. The rules read the groups of the whole pattern: "\1" of
+     * "/(a+)+b\1\2/" names a group it holds, "\2" none.
+     */
+    #[Test]
+    #[DataProvider('provideReferences')]
+    public function test_analyze_returns_the_findings_of_a_pattern(string $regex, string $defined): void
+    {
+        // Oracle: PCRE2 refuses the reference to the group the pattern does
+        // not hold, and takes the one it holds.
+        $this->assertFalse(@preg_match($regex, ''));
+        $this->assertStringContainsString('reference to non-existent subpattern', error_get_last()['message'] ?? '');
+        $this->assertSame(1, preg_match($defined, 'aabaa'));
+
+        $linter = new PatternLinter();
+        $issues = $linter->analyze(Regex::create(['cache' => null])->parse($regex));
+
+        $undefined = array_values(array_filter($issues, static fn (RuleViolation $issue): bool => UndefinedBackrefRule::ID === $issue->id));
+        $this->assertSame([8], array_map(static fn (RuleViolation $issue): ?int => $issue->offset, $undefined));
+        $this->assertSame($issues, $linter->getIssues());
+
+        $this->assertSame([], $linter->analyze(Regex::create(['cache' => null])->parse('/ab/')), 'The findings of one pattern only.');
+        $this->assertSame([], $linter->getIssues());
+    }
+
+    /**
+     * @return iterable<string, array{regex: string, defined: string}>
+     */
+    public static function provideReferences(): iterable
+    {
+        yield 'a reference to a group, then to none' => ['regex' => '/(a+)+b\1\2/', 'defined' => '/(a+)+b\1/'];
+    }
+
+    /**
+     * The entry point takes the root of a tree; the visitor methods are the
+     * walk analyze() runs, not a way in.
+     */
+    #[Test]
+    public function test_the_entry_point_takes_the_root_and_the_walk_is_internal(): void
+    {
+        $analyze = new \ReflectionMethod(PatternLinter::class, 'analyze');
+        $this->assertSame(['ast'], array_map(static fn (\ReflectionParameter $parameter): string => $parameter->getName(), $analyze->getParameters()));
+        $this->assertSame(RegexNode::class, (string) $analyze->getParameters()[0]->getType());
+        $this->assertStringContainsString('@return list<RuleViolation>', (string) $analyze->getDocComment());
+
+        $visits = [];
+        foreach ((new \ReflectionClass(PatternLinter::class))->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            if (PatternLinter::class === $method->getDeclaringClass()->getName() && str_starts_with($method->getName(), 'visit')) {
+                $visits[] = $method->getName();
+                $this->assertMatchesRegularExpression('/^\s*\*\s*@internal\b/m', (string) $method->getDocComment(), $method->getName().'()');
+            }
+        }
+        $this->assertContains('visitRegex', $visits);
+        $this->assertContains('visitGroup', $visits);
+        $this->assertDoesNotMatchRegularExpression('/@internal/', (string) $analyze->getDocComment());
+        $this->assertDoesNotMatchRegularExpression('/@internal/', (string) (new \ReflectionMethod(PatternLinter::class, 'getIssues'))->getDocComment());
     }
 
     /**
@@ -66,7 +133,7 @@ final class PatternLinterSurfaceTest extends TestCase
     public function test_the_constructor_refuses_a_rule_it_does_not_run(string $id, string $message): void
     {
         try {
-            new PatternLinter(['quantifier.useless' => true, $id => false]);
+            new PatternLinter(rules: ['quantifier.useless' => true, $id => false]);
             $this->fail('No exception for '.$id.'.');
         } catch (UnknownLintRuleException $e) {
             $this->assertSame($message, $e->getMessage());
@@ -105,8 +172,8 @@ final class PatternLinterSurfaceTest extends TestCase
     #[Test]
     public function test_the_constructor_takes_every_rule_in_either_spelling(): void
     {
-        $short = new PatternLinter(array_fill_keys(RuleCatalog::configurableIds(), false));
-        $full = new PatternLinter(array_fill_keys(array_map(static fn (string $id): string => 'regex.lint.'.$id, RuleCatalog::configurableIds()), false));
+        $short = new PatternLinter(rules: array_fill_keys(RuleCatalog::configurableIds(), false));
+        $full = new PatternLinter(rules: array_fill_keys(array_map(static fn (string $id): string => 'regex.lint.'.$id, RuleCatalog::configurableIds()), false));
         Regex::create()->parse('/a{1}/')->accept($short);
         Regex::create()->parse('/a{1}/')->accept($full);
 
@@ -123,18 +190,18 @@ final class PatternLinterSurfaceTest extends TestCase
     {
         $registry = new LintRuleRegistry();
 
-        $linter = PatternLinter::withRegistry(['quantifier.useless' => false, 'regex.lint.flag.redundant' => false], $registry);
+        $linter = PatternLinter::withRegistry($registry, ['quantifier.useless' => false, 'regex.lint.flag.redundant' => false]);
         Regex::create()->parse('/a{1}/')->accept($linter);
         $this->assertSame([], $linter->getIssues());
 
         $this->expectException(UnknownLintRuleException::class);
-        PatternLinter::withRegistry(['quantifier.nestd' => false], $registry);
+        PatternLinter::withRegistry($registry, ['quantifier.nestd' => false]);
     }
 
     #[Test]
     public function test_the_issues_read_one_way(): void
     {
-        $linter = PatternLinter::withRegistry([], new LintRuleRegistry());
+        $linter = PatternLinter::withRegistry(new LintRuleRegistry());
         Regex::create()->parse('/a{1}/')->accept($linter);
 
         $this->assertNotSame([], $linter->getIssues());

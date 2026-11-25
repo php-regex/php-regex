@@ -135,7 +135,7 @@ final class DollarNewlineTest extends TestCase
     #[Test]
     public function test_the_rule_can_be_turned_off(): void
     {
-        $linter = new PatternLinter(['anchor.dollarNewline' => false]);
+        $linter = new PatternLinter(rules: ['anchor.dollarNewline' => false]);
         Regex::create(['cache' => null])->parse('/^\d+$/')->accept($linter);
 
         $this->assertSame([], array_values(array_filter($linter->getIssues(), static fn (object $issue): bool => self::RULE === $issue->id)));
@@ -146,7 +146,7 @@ final class DollarNewlineTest extends TestCase
      */
     private function issues(string $pattern): array
     {
-        $linter = new PatternLinter(['anchor.dollarNewline' => true]);
+        $linter = new PatternLinter(rules: ['anchor.dollarNewline' => true]);
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
         return array_values(array_filter($linter->getIssues(), static fn (object $issue): bool => self::RULE === $issue->id));

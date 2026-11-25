@@ -620,11 +620,10 @@ final class TextDocumentHandler
             if (!$validation->isValid && null !== $validation->errorCode) {
                 $analysis = ['invalid', $validation];
             } else {
-                $linter = new PatternLinter($this->lintRules);
-                $ast->accept($linter);
+                $issues = (new PatternLinter($regex->target(), $this->lintRules))->analyze($ast);
 
                 $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
-                $analysis = ['read', $ast->source ?? '', $linter->getIssues(), $redos, null, null];
+                $analysis = ['read', $ast->source ?? '', $issues, $redos, null, null];
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];

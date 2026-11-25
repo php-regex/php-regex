@@ -131,7 +131,7 @@ final class UselessIFlagUnderLocaleTablesTest extends TestCase
     private static function reports(string $pattern, string $locale): bool
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return \in_array(self::ID, array_map(static fn ($issue): string => $issue->id, $linter->getIssues()), true);

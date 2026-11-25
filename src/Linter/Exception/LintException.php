@@ -18,5 +18,7 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 /**
  * The linter could not do what it was asked: a formatter it does not know,
  * a worker that failed, a report it cannot write out.
+ *
+ * @internal thrown by the lint commands' own services; catch ExceptionInterface
  */
 final class LintException extends \RuntimeException implements ExceptionInterface {}

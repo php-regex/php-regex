@@ -89,7 +89,7 @@ In short, the public surface is:
 | `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCell` |
 | `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
 | `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `Target\JavaScript\VModeCompatibility` |
-| `regex-linter` | `PatternLinter`, `LintSeverity`, `Exception\LintException`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
+| `regex-linter` | `PatternLinter`, `LintSeverity`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `ExplainFormat`, `HighlightFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-phpunit` | `RegexAssertions`, `Constraint\MatchesPattern`, `Constraint\DoesNotMatchPattern`, `Constraint\CompilesPattern`, `Constraint\IsLinearPattern` |
@@ -198,8 +198,15 @@ Extending and implementing are covered only where the API is meant for it:
 - **Implement** `Extraction\ExtractorInterface` in `regex-linter` to read the
   patterns of calls the built-in extractors do not know, and build each
   occurrence with `PatternOccurrence::found()`. The constructor of
-  `PatternOccurrence` and its other methods are `@internal`; read an
-  occurrence through `$pattern`, `$file`, `$line`, `$column` and `$source`.
+  `PatternOccurrence`, its other methods and its other properties are
+  `@internal`; read an occurrence through `$pattern`, `$file`, `$line`,
+  `$column` and `$source`. An extractor the Symfony bundle's
+  `extractor_service` names replaces the built-in one: the lint reads
+  patterns with it alone. To read your calls beside the built-in ones,
+  decorate the built-in extractor and call it from yours: the service
+  `php_regex.extractor.instance` in the Symfony bundle, the binding
+  `php-regex.extractor.strategy` in the Laravel integration. Both ids stay
+  for all of 2.x.
 
 Every other public interface (`NodeInterface`, `ConfirmationRunnerInterface`, …)
 is there to type against, not to implement. Lint rules, transpiler targets and
@@ -307,8 +314,18 @@ add one to yet.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, `regex.redos.search`, …), with the **lint issue ids**
-  (`regex.lint.redos`, `regex.lint.redos.search`, …): baselines and ignore
-  lists keep working.
+  (`regex.lint.redos`, `regex.lint.redos.search`, …), among them
+  `regex.lint.source.*`, the issues of a file the lint cannot read and of a
+  pattern built at run time, and the ids of the inline markers' own issues,
+  `regex.ignore.unmatched` and `regex.target.*`: baselines and ignore lists
+  keep working.
+- The **inline markers** `@regex-ignore`, `@regex-ignore-next-line`,
+  `@regex-target` and `@regex-target-next-line`, in a PHP comment and in a
+  Twig one (`{# @regex-ignore #}`), with the lines each covers and the
+  [grammar](../guides/cli.md#inline-comments) of the issues a
+  `@regex-ignore` names: a marker that silences an issue, or narrows the
+  versions a pattern is judged for, in 2.0 does the same in every 2.x. A
+  minor release may add a marker.
 - The **text of the PHPStan ReDoS messages**: `Exponential backtracking
   (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
   backtracking (ReDoS): %s`, and the one of a quadratic unanchored search,

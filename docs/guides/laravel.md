@@ -159,6 +159,19 @@ neither, or that resolves to no extractor, stops `regex:lint` with exit code 2.
 Binding `ExtractorInterface` in your own provider changes nothing: name the
 class here.
 
+To read the patterns of your own calls beside the ones the package reads,
+extend the built-in extractor, bound as `php-regex.extractor.strategy`, in
+the `register()` method of a service provider. Yours implements
+`PHPRegex\Linter\Extraction\ExtractorInterface`, is handed the built-in one,
+and returns its occurrences with your own, each built with
+`PatternOccurrence::found()`:
+
+```php
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+
+$this->app->extend('php-regex.extractor.strategy', static fn (ExtractorInterface $builtIn): ExtractorInterface => new \App\Regex\RuleExtractor($builtIn));
+```
+
 An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`
 are not thresholds: they are the verdicts a pattern gets.
