@@ -55,7 +55,8 @@ final class LintCommandBaselineTest extends TestCase
 
         $exitCode = $command->run($input, $output);
 
-        $this->assertSame(1, $exitCode); // Should have errors
+        // The code has errors, which the baseline written now knows.
+        $this->assertSame(0, $exitCode);
         $this->assertFileExists($baselineFile);
 
         $content = file_get_contents($baselineFile);

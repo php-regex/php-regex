@@ -105,6 +105,18 @@
                                 "source": {
                                     "type": "string"
                                 },
+                                "pcre_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "locale_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "range": {
                                     "type": "array",
                                     "items": {
@@ -131,6 +143,8 @@
                                 "pcre",
                                 "locale",
                                 "source",
+                                "pcre_source",
+                                "locale_source",
                                 "range"
                             ],
                             "additionalProperties": false
@@ -320,6 +334,18 @@
                                 "source": {
                                     "type": "string"
                                 },
+                                "pcre_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "locale_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "range": {
                                     "type": "array",
                                     "items": {
@@ -346,6 +372,8 @@
                                 "pcre",
                                 "locale",
                                 "source",
+                                "pcre_source",
+                                "locale_source",
                                 "range"
                             ],
                             "additionalProperties": false
@@ -553,6 +581,18 @@
                                 "source": {
                                     "type": "string"
                                 },
+                                "pcre_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "locale_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "range": {
                                     "type": "array",
                                     "items": {
@@ -579,6 +619,8 @@
                                 "pcre",
                                 "locale",
                                 "source",
+                                "pcre_source",
+                                "locale_source",
                                 "range"
                             ],
                             "additionalProperties": false
@@ -808,6 +850,18 @@
                                 "source": {
                                     "type": "string"
                                 },
+                                "pcre_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "locale_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "range": {
                                     "type": "array",
                                     "items": {
@@ -834,6 +888,8 @@
                                 "pcre",
                                 "locale",
                                 "source",
+                                "pcre_source",
+                                "locale_source",
                                 "range"
                             ],
                             "additionalProperties": false
@@ -1047,6 +1103,18 @@
                                 "source": {
                                     "type": "string"
                                 },
+                                "pcre_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "locale_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
                                 "range": {
                                     "type": "array",
                                     "items": {
@@ -1073,6 +1141,8 @@
                                 "pcre",
                                 "locale",
                                 "source",
+                                "pcre_source",
+                                "locale_source",
                                 "range"
                             ],
                             "additionalProperties": false

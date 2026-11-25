@@ -1568,9 +1568,9 @@ vendor/bin/regex redos '/(a+)+$/'
   Preview      : "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!"
 
   [3/3] Benchmark
-case     | result |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
---------------------------------------------------------------------------------------------
-vuln     | error  |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
+case     | result   |    wall_ms |     avg_ms |     cpu_ms |     mem_kb |    peak_kb | err
+----------------------------------------------------------------------------------------------
+pattern  | error    |       2.57 |       2.57 |       2.39 |       +0.0 |       +0.0 | Backtrack limit exhausted
 ```
 
 The input is the witness of a proven verdict, 32 pumps of an exponential one and 1,000 of a polynomial one, so it holds
@@ -2152,7 +2152,7 @@ pattern.
 
 | Command                                      | Exits with 1 when                                                                  |
 |----------------------------------------------|------------------------------------------------------------------------------------|
-| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0); or the files cannot be read; or a worker fails or exits |
+| `lint`                                       | A pattern does not compile, a ReDoS verdict reproduced at high or above, or a lint rule of error severity fires (warnings and infos alone leave 0), unless `--generate-baseline` writes them to a baseline, which leaves 0; or the files cannot be read; or a worker fails or exits |
 | `validate`, `parse --validate`, `analyze`    | The pattern is invalid, or a later version of a range named with `--php-version` refuses it |
 | `parse`, `explain`, `diagram`, `highlight`   | The pattern does not parse, or a later version of a range named with `--php-version` refuses it |
 | `graph`                                      | The pattern does not parse, a later version of a range named with `--php-version` refuses it, or it cannot be drawn as an automaton |
@@ -2409,6 +2409,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
         "php": "8.4.26",
         "pcre": "10.49",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.26",
@@ -2448,7 +2450,8 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "line": 3,
                     "column": 12,
                     "file_offset": 18,
-                    "position": 0,
+                    "offset": 0,
+                    "end": null,
                     "issue_id": "regex.lookbehind.unbounded",
                     "docs_url": null,
                     "message": "Lookbehind is unbounded. PCRE requires a bounded maximum length.",
@@ -2571,14 +2574,14 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 | `--no-report-dynamic` | Do not list them when `regex.json` turns the list on (the default) |
 | `--redos`           | Run the ReDoS analysis, off by default             |
 | `--no-redos`        | Skip it when `regex.json` turns it on              |
-| `--redos-mode <mode>` | `theoretical` or `confirmed`                     |
-| `--redos-threshold <sev>` | Lowest severity reported: low, medium, high, critical |
+| `--redos-mode <mode>` | `off`, `theoretical` or `confirmed`; `off` is `--no-redos` |
+| `--redos-threshold <sev>` | Lowest severity replayed and failing the run, and reported: low, medium, high, critical |
 | `--no-validate`     | Skip validation                                    |
 | `--no-optimize`     | Disable optimization suggestions                   |
 | `--lint`            | Run the lint rules (the default)                   |
 | `--no-lint`         | Skip the lint rules                                |
-| `--enable-rule=<id>` | Turn a lint rule on (repeatable)                  |
-| `--disable-rule=<id>` | Turn a lint rule off (repeatable)                |
+| `--enable-rule <id>` | Turn a lint rule on (repeatable)                  |
+| `--disable-rule <id>` | Turn a lint rule off (repeatable)                |
 | `--interop <presets>` | Libraries to read patterns from, every preset by default (comma separated, `none` turns every preset off, as `--no-interop` does) |
 | `--no-interop`      | Turn off every wrapper preset; the native calls (`preg_*`, `RegexIterator`, `filter_var()`) and the functions you configure are still read |
 | `--no-twig`         | Skip the `matches` patterns of the Twig templates under the paths |
@@ -2588,12 +2591,14 @@ vendor/bin/regex lint src/ --format=junit --output=junit.xml
 
 > **Note:** ReDoS analysis is disabled by default for performance. Enable it with `--redos` or via configuration. The default threshold is `high`: a proven quadratic pattern is `medium`, and is reported with `--redos-threshold=medium` only.
 
-`--redos-mode` takes `theoretical` or `confirmed`, and `--no-redos` skips the
-analysis; the confirmation always runs without JIT. Any other mode is a usage
+`--redos-mode` takes `off`, `theoretical` or `confirmed`, as in `analyze`
+and `debug`; `off` skips the analysis, as `--no-redos` does, and the last of
+them wins. The confirmation always runs without JIT. Any other mode is a usage
 error (exit code 2), as is an unknown `--format`, and an `--enable-rule` or
 `--disable-rule` id that `checks.lint.rules` in `regex.json` would refuse
 (`Unknown lint rule "quantifer.nested" in --disable-rule. Did you mean "quantifier.nested"?`).
-Both options take the id without `regex.lint.` or in full.
+Both options take the id without `regex.lint.` or in full, after a space or
+an `=`.
 
 `--report-dynamic` adds one issue of severity `info` per pattern argument
 built at run time, and leaves the exit code as it is. With
@@ -2718,9 +2723,11 @@ Both options take their file after a space or an `=`.
 - **Every format.** A baselined issue is gone from the console, JSON, GitHub,
   Checkstyle and JUnit reports alike, and the exit code is computed without
   it.
-- **Paths.** Files are recorded relative to the directory the command runs
-  from: generate and apply the baseline from the same directory, usually the
-  project root.
+- **Paths.** Files are recorded relative to the directory of the baseline
+  file, as PHPStan records them: `build/regex-baseline.json` names
+  `../src/Form.php`. The baseline then serves a run from any directory, and
+  moves with the project. A file on another drive than the baseline is
+  recorded absolute.
 - **The file.** `{"version": 1, "issues": [...]}`, each issue with its `file`,
   `line`, `column`, `issue_id`, `message`, `severity`, `pattern`,
   `expression` and `pattern_hash`; the [JSON output reference](../reference/json-output.md#baseline-file)
@@ -2741,6 +2748,9 @@ Both options take their file after a space or an `=`.
 - **A 1.x baseline**, a plain list, is refused like any non-baseline file:
   exit code 2, `stage: "usage"` in JSON, before anything is scanned — even on
   a run that also passes `--generate-baseline`. Regenerate it once.
+- **Exit code 0** once `--generate-baseline` has written the file: the
+  errors the run found are the ones the baseline now knows. The report still
+  lists them.
 - **Exit code 2** when the baseline file is missing, empty or not a baseline,
   or when the generated file cannot be written.
 

@@ -162,7 +162,7 @@ abstract class AbstractCommand implements CommandInterface
     {
         return [
             Option::value('--redos-mode', '<mode>', 'ReDoS mode (off, theoretical, confirmed)'),
-            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity confirmed mode replays (low, medium, high, critical)'),
+            Option::value('--redos-threshold', '<sev>', 'Lowest ReDoS severity replayed and failing the run (low, medium, high, critical)'),
         ];
     }
 
@@ -276,10 +276,10 @@ abstract class AbstractCommand implements CommandInterface
     protected function targetMeta(Output $output, TargetRange $range): array
     {
         $target = $range->target;
-        if ('running PHP' === $target->source()) {
+        if ($target->isRuntime()) {
             return [];
         }
 
-        return ['Target PHP' => $output->warning($target->label()).' ('.$target->source().')'.LintOutputRenderer::laterPoints($output, $target)];
+        return ['Target PHP' => $output->warning($target->label()).' ('.$target->origins().')'.LintOutputRenderer::laterPoints($output, $target)];
     }
 }

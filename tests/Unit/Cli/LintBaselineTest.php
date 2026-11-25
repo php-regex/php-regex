@@ -60,6 +60,8 @@ final class LintBaselineTest extends TestCase
     {
         $this->previousDirectory = (string) getcwd();
         $this->directory = TemporaryDirectory::create('regex-lint-baseline');
+        // The baselines are written there: their files are named from it.
+        chdir($this->directory);
     }
 
     protected function tearDown(): void
@@ -250,19 +252,78 @@ final class LintBaselineTest extends TestCase
     }
 
     /**
-     * With "/" as the working directory there is no prefix to take off: an
-     * absolute path is written, and matched, as it is.
+     * A baseline names each file from its own directory, "../" segments
+     * included, as PHPStan's does: the baseline moves with the project,
+     * and one written under build/ serves a run from the project root.
      */
     #[Test]
-    public function test_generate_keeps_an_absolute_path_when_the_working_directory_is_the_root(): void
+    public function test_generate_writes_each_file_from_the_directory_of_the_baseline(): void
     {
-        $this->assertTrue(chdir('/'));
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'src/a.php')])]);
 
-        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', '/srv/app/a.php')])]);
-        $baseline = $this->baselineOf($report);
+        $this->assertSame(['src/a.php'], self::filesOf(LintBaseline::generate($report, 'baseline.json')));
+        $this->assertSame(['src/a.php'], self::filesOf(LintBaseline::generate($report, $this->directory.'/baseline.json')));
+        $this->assertSame(['../src/a.php'], self::filesOf(LintBaseline::generate($report, 'build/baseline.json')));
+        $this->assertSame(['../../src/a.php'], self::filesOf(LintBaseline::generate($report, './build/ci/../ci/baseline.json')));
+        $this->assertSame(['a.php'], self::filesOf(LintBaseline::generate($report, 'src/baseline.json')));
+        $this->assertSame([basename($this->directory).'/src/a.php'], self::filesOf(LintBaseline::generate($report, '../baseline.json')));
+    }
 
-        $this->assertSame(['/srv/app/a.php'], self::filesOf(LintBaseline::generate($report)));
-        $this->assertSame([], $baseline->filter($report)->results);
+    /**
+     * A file on another root than the baseline, a drive of its own, is
+     * written absolute, and matched so.
+     */
+    #[Test]
+    public function test_generate_writes_a_file_on_another_root_absolute(): void
+    {
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'D:\\app\\a.php')])]);
+
+        $this->assertSame(['D:/app/a.php'], self::filesOf(LintBaseline::generate($report, '/baseline.json')));
+        $this->assertSame([], $this->baselineOf($report)->filter($report)->results);
+    }
+
+    /**
+     * A baseline reads each file from its own directory, whatever the
+     * directory the run starts from: written under build/ from the
+     * project root, it hides the same issues for a run from src/.
+     */
+    #[Test]
+    public function test_load_reads_each_file_from_the_directory_of_the_baseline(): void
+    {
+        mkdir($this->directory.'/build');
+        mkdir($this->directory.'/src');
+
+        try {
+            $atRoot = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'src/a.php')])]);
+            file_put_contents('build/baseline.json', LintBaseline::generate($atRoot, 'build/baseline.json'));
+            $this->assertSame(['../src/a.php'], self::filesOf((string) file_get_contents('build/baseline.json')));
+            $this->assertSame([], LintBaseline::load('build/baseline.json')->filter($atRoot)->results);
+
+            chdir('src');
+            $inSrc = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'a.php')])]);
+            $this->assertSame([], LintBaseline::load('../build/baseline.json')->filter($inSrc)->results);
+            // Another file of the same name, elsewhere, is not the one baselined.
+            $elsewhere = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'src/a.php')])]);
+            $this->assertCount(1, LintBaseline::load('../build/baseline.json')->filter($elsewhere)->results);
+        } finally {
+            chdir($this->directory);
+            unlink($this->directory.'/build/baseline.json');
+            rmdir($this->directory.'/build');
+            rmdir($this->directory.'/src');
+        }
+    }
+
+    /**
+     * A baseline read through a stream wrapper has no directory on disk:
+     * its files are read from the working directory, as they are written
+     * to one.
+     */
+    #[Test]
+    public function test_a_baseline_behind_a_stream_wrapper_names_its_files_from_the_working_directory(): void
+    {
+        $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'src/a.php')])]);
+
+        $this->assertSame(['src/a.php'], self::filesOf(LintBaseline::generate($report, 'php://memory')));
     }
 
     /**
@@ -284,7 +345,7 @@ final class LintBaselineTest extends TestCase
         $report = self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', 'C:\\app\\src\\a.php')])]);
 
         try {
-            $generated = LintBaseline::generate($report);
+            $generated = LintBaseline::generate($report, 'baseline.json');
         } finally {
             chdir($this->previousDirectory);
         }
@@ -647,22 +708,20 @@ final class LintBaselineTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideParentSegmentsAboveTheStart')]
-    public function test_generate_resolves_a_parent_segment_above_the_start_of_a_path(string $file, string $written): void
+    public function test_generate_resolves_a_parent_segment_above_the_start_of_a_path(string $file, string $baseline, string $written): void
     {
-        chdir($this->directory);
-
-        $this->assertSame([$written], self::filesOf(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', $file)])]))));
+        $this->assertSame([$written], self::filesOf(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', 'Known issue', 'error', $file)])]), $baseline)));
     }
 
     /**
-     * @return iterable<string, array{file: string, written: string}>
+     * @return iterable<string, array{file: string, baseline: string, written: string}>
      */
     public static function provideParentSegmentsAboveTheStart(): iterable
     {
-        yield 'above the root' => ['file' => '/../srv/app/a.php', 'written' => '/srv/app/a.php'];
-        yield 'twice above the root' => ['file' => '/../../srv/app/a.php', 'written' => '/srv/app/a.php'];
-        yield 'above the root of a drive' => ['file' => 'C:\\..\\app\\a.php', 'written' => 'C:/app/a.php'];
-        yield 'above the start of a relative path' => ['file' => '../app/a.php', 'written' => '../app/a.php'];
+        yield 'above the root' => ['file' => '/../srv/app/a.php', 'baseline' => '/baseline.json', 'written' => 'srv/app/a.php'];
+        yield 'twice above the root' => ['file' => '/../../srv/app/a.php', 'baseline' => '/baseline.json', 'written' => 'srv/app/a.php'];
+        yield 'above the root of a drive' => ['file' => 'C:\\..\\app\\a.php', 'baseline' => '/baseline.json', 'written' => 'C:/app/a.php'];
+        yield 'above the start of a relative path' => ['file' => '../app/a.php', 'baseline' => 'baseline.json', 'written' => '../app/a.php'];
     }
 
     /**
@@ -707,7 +766,7 @@ final class LintBaselineTest extends TestCase
     #[DataProvider('provideTextsThatAreNoUtf8')]
     public function test_generate_spells_each_byte_that_is_no_part_of_a_utf8_character(string $text, string $spelled): void
     {
-        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', $text, 'error')])])), true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([self::issue('regex.lint.known', $text, 'error')])]), 'baseline.json'), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($data);
         $this->assertIsArray($data['issues'] ?? null);
 
@@ -747,7 +806,7 @@ final class LintBaselineTest extends TestCase
         $named = new LintIssue(LintSeverity::Error, 'Known issue', 'src/a.php', 3, issueId: 'regex.lint.known', validation: $validation);
         $unnamed = new LintIssue(LintSeverity::Error, 'Invalid pattern', 'src/a.php', 3, validation: $validation);
 
-        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([$named, $unnamed])])), true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode(LintBaseline::generate(self::report([self::lintResult([$named, $unnamed])]), 'baseline.json'), true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($data);
         $this->assertIsArray($data['issues'] ?? null);
 
@@ -767,7 +826,7 @@ final class LintBaselineTest extends TestCase
         $entries = self::entriesOf(LintBaseline::generate(self::lintReportingArguments([
             PatternOccurrence::argument('opaque', 'src/a.php', 3, 12, 18, 'preg_match()', '$first'),
             PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$second'),
-        ])));
+        ]), 'baseline.json'));
 
         $this->assertSame(
             [
@@ -793,7 +852,7 @@ final class LintBaselineTest extends TestCase
             PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$second'),
         ]);
         $this->assertSame(['$first', '$second'], self::expressionsOf($report));
-        $entries = self::entriesOf(LintBaseline::generate($report));
+        $entries = self::entriesOf(LintBaseline::generate($report, 'baseline.json'));
         $this->assertCount(2, $entries);
 
         $this->assertSame(['$second'], self::expressionsOf($this->baselineFrom(['version' => 1, 'issues' => [$entries[0]]])->filter($report)));
@@ -814,7 +873,7 @@ final class LintBaselineTest extends TestCase
             PatternOccurrence::argument('opaque', 'src/a.php', 3, 32, 38, 'preg_match()', '$re'),
             PatternOccurrence::argument('opaque', 'src/a.php', 9, 12, 90, 'preg_match()', '$re'),
         ]);
-        $entries = self::entriesOf(LintBaseline::generate($report));
+        $entries = self::entriesOf(LintBaseline::generate($report, 'baseline.json'));
         $this->assertCount(3, $entries);
         $hash = $entries[0]['pattern_hash'] ?? null;
         $this->assertIsString($hash);
@@ -842,7 +901,7 @@ final class LintBaselineTest extends TestCase
             PatternOccurrence::argument('constant', 'src/a.php', 3, 12, 18, 'preg_match()', "'/a{1}/'"),
             PatternOccurrence::argument('opaque', 'src/a.php', 4, 12, 44, 'preg_match()', '$re'),
         ]);
-        $entries = self::entriesOf(LintBaseline::generate($report));
+        $entries = self::entriesOf(LintBaseline::generate($report, 'baseline.json'));
         $this->assertSame(['regex.lint.quantifier.useless', 'regex.lint.source.dynamic'], array_column($entries, 'issue_id'));
 
         $older = $entries[0];
@@ -933,7 +992,7 @@ final class LintBaselineTest extends TestCase
     private function baselineOf(LintReport $report): LintBaseline
     {
         $file = $this->directory.'/baseline.json';
-        file_put_contents($file, LintBaseline::generate($report));
+        file_put_contents($file, LintBaseline::generate($report, 'baseline.json'));
 
         return LintBaseline::load($file);
     }
@@ -960,7 +1019,7 @@ final class LintBaselineTest extends TestCase
         $result = self::lintResult([$issue]);
         $result['pattern'] = $pattern;
 
-        $data = json_decode(LintBaseline::generate(self::report([$result])), true, 512, \JSON_THROW_ON_ERROR);
+        $data = json_decode(LintBaseline::generate(self::report([$result]), 'baseline.json'), true, 512, \JSON_THROW_ON_ERROR);
         self::assertIsArray($data);
         self::assertIsArray($data['issues'] ?? null);
         self::assertIsArray($data['issues'][0] ?? null);

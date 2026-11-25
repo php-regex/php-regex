@@ -70,7 +70,7 @@ final class RedosCommandTimeLimitTest extends TestCase
         // PHP refuses the pattern with PREG_INTERNAL_ERROR, whose message
         // preg_last_error_msg() gives as "Internal error": the measured row
         // fails with it.
-        $this->assertMatchesRegularExpression('/^vuln\s+\| error\s+\|.*\| Internal error$/m', $buffer);
+        $this->assertMatchesRegularExpression('/^pattern\s+\| error\s+\|.*\| Internal error$/m', $buffer);
     }
 
     /**

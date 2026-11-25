@@ -121,34 +121,34 @@ final class RedosBenchmarkRenderer
      * The table of the runs, and how the safe pattern compares when there
      * is one.
      *
-     * @param BenchResult      $vuln
+     * @param BenchResult      $pattern
      * @param BenchResult|null $safe
      */
-    public function renderResults(array $vuln, ?array $safe): void
+    public function renderResults(array $pattern, ?array $safe): void
     {
-        $this->renderTable(null === $safe ? [$vuln] : [$vuln, $safe]);
+        $this->renderTable(null === $safe ? [$pattern] : [$pattern, $safe]);
 
         if (null !== $safe) {
-            $this->renderSummary(RedosBenchmark::summary($vuln, $safe));
+            $this->renderSummary(RedosBenchmark::summary($pattern, $safe));
         }
     }
 
     /**
      * The JSON document of the run.
      *
-     * @param BenchResult           $vuln
+     * @param BenchResult           $pattern
      * @param BenchResult|null      $safe
      * @param ProjectTarget         $target    the PHP versions judged, written as lint writes them
      * @param list<RangePoint>      $range     the verdict of each of them on the pattern
      * @param list<RangePoint>|null $safeRange the verdict of each of them on the --safe pattern, when there is one
      */
-    public function writeDocument(RedosArguments $arguments, PcreRuntimeInfo $runtime, RedosInput $input, array $vuln, ?array $safe, ProjectTarget $target, array $range, ?array $safeRange = null): void
+    public function writeDocument(RedosArguments $arguments, PcreRuntimeInfo $runtime, RedosInput $input, array $pattern, ?array $safe, ProjectTarget $target, array $range, ?array $safeRange = null): void
     {
-        $rows = ['vuln' => $vuln];
+        $rows = ['pattern' => $pattern];
         $summary = null;
         if (null !== $safe) {
             $rows['safe'] = $safe;
-            $summary = RedosBenchmark::summary($vuln, $safe);
+            $summary = RedosBenchmark::summary($pattern, $safe);
         }
 
         $document = [
@@ -190,7 +190,7 @@ final class RedosBenchmarkRenderer
     {
         $output = $this->output;
         $header = \sprintf(
-            "%-8s | %-6s | %10s | %10s | %10s | %10s | %10s | %s\n",
+            "%-8s | %-8s | %10s | %10s | %10s | %10s | %10s | %s\n",
             'case',
             'result',
             'wall_ms',
@@ -201,17 +201,18 @@ final class RedosBenchmarkRenderer
             'err',
         );
         $output->write($output->dim($header));
-        $output->write(str_repeat('-', 92)."\n");
+        $output->write(str_repeat('-', 94)."\n");
 
         foreach ($rows as $row) {
             $label = $this->formatCase(str_pad($row['label'], 8), $row['label']);
-            $result = $this->formatResult(str_pad($row['result'], 6), $row['result']);
+            $result = $this->formatResult(str_pad($row['result'], 8), $row['result']);
             $wall = str_pad(self::formatMs($row['wall_ms']), 10, ' ', \STR_PAD_LEFT);
             $avg = str_pad(self::formatMs($row['avg_ms']), 10, ' ', \STR_PAD_LEFT);
             $cpu = str_pad(null === $row['cpu_ms'] ? 'n/a' : self::formatMs($row['cpu_ms']), 10, ' ', \STR_PAD_LEFT);
             $mem = str_pad(self::formatKb($row['mem_bytes']), 10, ' ', \STR_PAD_LEFT);
             $peak = str_pad(self::formatKb($row['peak_bytes']), 10, ' ', \STR_PAD_LEFT);
-            $err = '-' === $row['err_msg'] ? $row['err_msg'] : $output->error($row['err_msg']);
+            // A run without an error shows "-" in its cell.
+            $err = null === $row['error'] ? '-' : $output->error($row['error']);
 
             $output->write($label.' | '.$result.' | '.$wall.' | '.$avg.' | '.$cpu.' | '.$mem.' | '.$peak.' | '.$err."\n");
         }
@@ -245,14 +246,14 @@ final class RedosBenchmarkRenderer
 
         $output->write("\n");
         $output->write('Result parity : '.$parity."\n");
-        $output->write('Speedup       : '.$speedupText." (vuln avg / safe avg)\n");
-        $output->write('Delta avg     : '.$deltaText." (vuln - safe)\n");
+        $output->write('Speedup       : '.$speedupText." (pattern avg / safe avg)\n");
+        $output->write('Delta avg     : '.$deltaText." (pattern - safe)\n");
     }
 
     private function formatCase(string $label, string $raw): string
     {
         return match ($raw) {
-            'vuln' => $this->output->error($label),
+            'pattern' => $this->output->error($label),
             'safe' => $this->output->success($label),
             default => $label,
         };
@@ -262,7 +263,7 @@ final class RedosBenchmarkRenderer
     {
         return match ($raw) {
             'match' => $this->output->success($label),
-            'no' => $this->output->warning($label),
+            'no_match' => $this->output->warning($label),
             'error' => $this->output->error($label),
             default => $label,
         };

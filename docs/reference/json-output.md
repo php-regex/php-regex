@@ -128,7 +128,7 @@ Every position counts bytes.
 | `line` | 1 | the first line of the file |
 | `column` | 1 | the first byte of the line; `null` when unknown |
 | `file_offset` | 0 | the first byte of the file |
-| `position`, `validation.offset` | 0 | the first byte of the pattern body |
+| issue `offset`, `end`, `validation.offset` | 0 | the first byte of the pattern body |
 | hotspot `start`, `end` | 0 | the first byte of the pattern body |
 
 - `line`, `column` and `file_offset` of a lint result point at the start of
@@ -142,11 +142,12 @@ Every position counts bytes.
   through (see [`location`](#result-lintresults)).
 - A pattern argument built at run time, listed under `--report-dynamic`, is
   placed at the first byte of the argument, the `$` of `$pattern`, and its
-  issue has no `position`.
+  issue has no `offset`.
 - The pattern body is what sits between the delimiters. In `/(a/`, offset 0
   is the `(`. This is the coordinate PCRE2's own error offsets use. An error
   in the modifiers counts on past the body and its closing delimiter.
-- A hotspot's `end` is exclusive: the span is `start` to `end - 1`.
+- A hotspot's `end` is exclusive: the span is `start` to `end - 1`. So is an
+  issue's: its span is `offset` to `end - 1`.
 - Editors count in UTF-16 code units. An editor integration should use the
   [language server](../guides/lsp.md), which converts, rather than these
   byte offsets.
@@ -155,15 +156,18 @@ Every position counts bytes.
 
 `file` is relative to the working directory, with `/` separators, when the
 file lies under it, and absolute otherwise. `regex lint src` and
-`regex lint "$PWD/src"` print the same `file` values. The baseline file uses
-the same rule, with its `.` and `..` segments resolved and `\` read as a
-separator, so `regex lint ./src` and `regex lint src` share a baseline.
+`regex lint "$PWD/src"` print the same `file` values. The baseline file
+names each file relative to its own directory instead, as PHPStan's does,
+with `..` segments for a file above it (`../src/Form.php` for a baseline
+under `build/`) and absolute on another drive, its `.` and `..` segments
+resolved and `\` read as a separator, so `regex lint ./src` and
+`regex lint src` share a baseline, and a run from any directory reads it.
 
 ### Order
 
 - The lint report lists its results by `file` (compared byte by byte), then
   `line`, then `column` (`null` first), then `file_offset`, then `source`.
-- The issues of a result are listed by `position` (`null` first), then
+- The issues of a result are listed by `offset` (`null` first), then
   `issue_id`.
 - The `issues` of the baseline file are sorted like the results.
 - `lint.target.range` lists the floor first, then the other PHP versions in
@@ -236,9 +240,9 @@ on patterns:
 
 - `lint` reports it as an issue of severity `error`. Its `issue_id` is the
   error code, such as `regex.group.unclosed`, and its `validation` says why.
-- `analyze` prints its document with `parse.ok` false, `validation` saying
-  why, and `redos` and `explain` null. The exit code is 1.
-- `debug` prints its document with `validation` saying why and `analysis`
+- `analyze` prints its document with `validation` saying why, and `redos`
+  and `explain` null. The exit code is 1.
+- `debug` prints its document with `validation` saying why and `redos`
   null. The exit code is 1.
 
 The commands that act on a pattern, `transpile` and `redos`, cannot. They
@@ -264,6 +268,8 @@ short for `--format=json`.
         "pcre": "10.40",
         "locale": "C",
         "source": "composer.json require.php",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [{"php": "8.2", "pcre": "10.40"}, {"php": "8.3", "pcre": "10.42"}, {"php": "8.4", "pcre": "10.44"}, {"php": "8.4.25", "pcre": "10.44"}, {"php": "8.5", "pcre": "10.44"}, {"php": "8.5.10", "pcre": "10.44"}]
     },
     "host": {"php": "8.4.26", "pcre": "10.49"},
@@ -285,7 +291,8 @@ short for `--format=json`.
                     "line": 3,
                     "column": 12,
                     "file_offset": 18,
-                    "position": 2,
+                    "offset": 2,
+                    "end": null,
                     "issue_id": "regex.group.unclosed",
                     "docs_url": null,
                     "message": "Expected ) at end of input (found eof).",
@@ -328,10 +335,12 @@ short for `--format=json`.
 | `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when its patch is not 0 (`8.4.30` for `^8.4.30`, the running PHP's patch for `running PHP`); always the first `range` entry's `php` |
 | `pcre` | string | The PCRE2 release, as `major.minor` |
 | `locale` | string | The `LC_CTYPE` locale the patterns were judged under, as the C library names it: `C` for PCRE2's own character tables; the same at every `range` entry |
-| `source` | string | Where the target came from, such as `--php-version`, `regex.json`, `composer.json require.php` or `running PHP`, then where the PCRE2 release and the locale came from when it was elsewhere (`running PHP; --locale`) |
+| `source` | string | Where the PHP came from: `--php-version`, `regex.json`, `composer.json require.php`, `composer.json config.platform.php` or `running PHP`; the Symfony and Laravel commands name their own setting (`php_regex.php_version`, `config php-regex.php_version`); an open set |
+| `pcre_source` | string \| null | Where the PCRE2 release came from, in the same words: `--pcre-version`, `regex.json`, `composer.json config.platform.lib-pcre`, a bridge's setting; `null` when nothing named it, the release then the running one for the running PHP's minor version, else the one that PHP bundles |
+| `locale_source` | string \| null | Where the locale came from, in the same words: `--locale`, `regex.json`, a bridge's setting; `null` when nothing named it, the runtime's `LC_CTYPE` then |
 | `range` | list of objects | Every PHP and PCRE2 the patterns were validated at, the floor first; a single entry, the target, unless the PHP is a range: read from `composer.json require.php`, or named by `--php-version` or `phpVersion` as a constraint or `{min, max}` |
 
-`php`, `pcre` and `source` name the floor: the lint rules and the ReDoS
+`php`, `pcre` and their sources name the floor: the lint rules and the ReDoS
 analysis judge every pattern there. When the PHP is a range,
 each pattern is also validated (parsed and checked, without the lint rules)
 at every PHP version above the floor that a rule of the library changes at
@@ -427,7 +436,8 @@ line 12 of `app/Search.php`, where `$prefix` is a parameter, is this result:
             "line": 12,
             "column": 33,
             "file_offset": 261,
-            "position": null,
+            "offset": null,
+            "end": null,
             "issue_id": "regex.lint.source.dynamicPart",
             "docs_url": "https://php-regex.com/reference/rules/#pattern-around-a-part-built-at-run-time",
             "message": "The pattern holds a part built at run time: it is not verified.",
@@ -454,8 +464,9 @@ An issue repeats the location of its result, so it can be read alone.
 | `line` | int | As in the result |
 | `column` | int \| null | As in the result |
 | `file_offset` | int \| null | As in the result |
-| `position` | int \| null | Where in the pattern body the issue lies, 0-based, in bytes; `null` when it concerns the whole pattern |
-| `issue_id` | string \| null | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), a pattern argument built at run time (`regex.lint.source.dynamic`, `regex.lint.source.dynamicPart`, `regex.lint.source.quotedPart`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`); an open set, and a baseline matches on it. Every issue the library reports today carries one; `null` is kept for an invalid pattern without an error code |
+| `offset` | int \| null | Where in the pattern body the issue starts, 0-based, in bytes; `null` when it concerns the whole pattern |
+| `end` | int \| null | Where it ends, exclusive, as a hotspot's `end`: a lint rule's span is the node it names (`4` for the `a{1}` of `/a{1}/`); `null` where unknown, as for an invalid pattern, whose `offset` is where PCRE stopped |
+| `issue_id` | string | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), a pattern argument built at run time (`regex.lint.source.dynamic`, `regex.lint.source.dynamicPart`, `regex.lint.source.quotedPart`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`), `regex.pcre.runtime` for one the engine refuses without a code of its own; an open set, and a baseline matches on it. Every issue carries one |
 | `docs_url` | string \| null | The page of php-regex.com that explains what was found, as `https://php-regex.com/reference/rules/#useless-quantifier`: every lint rule, the ReDoS verdict and the search cost, the complexity warning, a file the lint could not read, a marker that silences nothing or cannot be read; `null` for the error code of an invalid pattern, which [Diagnostics: Error Codes](diagnostics.md#error-codes) lists. For people: a link may move with the docs, so match on `issue_id` |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
@@ -509,7 +520,7 @@ constraint cannot be read as `regex.target.invalid`.
 ## Analyze
 
 `regex analyze <pattern> --format=json` reports on one pattern. On an invalid
-pattern, `parse.ok` is false, `validation` says why, `redos` and `explain`
+pattern, `validation.is_valid` is false and says why, `redos` and `explain`
 are `null`, and the exit code is 1.
 
 ### Analyze: `analyze`
@@ -518,23 +529,16 @@ are `null`, and the exit code is 1.
 |---|---|---|
 | `pattern` | string | The pattern given |
 | `runtime` | object | The PCRE the command ran on: a [runtime](#runtime-runtime) object |
-| `parse` | object | Whether the pattern parses |
 | `validation` | object | The verdict on the pattern: a [validation](#validation-validation) object |
 | `redos` | object \| null | The ReDoS verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` for an invalid pattern |
 | `explain` | string \| null | The pattern explained in plain language; `null` for an invalid pattern |
 | `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
 | `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
 
-### Parse: `analyze.parse`
-
-| key | type | meaning |
-|---|---|---|
-| `ok` | bool | `true` when the pattern parses and is valid, `false` otherwise |
-
 ## Debug
 
 `regex debug <pattern> --format=json` reports the ReDoS analysis in depth.
-It always carries `validation`; on an invalid pattern `analysis` is `null`
+It always carries `validation`; on an invalid pattern `redos` is `null`
 and the exit code is 1.
 
 ### Debug: `debug`
@@ -544,7 +548,7 @@ and the exit code is 1.
 | `pattern` | string | The pattern given |
 | `runtime` | object | The PCRE the command ran on: a [runtime](#runtime-runtime) object |
 | `validation` | object | The verdict on the pattern: a [validation](#validation-validation) object, `is_valid` true when it is valid |
-| `analysis` | object \| null | The ReDoS verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` for an invalid pattern |
+| `redos` | object \| null | The ReDoS verdict: a [ReDoS analysis](#redos-analysis-redos_analysis); `null` for an invalid pattern |
 | `input` | object | The subject to try the pattern on |
 | `target` | object | The PHP versions the pattern was judged for, as [lint's target](#target-linttarget): the command's own output is the floor's |
 | `range` | list of objects | The verdict of each PHP version judged, the floor first: one [range point](#range-point-range_point) each |
@@ -606,24 +610,24 @@ pattern, or an invalid `--safe` pattern, stops it with the envelope (see
 
 | key | type | meaning |
 |---|---|---|
-| `vuln` | object | The measurement of the pattern: a [benchmark](#benchmark-benchmark) object |
+| `pattern` | object | The measurement of the pattern: a [benchmark](#benchmark-benchmark) object |
 | `safe` | object, optional | The measurement of the `--safe` pattern; absent without `--safe` |
 
 ### Benchmark: `benchmark`
 
-One measurement, under `redos.bench.vuln` and `redos.bench.safe`.
+One measurement, under `redos.bench.pattern` and `redos.bench.safe`.
 
 | key | type | meaning |
 |---|---|---|
-| `label` | string | `vuln` or `safe` |
-| `result` | string | What the last `preg_match()` returned: `match`, `no` or `error` |
+| `label` | string | `pattern` or `safe`, the key it sits under |
+| `result` | string | What the last `preg_match()` returned: `match`, `no_match` or `error` |
 | `wall_ms` | float | The wall time of all the timed runs, in milliseconds |
 | `avg_ms` | float | The wall time of one run, on average |
 | `cpu_ms` | float \| null | The CPU time (user and system) of the timed runs; `null` where PHP cannot measure it |
 | `mem_bytes` | int | How much the memory PHP holds grew during the runs, in bytes |
 | `peak_bytes` | int | How much the peak memory grew during the runs, in bytes |
-| `err_msg` | string | `preg_last_error_msg()` after the runs; `-` when there was no error |
-| `err_code` | int | `preg_last_error()` after the runs; `0` when there was no error |
+| `error` | string \| null | `preg_last_error_msg()` after the runs; `null` when there was no error |
+| `error_code` | int \| null | `preg_last_error()` after the runs, as `2` for `PREG_BACKTRACK_LIMIT_ERROR`; `null` when there was no error |
 | `iterations` | int | The timed runs made; fewer than asked when a run failed |
 
 ### Comparison: `redos.summary`
@@ -695,6 +699,8 @@ ASCII, and agree under `u` for UTF-8 subjects.
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -732,6 +738,8 @@ ASCII, and agree under `u` for UTF-8 subjects.
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -795,6 +803,8 @@ apart, 0 and 1:
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -847,6 +857,8 @@ plain language, the text the console prints. `--json` is short for
         "pcre": "10.49",
         "locale": "C",
         "source": "running PHP",
+        "pcre_source": null,
+        "locale_source": null,
         "range": [
             {
                 "php": "8.4.27",
@@ -1182,7 +1194,7 @@ gives these keys, in this order.
 
 ### ReDoS analysis: `redos_analysis`
 
-A ReDoS verdict: `analyze.redos`, `debug.analysis` and the `analysis` of a
+A ReDoS verdict: `analyze.redos`, `debug.redos` and the `analysis` of a
 lint issue. It is the JSON form of `RedosAnalysis`; the
 [ReDoS guide](../guides/redos.md#reading-the-result) explains how to read it.
 
@@ -1394,10 +1406,10 @@ entries included, is a usage error (exit code 2, `stage: "usage"`).
 
 | key | type | meaning |
 |---|---|---|
-| `file` | string | As in the issue (see [Paths](#paths)); what a baseline matches on |
+| `file` | string | The issue's file, relative to the directory of the baseline file (see [Paths](#paths)); what a baseline matches on |
 | `line` | int | As in the issue; decides between entries that match the same issues |
 | `column` | int \| null | As in the issue |
-| `issue_id` | string | As in the issue, or `""` for an issue without one; what a baseline matches on |
+| `issue_id` | string | As in the issue; what a baseline matches on |
 | `message` | string | As in the issue, for people |
 | `severity` | string | As in the issue |
 | `pattern` | string | The pattern of the issue's result, for people; `""` for an entry that has an `expression` |

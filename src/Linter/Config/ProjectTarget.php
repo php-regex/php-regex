@@ -70,15 +70,25 @@ use PHPRegex\Parser\Validation\RangeDiff;
 final class ProjectTarget
 {
     /**
+     * Where the PHP comes from when nothing names it.
+     */
+    private const RUNNING_PHP = 'running PHP';
+
+    /**
+     * @param string                          $source       where the PHP came from
+     * @param string|null                     $pcreSource   where the PCRE2 release came from; null when nothing named it
+     * @param string|null                     $localeSource where the locale came from; null when nothing named it
      * @param list<string>                    $notices
-     * @param list<PcreTarget>                $range      the target first
-     * @param list<array{int, int|null}>|null $admitted   the PHP versions the project installs on, from
-     *                                                    require.php; the series of the target when null
-     * @param string|null                     $pinnedPcre the PCRE2 release named for every version
+     * @param list<PcreTarget>                $range        the target first
+     * @param list<array{int, int|null}>|null $admitted     the PHP versions the project installs on, from
+     *                                                      require.php; the series of the target when null
+     * @param string|null                     $pinnedPcre   the PCRE2 release named for every version
      */
     private function __construct(
         private readonly PcreTarget $target,
         private readonly string $source,
+        private readonly ?string $pcreSource,
+        private readonly ?string $localeSource,
         private readonly array $notices,
         private readonly array $range,
         private readonly ?array $admitted = null,
@@ -177,7 +187,7 @@ final class ProjectTarget
         if (null === $phpVersionId || null === $phpSource) {
             $fromComposer = null === $projectDir ? null : ComposerPlatform::read($projectDir, $env, $notices);
             if (null === $fromComposer) {
-                [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, 'running PHP', true];
+                [$phpVersionId, $phpSource, $runningPhp] = [\PHP_VERSION_ID, self::RUNNING_PHP, true];
             } else {
                 [$phpVersionId, $phpSource, $constraint] = $fromComposer;
                 $intervals = null === $constraint ? null : ComposerConstraint::intervals($constraint);
@@ -212,8 +222,6 @@ final class ProjectTarget
         }
 
         $pinnedPcre = $pcreVersion;
-        $source = null === $pcreSource || $pcreSource === $phpSource ? $phpSource : $phpSource.'; '.$pcreSource;
-        $source = null === $localeSource || str_contains('; '.$source.';', '; '.$localeSource.';') ? $source : $source.'; '.$localeSource;
         $target = ParserOptions::resolveTarget($runningPhp ? null : $phpVersionId, $pcreVersion, $localeName, true);
         $range = self::rangeFor($target, $intervals ?? [], $pinnedPcre);
         $admitted = null === $intervals ? null : self::admittedFrom($phpVersionId, $intervals);
@@ -226,7 +234,7 @@ final class ProjectTarget
             $notices[] = $older;
         }
 
-        return new self($target, $source, $notices, $range, $admitted, $pinnedPcre);
+        return new self($target, $phpSource, $pcreSource, $localeSource, $notices, $range, $admitted, $pinnedPcre);
     }
 
     /**
@@ -249,7 +257,7 @@ final class ProjectTarget
             $target = self::fromSources([], [], $projectDir, $env, $locale);
             // The PHP came from composer.json unless it is the running one;
             // a lib-pcre read beside it names no PHP.
-            if (!str_starts_with($target->source, 'running PHP')) {
+            if (self::RUNNING_PHP !== $target->source) {
                 return $target;
             }
         }
@@ -352,13 +360,50 @@ final class ProjectTarget
     }
 
     /**
-     * Where the target came from: "--php-version", "regex.json",
-     * "composer.json require.php", "running PHP"; the PHP's source first,
-     * then the PCRE2's and the locale's when they came from elsewhere.
+     * Where the PHP came from: "--php-version", "regex.json",
+     * "composer.json require.php", "running PHP".
      */
     public function source(): string
     {
         return $this->source;
+    }
+
+    /**
+     * Where the PCRE2 release came from, in the words of source():
+     * "--pcre-version", "regex.json", "composer.json
+     * config.platform.lib-pcre". Null when nothing named it: the PHP's
+     * own then, the running one for the running PHP's minor version.
+     */
+    public function pcreSource(): ?string
+    {
+        return $this->pcreSource;
+    }
+
+    /**
+     * Where the locale came from, in the words of source(): "--locale",
+     * "regex.json". Null when nothing named it: the runtime's then.
+     */
+    public function localeSource(): ?string
+    {
+        return $this->localeSource;
+    }
+
+    /**
+     * Where the target came from, for people: the PHP's source, then the
+     * PCRE2's and the locale's, each source named once.
+     */
+    public function origins(): string
+    {
+        return implode('; ', array_unique(array_filter([$this->source, $this->pcreSource, $this->localeSource], static fn (?string $source): bool => null !== $source)));
+    }
+
+    /**
+     * Whether nothing named the target: the running PHP, with the PCRE2
+     * it links and the runtime's locale.
+     */
+    public function isRuntime(): bool
+    {
+        return self::RUNNING_PHP === $this->source && null === $this->pcreSource && null === $this->localeSource;
     }
 
     /**
@@ -400,7 +445,7 @@ final class ProjectTarget
     }
 
     /**
-     * @return array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}
+     * @return array{php: string, pcre: string, locale: string, source: string, pcre_source: string|null, locale_source: string|null, range: list<TargetDescription>}
      */
     public function toArray(): array
     {
@@ -409,6 +454,8 @@ final class ProjectTarget
             'pcre' => $this->target->pcreVersion,
             'locale' => $this->target->locale,
             'source' => $this->source,
+            'pcre_source' => $this->pcreSource,
+            'locale_source' => $this->localeSource,
             'range' => array_map(self::describe(...), $this->range),
         ];
     }

@@ -95,7 +95,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `regex.lint.unicode.shorthandWithoutU` is off by default: `--enable-rule=unicode.shorthandWithoutU` or `checks.lint.rules` turns it on.
 - Lint identifiers are camelCase, as PHPStan wants: `unicode.shorthand_without_u` is `unicode.shorthandWithoutU`, and likewise `alternation.duplicateDisjunction`, `charclass.duplicateChars`, `charclass.suspiciousRange`, `charclass.suspiciousPipe`.
 - Some lint messages are reworded (useless `m` and `s` flags, a lazy quantifier under `/U`, the redundant-class hint, the invalid delimiter): a PHPStan baseline holding lint issues is regenerated once.
-- The lint command exits with 2 on a configuration or usage error and writes errors to stderr, or as the envelope `{"error": ..., "stage": ...}` under `--format=json`; `--redos-mode=off` is refused. See [Exit codes and streams](UPGRADE-2.0.md#the-lint-commands-exit-codes-and-streams).
+- The lint command exits with 2 on a configuration or usage error and writes errors to stderr, or as the envelope `{"error": ..., "stage": ...}` under `--format=json`. See [Exit codes and streams](UPGRADE-2.0.md#the-lint-commands-exit-codes-and-streams).
 - Every command writes a usage error (exit code 2) to stderr with its usage line, where only `lint` did; the JSON error envelope stays on stdout. See [Every command exits with 0, 1 or 2](UPGRADE-2.0.md#every-command-exits-with-0-1-or-2).
 - Every CLI command exits with 0, 1 or 2 as the lint does, and refuses an option it does not know. See [Every command exits with 0, 1 or 2](UPGRADE-2.0.md#every-command-exits-with-0-1-or-2).
 - `regex lint` refuses a path that does not exist (exit code 2). See [JSON output](UPGRADE-2.0.md#json-output).

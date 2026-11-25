@@ -93,7 +93,7 @@ final class LintCommandRangeTest extends LaravelTestCase
 
         $this->assertSame(1, $status);
         $this->assertSame(
-            ['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'config php-regex.php_version', 'range' => self::rangeRows([80200, 80300, 80400, 80425, 80500, 80510])],
+            ['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'config php-regex.php_version', 'pcre_source' => null, 'locale_source' => null, 'range' => self::rangeRows([80200, 80300, 80400, 80425, 80500, 80510])],
             $document['target'] ?? null,
         );
         $issues = self::issues($document);

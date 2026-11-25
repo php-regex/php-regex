@@ -16,6 +16,7 @@ namespace PHPRegex\Linter;
 use PHPRegex\Linter\Advice\RedosHints;
 use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Rule\RuleCatalog;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Validation\ValidationErrorCategory;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -27,7 +28,8 @@ use PHPRegex\Redos\RedosAnalysis;
  * diagnostic, a baseline its identifier.
  *
  * $file, $line, $column and $fileOffset place the pattern in its file,
- * $position the finding in the pattern's body. $validation is the verdict
+ * $offset the finding in the pattern's body and $end, exclusive, where it
+ * ends there, null when unknown. $validation is the verdict
  * on a pattern that does not compile, at the floor or at the version of
  * $target; $analysis the verdict of a ReDoS finding; $target the PHP and
  * PCRE2 that reported the finding, when it is not the floor. $variant is
@@ -64,7 +66,8 @@ final class LintIssue
         public readonly int $line,
         public readonly ?int $column = null,
         public readonly ?int $fileOffset = null,
-        public readonly ?int $position = null,
+        public readonly ?int $offset = null,
+        public readonly ?int $end = null,
         public readonly ?string $issueId = null,
         public readonly ?string $hint = null,
         public readonly ?string $tip = null,
@@ -93,7 +96,8 @@ final class LintIssue
         LintSeverity $severity,
         string $message,
         ?string $issueId = null,
-        ?int $position = null,
+        ?int $offset = null,
+        ?int $end = null,
         ?string $hint = null,
         ?string $tip = null,
         ?ValidationResult $validation = null,
@@ -101,16 +105,18 @@ final class LintIssue
         ?array $target = null,
         ?array $hints = null,
     ): self {
-        return new self($severity, $message, $occurrence->file, $occurrence->line, $occurrence->column, $occurrence->fileOffset, $position, $issueId, $hint, $tip, $occurrence->source, $validation, $analysis, $target, $hints, $occurrence->variant, null === $occurrence->state ? $occurrence->pattern : null);
+        return new self($severity, $message, $occurrence->file, $occurrence->line, $occurrence->column, $occurrence->fileOffset, $offset, $end, $issueId, $hint, $tip, $occurrence->source, $validation, $analysis, $target, $hints, $occurrence->variant, null === $occurrence->state ? $occurrence->pattern : null);
     }
 
     /**
      * The identifier the finding is reported, silenced and baselined under:
-     * its own, else the error code of the pattern that does not compile.
+     * its own, else the error code of the pattern that does not compile, a
+     * refusal of the engine when it carries none, as the language server
+     * names it.
      */
-    public function id(): ?string
+    public function id(): string
     {
-        return $this->issueId ?? $this->validation?->errorCode?->value;
+        return $this->issueId ?? ($this->validation->errorCode ?? ErrorCode::PcreRuntime)->value;
     }
 
     /**
@@ -120,9 +126,7 @@ final class LintIssue
      */
     public function docsUrl(): ?string
     {
-        $id = $this->id();
-
-        return null === $id ? null : RuleCatalog::docsUrl($id);
+        return RuleCatalog::docsUrl($this->id());
     }
 
     /**
@@ -130,7 +134,7 @@ final class LintIssue
      */
     public function withFile(string $file): self
     {
-        return new self($this->severity, $this->message, $file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $this->target, $this->hints, $this->variant, $this->pattern);
+        return new self($this->severity, $this->message, $file, $this->line, $this->column, $this->fileOffset, $this->offset, $this->end, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $this->target, $this->hints, $this->variant, $this->pattern);
     }
 
     /**
@@ -140,7 +144,7 @@ final class LintIssue
      */
     public function withTarget(array $target): self
     {
-        return new self($this->severity, $this->message, $this->file, $this->line, $this->column, $this->fileOffset, $this->position, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $target, $this->hints, $this->variant, $this->pattern);
+        return new self($this->severity, $this->message, $this->file, $this->line, $this->column, $this->fileOffset, $this->offset, $this->end, $this->issueId, $this->hint, $this->tip, $this->source, $this->validation, $this->analysis, $target, $this->hints, $this->variant, $this->pattern);
     }
 
     /**
@@ -162,7 +166,8 @@ final class LintIssue
             $this->line,
             $this->column,
             $this->fileOffset,
-            $this->position,
+            $this->offset,
+            $this->end,
             $this->issueId,
             $this->hint,
             $this->tip,

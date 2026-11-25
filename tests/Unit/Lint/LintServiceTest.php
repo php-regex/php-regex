@@ -271,7 +271,7 @@ final class LintServiceTest extends TestCase
 
         $this->assertCount(1, $result->results);
         $found = array_values(array_filter($result->results[0]['issues'], static fn (LintIssue $issue): bool => $issueId === $issue->issueId));
-        $this->assertSame($positions, array_map(static fn (LintIssue $issue): ?int => $issue->position, $found));
+        $this->assertSame($positions, array_map(static fn (LintIssue $issue): ?int => $issue->offset, $found));
     }
 
     #[Test]

@@ -270,7 +270,8 @@ final class LaravelTargetConfigTest extends LaravelTestCase
         [, $json] = $this->lintJson();
 
         $this->assertSame('fr_FR.ISO8859-1', $json['target']['locale'] ?? null);
-        $this->assertSame('running PHP; config php-regex.locale', $json['target']['source'] ?? null);
+        $this->assertSame('running PHP', $json['target']['source'] ?? null);
+        $this->assertSame('config php-regex.locale', $json['target']['locale_source'] ?? null);
         $this->assertSame(PcreTarget::runtime()->locale, $this->regexService()->target()->locale);
     }
 

@@ -64,7 +64,7 @@ final class JsonContract
             'timeout_ms', 'timed_out', 'evidence', 'note', 'error',
         ],
         'redos_analysis.confirmation.samples[]' => ['input_length', 'duration_ms', 'input_preview', 'preg_error_code', 'preg_error'],
-        'benchmark' => ['label', 'result', 'wall_ms', 'avg_ms', 'cpu_ms', 'mem_bytes', 'peak_bytes', 'err_msg', 'err_code', 'iterations'],
+        'benchmark' => ['label', 'result', 'wall_ms', 'avg_ms', 'cpu_ms', 'mem_bytes', 'peak_bytes', 'error', 'error_code', 'iterations'],
         // The verdict of one PHP version of the range a single-pattern
         // command judged, the floor first.
         'range_point' => ['php', 'pcre', 'is_valid', 'error', 'error_code', 'parses_differently'],
@@ -75,7 +75,7 @@ final class JsonContract
         // regex lint --format=json
         'lint' => ['target', 'host', 'stats', 'results'],
         'lint.host' => ['php', 'pcre'],
-        'lint.target' => ['php', 'pcre', 'locale', 'source', 'range'],
+        'lint.target' => ['php', 'pcre', 'locale', 'source', 'pcre_source', 'locale_source', 'range'],
         'lint.target.range[]' => ['php', 'pcre'],
         'lint.stats' => [
             'errors', 'warnings', 'optimizations', 'redos_errors', 'infos', 'lint_errors', 'parser_fallbacks', 'not_analyzed',
@@ -83,7 +83,7 @@ final class JsonContract
         ],
         'lint.results[]' => ['file', 'line', 'column', 'file_offset', 'source', 'pattern', 'expression', 'location', 'issues', 'optimizations'],
         'lint.results[].issues[]' => [
-            'severity', 'file', 'line', 'column', 'file_offset', 'position', 'issue_id', 'docs_url', 'message', 'hint',
+            'severity', 'file', 'line', 'column', 'file_offset', 'offset', 'end', 'issue_id', 'docs_url', 'message', 'hint',
             'tip', 'source', 'validation', 'analysis', 'target',
         ],
         'lint.results[].issues[].target' => ['php', 'pcre', 'guard', 'guard_pcre'],
@@ -91,18 +91,17 @@ final class JsonContract
         'lint.results[].optimizations[].optimization' => ['original', 'optimized', 'changes'],
 
         // regex analyze --format=json
-        'analyze' => ['pattern', 'runtime', 'parse', 'validation', 'redos', 'explain', 'target', 'range'],
-        'analyze.parse' => ['ok'],
+        'analyze' => ['pattern', 'runtime', 'validation', 'redos', 'explain', 'target', 'range'],
 
         // regex debug --format=json
-        'debug' => ['pattern', 'runtime', 'validation', 'analysis', 'input', 'target', 'range'],
+        'debug' => ['pattern', 'runtime', 'validation', 'redos', 'input', 'target', 'range'],
         'debug.input' => ['value', 'source'],
 
         // regex redos --format=json
         'redos' => ['pattern', 'safe_pattern', 'runtime', 'input', 'settings', 'bench', 'summary', 'target', 'range', 'safe_range'],
         'redos.input' => ['source', 'base_length', 'final_length', 'repeat', 'prefix', 'suffix', 'preview', 'value', 'note'],
         'redos.settings' => ['iterations', 'warmup'],
-        'redos.bench' => ['vuln', 'safe'],
+        'redos.bench' => ['pattern', 'safe'],
         'redos.summary' => ['result_parity', 'speedup', 'delta_ms'],
 
         // regex transpile --format=json, and the Symfony and Laravel commands:
@@ -170,9 +169,9 @@ final class JsonContract
         'validate.validation' => 'validation',
         'lint.results[].issues[].validation' => 'validation',
         'analyze.redos' => 'redos_analysis',
-        'debug.analysis' => 'redos_analysis',
+        'debug.redos' => 'redos_analysis',
         'lint.results[].issues[].analysis' => 'redos_analysis',
-        'redos.bench.vuln' => 'benchmark',
+        'redos.bench.pattern' => 'benchmark',
         'redos.bench.safe' => 'benchmark',
         // The single-pattern commands name the PHP versions they judged as
         // lint names them, and give each version's verdict.

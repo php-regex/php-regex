@@ -108,7 +108,7 @@ final class LintOutputRenderer
 
         $lines = [
             'Runtime' => 'PHP '.$output->warning(\PHP_VERSION).', PCRE2 '.$output->warning($runningPcre),
-            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->source().')'.self::laterPoints($output, $target),
+            'Target' => 'PHP '.$output->warning($target->php()).', PCRE2 '.$output->warning($target->target()->pcreVersion).('C' === $target->target()->locale ? '' : ', locale '.$output->warning($target->target()->locale)).' ('.$target->origins().')'.self::laterPoints($output, $target),
             // What the run planned; where this PHP cannot fork, Windows among
             // others, the workers asked for run in this process, and the
             // banner says so beside the count asked for.

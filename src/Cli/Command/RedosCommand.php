@@ -132,7 +132,7 @@ final class RedosCommand extends AbstractCommand implements JsonCommandInterface
         }
 
         $benchmark = new RedosBenchmark();
-        $vuln = $benchmark->run('vuln', $pattern, $subject->subject, $arguments->warmup, $arguments->iterations);
+        $vuln = $benchmark->run('pattern', $pattern, $subject->subject, $arguments->warmup, $arguments->iterations);
         $safe = null !== $safePattern ? $benchmark->run('safe', $safePattern, $subject->subject, $arguments->warmup, $arguments->iterations) : null;
 
         // A pattern PHP refuses is a problem of the pattern, whatever the

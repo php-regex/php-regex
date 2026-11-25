@@ -167,3 +167,23 @@ CHANGELOG
    `internal`, however long the shutdown takes: PHP stopped the shutdown
    too once the limit had run out again, and the run then exited with 255
    and printed nothing.
+ * The JSON documents name one thing one way: the ReDoS verdict of
+   `regex debug` is `redos`, as in `regex analyze`; `regex analyze` carries
+   no `parse` object, `validation.is_valid` says it; a measurement of
+   `regex redos` sits under `bench.pattern`, labelled `pattern`, writes
+   `error` and `error_code`, `null` without an error, and its `result` is
+   `match`, `no_match` or `error`.
+ * `regex lint --generate-baseline` exits with 0 once the baseline is
+   written, the errors found being the ones it now knows, and with 2 when it
+   cannot be written, where 1.x exited with 1 on code with errors.
+ * A baseline names each file relative to its own directory, as PHPStan's
+   does (`../src/Form.php` for a baseline under `build/`), and reads it so:
+   one baseline serves a run from any directory. A file on another drive is
+   named absolute, and a baseline behind a stream wrapper names its files
+   from the working directory.
+ * `regex lint --redos-mode` takes `off`, `theoretical` or `confirmed`, as
+   `analyze` and `debug` do: `off` skips the analysis, as `--no-redos` does.
+   `--redos-threshold` says what it sets in one wording everywhere: the
+   lowest severity replayed and failing the run, and, for `lint`, reported.
+ * `regex lint --enable-rule` and `--disable-rule` take their id after a
+   space too, as every other option that takes a value.

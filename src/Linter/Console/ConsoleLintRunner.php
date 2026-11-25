@@ -234,7 +234,7 @@ final class ConsoleLintRunner
         $locale = $target->target()->locale;
         $lines = [
             'Runtime' => 'PHP <fg=yellow>'.\PHP_VERSION.'</>',
-            'Target' => \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->source()),
+            'Target' => \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->origins()),
             // where this PHP cannot fork, Windows among others, the workers
             // asked for run as this one process, said here once
             'Processes' => $forking || $jobs <= 1 ? '<fg=yellow>'.$jobs.'</>' : '<fg=yellow>1</> (this PHP cannot fork: --jobs '.$jobs.' ran in one process)',
@@ -267,7 +267,7 @@ final class ConsoleLintRunner
         foreach ($setup->warnings as $warning) {
             $errors->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
-        $errors->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
+        $errors->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->origins()), OutputInterface::OUTPUT_RAW);
     }
 
     /**

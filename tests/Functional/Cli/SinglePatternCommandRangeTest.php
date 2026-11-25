@@ -197,12 +197,12 @@ final class SinglePatternCommandRangeTest extends TestCase
      */
     public static function provideJsonCommandsOnARefusedPattern(): iterable
     {
-        yield 'analyze' => ['address' => 'analyze', 'command' => ['analyze', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'runtime', 'parse', 'validation', 'redos', 'explain']];
+        yield 'analyze' => ['address' => 'analyze', 'command' => ['analyze', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'runtime', 'validation', 'redos', 'explain']];
         yield 'explain' => ['address' => 'explain', 'command' => ['explain', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'explanation']];
         // The benchmark's timings differ from run to run.
         yield 'redos' => ['address' => 'redos', 'command' => ['redos', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'safe_pattern', 'input', 'settings']];
         yield 'format' => ['address' => 'format', 'command' => ['format', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'formatted', 'changed', 'refusal']];
-        yield 'debug' => ['address' => 'debug', 'command' => ['debug', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'runtime', 'validation', 'analysis', 'input']];
+        yield 'debug' => ['address' => 'debug', 'command' => ['debug', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'runtime', 'validation', 'redos', 'input']];
         yield 'validate' => ['address' => 'validate', 'command' => ['validate', RangePatterns::KEEP_IN_LOOKBEHIND], 'kept' => ['pattern', 'validation']];
     }
 
@@ -250,7 +250,7 @@ final class SinglePatternCommandRangeTest extends TestCase
     {
         $lines = [];
         foreach (explode("\n", $output) as $line) {
-            // "vuln     | no     |       0.03 | ...", its header and its rule.
+            // "pattern  | no_match |       0.03 | ...", its header and its rule.
             if ('' === trim($line) || 1 === preg_match('/^\w+ +\|/', $line) || 1 === preg_match('/^-+$/', $line)) {
                 continue;
             }

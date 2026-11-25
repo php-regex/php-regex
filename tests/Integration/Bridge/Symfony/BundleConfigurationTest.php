@@ -140,7 +140,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)], ['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'pcre_source' => null, 'locale_source' => null, 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)], ['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 
@@ -172,7 +172,8 @@ final class BundleConfigurationTest extends TestCase
         $report = $this->lint($container);
 
         $this->assertSame('fr_FR.ISO8859-1', $report['target']['locale'] ?? null);
-        $this->assertSame('running PHP; php_regex.locale', $report['target']['source'] ?? null);
+        $this->assertSame('running PHP', $report['target']['source'] ?? null);
+        $this->assertSame('php_regex.locale', $report['target']['locale_source'] ?? null);
         $this->assertSame(PcreTarget::runtime()->locale, $this->regexService($container)->target()->locale);
     }
 

@@ -47,6 +47,34 @@ final class LintArgumentParserTest extends TestCase
     }
 
     /**
+     * --enable-rule and --disable-rule take their id after a space too, as
+     * every other option that takes a value; the path after it is a path.
+     */
+    #[Test]
+    public function test_a_rule_option_takes_its_id_after_a_space(): void
+    {
+        $result = (new LintArgumentParser())->parse(['--disable-rule', 'group.redundant', '--enable-rule', 'regex.lint.charclass.single', 'src']);
+
+        $this->assertNull($result->error);
+        $this->assertInstanceOf(LintArguments::class, $result->arguments);
+        $this->assertSame(['group.redundant' => false, 'charclass.single' => true], $result->arguments->lintRules);
+        $this->assertSame(['src'], $result->arguments->paths);
+    }
+
+    /**
+     * A rule option at the end of the command line, its id missing, is a
+     * usage error, as for every option that takes a value.
+     */
+    #[Test]
+    public function test_a_rule_option_without_its_id_is_a_usage_error(): void
+    {
+        $result = (new LintArgumentParser())->parse(['src', '--disable-rule']);
+
+        $this->assertNull($result->arguments);
+        $this->assertSame('Missing value for --disable-rule.', $result->error);
+    }
+
+    /**
      * An id regex.json refuses is refused on the command line too, naming
      * the option and the id, instead of turning nothing on or off.
      */

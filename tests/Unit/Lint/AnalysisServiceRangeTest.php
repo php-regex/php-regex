@@ -51,8 +51,8 @@ final class AnalysisServiceRangeTest extends TestCase
         $this->assertSame(3, $issue->line);
         $this->assertSame(17, $issue->column);
         $this->assertSame(42, $issue->fileOffset);
-        $this->assertSame($refusal->offset, $issue->position);
-        $this->assertSame(10, $issue->position);
+        $this->assertSame($refusal->offset, $issue->offset);
+        $this->assertSame(10, $issue->offset);
         $this->assertSame('On PHP 8.5 and later: '.($refusal->error ?? 'Invalid regex.'), $issue->message);
         $this->assertSame('preg_match', $issue->source);
         $this->assertInstanceOf(ValidationResult::class, $issue->validation);
