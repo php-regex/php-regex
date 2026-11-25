@@ -132,7 +132,8 @@ final class AstValueCollector extends NodeVisitorAbstract
     private const BLOCK_END = 'phpRegexBlockEnd';
 
     /**
-     * A control structure written in the alternative syntax.
+     * A control structure written in the alternative syntax: the function
+     * body, or the file level, it stands in.
      */
     private const ALTERNATIVE = 'phpRegexAlternative';
 
@@ -299,9 +300,9 @@ final class AstValueCollector extends NodeVisitorAbstract
      */
     public function leaveNode(Node $node)
     {
-        if (true === $node->getAttribute(self::ALTERNATIVE)) {
-            $scope = $this->scope() ?? -1;
-            $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 1) - 1;
+        $alternative = $node->getAttribute(self::ALTERNATIVE);
+        if (\is_int($alternative)) {
+            $this->alternativeBlocks[$alternative]--;
         }
 
         if ($node instanceof ClassLike) {
@@ -886,10 +887,8 @@ final class AstValueCollector extends NodeVisitorAbstract
         $scope = $this->scope() ?? -1;
         if (($node instanceof If_ || $node instanceof For_ || $node instanceof Foreach_ || $node instanceof While_ || $node instanceof Switch_ || $node instanceof Declare_)
             && $this->writtenAlternatively($node)) {
-            $node->setAttribute(self::ALTERNATIVE, true);
+            $node->setAttribute(self::ALTERNATIVE, $scope);
             $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 0) + 1;
-
-            return;
         }
 
         if (0 !== ($this->alternativeBlocks[$scope] ?? 0) || !($node instanceof If_ || $node instanceof ElseIf_ || $node instanceof Else_ || $node instanceof For_
