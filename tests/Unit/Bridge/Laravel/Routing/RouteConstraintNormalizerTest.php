@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Laravel\Routing;
 
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use Illuminate\Routing\Route;
 use PHPRegex\Laravel\Routing\RouteConstraintNormalizer;
 use PHPRegex\Toolkit\Regex;
@@ -26,7 +28,9 @@ use PHPUnit\Framework\TestCase;
  * \z, its own groups stop capturing, it sits in a group named after the
  * parameter, and the path is matched with "{^...$}sDu", the domain with
  * "{^...$}sDiu". The normalized pattern is that pattern without the text of
- * the path around the parameter.
+ * the path around the parameter. A named group of the constraint stops
+ * capturing too where symfony/routing drops its name, 6.4.51, 7.4.24 and
+ * 8.1.12 on: the normalizer reads it as the installed compiler writes it.
  */
 final class RouteConstraintNormalizerTest extends TestCase
 {
@@ -49,13 +53,16 @@ final class RouteConstraintNormalizerTest extends TestCase
      */
     public static function provideConstraints(): iterable
     {
+        $keepsNames = self::keepsNamedGroups();
         yield 'digits' => ['constraint' => '\d+', 'expected' => '{^(?P<v>\d+)$}sDu'];
         yield 'nested quantifier' => ['constraint' => '(a+)+', 'expected' => '{^(?P<v>(?:a+)+)$}sDu'];
         yield 'both anchors' => ['constraint' => '^[a-z]+$', 'expected' => '{^(?P<v>[a-z]+)$}sDu'];
         yield 'string anchors' => ['constraint' => '\A[a-z]+\z', 'expected' => '{^(?P<v>[a-z]+)$}sDu'];
         yield 'top-level alternation' => ['constraint' => 'en|fr|de', 'expected' => '{^(?P<v>en|fr|de)$}sDu'];
         yield 'alternation in a group' => ['constraint' => '(en|fr)', 'expected' => '{^(?P<v>(?:en|fr))$}sDu'];
-        yield 'named group kept' => ['constraint' => '(?<l>en|fr)', 'expected' => '{^(?P<v>(?<l>en|fr))$}sDu'];
+        yield 'named group' => ['constraint' => '(?<l>en|fr)', 'expected' => $keepsNames ? '{^(?P<v>(?<l>en|fr))$}sDu' : '{^(?P<v>(?:en|fr))$}sDu'];
+        yield 'named group, P' => ['constraint' => '(?P<l>en|fr)', 'expected' => $keepsNames ? '{^(?P<v>(?P<l>en|fr))$}sDu' : '{^(?P<v>(?:en|fr))$}sDu'];
+        yield 'lookbehind' => ['constraint' => '(?<!x)[a-z]+', 'expected' => '{^(?P<v>(?<!x)[a-z]+)$}sDu'];
         yield 'bar in a class' => ['constraint' => '[a|b]x', 'expected' => '{^(?P<v>[a|b]x)$}sDu'];
         yield 'quoted bar' => ['constraint' => '\Qa|b\E', 'expected' => '{^(?P<v>\Qa|b\E)$}sDu'];
         // A constraint is a fragment, never a delimited pattern: the router
@@ -126,6 +133,27 @@ final class RouteConstraintNormalizerTest extends TestCase
         yield 'escaped dollar' => ['constraint' => 'a\$'];
         // The second group no longer captures: \2 names no group.
         yield 'backreference to a group that stops capturing' => ['constraint' => '(a)(b)\2'];
+        // Where the release drops the name of a group, \k<n> names no group.
+        if (!self::keepsNamedGroups()) {
+            yield 'backreference to a named group that stops capturing' => ['constraint' => '(?<n>a)\k<n>'];
+        }
+    }
+
+    /**
+     * The release of symfony/routing that drops the name of a group: 6.4.51,
+     * 7.4.24 and 8.1.12 on, never 8.0. Oracle, PHP 8.4.28 / PCRE2 10.49:
+     * the group named, {^/x/(?P<v>(?<n>a)\k<n>)$}sDu matches "/x/aa"; its
+     * name dropped, {^/x/(?P<v>(?:a)\k<n>)$}sDu does not compile.
+     */
+    #[Test]
+    public function test_a_named_group_stops_capturing_from_symfony_routing_6_4_51_7_4_24_and_8_1_12_on(): void
+    {
+        $drops = InstalledVersions::satisfies(new VersionParser(), 'symfony/routing', '~6.4.51 || ~7.4.24 || >=8.1.12');
+        $route = (new Route(['GET'], 'x/{v}', static fn (): string => ''))->where('v', '(?<n>a)\k<n>');
+
+        $this->assertSame($drops, !self::keepsNamedGroups());
+        $this->assertSame($drops ? '{^(?P<v>(?:a)\k<n>)$}sDu' : '{^(?P<v>(?<n>a)\k<n>)$}sDu', $this->normalizer->normalize($route, 'v', '(?<n>a)\k<n>'));
+        $this->assertSame($drops ? false : 1, @preg_match($route->toSymfonyRoute()->compile()->getRegex(), '/x/aa'), 'oracle');
     }
 
     #[Test]
@@ -198,5 +226,16 @@ final class RouteConstraintNormalizerTest extends TestCase
     private function route(): Route
     {
         return new Route(['GET'], '/x/{v}', static fn (): string => '');
+    }
+
+    /**
+     * Whether the installed router keeps the name of a group of a
+     * constraint.
+     */
+    private static function keepsNamedGroups(): bool
+    {
+        $route = (new Route(['GET'], '{v}', static fn (): string => ''))->where('v', '(?<n>a)');
+
+        return str_contains($route->toSymfonyRoute()->compile()->getRegex(), '(?<n>');
     }
 }
