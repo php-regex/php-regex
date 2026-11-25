@@ -701,5 +701,6 @@ vendor/bin/psalm --set-baseline=psalm-baseline.xml
 
 A minor release may type a pattern more narrowly than the one before, which
 may require regenerating the baseline; its CHANGELOG says so. The `Plugin`
-class, the `InvalidRegexPattern`, `RegexRedos` and `RegexRedosSearch` names
-and the options stay for all of 2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).
+class, the `InvalidRegexPattern`, `InvalidRegexTarget`, `RegexRedos` and
+`RegexRedosSearch` names and the options (`<phpVersion>`, `<pcreVersion>`,
+`<locale>`, `<redos>`, `<redosThreshold>`) stay for all of 2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).

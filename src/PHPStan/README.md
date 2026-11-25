@@ -37,7 +37,7 @@ Features
 * Opt-in ReDoS analysis, theoretical only — the pattern is read, never run inside PHPStan — with four severity thresholds: a proven exponential or polynomial verdict, or a heuristic one, with the attack input in the tip, and, under `regex.redos.search`, the quadratic cost of an unanchored search whose every attempt is linear. A call whose subject PHPStan knows to be constant is not reported: no input can reach it.
 * Opt-in optimization suggestions behind a minimum-savings setting; every rewrite is proven equivalent by the automata solver before it is reported.
 * With optimizations on, a `preg_match($pattern, $subject)` a string function answers alike is reported with the function: `/^https:/` is `str_starts_with($subject, 'https:')`, `/^(?:GET|POST)\z/` an `in_array()`. Each is proven by the automata; `/^foo$/` is no `===`, as `$` also takes `"foo\n"`.
-* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regexp.pattern` (a marked parameter), `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`, `regex.lint.complexity`.
+* Stable identifiers for `ignoreErrors` and baselines: `regex.invalidForTarget`, `regexp.pattern` (a marked parameter), `regex.replacement.undefinedGroup`, `regex.redos`, `regex.redos.search`, `regex.optimization`, `regex.trivialMatch`, `regex.lint.<rule>`, `regex.lint.complexity`, and `regex.target.invalid` and `regex.target.empty` for a `@regex-target` marker that cannot be read or keeps no version.
 * The `phpRegex` parameter is validated by a Neon schema before analysis starts; a version or threshold that names no real value stops the run there.
 
 The shape of `$matches`

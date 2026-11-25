@@ -140,12 +140,15 @@ empty match or the attempt that finds each short match
 
 The bridges and tools carry more than their classes:
 
-- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`. PHPStan
-  builds the rules from it: their constructors are `@internal`.
-- `regex-psalm`: the `InvalidRegexPattern`, `RegexRedos` and
-  `RegexRedosSearch` issue names and the plugin's `<phpVersion>`,
-  `<pcreVersion>`, `<redos>` and `<redosThreshold>` options stay for all of
-  2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
+- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`, the
+  `rules.neon` file that turns lint and ReDoS on, and the identifiers of the
+  `@regex-target` markers, `regex.target.invalid` and `regex.target.empty`.
+  PHPStan builds the rules from `extension.neon`: their constructors are
+  `@internal`.
+- `regex-psalm`: the `InvalidRegexPattern`, `InvalidRegexTarget`,
+  `RegexRedos` and `RegexRedosSearch` issue names and the plugin's
+  `<phpVersion>`, `<pcreVersion>`, `<locale>`, `<redos>` and
+  `<redosThreshold>` options stay for all of 2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
   ReDoS analysis. The
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
@@ -273,11 +276,17 @@ add one to yet.
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
 - **Which patterns are read**: a minor release may read patterns the lint, the
-  language server, the bridges or the PHPStan extension did not read before: a
+  language server or the other bridges did not read before: a
   new preset, a call kind, a pattern reached through a name. More patterns
   read means more findings on unchanged code; the CHANGELOG says what is read
   that was not. A preset a minor adds is on by default, unless your
   configuration lists its presets: a list means exactly that list.
+- **New PHPStan findings, behind bleeding edge**: a minor release adds what
+  the PHPStan extension reports (a new identifier, a call kind read, a rule
+  that reads wider) behind PHPStan's `%featureToggles.bleedingEdge%`, as
+  PHPStan itself does: a project that includes `bleedingEdge.neon` gets them
+  at once, every other one in 3.0, where they are on by default. What an
+  improved analysis finds under an existing identifier is not held back.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
   with the replacement named. A deprecated class, method, option or
   configuration key carries `@deprecated since <package> <version>, use <replacement>`

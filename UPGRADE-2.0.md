@@ -1682,7 +1682,7 @@ or a binding implementing `ExtractorInterface`, as Symfony's
 at `initialize`, for the first workspace folder (else `rootUri`):
 `initializationOptions.phpVersion` / `pcreVersion`, else `regex.json` there,
 else `composer.json` there, else the running PHP. It logs the target with
-`window/logMessage`. A `Regex` passed to `new Server($regex)` is used as it is.
+`window/logMessage`.
 See [the language server guide](docs/guides/lsp.md#target-php-and-pcre2).
 
 #### The ReDoS confirmation has no JIT switch
