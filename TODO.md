@@ -2,20 +2,6 @@
 
 ## ReDoS precision
 
-- Since #445 a loop is set aside on a sure success only where no widened
-  part lies on the way, which costs precision: of 19,000 fuzzed loop
-  patterns, 242 linear ones lose "safe (proven)", mostly an atomic
-  alternation whose first branch always matches, `(?>[^x]*|y)`, which the
-  engine always commits to. Read such a body exactly. The patterns #445
-  takes from the proof, `/^(?:a|a)+[^x]{0,20}(?:x|\z)/` and
-  `/^(?:a+)+(?>.*|y)\b/`, are heuristic now: prove them exponential.
-- Since #446 a loop whose success needs one more character after `^`
-  under `m` is heuristic, though the engine is linear:
-  `/\A(?:\n|\n)+^/m`, `/\A(?:\n|\n)+(?:^|x)/m` and
-  `/\A(?:\n|\n)+(?:^$|[^\n])/mD` lost "safe (proven)", and
-  `/^(?:a|a)+./` was already heuristic for the same reason. Let
-  `AmbiguityFinder::disproved()`, with its `link()` and `chainOn()` uses,
-  accept a success where every non-empty continuation is accepted.
 - `regex.lint.anchor.impossible.start` and `.end` stay silent on
   patterns PCRE2 never matches: `/a(?=\n^)\n\z/m`, `/(*CRLF)a\Z\r\n^/m`,
   `/(*CRLF)a$\r^\n/m`, `/a\z^/m`, `/\n^\z/m` and `/a$^/m` (0 with
@@ -104,11 +90,6 @@
   `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}(?:f|f)+./` on 82
   characters (6.3 million steps). Merge 2.x into it, with #450's count,
   which rewrites the same parts of `AmbiguityFinder`, then review it again.
-- Since #450 a linear verdict is refused where one attempt may try more
-  than 1,024 paths at once, which takes the proof from linear patterns
-  too: 1,194 of 66,963 fuzzed patterns proven linear before, and two of
-  the corpus, of the `/^(RH|r)?…V((Z?F)?[N]{0,2})?…/` form, that take 4 to
-  5 steps per character. Count the paths more exactly where they meet.
 - The count of #450 slows some analyses: a chain of 26 `X+.{0,15}` takes
   216 ms against 10 ms before, and patterns of 5 to 10 `(?:X{0}|)` or
   `\K` groups around loops take 350 to 700 ms against 25 to 55 ms.
@@ -135,44 +116,100 @@
   #443. Find what moves them, or give the method a wider cycles margin
   with `#[MetricTolerance]`.
 
-## Engine reports
+## Linter precision
 
-Found while fixing the bugs of #400; each is PCRE2's, not the library's.
+- Since #453 the character sets read a byte's case under `(*UCP)` from
+  the target's release, but the paths that ask the running engine do not:
+  the overlap rule where PCRE judges the branches (`setsFromPcre()`,
+  `ClassSetProvider::query()`) and the ReDoS proof (`PnfaBuilder`,
+  `LastCodeUnit`, `SearchCostProver`) read it as PCRE2 10.35 and later
+  do. For PHP 7.4 with PCRE2 10.34, `regex.lint.overlap.charset` still
+  reports `"/(*UCP)(?:\xC9|\xE9)+$/i"`, though `\xC9` matches itself alone
+  there, and `"/(*UCP)^(?:\xE9|\xC9)+x/i"` stays critical (proven), though
+  10.34 runs it on 30 `\xE9` and `!` within the backtrack limit, which
+  10.49 reaches from 20 (JIT and start optimizations off). Read the case
+  there under `UcpFoldsPastAsciiWithoutUtf` as well.
+- Since #452 `regex.lint.flag.useless.i` still keeps an `i` the engine
+  finds useless: a class holding both cases under u, `/[aA]/iu` or
+  `/[a-zA-Z]/iu`, which needs PCRE2's caseless sets (`k`, `K` and the
+  Kelvin sign; `µ`, `Μ` and `μ`), which `OtherCases` does not carry; a
+  class under `(*UCP)` with another locale's tables,
+  `/(*UCP)[\xC9\xE9]/i` under fr_FR.ISO8859-1, whose ASCII case comes
+  from Unicode up to 10.44 and from the tables from 10.45; a class whose
+  bytes the tables leave unsettled, `/[Ii\xDD\xFD]/i` under macOS's
+  tr_TR.ISO8859-9; a backreference to a group that captures nothing with
+  a case, `/(1)\1/i`; and `\p{Lu}`, `\p{Ll}` or `\p{Lt}` before PCRE2
+  10.45, where `i` leaves them as written (`/\p{Lu}/i` on 10.44).
 
-- `pcre2_jit_match()`, which PHP calls when the JIT is on, ignores
-  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, where `pcre2_match()` honours
-  them, through the JIT too: `preg_match('/(*NOTEMPTY)a*/', 'b')` returns 1
-  with the JIT and 0 with `pcre.jit=0`, and `(*NOTEMPTY_ATSTART)a*` on `b`
-  matches at offset 0 with the JIT and at 1 without. pcre2pattern says the
-  items act as the options do for whichever function matches, and both
-  options work with `pcre2_jit_match()`. No issue or pull request names it
-  on 2026-11-22 (10.43 to master): report it to PCRE2, with the fix of
-  copying the two flags into the options as `pcre2_match()` does.
-- Under `(*UTF)` without UCP and another locale's tables, PCRE2's paths
-  disagree on whether a code point from 128 to 255 is in `\w`: under
-  fr_FR.ISO8859-1, on `é`, `/(*UTF)\w/` gives 0 and
-  `/(*NO_START_OPT)(*UTF)\w/` and `/(*UTF)[\w]/` give 1, with the JIT and
-  without, while `/(*UTF)^\w$/` gives 1 with the JIT and 0 with
-  `pcre.jit=0` (PHP 8.4.28, PCRE2 10.49; a separate process per JIT
-  setting, since PHP's cache keeps the first compile). pcre2pattern says
-  only that such characters "may be different" under locale tables; the
-  answer should not depend on the path. Search PCRE2's tracker, then
-  report it. `CharSetAnalyzer` holds what any path takes there (#432).
-- The same paths disagree on case under a locale whose case maps are not
-  inverse: macOS's tr_TR.ISO8859-9 gives `tolower(0xDD) = 'i'` and
-  `toupper(0xFD) = 'I'`, while `I` and `i` pair with each other.
-  `/\xFD/i` matches `I` with the JIT and not with `pcre.jit=0` (PHP 8.4.28,
-  PCRE2 10.49): the interpreter compares the lowercase forms (`lcc`), the
-  JIT the other case (`fcc`). Report it with the `\w` one. Byte 0xFF
-  splits the paths too under macOS's ru_RU.KOI8-R and fr_FR.ISO8859-15:
-  `/\xFF/i` matches `\xDF` and `\xBE` with the JIT, and no other byte with
-  `pcre.jit=0`.
-- PCRE2's open pull requests fix the JIT's two other wrong answers, found
-  on 10.49 and master: #1004 a zero-width branch of a variable-length
-  lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
-  scan (`/\x{100}.{2}|A/u` on `A`, since 10.45, so not in PHP's bundled
-  10.44). Nothing to report: check that a release ships them.
+## Optimizer precision
 
+- Since #451 the possessive rewrite stays out of a pattern holding a
+  non-atomic lookaround, past whose end the walk reads the outer text,
+  where the engine reads it from where the lookaround starts:
+  `/^(*napla:x(a+b?))x[ab-]*\1$/` would be offered `a++b?`, which misses
+  `xaaba`. Read that end as followed by nothing known, so that the rest
+  of such a pattern can be made possessive.
+- A repeated group followed by other items is offered its possessive from
+  the characters its body ends with, though it gives back whole runs:
+  `/(?:b|ba)*c/` is offered `(?:b|ba)*+c`, which matches `c` alone in
+  `bac`, and `/[a-z]+(?:-[a-z]+)*$/` is offered `(?:-[a-z]++)*+$`, which
+  holds but which the check does not prove. Either refusal reruns the
+  rewrite without any possessive, so the pattern ships greedy throughout.
+  Read every character a run may give back, or leave such a group out as
+  #451 does one that ends its sequence.
+- A repeat that ends a group a call runs in a loop, `(?1)+` or `(?&n)*`,
+  stays greedy even where the group never starts with what the repeat
+  gives back, `/(xa+)c(?1)+d/`: the walk reads no first characters of a
+  call.
+- `LanguageSolver::matchEquivalent()` calls three pairs equivalent that
+  the engine matches differently, with or without calls; the optimizer
+  never ships them, but the mutation judge reads the same verdict:
+  `/a+(?:b)?+a/` and `/a+(?:b)?a/`, which PCRE2's auto-possessification
+  splits on `aa` (0 against 1, JIT on and off, 10.39 to 10.49, alike under
+  `(*NO_AUTO_POSSESS)`); `/a(a)*+b/` and `/a(a)*b/`, whose group 2 the JIT
+  of 10.39 to 10.42 leaves set from an earlier start on `aacab`; and
+  `/c\xE9++b?\w/` and `/c\xE9+b?\w/`, read under C's tables, which split
+  on `c\xE9\xE9` under en_IE.ISO8859-1. Refuse a possessive group that
+  may run zero times after a repeat, a possessive capturing repeat for a
+  target before 10.44, and bytes above ASCII under another locale.
+- The optimizer makes a group's repeat possessive under
+  `(*LIMIT_MATCH=n)`, where the atomic run costs more match calls:
+  `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe` and its rewrite
+  `c(?:ab)++e` exhausts the limit with `pcre.jit=0`. Keep a group's
+  repeat greedy under a match limit the pattern sets.
+
+## After 2.0.0
+
+Each of these widens what the proof or the match solver accepts: land them
+after the 2.0.0 tag, each with an adversarial review of its own.
+
+- Since #445 a loop is set aside on a sure success only where no widened
+  part lies on the way, which costs precision: of 19,000 fuzzed loop
+  patterns, 242 linear ones lose "safe (proven)", mostly an atomic
+  alternation whose first branch always matches, `(?>[^x]*|y)`, which the
+  engine always commits to. Read such a body exactly. The patterns #445
+  takes from the proof, `/^(?:a|a)+[^x]{0,20}(?:x|\z)/` and
+  `/^(?:a+)+(?>.*|y)\b/`, are heuristic now: prove them exponential.
+- Since #446 a loop whose success needs one more character after `^`
+  under `m` is heuristic, though the engine is linear:
+  `/\A(?:\n|\n)+^/m`, `/\A(?:\n|\n)+(?:^|x)/m` and
+  `/\A(?:\n|\n)+(?:^$|[^\n])/mD` lost "safe (proven)", and
+  `/^(?:a|a)+./` was already heuristic for the same reason. Let
+  `AmbiguityFinder::disproved()`, with its `link()` and `chainOn()` uses,
+  accept a success where every non-empty continuation is accepted.
+- Since #450 a linear verdict is refused where one attempt may try more
+  than 1,024 paths at once, which takes the proof from linear patterns
+  too: 1,194 of 66,963 fuzzed patterns proven linear before, and two of
+  the corpus, of the `/^(RH|r)?…V((Z?F)?[N]{0,2})?…/` form, that take 4 to
+  5 steps per character. Count the paths more exactly where they meet.
+- Since #454 the check reads a group that calls itself through every
+  call, yet three such groups stay greedy where the engine finds the
+  possessive form the same (every subject of `abcx` up to 7 characters,
+  10.49, JIT on and off): one called inside a lookahead,
+  `/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/`; one a backreference reads
+  back after it, `/(x(?1)?ca+b?)c\1/`; and one that holds `(*ACCEPT)`,
+  `/(?&n)a(?(DEFINE)(?<n>x(?&n)?ca+(*ACCEPT)b?))/`. A call that returns
+  groups, `(?1(2))` or `(?R(1))`, is not read through at all.
 
 ## PCRE2 10.50
 
@@ -240,11 +277,48 @@ In this order.
    `regex.json`, `regex.dist.json`) for editor support without setup: it
    needs the stable public URL the tag gives it.
 
+## Engine reports
 
-## PHPStan proof of concept
+Each is PCRE2's, not the library's.
 
-The proof of concept stays on the fork, as php-regex/phpstan-src#1: no pull
-request goes to `phpstan/phpstan-src`.
+- `pcre2_jit_match()`, which PHP calls when the JIT is on, ignores
+  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, where `pcre2_match()` honours
+  them, through the JIT too: `preg_match('/(*NOTEMPTY)a*/', 'b')` returns 1
+  with the JIT and 0 with `pcre.jit=0`, and `(*NOTEMPTY_ATSTART)a*` on `b`
+  matches at offset 0 with the JIT and at 1 without. pcre2pattern says the
+  items act as the options do for whichever function matches, and both
+  options work with `pcre2_jit_match()`. No issue or pull request names it
+  on 2026-11-22 (10.43 to master): report it to PCRE2, with the fix of
+  copying the two flags into the options as `pcre2_match()` does.
+- Under `(*UTF)` without UCP and another locale's tables, PCRE2's paths
+  disagree on whether a code point from 128 to 255 is in `\w`: under
+  fr_FR.ISO8859-1, on `é`, `/(*UTF)\w/` gives 0 and
+  `/(*NO_START_OPT)(*UTF)\w/` and `/(*UTF)[\w]/` give 1, with the JIT and
+  without, while `/(*UTF)^\w$/` gives 1 with the JIT and 0 with
+  `pcre.jit=0` (PHP 8.4.28, PCRE2 10.49; a separate process per JIT
+  setting, since PHP's cache keeps the first compile). pcre2pattern says
+  only that such characters "may be different" under locale tables; the
+  answer should not depend on the path. Search PCRE2's tracker, then
+  report it. `CharSetAnalyzer` holds what any path takes there (#432).
+- The same paths disagree on case under a locale whose case maps are not
+  inverse: macOS's tr_TR.ISO8859-9 gives `tolower(0xDD) = 'i'` and
+  `toupper(0xFD) = 'I'`, while `I` and `i` pair with each other.
+  `/\xFD/i` matches `I` with the JIT and not with `pcre.jit=0` (PHP 8.4.28,
+  PCRE2 10.49): the interpreter compares the lowercase forms (`lcc`), the
+  JIT the other case (`fcc`). Report it with the `\w` one. Byte 0xFF
+  splits the paths too under macOS's ru_RU.KOI8-R and fr_FR.ISO8859-15:
+  `/\xFF/i` matches `\xDF` and `\xBE` with the JIT, and no other byte with
+  `pcre.jit=0`.
+- PCRE2's open pull requests fix the JIT's two other wrong answers, found
+  on 10.49 and master: #1004 a zero-width branch of a variable-length
+  lookbehind (`/(?<=a?b|\b)x/` on `x`, since 10.43) and #1005 the prefix
+  scan (`/\x{100}.{2}|A/u` on `A`, since 10.45, so not in PHP's bundled
+  10.44). Nothing to report: check that a release ships them.
+
+## PHPStan
+
+The proof of concept stays on the fork, as php-regex/phpstan-src#1; only the
+narrowing fix goes to `phpstan/phpstan-src`.
 
 - In `~/projects/php-regex/phpstan-src`, branch
   `read-regex-shapes-through-phpregex` is one local commit, `da58ce923a`,
@@ -265,32 +339,6 @@ request goes to `phpstan/phpstan-src`.
   peak memory, a second read free, the same 3.7 s over twelve regex-heavy
   files; memoising the length calculator or the ACCEPT check, or walking
   the letter check once, each measured under 3 %).
-
-
-## Linter precision
-
-- Since #453 the character sets read a byte's case under `(*UCP)` from
-  the target's release, but the paths that ask the running engine do not:
-  the overlap rule where PCRE judges the branches (`setsFromPcre()`,
-  `ClassSetProvider::query()`) and the ReDoS proof (`PnfaBuilder`,
-  `LastCodeUnit`, `SearchCostProver`) read it as PCRE2 10.35 and later
-  do. For PHP 7.4 with PCRE2 10.34, `regex.lint.overlap.charset` still
-  reports `"/(*UCP)(?:\xC9|\xE9)+$/i"`, though `\xC9` matches itself alone
-  there, and `"/(*UCP)^(?:\xE9|\xC9)+x/i"` stays critical (proven), though
-  10.34 runs it on 30 `\xE9` and `!` within the backtrack limit, which
-  10.49 reaches from 20 (JIT and start optimizations off). Read the case
-  there under `UcpFoldsPastAsciiWithoutUtf` as well.
-- Since #452 `regex.lint.flag.useless.i` still keeps an `i` the engine
-  finds useless: a class holding both cases under u, `/[aA]/iu` or
-  `/[a-zA-Z]/iu`, which needs PCRE2's caseless sets (`k`, `K` and the
-  Kelvin sign; `µ`, `Μ` and `μ`), which `OtherCases` does not carry; a
-  class under `(*UCP)` with another locale's tables,
-  `/(*UCP)[\xC9\xE9]/i` under fr_FR.ISO8859-1, whose ASCII case comes
-  from Unicode up to 10.44 and from the tables from 10.45; a class whose
-  bytes the tables leave unsettled, `/[Ii\xDD\xFD]/i` under macOS's
-  tr_TR.ISO8859-9; a backreference to a group that captures nothing with
-  a case, `/(1)\1/i`; and `\p{Lu}`, `\p{Ll}` or `\p{Lt}` before PCRE2
-  10.45, where `i` leaves them as written (`/\p{Lu}/i` on 10.44).
 - PHPStan's own `regexp.pattern` rule reports the php/pie loop too: it
   does not narrow a union of constant strings by `$v[0] === '|'`. The fix
   is committed, not pushed, in `~/projects/php-regex/phpstan-src-narrow-constant-string-offset`
@@ -302,49 +350,3 @@ request goes to `phpstan/phpstan-src`.
   it to the fork and open the pull request to phpstan/phpstan-src.
   phpstan-src#6614 (`substr()` or `$s[0]` against a longer string) is
   related, not the same.
-
-
-## Optimizer precision
-
-- Since #451 the possessive rewrite stays out of a pattern holding a
-  non-atomic lookaround, past whose end the walk reads the outer text,
-  where the engine reads it from where the lookaround starts:
-  `/^(*napla:x(a+b?))x[ab-]*\1$/` would be offered `a++b?`, which misses
-  `xaaba`. Read that end as followed by nothing known, so that the rest
-  of such a pattern can be made possessive.
-- A repeated group followed by other items is offered its possessive from
-  the characters its body ends with, though it gives back whole runs:
-  `/(?:b|ba)*c/` is offered `(?:b|ba)*+c`, which matches `c` alone in
-  `bac`, and `/[a-z]+(?:-[a-z]+)*$/` is offered `(?:-[a-z]++)*+$`, which
-  holds but which the check does not prove. Either refusal reruns the
-  rewrite without any possessive, so the pattern ships greedy throughout.
-  Read every character a run may give back, or leave such a group out as
-  #451 does one that ends its sequence.
-- A repeat that ends a group a call runs in a loop, `(?1)+` or `(?&n)*`,
-  stays greedy even where the group never starts with what the repeat
-  gives back, `/(xa+)c(?1)+d/`: the walk reads no first characters of a
-  call.
-- Since #454 the check reads a group that calls itself through every
-  call, yet three such groups stay greedy where the engine finds the
-  possessive form the same (every subject of `abcx` up to 7 characters,
-  10.49, JIT on and off): one called inside a lookahead,
-  `/(?=(?&n)c)(?(DEFINE)(?<n>x(?&n)?ca+b?))/`; one a backreference reads
-  back after it, `/(x(?1)?ca+b?)c\1/`; and one that holds `(*ACCEPT)`,
-  `/(?&n)a(?(DEFINE)(?<n>x(?&n)?ca+(*ACCEPT)b?))/`. A call that returns
-  groups, `(?1(2))` or `(?R(1))`, is not read through at all.
-- `LanguageSolver::matchEquivalent()` calls three pairs equivalent that
-  the engine matches differently, with or without calls; the optimizer
-  never ships them, but the mutation judge reads the same verdict:
-  `/a+(?:b)?+a/` and `/a+(?:b)?a/`, which PCRE2's auto-possessification
-  splits on `aa` (0 against 1, JIT on and off, 10.39 to 10.49, alike under
-  `(*NO_AUTO_POSSESS)`); `/a(a)*+b/` and `/a(a)*b/`, whose group 2 the JIT
-  of 10.39 to 10.42 leaves set from an earlier start on `aacab`; and
-  `/c\xE9++b?\w/` and `/c\xE9+b?\w/`, read under C's tables, which split
-  on `c\xE9\xE9` under en_IE.ISO8859-1. Refuse a possessive group that
-  may run zero times after a repeat, a possessive capturing repeat for a
-  target before 10.44, and bytes above ASCII under another locale.
-- The optimizer makes a group's repeat possessive under
-  `(*LIMIT_MATCH=n)`, where the atomic run costs more match calls:
-  `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe` and its rewrite
-  `c(?:ab)++e` exhausts the limit with `pcre.jit=0`. Keep a group's
-  repeat greedy under a match limit the pattern sets.
