@@ -19,9 +19,11 @@ use PHPRegex\Parser\Engine\LibraryPcre;
  * The pattern Symfony's route compiler, which Laravel's router runs too,
  * matches a route requirement with. The compiler strips the requirement's
  * leading ^ or \A and its trailing $ or \z as Route::sanitizeRequirement()
- * does, inserts ?: after every ( no backslash escapes, puts it in a group
- * named after the parameter and matches the path with "{^...$}sD", the host
- * with "{^...$}sDi", plus u under the route's utf8 option.
+ * does, inserts ?: after every ( no backslash escapes, writes ?: in place of
+ * the name of a group too since symfony/routing 6.4.51, 7.4.24 and 8.1.12,
+ * puts it in a group named after the parameter and matches the path with
+ * "{^...$}sD", the host with "{^...$}sDi", plus u under the route's utf8
+ * option.
  *
  * The pattern is the compiled one without the text of the path around the
  * parameter, so the engine and the lint read the requirement as the compiled
@@ -58,20 +60,24 @@ final class RouteRequirementCompiler
     /**
      * The pattern the compiler matches a sanitized requirement with.
      *
-     * @param bool $utf8 whether the route has the utf8 option
-     * @param bool $host whether the parameter is matched in the host
+     * @param bool $utf8             whether the route has the utf8 option
+     * @param bool $host             whether the parameter is matched in the host
+     * @param bool $keepsNamedGroups whether the release keeps the name of a group, as it does before 6.4.51, 7.4.24 and 8.1.12
      */
-    public static function compile(string $requirement, string $parameter, bool $utf8, bool $host): string
+    public static function compile(string $requirement, string $parameter, bool $utf8, bool $host, bool $keepsNamedGroups = false): string
     {
-        return '{^'.self::group($parameter, self::nonCapturing($requirement)).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
+        return '{^'.self::group($parameter, self::nonCapturing($requirement, $keepsNamedGroups)).'$}sD'.($host ? 'i' : '').($utf8 ? 'u' : '');
     }
 
     /**
      * The requirement as RouteCompiler::transformCapturingGroupsToNonCapturings()
      * leaves it: ?: goes after every ( no backslash escapes and no * or ?
-     * follows, whether it opens a group or stands in a class or a comment.
+     * follows, whether it opens a group or stands in a class or a comment,
+     * and in place of the name of a group, ?<name>, ?P<name> or ?'name',
+     * unless the release keeps it: a lookbehind, a backreference or a call
+     * by name keeps its text.
      */
-    private static function nonCapturing(string $requirement): string
+    private static function nonCapturing(string $requirement, bool $keepsNamedGroups): string
     {
         for ($i = 0; $i < \strlen($requirement); $i++) {
             if ('\\' === $requirement[$i]) {
@@ -85,6 +91,10 @@ final class RouteRequirementCompiler
             }
 
             if ('*' === $requirement[++$i] || '?' === $requirement[$i]) {
+                if (!$keepsNamedGroups && 1 === LibraryPcre::match('/\G\?(?:P?<(?![=!])[^>]++>|\'[^\']++\')/', $requirement, $name, 0, $i)) {
+                    $requirement = substr_replace($requirement, '?:', $i, \strlen($name[0]));
+                }
+
                 $i++;
 
                 continue;
