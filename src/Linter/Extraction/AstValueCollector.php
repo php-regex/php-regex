@@ -940,7 +940,7 @@ final class AstValueCollector extends NodeVisitorAbstract
         $length = \strlen($content);
         for ($at = $from; $at < $length; $at++) {
             $character = $content[$at];
-            if (ctype_space($character) || str_contains($skipped, $character)) {
+            if (str_contains(" \t\n\r\v\f".$skipped, $character)) {
                 continue;
             }
 
