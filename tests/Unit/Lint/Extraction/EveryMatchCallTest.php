@@ -161,8 +161,7 @@ final class EveryMatchCallTest extends TestCase
      * The oracle runs the iterator in that mode: on a longer run it makes
      * more matches only where it loops, and then as many as the function
      * named.
-     */
-    /**
+     *
      * @param int<0, 4> $mode
      */
     #[Test]
