@@ -60,7 +60,7 @@ final class AutoPossession
         $firstRepeatEnd = null;
         $skippable = [];
         foreach (self::nodes($pattern, $unwrapped) as $node) {
-            if ($node instanceof QuantifierNode && !self::groupLike(self::unwrap($node->node, $unwrapped)) && self::repeatsSomeNumberOfTimes($node)) {
+            if ($node instanceof QuantifierNode && !self::groupLike(null !== $unwrapped && $node->node === $unwrapped ? $unwrapped->child : $node->node) && self::repeatsSomeNumberOfTimes($node)) {
                 $firstRepeatEnd = min($firstRepeatEnd ?? $node->getEndPosition(), $node->getEndPosition());
             }
 
@@ -163,7 +163,7 @@ final class AutoPossession
         $skippable = [];
         foreach (self::nodes($pattern, $unwrapped) as $node) {
             if ($node instanceof QuantifierNode && (QuantifierType::Possessive === $node->type || self::repeatsSomeNumberOfTimes($node))) {
-                $repeats .= self::groupLike(self::unwrap($node->node, $unwrapped)) ? '1' : '0';
+                $repeats .= self::groupLike(null !== $unwrapped && $node->node === $unwrapped ? $unwrapped->child : $node->node) ? '1' : '0';
             }
 
             if (self::skippable($node, $unwrapped)) {
@@ -210,9 +210,13 @@ final class AutoPossession
     private static function skippable(NodeInterface $node, ?GroupNode $unwrapped = null): bool
     {
         if ($node instanceof QuantifierNode) {
+            if (QuantifierType::Possessive !== $node->type) {
+                return false;
+            }
+
             $operand = self::unwrap($node->node, $unwrapped);
 
-            return QuantifierType::Possessive === $node->type && self::groupLike($operand)
+            return self::groupLike($operand)
                 && (null === $node->bounds || 0 === $node->bounds->min || self::mayMatchNothing($operand, $unwrapped));
         }
 
@@ -226,15 +230,32 @@ final class AutoPossession
     private static function mayMatchNothing(NodeInterface $node, ?GroupNode $unwrapped = null): bool
     {
         $node = self::unwrap($node, $unwrapped);
-        $empty = static fn (NodeInterface $child): bool => self::mayMatchNothing($child, $unwrapped);
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!self::mayMatchNothing($child, $unwrapped)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (self::mayMatchNothing($alternative, $unwrapped)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         return match (true) {
             $node instanceof LiteralNode => '' === $node->value,
             self::oneCharacter($node) => false,
-            $node instanceof SequenceNode => [] === array_filter($node->children, static fn (NodeInterface $child): bool => !$empty($child)),
-            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, $empty),
-            $node instanceof GroupNode => !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true) || $empty($node->child),
-            $node instanceof QuantifierNode => null === $node->bounds || 0 === $node->bounds->min || $empty($node->node),
+            $node instanceof GroupNode => !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true) || self::mayMatchNothing($node->child, $unwrapped),
+            $node instanceof QuantifierNode => null === $node->bounds || 0 === $node->bounds->min || self::mayMatchNothing($node->node, $unwrapped),
             default => true,
         };
     }
@@ -276,15 +297,21 @@ final class AutoPossession
     private static function brackets(NodeInterface $node, ?GroupNode $unwrapped = null): string
     {
         $node = self::unwrap($node, $unwrapped);
-        $of = static fn (NodeInterface $child): string => self::brackets($child, $unwrapped);
+
+        if ($node instanceof SequenceNode || $node instanceof AlternationNode) {
+            $parts = [];
+            foreach ($node instanceof SequenceNode ? $node->children : $node->alternatives as $child) {
+                $parts[] = self::brackets($child, $unwrapped);
+            }
+
+            return $node instanceof SequenceNode ? 's('.implode(',', $parts).')' : 'a('.implode('|', $parts).')';
+        }
 
         return match (true) {
             self::oneCharacter($node) => 'c',
             $node instanceof LiteralNode => 'e',
-            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, $of($node->node)),
-            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, $of($node->child)),
-            $node instanceof SequenceNode => 's('.implode(',', array_map($of, $node->children)).')',
-            $node instanceof AlternationNode => 'a('.implode('|', array_map($of, $node->alternatives)).')',
+            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, self::brackets($node->node, $unwrapped)),
+            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, self::brackets($node->child, $unwrapped)),
             default => serialize(RewriteSites::shape($node)),
         };
     }
