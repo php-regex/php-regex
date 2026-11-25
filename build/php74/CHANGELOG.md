@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PatternFormatter::compact()` keeps a group of comments inside an atomic
+   group or a possessive repeat as `(?:)`: PCRE2 makes a character repeated
+   before such a group possessive as if the group could not be skipped, and
+   the empty group it enters stops it. `/a+(?>(?:#c\n)|b)a/x` compacted to
+   `/a+(?>|b)a/`, which finds nothing in `aa`; it is now
+   `/a+(?>(?:)|b)a/`.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for
