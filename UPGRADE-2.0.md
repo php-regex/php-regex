@@ -574,7 +574,7 @@ its body, `$ast` a parsed tree, `$subject` the text matched against and
 |---|---|---|
 | `Transpiler::__construct()` | `$regex` | `$parser` |
 | `Transpiler::transpile()` | `$pattern` | `$regex` |
-| `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$subject` |
+| `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$prefix` |
 | `LanguageSolver::language()`, `compile()` | `$pattern` | `$regex` |
 | `TrivialMatchClassifier::classify()`, `matchedLiteral()` | `$pattern` | `$regex` |
 | `RedosRepairer::repair()` | `$pattern` | `$regex` |

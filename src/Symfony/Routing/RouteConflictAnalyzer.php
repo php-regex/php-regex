@@ -19,6 +19,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Ordered\FirstMatchCandidate;
 use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
@@ -365,35 +366,34 @@ final class RouteConflictAnalyzer
 
         usort($routes, static fn (array $left, array $right): int => [!$left['static'], $left['index']] <=> [!$right['static'], $right['index']]);
 
+        $requests = [];
         $candidates = [];
-        $keeps = [];
-        $rivals = [];
         $pairs = 0;
         foreach ($routes as $i => $route) {
-            $candidates[$i] = $this->requestsOf($route);
-            if (null !== $candidates[$i]) {
-                // A path it redirects for the slash is one no later route
-                // gets, and one it does not serve either.
-                $keeps[$i] = [$candidates[$i][0]];
-            }
+            $requests[$i] = $this->requestsOf($route);
+            if (null === $requests[$i]) {
+                $candidates[] = null;
 
-            $rivals[$i] = [];
-            if (null === $candidates[$i]) {
                 continue;
             }
 
+            $rivals = [];
             for ($j = 0; $j < $i; $j++) {
                 $earlier = $routes[$j];
-                if (null === $candidates[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier['host'], $route['host'])) {
+                if (null === $requests[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier['host'], $route['host'])) {
                     continue;
                 }
 
-                $rivals[$i][] = $j;
+                $rivals[] = $j;
                 $pairs++;
             }
+
+            // A path it redirects for the slash is one no later route gets,
+            // and one it does not serve either.
+            $candidates[] = new FirstMatchCandidate($requests[$i], [$requests[$i][0]], $rivals);
         }
 
-        $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates, $rivals, $keeps);
+        $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates);
 
         $reach = [];
         $unreachable = $cumulative = $refused = 0;
@@ -413,12 +413,12 @@ final class RouteConflictAnalyzer
                 'index' => $route['index'],
                 'path' => $route['path'],
                 'reachable' => $cell->reachable,
-                'example' => null === $cell->witness ? null : self::request($cell->witness),
+                'example' => null === $cell->example ? null : self::request($cell->example),
                 'takenBy' => $takenBy,
                 'cumulative' => $cell->isShadowedCumulatively(),
                 'refused' => $cell->refused,
             ];
-            $unreachable += (int) !$cell->reachable;
+            $unreachable += (int) (false === $cell->reachable);
             $cumulative += (int) $cell->isShadowedCumulatively();
             $refused += (int) (null !== $cell->refused);
         }

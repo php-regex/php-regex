@@ -44,6 +44,8 @@ use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -130,7 +132,8 @@ final class LanguageSolver
     /**
      * Whether some string matches both patterns, and the shortest such string.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When a pattern does not lex or parse
+     * @throws ComplexityException            When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
@@ -164,7 +167,8 @@ final class LanguageSolver
      * Whether every string the left pattern matches is matched by the right one,
      * and the shortest string that is not.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When a pattern does not lex or parse
+     * @throws ComplexityException            When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
@@ -199,7 +203,8 @@ final class LanguageSolver
      * Whether both patterns match exactly the same strings, and the shortest
      * string only one side matches, for each side.
      *
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When a pattern does not lex or parse
+     * @throws ComplexityException            When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
@@ -254,7 +259,8 @@ final class LanguageSolver
      * read: PCRE2's JIT, which PHP runs by default, misses matches of it
      * that the interpreter finds, "/(a++)c(?1)d/" none in "acacad".
      *
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws LexerException|ParserException When a pattern does not lex or parse
+     * @throws ComplexityException            When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalent(string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
@@ -268,7 +274,8 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws LexerException|ParserException When a pattern does not lex or parse
+     * @throws ComplexityException            When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
@@ -484,19 +491,20 @@ final class LanguageSolver
     }
 
     /**
-     * Whether some string starting with the input is matched, under the match
-     * mode of the options: a half-typed "2026" begins a date that
+     * Whether some string starting with the prefix is matched, under the
+     * match mode of the options: a half-typed "2026" begins a date that
      * /^\d{4}-\d{2}-\d{2}$/ matches, where preg_match() can only say 0. In
-     * UTF mode, an input ending in the middle of a character is viable when
+     * UTF mode, a prefix ending in the middle of a character is viable when
      * one way to finish the character is.
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When the pattern does not lex or parse
+     * @throws ComplexityException            When the pattern leaves the regular subset or a limit is reached
      */
-    public function acceptsPrefix(string $regex, string $subject, ?SolverOptions $options = null): bool
+    public function acceptsPrefix(string $regex, string $prefix, ?SolverOptions $options = null): bool
     {
         $dfa = $this->buildDfa($regex, $options ?? new SolverOptions());
 
-        return PrefixReader::begins($dfa, $subject, $this->parser->parse($regex)->isUnicode());
+        return PrefixReader::begins($dfa, $prefix, $this->parser->parse($regex)->isUnicode());
     }
 
     /**
@@ -504,7 +512,8 @@ final class LanguageSolver
      * options: whether it is finite, how many strings of each length it
      * holds, each of them, and the strings it rejects.
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When the pattern does not lex or parse
+     * @throws ComplexityException            When the pattern leaves the regular subset or a limit is reached
      */
     public function language(string $regex, ?SolverOptions $options = null): Language
     {
@@ -515,7 +524,8 @@ final class LanguageSolver
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws LexerException|ParserException When the pattern does not lex or parse
+     * @throws ComplexityException            When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $regex, ?SolverOptions $options = null): Dfa
     {
@@ -979,6 +989,7 @@ final class LanguageSolver
      *                           is read through, for an automaton never run
      *                           for a match
      *
+     * @throws LexerException|ParserException
      * @throws ComplexityException
      */
     private function priorityNfa(string $pattern, SolverOptions $options, bool $throughCalls = false): PriorityNfa
@@ -1074,6 +1085,7 @@ final class LanguageSolver
     /**
      * @param Nfa|null $nfa the pattern's NFA, when it is built already
      *
+     * @throws LexerException|ParserException
      * @throws ComplexityException
      */
     private function buildDfa(string $pattern, SolverOptions $options, ?Nfa $nfa = null): Dfa

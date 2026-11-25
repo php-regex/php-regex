@@ -18,6 +18,11 @@ namespace PHPRegex\Automata\Solver;
  */
 final class EquivalenceResult
 {
+    /**
+     * The PCRE2 release that ran the solver, which it asks what the classes
+     * of the patterns hold. The patterns are read for the target of the
+     * solver's parser, which may be another PHP and PCRE2.
+     */
     public readonly string $pcreVersion;
 
     /**
@@ -26,7 +31,7 @@ final class EquivalenceResult
      * @param bool        $isEquivalent     Whether both regexes accept the same language
      * @param string|null $leftOnlyExample  Example accepted by left but not right
      * @param string|null $rightOnlyExample Example accepted by right but not left
-     * @param string|null $pcreVersion      The PCRE2 release the answer was computed with
+     * @param string|null $pcreVersion      The PCRE2 release that ran the solver; the running one when null
      */
     public function __construct(
         public readonly bool $isEquivalent,

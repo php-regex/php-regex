@@ -23,7 +23,7 @@ use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Model\DfaState;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
-use PHPRegex\Automata\Options\SolverStrategy;
+use PHPRegex\Automata\Ordered\FirstMatchCandidate;
 use PHPRegex\Automata\Ordered\FirstMatchCell;
 use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
@@ -49,8 +49,8 @@ final class PublicSurfaceTest extends TestCase
         LanguageSolver::class,
         SolverOptions::class,
         MatchMode::class,
-        SolverStrategy::class,
         FirstMatchPartition::class,
+        FirstMatchCandidate::class,
         FirstMatchCell::class,
         DeterminizationAlgorithm::class,
         MinimizationAlgorithm::class,

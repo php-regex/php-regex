@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Ordered\FirstMatchPartition;
+use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
@@ -84,11 +86,15 @@ final class ParameterNamesTest extends TestCase
     {
         yield 'Transpiler::__construct' => ['class' => Transpiler::class, 'method' => '__construct', 'names' => ['parser']];
         yield 'Transpiler::transpile' => ['class' => Transpiler::class, 'method' => 'transpile', 'names' => ['regex', 'target']];
-        yield 'LanguageSolver::acceptsPrefix' => ['class' => LanguageSolver::class, 'method' => 'acceptsPrefix', 'names' => ['regex', 'subject']];
+        yield 'LanguageSolver::acceptsPrefix' => ['class' => LanguageSolver::class, 'method' => 'acceptsPrefix', 'names' => ['regex', 'prefix', 'options']];
         yield 'LanguageSolver::language' => ['class' => LanguageSolver::class, 'method' => 'language', 'names' => ['regex']];
         yield 'LanguageSolver::compile' => ['class' => LanguageSolver::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'TrivialMatchClassifier::classify' => ['class' => TrivialMatchClassifier::class, 'method' => 'classify', 'names' => ['regex']];
         yield 'TrivialMatchClassifier::matchedLiteral' => ['class' => TrivialMatchClassifier::class, 'method' => 'matchedLiteral', 'names' => ['regex']];
+        yield 'TrivialMatchClassifier::__construct' => ['class' => TrivialMatchClassifier::class, 'method' => '__construct', 'names' => ['parser', 'dfaCache']];
+        yield 'TrivialMatch::phpExpression' => ['class' => TrivialMatch::class, 'method' => 'phpExpression', 'names' => ['subjectCode']];
+        yield 'FirstMatchPartition::__construct' => ['class' => FirstMatchPartition::class, 'method' => '__construct', 'names' => ['solver', 'options']];
+        yield 'FirstMatchPartition::partition' => ['class' => FirstMatchPartition::class, 'method' => 'partition', 'names' => ['candidates']];
         yield 'RedosRepairer::repair' => ['class' => RedosRepairer::class, 'method' => 'repair', 'names' => ['regex']];
         yield 'PcreEngine::compile' => ['class' => PcreEngine::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject']];
