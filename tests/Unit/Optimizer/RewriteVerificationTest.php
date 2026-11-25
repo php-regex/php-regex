@@ -500,6 +500,7 @@ final class RewriteVerificationTest extends TestCase
         yield 'an alternation in an atomic group, made a class' => ['original' => '/a+(?>(?:b|c)?)a/', 'rewrite' => '/a+(?>[bc]?)a/', 'subject' => 'aa'];
         yield 'a repeat written as a group, the group dropped' => ['original' => '/(?:a)+(?:b)?+a/', 'rewrite' => '/a+(?:b)?+a/', 'subject' => 'aa'];
         yield 'beside a lookbehind' => ['original' => '/(?<!x)a+(?:b|c)?+a/', 'rewrite' => '/(?<!x)a+[bc]?+a/', 'subject' => 'aa'];
+        yield 'an empty group in an atomic group, dropped' => ['original' => '/a+(?>(?:)|b)a/', 'rewrite' => '/a+(?>|b)a/', 'subject' => 'aa'];
     }
 
     /**

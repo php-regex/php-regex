@@ -304,14 +304,13 @@ final class AutoPossession
                 $parts[] = self::brackets($child, $unwrapped);
             }
 
-            return $node instanceof SequenceNode ? 's('.implode(',', $parts).')' : 'a('.implode('|', $parts).')';
+            return $node instanceof SequenceNode ? \sprintf('s(%s)', implode(',', $parts)) : \sprintf('a(%s)', implode('|', $parts));
         }
 
         return match (true) {
             self::oneCharacter($node) => 'c',
-            $node instanceof LiteralNode => 'e',
-            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, self::brackets($node->node, $unwrapped)),
-            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, self::brackets($node->child, $unwrapped)),
+            $node instanceof QuantifierNode => \sprintf('q%s%s(%s)', serialize($node->bounds), $node->type->name, self::brackets($node->node, $unwrapped)),
+            $node instanceof GroupNode => \sprintf('g%s(%s)', $node->type->name, self::brackets($node->child, $unwrapped)),
             default => serialize(RewriteSites::shape($node)),
         };
     }
