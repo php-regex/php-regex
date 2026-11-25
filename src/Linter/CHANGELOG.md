@@ -90,6 +90,19 @@ CHANGELOG
    `/(?:a)+(?:b)?+a/`, `(?:)` in `/a+(?>(?:)|b)a/` and `a?` in
    `/[ab]{2,}a?(?:b){0,2}+a/` were reported, where the pattern without them
    matches otherwise.
+ * Without u, `regex.lint.group.redundant` and `regex.lint.group.empty` no
+   longer call a group removable in a pattern that holds a repeat of the
+   byte 0xFF before `\w`, or of `\w` before that byte, or would hold one
+   with the groups repeats read taken out: PCRE2 makes such a repeat
+   possessive as if 0xFF were no word character, never one written as a
+   group, and stops a lazy one at the end of a group. Under
+   fr_FR.ISO8859-1, where `\w` takes 0xFF, `/(?:\xFF)+\w/` finds
+   `\xFF\xFF` where `/\xFF+\w/` finds nothing, and `/\xFF+?(?:)\w/` finds
+   it where `/\xFF+?\w/` does not; `(?:\xFF)`, `(?:\w)` in `/(?:\w)+\xFF/`
+   and `(?:)` were reported. A target that names no locale but C may run
+   under any tables, and keeps them too; one that names a locale whose
+   tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does, still reports
+   them.
  * `regex.lint.anchor.impossible.start` reports `^` under `m` after a
    character that ends no line under the newline convention (`/a$^/m`,
    `/(*CRLF)a$\r^\n/m`), beside `\z` once a character was read (`/a\z^/m`,

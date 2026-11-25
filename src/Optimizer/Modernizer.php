@@ -78,6 +78,14 @@ final class Modernizer extends AbstractNodeVisitor
      */
     private ?NodeInterface $pattern = null;
 
+    /**
+     * Whether the brackets of a group of the pattern being modernized may
+     * decide which repeats PCRE2 makes possessive as if the byte 0xFF were
+     * no word character, read under the tables of any locale, whichever one
+     * is known.
+     */
+    private bool $bracketsDecideBesideLastByte = false;
+
     public function __construct(
         /**
          * The LC_CTYPE locale the pattern runs under, when it is known:
@@ -93,6 +101,7 @@ final class Modernizer extends AbstractNodeVisitor
         $this->unicodeProperties = UnicodeProperties::on($node);
         $this->utf = str_contains($node->flags, 'u');
         $this->pattern = [] !== AutoPossession::shape($node->pattern, false) ? $node->pattern : null;
+        $this->bracketsDecideBesideLastByte = AutoPossession::bracketsDecideBesideLastByte($node->pattern, $node->flags, null);
 
         return new RegexNode(
             $node->pattern->accept($this),
@@ -158,9 +167,13 @@ final class Modernizer extends AbstractNodeVisitor
         // PCRE2 makes a character repeated before a possessive or atomic
         // group that may match nothing possessive, as if the group could
         // not be skipped, and the brackets decide which: "/a+(?:b)?+a/"
-        // finds nothing in "aa", where "/a+b?+a/" finds it.
+        // finds nothing in "aa", where "/a+b?+a/" finds it. So do the
+        // brackets beside a repeat it makes possessive as if the byte 0xFF
+        // were no word character: under fr_FR.ISO8859-1 "/(?:\xFF)+\w/"
+        // finds "\xFF\xFF", "/\xFF+\w/" nothing.
         if (self::isPlain($node) && !$child instanceof AlternationNode && !self::setsOption($child)
-            && (null === $this->pattern || !AutoPossession::groupDecides($this->pattern, $node))) {
+            && (null === $this->pattern || !AutoPossession::groupDecides($this->pattern, $node))
+            && !$this->bracketsDecideBesideLastByte) {
             return $child;
         }
 
