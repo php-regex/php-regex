@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule;
 
 use PHPRegex\Linter\Rule\Support\EscapeJoin;
+use PHPRegex\Linter\Rule\Support\PossessiveBrackets;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
@@ -28,7 +29,9 @@ use PHPRegex\Parser\Node\SequenceNode;
  * its own; a "(?:)" that keeps an escape apart from the digit after it, as
  * in "(a)\1(?:)0", or braces from a count, as in "a{(?:)2}", stays. So does
  * the operand of a quantifier: without it, "a(?:)?" is "a?". An unbounded
- * repeat of it is quantifier.emptyRepeat's.
+ * repeat of it is quantifier.emptyRepeat's. So does a group PCRE2 enters
+ * to choose which repeats it makes possessive: "/a+(?>(?:)|b)a/" finds
+ * "aa", where "/a+(?>|b)a/" finds nothing.
  *
  * @internal
  */
@@ -53,6 +56,7 @@ final class EmptyGroupRule extends AbstractLintRule
             || !self::isEmpty($node->child)
             || EscapeJoin::groupSeparatesAnEscape($node, $context)
             || self::isQuantified($context)
+            || PossessiveBrackets::groupDecides($node, $context)
         ) {
             return [];
         }

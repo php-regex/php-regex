@@ -51,17 +51,20 @@ final class AutoPossession
      * nothing and that a character repeated some number of times precedes,
      * or null. Every possessive repeat of a group from zero counts, "*+"
      * too, which PCRE2 compiles otherwise and reads as written today.
+     *
+     * @param GroupNode|null $unwrapped a group read as its body, as if it
+     *                                  were taken out
      */
-    public static function repeatBeforeSkippableGroup(NodeInterface $pattern): ?NodeInterface
+    public static function repeatBeforeSkippableGroup(NodeInterface $pattern, ?GroupNode $unwrapped = null): ?NodeInterface
     {
         $firstRepeatEnd = null;
         $skippable = [];
-        foreach (self::nodes($pattern) as $node) {
-            if ($node instanceof QuantifierNode && !self::groupLike($node->node) && self::repeatsSomeNumberOfTimes($node)) {
+        foreach (self::nodes($pattern, $unwrapped) as $node) {
+            if ($node instanceof QuantifierNode && !self::groupLike(self::unwrap($node->node, $unwrapped)) && self::repeatsSomeNumberOfTimes($node)) {
                 $firstRepeatEnd = min($firstRepeatEnd ?? $node->getEndPosition(), $node->getEndPosition());
             }
 
-            if (self::skippable($node)) {
+            if (self::skippable($node, $unwrapped)) {
                 $skippable[] = $node;
             }
         }
@@ -118,15 +121,53 @@ final class AutoPossession
      */
     public static function shape(NodeInterface $pattern, bool $spliced): array
     {
+        return self::shapeOf($pattern, $spliced, null);
+    }
+
+    /**
+     * Whether taking the group out, its body standing where it stood, may
+     * change which repeats PCRE2 makes possessive: a character repeated
+     * before an atomic group or a possessive repeat of a group that may
+     * match nothing stands in the pattern with or without it, and the
+     * brackets that decide it differ (see shapeWithout()). "(?:b)" in
+     * "/a+(?:b)?+a/" and "(?:)" in "/a+(?>(?:)|b)a/" stay; "(?>)" in
+     * "/a(?>)b/", with no repeat before it, can go.
+     */
+    public static function groupDecides(NodeInterface $pattern, GroupNode $group): bool
+    {
+        return (null !== self::repeatBeforeSkippableGroup($pattern) || null !== self::repeatBeforeSkippableGroup($pattern, $group))
+            && self::shape($pattern, false) !== self::shapeWithout($pattern, $group);
+    }
+
+    /**
+     * The shape (see shape()) of the pattern with the group taken out, its
+     * body standing where it stood: where it differs from the shape of the
+     * pattern, the group changes which repeats PCRE2 makes possessive.
+     * "(?:b)" in "/a+(?:b)?+a/", or "(?:a)" in "/(?:a)+(?:b)?+a/", cannot go.
+     *
+     * @return list<string>
+     */
+    public static function shapeWithout(NodeInterface $pattern, GroupNode $group): array
+    {
+        return self::shapeOf($pattern, false, $group);
+    }
+
+    /**
+     * @param GroupNode|null $unwrapped a group read as its body
+     *
+     * @return list<string>
+     */
+    private static function shapeOf(NodeInterface $pattern, bool $spliced, ?GroupNode $unwrapped): array
+    {
         $repeats = '';
         $skippable = [];
-        foreach (self::nodes($pattern) as $node) {
+        foreach (self::nodes($pattern, $unwrapped) as $node) {
             if ($node instanceof QuantifierNode && (QuantifierType::Possessive === $node->type || self::repeatsSomeNumberOfTimes($node))) {
-                $repeats .= self::groupLike($node->node) ? '1' : '0';
+                $repeats .= self::groupLike(self::unwrap($node->node, $unwrapped)) ? '1' : '0';
             }
 
-            if (self::skippable($node)) {
-                $skippable[] = self::brackets($node);
+            if (self::skippable($node, $unwrapped)) {
+                $skippable[] = self::brackets($node, $unwrapped);
             }
         }
 
@@ -134,17 +175,27 @@ final class AutoPossession
     }
 
     /**
+     * The node, or the body of the group read as its body.
+     */
+    private static function unwrap(NodeInterface $node, ?GroupNode $unwrapped): NodeInterface
+    {
+        return $node === $unwrapped ? $unwrapped->child : $node;
+    }
+
+    /**
      * Each node of the tree, a node before its children, in the order the
-     * pattern writes them.
+     * pattern writes them; the group read as its body stands for nothing.
      *
      * @return list<NodeInterface>
      */
-    private static function nodes(NodeInterface $pattern): array
+    private static function nodes(NodeInterface $pattern, ?GroupNode $unwrapped = null): array
     {
         $nodes = [];
         $pending = [$pattern];
         while (null !== $node = array_pop($pending)) {
-            $nodes[] = $node;
+            if ($node !== $unwrapped) {
+                $nodes[] = $node;
+            }
             array_push($pending, ...array_reverse($node->getChildren()));
         }
 
@@ -156,29 +207,34 @@ final class AutoPossession
      * nothing: the engine reaches its end through an iteration it skips or
      * a branch that is empty.
      */
-    private static function skippable(NodeInterface $node): bool
+    private static function skippable(NodeInterface $node, ?GroupNode $unwrapped = null): bool
     {
         if ($node instanceof QuantifierNode) {
-            return QuantifierType::Possessive === $node->type && self::groupLike($node->node)
-                && (null === $node->bounds || 0 === $node->bounds->min || self::mayMatchNothing($node->node));
+            $operand = self::unwrap($node->node, $unwrapped);
+
+            return QuantifierType::Possessive === $node->type && self::groupLike($operand)
+                && (null === $node->bounds || 0 === $node->bounds->min || self::mayMatchNothing($operand, $unwrapped));
         }
 
-        return $node instanceof GroupNode && GroupType::Atomic === $node->type && self::mayMatchNothing($node->child);
+        return $node instanceof GroupNode && GroupType::Atomic === $node->type && self::mayMatchNothing($node->child, $unwrapped);
     }
 
     /**
      * Whether the node may match the empty string; true for anything not
      * read here.
      */
-    private static function mayMatchNothing(NodeInterface $node): bool
+    private static function mayMatchNothing(NodeInterface $node, ?GroupNode $unwrapped = null): bool
     {
+        $node = self::unwrap($node, $unwrapped);
+        $empty = static fn (NodeInterface $child): bool => self::mayMatchNothing($child, $unwrapped);
+
         return match (true) {
             $node instanceof LiteralNode => '' === $node->value,
             self::oneCharacter($node) => false,
-            $node instanceof SequenceNode => [] === array_filter($node->children, static fn (NodeInterface $child): bool => !self::mayMatchNothing($child)),
-            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, self::mayMatchNothing(...)),
-            $node instanceof GroupNode => !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true) || self::mayMatchNothing($node->child),
-            $node instanceof QuantifierNode => null === $node->bounds || 0 === $node->bounds->min || self::mayMatchNothing($node->node),
+            $node instanceof SequenceNode => [] === array_filter($node->children, static fn (NodeInterface $child): bool => !$empty($child)),
+            $node instanceof AlternationNode => [] !== array_filter($node->alternatives, $empty),
+            $node instanceof GroupNode => !\in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::BranchReset, GroupType::InlineFlags], true) || $empty($node->child),
+            $node instanceof QuantifierNode => null === $node->bounds || 0 === $node->bounds->min || $empty($node->node),
             default => true,
         };
     }
@@ -217,15 +273,18 @@ final class AutoPossession
      * The brackets of a node, each character read alike: "(?>[0-9]*)" and
      * "(?>\d*)" have the same, "(?>(?:b)?)" and "(?>b?)" do not.
      */
-    private static function brackets(NodeInterface $node): string
+    private static function brackets(NodeInterface $node, ?GroupNode $unwrapped = null): string
     {
+        $node = self::unwrap($node, $unwrapped);
+        $of = static fn (NodeInterface $child): string => self::brackets($child, $unwrapped);
+
         return match (true) {
             self::oneCharacter($node) => 'c',
             $node instanceof LiteralNode => 'e',
-            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, self::brackets($node->node)),
-            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, self::brackets($node->child)),
-            $node instanceof SequenceNode => 's('.implode(',', array_map(self::brackets(...), $node->children)).')',
-            $node instanceof AlternationNode => 'a('.implode('|', array_map(self::brackets(...), $node->alternatives)).')',
+            $node instanceof QuantifierNode => \sprintf('q{%s,%s,%s}(%s)', $node->bounds?->min, $node->bounds?->max, $node->type->name, $of($node->node)),
+            $node instanceof GroupNode => \sprintf('g{%s}(%s)', $node->type->name, $of($node->child)),
+            $node instanceof SequenceNode => 's('.implode(',', array_map($of, $node->children)).')',
+            $node instanceof AlternationNode => 'a('.implode('|', array_map($of, $node->alternatives)).')',
             default => serialize(RewriteSites::shape($node)),
         };
     }

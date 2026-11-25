@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\CharClassSets;
 use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
+use PHPRegex\Linter\Rule\Support\PossessiveBrackets;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Analysis\LengthRangeCalculator;
@@ -58,6 +59,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
         }
 
         $issues = [];
+        $madePossessive = null;
         $children = $node->children;
         $count = \count($children);
         $flags = $context->flagsAtEachChild($node);
@@ -75,6 +77,14 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             }
 
             if (!QuantifierMath::isVariable($left) || !QuantifierMath::isVariable($right)) {
+                continue;
+            }
+
+            // A run PCRE2 may make possessive before a group it may skip
+            // stays as written: dropped or fixed to a count, it gives back
+            // to the run before it what PCRE2 took.
+            $madePossessive ??= PossessiveBrackets::repeatsMadePossessive($node, $context);
+            if (isset($madePossessive[$left->getStartPosition()]) || isset($madePossessive[$right->getStartPosition()])) {
                 continue;
             }
 

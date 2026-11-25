@@ -413,7 +413,11 @@ preg_match('/ac/', $input);
 The rule speaks only when it knows the subset holds: a token that may take a character above
 ASCII fits only a dot, a negated class of ASCII members or, without `u`, `\D`, `\W` and `\S`
 (`/^\h{1,3}[\t ]+\z/` stays silent, `\h` takes `"\xA0"`), and under `i` a negated class must
-hold both cases of its letters (`/^A?[^a]*\z/i` stays silent).
+hold both cases of its letters (`/^A?[^a]*\z/i` stays silent). Nor does it speak of a token
+PCRE2 makes possessive before an atomic group, or a possessive repeat of a group, that may
+match nothing: dropped or fixed to a count, it gives back what PCRE2 took from the token
+before it, and `/[ab]{2,}a?(?:b){0,2}+a/` finds nothing in `aaa` where
+`/[ab]{2,}(?:b){0,2}+a/` finds it.
 
 **Example:**
 ```php
@@ -652,7 +656,11 @@ the digit after it is not redundant: `(a)\1(?:0)` matches `aa0`, `(a)\10` does n
 not compile without it. Neither is a group that keeps braces from reading as a quantifier, `a{(?:2)}` (it matches `a{2}`,
 `a{2}` matches `aa`), nor a group a quantifier repeats around anything but one character:
 without the group, `(?:\Qab\E)+` repeats the `b` alone, `(?:é)+` without `/u` the last byte
-of the letter, and `(?:^)+` does not compile. `(?:a)+` is reported: `a+` is the same.
+of the letter, and `(?:^)+` does not compile. `(?:a)+` is reported: `a+` is the same. A group
+whose brackets decide which repeats PCRE2 makes possessive stays too: PCRE2 makes a character
+repeated before an atomic group, or a possessive repeat of a group, that may match nothing
+possessive, as if the group could not be skipped, so `/a+(?:b)?+a/` finds nothing in `aa`
+where `/a+b?+a/` finds it, and `/(?:a)+(?:b)?+a/` finds `aa` where `/a+(?:b)?+a/` does not.
 
 **Example:**
 ```php
@@ -679,7 +687,8 @@ printer writes: `(a)\1(?:)0` is not `(a)\10`, and `\01(?:)2` is not the newline 
 that keeps braces from a count, `a{(?:)2}`, `a{1,(?:)2}` or `a{(?:),2}` (`{,2}` is a
 quantifier since PCRE2 10.43); and one a quantifier repeats: `a(?:)?` matches `a` alone,
 `a?` the empty string too. An unbounded repeat of an empty group, `(?>)+`, is
-`regex.lint.quantifier.emptyRepeat`'s.
+`regex.lint.quantifier.emptyRepeat`'s. So is an empty group PCRE2 enters to choose which
+repeats it makes possessive: `/a+(?>(?:)|b)a/` finds `aa`, where `/a+(?>|b)a/` finds nothing.
 
 **Example:**
 ```php
