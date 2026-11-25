@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 
+use Composer\InstalledVersions;
+use Composer\Semver\VersionParser;
 use PHPRegex\Symfony\Routing\RouteRequirementNormalizer;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -26,7 +28,10 @@ use Symfony\Component\Routing\Route;
  * non-capturing ones, puts it in a group named after the parameter and
  * matches the path with "{^...$}sD", the host with "{^...$}sDi", plus u
  * under the route's utf8 option. The normalized pattern is that pattern
- * without the text of the path around the parameter.
+ * without the text of the path around the parameter. A named group of the
+ * requirement stops capturing too since symfony/routing 6.4.51, 7.4.24 and
+ * 8.1.12, its name dropped: the normalizer reads it as the installed
+ * compiler writes it.
  */
 final class RouteRequirementNormalizerTest extends TestCase
 {
@@ -49,6 +54,7 @@ final class RouteRequirementNormalizerTest extends TestCase
      */
     public static function provideRequirements(): iterable
     {
+        $keepsNames = self::keepsNamedGroups();
         yield 'simple' => ['requirement' => 'test', 'expected' => '{^(?P<x>test)$}sD'];
         yield 'class' => ['requirement' => 'test[0-9]+', 'expected' => '{^(?P<x>test[0-9]+)$}sD'];
         yield 'leading caret' => ['requirement' => '^test', 'expected' => '{^(?P<x>test)$}sD'];
@@ -69,9 +75,13 @@ final class RouteRequirementNormalizerTest extends TestCase
         yield 'bare alternation' => ['requirement' => 'en|fr|de', 'expected' => '{^(?P<x>en|fr|de)$}sD'];
         yield 'anchored alternation' => ['requirement' => '^en|fr$', 'expected' => '{^(?P<x>en|fr)$}sD'];
         // The compiler inserts ?: after every ( no backslash escapes, in a
-        // class or an x comment too.
+        // class or an x comment too, and in place of the name of a group
+        // where the release drops it.
         yield 'grouped alternation' => ['requirement' => '(foo|bar)', 'expected' => '{^(?P<x>(?:foo|bar))$}sD'];
-        yield 'named group kept' => ['requirement' => '(?<l>en|fr)', 'expected' => '{^(?P<x>(?<l>en|fr))$}sD'];
+        yield 'named group' => ['requirement' => '(?<l>en|fr)', 'expected' => $keepsNames ? '{^(?P<x>(?<l>en|fr))$}sD' : '{^(?P<x>(?:en|fr))$}sD'];
+        yield 'named group, P' => ['requirement' => '(?P<l>en|fr)', 'expected' => $keepsNames ? '{^(?P<x>(?P<l>en|fr))$}sD' : '{^(?P<x>(?:en|fr))$}sD'];
+        yield 'named group, quotes' => ['requirement' => "(?'l'en|fr)", 'expected' => $keepsNames ? "{^(?P<x>(?'l'en|fr))$}sD" : '{^(?P<x>(?:en|fr))$}sD'];
+        yield 'lookbehinds' => ['requirement' => '(?<=a)b(?<!c)', 'expected' => '{^(?P<x>(?<=a)b(?<!c))$}sD'];
         yield 'parenthesis in a class' => ['requirement' => '[(]a', 'expected' => '{^(?P<x>[(?:]a)$}sD'];
         yield 'parenthesis in an x comment' => ['requirement' => "(?x)a # (\n|b", 'expected' => "{^(?P<x>(?x)a # (?:\n|b)$}sD"];
         yield 'escaped parenthesis' => ['requirement' => 'a\\(b', 'expected' => '{^(?P<x>a\\(b)$}sD'];
@@ -187,6 +197,26 @@ final class RouteRequirementNormalizerTest extends TestCase
         yield 'comment under an inline x' => ['requirement' => '(?x)a #c'];
         // The second group no longer captures: \2 names no group.
         yield 'backreference to a group that stops capturing' => ['requirement' => '(a)(b)\\2'];
+        // Where the release drops the name of a group, \k<n> names no group.
+        if (!self::keepsNamedGroups()) {
+            yield 'backreference to a named group that stops capturing' => ['requirement' => '(?<n>a)\\k<n>'];
+        }
+    }
+
+    /**
+     * The release that drops the name of a group: 6.4.51, 7.4.24 and
+     * 8.1.12 on, never 8.0. Oracle, PHP 8.4.28 / PCRE2 10.49: the group
+     * named, {^/a/(?P<x>(?<n>a)\k<n>)$}sD matches "/a/aa"; its name dropped,
+     * {^/a/(?P<x>(?:a)\k<n>)$}sD does not compile.
+     */
+    #[Test]
+    public function test_a_named_group_stops_capturing_from_symfony_routing_6_4_51_7_4_24_and_8_1_12_on(): void
+    {
+        $drops = InstalledVersions::satisfies(new VersionParser(), 'symfony/routing', '~6.4.51 || ~7.4.24 || >=8.1.12');
+
+        $this->assertSame($drops, !self::keepsNamedGroups());
+        $this->assertSame($drops ? '{^(?P<x>(?:a)\\k<n>)$}sD' : '{^(?P<x>(?<n>a)\\k<n>)$}sD', $this->normalizer->normalize('(?<n>a)\\k<n>', 'x'));
+        $this->assertSame($drops ? false : 1, @preg_match((new Route('/a/{x}', [], ['x' => '(?<n>a)\\k<n>']))->compile()->getRegex(), '/a/aa'), 'oracle');
     }
 
     /**
@@ -216,5 +246,14 @@ final class RouteRequirementNormalizerTest extends TestCase
         yield 'dot over a newline' => ['requirement' => '.+', 'subject' => "a\nb", 'matches' => true];
         yield 'escaped hash' => ['requirement' => '^a\\#b$', 'subject' => 'a#b', 'matches' => true];
         yield 'escaped brace' => ['requirement' => '\\{', 'subject' => '{', 'matches' => true];
+    }
+
+    /**
+     * Whether the installed compiler keeps the name of a group of a
+     * requirement.
+     */
+    private static function keepsNamedGroups(): bool
+    {
+        return str_contains((new Route('/{x}', [], ['x' => '(?<n>a)']))->compile()->getRegex(), '(?<n>');
     }
 }
