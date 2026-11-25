@@ -1260,6 +1260,24 @@ final class CharSetAnalyzerTest extends TestCase
     }
 
     /**
+     * The word characters "\b" reads: ASCII's under PCRE2's own tables,
+     * every byte another locale's tables put in "\w", the Latin-1 letters
+     * of GIVEN, and none known under (*UCP), whose properties of Unicode
+     * the sets do not hold.
+     */
+    #[Test]
+    public function test_the_word_set_is_the_set_of_w_the_tables_give(): void
+    {
+        self::giveTables();
+
+        $ascii = [[0x30, 0x39], [0x41, 0x5A], [0x5F, 0x5F], [0x61, 0x7A]];
+        $this->assertSame($ascii, (new CharSetAnalyzer())->wordSet()->ranges());
+        $this->assertSame($ascii, (new CharSetAnalyzer('', '', true))->wordSet()->ranges());
+        $this->assertSame([...$ascii, [0xAA, 0xAA], [0xC0, 0xD6], [0xD8, 0xF6], [0xF8, 0xFF]], (new CharSetAnalyzer('', '', true, locale: self::GIVEN))->wordSet()->ranges());
+        $this->assertTrue((new CharSetAnalyzer('', '(*UCP)', true, locale: self::GIVEN))->wordSet()->isUnknown());
+    }
+
+    /**
      * The pattern matched whole: "/a|b/u" as "/^(?:a|b)$/u".
      */
     private static function anchored(string $pattern): string

@@ -175,6 +175,32 @@ final class CharacterTablesTest extends TestCase
     }
 
     /**
+     * Tables settle every case where no byte is read otherwise, by the
+     * interpreter or by the tables of either side of 10.43: PCRE2's own,
+     * and tables that pair "i" with 0xDD both ways, as glibc's
+     * tr_TR.ISO-8859-9 do; not those where the interpreter reads 0xDD
+     * otherwise, as on macOS, nor those that read 0xFF otherwise before
+     * 10.43.
+     */
+    #[Test]
+    public function test_tables_settle_every_case_where_no_byte_is_read_otherwise(): void
+    {
+        $this->assertTrue(CharacterTables::builtIn()->settlesEveryCase());
+
+        $cases = self::cases([0x69 => 0xDD, 0xDD => 0x69, 0x49 => 0xFD, 0xFD => 0x49]);
+        CharacterTables::useTables('xx_XX.GIVEN', $cases);
+        $this->assertTrue(CharacterTables::forLocale('xx_XX.GIVEN')->settlesEveryCase());
+
+        CharacterTables::useTables('xx_XX.GIVEN', $cases, [0xDD]);
+        $this->assertFalse(CharacterTables::forLocale('xx_XX.GIVEN')->settlesEveryCase());
+
+        $before = $cases;
+        $before[0xFF] = 'x';
+        CharacterTables::useTables('xx_XX.GIVEN', $cases, [], $before);
+        $this->assertFalse(CharacterTables::forLocale('xx_XX.GIVEN')->settlesEveryCase());
+    }
+
+    /**
      * Tables a test gives hold the bytes given for a name, and PCRE2's own
      * for the names not given.
      */

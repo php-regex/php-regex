@@ -242,6 +242,17 @@ final class CharSetAnalyzer
     }
 
     /**
+     * The characters "\w" takes, which "\b" and "\B" tell apart from the
+     * others: the tables' word characters without UCP, read as a set of
+     * "\w" is, not known under UCP, whose properties of Unicode the sets
+     * do not hold.
+     */
+    public function wordSet(): ByteCharSet
+    {
+        return $this->fromCharType('w');
+    }
+
+    /**
      * The flags a pattern whose modifiers are $flags opens under, those an
      * option setting changes: (*CASELESS_RESTRICT) holds from the start as
      * r does, and "(?-r)" or "(?^)" turns it off after.
