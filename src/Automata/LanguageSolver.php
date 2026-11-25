@@ -1020,16 +1020,13 @@ final class LanguageSolver
         }
 
         // The JIT of PCRE2 10.39 to 10.42 keeps the groups of a possessive
-        // repeat from an earlier start, and 10.44, the first release PHP
-        // bundles after 10.42, clears them: the target is asked for 10.44 by
-        // the long group names it brought, 10.43 judged with the older
-        // ones. A target that names no locale but C may run under any:
-        // without "u" the tables a class is read under past ASCII are not
-        // known.
+        // repeat from an earlier start. A target that names no locale but C
+        // may run under any: without "u" the tables a class is read under
+        // past ASCII are not known.
         $builder = new PriorityNfaBuilder(
             $options->maxNfaStates,
             $pattern,
-            groupsOfPossessivesCleared: $target->supports(PcreFeature::LongGroupNames),
+            groupsOfPossessivesCleared: $target->supports(PcreFeature::PossessiveRepeatGroupsClearedEachStart),
             localeBound: LocaleBoundClasses::of($ast, $target),
         );
 

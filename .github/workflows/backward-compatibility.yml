@@ -21,15 +21,15 @@ concurrency:
 
 jobs:
   public-api:
-    # The public API of the sources against the latest 2.x tag, or the
+    # The public API of the sources against the latest 2.x release, or the
     # reference a run by hand names: a class, method, parameter or constant a
     # release promised and this checkout changes fails here. A symbol marked
-    # @internal is not compared. Until the first 2.x tag the API is being
-    # settled and nothing is promised: the job then compares nothing and
-    # passes, so that it gates from the tag on without a change here.
+    # @internal is not compared. A pre-release promises nothing: until 2.0.0
+    # the API is being settled, the job compares nothing and passes, and it
+    # gates from that tag on without a change here.
     # .roave-backward-compatibility-check.xml names what the tool reports and
     # is not a break.
-    name: Public API since the latest tag
+    name: Public API since the latest release
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -46,14 +46,14 @@ jobs:
         id: reference
         env:
           FROM: ${{ inputs.from }}
-        # The newest tag by version, a pre-release tag sorting before the
-        # release it precedes.
+        # The newest release by version; a pre-release tag, which holds a
+        # hyphen, is no reference.
         run: |
           if [ -z "$FROM" ]; then
-            FROM=$(git -c versionsort.suffix=- tag --list 'v2.*' --sort=-version:refname | head -n 1)
+            FROM=$(git tag --list 'v2.*' --sort=-version:refname | grep -v -e - | head -n 1)
           fi
           if [ -z "$FROM" ]; then
-            echo "No 2.x tag yet: the public API is compared from the first one."
+            echo "No 2.x release yet: the public API is compared from the first one."
             echo "from=" >> "$GITHUB_OUTPUT"
             exit 0
           fi

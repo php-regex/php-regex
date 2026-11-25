@@ -165,6 +165,11 @@ final class PcreFeature implements UnitEnum
         return self::$instances['LongGroupNames'] ??= new self('LongGroupNames');
     }
 
+    public static function PossessiveRepeatGroupsClearedEachStart(): self
+    {
+        return self::$instances['PossessiveRepeatGroupsClearedEachStart'] ??= new self('PossessiveRepeatGroupsClearedEachStart');
+    }
+
     public static function ScanSubstring(): self
     {
         return self::$instances['ScanSubstring'] ??= new self('ScanSubstring');
@@ -380,6 +385,7 @@ final class PcreFeature implements UnitEnum
             self::UcpWordTakesMarksAndConnectors(),
             self::CallCapturesGivenBack(),
             self::LongGroupNames(),
+            self::PossessiveRepeatGroupsClearedEachStart(),
             self::ScanSubstring(),
             self::ExtendedCharClass(),
             self::CasingSettingVerbs(),
@@ -451,6 +457,7 @@ final class PcreFeature implements UnitEnum
             'UcpWordTakesMarksAndConnectors' => '10.43',
             'CallCapturesGivenBack' => '10.43',
             'LongGroupNames' => '10.44',
+            'PossessiveRepeatGroupsClearedEachStart' => '10.44',
             'ScanSubstring' => '10.45',
             'ExtendedCharClass' => '10.45',
             'CasingSettingVerbs' => '10.45',
