@@ -12,8 +12,12 @@ CHANGELOG
    `preg_match_all()` was not reported. The pattern is still reported once,
    where its literal is written, with one finding for each function of
    those calls. Through a variable, a call runs in its loop the value of
-   the latest assignment before it, in no branch and no loop; where one in
-   a branch or a loop may stand between, the call names no loop.
+   the latest assignment before it when that one runs first on every path
+   to it: a statement of the body or of the block of braces the call
+   stands in, the head of a `foreach` over literals, or a composition of
+   such values. Where one in a branch or a loop of its own may stand
+   between, in a `switch` or in a block of the alternative syntax, the
+   call names no loop.
    `PatternOccurrence::$everyMatchElsewhere` names the functions of the
    other calls, and `everyMatchCalls()` all of them.
  * Without u, where the bytes of the branches decide,

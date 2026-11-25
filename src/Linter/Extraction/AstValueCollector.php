@@ -67,10 +67,12 @@ use PhpParser\Node\Stmt\ClassMethod;
 use PhpParser\Node\Stmt\Const_;
 use PhpParser\Node\Stmt\Declare_;
 use PhpParser\Node\Stmt\Do_;
+use PhpParser\Node\Stmt\Else_;
 use PhpParser\Node\Stmt\ElseIf_;
 use PhpParser\Node\Stmt\Enum_;
 use PhpParser\Node\Stmt\EnumCase;
 use PhpParser\Node\Stmt\Expression;
+use PhpParser\Node\Stmt\Finally_;
 use PhpParser\Node\Stmt\For_;
 use PhpParser\Node\Stmt\Foreach_;
 use PhpParser\Node\Stmt\Function_;
@@ -122,6 +124,17 @@ final class AstValueCollector extends NodeVisitorAbstract
     private const RUNS_AT = 'phpRegexRunsAt';
 
     private const CERTAIN = 'phpRegexCertain';
+
+    /**
+     * Where the block of braces ends that an assignment stands in as a
+     * statement.
+     */
+    private const BLOCK_END = 'phpRegexBlockEnd';
+
+    /**
+     * A control structure written in the alternative syntax.
+     */
+    private const ALTERNATIVE = 'phpRegexAlternative';
 
     /**
      * An "&&", "and", "||" or "or" of a chain the outermost one read.
@@ -177,10 +190,18 @@ final class AstValueCollector extends NodeVisitorAbstract
     private int $alternatives = 0;
 
     /**
+     * @var array<int, int> function body, or the file level => the control structures of the alternative syntax
+     *                      open around the node
+     */
+    private array $alternativeBlocks = [];
+
+    /**
      * @param \Closure(Node): list<Arg> $patternArguments the arguments of a call that carry its pattern: a
      *                                                    variable passed there is read, not written
+     * @param string                    $content          the file's text, where the blocks of braces are told from
+     *                                                    the others; an empty one tells none
      */
-    public function __construct(private readonly \Closure $patternArguments)
+    public function __construct(private readonly \Closure $patternArguments, private readonly string $content = '')
     {
         $this->values = new InFileValueResolver();
     }
@@ -212,6 +233,8 @@ final class AstValueCollector extends NodeVisitorAbstract
         if ($node instanceof FuncCall && $node->name instanceof Name) {
             $this->holdClosures($node, $node->name);
         }
+
+        $this->enterBlock($node);
 
         if ($node instanceof ClassLike) {
             $this->enterClass($node);
@@ -276,6 +299,11 @@ final class AstValueCollector extends NodeVisitorAbstract
      */
     public function leaveNode(Node $node)
     {
+        if (true === $node->getAttribute(self::ALTERNATIVE)) {
+            $scope = $this->scope() ?? -1;
+            $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 1) - 1;
+        }
+
         if ($node instanceof ClassLike) {
             array_pop($this->classes);
             array_pop($this->scopes);
@@ -845,6 +873,92 @@ final class AstValueCollector extends NodeVisitorAbstract
         }
     }
 
+    /**
+     * Marks the assignments that stand as statements of a block of braces
+     * of a branch, a loop or a try with where the block ends: every path
+     * to what follows one in the block runs it. A control structure of the
+     * alternative syntax holds statements no brace delimits: none of the
+     * blocks in it marks anything, as the token reading counts them; nor
+     * does a switch, whose cases may be entered past an assignment.
+     */
+    private function enterBlock(Node $node): void
+    {
+        $scope = $this->scope() ?? -1;
+        if (($node instanceof If_ || $node instanceof For_ || $node instanceof Foreach_ || $node instanceof While_ || $node instanceof Switch_ || $node instanceof Declare_)
+            && $this->writtenAlternatively($node)) {
+            $node->setAttribute(self::ALTERNATIVE, true);
+            $this->alternativeBlocks[$scope] = ($this->alternativeBlocks[$scope] ?? 0) + 1;
+
+            return;
+        }
+
+        if (0 !== ($this->alternativeBlocks[$scope] ?? 0) || !($node instanceof If_ || $node instanceof ElseIf_ || $node instanceof Else_ || $node instanceof For_
+            || $node instanceof Foreach_ || $node instanceof While_ || $node instanceof Do_ || $node instanceof TryCatch || $node instanceof Catch_
+            || $node instanceof Finally_ || $node instanceof Block || $node instanceof Declare_)) {
+            return;
+        }
+
+        $statements = $node->stmts ?? [];
+        $last = $statements[\count($statements) - 1] ?? null;
+        $brace = null === $last ? null : $this->significantAt($last->getEndFilePos() + 1, '');
+        if (null === $brace || '}' !== ($this->content[$brace] ?? '')) {
+            return;
+        }
+
+        foreach ($statements as $statement) {
+            if ($statement instanceof Expression && $statement->expr instanceof Assign) {
+                $statement->expr->setAttribute(self::BLOCK_END, $brace);
+            }
+        }
+    }
+
+    /**
+     * Whether a ":" opens the body of the control structure, after its
+     * head; so it reads where the text is not known.
+     */
+    private function writtenAlternatively(If_|For_|Foreach_|While_|Switch_|Declare_ $node): bool
+    {
+        $head = match (true) {
+            $node instanceof Foreach_ => $node->valueVar,
+            $node instanceof Declare_ => $node->declares[\count($node->declares) - 1] ?? null,
+            $node instanceof For_ => [...$node->init, ...$node->cond, ...$node->loop][\count($node->init) + \count($node->cond) + \count($node->loop) - 1] ?? null,
+            default => $node->cond,
+        };
+        // "for (;;)" holds no expression: its head is read from its keyword.
+        $colon = null === $head ? $this->significantAt($node->getStartFilePos() + 3, '(;)') : $this->significantAt($head->getEndFilePos() + 1, ');');
+
+        return null === $colon || ':' === $this->content[$colon];
+    }
+
+    /**
+     * Where the first character from $from stands that is no white space,
+     * no comment and none of $skipped; null at the end of the text.
+     */
+    private function significantAt(int $from, string $skipped): ?int
+    {
+        $content = $this->content;
+        $length = \strlen($content);
+        for ($at = $from; $at < $length; $at++) {
+            $character = $content[$at];
+            if (ctype_space($character) || str_contains($skipped, $character)) {
+                continue;
+            }
+
+            $next = $content[$at + 1] ?? '';
+            if ('/' === $character && '*' === $next) {
+                $close = strpos($content, '*/', $at + 2);
+                $at = false === $close ? $length : $close + 1;
+            } elseif (('/' === $character && '/' === $next) || ('#' === $character && '[' !== $next)) {
+                $newline = strpos($content, "\n", $at);
+                $at = false === $newline ? $length : $newline;
+            } else {
+                return $at;
+            }
+        }
+
+        return null;
+    }
+
     private function declareClassConstants(ClassConst $constants): void
     {
         $class = $this->classKey();
@@ -899,6 +1013,7 @@ final class AstValueCollector extends NodeVisitorAbstract
             $scope = $target->getAttribute(self::SCOPE);
             if (\is_int($scope)) {
                 $runsAt = $assign->getAttribute(self::RUNS_AT);
+                $blockEnd = $assign->getAttribute(self::BLOCK_END);
                 $this->values->assign(
                     $scope,
                     $target->name,
@@ -906,6 +1021,7 @@ final class AstValueCollector extends NodeVisitorAbstract
                     \is_int($runsAt) ? $runsAt : $target->getStartFilePos(),
                     \is_int($runsAt) ? $runsAt : $assign->getEndFilePos(),
                     true === $assign->getAttribute(self::CERTAIN),
+                    \is_int($blockEnd) ? $blockEnd : null,
                 );
             }
 

@@ -132,9 +132,12 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     same way and is not reported.
   - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
     written, with one finding for each function of those calls that looks for every match. Through a variable, a call
-    runs in its loop the value of the latest assignment before it, a statement in no branch and no loop that no later
-    assignment reaches through a loop: `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`.
-    Where an assignment in a branch or a loop may stand between, the call names no loop.
+    runs in its loop the value of the latest assignment before it when that one runs first on every path to the call:
+    a statement of the body, or of the block of braces the call stands in, that no later assignment reaches through a
+    loop the block holds. `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`. The head of a
+    `foreach` over literals gives each of them to a call in its body the body does not write it in first, and a
+    composition joins what each variable holds where it is read. Where an assignment in a branch or a loop of its own
+    may stand between, in a `switch` or in a block of the alternative syntax, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 

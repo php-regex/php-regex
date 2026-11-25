@@ -228,11 +228,92 @@ final class EveryMatchCallTest extends TestCase
             'loops' => ['preg_split'],
             'expected' => [["\n", 'preg_split', []], ["\r\n", 'preg_split', []]],
         ];
-        // The head of a loop assigns the variable at each turn.
+        // The head of a foreach over literals assigns the variable before
+        // the body at each turn: each value runs in the loop.
         yield 'a variable the head of a foreach gives each literal' => [
             'code' => "function f(\$s) { foreach (['/p/', '/q/'] as \$p) { preg_match_all(\$p, \$s); } }",
             'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', 'preg_match_all', []]],
+        ];
+        yield 'a variable the body of a foreach gives another literal before the read' => [
+            'code' => "function f(\$s) { foreach (['/p/'] as \$p) { \$p = '/q/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        yield 'a variable the head of a foreach gives, read after the loop' => [
+            'code' => "function f(\$s) { foreach (['/p/'] as \$p) { } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [],
+        ];
+        // An assignment before the read in the block that holds it runs
+        // before the read, whatever loop or branch holds the block.
+        yield 'an assignment in a loop body before the read' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in an if body before the read' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a loop body before a read in a branch of it' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; if (\$c) { preg_match_all(\$p, \$s); } } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a loop body the body replaces after the read' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); \$p = '/q/'; } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, another behind a condition before the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; \$c && \$p = '/q/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
             'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, another in a nested branch before the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; if (\$c) { \$p = '/q/'; } preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, read after the loop' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) { \$p = '/p/'; } preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment in a loop body, read in a loop inside it that writes after the read' => [
+            'code' => "function f(\$s, \$l, \$c) { foreach (\$l as \$x) { \$p = '/p/'; while (\$c) { preg_match_all(\$p, \$s); \$p = '/q/'; } } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []]],
+        ];
+        yield 'an assignment in a loop body, comments around its braces' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) // :\n # :\n { \$p = '/p/'; preg_match_all(\$p, \$s); /* } */ // }\n # }\n } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an assignment in a for loop of the alternative syntax with an empty head' => [
+            'code' => "function f(\$s) { for (;;) /* { */ : \$p = '/p/'; preg_match_all(\$p, \$s); endfor; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment as the unbraced body that ends the file' => [
+            'code' => "\$q = '/q/';\npreg_match(\$q, \$s);\nif (\$s) \$p = '/p/';",
+            'loops' => [],
+            'expected' => [['/q/', null, []]],
+        ];
+        // A case of a switch may be entered past the assignment, and a
+        // block of the alternative syntax is not told apart by both
+        // readings: neither says.
+        yield 'an assignment in a case before the read' => [
+            'code' => "function f(\$s, \$c) { switch (\$c) { case 1: \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'an assignment in a block of the alternative syntax before the read' => [
+            'code' => "function f(\$s, \$c) { if (\$c): \$p = '/p/'; preg_match_all(\$p, \$s); endif; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []]],
         ];
         yield 'a variable a goto may come back to' => [
             'code' => "function f(\$s) { \$p = '/p/'; a: preg_match_all(\$p, \$s); goto a; }",
@@ -249,10 +330,27 @@ final class EveryMatchCallTest extends TestCase
             'loops' => ['preg_match_all'],
             'expected' => [],
         ];
+        // A composition reads each variable it joins where it stands, as
+        // the latest assignment before it gives it.
         yield 'a variable composed with another one' => [
             'code' => "function f(\$s) { \$x = 'p'; \$p = '/'.\$x.'/'; preg_match(\$p, \$s); preg_match_all(\$p, \$s); }",
             'loops' => ['preg_match_all'],
-            'expected' => [['/p/', null, []]],
+            'expected' => [['/p/', null, ['preg_match_all']]],
+        ];
+        yield 'a composition in the argument of a variable given another value later' => [
+            'code' => "function f(\$s) { \$x = 'p'; preg_match_all('/'.\$x.'/', \$s); \$x = 'q'; }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a variable choosing between another one and a literal' => [
+            'code' => "function f(\$s, \$c) { \$q = '/p/'; \$p = \$c ? \$q : '/r/'; preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', 'preg_match_all', []], ['/r/', 'preg_match_all', []]],
+        ];
+        yield 'a variable choosing between another one a branch may change and a literal' => [
+            'code' => "function f(\$s, \$c) { \$q = '/p/'; if (\$c) { \$q = '/q/'; } \$p = \$c ? \$q : '/r/'; preg_match_all(\$p, \$s); }",
+            'loops' => ['preg_match_all'],
+            'expected' => [['/p/', null, []], ['/q/', null, []], ['/r/', null, []]],
         ];
         yield 'a variable holding a list of another one' => [
             'code' => "function f(\$s) { \$x = '/p/'; \$l = [\$x]; preg_match(\$x, \$s); preg_replace(\$l, '', \$s); }",

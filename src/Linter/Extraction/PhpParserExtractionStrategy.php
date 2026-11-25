@@ -224,7 +224,7 @@ final class PhpParserExtractionStrategy implements ArgumentAwareInterface, Extra
             }
 
             if (null === $collector) {
-                $collector = new AstValueCollector($this->patternArguments(...));
+                $collector = new AstValueCollector($this->patternArguments(...), $content);
                 // Tokenized when a variable of the file level is read, and
                 // only then.
                 $collector->values()->useFileLevel(new FileLevelCode($content));

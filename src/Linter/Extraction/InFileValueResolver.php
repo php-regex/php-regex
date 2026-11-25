@@ -385,6 +385,13 @@ final class InFileValueResolver
     private array $certain = [];
 
     /**
+     * @var array<int, array<string, array<int, int>>> scope => variable => where the block ends that the
+     *                                                 assignments, by their rank, stand in as statements: a read
+     *                                                 in it after one runs it first
+     */
+    private array $blockEnds = [];
+
+    /**
      * @var array<int, array<string, array{list<int>, list<int>}>> scope => variable => where those assignments
      *                                                             are written and where they end, in order
      */
@@ -512,10 +519,10 @@ final class InFileValueResolver
     private array $variablesRead = [];
 
     /**
-     * @var array<string, array<string, true>> "scope|name|rank|suffix" => the literals the value of that
-     *                                         assignment gives, "file\0offset\0pattern"
+     * @var array<string, array<string, true>> "value|suffix" => the literals a call reads through the value,
+     *                                         "file\0offset\0pattern"
      */
-    private array $assignedLiterals = [];
+    private array $literalsGiven = [];
 
     /**
      * @var array<string, array<int, array<string, array<string, true>>>> file ("" for this one) => offset =>
@@ -770,16 +777,24 @@ final class InFileValueResolver
     }
 
     /**
-     * @param int      $at      where the assignment is written
-     * @param int|null $end     where its value ends; null when it is not known, which reads as where it is
-     *                          written
-     * @param bool     $certain whether the assignment stands as a statement of the function body itself, or of
-     *                          the file, in no branch and no loop: every path to what follows it runs it
+     * @param int      $at       where the assignment is written
+     * @param int|null $end      where its value ends; null when it is not known, which reads as where it is
+     *                           written
+     * @param bool     $certain  whether the assignment stands as a statement of the function body itself, or of
+     *                           the file, in no branch and no loop: every path to what follows it runs it
+     * @param int|null $blockEnd where the block ends that the assignment stands in as a statement, a block of
+     *                           braces that is no switch: every path to what follows it in the block runs it;
+     *                           null when it stands in none
      */
-    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false): void
+    public function assign(int $scope, string $name, ValueExpr $value, int $at, ?int $end = null, bool $certain = false, ?int $blockEnd = null): void
     {
+        $rank = \count($this->assignments[$scope][$name] ?? []);
         if ($certain) {
-            $this->certain[$scope][$name][\count($this->assignments[$scope][$name] ?? [])] = true;
+            $this->certain[$scope][$name][$rank] = true;
+        }
+
+        if (null !== $blockEnd) {
+            $this->blockEnds[$scope][$name][$rank] = $blockEnd;
         }
 
         $this->assignments[$scope][$name][] = [$value, $at, max($at, $end ?? $at)];
@@ -946,7 +961,7 @@ final class InFileValueResolver
      *
      * A call that looks for every match runs in its loop the patterns it
      * reads where it stands, "loops" says which: through a variable, only
-     * the literals of the assignment it reads (see readAssignment()).
+     * the literals of the assignment it reads (see literalsOf()).
      *
      * @return list<array{pattern: string, offset: int, line: int, location: string|null, file: string|null, column: int|null, guard: TargetConstraint|null, variant: string|null, loops: bool}> each with the file, the column and the guard of its literal when it is another file's, and what it says of a constant of PHP whose value depends on the system
      */
@@ -955,7 +970,7 @@ final class InFileValueResolver
         // The literals the call runs in its loop over every match: all of
         // them, but through a variable, whose value is the one the call
         // reads where it stands.
-        $looped = null === $function->everyMatch || ValueExpr::VARIABLE !== $expr->kind ? null : $this->literalsReadAt($expr, $function, 0) ?? [];
+        $looped = null === $function->everyMatch || !self::readsAVariable($expr) ? null : $this->literalsOf($expr, $function, 0) ?? [];
 
         // A variable read again the same way gives the patterns its first
         // read reported: none is new, but the call runs those it reads in
@@ -1085,54 +1100,48 @@ final class InFileValueResolver
     }
 
     /**
-     * The literals a read of a variable reaches where it stands, when
-     * straight-line code says which assignment it reads, as
-     * "file\0offset\0pattern": the latest one written before the read,
-     * which must be a statement of the body itself, or of the file, in no
-     * branch and no loop, that no later assignment reaches through a loop
-     * or a goto, of a variable nothing writes out of sight. Its value is a
-     * literal, a constant, a composition of them, or another variable read
-     * the same way there. Null when the code does not say: an assignment
-     * in a branch or a loop may stand between, or the value names a
-     * property or a variable composed with something else.
+     * The literals a value gives where it stands, as
+     * "file\0offset\0pattern", when the code says which: a variable as
+     * literalsReadAt() reads it, a choice as each of its alternatives,
+     * and any other value whole when it reads no variable but through a
+     * composition, which joins what each one holds where it is read
+     * (composedValues()). Null when the code does not say.
      *
      * @return array<string, true>|null
      */
-    private function literalsReadAt(ValueExpr $variable, PatternFunction $function, int $depth): ?array
+    private function literalsOf(ValueExpr $value, PatternFunction $function, int $depth): ?array
     {
-        $scope = $variable->scope;
-        $name = $variable->value;
-        $read = $variable->offset;
-        if (null === $scope || $read < 0 || $depth > self::MAX_DEPTH || isset($this->opaqueScopes[$scope]) || isset($this->jumpingScopes[$scope])
-            || isset($this->targets[$scope][$name]) || isset($this->bailed[$scope][$name]) || isset($this->passedAt[$scope][$name])
-            || (self::FILE === $scope && $this->writtenOutOfSight())) {
-            return null;
-        }
-
-        // None written before the read says nothing of it there; nor does
-        // the assignment the read stands in, or one a branch or a loop
-        // holds, nor one a later turn of a loop may replace before the read.
-        $assignments = $this->assignments[$scope][$name] ?? [];
-        [$starts, , $order] = [] === $assignments ? [[], [], []] : $this->assignmentPlaces[$scope][$name] ??= self::inOrder($assignments);
-        $started = self::before($starts, $read);
-        $latest = $order[$started - 1] ?? -1;
-        $assignment = $assignments[$latest] ?? null;
-        $loop = $this->outerLoop($scope, $read);
-        if (null === $assignment || $assignment[2] >= $read || !isset($this->certain[$scope][$name][$latest]) || (null !== $loop && ($starts[$started] ?? \PHP_INT_MAX) <= $loop[1])) {
-            return null;
-        }
-
-        $value = $assignment[0];
         if (ValueExpr::VARIABLE === $value->kind) {
-            return $this->literalsReadAt($value, $function, $depth + 1);
+            return $this->literalsReadAt($value, $function, $depth);
         }
 
-        if (self::namesAName($value)) {
-            return null;
+        if (ValueExpr::SET === $value->kind) {
+            $literals = [];
+            foreach ($value->alternatives as $alternative) {
+                $given = $this->literalsOf($alternative, $function, $depth + 1);
+                if (null === $given) {
+                    return null;
+                }
+
+                $literals += $given;
+            }
+
+            return $literals;
         }
 
-        $key = $scope.'|'.$name.'|'.$latest.'|'.$function->patternSuffix;
-        if (!isset($this->assignedLiterals[$key])) {
+        return self::readsAVariable($value) ? null : $this->literalsIn($value, $function);
+    }
+
+    /**
+     * The literals the call reads through the value, as
+     * "file\0offset\0pattern".
+     *
+     * @return array<string, true>
+     */
+    private function literalsIn(ValueExpr $value, PatternFunction $function): array
+    {
+        $key = spl_object_id($value).'|'.$function->patternSuffix;
+        if (!isset($this->literalsGiven[$key])) {
             $literals = [];
             foreach ($this->arguments($value, $function) as $alternatives) {
                 foreach ($alternatives as [$literal]) {
@@ -1142,30 +1151,92 @@ final class InFileValueResolver
                 }
             }
 
-            $this->assignedLiterals[$key] = $literals;
+            $this->literalsGiven[$key] = $literals;
         }
 
-        return $this->assignedLiterals[$key];
+        return $this->literalsGiven[$key];
     }
 
     /**
-     * Whether the value names a variable or a property anywhere in it,
-     * whose value another place gives.
+     * The literals a read of a variable reaches where it stands, when the
+     * code says which assignment it reads (see literalsOf()), of a
+     * variable nothing writes out of sight and in a body no goto runs
+     * again. Inside a foreach whose head assigns it, before the body
+     * writes it, those of the head, when it walks no variable. Otherwise
+     * the latest assignment written before the read, which runs first on
+     * every path to it: a statement of the body itself, or of the block
+     * of braces the read stands in, that no later assignment reaches
+     * through a loop the block holds. Null when the code does not say: an
+     * assignment in a branch or a loop of its own may stand between, in a
+     * switch, or a block of the alternative syntax.
+     *
+     * @return array<string, true>|null
      */
-    private static function namesAName(ValueExpr $value): bool
+    private function literalsReadAt(ValueExpr $variable, PatternFunction $function, int $depth): ?array
     {
-        if (ValueExpr::VARIABLE === $value->kind || ValueExpr::PROPERTY === $value->kind) {
+        $scope = $variable->scope;
+        $name = $variable->value;
+        $read = $variable->offset;
+        if (null === $scope || $read < 0 || $depth > self::MAX_DEPTH || isset($this->opaqueScopes[$scope]) || isset($this->jumpingScopes[$scope])
+            || isset($this->bailed[$scope][$name]) || isset($this->passedAt[$scope][$name]) || (self::FILE === $scope && $this->writtenOutOfSight())) {
+            return null;
+        }
+
+        // The head of a foreach gives the read what it walks, each value at
+        // a turn: targetValues() keeps none where the loop writes it again.
+        if (isset($this->targets[$scope][$name])) {
+            $head = $this->targets[$scope][$name][$this->loopRank($scope, $name, $read)] ?? null;
+
+            return null === $head || $head[3] < $read || self::readsAVariable($head[0]) ? null : $this->literalsIn($variable, $function);
+        }
+
+        // None written before the read says nothing of it there; nor does
+        // the assignment the read stands in, or one a branch or a loop of
+        // its own holds, nor one a later turn of a loop may replace.
+        $assignments = $this->assignments[$scope][$name] ?? [];
+        [$starts, , $order] = [] === $assignments ? [[], [], []] : $this->assignmentPlaces[$scope][$name] ??= self::inOrder($assignments);
+        $started = self::before($starts, $read);
+        $latest = $order[$started - 1] ?? -1;
+        $assignment = $assignments[$latest] ?? null;
+        $blockEnd = isset($this->certain[$scope][$name][$latest]) ? \PHP_INT_MAX : $this->blockEnds[$scope][$name][$latest] ?? -1;
+        if (null === $assignment || $assignment[2] >= $read || $blockEnd < $read) {
+            return null;
+        }
+
+        // A loop that holds the read and not the assignment runs the read
+        // again after what it writes later.
+        $replaced = $starts[$started] ?? \PHP_INT_MAX;
+        foreach ($this->loopsHolding($scope, $read) as [$start, $end]) {
+            if ($start > $assignment[1] && $replaced <= $end) {
+                return null;
+            }
+        }
+
+        return $this->literalsOf($assignment[0], $function, $depth + 1);
+    }
+
+    /**
+     * Whether the value reads a variable anywhere but in a composition,
+     * which joins what the variable holds where it is read.
+     */
+    private static function readsAVariable(ValueExpr $value): bool
+    {
+        if (ValueExpr::VARIABLE === $value->kind) {
             return true;
         }
 
+        if (ValueExpr::CONCAT === $value->kind) {
+            return false;
+        }
+
         foreach ([...$value->parts, ...$value->alternatives] as $part) {
-            if (self::namesAName($part)) {
+            if (self::readsAVariable($part)) {
                 return true;
             }
         }
 
         foreach ($value->items as [$key, $item]) {
-            if ((null !== $key && self::namesAName($key)) || self::namesAName($item)) {
+            if ((null !== $key && self::readsAVariable($key)) || self::readsAVariable($item)) {
                 return true;
             }
         }
