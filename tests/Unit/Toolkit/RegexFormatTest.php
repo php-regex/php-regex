@@ -16,10 +16,10 @@ namespace PHPRegex\Tests\Unit\Toolkit;
 use PHPRegex\Parser\Cache\NullCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\FormatResult;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -359,7 +359,7 @@ final class RegexFormatTest extends TestCase
         $result = $regex->format($pattern);
 
         $this->assertTrue($result->changed);
-        $this->assertGreaterThan(RegexParser::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
+        $this->assertGreaterThan(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
         // PCRE refuses to compile a pattern this large, so only the library
         // reads it: the limit under test is the library's own.
         $this->assertFalse(@preg_match($pattern, ''), 'PCRE refuses the pattern as too large.');

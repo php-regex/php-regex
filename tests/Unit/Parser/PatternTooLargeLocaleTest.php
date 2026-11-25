@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Parser;
 
 use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\ErrorCode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -114,6 +115,6 @@ final class PatternTooLargeLocaleTest extends TestCase
         $this->assertTrue($latin1->validate($pattern)->isValid);
         $this->assertSame(ErrorCode::PatternTooLarge, $c->validate($pattern)->errorCode);
         $this->assertTrue($latin1->validate($pattern)->isValid);
-        $this->assertNotSame(RegexParser::cacheSeed($pattern, $latin1->target(), RegexParser::DEFAULT_MAX_RECURSION_DEPTH), RegexParser::cacheSeed($pattern, $c->target(), RegexParser::DEFAULT_MAX_RECURSION_DEPTH));
+        $this->assertNotSame(RegexParser::cacheSeed($pattern, $latin1->target(), ParserOptions::DEFAULT_MAX_RECURSION_DEPTH), RegexParser::cacheSeed($pattern, $c->target(), ParserOptions::DEFAULT_MAX_RECURSION_DEPTH));
     }
 }

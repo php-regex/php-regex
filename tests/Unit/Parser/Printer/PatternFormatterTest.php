@@ -27,11 +27,11 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\FormatRefusal;
 use PHPRegex\Parser\Printer\FormatResult;
 use PHPRegex\Parser\Printer\PatternFormatter;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\CpuClock;
 use PHPRegex\Tests\Support\PatternEquivalence;
 use PHPRegex\Tests\Support\PcreGates;
@@ -300,7 +300,7 @@ final class PatternFormatterTest extends TestCase
 
         $result = (new PatternFormatter(1))->format($this->parse($pattern));
 
-        $this->assertLessThan(RegexParser::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
+        $this->assertLessThan(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
         $this->assertSameMeaning($pattern, $result->pattern);
     }
 
@@ -1465,7 +1465,7 @@ final class PatternFormatterTest extends TestCase
 
         $this->assertNull($result->refusal);
         $this->assertTrue($result->changed);
-        $this->assertGreaterThan(RegexParser::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
+        $this->assertGreaterThan(ParserOptions::DEFAULT_MAX_PATTERN_LENGTH, \strlen($result->pattern));
         $this->assertSame(20002, substr_count($result->pattern, "\n") + 1);
         $this->assertSame(1, preg_match($result->pattern, $subject));
         $this->assertSame(0, preg_match($result->pattern, str_repeat('a', 20000)));

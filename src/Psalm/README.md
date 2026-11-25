@@ -304,7 +304,7 @@ The plugin reads a call only when it can tell what the pattern is:
 * a pattern the PHP running Psalm does not compile, or the target PHP refuses,
   is not typed (the second is reported).
 * a pattern past the library's length limit
-  (`RegexParser::DEFAULT_MAX_PATTERN_LENGTH`) is neither typed nor reported:
+  (`ParserOptions::DEFAULT_MAX_PATTERN_LENGTH`) is neither typed nor reported:
   PCRE may accept it.
 * a shape of more keys than Psalm's `maxShapedArraySize` is left to Psalm.
 * `preg_match_all()` returns `false` and leaves `[]` for an offset past the

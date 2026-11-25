@@ -44,10 +44,10 @@ use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\NodeDumper;
 use PHPRegex\Parser\Printer\PatternPrinter;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\ExtendedClassParser;
 use PHPRegex\Parser\Syntax\ExtendedClassReader;
 use PHPRegex\Parser\Syntax\ParseState;
@@ -227,8 +227,8 @@ final class ExtendedCharClassTest extends TestCase
         $parser = new ExtendedClassParser(
             $state,
             '',
-            RegexParser::DEFAULT_MAX_RECURSION_DEPTH,
-            static fn (array $tokens): NodeInterface => (new TokenParser(RegexParser::DEFAULT_MAX_RECURSION_DEPTH, $target))->parse(new TokenStream($tokens, $pattern), '', '/', \strlen($pattern))->pattern,
+            ParserOptions::DEFAULT_MAX_RECURSION_DEPTH,
+            static fn (array $tokens): NodeInterface => (new TokenParser(ParserOptions::DEFAULT_MAX_RECURSION_DEPTH, $target))->parse(new TokenStream($tokens, $pattern), '', '/', \strlen($pattern))->pattern,
             static function (): void {},
         );
         $members = [new Token(TokenType::GroupClose, ')', 4), new Token(TokenType::CharType, 'N', 5, 2)];
