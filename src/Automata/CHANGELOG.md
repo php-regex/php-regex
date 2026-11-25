@@ -61,30 +61,36 @@ CHANGELOG
    `(?&n)`, `(?P>n)` or `\g<n>`, as the body of the group run where the
    call stands: the engine backtracks into it, the groups inside it are
    given back the values they held before it, and it keeps the options the
-   group was written under. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
-   proven to write the same `$matches`, while `/(a++b?)c(?1)a/` stays
-   refused, as the call gives an `a` back to what follows it. A call that
-   may run its own group again, `(?R)` included, and a call that returns
-   groups, `(?1(2))`, stay refused, with a message of their own.
+   group was written under. `/(a|ab)(?1)c/` and `/(a|ab)(?:a|ab)c/` are
+   proven to write the same `$matches`. A call that may run its own group
+   again, `(?R)` included, and a call that returns groups, `(?1(2))`, stay
+   refused, with a message of their own.
+ * `matchEquivalent()` refuses a pattern that holds a possessive quantifier
+   inside a group a call runs, a group a DEFINE holds included, or anywhere
+   in a pattern that calls itself whole, and `runsOfEveryCall()` names no
+   run for it: PCRE2's JIT, which PHP runs by default, misses matches of
+   such a pattern that its interpreter finds, and the match solver reads
+   the interpreter. With the JIT, `/(a++)c(?1)d/` finds no match in
+   `acacad` from PCRE2 10.34 to 10.49, where `/(a+)c(?1)d/` and the
+   interpreter match `acad`. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
+   refused too, though no subject was found on which they differ.
  * `matchEquivalent()` runs a group a `(?(DEFINE)...)` holds where a call
    of it stands, under the options in force where the DEFINE stands, not
-   where the call does: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` and
-   `/(?&n)c(?(DEFINE)(?<n>a++b?))/` are proven to write the same
+   where the call does: `/(?&n)c(?(DEFINE)(?<n>a|ab))/` and
+   `/(?:a|ab)c(?(DEFINE)(?<n>a|ab))/` are proven to write the same
    `$matches`, and `/(?i:(?(DEFINE)(?<n>a)))(?&n)/` is told apart from
    `/(?i:(?(DEFINE)(?<n>a)))a/` on `A`. Such a group takes its number and
    its name, as a group repeated no time does: `/(?(DEFINE)(?<n>x))(a)/`
    and `/(?(DEFINE)(?<m>x))(a)/`, proven to write the same `$matches`, are
    told apart on `a`.
  * `matchEquivalent()` proves two patterns that differ only in possessive
-   quantifiers where a call may run its own group again, `(?R)` included,
-   by reading through every call: a call that runs its group again leads
-   back to where the group starts, and the end of the group to every place
-   a call of it returns to, however deep the calls run. Where nothing that
-   may follow a possessive quantifier there starts as its body does, it
-   gives nothing back: `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` and
-   `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/` are proven to write the same
-   `$matches`, while `/(x(?1)?ca++)(?1)a/` stays refused, as the run of the
-   group the second call makes gives an `a` back to what follows it. Only
+   quantifiers outside every group a call runs, where a call may run its
+   own group again, by reading through every call: a call that runs its
+   group again leads back to where the group starts, and the end of the
+   group to every place a call of it returns to, however deep the calls
+   run. Where nothing that may follow a possessive quantifier starts as its
+   body does, it gives nothing back: `/a+b(x(?1)?y)/` and
+   `/a++b(x(?1)?y)/` are proven to write the same `$matches`. Only
    quantifiers over one character are read so: a possessive quantifier
    over a group, capturing or not, keeps a frame of the JIT for each run of
    the call around it, and `/x(?R)?(?:ab)++c/` runs out of the JIT stack

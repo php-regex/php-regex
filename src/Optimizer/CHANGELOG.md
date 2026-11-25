@@ -43,34 +43,29 @@ CHANGELOG
    and `\Z` read as the newline they may stand before, so `/^(\d+\s*)$/`
    still becomes `/^(\d++\s*)$/`, and `/[0-9]+\s*$/` now becomes
    `/\d++\s*$/`.
- * The possessive rewrite reads what follows a group at every place it
-   runs: where it stands, and after each call that runs it, `(?1)`,
-   `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)`, `\g<n>`, or `(?R)` for the whole
-   pattern, which gives back to what follows the call.
-   `/(?&n)a(?(DEFINE)(?<n>a+b?))/` is no longer offered `a++b?`, which the
-   check of the result refused before the rewrite was made a second time
-   without the possessive step. A group in a DEFINE runs only where it is
-   called: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
-   `/(?(DEFINE)(?<n>a++b?))a/`. A group called inside a script run stays
-   greedy, as the check of the run reads what the call matched.
+ * The possessive rewrite leaves every repetition greedy inside a group a
+   call runs, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, a
+   group a DEFINE holds included, and everywhere in a pattern that calls
+   itself whole, `(?R)`, whatever follows it: PCRE2's JIT, which PHP runs
+   by default, misses matches of a possessive quantifier there that its
+   interpreter finds. `/(a++)c(?1)d/` finds no match in `acacad` with the
+   JIT, from PCRE2 10.34 to 10.49, where `/(a+)c(?1)d/` matches `acad`, so
+   `/(a+)c(?1)d/`, `/(a+b?)c(?1)d/`, `/(x(?1)?ca+b?)c/` and
+   `/(?&n)c(?(DEFINE)(?<n>a+b?))/` stay as written. A group in a DEFINE
+   that no call runs runs nowhere: `/(?(DEFINE)(?<n>a+b?))a/` now becomes
+   `/(?(DEFINE)(?<n>a++b?))a/`. A repetition outside every group a call
+   runs reads what follows it as before: `/a+;(x)(?1)/` becomes
+   `/a++;(x)(?1)/`.
  * The check of the result runs the body of a group where each call of it
-   stands, and proves the possessive the rewrite offers there:
-   `/(a+b?)c(?1)d/` now becomes `/(a++b?)c(?1)d/` with the first rewrite,
-   where the check refused it and the rewrite made a second time without
-   the possessive step shipped the pattern unchanged. A group a DEFINE
-   holds runs there too, under the options in force where the DEFINE
-   stands: `/(?&n)c(?(DEFINE)(?<n>a+b?))/` now becomes
-   `/(?&n)c(?(DEFINE)(?<n>a++b?))/`, and `/(?(DEFINE)(?<n>a|b))x(?&n)/`
-   becomes `/(?(DEFINE)(?<n>[ab]))x(?&n)/`, a rewrite the check left
-   unproven. The calls the check proves a rewrite in read what a DEFINE
-   holds: `^` in a group it holds asks for the search past the start of
-   the subject. A group that calls itself and a call of the whole pattern
-   are read through every call, what may follow the group after each
-   return included: `/(x(?1)?ca+b?)c/` now becomes `/(x(?1)?ca++b?)c/`,
-   and `/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/` gets `ca++b?`, where the
-   check refused them. A group repeated there stays greedy:
-   `/x(?R)?(?:ab)++c/` runs out of the JIT stack deep in the calls where
-   `/x(?R)?(?:ab)+c/` matches.
+   stands, a group a DEFINE holds included, under the options in force
+   where the DEFINE stands: `/(?(DEFINE)(?<n>a|b))x(?&n)/` becomes
+   `/(?(DEFINE)(?<n>[ab]))x(?&n)/`, a rewrite the check left unproven. The
+   calls the check proves a rewrite in read what a DEFINE holds: `^` in a
+   group it holds asks for the search past the start of the subject. A
+   group that calls itself is read through every call where the rewrite
+   changes a quantifier outside every group a call runs:
+   `/a+b(x(?1)?y)/` now becomes `/a++b(x(?1)?y)/`, where the check
+   refused it.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
    rewrites ship: the solver proves no possessive in a pattern that holds a
@@ -82,10 +77,8 @@ CHANGELOG
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
  * The possessive rewrite reads the flags in force where each item stands,
    and an option setting no longer keeps it out of the whole pattern:
-   `/(?&n)(?i)c(?(DEFINE)(?<n>a+b?))/` now becomes
-   `/(?&n)(?i)c(?(DEFINE)(?<n>a++b?))/`, and
-   `/(?i:(?(DEFINE)(?<n>A+b?)))(?&n)c/` becomes
-   `/(?i:(?(DEFINE)(?<n>A++b?)))(?&n)c/`, while `/(?i)a+b?A/` stays greedy.
+   `/(?i)a+b?c/` now becomes `/(?i)a++b?c/`, and `/(?i:a+b?)c/` becomes
+   `/(?i:a++b?)c/`, while `/(?i)a+b?A/` stays greedy.
    An option setting that names `U`, under which a plain quantifier is
    lazy, and a non-atomic lookaround, past whose end the engine reads from
    where it starts, still keep every quantifier of the pattern as written.
@@ -93,8 +86,7 @@ CHANGELOG
    sequence, or stands alone in its group, its branch or the pattern: what
    follows the group at every place it runs, the alternation or the
    conditional, up to the end of the pattern. `/(a+)c/` now becomes
-   `/(a++)c/`, `/(?&n)x(?(DEFINE)(?<n>[0-9]+))/` becomes
-   `/(?&n)x(?(DEFINE)(?<n>\d++))/`, and `/x[0-9]+/` becomes `/x\d++/`,
+   `/(a++)c/`, and `/x[0-9]+/` becomes `/x\d++/`,
    while `/(a+)a/`, `/(?:a+){2}/` and `/(a+)\1/` stay greedy. A repeated
    group that ends its sequence stays greedy, as it gives back whole runs.
    The next run of a group that may run again follows the repetition that

@@ -105,6 +105,20 @@ possessive one may spend more of it without the JIT:
 `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
 `/(*LIMIT_MATCH=4)c(?:ab)++e/` gives up. A repeated character or class spends
 no more, and is still made possessive there.
+`/\d+x(?!y)/`. Every repetition inside a group a call runs, a group a DEFINE
+holds included, and everywhere in a pattern that calls itself whole, stays
+greedy, whatever follows it: PCRE2's JIT, which PHP runs by default, misses
+matches of a possessive quantifier there that its interpreter finds.
+`/(a++)c(?1)d/` finds no match in `acacad` with the JIT, from PCRE2 10.34 to
+10.49, where `/(a+)c(?1)d/` matches `acad`, so `/(a+)c(?1)d/`,
+`/(a+b?)c(?1)d/` and `/(?&n)c(?(DEFINE)(?<n>a+b?))/` stay as written. A
+repetition outside every group a call runs is read as before: `/a+;(x)(?1)/`
+becomes `/a++;(x)(?1)/`. The rewrite reads the flags in force where each item
+stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays
+greedy, and an option setting that names `U` or a non-atomic lookaround keeps
+every quantifier of the pattern as written. A repetition that ends its group
+reads what follows the group up to the end of the pattern: `/(a+)c/` becomes
+`/(a++)c/`, and `/(a+)a/` stays greedy.
 
 A rewrite holds whatever locale the program runs under. Without `u`, PHP builds
 the tables of `\w`, `\s` and the POSIX classes from `LC_CTYPE` once a program
