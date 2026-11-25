@@ -32,9 +32,10 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Members of public classes that only the library calls: the parts of a
- * result or an exception the library builds, and the plumbing one service
- * hands another. They say @internal, so a minor release may change them.
+ * Members of public classes that only the library calls or reads: the
+ * parts of a result or an exception the library builds, the plumbing one
+ * service hands another, and what the lint keeps on a value it gives an
+ * extension point. They say @internal, so a minor release may change them.
  */
 final class InternalMembersTest extends TestCase
 {
@@ -48,6 +49,18 @@ final class InternalMembersTest extends TestCase
         $docComment = (string) (new \ReflectionMethod($class, $method))->getDocComment();
 
         $this->assertMatchesRegularExpression('/^\s*\*\s*@internal\b/m', $docComment, $class.'::'.$method.'()');
+    }
+
+    /**
+     * @param class-string $class
+     */
+    #[Test]
+    #[DataProvider('provideInternalProperties')]
+    public function test_a_property_only_the_library_reads_says_it_is_internal(string $class, string $property): void
+    {
+        $docComment = (string) (new \ReflectionProperty($class, $property))->getDocComment();
+
+        $this->assertMatchesRegularExpression('/^\s*\*\s*@internal\b/m', $docComment, $class.'::$'.$property);
     }
 
     /**
@@ -78,6 +91,25 @@ final class InternalMembersTest extends TestCase
         foreach ($members as $class => $methods) {
             foreach ($methods as $method) {
                 yield substr($class, (int) strrpos($class, '\\') + 1).'::'.$method => ['class' => $class, 'method' => $method];
+            }
+        }
+    }
+
+    /**
+     * @return iterable<string, array{class: class-string, property: string}>
+     */
+    public static function provideInternalProperties(): iterable
+    {
+        $members = [
+            // An extractor of your own reads $pattern, $file, $line, $column
+            // and $source; the rest is what the lint keeps of the files it
+            // reads.
+            PatternOccurrence::class => ['displayPattern', 'location', 'isIgnored', 'fileOffset', 'unread', 'parserFallback', 'ignores', 'guard', 'targets', 'argumentOffset', 'argumentLength', 'state', 'expression', 'variant', 'everyMatch', 'everyMatchElsewhere'],
+        ];
+
+        foreach ($members as $class => $properties) {
+            foreach ($properties as $property) {
+                yield substr($class, (int) strrpos($class, '\\') + 1).'::$'.$property => ['class' => $class, 'property' => $property];
             }
         }
     }

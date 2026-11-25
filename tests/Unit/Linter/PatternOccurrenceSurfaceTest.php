@@ -61,6 +61,23 @@ final class PatternOccurrenceSurfaceTest extends TestCase
         $this->assertStringNotContainsString('@internal', (string) (new \ReflectionMethod(PatternOccurrence::class, 'found'))->getDocComment());
     }
 
+    /**
+     * An extractor of your own reads five properties of an occurrence: the
+     * others are the lint's, and say so.
+     */
+    #[Test]
+    public function test_an_extractor_reads_five_properties_of_an_occurrence(): void
+    {
+        $public = [];
+        foreach ((new \ReflectionClass(PatternOccurrence::class))->getProperties(\ReflectionProperty::IS_PUBLIC) as $property) {
+            if (1 !== preg_match('/^\s*\*\s*@internal\b/m', (string) $property->getDocComment())) {
+                $public[] = $property->getName();
+            }
+        }
+
+        $this->assertSame(['pattern', 'file', 'line', 'source', 'column'], $public);
+    }
+
     #[Test]
     public function test_extractor_returns_a_list_of_occurrences(): void
     {

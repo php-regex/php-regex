@@ -189,8 +189,9 @@ Extending and implementing are covered only where the API is meant for it:
 - **Implement** `Extraction\ExtractorInterface` in `regex-linter` to read the
   patterns of calls the built-in extractors do not know, and build each
   occurrence with `PatternOccurrence::found()`. The constructor of
-  `PatternOccurrence` and its other methods are `@internal`; read an
-  occurrence through `$pattern`, `$file`, `$line`, `$column` and `$source`.
+  `PatternOccurrence`, its other methods and its other properties are
+  `@internal`; read an occurrence through `$pattern`, `$file`, `$line`,
+  `$column` and `$source`.
 
 Every other public interface (`NodeInterface`, `ConfirmationRunnerInterface`, …)
 is there to type against, not to implement. Lint rules, transpiler targets and
