@@ -29,6 +29,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
@@ -44,6 +45,7 @@ use PHPRegex\Parser\Printer\DisplayEscaper;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Detects (.|\n) anti-patterns, overlapping literal alternatives, and
@@ -128,18 +130,18 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return $issues;
         }
 
-        // Each literal branch, once, and whether it reads its letters in
-        // either case: under i, or through a group turning i on.
+        // Each literal branch, once, with the case each of its characters
+        // is read in: under i, or the options a group or a setting in the
+        // branch gives where it stands.
         $literals = [];
         $flags = $context->flagsAtEachChild($node);
         foreach ($node->alternatives as $index => $alt) {
-            $literal = $this->extractLiteralSequence($alt);
-            if (null === $literal || '' === $literal) {
+            $literal = self::literalText($alt, $flags[$index] ?? $context->activeFlags(), $context->pattern->unicodeMode);
+            if (null === $literal || '' === $literal[0]) {
                 continue;
             }
 
-            $caseless = str_contains($flags[$index] ?? '', 'i') || NodePredicates::turnsCaselessOn($alt);
-            $literals[$literal.'|'.($caseless ? 'i' : '')] = [$literal, $caseless];
+            $literals[$literal[0].'|'.$literal[1]] = $literal;
         }
 
         // Literal branches are compared by their text alone: one set of
@@ -173,7 +175,8 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // Each alternative reads the flags in effect there, with the ones an
         // earlier alternative carries into it.
         $charSets = [];
-        $caselessAt = [];
+        $flagsAt = [];
+        $leadBytes = null;
         $anyUnknown = false;
         $pastAscii = false;
         // The atoms each branch may start with, and the lookaheads before
@@ -182,14 +185,21 @@ final class OverlappingAlternationRule extends AbstractLintRule
         $guarded = false;
         foreach ($context->flagsAtEachChild($node) as $index => $flags) {
             $alternative = $node->alternatives[$index];
+            $flagsAt[] = $flags;
             $starts[$index] = self::firstAtoms($alternative);
             $guarded = $guarded || self::holdsLookahead($starts[$index][0]);
             $charSet = $context->firstChars($alternative, $flags);
+            // Under u a character past ASCII is known by the byte it starts
+            // with, as "é" is, whether written as it is or as an escape,
+            // "\x{E9}", or in a range, which the ASCII read leaves unknown.
+            if ($charSet->isUnknown() && $context->pattern->unicodeMode) {
+                $charSet = ($leadBytes ??= self::everyByteAnalyzer($context))->withFlags($flags)->firstChars($alternative);
+            }
+
             // The case the branch starts in: the flags at its first atom, a
             // "(?i:" around it or a bare "(?i)" before it included, not one
             // later in the branch, which leaves the start case-sensitive.
             $caseless = str_contains($context->flagsAt(self::firstLeaf($alternative), $alternative, $flags), 'i');
-            $caselessAt[] = $caseless;
             $folded = $caseless ? self::foldCharSet($charSet) : $charSet;
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
@@ -229,8 +239,14 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // they start with: when neither text is a prefix of the other,
         // "associative-array" and "array", an input one branch takes the
         // other never does. A branch that starts with no literal tells
-        // nothing.
-        $pair = $this->firstOverlap(array_map($this->leadingText(...), $node->alternatives), $caselessAt, $sets, $context);
+        // nothing. Each character of a text is read in the case in force
+        // where it stands.
+        $texts = $cases = [];
+        foreach ($node->alternatives as $index => $alternative) {
+            [$texts[], $cases[]] = self::leadingText($alternative, $flagsAt[$index] ?? $context->activeFlags(), $context->pattern->unicodeMode);
+        }
+
+        $pair = $this->firstOverlap($texts, $cases, $sets, $context);
 
         return null === $pair ? null : $this->makeCharsetViolation($node, $pair[0], $pair[1], $context);
     }
@@ -238,18 +254,35 @@ final class OverlappingAlternationRule extends AbstractLintRule
     /**
      * The first two branches that overlap, in the order of the
      * alternation: their first characters meet and the text of one starts
-     * the text of the other, both read in one case when either branch is
-     * caseless.
+     * the text of the other, a character meeting another in either case
+     * where either is read caselessly.
      *
-     * @param list<string>  $texts    the text each branch starts with
-     * @param list<bool>    $caseless whether each branch matches caselessly
-     * @param list<CharSet> $sets     the characters each branch can start with
+     * @param list<string>  $texts the text each branch starts with
+     * @param list<string>  $cases the case each byte of each text is read in: "i" for either case, "-" for its own
+     * @param list<CharSet> $sets  the characters each branch can start with
      *
      * @return ?array{int, int}
      */
-    private function firstOverlap(array $texts, array $caseless, array $sets, LintContext $context): ?array
+    private function firstOverlap(array $texts, array $cases, array $sets, LintContext $context): ?array
     {
-        $overlaps = new BranchOverlaps($texts, array_map(static fn (string $text): string => self::fold($text, $context), $texts), $caseless, $sets);
+        // A text read in two cases is compared character by character, and
+        // so are the others beside it.
+        $units = null;
+        foreach ($cases as $case) {
+            if (str_contains($case, 'i') && str_contains($case, '-')) {
+                $units = array_map(static fn (string $text, string $case): array => self::units($text, $case, $context), $texts, $cases);
+
+                break;
+            }
+        }
+
+        $overlaps = new BranchOverlaps(
+            $texts,
+            array_map(static fn (string $text): string => self::fold($text, $context), $texts),
+            array_map(static fn (string $case): bool => str_contains($case, 'i'), $cases),
+            $sets,
+            $units,
+        );
         $pair = $overlaps->first();
         $this->comparisons += $overlaps->compared();
 
@@ -280,35 +313,111 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The literal text a branch starts with, through the groups that only
-     * capture, up to its first item that is no literal: "callable-" for
-     * "callable-(?:string|object)", "" for "a+b".
+     * capture or set options, up to its first item that is no literal:
+     * "callable-" for "callable-(?:string|object)", "" for "a+b"; and the
+     * case each byte of it is read in, as literalText() gives them.
+     *
+     * @return array{string, string}
      */
-    private function leadingText(NodeInterface $node): string
+    private static function leadingText(NodeInterface $node, string $flags, bool $unicode): array
     {
-        while ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named], true)) {
+        while ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags], true)) {
+            $flags = FlagScope::flagsInside($node, $flags);
             $node = $node->child;
         }
 
         // A branch of one item holds one character of text at most, which
         // the other text starts with or not as it does with no text at all.
         if (!$node instanceof SequenceNode) {
-            return '';
+            return ['', ''];
         }
 
-        // The text ends where the case changes: what a "(?i:" or a bare
-        // "(?i)" puts after it takes the other case as well, and tells
-        // nothing apart.
-        $text = '';
-        foreach ($node->children as $child) {
-            $piece = $this->extractLiteralSequence($child);
-            if (null === $piece || NodePredicates::turnsCaselessOn($child)) {
+        $text = $case = '';
+        foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtChild) {
+            $piece = self::literalText($node->children[$index], $flagsAtChild, $unicode);
+            if (null === $piece) {
                 break;
             }
 
-            $text .= $piece;
+            $text .= $piece[0];
+            $case .= $piece[1];
         }
 
-        return $text;
+        return [$text, $case];
+    }
+
+    /**
+     * The literal text a node matches, and the case each byte of it is read
+     * in, "i" for either case and "-" for its own, from the options in force
+     * where it stands: under i, "(?-i)Ax" reads "Ax" in its own case and
+     * "a(?-i)B" its "a" alone in either. An escape that names one character,
+     * "\x41", "\x{E9}", "\101", "\o{101}", "\N{U+E9}" or "\cA", is the text
+     * of that character, as the engine reads it. Null for a node that is no
+     * literal text.
+     *
+     * @return ?array{string, string}
+     */
+    private static function literalText(NodeInterface $node, string $flags, bool $unicode): ?array
+    {
+        $case = str_contains($flags, 'i') ? 'i' : '-';
+        if ($node instanceof LiteralNode) {
+            return [$node->value, str_repeat($case, \strlen($node->value))];
+        }
+
+        if ($node instanceof CharLiteralNode || $node instanceof ControlCharNode) {
+            $character = $unicode ? mb_chr($node->codePoint, 'UTF-8') : ($node->codePoint <= 0xFF ? \chr($node->codePoint) : false);
+
+            return false === $character ? null : [$character, str_repeat($case, \strlen($character))];
+        }
+
+        if ($node instanceof GroupNode) {
+            if (\in_array($node->type, [
+                GroupType::LookaheadPositive,
+                GroupType::LookaheadNegative,
+                GroupType::LookbehindPositive,
+                GroupType::LookbehindNegative,
+                GroupType::ScanSubstring,
+            ], true)) {
+                return null;
+            }
+
+            return self::literalText($node->child, FlagScope::flagsInside($node, $flags), $unicode);
+        }
+
+        if ($node instanceof SequenceNode) {
+            $text = $case = '';
+            foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtChild) {
+                $piece = self::literalText($node->children[$index], $flagsAtChild, $unicode);
+                if (null === $piece) {
+                    return null;
+                }
+
+                $text .= $piece[0];
+                $case .= $piece[1];
+            }
+
+            return [$text, $case];
+        }
+
+        return null;
+    }
+
+    /**
+     * A text character by character: each as written, in one case, and
+     * whether it is read in either case.
+     *
+     * @return list<array{string, string, bool}>
+     */
+    private static function units(string $text, string $case, LintContext $context): array
+    {
+        $units = [];
+        $at = 0;
+        foreach ($context->pattern->unicodeMode ? mb_str_split($text, 1, 'UTF-8') : Bytes::split($text) as $character) {
+            $units[] = [$character, self::fold($character, $context), 'i' === substr($case, $at, 1)];
+            $at += \strlen($character);
+        }
+
+        return $units;
     }
 
     /**
@@ -783,7 +892,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         if ($node instanceof CharClassNode || $node instanceof CharTypeNode || $node instanceof DotNode
-            || $node instanceof UnicodePropNode || $node instanceof CharLiteralNode
+            || $node instanceof UnicodePropNode || $node instanceof CharLiteralNode || $node instanceof ControlCharNode
         ) {
             $start = $node->getStartPosition();
             $written = substr($source, $start, $node->getEndPosition() - $start);
@@ -846,42 +955,6 @@ final class OverlappingAlternationRule extends AbstractLintRule
             'Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.',
             end: $node->getEndPosition(),
         );
-    }
-
-    private function extractLiteralSequence(NodeInterface $node): ?string
-    {
-        if ($node instanceof LiteralNode) {
-            return $node->value;
-        }
-
-        if ($node instanceof GroupNode) {
-            if (\in_array($node->type, [
-                GroupType::LookaheadPositive,
-                GroupType::LookaheadNegative,
-                GroupType::LookbehindPositive,
-                GroupType::LookbehindNegative,
-                GroupType::ScanSubstring,
-            ], true)) {
-                return null;
-            }
-
-            return $this->extractLiteralSequence($node->child);
-        }
-
-        if ($node instanceof SequenceNode) {
-            $value = '';
-            foreach ($node->children as $child) {
-                $literal = $this->extractLiteralSequence($child);
-                if (null === $literal) {
-                    return null;
-                }
-                $value .= $literal;
-            }
-
-            return $value;
-        }
-
-        return null;
     }
 
     /**
@@ -979,7 +1052,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
      */
     private static function everyByte(AlternationNode $node, array $ascii, LintContext $context): ?array
     {
-        $analyzer = new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale, ucpFoldsPastAscii: $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
+        $analyzer = self::everyByteAnalyzer($context);
         $flagsAt = $context->flagsAtEachChild($node);
         $sets = [];
         foreach ($node->alternatives as $index => $alternative) {
@@ -993,6 +1066,16 @@ final class OverlappingAlternationRule extends AbstractLintRule
         }
 
         return $sets;
+    }
+
+    /**
+     * The analyzer that reads every byte, under the target's tables: past
+     * ASCII without u a character is a byte, and under u one is known by the
+     * byte it starts with.
+     */
+    private static function everyByteAnalyzer(LintContext $context): CharSetAnalyzer
+    {
+        return new CharSetAnalyzer($context->pattern->flags, StartOptions::of($context->pattern->source), true, locale: $context->target->locale, ucpFoldsPastAscii: $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
     }
 
     /**

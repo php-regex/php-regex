@@ -6,6 +6,33 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The overlap rules read an escape that names one character, `\x41`,
+   `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
+   literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported
+   by `regex.lint.alternation.overlap`, with the message of
+   `/(?:Ax|ax)+/i`, where `regex.lint.overlap.charset` reported it, and so
+   are `'/(?:\xC9x|\xE9x)+/i'` and `'/(?:\xC9|\xE9|)+/i'` under
+   fr_FR.ISO8859-1, as their raw bytes are; `'/(?:\xC9x|\xE9y)+/i'` there
+   and `/(?:\x{E9}a|\x{E9}b)+/u`, whose texts tell the branches apart as
+   those of `/(?:éa|éb)+/u` do, are no longer reported. Under u, where the
+   engine judges no branch, a character past ASCII is known by the byte it
+   starts with, written as it is, as an escape or in a range:
+   `/(?:[a-z]|\x{E9}|[a-c]|)+/u` and `/(?:[a-z]|[é-ÿ]|[a-c]|)+/u` are
+   reported by `regex.lint.overlap.charset`, as `/(?:[a-z]|é|[a-c]|)+/u` is;
+   neither was.
+ * The overlap rules read each character of a branch in the case the
+   options in force where it stands give it, where they read the whole
+   branch caselessly once i held at its start or a group in it turned i on:
+   `/(?:(?-i)Ax|(?-i)ax)+/i`, `/(?:(?-i)Ax|ax)+/i`, `/(?:a(?-i)B|A(?-i)b)+/i`,
+   `/(?:(?-i:AA)|AB)+/i` and `/(?:(?i:A)x|aX)+/` are no longer reported, as
+   no input starts both branches, nor under fr_FR.ISO8859-1
+   `"/(?:(?-i)\xC9x|(?-i)\xE9x)+/i"`; `/(?:(?i:A)x|ax)+/` still is. The texts
+   that tell branches apart go on past an option setting and through a
+   group setting options: `/(?:a(?i)b\d|a(?i)c\w)+/` and
+   `/(?:(?i:öa)|Öb)+x/u` are no longer reported.
+ * `\cA` reads one character in every rule, as `\x01` does:
+   `/^(?:a+\cA)+$/` no longer reports nested quantifiers, and `/\cA+\cA+$/`
+   reports `regex.lint.quantifier.concatenation`, as `/\x01+\x01+$/` does.
  * Without u, where the bytes of the branches decide,
    `regex.lint.overlap.charset` reads a byte read caselessly under
    `(*UCP)` as the target's PCRE2 does: the case of the character of the
@@ -85,8 +112,8 @@ CHANGELOG
    `regex.lint.overlap.charset` reads a byte above ASCII written as an
    escape, `\xE9`, `\x{E9}`, `\351` or `\o{351}`, as the byte written as
    it is, where it left the branches unjudged: `'/(?:\W|\xE9|)+/'` is
-   reported under C, and `'/(?:\w|\xE9|)+/'` and `'/(?:\xC9|\xE9|)+/i'`
-   under fr_FR.ISO8859-1; none was.
+   reported under C, and `'/(?:\w|\xE9|)+/'` under fr_FR.ISO8859-1;
+   neither was.
  * The rules that compare first and last characters read a POSIX class
    without u, `[[:alpha:]]` or `[[:^alpha:]]`, where they left it unknown:
    in ASCII as they read `\w`, so `#^(?:[[:alnum:]_]+/)+$#`, which PCRE

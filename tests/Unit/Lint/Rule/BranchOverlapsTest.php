@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\Rule\Support\BranchOverlaps;
 use PHPRegex\Parser\Hir\CharSet;
+use PHPRegex\Parser\Text\Bytes;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -246,6 +247,76 @@ final class BranchOverlapsTest extends TestCase
         yield 'an empty set' => ['one' => ['', false, []], 'other' => ['', false, [[3, 4]]], 'expected' => false];
     }
 
+    /**
+     * A text read in two cases, part of it caselessly, meets another
+     * character by character: two characters meet when they are the same,
+     * or one letter in two cases where either is read caselessly. A text is
+     * written with its case, "i" where a character is read caselessly.
+     */
+    #[Test]
+    #[DataProvider('provideTextsInTwoCases')]
+    public function test_texts_read_in_two_cases_meet_character_by_character(string $one, string $oneCase, string $other, string $otherCase, bool $expected): void
+    {
+        $overlaps = self::overlapsInTwoCases([[$one, $oneCase], [$other, $otherCase]]);
+
+        $this->assertSame($expected, $overlaps->overlap(0, 1));
+        $this->assertSame($expected, $overlaps->overlap(1, 0));
+        $this->assertSame($expected ? [0, 1] : null, $overlaps->first());
+    }
+
+    /**
+     * @return iterable<string, array{one: string, oneCase: string, other: string, otherCase: string, expected: bool}>
+     */
+    public static function provideTextsInTwoCases(): iterable
+    {
+        yield 'a letter read caselessly, then one in its own case' => ['one' => 'aB', 'oneCase' => 'i-', 'other' => 'Ab', 'otherCase' => 'i-', 'expected' => false];
+        yield 'a letter read caselessly, then the same letter' => ['one' => 'aB', 'oneCase' => 'i-', 'other' => 'ABc', 'otherCase' => 'i--', 'expected' => true];
+        yield 'a letter in its own case beside one read caselessly' => ['one' => 'Ax', 'oneCase' => 'i-', 'other' => 'aX', 'otherCase' => '--', 'expected' => false];
+        yield 'a letter read caselessly beside one in its own case' => ['one' => 'Ax', 'oneCase' => '-i', 'other' => 'AX', 'otherCase' => '--', 'expected' => true];
+        yield 'letters in their own case, then letters read caselessly' => ['one' => 'Ab', 'oneCase' => '-i', 'other' => 'aB', 'otherCase' => '-i', 'expected' => false];
+        yield 'a text read in its own case beside one read caselessly' => ['one' => 'AB', 'oneCase' => '--', 'other' => 'abc', 'otherCase' => 'ii-', 'expected' => true];
+    }
+
+    #[Test]
+    public function test_generated_texts_in_two_cases_give_the_pair_of_the_pairwise_comparison(): void
+    {
+        $letters = ['a', 'b', 'A'];
+        $state = 20261125;
+        $next = static function (int $below) use (&$state): int {
+            $state = ($state * 1103515245 + 12345) & 0x7FFFFFFF;
+
+            return ($state >> 8) % $below;
+        };
+
+        $pairs = 0;
+        for ($case = 0; $case < 4000; $case++) {
+            $branches = [];
+            for ($count = $next(7); $count > 0; $count--) {
+                $text = $mask = '';
+                for ($length = $next(4); $length > 0; $length--) {
+                    $text .= $letters[$next(3)];
+                    $mask .= 0 === $next(2) ? 'i' : '-';
+                }
+
+                $branches[] = [$text, $mask];
+            }
+
+            $expected = null;
+            for ($i = 0; $i < \count($branches) && null === $expected; $i++) {
+                for ($j = $i + 1; $j < \count($branches) && null === $expected; $j++) {
+                    $expected = self::meetInTwoCases($branches[$i], $branches[$j]) ? [$i, $j] : null;
+                }
+            }
+
+            $pairs += null === $expected ? 0 : 1;
+            $this->assertSame($expected, self::overlapsInTwoCases($branches)->first(), json_encode($branches, \JSON_THROW_ON_ERROR));
+        }
+
+        // The corpus holds both answers in number.
+        $this->assertGreaterThan(1000, $pairs);
+        $this->assertLessThan(3000, $pairs);
+    }
+
     #[Test]
     public function test_branches_sharing_a_long_start_are_compared_a_few_times_each(): void
     {
@@ -408,6 +479,47 @@ final class BranchOverlapsTest extends TestCase
             array_column($branches, 1),
             array_map(static fn (array $branch): CharSet => CharSet::fromRanges($branch[2]), $branches),
         );
+    }
+
+    /**
+     * Branches that can all start with the same character, each a text and
+     * its case, character by character.
+     *
+     * @param list<array{string, string}> $branches
+     */
+    private static function overlapsInTwoCases(array $branches): BranchOverlaps
+    {
+        $units = [];
+        foreach ($branches as [$text, $mask]) {
+            $units[] = array_map(static fn (string $character, string $case): array => [$character, strtolower($character), 'i' === $case], Bytes::split($text), Bytes::split($mask));
+        }
+
+        return new BranchOverlaps(
+            array_column($branches, 0),
+            array_map(strtolower(...), array_column($branches, 0)),
+            array_map(static fn (string $mask): bool => str_contains($mask, 'i'), array_column($branches, 1)),
+            array_fill(0, \count($branches), CharSet::fromRanges(self::ANY)),
+            $units,
+        );
+    }
+
+    /**
+     * Whether one text starts the other, character by character, each read
+     * in its case.
+     *
+     * @param array{string, string} $one
+     * @param array{string, string} $other
+     */
+    private static function meetInTwoCases(array $one, array $other): bool
+    {
+        for ($at = 0; $at < min(\strlen($one[0]), \strlen($other[0])); $at++) {
+            $caseless = 'i' === $one[1][$at] || 'i' === $other[1][$at];
+            if ($one[0][$at] !== $other[0][$at] && (!$caseless || strtolower($one[0][$at]) !== strtolower($other[0][$at]))) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
