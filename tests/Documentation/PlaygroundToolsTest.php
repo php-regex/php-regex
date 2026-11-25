@@ -278,6 +278,24 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertSame($witness, null !== $payload['redos']['attack']);
     }
 
+    /**
+     * The rule of regex-phpunit's assertPatternIsLinear(): one attempt proven
+     * linear and no quadratic unanchored search. preg_match() stops at the
+     * first empty match of "/(?:a+\d)?/", whose cost is the one of the
+     * functions that look for every match: linear. "/\s+$/" retries an
+     * attempt that reads the rest of a run of spaces: not linear.
+     */
+    #[Test]
+    #[DataProvider('provideDrivers')]
+    public function test_the_linear_verdict_is_the_one_of_the_assertion(string $driver, string $root): void
+    {
+        $this->assertSame(1, preg_match('/(?:a+\d)?/', str_repeat('a', 100).'!', $matches, \PREG_OFFSET_CAPTURE));
+        $this->assertSame(['', 0], $matches[0]);
+
+        $this->assertTrue(self::redos($driver, $root, '/(?:a+\d)?/')['redos']['linear'] ?? null);
+        $this->assertFalse(self::redos($driver, $root, '/\s+$/')['redos']['linear'] ?? null);
+    }
+
     #[Test]
     #[DataProvider('provideDrivers')]
     public function test_the_attack_string_exhausts_the_engine_without_jit(string $driver, string $root): void
