@@ -209,6 +209,7 @@ $input: 'no'|'no\n'|'yes'|'yes\n'
 ```
 
 `$` matches before a final `"\n"` too: `/^(?:yes|no)$/D` or `\z` leaves it out.
+Psalm 7.20 and later print the same type as `"no\n"|"yes\n"|'no'|'yes'`.
 
 An invalid pattern, in `app/broken.php`:
 
