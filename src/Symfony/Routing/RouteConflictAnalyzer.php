@@ -32,7 +32,9 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Routing\CompiledRoute;
+use Symfony\Component\Routing\Matcher\CompiledUrlMatcher;
 use Symfony\Component\Routing\Matcher\Dumper\CompiledUrlMatcherDumper;
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\RouteCollection;
 
@@ -58,6 +60,8 @@ final class RouteConflictAnalyzer
      * request to it, where a route that lists none takes any.
      */
     private const NO_REQUEST = [''];
+
+    private static ?bool $trimsEveryTrailingSlash = null;
 
     private readonly LanguageSolver $solver;
 
@@ -710,12 +714,16 @@ final class RouteConflictAnalyzer
      * its regex. A route tried with a regex takes its path with one
      * trailing slash at most, the "/?" the dumper writes before "$", and
      * redirects the path with the slash it lacks, or without the one it
-     * has. A route looked up by its path is looked up with every trailing
-     * slash of the request trimmed off: ending on a slash, it takes its
-     * path with any number of them and redirects it with none; else it
-     * redirects it with any number, "/" answering those with a 404. The
-     * slash of "/" is no trailing one. A regex of the application's own
-     * with no "$" is taken as it is.
+     * has. Where the matcher trims every trailing slash of the request off
+     * before it looks a route up by its path, a route it looks up so takes
+     * its path with any number of them when it ends on a slash, and
+     * redirects it with none; else it redirects it with any number, "/"
+     * answering those with a 404, as the root route tried with a regex
+     * answers "//". Where it looks a route up for a request with one
+     * trailing slash at most, the route reads its slash as a route tried
+     * with a regex does, and "/" takes no path but its own. The slash of
+     * "/" is no trailing one. A regex of the application's own with no "$"
+     * is taken as it is.
      *
      * @return array{string, string, string}
      */
@@ -729,13 +737,40 @@ final class RouteConflictAnalyzer
         $slash = '/' !== $path && $end > 0 && '/' === $regex[$end - 1];
         $head = substr($regex, 0, $end - (int) $slash);
         $tail = substr($regex, $end + 1);
-        $any = $static ? '/*$' : '/?$';
-
-        if ($slash) {
-            return [$static ? $head.'/+$'.$tail : $regex, $head.$any.$tail, $head.'$'.$tail];
+        $trims = self::trimsEveryTrailingSlash();
+        if ('/' === $path && !$trims) {
+            return [$regex, $regex, $head.'(?!)$'.$tail];
         }
 
-        return [$regex, $head.$any.$tail, $head.($static ? '/+$' : '/$').$tail];
+        $any = $static && $trims ? '/*$' : '/?$';
+
+        if ($slash) {
+            return [$static && $trims ? $head.'/+$'.$tail : $regex, $head.$any.$tail, $head.'$'.$tail];
+        }
+
+        return [$regex, $head.$any.$tail, $head.($static && $trims ? '/+$' : '/$').$tail];
+    }
+
+    /**
+     * Whether the compiled matcher trims every trailing slash of a request
+     * off before it looks a route up by its path, as symfony/routing does
+     * before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and reads "//" for the
+     * slash of "/". Since those releases, it looks a route up for a request
+     * with one trailing slash at most, tries the routes with a regex on any
+     * other, and reads no trailing slash on "/". Read on the matcher
+     * installed: whether "/a/" takes "/a//" before a catch-all declared
+     * after it.
+     */
+    private static function trimsEveryTrailingSlash(): bool
+    {
+        if (null === self::$trimsEveryTrailingSlash) {
+            $routes = new RouteCollection();
+            $routes->add('a', new Route('/a/'));
+            $routes->add('any', new Route('/{p<.*>}'));
+            self::$trimsEveryTrailingSlash = 'a' === (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($routes))->getCompiledRoutes(), new RequestContext()))->match('/a//')['_route'];
+        }
+
+        return self::$trimsEveryTrailingSlash;
     }
 
     /**
