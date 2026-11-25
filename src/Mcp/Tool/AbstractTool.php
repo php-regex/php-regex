@@ -88,7 +88,7 @@ abstract class AbstractTool implements ToolInterface
      * floor first. The parsers of the later versions are
      * built once for both.
      *
-     * @return array{string, array{target: array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}, range: non-empty-list<RangePoint>}}
+     * @return array{string, array{target: array{php: string, pcre: string, locale: string, source: string, pcre_source: string|null, locale_source: string|null, range: list<TargetDescription>}, range: non-empty-list<RangePoint>}}
      */
     protected static function overRange(string $text, Regex $regex, ProjectTarget $target, string $pattern): array
     {
