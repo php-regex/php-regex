@@ -106,7 +106,7 @@ final class SolverOnHirRefusalsTest extends TestCase
         // search to the subject's start. It is not read, so the flag check
         // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
-        yield 'newline convention under m' => ['pattern' => '/(*CR)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
+        yield 'newline convention under m' => ['pattern' => '/(*CRLF)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
         // Without the JIT the option refuses the empty match "/a?/" finds
         // at 0; the JIT ignores it: test_the_jit_decides_what_an_empty_match_option_refuses().
         yield 'not empty' => ['pattern' => '/(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY)a?/', '/a?/', 'b']];

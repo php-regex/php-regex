@@ -19,6 +19,8 @@ use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
+use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
@@ -36,6 +38,8 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class RegularSubsetValidator
 {
+    public const CRLF_DOT_MESSAGE = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.';
+
     /**
      * Whether the solver can answer for the pattern, and the normalized
      * form it can answer from.
@@ -48,7 +52,7 @@ final class RegularSubsetValidator
     public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options, ?PcreTarget $target = null): Hir
     {
         $this->assertSupportedFlags($regex->flags);
-        self::assertNewlineConvention($regex, $pattern);
+        self::assertCrLfRead($regex, $pattern);
         self::assertEmptyMatchesAllowed($regex, $pattern);
 
         $hir = (new HirTranslator($target))->translate($regex);
@@ -60,10 +64,11 @@ final class RegularSubsetValidator
 
     /**
      * "$", "\Z" and the multiline anchors read where lines end, which a start
-     * option such as "(*CR)" moves: the solvers read the newline "\n" only.
-     * The last convention the options name holds.
+     * option such as "(*CR)" moves: the match solver reads the newline "\n"
+     * only, the automata every convention but "(*CRLF)". The last convention
+     * the options name holds.
      *
-     * @internal the match solver asks it too
+     * @internal the match solver asks it
      *
      * @throws ComplexityException
      */
@@ -94,6 +99,47 @@ final class RegularSubsetValidator
         if (\in_array('NOTEMPTY', $options, true) || \in_array('NOTEMPTY_ATSTART', $options, true)) {
             throw new ComplexityException('(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.', 0, $pattern);
         }
+    }
+
+    /**
+     * The automata read the lines of every convention but "(*CRLF)", under
+     * which a line ends at "\r\n" alone, and the dot and "\N" read a "\r"
+     * alone but not one before a "\n": "/(*CRLF)a.\n/" finds no match in
+     * "a\r\n". The last convention the options name holds.
+     *
+     * @throws ComplexityException
+     */
+    private static function assertCrLfRead(RegexNode $regex, string $pattern): void
+    {
+        if ('CRLF' !== StartOptions::newline($regex->source ?? '')) {
+            return;
+        }
+
+        $dot = self::dotOrNotNewline($regex->pattern);
+        if (null !== $dot) {
+            throw new ComplexityException(self::CRLF_DOT_MESSAGE, $dot->getStartPosition(), $pattern);
+        }
+
+        self::assertNewlineConvention($regex, $pattern);
+    }
+
+    /**
+     * The first dot or "\N" under the node.
+     */
+    private static function dotOrNotNewline(NodeInterface $node): ?NodeInterface
+    {
+        if ($node instanceof DotNode || ($node instanceof CharTypeNode && 'N' === $node->value)) {
+            return $node;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $found = self::dotOrNotNewline($child);
+            if (null !== $found) {
+                return $found;
+            }
+        }
+
+        return null;
     }
 
     /**
