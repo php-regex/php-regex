@@ -45,13 +45,13 @@ trait RegexAssertions
      * group behind it fails saying what the modifier did. When only the
      * captures differ, the failure renders a focused diff.
      *
-     * @param array<int|string, mixed> $expected the capture expectation: true (participated), false (did not
+     * @param array<int|string, mixed> $captures the capture expectation: true (participated), false (did not
      *                                           participate), a string value, or [value, byte offset], keyed by
      *                                           group number or name; empty asks only whether the pattern matched
      */
-    public static function assertPatternMatches(string $pattern, string $subject, array $expected = [], string $message = ''): void
+    public static function assertPatternMatches(string $pattern, string $subject, array $captures = [], string $message = ''): void
     {
-        self::assertThat($subject, new MatchesPattern($pattern, $expected), $message);
+        self::assertThat($subject, new MatchesPattern($pattern, $captures), $message);
     }
 
     /**

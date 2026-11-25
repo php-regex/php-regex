@@ -60,6 +60,15 @@ final class RegexAssertionsTraitTest extends TestCase
         PlainRegexAssert::assertPatternMatches($pattern, $subject, $expected);
     }
 
+    /**
+     * The expectation is named after what it holds: the captures.
+     */
+    #[Test]
+    public function test_assert_pattern_matches_takes_the_captures_by_name(): void
+    {
+        self::assertPatternMatches(pattern: '/(?<year>\d{4})-(\d{2})/', subject: '2024-05', captures: ['year' => '2024', 2 => ['05', 5]], message: 'the year and the month');
+    }
+
     #[Test]
     public function test_assert_pattern_does_not_match_passes_on_a_subject_the_pattern_misses(): void
     {
