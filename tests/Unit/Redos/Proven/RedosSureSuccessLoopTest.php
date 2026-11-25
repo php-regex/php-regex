@@ -43,7 +43,7 @@ use PHPUnit\Framework\TestCase;
  * "(*NOTEMPTY)^(?:a|a)+\K.?", 37 -> 69 for "(*NOTEMPTY)^(?:a\K|a)+", the
  * same as "^(?:a|b)+." takes. On 6 then 12 units and the tail: 255 ->
  * 16 383 steps for "^(?:a|a)+b", 160 -> 454 for "^(?:a|a|ab)+(?:[ab]*c|a)"
- * on "ab", 475 -> 30 715 for "^(?:a|a)+(?>a+|b)a".
+ * on "ab", 475 -> 30 715 for "^(?:a|a)+(?>a+|ab)a".
  */
 final class RedosSureSuccessLoopTest extends TestCase
 {
@@ -128,6 +128,9 @@ final class RedosSureSuccessLoopTest extends TestCase
         yield 'a lazy loop before the end' => ['pattern' => '/^(?:a|a)+?$/', 'unit' => 'a', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
         yield 'the loop inside a loop before the end' => ['pattern' => '/^(?:(?:a|a)+.)+$/', 'unit' => 'a', 'tail' => '!!', 'complexity' => RedosComplexity::Exponential];
         yield 'the empty match \K leaves, under (*NOTEMPTY)' => ['pattern' => '/(*NOTEMPTY)^(?:a|a)+\K/', 'unit' => 'a', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
+        // The atomic group reads every "a" left in its first branch, which
+        // no other branch starts like, and the "a" after it fails.
+        yield 'an atomic group of runs that start apart before a letter' => ['pattern' => '/^(?:a|a)+(?>a+|b)a/', 'unit' => 'a', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
         // Each "a" the first two branches read before a "b" sends the
         // attempt into "[ab]*", which reads the rest of the subject before it
         // fails on the "!": a run abandoned after the loop, from each
@@ -170,8 +173,9 @@ final class RedosSureSuccessLoopTest extends TestCase
     public static function provideLoopsTheModelMayMisread(): iterable
     {
         // The atomic group keeps every "a" its run reads, and the "a" after
-        // it fails: no way out of the loop succeeds.
-        yield 'an atomic group kept with every way through it' => ['pattern' => '/^(?:a|a)+(?>a+|b)a/', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
+        // it fails: no way out of the loop succeeds. Its branches both start
+        // with "a": the model keeps it with every way through it.
+        yield 'an atomic group kept with every way through it' => ['pattern' => '/^(?:a|a)+(?>a+|ab)a/', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
         // Twenty characters at most before the end, where the "b" run is
         // thirty long: no way out of the loop succeeds.
         yield 'a bounded repeat read as unbounded' => ['pattern' => '/^(?:a|a)+a[^x]{0,20}(?:x|\z)/', 'tail' => str_repeat('b', 30), 'complexity' => RedosComplexity::Exponential];

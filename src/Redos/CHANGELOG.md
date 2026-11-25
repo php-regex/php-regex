@@ -6,6 +6,17 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * An atomic group whose branches each hold one run of one character set,
+   or one character, with nothing but `\K` around it, and start with
+   characters no other branch starts with, is read as those runs, each an
+   atomic group of its own: `(?>a+\K)` as `(?>a+)\K`, `(?>a+|c)` as
+   `(?:(?>a+)|c)`. It is no longer listed among the abstractions, and the
+   theoretical mode reports the search cost of `/(*NOTEMPTY)(?>a+\K)/`,
+   `/(*NOTEMPTY)(?>(?>a+)\K)/`, `/(*NOTEMPTY)(?>a+\K|b)/` and `/(?>a+|c)b/`
+   (1.1, 4.1 then 16 ms on 2,000, 4,000 then 8,000 `a` with `pcre.jit=0`),
+   which confirmed mode alone reported. `/^(?:a|a)+(?>a+|b)a/` is proven
+   exponential. A body whose branches may start alike, as `(?>a+|ab)`,
+   is kept with every way through it as before.
  * The heuristics read a byte under `(*UCP)` without u as the target's
    PCRE2 does: a Latin-1 letter meets its other case from 10.35 only, and
    before it has the tables' case, none above ASCII under C.

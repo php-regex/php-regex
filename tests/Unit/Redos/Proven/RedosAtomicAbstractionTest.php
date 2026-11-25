@@ -21,6 +21,7 @@ use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProfiler;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -156,6 +157,107 @@ final class RedosAtomicAbstractionTest extends TestCase
 
         $this->assertFalse($analysis->isProvenSafe());
         $this->assertAtomicAbstractionAt(1, $analysis, '/^(?:a+){30,}+$/');
+    }
+
+    /**
+     * A body whose branches each hold one run of one character set, or one
+     * character, with "\K" and comments around it, and start with
+     * characters no other branch starts with, gives nothing back and tries
+     * no other branch once one has read its first character: it is the
+     * alternation of its runs, each in an atomic group of its own, which the
+     * model reads exactly. "(?>a+\K)" is "(?>a+)\K", "(?>a+|c)" is
+     * "(?:(?>a+)|c)". A branch that may read nothing stands alone. The
+     * engine agrees with that spelling on every subject over the row's
+     * characters up to five long, and so does the verdict.
+     */
+    #[Test]
+    #[DataProvider('provideBodiesOfRunsWithTheirOwnFirstCharacters')]
+    public function test_atomic_body_of_runs_with_their_own_first_characters_is_read_exactly(string $pattern, string $spelled, string $characters): void
+    {
+        $subjects = [''];
+        for ($length = 1, $last = ['']; $length <= 5; $length++) {
+            $next = [];
+            foreach ($last as $subject) {
+                foreach (preg_split('//u', $characters, -1, \PREG_SPLIT_NO_EMPTY) ?: [] as $character) {
+                    $next[] = $subject.$character;
+                }
+            }
+            $subjects = [...$subjects, ...$next];
+            $last = $next;
+        }
+
+        foreach ($subjects as $subject) {
+            $this->assertSame(
+                [preg_match(PcreInterpreter::pattern($spelled), $subject, $expected, \PREG_OFFSET_CAPTURE), $expected],
+                [preg_match(PcreInterpreter::pattern($pattern), $subject, $actual, \PREG_OFFSET_CAPTURE), $actual],
+                \sprintf('Oracle: %s and %s disagree on %s.', $pattern, $spelled, json_encode($subject)),
+            );
+        }
+
+        $analyzer = new RedosAnalyzer();
+        $analysis = $analyzer->analyze($pattern);
+        $this->assertSame([RedosProof::Proven, []], [$analysis->proof, $analysis->abstractions], $pattern);
+
+        $reference = $analyzer->analyze($spelled);
+        $this->assertSame([RedosProof::Proven, []], [$reference->proof, $reference->abstractions], $spelled);
+        $this->assertSame(
+            [$reference->complexity, $reference->witness?->toArray(), $reference->searchCost?->toArray(), $reference->everyMatchSearchCost?->toArray()],
+            [$analysis->complexity, $analysis->witness?->toArray(), $analysis->searchCost?->toArray(), $analysis->everyMatchSearchCost?->toArray()],
+            $pattern.' and '.$spelled,
+        );
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, spelled: string, characters: string}>
+     */
+    public static function provideBodiesOfRunsWithTheirOwnFirstCharacters(): iterable
+    {
+        yield '\K after the run' => ['pattern' => '/(?>a+\K)b/', 'spelled' => '/(?>a+)\Kb/', 'characters' => 'ab!'];
+        yield '\K after the run, under (*NOTEMPTY)' => ['pattern' => '/(*NOTEMPTY)(?>a+\K)/', 'spelled' => '/(*NOTEMPTY)(?>a+)\K/', 'characters' => 'ab!'];
+        yield '\K after an atomic run' => ['pattern' => '/(?>(?>a+)\K)b/', 'spelled' => '/(?>a+)\Kb/', 'characters' => 'ab!'];
+        yield '\K inside nested atomic groups' => ['pattern' => '/(?>(?>a+\K))b/', 'spelled' => '/(?>a+)\Kb/', 'characters' => 'ab!'];
+        yield '\K before the run' => ['pattern' => '/(?>\Ka+|c)b/', 'spelled' => '/(?:\K(?>a+)|c)b/', 'characters' => 'abc'];
+        yield '\K in a group with the run' => ['pattern' => '/(?>(a+\K)|c)b/', 'spelled' => '/(?:(?>(a+))\K|c)b/', 'characters' => 'abc'];
+        yield 'run or a character' => ['pattern' => '/(?>a+|c)b/', 'spelled' => '/(?:(?>a+)|c)b/', 'characters' => 'abc'];
+        yield 'run then \K, or a character, under (*NOTEMPTY)' => ['pattern' => '/(*NOTEMPTY)(?>a+\K|b)/', 'spelled' => '/(*NOTEMPTY)(?:(?>a+)\K|b)/', 'characters' => 'ab!'];
+        yield 'captured runs of a character and of a class' => ['pattern' => '/(?>(a+)|[cd]+)b/', 'spelled' => '/(?:(?>(a+))|(?>[cd]+))b/', 'characters' => 'abcd'];
+        yield 'counted run or a character' => ['pattern' => '/(?>a{2,}|c)b/', 'spelled' => '/(?:(?>a{2,})|c)b/', 'characters' => 'abc'];
+        yield 'run of one-character branches or a character' => ['pattern' => '/(?>(?:a|c)+|b)d/', 'spelled' => '/(?:(?>(?:a|c)+)|b)d/', 'characters' => 'abcd'];
+        yield 'repeated run or a character' => ['pattern' => '/(?>(?:a+)+|c)b/', 'spelled' => '/(?:(?>(?:a+)+)|c)b/', 'characters' => 'abc'];
+        yield 'run or a character under i' => ['pattern' => '/(?>a+|B)c/i', 'spelled' => '/(?:(?>a+)|B)c/i', 'characters' => 'aAbBc'];
+        yield 'run or a character under u' => ['pattern' => '/(?>é+|c)b/u', 'spelled' => '/(?:(?>é+)|c)b/u', 'characters' => 'ébc'];
+        yield 'run that may read nothing, alone' => ['pattern' => '/(?>a*\K)b/', 'spelled' => '/(?>a*)\Kb/', 'characters' => 'ab!'];
+        yield 'atomic alternation of characters or a character' => ['pattern' => '/(?>(?>a|c)|b)d/', 'spelled' => '/(?:(?>a|c)|b)d/', 'characters' => 'abcd'];
+        yield 'lazy atomic run or a character' => ['pattern' => '/(?>(?>a+?)|c)b/', 'spelled' => '/(?:(?>a+?)|c)b/', 'characters' => 'abc'];
+        yield 'lazy atomic run that may read nothing, alone' => ['pattern' => '/(?>(?>a*?)\K)b/', 'spelled' => '/(?>a*?)\Kb/', 'characters' => 'ab!'];
+    }
+
+    /**
+     * Where two branches may start with the same character, or one that
+     * may read nothing comes before another, the group commits to the
+     * first branch that matches and never tries the others: a branch the
+     * alternation of their atomic groups would try matches on the row's
+     * subject. Such a body stays kept with every way through it, and
+     * listed.
+     */
+    #[Test]
+    #[DataProvider('provideBodiesWhoseBranchesMayStartAlike')]
+    public function test_atomic_body_whose_branches_may_start_alike_stays_over_approximated(string $pattern, string $spelled, string $subject): void
+    {
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern).'A', $subject), 'Oracle: '.$pattern.' matches '.$subject.' at its start.');
+        $this->assertSame(1, preg_match(PcreInterpreter::pattern($spelled).'A', $subject), 'Oracle: '.$spelled.' does not match '.$subject.' at its start.');
+
+        $this->assertAtomicAbstractionAt(0, (new RedosAnalyzer())->analyze($pattern), $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, spelled: string, subject: string}>
+     */
+    public static function provideBodiesWhoseBranchesMayStartAlike(): iterable
+    {
+        yield 'branches starting with the same character' => ['pattern' => '/(?>a+|ab)c/', 'spelled' => '/(?:(?>a+)|ab)c/', 'subject' => 'abc'];
+        yield 'branch that may read nothing first' => ['pattern' => '/(?>a*|b)c/', 'spelled' => '/(?:(?>a*)|b)c/', 'subject' => 'bc'];
+        yield 'branches of overlapping classes' => ['pattern' => '/(?>[ab]+|bc)d/', 'spelled' => '/(?:(?>[ab]+)|bc)d/', 'subject' => 'bcd'];
     }
 
     /**
