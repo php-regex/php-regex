@@ -12,6 +12,10 @@ CHANGELOG
    the empty group it enters stops it. `/a+(?>(?:#c\n)|b)a/x` compacted to
    `/a+(?>|b)a/`, which finds nothing in `aa`; it is now
    `/a+(?>(?:)|b)a/`.
+ * `Exception\FormattingException` is a `RuntimeException`, not a
+   `RegexException`: the formatter refusing its own output is a bug of the
+   library, never a verdict on the pattern. It carries `$errorCode`, always
+   `regex.formatting.unsafe`, and holds the pattern to report in `$pattern`.
  * `Analysis\InertCommitments::of()` names the possessive quantifiers and
    the atomic groups of a pattern searched that commit to nothing: nothing
    that may follow one can take back a character it matched. A printer for

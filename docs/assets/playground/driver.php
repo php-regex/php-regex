@@ -53,6 +53,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -1013,7 +1014,7 @@ if (!\function_exists('phpregex_playground_run')) {
             $answer['error'] = ['source' => 'format', 'class' => phpregex_playground_short_class($e), 'message' => $e->getMessage(), 'position' => null, 'code' => null, 'hint' => null];
 
             return phpregex_playground_timed($answer, 'formatMs', $started);
-        } catch (RegexException $e) {
+        } catch (FormattingException $e) {
             // The formatter refused to hand over a pattern that would not read
             // back as the same one: the pattern stays as written.
             $answer['format'] = ['pattern' => $regex, 'changed' => false, 'refusal' => phpregex_playground_format_refusal('round_trip')];

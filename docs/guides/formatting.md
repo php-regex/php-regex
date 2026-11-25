@@ -113,7 +113,7 @@ Under a bracket delimiter, `{…}` for one, PHP finds where the pattern ends by 
 - **A pattern that already fits comes back byte for byte.** A short pattern is left alone, unless it holds a raw line break, which is respelled `\n` so that every line break of the output is layout.
 - **Formatting is idempotent.** Formatting the output again changes nothing.
 - **The result is the same pattern**, under PHP's default `C` locale. Under another `LC_CTYPE`, PHP lets PCRE2 read the locale's spaces, and `x` then skips a no-break space too: a pattern under `x` holding one raw already means something else there.
-- **It checks itself.** Before it returns, the formatter parses its own output and compares the tree with the input's. If they differ, it throws `FormattingException` (code `regex.formatting.unsafe`) instead of handing back a wrong pattern. That would be a bug: please report it with the pattern.
+- **It checks itself.** Before it returns, the formatter parses its own output and compares the tree with the input's. If they differ, it throws `FormattingException` (code `regex.formatting.unsafe`) instead of handing back a wrong pattern. That would be a bug of the library, not a fault of the pattern: the exception is a `RuntimeException`, never a `RegexException`, and `$pattern` holds the pattern to report it with.
 - **The formatter never asks the running engine.** It reads the pattern for the PCRE2 target of the `Regex` instance (or the `PcreTarget` given to `PatternFormatter`), and checks its output for that same target. Where a layout would mean one thing on one PCRE2 release and another thing on the next, it refuses rather than pick one.
 
 ## When it refuses

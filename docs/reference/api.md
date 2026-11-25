@@ -603,7 +603,8 @@ echo $result->pattern;
 ```
 
 The formatter parses its own output before returning it; if the tree differs from the input's, it throws
-`FormattingException` (code `regex.formatting.unsafe`) instead of returning a different pattern. See
+`FormattingException` (code `regex.formatting.unsafe`) instead of returning a different pattern: a bug of the
+library, reported with the pattern in `$pattern`, and no `RegexException`, since the pattern is not at fault. See
 [Formatting patterns](../guides/formatting.md) for the layout rules and the refusals.
 
 ---
@@ -998,6 +999,7 @@ Exception hierarchy (simplified):
   - `InvalidRegexOptionException` (invalid configuration option)
   - `CacheException` (a cache directory or file that cannot be written)
   - `InternalFailureException` (the library could not finish its own work: no verdict on the pattern)
+  - `FormattingException` (the formatter could not keep the pattern's meaning: a bug of the library to report with `$pattern`)
   - `LintException` (a lint formatter or worker that failed)
   - `UnknownLintRuleException` (a rules map that names a rule the linter does not run)
   - `UnsupportedTargetException` (a target PHP whose engine the library does not judge: PHP 7.2 and earlier ship PCRE1)
