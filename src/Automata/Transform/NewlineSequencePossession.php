@@ -115,12 +115,15 @@ final class NewlineSequencePossession
     /**
      * The items at the start of the pattern, or at its end, up to the first
      * one from there that may not match nothing, each printed as written.
+     * A non-capturing group that does not repeat stands for its body, which
+     * PCRE2 reads into and past the end of as it reads it bare: "(?:a?)"
+     * and "a?" end alike; "(?:.)*" and ".*", whose group repeats, do not.
      *
      * @return list<string>
      */
     private static function end(RegexNode $regex, bool $start): array
     {
-        $items = $regex->pattern instanceof SequenceNode ? $regex->pattern->children : [$regex->pattern];
+        $items = self::items($regex->pattern);
         $printer = PatternPrinter::asWritten();
         $end = [];
         foreach ($start ? $items : array_reverse($items) as $item) {
@@ -131,6 +134,30 @@ final class NewlineSequencePossession
         }
 
         return $end;
+    }
+
+    /**
+     * The items of a sequence one after the other, a non-capturing group
+     * that does not repeat read as the items of its body.
+     *
+     * @return list<NodeInterface>
+     */
+    private static function items(NodeInterface $node): array
+    {
+        if ($node instanceof GroupNode && GroupType::NonCapturing === $node->type) {
+            return self::items($node->child);
+        }
+
+        if (!$node instanceof SequenceNode) {
+            return [$node];
+        }
+
+        $items = [];
+        foreach ($node->children as $child) {
+            array_push($items, ...self::items($child));
+        }
+
+        return $items;
     }
 
     /**
