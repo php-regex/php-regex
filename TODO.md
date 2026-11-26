@@ -8,6 +8,35 @@
   the possession beside 0xFF already reads such a target as running under
   any tables, and the mutation judge reads plain classes the C way. The
   reading 2.0.0 ships is the contract.
+- The branch `api-last-names` settles the last names of the public API: one
+  catch for a malformed pattern (`LexerException` extends
+  `ParserException`), `$offset` and `$caretSnippet` on the exceptions,
+  `RedosOptions` as the one argument of the ReDoS analysis,
+  `AnalysisReport::$validation`, `TranspileResult::$dialect`. Three commits,
+  not pushed: push it, open its pull request, read its checks, merge it.
+- Names and shapes left as they are, each to settle before the tag or to
+  keep for all of 2.x:
+  - `OptimizerOptions::$word` rewrites nothing today, as its docblock says:
+    `/[a-zA-Z0-9_]+/` becomes `/[0-9A-Z_a-z]+/`, not `/\w+/`. Drop the
+    option from the class, `regex.json`, the bridges' configurations and
+    the PHPStan parameters, or make it rewrite under the C locale. The same
+    example asks whether `canonicalizeCharClasses` should be on by default.
+  - Two cache contracts, two vocabularies: `CacheInterface::load()` and
+    `write()`, `DfaCacheInterface::get()` and `set()`. And
+    `RemovableCacheInterface` removes nothing one by one since 2.0: it
+    clears and counts.
+  - `RedosAnalysis` and the four solver results carry `$pcreVersion`, the
+    engine that ran, not the target judged. Give them the `PcreTarget`
+    now, or both names live side by side from 2.1.
+  - `ComplexityException` says with one class that a pattern is outside
+    what the automata read and that a budget ran out, and tells them apart
+    through `getDiagnostic()`, an untyped array.
+  - `max_recursion_depth` and `RecursionLimitException` name the nesting
+    depth of groups (`regex.nesting.too_deep`), where "recursion" already
+    names `(?R)` and `pcre.recursion_limit`.
+  - Plumbing that still reads as public: `PatternInfoAnalyzer::analyzePattern()`,
+    `RangeDiff::judgedWith()` and `notice()`,
+    `OptimizerOptions::fromCamelCaseArray()` and `Redos\IgnoreList`.
 
 ## Release 2.0.0
 
