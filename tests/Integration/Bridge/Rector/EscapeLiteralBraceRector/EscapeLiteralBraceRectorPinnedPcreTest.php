@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Rector\EscapeLiteralBraceRector;
 
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\Test;
 use Rector\Testing\PHPUnit\AbstractRectorTestCase;
 
@@ -28,6 +29,7 @@ use Rector\Testing\PHPUnit\AbstractRectorTestCase;
 final class EscapeLiteralBraceRectorPinnedPcreTest extends AbstractRectorTestCase
 {
     use PcreGates;
+    use PcreRule;
 
     private ?string $composer = null;
 
@@ -71,7 +73,7 @@ final class EscapeLiteralBraceRectorPinnedPcreTest extends AbstractRectorTestCas
     #[Test]
     public function test_a_pin_that_names_no_release_is_passed_over(): void
     {
-        $this->requiresBundledPcre2('8.3', '"a{,3}" escaped for a pin that names no release');
+        $this->requiresBundledPcre2Within(80300, 80700, __FUNCTION__);
         $this->pinPcre2('latest');
 
         $this->doTestFile(__DIR__.'/Fixture/brace_without_minimum.php.inc');

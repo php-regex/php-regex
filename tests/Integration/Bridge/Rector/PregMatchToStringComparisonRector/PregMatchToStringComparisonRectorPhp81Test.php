@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Bridge\Rector\PregMatchToStringComparisonRector;
 
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Rector\Testing\PHPUnit\AbstractRectorTestCase;
@@ -26,6 +27,7 @@ use Rector\Testing\PHPUnit\AbstractRectorTestCase;
 final class PregMatchToStringComparisonRectorPhp81Test extends AbstractRectorTestCase
 {
     use PcreGates;
+    use PcreRule;
 
     #[Test]
     #[DataProvider('provideFixtures')]
@@ -39,7 +41,7 @@ final class PregMatchToStringComparisonRectorPhp81Test extends AbstractRectorTes
         // project that pins no PCRE2 with that release, and agrees too.
         if ('skip_quantifier_without_a_minimum' === basename($filePath, '.php.inc')) {
             $this->requiresPcre2('10.43', '/a{,0}b/');
-            $this->requiresBundledPcre2('8.1', '/a{,0}b/');
+            $this->requiresBundledPcre2Within(80100, 80700, __FUNCTION__);
         }
 
         $this->doTestFile($filePath);

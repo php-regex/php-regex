@@ -353,44 +353,6 @@ final class PcreGatesTest extends TestCase
         }
     }
 
-    /**
-     * A project that pins no PCRE2 is judged, at the running PHP's own
-     * minor version, with the PCRE2 that PHP runs: a row written for a PHP
-     * with the release it bundles holds there only when the two are one.
-     */
-    #[Test]
-    public function test_the_bundled_pcre2_gate_follows_the_pcre2_the_running_php_runs(): void
-    {
-        // The list names every minor version from PHP 8.1 on, in order.
-        $running = PcreGateLimits::KNOWN_PHP_VERSIONS[intdiv(\PHP_VERSION_ID, 100) - 801];
-        $this->assertSame(\PHP_MAJOR_VERSION.'.'.\PHP_MINOR_VERSION, $running);
-        $bundled = PcreTarget::bundledWith(intdiv(\PHP_VERSION_ID, 100) * 100)->pcreVersion;
-
-        try {
-            $this->requiresBundledPcre2($running, 'Each fixture');
-            $this->assertSame($bundled, PcreTarget::runtime()->pcreVersion, 'The gate let through a PHP that runs another PCRE2 than it bundles.');
-        } catch (SkippedWithMessageException $skip) {
-            $this->assertNotSame($bundled, PcreTarget::runtime()->pcreVersion, 'The gate skipped on a PHP that runs the PCRE2 it bundles.');
-            $this->assertSame(
-                \sprintf('%s is verified against PHP %s with the PCRE2 %s it bundles; PHP %s runs PCRE2 %s.', 'Each fixture', $running, $bundled, \PHP_VERSION, \PCRE_VERSION),
-                $skip->getMessage(),
-            );
-        }
-    }
-
-    /**
-     * Every other PHP is judged with the PCRE2 it bundles, whichever runs.
-     */
-    #[Test]
-    public function test_the_bundled_pcre2_gate_lets_another_php_through(): void
-    {
-        $other = 801 === intdiv(\PHP_VERSION_ID, 100) ? '8.2' : '8.1';
-
-        $this->requiresBundledPcre2($other, 'Each fixture');
-
-        $this->assertNotSame(intdiv(\PHP_VERSION_ID, 100), intdiv(self::pcreGatePhpVersionId($other), 100));
-    }
-
     #[Test]
     public function test_a_pattern_the_engine_accepts_does_not_skip(): void
     {

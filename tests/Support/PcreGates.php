@@ -99,25 +99,6 @@ trait PcreGates
     }
 
     /**
-     * Skip when the running PHP is the version a row is written for and
-     * runs another PCRE2 than that PHP bundles: a project that pins no
-     * PCRE2 is judged, at the running PHP's own minor version, with the
-     * PCRE2 it runs, so the row cannot be seen there with the bundled
-     * release. Every other PHP is judged with the release it bundles.
-     *
-     * @param value-of<PcreGateLimits::KNOWN_PHP_VERSIONS> $php
-     */
-    private function requiresBundledPcre2(string $php, string $subject): void
-    {
-        $versionId = self::pcreGatePhpVersionId($php);
-        $bundled = PcreTarget::bundledWith($versionId)->pcreVersion;
-
-        if (intdiv(\PHP_VERSION_ID, 100) === intdiv($versionId, 100) && PcreTarget::runtime()->pcreVersion !== $bundled) {
-            $this->markTestSkipped(\sprintf('%s is verified against PHP %s with the PCRE2 %s it bundles; PHP %s runs PCRE2 %s.', $subject, $php, $bundled, \PHP_VERSION, \PCRE_VERSION));
-        }
-    }
-
-    /**
      * Skip a row PHP 8.1 refuses and PHP 8.2 reads: a pattern with the n
      * modifier, or with a NUL byte anywhere.
      */
