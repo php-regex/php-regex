@@ -587,7 +587,9 @@ too: a pattern with `^` or `\A`, or that may match empty, is checked in those ru
 text before where the search starts (a lookbehind, `\b`, `\B`, `^` under `m`, `\K`) keeps only a rewrite that reads
 as it does or whose changed parts are each proven alone (see [the logic solver](logic-solver.md)). Under `possessive`, a
 rewrite refused for its possessive quantifiers is made again without them, and the other rewrites ship:
-`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`.
+`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`. A rewrite refused whole
+still loses the `s` or the `m` nothing in the pattern reads: the flag moves no bracket and no repeat, and goes
+without a proof. `/a+(?:b)?+a/m` becomes `/a+(?:b)?+a/`, the group kept, which PCRE2 reads to make `a+` possessive.
 
 ---
 

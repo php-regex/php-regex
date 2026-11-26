@@ -85,7 +85,28 @@ final class Optimizer
             $result = $this->rewrite($regex, $ast, self::rewriter($options, false), $options, false);
         }
 
-        return $result ?? new OptimizationResult($regex, $regex, []);
+        // A refused rewrite takes with it the "s" or the "m" nothing in
+        // the pattern reads: the flag goes on its own, the rest as written.
+        return $result ?? $this->withoutUselessFlags($regex, $ast);
+    }
+
+    /**
+     * The pattern without the "s" and the "m" nothing in it reads, the rest
+     * as written: no bracket and no repeat moves, and PCRE compiles the
+     * pattern alike with or without them, so the check has nothing to
+     * prove. It refuses every rewrite of a pattern that holds a possessive
+     * quantifier where a call runs, "/(\[(?:[^\]\[]+|(?R))*+\])/m" keeping
+     * an "m" no anchor reads, and the rewrite of "/a+(?:b)?+a/m" whole, for
+     * the group it takes out.
+     */
+    private function withoutUselessFlags(string $regex, RegexNode $ast): OptimizationResult
+    {
+        $flags = (new FlagRewrites())->removeUselessFlags($ast->flags, $ast->pattern);
+        if ($flags === $ast->flags) {
+            return new OptimizationResult($regex, $regex, []);
+        }
+
+        return new OptimizationResult($regex, $this->written($regex, $ast, new RegexNode($ast->pattern, $flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)), [Rewriter::UNUSED_FLAG]);
     }
 
     private static function rewriter(OptimizerOptions $options, bool $possessive): Rewriter
@@ -122,29 +143,7 @@ final class Optimizer
             return new OptimizationResult($regex, $regex, []);
         }
 
-        $pretty = str_contains($ast->flags, 'x');
-        // Both sides are normalized so that a pattern only counts as optimized
-        // when its structure changed, not when it merely spells an escape
-        // differently.
-        $originalCompiled = $ast->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
-        $optimizedCompiled = $optimizedAst->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
-
-        [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->parser->target());
-        [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->parser->target());
-
-        if ($originalPattern === $optimizedPatternPart) {
-            [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->parser->target());
-            $closingDelimiter = Delimiters::closing($delimiter);
-            $optimizedPattern = $delimiter.$pattern.$closingDelimiter.$optimizedAst->flags;
-        } else {
-            $optimizedPattern = $optimizedCompiled;
-        }
-
-        // Under x the rewrite is written into the pattern as laid out, only
-        // its changed parts printed again.
-        if ($pretty) {
-            $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
-        }
+        $optimizedPattern = $this->written($regex, $ast, $optimizedAst);
 
         // A rewrite PCRE refuses where it compiles the original is no
         // rewrite, whatever the options say: the automata read what a
@@ -193,6 +192,40 @@ final class Optimizer
         }
 
         return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+    }
+
+    /**
+     * The rewritten tree as a pattern: the text of $regex with the flags of
+     * the rewrite where its body reads as the original's, the rewrite
+     * printed otherwise.
+     */
+    private function written(string $regex, RegexNode $ast, RegexNode $optimizedAst): string
+    {
+        $pretty = str_contains($ast->flags, 'x');
+        // Both sides are normalized so that a pattern only counts as optimized
+        // when its structure changed, not when it merely spells an escape
+        // differently.
+        $originalCompiled = $ast->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
+        $optimizedCompiled = $optimizedAst->accept($pretty ? PatternPrinter::pretty() : PatternPrinter::normalized());
+
+        [$originalPattern] = PatternParser::extractPatternAndFlags($originalCompiled, $this->parser->target());
+        [$optimizedPatternPart] = PatternParser::extractPatternAndFlags($optimizedCompiled, $this->parser->target());
+
+        if ($originalPattern === $optimizedPatternPart) {
+            [$pattern, , $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->parser->target());
+            $closingDelimiter = Delimiters::closing($delimiter);
+            $optimizedPattern = $delimiter.$pattern.$closingDelimiter.$optimizedAst->flags;
+        } else {
+            $optimizedPattern = $optimizedCompiled;
+        }
+
+        // Under x the rewrite is written into the pattern as laid out, only
+        // its changed parts printed again.
+        if ($pretty) {
+            $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
+        }
+
+        return $optimizedPattern;
     }
 
     /**

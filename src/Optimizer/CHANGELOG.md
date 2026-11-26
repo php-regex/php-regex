@@ -94,6 +94,16 @@ CHANGELOG
    lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
    now lose their useless `s`, as they do without the option. The second
    rewrite runs only on such a refusal.
+ * A rewrite the check refuses whole no longer keeps the `s` or the `m`
+   nothing in the pattern reads: the flag goes on its own, the rest of the
+   pattern as written. `/(\[(?:[^\]\[]+|(?R))*+\])/m`, where the check
+   proves no rewrite of a pattern that holds a possessive quantifier a call
+   runs, and `/a+(?:b)?+a/m`, whose rewrite takes out a group PCRE2 reads
+   to make `a+` possessive, lose their `m` and nothing else; they came back
+   as written. So does `/(?<=abc|abde)[0-9]+x/s` its `s` for a PCRE2 that
+   refuses the lookbehind factorized. Dropping such a flag moves no bracket
+   and no repeat, and PCRE compiles the pattern alike without it: it is not
+   sent to the check, whatever `verifyWithAutomata` says.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
