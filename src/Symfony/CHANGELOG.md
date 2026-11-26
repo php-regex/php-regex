@@ -17,6 +17,17 @@ CHANGELOG
    route requirement as non-capturing too where the router drops its name,
    on the same releases: `(?<l>en|fr)` is linted as `(?:en|fr)`, and
    `(?<n>a)\k<n>` is invalid there.
+ * `regex:routes` reads the optional slash the router writes after every
+   route it tries with a regex: it takes as is the path that slash ends
+   when the value of the variable the route ends on ends on the slash, or
+   is empty, so `/{p<admin/>}` takes `/admin//` too and `/a{y<b?>}` takes
+   `/a/`. A later route that keeps such a path is an overlap where it was
+   reported shadowed: `/{p<admin/>}` after `/{x<admin>}`, which redirects
+   `GET /admin/` alone, `/{y<a/>}` after `/{x<a>}/`, `/{y<a//>}` after
+   `/{x<a/?>}`, and, since symfony/routing 6.4.51, 7.4.24 and 8.1.12,
+   `/{p<admin/>}` after `/admin` and `/blog{slash}` (`/?`) after `/blog`.
+   `regex:routes --reachability` no longer reports such a route
+   unreachable.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,

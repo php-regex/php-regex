@@ -1120,8 +1120,24 @@ final class RouteConflictAnalyzerTest extends TestCase
         yield 'a requirement that can end on the slash, before a route whose paths it matches only with the slash' => [
             'earlier' => ['/{x<a/?>}', ['GET'], []],
             'later' => ['/{y<a//>}', ['GET'], []],
-            'probes' => [['GET', 'http', '/a//', false], ['HEAD', 'http', '/a//', false]],
+            'probes' => [['GET', 'http', '/a//', false], ['HEAD', 'http', '/a//', false], ['GET', 'http', '/a///', true]],
+            'type' => 'overlap',
+            'skipped' => 0,
+        ];
+        // A later route with its slash after the variable takes "/a//" and
+        // "/a/" alone, which the earlier one matches as is: on its schemes.
+        yield 'a requirement that can end on the slash, before a route ending on a slash that it matches with one slash more' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], []],
+            'later' => ['/{y<a/>}/', ['GET'], []],
+            'probes' => [['GET', 'http', '/a//', false], ['HEAD', 'http', '/a//', false], ['GET', 'http', '/a/', false], ['GET', 'http', '/a///', false]],
             'type' => 'shadowed',
+            'skipped' => 0,
+        ];
+        yield 'a requirement that can end on the slash, on https before a route on https and http ending on a slash that it matches with one slash more' => [
+            'earlier' => ['/{x<a/?>}', ['GET'], ['https']],
+            'later' => ['/{y<a/>}/', ['GET'], ['https', 'http']],
+            'probes' => [['GET', 'https', '/a//', false], ['GET', 'http', '/a//', true]],
+            'type' => 'overlap',
             'skipped' => 0,
         ];
         // A path ending on the slash whose value PCRE captured without it
@@ -1221,11 +1237,13 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => 'overlap',
             'skipped' => 0,
         ];
+        // The later route keeps the path the "/?" of the dumper ends after
+        // its value, which ends on the slash.
         yield 'a custom requirement, before a route whose every path it redirects' => [
             'earlier' => ['/page/{n<\d+>}', ['GET'], []],
             'later' => ['/page/{p<\d+/>}', ['GET'], []],
-            'probes' => [['GET', 'http', '/page/1/', false], ['HEAD', 'http', '/page/1/', false]],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '/page/1/', false], ['HEAD', 'http', '/page/1/', false], ['GET', 'http', '/page/1//', true]],
+            'type' => 'overlap',
             'skipped' => 0,
         ];
         yield 'a custom requirement before a trailing slash, before a route whose every path it redirects' => [
@@ -1553,6 +1571,152 @@ final class RouteConflictAnalyzerTest extends TestCase
             'alone' => [['GET', 'http', '/files/b', true]],
             'type' => null,
             'skipped' => 1,
+        ];
+    }
+
+    /**
+     * The dumper writes "/?" after every route it tries with a regex, and
+     * the matcher takes as is the path that slash ends when the value PCRE
+     * captured for the variable the route ends on ends on the slash, or is
+     * empty: "/{p<admin/>}" takes "/admin//" too, and "/a{y<b?>}" takes
+     * "/a/", paths their own regex does not match. An earlier route that
+     * takes or redirects every path of that regex, and not this one, leaves
+     * the later route a request: an overlap, never a shadow. The later
+     * route stays shadowed where the earlier one takes that path too.
+     *
+     * @param array{0: string, 1: list<string>}                 $earlier path, methods
+     * @param array{0: string, 1: list<string>}                 $later   path, methods
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes  method, path, and the route the request reaches, redirected or not
+     */
+    #[Test]
+    #[DataProvider('provideLaterRoutesTakingOneMoreSlash')]
+    public function test_a_later_route_keeps_the_path_the_matcher_takes_with_one_more_slash(array $earlier, array $later, array $probes, string $type): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('earlier', (new Route($earlier[0]))->setMethods($earlier[1]));
+        $collection->add('later', (new Route($later[0]))->setMethods($later[1]));
+
+        $compiled = (new CompiledUrlMatcherDumper($collection))->getCompiledRoutes();
+        $reached = [];
+        foreach ($probes as [$method, $path, $winner]) {
+            $reached[] = FrameworkMatcher::reached($compiled, $method, $path);
+            $this->assertSame($winner, end($reached), $method.' '.$path);
+        }
+        $this->assertSame('shadowed' !== $type, \in_array('later', $reached, true), 'A request reaches the later route, or none does.');
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame([[$type, 'earlier', 'later']], array_map(
+            static fn (array $conflict): array => [$conflict['type'], $conflict['route']['name'], $conflict['conflict']['name']],
+            $report->conflicts,
+        ));
+        $this->assertSame(0, $report->stats['skipped_pairs']);
+        $this->assertIsString($report->conflicts[0]['example']);
+        $this->assertSame('earlier', FrameworkMatcher::reached($compiled, $earlier[1][0] ?? 'GET', $report->conflicts[0]['example']));
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>}, later: array{0: string, 1: list<string>}, probes: list<array{0: string, 1: string, 2: string|null}>, type: string}>
+     */
+    public static function provideLaterRoutesTakingOneMoreSlash(): iterable
+    {
+        // Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, a
+        // route looked up by its path takes it with any number of slashes.
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
+        yield 'a value ending on the slash, after a route that redirects its path' => [
+            'earlier' => ['/{x<admin>}', ['GET']],
+            'later' => ['/{p<admin/>}', ['GET']],
+            'probes' => [['GET', '/admin', 'earlier'], ['GET', '/admin/', 'earlier'], ['GET', '/admin//', 'later'], ['HEAD', '/admin//', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value ending on the slash, after a route looked up by its path that redirects it' => [
+            'earlier' => ['/admin', ['GET']],
+            'later' => ['/{p<admin/>}', ['GET']],
+            'probes' => [['GET', '/admin/', 'earlier'], ['GET', '/admin//', $trims ? 'earlier' : 'later'], ['HEAD', '/admin//', $trims ? 'earlier' : 'later']],
+            'type' => $trims ? 'shadowed' : 'overlap',
+        ];
+        yield 'values ending on the slash, after a route that matches one path and redirects the other' => [
+            'earlier' => ['/{x<a|b/>}', ['GET']],
+            'later' => ['/{y<a/|b/>}', ['GET']],
+            'probes' => [['GET', '/a/', 'earlier'], ['GET', '/b/', 'earlier'], ['GET', '/b//', 'earlier'], ['GET', '/a//', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value ending on the slash, after a route for the same path with its slash after the variable' => [
+            'earlier' => ['/{x<a>}/', ['GET']],
+            'later' => ['/{y<a/>}', ['GET']],
+            'probes' => [['GET', '/a', 'earlier'], ['GET', '/a/', 'earlier'], ['GET', '/a//', 'later'], ['HEAD', '/a//', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value ending on the slash, after a route looked up by the same path' => [
+            'earlier' => ['/admin/', ['GET']],
+            'later' => ['/{p<admin/>}', ['GET']],
+            'probes' => [['GET', '/admin', 'earlier'], ['GET', '/admin/', 'earlier'], ['GET', '/admin//', $trims ? 'earlier' : 'later']],
+            'type' => $trims ? 'shadowed' : 'overlap',
+        ];
+        yield 'a value that may be empty, for any method, after a route that reads the path for its slash' => [
+            'earlier' => ['/{x<a|ab>}', []],
+            'later' => ['/a{y<b?>}', []],
+            'probes' => [['GET', '/a', 'earlier'], ['POST', '/a', 'earlier'], ['GET', '/a/', 'earlier'], ['POST', '/a/', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value that may be empty, for any method, after a route ending on no variable' => [
+            'earlier' => ['/{x<a?>}a', []],
+            'later' => ['/a{y<a?>}', []],
+            'probes' => [['POST', '/a', 'earlier'], ['GET', '/a/', 'earlier'], ['POST', '/a/', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value that may be empty, for any method, after a route that may capture the slash or not' => [
+            'earlier' => ['/{x<a|a/|ab|ab/>}', []],
+            'later' => ['/a{y<b?>}', []],
+            'probes' => [['POST', '/a', 'earlier'], ['GET', '/a/', 'earlier'], ['POST', '/a/', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a value ending on the slash, after a route that takes its path with one more slash too' => [
+            'earlier' => ['/{x<a|a/>}', ['GET']],
+            'later' => ['/{y<a/>}', ['GET']],
+            'probes' => [['GET', '/a/', 'earlier'], ['GET', '/a//', 'earlier'], ['HEAD', '/a//', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a value ending on the slash, for any method, after a route that takes every path ending on the slash' => [
+            'earlier' => ['/{x<.*>}/', []],
+            'later' => ['/{y<a/>}', []],
+            'probes' => [['GET', '/a/', 'earlier'], ['POST', '/a/', 'earlier'], ['GET', '/a//', 'earlier'], ['POST', '/a//', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        // With its slash after the variable, the later route takes as is
+        // the paths ending on a slash alone, and redirects the others.
+        yield 'a value ending on the slash, before the slash of the route, after a route for the same path' => [
+            'earlier' => ['/{x<a//>}', ['GET']],
+            'later' => ['/{p<a/>}/', ['GET']],
+            'probes' => [['GET', '/a//', 'earlier'], ['GET', '/a///', 'earlier'], ['GET', '/a/', 'later'], ['HEAD', '/a/', 'later']],
+            'type' => 'overlap',
+        ];
+        yield 'a catch-all ending on a slash, for any method, after a wider one ending on a slash' => [
+            'earlier' => ['/{x<.+>}/', []],
+            'later' => ['/docs/{p<.+>}/', []],
+            'probes' => [['POST', '/docs/a/', 'earlier'], ['POST', '/docs/a//', 'earlier'], ['GET', '/docs/a', 'earlier'], ['POST', '/docs/a', null]],
+            'type' => 'shadowed',
+        ];
+        // The earlier route takes as is, for any method, every path ending
+        // on a slash that its own "/?" ends.
+        yield 'a value ending on the slash, before the slash of the route, for POST, after a route that takes its paths under its own slash' => [
+            'earlier' => ['/{x<a//>}/', ['POST']],
+            'later' => ['/a/{y</>}/', ['POST']],
+            'probes' => [['POST', '/a///', 'earlier'], ['POST', '/a//', 'earlier'], ['POST', '/a////', null]],
+            'type' => 'shadowed',
+        ];
+        yield 'a route matched in part, after one that takes its other path under its own slash' => [
+            'earlier' => ['/{x<a|b/>}/', ['GET']],
+            'later' => ['/{y<a|b>}/', ['GET']],
+            'probes' => [['GET', '/a/', 'earlier'], ['GET', '/b/', 'earlier'], ['GET', '/b', 'earlier'], ['HEAD', '/b//', 'earlier']],
+            'type' => 'shadowed',
+        ];
+        yield 'a catch-all, whose paths take any number of slashes, after a wider one' => [
+            'earlier' => ['/{any<.*>}', ['GET']],
+            'later' => ['/files/{path<.+>}', ['GET']],
+            'probes' => [['GET', '/files/a', 'earlier'], ['GET', '/files/a/', 'earlier'], ['GET', '/files/a//', 'earlier']],
+            'type' => 'shadowed',
         ];
     }
 
@@ -1911,7 +2075,8 @@ final class RouteConflictAnalyzerTest extends TestCase
      * takes only GET and HEAD requests on the schemes and hosts of the
      * earlier route: the matcher sends every request of it to the earlier
      * route, as is or redirected. One that keeps some requests, another
-     * method or a scheme of its own, overlaps.
+     * method, a scheme of its own, or the path the matcher takes with one
+     * more slash after a value ending on it, overlaps.
      *
      * @param array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>} $earlier path, methods, schemes, requirements, defaults
      * @param array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>} $later   path, methods, schemes, requirements, defaults
@@ -1919,7 +2084,7 @@ final class RouteConflictAnalyzerTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideRoutesMatchedInPartAndRedirectedForTheRest')]
-    public function test_a_later_route_the_earlier_one_matches_in_part_and_redirects_for_the_rest(array $earlier, array $later, array $probes, string $type, ?string $example): void
+    public function test_a_later_route_the_earlier_one_matches_in_part_and_redirects_for_the_rest(array $earlier, array $later, array $probes, string $type, ?string $example, bool $redirected): void
     {
         $collection = new RouteCollection();
         foreach (['earlier' => $earlier, 'later' => $later] as $name => [$path, $methods, $schemes, $requirements, $defaults]) {
@@ -1939,7 +2104,7 @@ final class RouteConflictAnalyzerTest extends TestCase
         ));
         $this->assertSame('shadowed' === $type ? 1 : 0, $report->stats['shadowed']);
         $this->assertSame('overlap' === $type ? 1 : 0, $report->stats['overlaps']);
-        $this->assertSame('shadowed' === $type, $report->conflicts[0]['redirected']);
+        $this->assertSame($redirected, $report->conflicts[0]['redirected']);
         $this->assertSame($example, $report->conflicts[0]['example']);
         if ('shadowed' === $type) {
             $this->assertContains('GET and HEAD requests differing by a trailing slash are redirected to the earlier route.', $report->conflicts[0]['notes']);
@@ -1948,23 +2113,34 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>}, later: array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>}, probes: list<array{0: string, 1: string, 2: string, 3: string|null}>, type: string, example: string|null}>
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>}, later: array{0: string, 1: list<string>, 2: list<string>, 3: array<string, string>, 4: array<string, string>}, probes: list<array{0: string, 1: string, 2: string, 3: string|null}>, type: string, example: string|null, redirected: bool}>
      */
     public static function provideRoutesMatchedInPartAndRedirectedForTheRest(): iterable
     {
+        // Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, a
+        // route looked up by its path takes it with any number of slashes.
+        $trims = FrameworkMatcher::trimsEveryTrailingSlash();
+
+        // The later route keeps the path the "/?" of the dumper ends after
+        // a value ending on the slash, "/b//": no shadow.
         yield 'a placeholder matched as is on one value and redirected on the other' => [
             'earlier' => ['/{x}', ['GET'], [], ['x' => 'a|b'], []],
             'later' => ['/{y}', ['GET'], [], ['y' => 'a|b/'], []],
-            'probes' => [['GET', 'http', '/a', 'earlier'], ['GET', 'http', '/b/', 'earlier'], ['HEAD', 'http', '/b/', 'earlier']],
-            'type' => 'shadowed',
-            'example' => '/b/',
+            'probes' => [['GET', 'http', '/a', 'earlier'], ['GET', 'http', '/b/', 'earlier'], ['HEAD', 'http', '/b/', 'earlier'], ['GET', 'http', '/b//', 'later']],
+            'type' => 'overlap',
+            'example' => '/a',
+            'redirected' => false,
         ];
+        // Looked up by its path, the earlier route redirects "/blog/", and
+        // "/blog//" too where the matcher trims every slash; else the later
+        // route keeps it, the "/?" of the dumper ending it after "/".
         yield 'a later route taking its path with and without a trailing slash' => [
             'earlier' => ['/blog', [], [], [], []],
             'later' => ['/blog{slash}', ['GET', 'HEAD'], [], ['slash' => '/?'], ['slash' => '']],
-            'probes' => [['GET', 'http', '/blog', 'earlier'], ['GET', 'http', '/blog/', 'earlier'], ['HEAD', 'http', '/blog/', 'earlier']],
-            'type' => 'shadowed',
+            'probes' => [['GET', 'http', '/blog', 'earlier'], ['GET', 'http', '/blog/', 'earlier'], ['HEAD', 'http', '/blog/', 'earlier'], ['GET', 'http', '/blog//', $trims ? 'earlier' : 'later']],
+            'type' => $trims ? 'shadowed' : 'overlap',
             'example' => '/blog/',
+            'redirected' => true,
         ];
         yield 'a later route that takes POST too keeps it' => [
             'earlier' => ['/{x}', ['GET'], [], ['x' => 'a|b'], []],
@@ -1972,6 +2148,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'probes' => [['GET', 'http', '/b/', 'earlier'], ['POST', 'http', '/b/', 'later'], ['POST', 'http', '/a', 'later']],
             'type' => 'overlap',
             'example' => '/a',
+            'redirected' => false,
         ];
         yield 'a later route on a scheme the earlier one does not take keeps it' => [
             'earlier' => ['/{x}', ['GET'], ['https'], ['x' => 'a|b'], []],
@@ -1979,6 +2156,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'probes' => [['GET', 'https', '/a', 'earlier'], ['GET', 'http', '/a', 'later']],
             'type' => 'overlap',
             'example' => '/a',
+            'redirected' => false,
         ];
         // A possessive the slash may follow is ordered behaviour the solver
         // cannot read: the paths the earlier route matches decide the pair.
@@ -1988,6 +2166,7 @@ final class RouteConflictAnalyzerTest extends TestCase
             'probes' => [['GET', 'http', '/a', 'earlier'], ['GET', 'http', '/', 'later']],
             'type' => 'overlap',
             'example' => '/a',
+            'redirected' => false,
         ];
     }
 

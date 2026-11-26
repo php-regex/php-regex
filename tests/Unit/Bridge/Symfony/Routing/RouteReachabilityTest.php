@@ -114,6 +114,80 @@ final class RouteReachabilityTest extends TestCase
         }
     }
 
+    /**
+     * A route ending on a variable whose value may end on the slash takes
+     * its path with one more slash too, the "/?" the dumper writes after
+     * it: "/{p<admin/>}" keeps "/admin//" after a route that takes "/admin"
+     * and redirects "/admin/".
+     */
+    #[Test]
+    public function test_a_route_keeps_the_path_the_matcher_takes_with_one_more_slash(): void
+    {
+        $routes = self::collection([
+            'admin' => new Route('/{x}', requirements: ['x' => 'admin'], methods: ['GET']),
+            'slash' => new Route('/{p}', requirements: ['p' => 'admin/'], methods: ['GET']),
+        ]);
+
+        $this->assertSame('admin', FrameworkMatcher::reached($routes, 'GET', '/admin/'));
+        $this->assertSame('slash', FrameworkMatcher::reached($routes, 'GET', '/admin//'));
+
+        $report = self::analyzer()->analyzeReachability($routes);
+        $slash = self::route($report->routes, 'slash');
+
+        $this->assertTrue($slash['reachable']);
+        $this->assertSame('/admin//', $slash['example']['path'] ?? null);
+        $this->assertSame(['admin'], array_column($slash['takenBy'], 'name'));
+        $this->assertSame([], $report->unreachable());
+    }
+
+    /**
+     * Two routes that take the paths of a third together still leave it the
+     * path the matcher takes with one more slash.
+     */
+    #[Test]
+    public function test_two_routes_leave_a_third_the_path_the_matcher_takes_with_one_more_slash(): void
+    {
+        $routes = self::collection([
+            'a' => new Route('/{x}', requirements: ['x' => 'a'], methods: ['GET']),
+            'b' => new Route('/{x}', requirements: ['x' => 'b'], methods: ['GET']),
+            'either' => new Route('/{p}', requirements: ['p' => 'a/|b/'], methods: ['GET']),
+        ]);
+
+        foreach (['/a/' => 'a', '/b/' => 'b', '/a//' => 'either', '/b//' => 'either'] as $path => $winner) {
+            $this->assertSame($winner, FrameworkMatcher::reached($routes, 'GET', $path), $path);
+        }
+
+        $report = self::analyzer()->analyzeReachability($routes);
+        $either = self::route($report->routes, 'either');
+
+        $this->assertTrue($either['reachable']);
+        $this->assertFalse($either['cumulative']);
+        $this->assertSame('/a//', $either['example']['path'] ?? null);
+        $this->assertSame(0, $report->stats['cumulative']);
+    }
+
+    /**
+     * An earlier route that takes the path with one more slash too leaves
+     * the later one nothing.
+     */
+    #[Test]
+    public function test_a_route_loses_the_path_with_one_more_slash_to_a_route_that_takes_it(): void
+    {
+        $routes = self::collection([
+            'both' => new Route('/{x}', requirements: ['x' => 'a|a/'], methods: ['GET']),
+            'slash' => new Route('/{y}', requirements: ['y' => 'a/'], methods: ['GET']),
+        ]);
+
+        foreach (['/a', '/a/', '/a//'] as $path) {
+            $this->assertSame('both', FrameworkMatcher::reached($routes, 'GET', $path), $path);
+        }
+
+        $slash = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'slash');
+
+        $this->assertFalse($slash['reachable']);
+        $this->assertSame(['both'], array_column($slash['takenBy'], 'name'));
+    }
+
     #[Test]
     public function test_a_route_with_a_condition_shadows_nothing(): void
     {
