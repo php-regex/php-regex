@@ -129,3 +129,14 @@ namespace Webmozart\Assert {
         public static function regex(string $value, string $pattern, string $message = ''): void {}
     }
 }
+
+// PHPUnit's Assert is a class of the PHPUnit running the tests, loaded in
+// Psalm's process: Psalm would otherwise read it from the file of that
+// release, through the storage it keeps from one run of the process to the
+// next. Read from here, it is the same class whatever PHPUnit runs.
+namespace PHPUnit\Framework {
+    abstract class Assert
+    {
+        final public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = ''): void {}
+    }
+}

@@ -243,7 +243,7 @@ final class PsalmPluginWrapperCallTest extends TestCase
     #[Test]
     public function test_plugin_refuses_a_php_on_pcre1_at_a_wrapper_call(): void
     {
-        $directory = $this->makeProject(['calls.php' => <<<'CODE'
+        $directory = $this->makeProject(['libraries.phpstub' => self::libraries(), 'calls.php' => <<<'CODE'
             <?php
 
             function f(string $s): void
@@ -254,7 +254,7 @@ final class PsalmPluginWrapperCallTest extends TestCase
             CODE]);
 
         try {
-            PsalmRun::issues(['calls.php'], '7.2', [], [], false, $directory);
+            PsalmRun::issues(['calls.php'], '7.2', [], [], false, $directory, stubs: ['libraries.phpstub']);
             $this->fail('A PHP on PCRE1 was judged.');
         } catch (UnsupportedTargetException $e) {
             $this->assertSame('Psalm phpVersion names PHP 7.2: PHP 7.2 and earlier ship PCRE1, which this library does not judge. Name a PHP version of 7.3 or later to judge for.', $e->getMessage());
@@ -274,6 +274,7 @@ final class PsalmPluginWrapperCallTest extends TestCase
 
         $directory = $this->makeProject([
             'composer.json' => '{"config": {"platform": {"lib-pcre": "8.45"}}}',
+            'libraries.phpstub' => self::libraries(),
             'calls.php' => <<<'CODE'
                 <?php
 
@@ -286,7 +287,7 @@ final class PsalmPluginWrapperCallTest extends TestCase
                 CODE,
         ]);
 
-        $this->assertSame([], PsalmRun::reported(PsalmRun::inFile(PsalmRun::issues(['calls.php'], '8.4', [], [], false, $directory), 'calls.php', $directory)));
+        $this->assertSame([], PsalmRun::reported(PsalmRun::inFile(PsalmRun::issues(['calls.php'], '8.4', [], [], false, $directory, stubs: ['libraries.phpstub']), 'calls.php', $directory)));
     }
 
     /**
@@ -361,6 +362,14 @@ final class PsalmPluginWrapperCallTest extends TestCase
         }
 
         return $found;
+    }
+
+    /**
+     * The stubs of the libraries, for a project of its own.
+     */
+    private static function libraries(): string
+    {
+        return (string) file_get_contents(PsalmRun::FIXTURES.'/'.self::LIBRARIES);
     }
 
     /**
