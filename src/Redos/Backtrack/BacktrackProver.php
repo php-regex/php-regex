@@ -187,9 +187,7 @@ final class BacktrackProver
                 // The attempt at the subject's start, and when the pattern
                 // looks at the character before, the later attempts of an
                 // unanchored search after each kind of character.
-                $contexts = $pnfa->looksBehindStart
-                    ? [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER]
-                    : [ItemAutomaton::CONTEXT_START];
+                $contexts = self::startContexts($pnfa);
                 $reach[$index] = [];
             }
 
@@ -230,6 +228,16 @@ final class BacktrackProver
             if (null === $best || self::better($verdict, $best)) {
                 $best = $verdict;
             }
+        }
+
+        // Past the margin with a bounded repeat read as unbounded for the two
+        // ways its copies read one input, the loop goes round without end
+        // where the engine stops at the last copy: the copies written out
+        // are what it reads, and the attempt is read whole on them. A
+        // pattern with a lookaround, whose body is a search of its own, is
+        // left as counted.
+        if ($beyond && 1 === \count($searches) && $builder->hasAmbiguousRepeats()) {
+            $beyond = !$this->withinMarginAsWritten($regex, $target);
         }
 
         // Known before any verdict is refused: a ceiling needs no witness,
@@ -292,6 +300,42 @@ final class BacktrackProver
             $unicode,
             $best['withoutMatches'],
         );
+    }
+
+    /**
+     * Whether one attempt of a pattern without lookaround stays within the
+     * margin of the paths tried at once (AmbiguityFinder::readWhole()) when
+     * each bounded repeat within the cutoff is built as its copies, those
+     * that read one input in two ways too: the search as the engine reads
+     * it, where the loop such a repeat is read as holds more paths at each
+     * round. Built and read on a budget of its own, which takes nothing from
+     * the proofs that share one; past it, the attempt is not within.
+     */
+    private function withinMarginAsWritten(RegexNode $regex, ?PcreTarget $target): bool
+    {
+        $budget = new Budget($this->maxSteps, $this->maxStates);
+
+        try {
+            $pnfa = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, written: true))->build()[0];
+
+            return null !== (new AmbiguityFinder(new ItemAutomaton($pnfa, $budget, self::startContexts($pnfa)), $budget))->readWhole();
+        } catch (ModelLimitException) {
+            return false;
+        }
+    }
+
+    /**
+     * The contexts the attempts of a pattern's own search start in: the
+     * subject's start, and when the pattern looks at the character before,
+     * after each kind of character.
+     *
+     * @return list<int>
+     */
+    private static function startContexts(Pnfa $pnfa): array
+    {
+        return $pnfa->looksBehindStart
+            ? [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER]
+            : [ItemAutomaton::CONTEXT_START];
     }
 
     /**
@@ -461,10 +505,7 @@ final class BacktrackProver
 
         try {
             $inPlace = (new PnfaBuilder($regex, $budget, $this->boundedRepeatCutoff, $target, true))->build()[0];
-            $contexts = $inPlace->looksBehindStart
-                ? [ItemAutomaton::CONTEXT_START, ItemAutomaton::CONTEXT_WORD, ItemAutomaton::CONTEXT_NEWLINE, ItemAutomaton::CONTEXT_OTHER]
-                : [ItemAutomaton::CONTEXT_START];
-            $verdict = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, $contexts), $budget))->find(self::requiredLiterals($regex->pattern, $inPlace->unicode));
+            $verdict = (new AmbiguityFinder(new ItemAutomaton($inPlace, $budget, self::startContexts($inPlace)), $budget))->find(self::requiredLiterals($regex->pattern, $inPlace->unicode));
             if (null === $verdict || RedosComplexity::Polynomial !== $verdict['complexity'] || $verdict['approximated'] || null !== $verdict['unwitnessed']
                 || ($verdict['degree'] ?? 0) <= (null === $best ? 1 : $best['degree'] ?? 0) || (null !== $best && !\in_array($verdict['pump'], $lookaroundPumps, true))) {
                 return $best;

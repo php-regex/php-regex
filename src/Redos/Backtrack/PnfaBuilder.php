@@ -286,6 +286,10 @@ final class PnfaBuilder
      * @param bool            $inPlace whether the lookarounds are read in place, in the
      *                                 pattern's own search, instead of as searches of
      *                                 their own
+     * @param bool            $written whether a bounded repeat within the cutoff is built as
+     *                                 its copies even when they read the same input in two
+     *                                 ways, instead of as an unbounded loop: what the engine
+     *                                 reads, for the count of the paths it tries at once
      */
     public function __construct(
         private readonly RegexNode $regex,
@@ -293,6 +297,7 @@ final class PnfaBuilder
         private readonly int $boundedRepeatCutoff,
         private readonly ?PcreTarget $target = null,
         private readonly bool $inPlace = false,
+        private readonly bool $written = false,
     ) {
         $this->locale = $target?->locale;
         $this->unicode = str_contains($regex->flags, 'u');
@@ -351,9 +356,11 @@ final class PnfaBuilder
             $lineStart = $lineStart || $search->hasLineStart;
         }
 
+        $possessive = self::holdsPossessive($this->regex->pattern);
         foreach ($this->searches as $search) {
             $search->wordSet ??= $wordSet;
             $search->hasLineStart = $search->hasLineStart || $lineStart;
+            $search->holdsPossessive = $possessive;
         }
 
         return $this->searches;
@@ -370,11 +377,38 @@ final class PnfaBuilder
     }
 
     /**
+     * Whether a bounded repeat was read as unbounded for the two ways its
+     * copies read the same input.
+     */
+    public function hasAmbiguousRepeats(): bool
+    {
+        return [] !== $this->ambiguousRepeats;
+    }
+
+    /**
      * Whether a set was read as any character: no safe verdict then.
      */
     public function hasApproximatedSets(): bool
     {
         return null !== $this->anyCharacter;
+    }
+
+    /**
+     * Whether the node holds an atomic group or a possessive repeat.
+     */
+    private static function holdsPossessive(NodeInterface $node): bool
+    {
+        if (($node instanceof GroupNode && GroupType::Atomic === $node->type) || ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsPossessive($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -650,7 +684,7 @@ final class PnfaBuilder
 
             // Copies that read the same input in two ways: the unbounded loop
             // carries that ambiguity, the unrolled copies hide it.
-            if (($max <= $this->boundedRepeatCutoff || $max === $min) && $this->repeatsAmbiguously($node->node, $flags)) {
+            if (($max <= $this->boundedRepeatCutoff || $max === $min) && !$this->written && $this->repeatsAmbiguously($node->node, $flags)) {
                 $abstracted = true;
                 $this->ambiguousRepeats[$node->getStartPosition()] ??= \sprintf(
                     '%s at offset %d analysed as {%d,} (its copies read the same input in two ways)',

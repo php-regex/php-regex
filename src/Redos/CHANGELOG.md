@@ -6,6 +6,27 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * The paths one attempt tries at once are counted more exactly where they
+   meet. Counted stretch by stretch, a loop is entered by the ways of every
+   stretch before it, added up whether or not one input brings them
+   together: a chain of loops each reached both from the loop before it and
+   around that loop doubles the sum at each loop. Past 1,024 that way, the
+   attempt is now read whole on one input, its loops included, in the order
+   the engine tries its paths and up to a success it stops at: nothing after
+   that success is tried, but at the attempt start, where a success that
+   reads nothing may be refused. The pattern of semver.org (189 then 717
+   steps on sixteen then sixty-four `0a0.` of a prerelease and a `!`) and
+   `/^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){8}$/`, nine numbers joined by dots,
+   are safe (proven), where they got the heuristics' verdict. A bounded
+   repeat whose copies read one input in two ways, read as a loop that holds
+   more paths at each round, is then read as its copies in a pattern without
+   lookaround: two patterns of mpdf's Indic shaper, every repeat bounded (67
+   and 68 steps on the text of four copies of the repeat, as many on eight),
+   are safe (proven) again. Ten groups `(?:b{0}|)` before an `x` and ten
+   after it, then `\ba`, and
+   `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/` keep the heuristics'
+   verdict, and so does a pattern whose reading takes more than 16,384 steps.
+   An exponential or polynomial verdict stands.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.
