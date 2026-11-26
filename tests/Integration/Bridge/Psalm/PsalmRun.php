@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use Composer\InstalledVersions;
 use Composer\Semver\VersionParser;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Assert;
 use Psalm\Config;
@@ -296,6 +297,16 @@ final class PsalmRun
 
         try {
             return self::analyse($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource, $stubs);
+        } catch (\RuntimeException $e) {
+            // From Psalm 7.22 an exception the plugin throws while a file is
+            // analysed reaches the caller inside a TaskCrashedException that
+            // names the file; the tests assert the plugin's own.
+            $previous = $e->getPrevious();
+            if ('Psalm\Internal\Fork\TaskCrashedException' === $e::class && $previous instanceof ExceptionInterface) {
+                throw $previous;
+            }
+
+            throw $e;
         } finally {
             $GLOBALS['argv'] = $argv;
         }
