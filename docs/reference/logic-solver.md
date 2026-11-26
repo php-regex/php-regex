@@ -586,7 +586,8 @@ Two refinements inside those rules:
   `\R`, are read as written. A part spliced into a larger pattern meets
   what stands around it: one that may end with such a repeat, start with a
   dot or match nothing reads alike another only where both write that end
-  the same, as `.[0-9]` and `.\d` do; between `\R?` and a dot, `[0-9]*`
+  the same, as `.[0-9]` and `.\d` do, or `(?:a?)` and `a?`, a group that
+  does not repeat reading as its body; between `\R?` and a dot, `[0-9]*`
   finds `"\r"` and `\d*` nothing.
 
   A lookbehind branch that matches more than one length, as `\R` does,

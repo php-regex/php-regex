@@ -208,6 +208,13 @@ final class RepeatBesideNewlineSequenceTest extends TestCase
         yield 'a letter and dots' => ['options' => '', 'left' => 'x.*', 'right' => 'x.*', 'flags' => ''];
         yield 'digits and dots' => ['options' => '', 'left' => '[0-9]x.*', 'right' => '\dx.*', 'flags' => ''];
         yield 'a dot under (*CRLF)' => ['options' => '(*CRLF)', 'left' => '.[0-9]', 'right' => '.\d', 'flags' => ''];
+        // A group that does not repeat stands for its body: PCRE2 reads
+        // into it and past its end as it reads the body bare.
+        yield 'a letter or none in a group' => ['options' => '', 'left' => '(?:a?)', 'right' => 'a?', 'flags' => ''];
+        yield 'digits or none in a group' => ['options' => '', 'left' => '(?:\d*)', 'right' => '\d*', 'flags' => ''];
+        yield 'a dot in a group' => ['options' => '', 'left' => '(?:.)x', 'right' => '.x', 'flags' => ''];
+        yield 'dots at the end of a group' => ['options' => '', 'left' => '(?:x.*)', 'right' => 'x.*', 'flags' => ''];
+        yield 'a group in a group' => ['options' => '', 'left' => '(?:(?:a?)b)', 'right' => 'a?b', 'flags' => ''];
     }
 
     /**

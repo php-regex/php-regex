@@ -153,7 +153,8 @@ CHANGELOG
    such a repeat, start with a dot or match nothing, and they write that
    end apart: spliced between `\R?` and a dot, `[0-9]*` finds `"\r"` and
    `\d*` nothing, as PCRE2 reads past the second alone. `/.[0-9]/` and
-   `/.\d/` still read alike. A repeat counted once, `.{2}\R`, and one a
+   `/.\d/` still read alike, and so do `(?:a?)` and `a?`: a group that
+   does not repeat reads as its body there. A repeat counted once, `.{2}\R`, and one a
    character follows first, `.*a\R`, are read as before.
  * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
    `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
