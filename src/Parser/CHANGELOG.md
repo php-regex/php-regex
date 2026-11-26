@@ -53,6 +53,10 @@ CHANGELOG
    error, for a pattern refused either way (`ErrorOffsetPastTheFault`,
    `TooLargeAtPatternStart`, ...), are internal: a minor release may merge
    or remove one.
+ * `PcreFeature::AssertedFirstCharacterCheckedAgainstRequired` (10.45): the
+   character a lookahead opening the pattern asserts is not looked for
+   first where the pattern requires a character of the same value, and
+   `/(?=a)b?a/` finds `a` in `a`, where 10.32 to 10.44 found nothing.
  * `Analysis\GroupNumbering::getWrittenGroupCount()` counts the capturing
    groups as written, not PCRE2's capture count: `/(?|(a)|(b))/` writes two,
    PCRE2 counts one, `$maxGroupNumber`.

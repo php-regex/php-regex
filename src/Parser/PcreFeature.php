@@ -285,6 +285,11 @@ enum PcreFeature
     case CaselessCasePropertiesMatchCasedLetters;
 
     /**
+     * The character a lookahead opening the pattern asserts is not looked for first where the pattern requires a character of the same value: "/(?=a)b?a/" finds "a" in "a", where 10.32 to 10.44 found nothing.
+     */
+    case AssertedFirstCharacterCheckedAgainstRequired;
+
+    /**
      * The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits.
      */
     case VersionConditionWholeNumbers;
@@ -447,7 +452,8 @@ enum PcreFeature
             self::NamedCharacterBraceRefusedInClass,
             self::ClassesCompiledFromMergedRanges,
             self::CaselessReferenceHoldsItsCaseRules,
-            self::CaselessCasePropertiesMatchCasedLetters => '10.45',
+            self::CaselessCasePropertiesMatchCasedLetters,
+            self::AssertedFirstCharacterCheckedAgainstRequired => '10.45',
             self::VersionConditionWholeNumbers,
             self::CallsReturnCaptureGroups,
             self::GroupListErrors,
