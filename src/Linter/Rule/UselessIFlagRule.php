@@ -438,6 +438,13 @@ final class UselessIFlagRule extends AbstractLintRule
      * every other case, "[aA[:upper:]]" does not, which i turns into
      * "[aA[:alpha:]]".
      *
+     * A class of two bytes or more is compiled from the pairs of the tables
+     * alone, with i and without it: to the bytes it holds and their other
+     * cases, or to one byte matched caselessly either way where it holds
+     * that byte and its other case, from 10.34. What the interpreter reads
+     * otherwise of a byte matched alone reaches a class of one byte only,
+     * which is compiled as that byte.
+     *
      * @param array<NodeInterface> $parts
      */
     private function holdsEveryOtherCase(array $parts): bool
@@ -468,8 +475,9 @@ final class UselessIFlagRule extends AbstractLintRule
             }
         }
 
+        $several = \count($bytes) > 1;
         foreach (array_keys($bytes) as $byte) {
-            $other = $this->otherByte($byte);
+            $other = $this->otherByte($byte, $several);
             if (null === $other || !isset($bytes[$other])) {
                 return false;
             }
@@ -561,12 +569,14 @@ final class UselessIFlagRule extends AbstractLintRule
      * The other case of a byte, or the byte itself: under (*UCP), of a
      * byte past ASCII from PCRE2's Unicode tables of the target's release,
      * where it is a byte, whatever the locale's tables give; of an ASCII
-     * letter; from the locale's tables, null where they leave it unsettled.
+     * letter; from the locale's tables, null where they leave it unsettled:
+     * where the releases hold it otherwise, or, for a byte not among
+     * several, where the interpreter reads it otherwise matched alone.
      * Under (*UCP) a class reads ASCII from Unicode up to 10.44 and from
      * the tables from 10.45: an ASCII byte they pair otherwise than Unicode
      * is unsettled there.
      */
-    private function otherByte(int $byte): ?int
+    private function otherByte(int $byte, bool $amongSeveral): ?int
     {
         if ($this->unicodeCase && $byte >= 0x80) {
             $other = OtherCases::of($this->target)->otherCase($byte);
@@ -579,7 +589,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return $ascii;
         }
 
-        $other = $this->tables->settledOtherCase($byte);
+        $other = $amongSeveral ? $this->tables->classOtherCase($byte) : $this->tables->settledOtherCase($byte);
 
         return !$this->unicodeCase || $other === $ascii ? $other : null;
     }

@@ -327,6 +327,16 @@ CHANGELOG
    `/(\w)((?1))\2/i`, `/(\P{Nd})\1/i` and a group that calls the whole
    pattern, `(?R)`, still keep it, as `\p{Nd}` does under another
    locale's tables.
+ * Without u, under another locale's tables, `regex.lint.flag.useless.i`
+   reads a class of two bytes or more from the pairs of the tables alone,
+   as PCRE2 compiles it with i and without: a byte the interpreter reads
+   otherwise matched alone no longer keeps the flag there. Under macOS's
+   tr_TR.ISO8859-9, whose interpreter takes `\xDD` for `I` or `i` alone,
+   `/[Ii\xDD\xFD]/i`, `/(*UCP)[iI]/i` and `/(*UCP)[iI\xDD\xFD]/i` are
+   reported, each matching the same bytes with i and without; `/[I]/i`,
+   a class of one byte, and `/[i\xDD]/i`, which matches `I` with i alone,
+   keep it. A byte the tables of either side of PCRE2 10.43 hold
+   otherwise still keeps the flag whatever the class holds.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
