@@ -1843,8 +1843,8 @@ final class RouteConflictAnalyzerTest extends TestCase
         ];
         yield 'a catch-all ending on a slash, for any method, after a wider one ending on a slash' => [
             'earlier' => ['/{x<.+>}/', []],
-            'later' => ['/docs/{p<.+>}/', []],
-            'probes' => [['POST', '/docs/a/', 'earlier'], ['POST', '/docs/a//', 'earlier'], ['GET', '/docs/a', 'earlier'], ['POST', '/docs/a', null]],
+            'later' => ['/pages/{p<.+>}/', []],
+            'probes' => [['POST', '/pages/a/', 'earlier'], ['POST', '/pages/a//', 'earlier'], ['GET', '/pages/a', 'earlier'], ['POST', '/pages/a', null]],
             'type' => 'shadowed',
         ];
         // The earlier route takes as is, for any method, every path ending
