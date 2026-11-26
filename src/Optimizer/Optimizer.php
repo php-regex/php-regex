@@ -106,7 +106,7 @@ final class Optimizer
             return new OptimizationResult($regex, $regex, []);
         }
 
-        return new OptimizationResult($regex, $this->written($regex, $ast, new RegexNode($ast->pattern, $flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)), [Rewriter::UNUSED_FLAG]);
+        return new OptimizationResult($regex, $this->written($regex, $ast, new RegexNode($ast->pattern, $flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)), kinds: [RewriteKind::UnusedFlag]);
     }
 
     private static function rewriter(OptimizerOptions $options, bool $possessive): Rewriter

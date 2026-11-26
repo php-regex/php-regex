@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Optimizer;
 
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\RewriteKind;
 use PHPRegex\Optimizer\Rewriter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreInterpreter;
@@ -49,6 +50,8 @@ final class UselessFlagOfARefusedRewriteTest extends TestCase
 
         $this->assertSame($optimized, $result->optimized);
         $this->assertSame([Rewriter::UNUSED_FLAG], $result->changes);
+        $this->assertSame([RewriteKind::UnusedFlag], $result->kinds);
+        $this->assertFalse($result->proven, 'The flag goes without the check: nothing proves the rewrite.');
     }
 
     /**
