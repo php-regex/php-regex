@@ -15,12 +15,14 @@ namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Parser\Hir\Utf8;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\CalloutNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
 use PHPRegex\Parser\Node\CommentNode;
+use PHPRegex\Parser\Node\ConditionalNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
@@ -60,18 +62,23 @@ use PHPRegex\Parser\TraversalAction;
  *
  * The characters are read wider than PCRE2 reads them: every one a
  * lookahead may start with where a match may start, past what may match
- * nothing, whatever the alternatives of the pattern start with. A pattern
- * of one alternative that reads an ASCII character first sets that one,
- * and PCRE2 looks for no other. Under UTF a character past ASCII is never
- * the one looked for.
+ * nothing, whatever the alternatives of the pattern start with; a class
+ * counts only where it holds one character or a letter and its other
+ * case, which PCRE2 compiles to one. A pattern of one alternative that
+ * reads a character first, past what sets none ("^" but under m, "$",
+ * the lookarounds, a group of nothing else), sets that one, and PCRE2
+ * looks for no other. Under UTF a character past ASCII is never the one
+ * looked for.
  *
- * The character required is not read either: any literal of the same
- * character outside the lookarounds, or of the other case of a letter,
- * counts, and without UTF any byte past ASCII may be the other case of
- * another under the tables of a locale. One inside a lookaround is left
- * out: PCRE2 requires none from a negative lookahead or a lookbehind, and
- * one a lookahead requires comes after where the lookahead stands, where
- * the search from past the first character finds it.
+ * The character required is read wider too: any character every match
+ * holds as a literal outside the lookarounds and outside what may match
+ * nothing, in every alternative of a group, may be the one, the same or
+ * the other case of a letter, and without UTF any byte past ASCII may be
+ * the other case of another under the tables of a locale. One inside a
+ * lookaround is left out: PCRE2 requires none from a negative lookahead
+ * or a lookbehind, and one a lookahead requires comes after where the
+ * lookahead stands, where the search from past the first character finds
+ * it, on a path that runs the lookahead: in an alternative, one counts.
  *
  * @internal
  */
@@ -80,9 +87,21 @@ final class AssertedFirstCharacter
     private const LOOKAROUNDS = [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative];
 
     /**
-     * @param bool $caseSets whether a character may match caselessly as a property of more than two, under UTF or "(*UCP)"
+     * A lookahead of which two alternatives may start with one letter.
      */
-    private function __construct(private readonly bool $unicode, private readonly bool $caseSets) {}
+    private ?NodeInterface $mixedCases = null;
+
+    /**
+     * @param bool $caseSets  whether a character may match caselessly as a property of more than two, under UTF or "(*UCP)"
+     * @param bool $multiline whether "^" may stand under m, which sets no first character
+     * @param bool $caseless  whether a letter may match in either case: under i, or in a class of both
+     */
+    private function __construct(
+        private readonly bool $unicode,
+        private readonly bool $caseSets,
+        private readonly bool $multiline,
+        private readonly bool $caseless
+    ) {}
 
     /**
      * The lookahead whose character the target's PCRE2 may look for in the
@@ -90,16 +109,24 @@ final class AssertedFirstCharacter
      */
     public static function lookahead(RegexNode $regex, PcreTarget $target): ?NodeInterface
     {
-        $reader = new self($regex->isUnicode(), $regex->isUnicode() || str_contains(StartOptions::of($regex->source ?? ''), '(*UCP)'));
+        [$multiline, $caseless] = self::options($regex);
+        $reader = new self($regex->isUnicode(), $regex->isUnicode() || str_contains(StartOptions::of($regex->source ?? ''), '(*UCP)'), $multiline, $caseless);
         $asserted = $reader->starts($regex->pattern, null)[0];
-        if ([] === $asserted || \in_array('NO_START_OPT', StartOptions::items($regex->source ?? ''), true) || $reader->opensOnACharacter($regex->pattern)) {
+        if ([] === $asserted || \in_array('NO_START_OPT', StartOptions::items($regex->source ?? ''), true) || true === $reader->opensOnACharacter($regex->pattern)) {
             return null;
+        }
+
+        // The alternatives of a lookahead give the character the case of
+        // the first one in every release: "/(?=A|[Aa])/" finds nothing in
+        // "a".
+        if (null !== $reader->mixedCases) {
+            return $reader->mixedCases;
         }
 
         // Under UTF a character past ASCII asserts its first byte only,
         // which ends no character.
         $sameValueLooked = !$target->supports(PcreFeature::AssertedFirstCharacterCheckedAgainstRequired);
-        $written = $reader->written($regex->pattern);
+        $written = $reader->required($regex->pattern);
         foreach ($asserted as $character => $lookahead) {
             foreach ($written as $other) {
                 if ($other === $character ? $sameValueLooked && ($character < 0x80 || !$reader->unicode) : $reader->mayBeOtherCase($character, $other)) {
@@ -121,11 +148,22 @@ final class AssertedFirstCharacter
     private function starts(NodeInterface $node, ?NodeInterface $lookahead): array
     {
         $characters = [];
+        $letters = [];
         $empty = false;
         foreach ($node instanceof AlternationNode ? $node->alternatives : [$node] as $alternative) {
             [$found, $alternativeEmpty] = $this->sequenceStarts(self::items($alternative), $lookahead);
             $characters += $found;
             $empty = $empty || $alternativeEmpty;
+
+            // PCRE2 compares the value alone of what the alternatives of a
+            // lookahead start with: a later one that takes a letter in
+            // either case keeps the case of the first.
+            $folded = array_unique(array_map(static fn (int $character): int => $character | 0x20, array_filter(array_keys($found), static fn (int $character): bool => ($character | 0x20) >= 0x61 && ($character | 0x20) <= 0x7A)));
+            if ($this->caseless && [] !== array_intersect($letters, $folded)) {
+                $this->mixedCases ??= $lookahead;
+            }
+
+            $letters = [...$letters, ...$folded];
         }
 
         return [$characters, $empty];
@@ -186,35 +224,79 @@ final class AssertedFirstCharacter
     /**
      * Whether the pattern, of one alternative, reads a character first,
      * which PCRE2 then looks for instead of any a lookahead asserts:
-     * "/(?=A)a/i" finds "a" in every release. What sets no first
-     * character may stand before it: a lookaround, an assertion, "\K", an
-     * option setting, a callout, a comment, a verb but "(*ACCEPT)". A group
-     * of one alternative that reads one first, repeated at least once, reads
-     * it too. Under UTF or "(*UCP)" a character past ASCII, and "i", "k" and
-     * "s", which may be properties under i, are left out.
+     * "/(?=A)a/i" finds "a" in every release. True when it sets one, false
+     * when it sets none, null when the items read nothing PCRE2 takes a
+     * first character from: a lookaround, an assertion, "\K", "$", "^"
+     * but under m, an option setting, a callout, a comment, a verb but
+     * "(*ACCEPT)", a group of nothing else. A group of one alternative
+     * that reads one first, repeated at least once, reads it too. Under
+     * UTF or "(*UCP)" a character past ASCII, and "i", "k" and "s", which
+     * may be properties under i, are left out.
      */
-    private function opensOnACharacter(NodeInterface $pattern): bool
+    private function opensOnACharacter(NodeInterface $pattern): ?bool
     {
         if ($pattern instanceof AlternationNode) {
             return false;
         }
 
         foreach (self::items($pattern) as $item) {
-            if (self::setsNoFirstCharacter($item)) {
-                continue;
+            $opens = $this->itemOpensOnACharacter($item);
+            if (null !== $opens) {
+                return $opens;
             }
-
-            $item = $item instanceof QuantifierNode && ($item->bounds->min ?? 0) > 0 ? $item->node : $item;
-            if ($item instanceof GroupNode && \in_array($item->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::InlineFlags], true)) {
-                return $this->opensOnACharacter($item->child);
-            }
-
-            $first = $this->literal($item)[0] ?? null;
-
-            return null !== $first && ($first < 0x80 ? !$this->caseSets || !\in_array($first | 0x20, [0x69, 0x6B, 0x73], true) : !$this->caseSets);
         }
 
-        return false;
+        return null;
+    }
+
+    private function itemOpensOnACharacter(NodeInterface $item): ?bool
+    {
+        if (self::setsNoFirstCharacter($item) || ($item instanceof LiteralNode && '' === $item->value)) {
+            return null;
+        }
+
+        if ($item instanceof AnchorNode) {
+            return '^' === $item->value && $this->multiline ? false : null;
+        }
+
+        if ($item instanceof QuantifierNode) {
+            $opens = $this->itemOpensOnACharacter($item->node);
+
+            return null === $opens || ($item->bounds->min ?? 0) > 0 ? $opens : false;
+        }
+
+        if ($item instanceof GroupNode && \in_array($item->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::Atomic, GroupType::InlineFlags], true)) {
+            return $this->opensOnACharacter($item->child);
+        }
+
+        $first = $this->literal($item)[0] ?? null;
+
+        return null !== $first && ($first < 0x80 ? !$this->caseSets || !\in_array($first | 0x20, [0x69, 0x6B, 0x73], true) : !$this->caseSets);
+    }
+
+    /**
+     * Whether m may hold anywhere, and whether a letter may match in either
+     * case: from the flags, an option setting, or a class of a letter and
+     * its other case.
+     *
+     * @return array{bool, bool}
+     */
+    private static function options(RegexNode $regex): array
+    {
+        $multiline = str_contains($regex->flags, 'm');
+        $caseless = str_contains($regex->flags, 'i');
+        NodeWalker::walk($regex->pattern, static function (NodeInterface $node) use (&$multiline, &$caseless): ?TraversalAction {
+            if ($node instanceof GroupNode && GroupType::InlineFlags === $node->type) {
+                $multiline = $multiline || str_contains((string) $node->flags, 'm');
+                $caseless = $caseless || str_contains((string) $node->flags, 'i');
+            }
+
+            $caseless = $caseless || ($node instanceof CharClassNode && !$node->isNegated);
+
+            return null;
+        });
+
+        return [$multiline, $caseless];
     }
 
     private static function setsNoFirstCharacter(NodeInterface $node): bool
@@ -248,25 +330,44 @@ final class AssertedFirstCharacter
     }
 
     /**
-     * The characters the pattern writes outside the lookarounds, as
-     * literals or in a class of one or two characters.
+     * The characters PCRE2 may require of every match: a literal, or a
+     * class of one character or of a letter and its other case, outside
+     * what may match nothing, in each alternative of a group. PCRE2
+     * requires one of them at most, the last. One a lookahead requires
+     * comes after where the lookahead stands, where the search from past
+     * the first character finds it, but only on a path that runs the
+     * lookahead: in an alternative, the character another one requires may
+     * stand first, and "/(?=a)b?(?:(?=xa)|a)/" finds nothing in "a" before
+     * 10.45. A lookahead counts there, a negative one or a lookbehind,
+     * which PCRE2 requires nothing of, nowhere.
      *
      * @return list<int>
      */
-    private function written(NodeInterface $pattern): array
+    private function required(NodeInterface $node, bool $inAlternative = false): array
     {
-        $written = [];
-        NodeWalker::walk($pattern, function (NodeInterface $node) use (&$written): ?TraversalAction {
-            if ($node instanceof GroupNode && \in_array($node->type, self::LOOKAROUNDS, true)) {
-                return TraversalAction::SkipChildren;
+        $alternatives = match (true) {
+            $node instanceof AlternationNode => $node->alternatives,
+            $node instanceof ConditionalNode => [$node->yes, $node->no],
+            default => null,
+        };
+        if (null !== $alternatives) {
+            $common = null;
+            foreach ($alternatives as $alternative) {
+                $characters = $this->required($alternative, true);
+                $common = null === $common ? $characters : array_values(array_intersect($common, $characters));
             }
 
-            array_push($written, ...($node instanceof CharClassNode ? $this->classCharacters($node) : $this->literal($node)));
+            return $common ?? [];
+        }
 
-            return $node instanceof CharClassNode ? TraversalAction::SkipChildren : null;
-        });
-
-        return array_values(array_unique($written));
+        return match (true) {
+            $node instanceof SequenceNode => array_values(array_unique(array_merge(...array_map(fn (NodeInterface $child): array => $this->required($child, $inAlternative), $node->children)))),
+            $node instanceof QuantifierNode => ($node->bounds->min ?? 0) > 0 && 0 !== $node->bounds?->max ? $this->required($node->node, $inAlternative) : [],
+            $node instanceof GroupNode => \in_array($node->type, self::LOOKAROUNDS, true) && (!$inAlternative || GroupType::LookaheadPositive !== $node->type) ? [] : $this->required($node->child, $inAlternative),
+            $node instanceof ScriptRunNode => null === $node->content ? [] : $this->required($node->content, $inAlternative),
+            $node instanceof CharClassNode => $this->classCharacters($node),
+            default => array_values(array_unique($this->literal($node))),
+        };
     }
 
     /**
@@ -284,9 +385,11 @@ final class AssertedFirstCharacter
     }
 
     /**
-     * The characters of a positive class that holds one or two, written as
-     * characters or ranges: PCRE2 compiles one to that character, and two
-     * cases of a letter to it caseless. None for any other class.
+     * The characters of a positive class that holds one, or two that may
+     * be cases of one, written as characters or ranges: PCRE2 compiles one
+     * to that character, and two cases of a letter to it caseless. None for
+     * any other class, "[ab]" included, which PCRE2 neither looks for first
+     * nor requires.
      *
      * @return list<int>
      */
@@ -303,13 +406,14 @@ final class AssertedFirstCharacter
                 return [];
             }
 
-            $characters = array_unique([...$characters, $from, $to]);
+            $characters = array_values(array_unique([...$characters, $from, $to]));
             if (\count($characters) > 2) {
                 return [];
             }
         }
 
-        return array_values($characters);
+        // Two characters make one only as cases of a letter.
+        return 2 === \count($characters) && !$this->mayBeOtherCase($characters[0], $characters[1]) ? [] : $characters;
     }
 
     private function single(NodeInterface $node): ?int

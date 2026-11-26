@@ -218,11 +218,18 @@ CHANGELOG
    the first kind for a target before 10.45, the second for any.
    `readAlike()`, `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it
    like no other pattern: `/(?:)(?=a)b?a/`, whose empty group keeps the
-   compiler from looking for the `a`, finds the match before 10.45. The
-   lookahead is found wider than PCRE2 finds it, any literal of its
-   character outside the lookarounds counting as the one required, and a
-   pattern that reads a character first, as `/(?=A)a/i`, is read as
-   before. The target answers it as
+   compiler from looking for the `a`, finds the match before 10.45. In
+   every release PCRE2 also gives the character the case of the first
+   alternative of the lookahead that starts with it: `/(?=A|[Aa])/` finds
+   nothing in `a`, and is refused for any target. The lookahead is found
+   wider than PCRE2 finds it, a class counting only where it holds one
+   character or a letter and its other case; the character required is
+   any one every match holds as a literal, outside what may match nothing
+   and in every alternative of a group, so `/(?=a)[ab]/` and
+   `/(?=a)b?(?:a|b)/` are read; and a pattern that reads a character
+   first, past `^` but under `m` and groups of nothing else, as
+   `/(?=A)a/i` or `/^(?=(?>a+)-)a+-$/`, is read as before. The target
+   answers it as
    `PcreFeature::AssertedFirstCharacterCheckedAgainstRequired`.
  * Without `u`, under a target that names no locale but C,
    `matchEquivalent()`, `equivalent()`, `intersection()` and `subsetOf()`
