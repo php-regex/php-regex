@@ -707,7 +707,7 @@ final class LanguageSolver
             && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst)
             && null === NewlineSequencePossession::repeat($leftAst) && null === NewlineSequencePossession::repeat($rightAst)
             && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)
-                && !NewlineSequencePossession::meetsWhereSpliced($leftAst) && !NewlineSequencePossession::meetsWhereSpliced($rightAst)));
+                && !NewlineSequencePossession::meetApartWhereSpliced($leftAst, $rightAst)));
     }
 
     /**

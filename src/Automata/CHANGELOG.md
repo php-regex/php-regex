@@ -149,10 +149,12 @@ CHANGELOG
    other one right after it, past the end of the groups it stands in, into
    the groups that follow, or past what may match nothing; `readAlike()`,
    `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it like no other
-   pattern, and `readAlike()` a pattern that may end with such a repeat, or
-   start with a dot, like no other where it is spliced. A repeat counted
-   once, `.{2}\R`, and one a character follows first, `.*a\R`, are read as
-   before.
+   pattern. `readAlike()` reads two patterns apart where one may end with
+   such a repeat, start with a dot or match nothing, and they write that
+   end apart: spliced between `\R?` and a dot, `[0-9]*` finds `"\r"` and
+   `\d*` nothing, as PCRE2 reads past the second alone. `/.[0-9]/` and
+   `/.\d/` still read alike. A repeat counted once, `.{2}\R`, and one a
+   character follows first, `.*a\R`, are read as before.
  * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
    `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
    as if 0xFF were no word character, whatever the tables say: under

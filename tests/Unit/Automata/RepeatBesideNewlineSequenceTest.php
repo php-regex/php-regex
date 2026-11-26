@@ -164,6 +164,53 @@ final class RepeatBesideNewlineSequenceTest extends TestCase
     }
 
     /**
+     * Two patterns that may meet a newline sequence where they are spliced,
+     * and whose ends PCRE2 reads the same: the dot that starts them, or the
+     * repeat that ends them, written the same on both sides. Spliced after
+     * "\R?", "\R*" or ".*" and before "\R", "\R?", a dot or dots, the
+     * engine finds the same matches with both, with the JIT and without,
+     * and they read alike.
+     */
+    #[Test]
+    #[DataProvider('providePatternsWhoseEndsReadAlike')]
+    public function test_patterns_whose_ends_meet_a_newline_sequence_alike_read_alike(string $options, string $left, string $right, string $flags): void
+    {
+        foreach (['', '\R?', '\R*', '.*'] as $before) {
+            foreach (['', '\R', '\R?', '.', '.*'] as $after) {
+                $splice = static fn (string $body): string => '/'.$options.'^'.$before.'(?P<a>'.$body.')'.$after.'$/'.$flags;
+                foreach (self::subjects(['a', '1', "\r", "\n"], 4) as $subject) {
+                    $found = preg_match($splice($left), $subject, $matches);
+                    $this->assertSame([$found, $matches], [preg_match($splice($right), $subject, $other), $other], $splice($left).' and '.$splice($right).' on '.json_encode($subject));
+                    $this->assertSame([$found, $matches], [preg_match('/(*NO_JIT)'.substr($splice($left), 1), $subject, $other), $other], $splice($left).' on '.json_encode($subject).', without the JIT.');
+                    $this->assertSame([$found, $matches], [preg_match('/(*NO_JIT)'.substr($splice($right), 1), $subject, $other), $other], $splice($right).' on '.json_encode($subject).', without the JIT.');
+                }
+            }
+        }
+
+        $solver = new LanguageSolver();
+
+        $this->assertTrue($solver->readAlike('/'.$options.$left.'/'.$flags, '/'.$options.$right.'/'.$flags));
+        $this->assertTrue($solver->readAlike('/'.$options.$right.'/'.$flags, '/'.$options.$left.'/'.$flags));
+    }
+
+    /**
+     * @return iterable<string, array{options: string, left: string, right: string, flags: string}>
+     */
+    public static function providePatternsWhoseEndsReadAlike(): iterable
+    {
+        yield 'a dot under s' => ['options' => '', 'left' => '.', 'right' => '.', 'flags' => 's'];
+        yield 'a dot' => ['options' => '', 'left' => '.', 'right' => '.', 'flags' => ''];
+        yield 'a dot and a letter under s' => ['options' => '', 'left' => '.a', 'right' => '.a', 'flags' => 's'];
+        yield 'a dot and a letter between anchors' => ['options' => '', 'left' => '^.a$', 'right' => '^.a$', 'flags' => 'sD'];
+        yield 'a dot before a class of digits or a digit' => ['options' => '', 'left' => '.[0-9]', 'right' => '.\d', 'flags' => ''];
+        yield 'a dot before a class of digits or a digit under s' => ['options' => '', 'left' => '.[0-9]', 'right' => '.\d', 'flags' => 's'];
+        yield 'a dot before digits between anchors' => ['options' => '', 'left' => '^.[0-9]+$', 'right' => '^.\d+$', 'flags' => 'sD'];
+        yield 'a letter and dots' => ['options' => '', 'left' => 'x.*', 'right' => 'x.*', 'flags' => ''];
+        yield 'digits and dots' => ['options' => '', 'left' => '[0-9]x.*', 'right' => '\dx.*', 'flags' => ''];
+        yield 'a dot under (*CRLF)' => ['options' => '(*CRLF)', 'left' => '.[0-9]', 'right' => '.\d', 'flags' => ''];
+    }
+
+    /**
      * @return iterable<string, array{pattern: string, witness: string}>
      */
     public static function provideRepeatsMadePossessive(): iterable
@@ -267,6 +314,9 @@ final class RepeatBesideNewlineSequenceTest extends TestCase
         yield 'dots in a group, before a newline sequence' => ['left' => '/(?:.)*/', 'right' => '/.*/', 'before' => '', 'after' => '(?P<b>\R)', 'witness' => "a\r"];
         yield 'a class and no newline, before a newline sequence' => ['left' => '/x[^\n]*/', 'right' => '/x\N*/', 'before' => '', 'after' => '(?P<b>\R)', 'witness' => "xa\r"];
         yield 'a newline sequence in a group, before a dot' => ['left' => '/(?:\R)?/', 'right' => '/\R?/', 'before' => '', 'after' => '(?P<b>.)', 'witness' => "\r"];
+        // PCRE2 looks past "\d*", which may match nothing, to the dot, and
+        // not past "[0-9]*".
+        yield 'a class of digits or none, between a newline sequence and a dot' => ['left' => '/[0-9]*/', 'right' => '/\d*/', 'before' => '(?P<b>\R?)', 'after' => '(?P<c>.)', 'witness' => "\r"];
         yield 'a class and a dot, after a newline sequence' => ['left' => '/[^\n]x/', 'right' => '/.x/', 'before' => '(?P<b>\R?)', 'after' => '', 'witness' => "\rx"];
     }
 
