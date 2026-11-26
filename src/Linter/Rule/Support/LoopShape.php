@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Linter\Rule\Support;
 
 use PHPRegex\Linter\Rule\LintContext;
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -214,6 +215,31 @@ final class LoopShape
     public static function mayTakeACharacterPastItsSet(NodeInterface $node, LintContext $context): bool
     {
         return !$context->comparesEveryByte() && self::mayTakeAboveAscii($node, str_contains($context->pattern->flags, 'u') || self::patternStartsWithVerb($context));
+    }
+
+    /**
+     * The bytes the node can start with, read in its own case, to compare
+     * with the bytes of another node or of a text. Under PCRE2's own
+     * tables the sets stop at ASCII: a node that may take a character
+     * above it, a dot, a negated class or, under u, "\d", starts with
+     * every byte above ASCII as well, the lead bytes of UTF-8 among them.
+     * Under another locale's tables, without u, the set holds every byte
+     * the node takes. Not known for a node read caselessly: under u "k"
+     * takes the Kelvin sign, whose bytes its set does not hold.
+     */
+    public static function firstBytesInItsOwnCase(NodeInterface $node, string $flags, LintContext $context): ByteCharSet
+    {
+        if (str_contains($flags, 'i') || NodePredicates::turnsCaselessOn($node)) {
+            return ByteCharSet::unknown();
+        }
+
+        if ($context->readsEveryByte()) {
+            return $context->firstBytes($node, $flags);
+        }
+
+        $set = $context->firstChars($node, $flags);
+
+        return self::mayTakeACharacterPastItsSet($node, $context) ? $set->union(ByteCharSet::fromBytes(0x80, 0xFF)) : $set;
     }
 
     /**

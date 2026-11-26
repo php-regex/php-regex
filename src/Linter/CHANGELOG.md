@@ -6,6 +6,18 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.overlap.charset` reads the text a branch starts with through
+   an atomic group and a script run, and tells two texts one of which
+   starts the other apart by what follows the shorter one, where both are
+   read in their own case: `/(?:(?>ab)|ac)+/`, `/(?:(*sr:öa)|öb)+x/u`,
+   `/(?:a\d|aa)+/` and `/(?:a\d|a[a-z])+/`, no input of which starts two
+   branches, are no longer reported. `/(?:a\w|ab)+/` still is, and so are
+   `/(?:a\d|aa)+/i` and `/(?:a\d|aa)+/u`: read caselessly, or where the
+   bytes of what follows are not known, the texts alone are compared. Two
+   literal branches written alike are reported wherever they stand:
+   `/(?:é|é|)+/u` and `/(?:É|É|)+/iu` were missed, past ASCII beside a
+   branch that may match nothing, though `/^(?:é|é|)+$/u` exhausts the
+   backtrack limit on 20 `é` then `!`.
  * The overlap rules read an escape that names one character, `\x41`,
    `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
    literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported
