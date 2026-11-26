@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Redos\Backtrack;
 
+use PHPRegex\Parser\Analysis\LengthRangeCalculator;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\NoJit;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -97,11 +98,15 @@ use PHPRegex\Redos\SearchCostCause;
  *
  * The model reads a bounded repeat above the unrolling cutoff as unbounded:
  * no run is read through it, the engine's attempts there stop at the bound.
+ * A possessive one it reads as a possessive run, which leaves only before a
+ * character it does not read, where the engine also leaves it at its bound:
+ * no witness holds a character such a repeat reads.
  * It reads an atomic body whose branches each hold one run, "\K" around
  * it, and start with characters of their own as those runs, "(?>a+\K)" as
  * "(?>a+)\K". It does not keep a lookaround's condition and keeps any other
  * atomic body with every way through it: such a witness is reported only
- * when the engine replay confirms it. A pinned replay cannot confirm a
+ * when the engine replay confirms it, and the replay is asked only where
+ * the pattern counts within its reach. A pinned replay cannot confirm a
  * pattern holding "\G", which holds at every pinned offset. The replay runs
  * the pattern with each character a repeat reads in a group of its own,
  * which the engine's step counter sees inside a possessive or atomic repeat
@@ -151,6 +156,13 @@ final class SearchCostProver
      * it.
      */
     private const MAX_MATCH_WORDS = 4;
+
+    /**
+     * The most a pattern may count for the engine replay to stand for a
+     * run of any length: a quarter of the run words it counts on, as many
+     * as lie before its first pinned attempt and between its two.
+     */
+    private const REPLAY_REACH = 64;
 
     /**
      * The attempts that refuse an empty match (pcre2api, PCRE2_NOTEMPTY and
@@ -338,12 +350,29 @@ final class SearchCostProver
             return null;
         }
 
+        // No witness holds a character a possessive bounded repeat reads,
+        // where the model reads that repeat without its bound.
+        $characters = [...$found['prefix'], ...$found['run']];
+        $found['breakers'] = array_values(array_filter(
+            $found['breakers'],
+            static fn (array $breaker): bool => !self::crossesABoundedPossessiveRun($pnfa, [...$characters, ...$breaker]),
+        ));
+        if ([] === $found['breakers']) {
+            return null;
+        }
+
         $prefix = Utf8::encode($found['prefix'], $unicode);
         $run = Utf8::encode($found['run'], $unicode);
         $breakers = array_map(static fn (array $breaker): string => Utf8::encode($breaker, $unicode), $found['breakers']);
 
+        // A witness the model does not read exactly stands on its replay,
+        // which vouches for nothing the pattern counts past its reach.
+        if (!$exact && (!$replay || !self::countsWithinTheReplay($regex->pattern, $unicode, 1, false))) {
+            return null;
+        }
+
         if (!$replay) {
-            return $exact ? new RedosSearchCost(2, $cause, $prefix, $run, $breakers[0], $unicode) : null;
+            return new RedosSearchCost(2, $cause, $prefix, $run, $breakers[0], $unicode);
         }
 
         // Replayed under the tables of the target's locale, as the pattern
@@ -454,6 +483,95 @@ final class SearchCostProver
         foreach ($node->getChildren() as $child) {
             self::repeatedCharacters($child, $sets, $universe, $unicode, $caseless, $atoms);
         }
+    }
+
+    /**
+     * Whether the replay, which counts on SearchCostReplayer's 256 run
+     * words at two attempts pinned 64 and 128 of them in, shows what the
+     * engine does on a run of any length: nothing under the node tells
+     * those attempts from the ones of a longer run. A repeat that counts
+     * past REPLAY_REACH does, its count multiplied by those of the repeats
+     * around it; so does a lookaround that must read further than that,
+     * and one that goes round a loop of several characters, which holds at
+     * one position in so many: "(?=a{200})" fails at both pinned attempts
+     * and holds on a longer run, "(?=(?:a{5})*\z)" holds every fifth
+     * character from the end.
+     *
+     * @param int  $times        the product of the counts of the repeats around the node
+     * @param bool $inLookaround whether the node lies in a lookaround
+     */
+    private static function countsWithinTheReplay(NodeInterface $node, bool $unicode, int $times, bool $inLookaround): bool
+    {
+        if ($node instanceof QuantifierNode) {
+            $bounds = $node->bounds;
+            $times *= max(1, $bounds->max ?? $bounds->min ?? 1);
+            if ($times > self::REPLAY_REACH || ($inLookaround && null === $bounds?->max && 1 !== $node->node->accept(new LengthRangeCalculator($unicode))[1])) {
+                return false;
+            }
+        }
+
+        if ($node instanceof GroupNode && \in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+            if ($node->child->accept(new LengthRangeCalculator($unicode))[0] > self::REPLAY_REACH) {
+                return false;
+            }
+
+            $inLookaround = true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (!self::countsWithinTheReplay($child, $unicode, $times, $inLookaround)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether the witness holds a character a possessive bounded repeat
+     * reads, where the model reads that repeat as a possessive run without
+     * a bound. The model leaves such a run only before a character it does
+     * not read; the engine also leaves it at its bound, and may match from
+     * there: "a{1,300}+aa*" matches a run of 302 "a" or more at once,
+     * where the model sees no way out of "a{1,300}+" inside the run. A
+     * repeat that gives back leaves through no such check, or through one
+     * of the item after it, as "$" under m.
+     *
+     * @param list<int> $characters those of the prefix, the run and a breaker
+     */
+    private static function crossesABoundedPossessiveRun(Pnfa $pnfa, array $characters): bool
+    {
+        if ([] === $pnfa->abstractedLoops) {
+            return false;
+        }
+
+        $universe = CharSet::universe($pnfa->unicode);
+        foreach ($pnfa->kinds as $state => $kind) {
+            // Where a loop is entered or left: a possessive run leaves by
+            // a check that the next character is none of its own.
+            if (Pnfa::EPSILON !== $kind || 2 !== \count($pnfa->targets[$state])) {
+                continue;
+            }
+
+            [$enter, $leave] = $pnfa->targets[$state];
+            if (Pnfa::ENTER !== $pnfa->kinds[$enter] || !isset($pnfa->abstractedLoops[$pnfa->loops[$enter]]) || Pnfa::PEEK !== $pnfa->kinds[$leave]) {
+                continue;
+            }
+
+            $run = $universe->subtract($pnfa->sets[$leave]);
+            $body = $pnfa->next[$enter];
+            if (Pnfa::CHAR === $pnfa->kinds[$body] && $pnfa->sets[$body]->key() !== $run->key()) {
+                continue;
+            }
+
+            foreach ($characters as $character) {
+                if ($run->contains($character)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

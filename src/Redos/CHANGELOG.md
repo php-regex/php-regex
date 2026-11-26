@@ -96,6 +96,29 @@ CHANGELOG
    `/\xff(?:\xff+\d)?/i` through `preg_match_all()`. A run word at whose
    first character no attempt starts is passed over, and `(*NO_START_OPT)`
    keeps the run as it was.
+ * No search cost is reported through a possessive bounded repeat the
+   proof reads as unbounded, one whose maximum is above the cutoff: the
+   model leaves such a run only before a character it does not read, where
+   the engine also leaves it at its bound, and may match from there.
+   `/a+\d|a{1,300}+aa*/`, `/a+\d|(?>a{1,300})aa*/` and
+   `/(?:a+\d|a{1,17}+aa*)?/` were reported quadratic, the first two
+   replayed on the 256 run words of the replay, though each matches a run
+   of 302 `a` or more at once (0.02 ms on 16,000 through
+   `preg_match_all()`). A witness that holds no character of such a
+   repeat, as the one of `/a+b|c{1,300}+d/`, stays.
+ * In confirmed mode a witness the model does not read exactly, through a
+   lookaround or an atomic body it keeps whole, is replayed only where the
+   pattern counts within the reach of the replay: 64, a quarter of the 256
+   run words it counts on. A repeat that counts past it (`a{200}`, the
+   counts of nested repeats multiplied), a lookaround that must read more
+   than 64 characters and one that goes round a loop of several characters
+   tell the two attempts the replay pins from those of a longer run.
+   `/a+\d|(?=a{300})a+/`, `/(?:a+\d|(?=a{200})a+)?/`,
+   `/a(?:a+\d|(?<=a{200})a*)?/` and `/a(?:a+\d|(?=(?:a{5})*\z)a*)?/` were
+   reported with `replayed: true`, though each function is linear on a
+   longer run: one to 200 matches in 16,000 `a`, in 0.02 to 1.5 ms. They
+   are no longer reported; `/[a-z]+(?=\d{64})/` and `/[a-z]+(?=\d*x)/`
+   still are, and `/[a-z]+(?=\d{65})/`, one count past that reach, is not.
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a
