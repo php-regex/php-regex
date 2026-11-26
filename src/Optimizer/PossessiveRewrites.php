@@ -94,8 +94,9 @@ final class PossessiveRewrites
      * items of its sequence from the index given, a repeat that may run
      * again, whose body then follows its own end, a capturing group, which
      * a call may run elsewhere, a DEFINE, which runs nothing where it
-     * stands, or null at the end of an atomic group or a lookaround but a
-     * scan substring or a non-atomic lookaround, which nothing after it
+     * stands, a non-atomic lookaround, past whose end nothing is known, or
+     * null at the end of an atomic group or a lookaround but a scan
+     * substring or a non-atomic lookaround, which nothing after it
      * backtracks into. What follows any other group is what follows the
      * group. Where a call stands in a script run, false stands for it: the
      * check of the run reads what the call matched.
@@ -135,13 +136,11 @@ final class PossessiveRewrites
 
     /**
      * Whether the pattern keeps every repeat greedy: an option setting
-     * names "U", under which a plain quantifier is lazy, or a lookaround is
-     * not atomic, past whose end the engine reads what follows from where
-     * the lookaround starts, not from where the repetition ends.
+     * names "U", under which a plain quantifier is lazy.
      */
     public static function keepsRepeatsGreedy(NodeInterface $node): bool
     {
-        if ($node instanceof GroupNode && false !== strpbrk((string) $node->flags, 'U*')) {
+        if ($node instanceof GroupNode && str_contains((string) $node->flags, 'U')) {
             return true;
         }
 
@@ -410,7 +409,11 @@ final class PossessiveRewrites
      * after it backtracks into; the body of a repeat that may run again
      * follows the end of its body as well. A group runs wherever a call
      * runs it, and gives back to what follows the call: "(?&n)a" after
-     * "(?<n>a+b?)" in a DEFINE matches "aa". Null when a lookaround may come
+     * "(?<n>a+b?)" in a DEFINE matches "aa". Past the end of a non-atomic
+     * lookaround the engine reads what follows from where the lookaround
+     * stands, and backtracks into it: "^(*napla:x(a+b?))x[ab-]*\1$" gives
+     * an "a" of group 1 back to the reference on "xaaba", whatever the "x"
+     * after the lookahead is. Null when a lookaround may come
      * first, which reads nothing yet looks at the characters the repetition
      * would give back, "a+(?!b)" matching "a" in "aab" where "a++(?!b)"
      * matches nothing, or a character above ASCII, which the sets, stopping
@@ -467,6 +470,13 @@ final class PossessiveRewrites
                 continue;
             }
 
+            // Of what follows the end of a non-atomic lookaround nothing is
+            // known, unless nothing does before the end of an atomic group
+            // or a lookaround.
+            if ($frame instanceof GroupNode && self::backtrackedInto($frame)) {
+                return self::endsWhatNothingBacktracksInto($frames, $level);
+            }
+
             if ($frame instanceof GroupNode) {
                 // What follows the group the walk has met is read: every
                 // way out of it leads to the same frames.
@@ -513,6 +523,30 @@ final class PossessiveRewrites
         }
 
         return true;
+    }
+
+    /**
+     * Whether the non-atomic lookaround the frame at the level stands for
+     * ends an atomic group or a lookaround nothing backtracks into: no item
+     * follows it there, and neither a group a call may run, a repeat nor a
+     * DEFINE stands between the two.
+     *
+     * @param list<array{list<NodeInterface>, int}|QuantifierNode|GroupNode|DefineNode|false|null> $frames
+     */
+    private static function endsWhatNothingBacktracksInto(array $frames, int $level): bool
+    {
+        while (--$level >= 0) {
+            $frame = $frames[$level];
+            if (null === $frame) {
+                return true;
+            }
+
+            if (!\is_array($frame) || isset($frame[0][$frame[1]])) {
+                return false;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -623,7 +657,7 @@ final class PossessiveRewrites
     {
         return match (true) {
             $node instanceof GroupNode && self::closes($node) => [null],
-            $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type) => [$node],
+            $node instanceof GroupNode && (GroupType::Capturing === $node->type || GroupType::Named === $node->type || self::backtrackedInto($node)) => [$node],
             $node instanceof QuantifierNode && self::mayRunAgain($node) => [$node],
             $node instanceof DefineNode => [$node],
             $node instanceof ScriptRunNode => [false],
@@ -706,13 +740,21 @@ final class PossessiveRewrites
      * Whether nothing after the group backtracks into it: an atomic group
      * or a lookaround, but a scan substring, which what follows backtracks
      * into: "^(aac)(*scs:(1)(a+b?))(?=\2ac)" matches "aac" in "aacaac"
-     * with group 2 given back to "a". Nor does a non-atomic lookaround,
-     * "(*napla:" or "(?*", whose flags hold the "*": "^(*napla:(a+b?))\1\1"
-     * matches "aa" with group 1 given back to "a".
+     * with group 2 given back to "a". Nor does a non-atomic lookaround:
+     * "^(*napla:(a+b?))\1\1" matches "aa" with group 1 given back to "a".
      */
     private static function closes(GroupNode $node): bool
     {
-        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && '*' !== $node->flags && \in_array($node->type, self::LOOKAROUNDS, true));
+        return GroupType::Atomic === $node->type || (GroupType::ScanSubstring !== $node->type && !self::backtrackedInto($node) && \in_array($node->type, self::LOOKAROUNDS, true));
+    }
+
+    /**
+     * Whether the group is a non-atomic lookaround, "(*napla:", "(*naplb:",
+     * "(?*" or "(?<*", whose flags hold the "*".
+     */
+    private static function backtrackedInto(GroupNode $node): bool
+    {
+        return '*' === $node->flags;
     }
 
     /**

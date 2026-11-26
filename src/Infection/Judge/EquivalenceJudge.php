@@ -74,8 +74,9 @@ final class EquivalenceJudge
      * The same matches in every run a preg_*() call may make: from the
      * start, from past it, and the retry after an empty match. No set of
      * runs covers every call of a pattern that reads the text before the
-     * search, and the match solver reads no such pattern either: the
-     * verdict stays open, and the sample generator looks for a subject.
+     * search: unless the match solver builds one automaton for both, which
+     * needs no run, the verdict stays open, and the sample generator looks
+     * for a subject.
      */
     private function sameMatches(string $left, string $right, Budget $budget): Verdict
     {

@@ -107,6 +107,26 @@ CHANGELOG
    over a group, capturing or not, keeps a frame of the JIT for each run of
    the call around it, and `/x(?R)?(?:ab)++c/` runs out of the JIT stack
    some 3,000 calls deep where `/x(?R)?(?:ab)+c/` matches.
+ * `matchEquivalent()` reads a lookaround, without running it: two patterns
+   that hold one write the same `$matches` where one automaton is built for
+   both, the body of the lookaround included, and are refused otherwise,
+   with a message that says so. A possessive quantifier beside a lookaround
+   is read as the greedy one where it gives nothing back: `/(?=x)xa+b/` and
+   `/(?=x)xa++b/`, `/a+(?=b)/` and `/a++(?=b)/`, `/(?=xa+)x/` and
+   `/(?=xa++)x/` are proven. Where the quantifier would give back, a
+   lookahead reads the character it gave back (`/a++(?=a)/` is refused); a
+   negative lookahead or a lookbehind may hold there and not after the last
+   repetition, so the pattern must read another character before it ends
+   (`/a++(?!c)b/` is read, `/a++(?!b)/` refused, as `/a+(?!b)/` finds `a`
+   in `aab`); and nothing is known past the end of a lookbehind, whose body
+   must end where it stands (`/(?<=xa{1,3}+)a/` finds the `a` at offset 4
+   of `xaaaa` without the JIT and the one at offset 2 with it), or of a
+   non-atomic lookaround, `(*napla:...)`, past which the engine reads from
+   where the lookaround stands and backtracks into its body: a possessive
+   quantifier that may reach either end is refused. `runsOfEveryCall()`
+   asks for no run of two patterns that hold a lookbehind when one
+   automaton is built for both, which run alike wherever a search starts:
+   `/(?<=x)a+b/` and `/(?<=x)a++b/`.
  * PCRE2 makes a character repeated before an atomic group, or a
    possessive repeat of a group, that may match nothing possessive, as if
    the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,

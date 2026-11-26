@@ -97,10 +97,9 @@ CHANGELOG
    refused it.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
-   rewrites ship: the solver proves no possessive in a pattern that holds a
-   lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
-   now lose their useless `s`, as they do without the option. The second
-   rewrite runs only on such a refusal.
+   rewrites ship: the solver proves no possessive in a pattern that holds
+   `\b` or a reference, and `/\d+y\b/s` now loses its useless `s`, as it
+   does without the option. The second rewrite runs only on such a refusal.
  * A rewrite the check refuses whole no longer keeps the `s` or the `m`
    nothing in the pattern reads: the flag goes on its own, the rest of the
    pattern as written. `/(\[(?:[^\]\[]+|(?R))*+\])/m`, where the check
@@ -111,6 +110,13 @@ CHANGELOG
    refuses the lookbehind factorized. Dropping such a flag moves no bracket
    and no repeat, and PCRE compiles the pattern alike without it: it is not
    sent to the check, whatever `verifyWithAutomata` says.
+ * Under the possessive option, a quantifier is made possessive in a
+   pattern that holds a lookaround, which the check of the result now
+   reads: `/(?=x)xa+b/` becomes `/(?=x)xa++b/`, `/\d+x(?!y)/s` becomes
+   `/\d++x(?!y)/`, `/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/` and
+   `/(?!x[0-9]+)x/` becomes `/(?!x\d++)x/`; all four were left greedy. A
+   repetition right before a lookaround stays greedy, as `/a+(?!b)/` finds
+   `a` in `aab` where `/a++(?!b)/` finds nothing.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
@@ -119,8 +125,17 @@ CHANGELOG
    `/(?i)a+b?c/` now becomes `/(?i)a++b?c/`, and `/(?i:a+b?)c/` becomes
    `/(?i:a++b?)c/`, while `/(?i)a+b?A/` stays greedy.
    An option setting that names `U`, under which a plain quantifier is
-   lazy, and a non-atomic lookaround, past whose end the engine reads from
-   where it starts, still keep every quantifier of the pattern as written.
+   lazy, still keeps every quantifier of the pattern as written.
+ * A non-atomic lookaround, `(*napla:...)`, `(*naplb:...)`, `(?*...)` or
+   `(?<*...)`, no longer keeps the possessive rewrite out of the whole
+   pattern: `/(*napla:x)xa+b/` becomes `/(?*x)xa++b/` and
+   `/(*napla:xa+b)x/` becomes `/(?*xa++b)x/`, the lookaround spelled in its
+   short form as every rewrite of such a pattern spells it. A repetition
+   that may end the lookaround stays greedy: past that end the engine reads
+   what follows from where the lookaround stands, and backtracks into its
+   body, so nothing is known of what follows the repetition.
+   `/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, group 1 giving an `a`
+   back to the reference, where `(a++b?)` finds nothing.
  * The possessive rewrite reads what follows a repetition that ends its
    sequence, or stands alone in its group, its branch or the pattern: what
    follows the group at every place it runs, the alternation or the
