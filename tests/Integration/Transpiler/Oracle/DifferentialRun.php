@@ -61,6 +61,13 @@ final class DifferentialRun
 
     public int $refused = 0;
 
+    /**
+     * Patterns written with a warning that PCRE2 makes a repeat possessive
+     * where the target runs it as written: the result already says the two
+     * may differ, so no subject is held against the target.
+     */
+    public int $warned = 0;
+
     public int $comparisons = 0;
 
     public int $timedOut = 0;
@@ -150,6 +157,14 @@ final class DifferentialRun
             }
 
             $this->transpiled++;
+            foreach ($result->warnings as $warning) {
+                if (str_contains($warning, 'as if that group could not be skipped')) {
+                    $this->warned++;
+
+                    continue 2;
+                }
+            }
+
             $ast = $regex->parse($pattern);
             $unicode = str_contains($ast->flags, 'u');
             $subjects = [];
