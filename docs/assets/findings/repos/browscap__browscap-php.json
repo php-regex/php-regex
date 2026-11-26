@@ -1,6 +1,6 @@
 {
     "repo": "browscap/browscap-php",
-    "sha": "9f32e3c77f6328e66014458b4aedf4c4338f7792",
+    "sha": "b12c9351f2c5aeefeb7b4b3da38341fc44bb3d16",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/browscap/browscap-php/blob/9f32e3c77f6328e66014458b4aedf4c4338f7792/src/IniParser/IniParser.php#L67-L73",
+            "permalink": "https://github.com/browscap/browscap-php/blob/b12c9351f2c5aeefeb7b4b3da38341fc44bb3d16/src/IniParser/IniParser.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -197,7 +197,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/browscap/browscap-php/blob/9f32e3c77f6328e66014458b4aedf4c4338f7792/src/IniParser/IniParser.php#L146-L152",
+            "permalink": "https://github.com/browscap/browscap-php/blob/b12c9351f2c5aeefeb7b4b3da38341fc44bb3d16/src/IniParser/IniParser.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -448,7 +448,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/browscap/browscap-php/blob/9f32e3c77f6328e66014458b4aedf4c4338f7792/src/Parser/Helper/Pattern.php#L45-L51",
+            "permalink": "https://github.com/browscap/browscap-php/blob/b12c9351f2c5aeefeb7b4b3da38341fc44bb3d16/src/Parser/Helper/Pattern.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,

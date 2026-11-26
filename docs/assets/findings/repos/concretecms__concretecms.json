@@ -1,12 +1,159 @@
 {
     "repo": "concretecms/concretecms",
-    "sha": "c9c99f291f9883794c4307219f1d8bb8ccf33f51",
+    "sha": "8e7713fcbd55d2120555788efcc27cad9bd811f0",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
         "source": "composer.json config.platform.php"
     },
     "findings": [
+        {
+            "id": "f-43031056e9",
+            "file": "concrete/attributes/rating/service.php",
+            "line": 67,
+            "column": 35,
+            "pattern": "/[^A-Za-z0-9]/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/attributes/rating/service.php#L64-L70",
+            "snippet": [
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $value = $v;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $sanitized = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Za",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $field);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $html = '<div class=\"ccm-attribute ccm-attribute-rating ccm-rating\" data-rating-field-name=\"' . $sanitized . '\" data-score=\"' . $value . '\"></div>';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $html .= \"<script type=\\\"text/javascript\\\">",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $(function() {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
         {
             "id": "f-75e835bc85",
             "file": "concrete/blocks/document_library/controller.php",
@@ -28,7 +175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/blocks/document_library/controller.php#L682-L688",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/blocks/document_library/controller.php#L682-L688",
             "snippet": [
                 {
                     "number": 682,
@@ -171,6 +318,173 @@
             ]
         },
         {
+            "id": "f-519b195140",
+            "file": "concrete/blocks/external_form/controller.php",
+            "line": 81,
+            "column": 29,
+            "pattern": "/^[A-Za-z0-9_-]+$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/blocks/external_form/controller.php#L78-L84",
+            "snippet": [
+                {
+                    "number": 78,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $filenameToCheck = $filename; // We just check the entirety of what's passed in.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 79,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 80,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 81,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Za",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $filenameToCheck)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 82,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $e->add(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 83,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    t('External forms may only contain letters, numbers, dashes and underscores.')",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 84,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-4383b4dd5e",
             "file": "concrete/controllers/single_page/dashboard/pages/templates.php",
             "line": 101,
@@ -191,7 +505,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/pages/templates.php#L98-L104",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/pages/templates.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -314,7 +628,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/pages/templates.php#L104-L110",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/pages/templates.php#L104-L110",
             "snippet": [
                 {
                     "number": 104,
@@ -437,7 +751,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/pages/templates/add.php#L31-L37",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/pages/templates/add.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -560,7 +874,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/pages/templates/add.php#L37-L43",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/pages/templates/add.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,
@@ -695,7 +1009,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/system/environment/security.php#L24-L30",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/system/environment/security.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -826,7 +1140,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L43-L49",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -949,7 +1263,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L87-L93",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/system/permissions/workflows.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -1072,7 +1386,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/users/group_sets.php#L25-L31",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/users/group_sets.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -1195,7 +1509,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/controllers/single_page/dashboard/users/group_sets.php#L74-L80",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/controllers/single_page/dashboard/users/group_sets.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -1298,6 +1612,173 @@
             ]
         },
         {
+            "id": "f-183e2ab28e",
+            "file": "concrete/src/Block/Block.php",
+            "line": 1671,
+            "column": 33,
+            "pattern": "/^[A-Za-z0-9_-]+$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Block/Block.php#L1668-L1674",
+            "snippet": [
+                {
+                    "number": 1668,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $bFilenameToCheck = $bFilename; // We just check the entirety of what's passed in.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1669,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1670,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1671,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                if (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "A",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Za",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $bFilenameToCheck)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1672,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    $bFilename = null;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1673,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                    throw new \\RuntimeException(",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 1674,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        t('Custom templates may only contain letters, numbers, dashes and underscores.')",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-7cd1699012",
             "file": "concrete/src/Express/Formatter/LabelFormatter.php",
             "line": 32,
@@ -1318,7 +1799,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Express/Formatter/LabelFormatter.php#L29-L35",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Express/Formatter/LabelFormatter.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -1441,6 +1922,145 @@
             ]
         },
         {
+            "id": "f-1605256ec2",
+            "file": "concrete/src/File/Import/Processor/ExifDataExtractor.php",
+            "line": 121,
+            "column": 28,
+            "pattern": "/[a-zA-Z]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/File/Import/Processor/ExifDataExtractor.php#L118-L124",
+            "snippet": [
+                {
+                    "number": 118,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                continue;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 119,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 120,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            ",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 121,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $value)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 122,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                // collect the keyword",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 123,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                $keywords[] = $value;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 124,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-301fa8dd58",
             "file": "concrete/src/File/Search/Field/Field/DateAddedField.php",
             "line": 54,
@@ -1461,7 +2081,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/File/Search/Field/Field/DateAddedField.php#L51-L57",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/File/Search/Field/Field/DateAddedField.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -1636,7 +2256,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/File/Service/File.php#L50-L56",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/File/Service/File.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -1771,7 +2391,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/File/Service/File.php#L55-L61",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/File/Service/File.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -1894,7 +2514,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Logging/Search/Field/Field/DateField.php#L49-L55",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Logging/Search/Field/Field/DateField.php#L49-L55",
             "snippet": [
                 {
                     "number": 49,
@@ -2064,7 +2684,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Mail/Importer/MailImportedMessage.php#L194-L200",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Mail/Importer/MailImportedMessage.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -2207,7 +2827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Package/Packer/PackerFile.php#L276-L282",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Package/Packer/PackerFile.php#L276-L282",
             "snippet": [
                 {
                     "number": 276,
@@ -2358,7 +2978,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Page/Search/Field/Field/DateAddedField.php#L51-L57",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Page/Search/Field/Field/DateAddedField.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -2521,7 +3141,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Page/Search/Field/Field/DateLastModifiedField.php#L51-L57",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Page/Search/Field/Field/DateLastModifiedField.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -2684,7 +3304,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Page/Search/Field/Field/DatePublicField.php#L51-L57",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Page/Search/Field/Field/DatePublicField.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -2847,7 +3467,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/User/Search/Field/Field/DateAddedField.php#L52-L58",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/User/Search/Field/Field/DateAddedField.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -3001,6 +3621,13 @@
             "issues": [
                 {
                     "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range '0'-'9' (covered by range '+'-'?'), '.' (covered by range '+'-'?')",
@@ -3010,7 +3637,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Utility/Service/Text.php#L117-L123",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Utility/Service/Text.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -3198,7 +3825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Utility/Service/Text.php#L237-L243",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Utility/Service/Text.php#L237-L243",
             "snippet": [
                 {
                     "number": 237,
@@ -3422,7 +4049,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Utility/Service/Text.php#L242-L248",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Utility/Service/Text.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3618,7 +4245,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Validation/SanitizeService.php#L33-L39",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Validation/SanitizeService.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -3758,7 +4385,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/concretecms/concretecms/blob/c9c99f291f9883794c4307219f1d8bb8ccf33f51/concrete/src/Validation/SanitizeService.php#L34-L40",
+            "permalink": "https://github.com/concretecms/concretecms/blob/8e7713fcbd55d2120555788efcc27cad9bd811f0/concrete/src/Validation/SanitizeService.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,

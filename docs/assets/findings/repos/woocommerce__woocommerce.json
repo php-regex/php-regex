@@ -1,6 +1,6 @@
 {
     "repo": "woocommerce/woocommerce",
-    "sha": "e98653261036eeeeda4226b35dc46c648ce87078",
+    "sha": "57738f1fb356d162fdb6a31a751b998214d74ef3",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/.github/workflows/scripts/post-request-shared.php#L116-L122",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/.github/workflows/scripts/post-request-shared.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -183,7 +183,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/blueprint/src/Importers/ImportRunSql.php#L247-L253",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/blueprint/src/Importers/ImportRunSql.php#L247-L253",
             "snippet": [
                 {
                     "number": 247,
@@ -318,7 +318,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php#L99-L105",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -425,7 +425,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
             "snippet": [
                 {
                     "number": 152,
@@ -572,7 +572,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L159-L165",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L159-L165",
             "snippet": [
                 {
                     "number": 159,
@@ -723,7 +723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -870,7 +870,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L178-L184",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L178-L184",
             "snippet": [
                 {
                     "number": 178,
@@ -1009,7 +1009,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L366-L372",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L366-L372",
             "snippet": [
                 {
                     "number": 366,
@@ -1156,7 +1156,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L374-L380",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L374-L380",
             "snippet": [
                 {
                     "number": 374,
@@ -1299,7 +1299,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L646-L652",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L646-L652",
             "snippet": [
                 {
                     "number": 646,
@@ -1434,7 +1434,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L650-L656",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L650-L656",
             "snippet": [
                 {
                     "number": 650,
@@ -1539,7 +1539,7 @@
         {
             "id": "f-7fd02bba28",
             "file": "packages/php/email-editor/src/Engine/class-theme-controller.php",
-            "line": 281,
+            "line": 266,
             "column": 14,
             "pattern": "/clamp\\([^,]+,\\s*[^,]+,\\s*([^)]+)\\)/",
             "source": "preg_replace()",
@@ -1557,10 +1557,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Engine/class-theme-controller.php#L278-L284",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/class-theme-controller.php#L263-L269",
             "snippet": [
                 {
-                    "number": 278,
+                    "number": 263,
                     "focus": false,
                     "runs": [
                         [
@@ -1570,7 +1570,7 @@
                     ]
                 },
                 {
-                    "number": 279,
+                    "number": 264,
                     "focus": false,
                     "runs": [
                         [
@@ -1580,7 +1580,7 @@
                     ]
                 },
                 {
-                    "number": 280,
+                    "number": 265,
                     "focus": false,
                     "runs": [
                         [
@@ -1590,7 +1590,7 @@
                     ]
                 },
                 {
-                    "number": 281,
+                    "number": 266,
                     "focus": true,
                     "runs": [
                         [
@@ -1708,7 +1708,7 @@
                     ]
                 },
                 {
-                    "number": 282,
+                    "number": 267,
                     "focus": false,
                     "runs": [
                         [
@@ -1718,7 +1718,7 @@
                     ]
                 },
                 {
-                    "number": 283,
+                    "number": 268,
                     "focus": false,
                     "runs": [
                         [
@@ -1728,7 +1728,7 @@
                     ]
                 },
                 {
-                    "number": 284,
+                    "number": 269,
                     "focus": false,
                     "runs": [
                         [
@@ -1760,7 +1760,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -1975,7 +1975,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2190,7 +2190,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L114-L120",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2393,7 +2393,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L154-L160",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -2588,7 +2588,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L714-L720",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L714-L720",
             "snippet": [
                 {
                     "number": 714,
@@ -2919,7 +2919,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -3094,7 +3094,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -3229,7 +3229,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3364,7 +3364,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -3711,7 +3711,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
             "snippet": [
                 {
                     "number": 711,
@@ -3886,7 +3886,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -4037,7 +4037,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -4132,7 +4132,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
             "snippet": [
                 {
                     "number": 656,
@@ -4329,7 +4329,7 @@
         {
             "id": "f-9802ea4d3d",
             "file": "plugins/woocommerce/includes/class-wc-product-download.php",
-            "line": 355,
+            "line": 357,
             "column": 20,
             "pattern": "#^//+(/[^/].+)$#i",
             "source": "preg_match()",
@@ -4347,10 +4347,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/class-wc-product-download.php#L352-L358",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/class-wc-product-download.php#L354-L360",
             "snippet": [
                 {
-                    "number": 352,
+                    "number": 354,
                     "focus": false,
                     "runs": [
                         [
@@ -4360,7 +4360,7 @@
                     ]
                 },
                 {
-                    "number": 353,
+                    "number": 355,
                     "focus": false,
                     "runs": [
                         [
@@ -4370,7 +4370,7 @@
                     ]
                 },
                 {
-                    "number": 354,
+                    "number": 356,
                     "focus": false,
                     "runs": [
                         [
@@ -4380,7 +4380,7 @@
                     ]
                 },
                 {
-                    "number": 355,
+                    "number": 357,
                     "focus": true,
                     "runs": [
                         [
@@ -4458,7 +4458,7 @@
                     ]
                 },
                 {
-                    "number": 356,
+                    "number": 358,
                     "focus": false,
                     "runs": [
                         [
@@ -4468,7 +4468,7 @@
                     ]
                 },
                 {
-                    "number": 357,
+                    "number": 359,
                     "focus": false,
                     "runs": [
                         [
@@ -4478,7 +4478,7 @@
                     ]
                 },
                 {
-                    "number": 358,
+                    "number": 360,
                     "focus": false,
                     "runs": [
                         [
@@ -4515,7 +4515,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L1014-L1020",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L1014-L1020",
             "snippet": [
                 {
                     "number": 1014,
@@ -4798,7 +4798,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -4938,7 +4938,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -5153,7 +5153,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -5328,7 +5328,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -5463,7 +5463,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -5598,7 +5598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -5730,7 +5730,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php#L107-L113",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -5942,7 +5942,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
             "snippet": [
                 {
                     "number": 151,
@@ -6110,7 +6110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -6326,7 +6326,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -6494,7 +6494,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -6664,7 +6664,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -6808,7 +6808,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -7024,7 +7024,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
             "snippet": [
                 {
                     "number": 286,
@@ -7192,7 +7192,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
             "snippet": [
                 {
                     "number": 287,
@@ -7360,7 +7360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
             "snippet": [
                 {
                     "number": 298,
@@ -7528,7 +7528,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -7696,7 +7696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
             "snippet": [
                 {
                     "number": 310,
@@ -7864,7 +7864,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
             "snippet": [
                 {
                     "number": 314,
@@ -8034,7 +8034,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -8180,7 +8180,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -8315,6 +8315,316 @@
             ]
         },
         {
+            "id": "f-ddf745701c",
+            "file": "plugins/woocommerce/src/Blocks/Utils/Utils.php",
+            "line": 28,
+            "column": 39,
+            "pattern": "/[^0-9a-zA-Z\\.]+/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Utils/Utils.php#L25-L31",
+            "snippet": [
+                {
+                    "number": 25,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Replace non-alphanumeric characters with a dot.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$current_wp_version = preg_replace( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '.', $current_wp_version );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$version            = preg_replace( '/[^0-9a-zA-Z\\.]+/i', '.', $version );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\treturn version_compare( $current_wp_version, $version, $operator );",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-ddf745701c-2",
+            "file": "plugins/woocommerce/src/Blocks/Utils/Utils.php",
+            "line": 29,
+            "column": 39,
+            "pattern": "/[^0-9a-zA-Z\\.]+/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Utils/Utils.php#L26-L32",
+            "snippet": [
+                {
+                    "number": 26,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 27,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t// Replace non-alphanumeric characters with a dot.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 28,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$current_wp_version = preg_replace( '/[^0-9a-zA-Z\\.]+/i', '.', $current_wp_version );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 29,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\t$version            = preg_replace( ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '.', $version );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 30,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 31,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\treturn version_compare( $current_wp_version, $version, $operator );",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t}",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-6950d50bd4",
             "file": "plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php",
             "line": 444,
@@ -8335,7 +8645,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
             "snippet": [
                 {
                     "number": 441,
@@ -8509,7 +8819,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php#L22-L28",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -8896,7 +9206,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -9055,7 +9365,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -9214,7 +9524,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -9373,7 +9683,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -9532,7 +9842,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -9691,7 +10001,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -9850,7 +10160,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -9991,7 +10301,7 @@
         {
             "id": "f-ed58368f70",
             "file": "plugins/woocommerce/src/StoreApi/Authentication.php",
-            "line": 404,
+            "line": 460,
             "column": 6,
             "pattern": "/(?<=\\[).*(?=\\])/i",
             "source": "preg_match()",
@@ -10009,10 +10319,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/plugins/woocommerce/src/StoreApi/Authentication.php#L401-L407",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/StoreApi/Authentication.php#L457-L463",
             "snippet": [
                 {
-                    "number": 401,
+                    "number": 457,
                     "focus": false,
                     "runs": [
                         [
@@ -10022,7 +10332,7 @@
                     ]
                 },
                 {
-                    "number": 402,
+                    "number": 458,
                     "focus": false,
                     "runs": [
                         [
@@ -10032,7 +10342,7 @@
                     ]
                 },
                 {
-                    "number": 403,
+                    "number": 459,
                     "focus": false,
                     "runs": [
                         [
@@ -10042,7 +10352,7 @@
                     ]
                 },
                 {
-                    "number": 404,
+                    "number": 460,
                     "focus": true,
                     "runs": [
                         [
@@ -10108,7 +10418,7 @@
                     ]
                 },
                 {
-                    "number": 405,
+                    "number": 461,
                     "focus": false,
                     "runs": [
                         [
@@ -10118,7 +10428,7 @@
                     ]
                 },
                 {
-                    "number": 406,
+                    "number": 462,
                     "focus": false,
                     "runs": [
                         [
@@ -10128,7 +10438,7 @@
                     ]
                 },
                 {
-                    "number": 407,
+                    "number": 463,
                     "focus": false,
                     "runs": [
                         [
@@ -10160,7 +10470,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/e98653261036eeeeda4226b35dc46c648ce87078/tools/monorepo/check-changelogger-use.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/tools/monorepo/check-changelogger-use.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,

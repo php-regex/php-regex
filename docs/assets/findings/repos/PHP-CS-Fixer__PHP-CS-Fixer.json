@@ -1,6 +1,6 @@
 {
     "repo": "PHP-CS-Fixer/PHP-CS-Fixer",
-    "sha": "58bc99aede1a58d5ece452b6b9238aa09e415bb4",
+    "sha": "511285399374ac4f95597276b2b6b652d42b9ea9",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -161,7 +161,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L475-L481",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -396,7 +396,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L704-L710",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L704-L710",
             "snippet": [
                 {
                     "number": 704,
@@ -638,7 +638,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L727-L733",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,
@@ -873,7 +873,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L740-L746",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L740-L746",
             "snippet": [
                 {
                     "number": 740,
@@ -1115,7 +1115,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L777-L783",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L777-L783",
             "snippet": [
                 {
                     "number": 777,
@@ -1350,7 +1350,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L790-L796",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L790-L796",
             "snippet": [
                 {
                     "number": 790,
@@ -1592,7 +1592,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L812-L818",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L812-L818",
             "snippet": [
                 {
                     "number": 812,
@@ -1827,7 +1827,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/DocBlock/TypeExpression.php#L825-L831",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L825-L831",
             "snippet": [
                 {
                     "number": 825,
@@ -1922,7 +1922,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Doctrine/Annotation/Tokens.php#L191-L197",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Doctrine/Annotation/Tokens.php#L191-L197",
             "snippet": [
                 {
                     "number": 191,
@@ -2085,7 +2085,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -2384,7 +2384,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
             "snippet": [
                 {
                     "number": 686,
@@ -2619,7 +2619,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
             "snippet": [
                 {
                     "number": 586,
@@ -2854,7 +2854,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
             "snippet": [
                 {
                     "number": 588,
@@ -3089,7 +3089,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
             "snippet": [
                 {
                     "number": 590,
@@ -3324,7 +3324,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -3419,7 +3419,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3562,7 +3562,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -3657,7 +3657,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -3892,7 +3892,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
             "snippet": [
                 {
                     "number": 185,
@@ -3987,7 +3987,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -4263,7 +4263,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/58bc99aede1a58d5ece452b6b9238aa09e415bb4/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,

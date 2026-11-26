@@ -1,6 +1,6 @@
 {
     "repo": "composer/composer",
-    "sha": "8a53515e753d9f60f1ed338cd40e0fae9464af52",
+    "sha": "c4899ab08f9e05c3a2d99843221704fcc71739b2",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Command/GlobalCommand.php#L154-L160",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/GlobalCommand.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -262,7 +262,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Command/InitCommand.php#L86-L92",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/InitCommand.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -603,7 +603,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Command/InitCommand.php#L297-L303",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/InitCommand.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -922,7 +922,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Command/PackageDiscoveryTrait.php#L221-L227",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/PackageDiscoveryTrait.php#L221-L227",
             "snippet": [
                 {
                     "number": 221,
@@ -1133,7 +1133,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Downloader/GitDownloader.php#L357-L363",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Downloader/GitDownloader.php#L357-L363",
             "snippet": [
                 {
                     "number": 357,
@@ -1276,7 +1276,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Downloader/SvnDownloader.php#L144-L150",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Downloader/SvnDownloader.php#L144-L150",
             "snippet": [
                 {
                     "number": 144,
@@ -1419,7 +1419,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Installer/BinaryInstaller.php#L338-L344",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Installer/BinaryInstaller.php#L338-L344",
             "snippet": [
                 {
                     "number": 338,
@@ -1608,7 +1608,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Json/JsonManipulator.php#L266-L272",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Json/JsonManipulator.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -1703,7 +1703,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Package/Version/VersionGuesser.php#L167-L173",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Package/Version/VersionGuesser.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -1857,7 +1857,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Repository/PlatformRepository.php#L36-L42",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/PlatformRepository.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -2208,7 +2208,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Repository/Vcs/GitDriver.php#L209-L215",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/Vcs/GitDriver.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -2355,7 +2355,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Repository/Vcs/HgDriver.php#L199-L205",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/Vcs/HgDriver.php#L199-L205",
             "snippet": [
                 {
                     "number": 199,
@@ -2562,7 +2562,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/8a53515e753d9f60f1ed338cd40e0fae9464af52/src/Composer/Util/ProcessExecutor.php#L128-L134",
+            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Util/ProcessExecutor.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,

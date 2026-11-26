@@ -1,6 +1,6 @@
 {
     "repo": "facebook/facebook-for-woocommerce",
-    "sha": "facd27658ff7c82cd107cea349f9523a3eb5c48d",
+    "sha": "1488462644eb8875544b0f1335f69b9aeb9a6dbb",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/Events/Normalizer.php#L194-L200",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/1488462644eb8875544b0f1335f69b9aeb9a6dbb/includes/Events/Normalizer.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -137,7 +137,7 @@
         {
             "id": "f-079a6884da",
             "file": "includes/fbutils.php",
-            "line": 1075,
+            "line": 1265,
             "column": 5,
             "pattern": "/^pa_[a-zA-Z0-9_]+:\\s*[a-zA-Z0-9_\\-\\s]+(\\s*,\\s*pa_[a-zA-Z0-9_]+:\\s*[a-zA-Z0-9_\\-\\s]+)*$/",
             "source": "preg_match()",
@@ -184,10 +184,10 @@
                 "limit": 100000
             },
             "subject": "pa_0:- ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: - ,pa_0: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1072-L1078",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/1488462644eb8875544b0f1335f69b9aeb9a6dbb/includes/fbutils.php#L1262-L1268",
             "snippet": [
                 {
-                    "number": 1072,
+                    "number": 1262,
                     "focus": false,
                     "runs": [
                         [
@@ -197,7 +197,7 @@
                     ]
                 },
                 {
-                    "number": 1073,
+                    "number": 1263,
                     "focus": false,
                     "runs": [
                         [
@@ -207,7 +207,7 @@
                     ]
                 },
                 {
-                    "number": 1074,
+                    "number": 1264,
                     "focus": false,
                     "runs": [
                         [
@@ -217,7 +217,7 @@
                     ]
                 },
                 {
-                    "number": 1075,
+                    "number": 1265,
                     "focus": true,
                     "runs": [
                         [
@@ -487,7 +487,7 @@
                     ]
                 },
                 {
-                    "number": 1076,
+                    "number": 1266,
                     "focus": false,
                     "runs": [
                         [
@@ -497,7 +497,7 @@
                     ]
                 },
                 {
-                    "number": 1077,
+                    "number": 1267,
                     "focus": false,
                     "runs": [
                         [
@@ -507,7 +507,7 @@
                     ]
                 },
                 {
-                    "number": 1078,
+                    "number": 1268,
                     "focus": false,
                     "runs": [
                         [
@@ -521,7 +521,7 @@
         {
             "id": "f-a402a1e880",
             "file": "includes/fbutils.php",
-            "line": 1077,
+            "line": 1267,
             "column": 5,
             "pattern": "/^(size|color|colour|brand|material|style|type|gender|age_group|pattern|condition|mpn|gtin):\\s*[a-zA-Z0-9_\\-\\s]{1,50}(\\s*,\\s*(size|color|colour|brand|material|style|type|gender|age_group|pattern|condition|mpn|gtin):\\s*[a-zA-Z0-9_\\-\\s]{1,50})*$/i",
             "source": "preg_match()",
@@ -554,10 +554,10 @@
                 "limit": 100000
             },
             "subject": "MPN:- ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: - ,MPN: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1074-L1080",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/1488462644eb8875544b0f1335f69b9aeb9a6dbb/includes/fbutils.php#L1264-L1270",
             "snippet": [
                 {
-                    "number": 1074,
+                    "number": 1264,
                     "focus": false,
                     "runs": [
                         [
@@ -567,7 +567,7 @@
                     ]
                 },
                 {
-                    "number": 1075,
+                    "number": 1265,
                     "focus": false,
                     "runs": [
                         [
@@ -577,7 +577,7 @@
                     ]
                 },
                 {
-                    "number": 1076,
+                    "number": 1266,
                     "focus": false,
                     "runs": [
                         [
@@ -587,7 +587,7 @@
                     ]
                 },
                 {
-                    "number": 1077,
+                    "number": 1267,
                     "focus": true,
                     "runs": [
                         [
@@ -989,7 +989,7 @@
                     ]
                 },
                 {
-                    "number": 1078,
+                    "number": 1268,
                     "focus": false,
                     "runs": [
                         [
@@ -999,7 +999,7 @@
                     ]
                 },
                 {
-                    "number": 1079,
+                    "number": 1269,
                     "focus": false,
                     "runs": [
                         [
@@ -1009,7 +1009,7 @@
                     ]
                 },
                 {
-                    "number": 1080,
+                    "number": 1270,
                     "focus": false,
                     "runs": [
                         [
@@ -1023,7 +1023,7 @@
         {
             "id": "f-5b88c0d54b",
             "file": "includes/fbutils.php",
-            "line": 1079,
+            "line": 1269,
             "column": 5,
             "pattern": "/^[a-zA-Z0-9_]{1,20}:\\s*[a-zA-Z0-9_\\-\\s]{1,30}(\\s*,\\s*[a-zA-Z0-9_]{1,20}:\\s*[a-zA-Z0-9_\\-\\s]{1,30})*$/",
             "source": "preg_match()",
@@ -1056,10 +1056,10 @@
                 "limit": 100000
             },
             "subject": "0:- ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: - ,0: -!",
-            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/facd27658ff7c82cd107cea349f9523a3eb5c48d/includes/fbutils.php#L1076-L1082",
+            "permalink": "https://github.com/facebook/facebook-for-woocommerce/blob/1488462644eb8875544b0f1335f69b9aeb9a6dbb/includes/fbutils.php#L1266-L1272",
             "snippet": [
                 {
-                    "number": 1076,
+                    "number": 1266,
                     "focus": false,
                     "runs": [
                         [
@@ -1069,7 +1069,7 @@
                     ]
                 },
                 {
-                    "number": 1077,
+                    "number": 1267,
                     "focus": false,
                     "runs": [
                         [
@@ -1079,7 +1079,7 @@
                     ]
                 },
                 {
-                    "number": 1078,
+                    "number": 1268,
                     "focus": false,
                     "runs": [
                         [
@@ -1089,7 +1089,7 @@
                     ]
                 },
                 {
-                    "number": 1079,
+                    "number": 1269,
                     "focus": true,
                     "runs": [
                         [
@@ -1351,7 +1351,7 @@
                     ]
                 },
                 {
-                    "number": 1080,
+                    "number": 1270,
                     "focus": false,
                     "runs": [
                         [
@@ -1361,7 +1361,7 @@
                     ]
                 },
                 {
-                    "number": 1081,
+                    "number": 1271,
                     "focus": false,
                     "runs": [
                         [
@@ -1371,7 +1371,7 @@
                     ]
                 },
                 {
-                    "number": 1082,
+                    "number": 1272,
                     "focus": false,
                     "runs": [
                         [

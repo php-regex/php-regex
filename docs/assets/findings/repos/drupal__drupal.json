@@ -1,6 +1,6 @@
 {
     "repo": "drupal/drupal",
-    "sha": "5776d7ded4da4d3e811ad32dfbe6a60b68113ad4",
+    "sha": "75a5600d2cdd7f3df2d3b9d4440df08b95abd665",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -57,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "FTP://!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
             "snippet": [
                 {
                     "number": 453,
@@ -152,7 +152,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
             "snippet": [
                 {
                     "number": 385,
@@ -290,7 +290,7 @@
                 "limit": 100000
             },
             "subject": "@IMPORTURL(\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"!;",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -407,7 +407,7 @@
                 "limit": 100000
             },
             "subject": "a0000000000000000000000000000000000000000000000000000000000000000!:",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -750,7 +750,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -977,7 +977,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -1116,7 +1116,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1323,7 +1323,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
             "snippet": [
                 {
                     "number": 269,
@@ -1502,7 +1502,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -1680,7 +1680,7 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -1885,7 +1885,7 @@
         {
             "id": "f-af55792a57",
             "file": "core/modules/filter/src/Plugin/Filter/FilterUrl.php",
-            "line": 151,
+            "line": 156,
             "column": 52,
             "pattern": "/(<.+?>)/is",
             "source": "preg_split()",
@@ -1903,10 +1903,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L148-L154",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L153-L159",
             "snippet": [
                 {
-                    "number": 148,
+                    "number": 153,
                     "focus": false,
                     "runs": [
                         [
@@ -1916,7 +1916,7 @@
                     ]
                 },
                 {
-                    "number": 149,
+                    "number": 154,
                     "focus": false,
                     "runs": [
                         [
@@ -1926,7 +1926,7 @@
                     ]
                 },
                 {
-                    "number": 150,
+                    "number": 155,
                     "focus": false,
                     "runs": [
                         [
@@ -1936,7 +1936,7 @@
                     ]
                 },
                 {
-                    "number": 151,
+                    "number": 156,
                     "focus": true,
                     "runs": [
                         [
@@ -1994,7 +1994,7 @@
                     ]
                 },
                 {
-                    "number": 152,
+                    "number": 157,
                     "focus": false,
                     "runs": [
                         [
@@ -2004,7 +2004,7 @@
                     ]
                 },
                 {
-                    "number": 153,
+                    "number": 158,
                     "focus": false,
                     "runs": [
                         [
@@ -2014,7 +2014,7 @@
                     ]
                 },
                 {
-                    "number": 154,
+                    "number": 159,
                     "focus": false,
                     "runs": [
                         [
@@ -2046,7 +2046,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -2341,7 +2341,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/link/src/AttributeXss.php#L129-L135",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/link/src/AttributeXss.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -2436,7 +2436,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/locale/src/File/LocaleFile.php#L86-L92",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/File/LocaleFile.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -2566,7 +2566,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/locale/src/LocaleJs.php#L190-L196",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -2717,7 +2717,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/locale/src/LocaleJs.php#L201-L207",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -2817,7 +2817,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/locale/src/LocaleJs.php#L452-L458",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L452-L458",
             "snippet": [
                 {
                     "number": 452,
@@ -2988,7 +2988,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -3202,7 +3202,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -3575,7 +3575,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -3894,7 +3894,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/5776d7ded4da4d3e811ad32dfbe6a60b68113ad4/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
+            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
             "snippet": [
                 {
                     "number": 1873,

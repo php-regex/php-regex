@@ -1,6 +1,6 @@
 {
     "repo": "reactphp/http",
-    "sha": "a58e432c146ffb84e3aab4c16eb7d9d497bfbd02",
+    "sha": "77e779503453ab91013426c77594fd5f3b0cbad1",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/a58e432c146ffb84e3aab4c16eb7d9d497bfbd02/src/Message/Uri.php#L53-L59",
+            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -151,7 +151,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/a58e432c146ffb84e3aab4c16eb7d9d497bfbd02/src/Message/Uri.php#L171-L177",
+            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -274,7 +274,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/a58e432c146ffb84e3aab4c16eb7d9d497bfbd02/src/Message/Uri.v1.php#L47-L53",
+            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.v1.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -397,7 +397,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/a58e432c146ffb84e3aab4c16eb7d9d497bfbd02/src/Message/Uri.v1.php#L165-L171",
+            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.v1.php#L165-L171",
             "snippet": [
                 {
                     "number": 165,

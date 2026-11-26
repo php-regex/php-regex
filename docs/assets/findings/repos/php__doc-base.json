@@ -1,6 +1,6 @@
 {
     "repo": "php/doc-base",
-    "sha": "a331e55094ca170b73357fa461101ffa28e0c617",
+    "sha": "ff79f59808477c12215d2ba934cbfc4396094dfa",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/chm/common.php#L11-L17",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/chm/common.php#L11-L17",
             "snippet": [
                 {
                     "number": 11,
@@ -139,7 +139,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/chm/common.php#L13-L19",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/chm/common.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -270,7 +270,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/chm/common.php#L61-L67",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/chm/common.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -493,7 +493,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/chm/common.php#L69-L75",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/chm/common.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -719,7 +719,7 @@
                 "limit": 100000
             },
             "subject": "<DT><A HREF=\"........................................................................................!</A",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/chm/make_chm.php#L212-L218",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/chm/make_chm.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -995,7 +995,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/filter_files.php#L184-L190",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/filter_files.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -1175,7 +1175,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/filter_files.php#L220-L226",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/filter_files.php#L220-L226",
             "snippet": [
                 {
                     "number": 220,
@@ -1335,7 +1335,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/filter_files.php#L226-L232",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/filter_files.php#L226-L232",
             "snippet": [
                 {
                     "number": 226,
@@ -1475,7 +1475,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/filter_files.php#L227-L233",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/filter_files.php#L227-L233",
             "snippet": [
                 {
                     "number": 227,
@@ -1615,7 +1615,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/filter_files.php#L228-L234",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/filter_files.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,
@@ -1799,7 +1799,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/htmlhelp/user_notes.php#L60-L66",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/htmlhelp/user_notes.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -1950,7 +1950,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/check-trans-params.php#L86-L92",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/check-trans-params.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -2101,7 +2101,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/check-trans-params.php#L87-L93",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/check-trans-params.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2257,7 +2257,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/check-trans.php#L990-L996",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/check-trans.php#L990-L996",
             "snippet": [
                 {
                     "number": 990,
@@ -2385,7 +2385,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/check-trans.php#L995-L1001",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/check-trans.php#L995-L1001",
             "snippet": [
                 {
                     "number": 995,
@@ -2508,7 +2508,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/qa/check-examples.php#L79-L85",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/qa/check-examples.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -2659,7 +2659,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/qa/entities.php#L105-L111",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/qa/entities.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -2814,7 +2814,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/versions.php#L64-L70",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/versions.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -3053,7 +3053,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/doc-base/blob/a331e55094ca170b73357fa461101ffa28e0c617/scripts/versions.php#L182-L188",
+            "permalink": "https://github.com/php/doc-base/blob/ff79f59808477c12215d2ba934cbfc4396094dfa/scripts/versions.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,

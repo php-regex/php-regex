@@ -1,6 +1,6 @@
 {
     "repo": "facebookincubator/Facebook-Pixel-for-Wordpress",
-    "sha": "155d1dcd9f4f603acb6ac5b1088f1f4310607535",
+    "sha": "2e912cf1278108e3ed6d96f2a7357340f79a6487",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/facebookincubator/Facebook-Pixel-for-Wordpress/blob/155d1dcd9f4f603acb6ac5b1088f1f4310607535/FacebookAds/Object/ServerSide/Normalizer.php#L245-L251",
+            "permalink": "https://github.com/facebookincubator/Facebook-Pixel-for-Wordpress/blob/2e912cf1278108e3ed6d96f2a7357340f79a6487/FacebookAds/Object/ServerSide/Normalizer.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,

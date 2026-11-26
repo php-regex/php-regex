@@ -1,6 +1,6 @@
 {
     "repo": "owncloud/core",
-    "sha": "950b4709c3f55379ef7142e769c26cbddc4450e6",
+    "sha": "cc614bf702cc43aac35f8a11c1451efd85b29680",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/AppConfig.php#L321-L327",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/AppConfig.php#L321-L327",
             "snippet": [
                 {
                     "number": 321,
@@ -175,7 +175,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/Files/Type/Detection.php#L162-L168",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/Files/Type/Detection.php#L162-L168",
             "snippet": [
                 {
                     "number": 162,
@@ -351,7 +351,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/Files/View.php#L1943-L1949",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/Files/View.php#L1943-L1949",
             "snippet": [
                 {
                     "number": 1943,
@@ -451,7 +451,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/legacy/app.php#L1238-L1244",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/legacy/app.php#L1238-L1244",
             "snippet": [
                 {
                     "number": 1238,
@@ -599,7 +599,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/legacy/app.php#L1244-L1250",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/legacy/app.php#L1244-L1250",
             "snippet": [
                 {
                     "number": 1244,
@@ -735,7 +735,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/legacy/helper.php#L160-L166",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/legacy/helper.php#L160-L166",
             "snippet": [
                 {
                     "number": 160,
@@ -890,7 +890,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/owncloud/core/blob/950b4709c3f55379ef7142e769c26cbddc4450e6/lib/private/legacy/helper.php#L608-L614",
+            "permalink": "https://github.com/owncloud/core/blob/cc614bf702cc43aac35f8a11c1451efd85b29680/lib/private/legacy/helper.php#L608-L614",
             "snippet": [
                 {
                     "number": 608,

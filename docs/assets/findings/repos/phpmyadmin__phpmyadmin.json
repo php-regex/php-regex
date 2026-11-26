@@ -1,6 +1,6 @@
 {
     "repo": "phpmyadmin/phpmyadmin",
-    "sha": "da6e317253a75077a212582a178ed4b8ca38312d",
+    "sha": "3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Bookmarks/Bookmark.php#L133-L139",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Bookmarks/Bookmark.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -216,7 +216,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Html/Generator.php#L786-L792",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Html/Generator.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -359,6 +359,137 @@
             ]
         },
         {
+            "id": "f-3eac5a3c11",
+            "file": "src/Plugins/Auth/AuthenticationHttp.php",
+            "line": 71,
+            "column": 38,
+            "pattern": "/[^\\x20-\\x7e]/i",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Plugins/Auth/AuthenticationHttp.php#L68-L74",
+            "snippet": [
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 70,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // remove non US-ASCII to respect RFC2616",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 71,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $realmMessage = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x20",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x7e",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', $realmMessage);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 72,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->responseRenderer->addHeader('WWW-Authenticate', 'Basic realm=\"' . $realmMessage . '\"');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 73,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $this->responseRenderer->setStatusCode(StatusCodeInterface::STATUS_UNAUTHORIZED);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 74,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-aa2bf41a4c",
             "file": "src/Server/Status/Monitor.php",
             "line": 332,
@@ -386,7 +517,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Server/Status/Monitor.php#L329-L335",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Server/Status/Monitor.php#L329-L335",
             "snippet": [
                 {
                     "number": 329,
@@ -569,7 +700,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Table/Table.php#L509-L515",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Table/Table.php#L509-L515",
             "snippet": [
                 {
                     "number": 509,
@@ -724,7 +855,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Table/Table.php#L511-L517",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Table/Table.php#L511-L517",
             "snippet": [
                 {
                     "number": 511,
@@ -884,7 +1015,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/da6e317253a75077a212582a178ed4b8ca38312d/src/Table/Table.php#L577-L583",
+            "permalink": "https://github.com/phpmyadmin/phpmyadmin/blob/3f93e4e39c0373bddd9feb95eb3b6ec000fdcb20/src/Table/Table.php#L577-L583",
             "snippet": [
                 {
                     "number": 577,

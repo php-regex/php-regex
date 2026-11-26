@@ -1,6 +1,6 @@
 {
     "repo": "10up/ElasticPress",
-    "sha": "609c96872dcc27cf6e798b2e8b53cf690d37a62e",
+    "sha": "333e4352f2918c6ae4ee892549f776b4bd0f6460",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -19,6 +19,13 @@
             "issues": [
                 {
                     "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
@@ -33,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/10up/ElasticPress/blob/609c96872dcc27cf6e798b2e8b53cf690d37a62e/includes/compat.php#L136-L142",
+            "permalink": "https://github.com/10up/ElasticPress/blob/333e4352f2918c6ae4ee892549f776b4bd0f6460/includes/compat.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,

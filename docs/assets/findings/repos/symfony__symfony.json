@@ -1,6 +1,6 @@
 {
     "repo": "symfony/symfony",
-    "sha": "2894e4eeea9e328e5f38d5e5e52498438c9a12fc",
+    "sha": "9222647836686bff1283e060108107318f9db3e7",
     "target": {
         "php": "8.4.1",
         "pcre": "10.49",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -169,7 +169,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
             "snippet": [
                 {
                     "number": 19,
@@ -282,101 +282,6 @@
             ]
         },
         {
-            "id": "f-0e10222723",
-            "file": "src/Symfony/Component/AssetMapper/Compiler/JavaScriptImportPathCompiler.php",
-            "line": 31,
-            "column": 36,
-            "pattern": "/\n            ^(?:\\/\\/.*)                     # Lines that start with comments\n        |\n            (?:\n                '(?:[^'\\\\\\n]|\\\\.)*+'   # Strings enclosed in single quotes\n            |\n                \"(?:[^\"\\\\\\n]|\\\\.)*+\"      # Strings enclosed in double quotes\n            )\n        |\n            (?:                            # Import statements (script captured)\n                import\\s*\n                    (?:\n                        (?:\\*\\s*as\\s+\\w+|\\s+[\\w\\s{},*]+)\n                        \\s*from\\s*\n                    )?\n            |\n                export\\s*\n                    (?:\\*(?:\\s*as\\s+\\w+)?|\\{[^}]*+\\})\n                    \\s*from\\s*\n            |\n                \\bimport\\(\n            )\n            \\s*['\"`](\\.\\/[^'\"`\\n]++|(\\.\\.\\/)*+[^'\"`\\n]++)['\"`]\\s*[;\\)]\n        ?\n    /mxu",
-            "source": "preg_replace_callback()",
-            "location": "via self::IMPORT_PATTERN",
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.anchor.alternationPrecedence",
-                    "message": "An anchor holds for its own alternative only: \"(?:\n                '(?:[^'\\\\\\n]|\\\\.)*+'   # Strings enclosed in single quotes\n            |\n                \"(?:[^\"\\\\\\n]|\\\\.)*+\"      # Strings enclosed in double quotes\n            )\" matches anywhere in the subject.",
-                    "hint": "If the anchors are meant for every alternative, group them: \"^(?:(?:\\/\\/.*)|(?:\n                '(?:[^'\\\\\\n]|\\\\.)*+'   # Strings enclosed in single quotes\n            |\n                \"(?:[^\"\\\\\\n]|\\\\.)*+\"      # Strings enclosed in double quotes\n            )|(?:                            # Import statements (script captured)\n                import\\s*\n                    (?:\n                        (?:\\*\\s*as\\s+\\w+|\\s+[\\w\\s{},*]+)\n                        \\s*from\\s*\n                    )?\n            |\n                export\\s*\n                    (?:\\*(?:\\s*as\\s+\\w+)?|\\{[^}]*+\\})\n                    \\s*from\\s*\n            |\n                \\bimport\\(\n            )\n            \\s*['\"`](\\.\\/[^'\"`\\n]++|(\\.\\.\\/)*+[^'\"`\\n]++)['\"`]\\s*[;\\)]\n        ?)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/AssetMapper/Compiler/JavaScriptImportPathCompiler.php#L28-L34",
-            "snippet": [
-                {
-                    "number": 28,
-                    "focus": false,
-                    "runs": [
-                        [
-                            " */",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 29,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "final class JavaScriptImportPathCompiler implements AssetCompilerInterface",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 30,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "{",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 31,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "    private const IMPORT_PATTERN = '/",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 32,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            ^(?:\\/\\/.*)                     # Lines that start with comments",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 33,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        |",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 34,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            (?:",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-db2ef0eace",
             "file": "src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php",
             "line": 75,
@@ -397,7 +302,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -645,7 +550,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -922,7 +827,7 @@
                 "limit": 100000
             },
             "subject": "<0=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,0!>",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
             "snippet": [
                 {
                     "number": 671,
@@ -1205,7 +1110,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -1300,7 +1205,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -1428,7 +1333,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
             "snippet": [
                 {
                     "number": 1731,
@@ -1604,7 +1509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
             "snippet": [
                 {
                     "number": 1738,
@@ -1775,7 +1680,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
             "snippet": [
                 {
                     "number": 518,
@@ -1951,7 +1856,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
             "snippet": [
                 {
                     "number": 234,
@@ -2101,7 +2006,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
             "snippet": [
                 {
                     "number": 1027,
@@ -2346,7 +2251,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
             "snippet": [
                 {
                     "number": 1423,
@@ -2679,7 +2584,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
             "snippet": [
                 {
                     "number": 1460,
@@ -2992,7 +2897,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
             "snippet": [
                 {
                     "number": 1484,
@@ -3291,7 +3196,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
             "snippet": [
                 {
                     "number": 259,
@@ -3416,7 +3321,7 @@
         {
             "id": "f-82161ccb2e",
             "file": "src/Symfony/Component/HttpClient/HttpClientTrait.php",
-            "line": 383,
+            "line": 394,
             "column": 28,
             "pattern": "{multipart/form-data; boundary=(?|\"([^\"\\r\\n]++)\"|([-!#$%&'*+.^_`|~_A-Za-z0-9]++))}",
             "source": "preg_match()",
@@ -3434,10 +3339,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/HttpClient/HttpClientTrait.php#L380-L386",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpClient/HttpClientTrait.php#L391-L397",
             "snippet": [
                 {
-                    "number": 380,
+                    "number": 391,
                     "focus": false,
                     "runs": [
                         [
@@ -3447,7 +3352,7 @@
                     ]
                 },
                 {
-                    "number": 381,
+                    "number": 392,
                     "focus": false,
                     "runs": [
                         [
@@ -3457,7 +3362,7 @@
                     ]
                 },
                 {
-                    "number": 382,
+                    "number": 393,
                     "focus": false,
                     "runs": [
                         [
@@ -3467,7 +3372,7 @@
                     ]
                 },
                 {
-                    "number": 383,
+                    "number": 394,
                     "focus": true,
                     "runs": [
                         [
@@ -3589,7 +3494,7 @@
                     ]
                 },
                 {
-                    "number": 384,
+                    "number": 395,
                     "focus": false,
                     "runs": [
                         [
@@ -3599,7 +3504,7 @@
                     ]
                 },
                 {
-                    "number": 385,
+                    "number": 396,
                     "focus": false,
                     "runs": [
                         [
@@ -3609,7 +3514,7 @@
                     ]
                 },
                 {
-                    "number": 386,
+                    "number": 397,
                     "focus": false,
                     "runs": [
                         [
@@ -3646,7 +3551,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -3795,7 +3700,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -3960,7 +3865,7 @@
         {
             "id": "f-58d92056f6",
             "file": "src/Symfony/Component/JsonPath/JsonCrawler.php",
-            "line": 485,
+            "line": 524,
             "column": 28,
             "pattern": "/^(\\w+)\\s*\\([^()]*\\)\\s*([<>=!]+.*)?$/",
             "source": "preg_match()",
@@ -3978,10 +3883,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/JsonPath/JsonCrawler.php#L482-L488",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/JsonPath/JsonCrawler.php#L521-L527",
             "snippet": [
                 {
-                    "number": 482,
+                    "number": 521,
                     "focus": false,
                     "runs": [
                         [
@@ -3991,7 +3896,7 @@
                     ]
                 },
                 {
-                    "number": 483,
+                    "number": 522,
                     "focus": false,
                     "runs": [
                         [
@@ -4001,7 +3906,7 @@
                     ]
                 },
                 {
-                    "number": 484,
+                    "number": 523,
                     "focus": false,
                     "runs": [
                         [
@@ -4011,7 +3916,7 @@
                     ]
                 },
                 {
-                    "number": 485,
+                    "number": 524,
                     "focus": true,
                     "runs": [
                         [
@@ -4141,7 +4046,7 @@
                     ]
                 },
                 {
-                    "number": 486,
+                    "number": 525,
                     "focus": false,
                     "runs": [
                         [
@@ -4151,7 +4056,7 @@
                     ]
                 },
                 {
-                    "number": 487,
+                    "number": 526,
                     "focus": false,
                     "runs": [
                         [
@@ -4161,7 +4066,7 @@
                     ]
                 },
                 {
-                    "number": 488,
+                    "number": 527,
                     "focus": false,
                     "runs": [
                         [
@@ -4193,7 +4098,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -4412,7 +4317,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
             "snippet": [
                 {
                     "number": 101,
@@ -4631,7 +4536,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Email.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -4698,7 +4603,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "            $names = array_filter(array_unique($names));",
+                            "            $names = array_filter(array_unique($names), 'strlen');",
                             ""
                         ]
                     ]
@@ -4726,7 +4631,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Email.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -4793,7 +4698,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "            $names = array_filter(array_unique($names));",
+                            "            $names = array_filter(array_unique($names), 'strlen');",
                             ""
                         ]
                     ]
@@ -4919,7 +4824,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -5014,7 +4919,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -5182,7 +5087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L270-L276",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L270-L276",
             "snippet": [
                 {
                     "number": 270,
@@ -5325,7 +5230,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -5518,7 +5423,7 @@
         {
             "id": "f-1a9bc245e0-2",
             "file": "src/Symfony/Component/Routing/Generator/UrlGenerator.php",
-            "line": 245,
+            "line": 259,
             "column": 96,
             "pattern": "/\\(\\?(?:=|<=|!|<!)((?:[^()\\\\]+|\\\\.|\\((?1)\\))*)\\)/",
             "source": "preg_replace()",
@@ -5536,10 +5441,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L242-L248",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L256-L262",
             "snippet": [
                 {
-                    "number": 242,
+                    "number": 256,
                     "focus": false,
                     "runs": [
                         [
@@ -5549,7 +5454,7 @@
                     ]
                 },
                 {
-                    "number": 243,
+                    "number": 257,
                     "focus": false,
                     "runs": [
                         [
@@ -5559,7 +5464,7 @@
                     ]
                 },
                 {
-                    "number": 244,
+                    "number": 258,
                     "focus": false,
                     "runs": [
                         [
@@ -5569,7 +5474,7 @@
                     ]
                 },
                 {
-                    "number": 245,
+                    "number": 259,
                     "focus": true,
                     "runs": [
                         [
@@ -5695,7 +5600,7 @@
                     ]
                 },
                 {
-                    "number": 246,
+                    "number": 260,
                     "focus": false,
                     "runs": [
                         [
@@ -5705,7 +5610,7 @@
                     ]
                 },
                 {
-                    "number": 247,
+                    "number": 261,
                     "focus": false,
                     "runs": [
                         [
@@ -5715,7 +5620,7 @@
                     ]
                 },
                 {
-                    "number": 248,
+                    "number": 262,
                     "focus": false,
                     "runs": [
                         [
@@ -5762,7 +5667,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -5993,7 +5898,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Routing/RouteCompiler.php#L209-L215",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/RouteCompiler.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -6240,7 +6145,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -6407,7 +6312,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -6566,7 +6471,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -6725,7 +6630,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L93-L99",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -7139,7 +7044,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
             "snippet": [
                 {
                     "number": 183,
@@ -7239,7 +7144,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -7430,7 +7335,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
             "snippet": [
                 {
                     "number": 405,
@@ -7616,7 +7521,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
             "snippet": [
                 {
                     "number": 425,
@@ -7862,7 +7767,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/2894e4eeea9e328e5f38d5e5e52498438c9a12fc/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
+            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,

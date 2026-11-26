@@ -1,16 +1,16 @@
 ---
 layout: landing
-title: "joomla/joomla-cms: 53 regex findings"
-description: "PHPRegex on joomla/joomla-cms: 2 failures and 51 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
+title: "joomla/joomla-cms: 52 regex findings"
+description: "PHPRegex on joomla/joomla-cms: 2 failures and 50 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
 permalink: /findings/joomla/joomla-cms/
 findings_repo: joomla/joomla-cms
 findings_slug: joomla__joomla-cms
-findings_count: 53
+findings_count: 52
 findings_fail: 2
-findings_warn: 51
+findings_warn: 50
 findings_php: "8.1"
 findings_pcre: "10.39"
-findings_committed: 2026-11-13
+findings_committed: 2026-11-25
 findings_rank: 26
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."

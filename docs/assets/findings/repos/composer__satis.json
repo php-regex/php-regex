@@ -1,6 +1,6 @@
 {
     "repo": "composer/satis",
-    "sha": "66c7b8ff47cdcc0c678e22e305f2760f6c19cf65",
+    "sha": "8fc25f3a85e189b44fb58f244da4bc192f586dad",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/satis/blob/66c7b8ff47cdcc0c678e22e305f2760f6c19cf65/src/PackageSelection/PackageSelection.php#L626-L632",
+            "permalink": "https://github.com/composer/satis/blob/8fc25f3a85e189b44fb58f244da4bc192f586dad/src/PackageSelection/PackageSelection.php#L626-L632",
             "snippet": [
                 {
                     "number": 626,

@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "99ab75ffdf1b679f7632b1f62328015551f41613",
+    "sha": "b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -190,7 +190,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -373,6 +373,668 @@
             ]
         },
         {
+            "id": "f-1578783509",
+            "file": "src/core/System/Version.php",
+            "line": 20,
+            "column": 39,
+            "pattern": "^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$^",
+            "source": "preg_match()",
+            "location": "via self::semverRegex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in \"(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-…\" at offset 126 can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.overlap.charset",
+                    "message": "Alternation branches \"0\" and \"\\d*[a-zA-Z-][0-9a-zA-Z-]*\" have overlapping character sets, which may cause unnecessary backtracking.",
+                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
+                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/System/Version.php#L17-L23",
+            "snippet": [
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const int PATCH = 0;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const int MINOR = 1;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public const int MAJOR = 2;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    public const string semverRegex = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "major",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "minor",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "patch",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "prerelease",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "][",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "|[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "1",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "|",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\d",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "][",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\+",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(?P<",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "buildmetadata",
+                            "pg-snippet-pattern pg-tok-identifier"
+                        ],
+                        [
+                            ">",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\.",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "))",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /**",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 23,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "     * Compare the specified FOSSBilling version string $version",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-117d7692c3",
             "file": "src/core/Update/Patch/Patch52.php",
             "line": 79,
@@ -398,7 +1060,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -606,7 +1268,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -814,7 +1476,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -1017,7 +1679,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1262,7 +1924,7 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Email/Service.php#L517-L523",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Email/Service.php#L517-L523",
             "snippet": [
                 {
                     "number": 517,
@@ -1466,7 +2128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Email/Service.php#L523-L529",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Email/Service.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -1669,7 +2331,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/99ab75ffdf1b679f7632b1f62328015551f41613/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

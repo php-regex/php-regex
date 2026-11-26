@@ -1,6 +1,6 @@
 {
     "repo": "MyIntervals/PHP-CSS-Parser",
-    "sha": "a97bd7a4d236765e71f1017f4e8db0c306b7a871",
+    "sha": "b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a97bd7a4d236765e71f1017f4e8db0c306b7a871/src/Parsing/ParserState.php#L129-L135",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -203,7 +203,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a97bd7a4d236765e71f1017f4e8db0c306b7a871/src/Parsing/ParserState.php#L171-L177",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -308,7 +308,7 @@
         {
             "id": "f-ff7f5eec4b-2",
             "file": "src/Parsing/ParserState.php",
-            "line": 247,
+            "line": 234,
             "column": 44,
             "pattern": "/\\s/isSu",
             "source": "preg_match()",
@@ -338,10 +338,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a97bd7a4d236765e71f1017f4e8db0c306b7a871/src/Parsing/ParserState.php#L244-L250",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L231-L237",
             "snippet": [
                 {
-                    "number": 244,
+                    "number": 231,
                     "focus": false,
                     "runs": [
                         [
@@ -351,7 +351,7 @@
                     ]
                 },
                 {
-                    "number": 245,
+                    "number": 232,
                     "focus": false,
                     "runs": [
                         [
@@ -361,7 +361,7 @@
                     ]
                 },
                 {
-                    "number": 246,
+                    "number": 233,
                     "focus": false,
                     "runs": [
                         [
@@ -371,7 +371,7 @@
                     ]
                 },
                 {
-                    "number": 247,
+                    "number": 234,
                     "focus": true,
                     "runs": [
                         [
@@ -409,7 +409,7 @@
                     ]
                 },
                 {
-                    "number": 248,
+                    "number": 235,
                     "focus": false,
                     "runs": [
                         [
@@ -419,7 +419,7 @@
                     ]
                 },
                 {
-                    "number": 249,
+                    "number": 236,
                     "focus": false,
                     "runs": [
                         [
@@ -429,7 +429,7 @@
                     ]
                 },
                 {
-                    "number": 250,
+                    "number": 237,
                     "focus": false,
                     "runs": [
                         [
@@ -473,7 +473,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a97bd7a4d236765e71f1017f4e8db0c306b7a871/src/Value/CSSString.php#L57-L63",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Value/CSSString.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,

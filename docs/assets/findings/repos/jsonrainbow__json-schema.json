@@ -1,6 +1,6 @@
 {
     "repo": "jsonrainbow/json-schema",
-    "sha": "c25bb4a2fc8749a3777410a455e786f46f99ee62",
+    "sha": "bc2360c918e71b16510c4c4c975d037317d2edb6",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "A://-////////////////////////////////////////////////////////\"",
-            "permalink": "https://github.com/jsonrainbow/json-schema/blob/c25bb4a2fc8749a3777410a455e786f46f99ee62/src/JsonSchema/Tool/Validator/UriValidator.php#L9-L15",
+            "permalink": "https://github.com/jsonrainbow/json-schema/blob/bc2360c918e71b16510c4c4c975d037317d2edb6/src/JsonSchema/Tool/Validator/UriValidator.php#L9-L15",
             "snippet": [
                 {
                     "number": 9,

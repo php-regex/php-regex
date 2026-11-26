@@ -1,6 +1,6 @@
 {
     "repo": "larastan/larastan",
-    "sha": "dd78a3eb22410ee66b5689bc19cacea2604bd7e6",
+    "sha": "3b2e33e8f43bf29c2d2c2214e9494c07d3483a47",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/larastan/larastan/blob/dd78a3eb22410ee66b5689bc19cacea2604bd7e6/src/Collectors/UsedTranslationViewCollector.php#L26-L32",
+            "permalink": "https://github.com/larastan/larastan/blob/3b2e33e8f43bf29c2d2c2214e9494c07d3483a47/src/Collectors/UsedTranslationViewCollector.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -140,7 +140,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/larastan/larastan/blob/dd78a3eb22410ee66b5689bc19cacea2604bd7e6/src/Collectors/UsedViewInAnotherViewCollector.php#L19-L25",
+            "permalink": "https://github.com/larastan/larastan/blob/3b2e33e8f43bf29c2d2c2214e9494c07d3483a47/src/Collectors/UsedViewInAnotherViewCollector.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,

@@ -1,6 +1,6 @@
 {
     "repo": "php-debugbar/php-debugbar",
-    "sha": "d04a382b80e320c7abdbe9fc66e83b34e80edef4",
+    "sha": "89c9564bbaec0a341b984e54ed5c1492009cab6e",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -54,7 +54,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php-debugbar/php-debugbar/blob/d04a382b80e320c7abdbe9fc66e83b34e80edef4/src/DataFormatter/QueryFormatter.php#L14-L20",
+            "permalink": "https://github.com/php-debugbar/php-debugbar/blob/89c9564bbaec0a341b984e54ed5c1492009cab6e/src/DataFormatter/QueryFormatter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,

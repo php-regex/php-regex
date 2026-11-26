@@ -2075,6 +2075,13 @@
                 },
                 {
                     "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,

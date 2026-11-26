@@ -1,6 +1,6 @@
 {
     "repo": "flarum/framework",
-    "sha": "b43a84be32b0af51a7a566783a6bf559b7332379",
+    "sha": "f47cbd8e460d9c76f76f403cfc366a6b67878a4e",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/mentions/src/ConfigureMentions.php#L25-L31",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/mentions/src/ConfigureMentions.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -321,7 +321,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/mentions/src/ConfigureMentions.php#L27-L33",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/mentions/src/ConfigureMentions.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -562,7 +562,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    public const TAG_MENTION_WITH_SLUG_REGEX = '/(?:[^“\"]|^)\\B#(?<slug>[-_\\p{L}\\p{N}\\p{M}]+)\\b/ui';",
+                            "    // Slugs can hold joiners (U+200C, U+200D), which spell words in Persian and Indic scripts, and",
                             ""
                         ]
                     ]
@@ -572,7 +572,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "",
+                            "    // can end in a spacing mark, which \\b doesn't count as part of a word (#हिन्दी). The slug ends",
                             ""
                         ]
                     ]
@@ -607,7 +607,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/mentions/src/ConfigureMentions.php#L28-L34",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/mentions/src/ConfigureMentions.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -838,7 +838,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    public const TAG_MENTION_WITH_SLUG_REGEX = '/(?:[^“\"]|^)\\B#(?<slug>[-_\\p{L}\\p{N}\\p{M}]+)\\b/ui';",
+                            "    // Slugs can hold joiners (U+200C, U+200D), which spell words in Persian and Indic scripts, and",
                             ""
                         ]
                     ]
@@ -848,7 +848,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "",
+                            "    // can end in a spacing mark, which \\b doesn't count as part of a word (#हिन्दी). The slug ends",
                             ""
                         ]
                     ]
@@ -858,7 +858,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    /**",
+                            "    // where no letter, number, mark, joiner or underscore follows, and not on a hyphen.",
                             ""
                         ]
                     ]
@@ -866,11 +866,11 @@
             ]
         },
         {
-            "id": "f-9013243728",
+            "id": "f-b8b6fb6cb1",
             "file": "extensions/mentions/src/ConfigureMentions.php",
-            "line": 32,
+            "line": 35,
             "column": 48,
-            "pattern": "/(?:[^“\"]|^)\\B#(?<slug>[-_\\p{L}\\p{N}\\p{M}]+)\\b/ui",
+            "pattern": "/(?:[^“\"]|^)\\B#(?<slug>[-_\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}]*[_\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}])(?![_\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}])/ui",
             "source": "preg_match_all()",
             "location": "via ConfigureMentions::TAG_MENTION_WITH_SLUG_REGEX",
             "level": "warn",
@@ -886,40 +886,40 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/mentions/src/ConfigureMentions.php#L29-L35",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/mentions/src/ConfigureMentions.php#L32-L38",
             "snippet": [
                 {
-                    "number": 29,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const USER_MENTION_WITH_USERNAME_REGEX = '/\\B@(?<username>[a-z0-9_-]+)(?!#)/i';",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 30,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const POST_MENTION_WITH_DISPLAY_NAME_REGEX = '/\\B@[\"“](?<displayname>((?!\"#[a-z]{0,3}[0-9]+).)+)[\"”]#p(?<id>[0-9]+)\\b/';",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 31,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const GROUP_MENTION_WITH_NAME_REGEX = '/\\B@[\"“](?<groupname>((?!\"#[a-z]{0,3}[0-9]+).)+)[\"|”]#g(?<id>[0-9]+)\\b/';",
-                            ""
-                        ]
-                    ]
-                },
-                {
                     "number": 32,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // Slugs can hold joiners (U+200C, U+200D), which spell words in Persian and Indic scripts, and",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 33,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // can end in a spacing mark, which \\b doesn't count as part of a word (#हिन्दी). The slug ends",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 34,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    // where no letter, number, mark, joiner or underscore follows, and not on a hyphen.",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 35,
                     "focus": true,
                     "runs": [
                         [
@@ -987,7 +987,7 @@
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
-                            "\\p{L}\\p{N}\\p{M}",
+                            "\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}",
                             "pg-snippet-pattern pg-tok-escape"
                         ],
                         [
@@ -995,16 +995,48 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "+",
+                            "*",
                             "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")(?!",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\p{L}\\p{N}\\p{M}\\x{200C}\\x{200D}",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
                             ")",
                             "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\b",
-                            "pg-snippet-pattern pg-tok-anchor"
                         ],
                         [
                             "/",
@@ -1025,7 +1057,7 @@
                     ]
                 },
                 {
-                    "number": 33,
+                    "number": 36,
                     "focus": false,
                     "runs": [
                         [
@@ -1035,7 +1067,7 @@
                     ]
                 },
                 {
-                    "number": 34,
+                    "number": 37,
                     "focus": false,
                     "runs": [
                         [
@@ -1045,7 +1077,7 @@
                     ]
                 },
                 {
-                    "number": 35,
+                    "number": 38,
                     "focus": false,
                     "runs": [
                         [
@@ -1059,7 +1091,7 @@
         {
             "id": "f-71320324b8",
             "file": "extensions/package-manager/src/Api/Controller/CompatController.php",
-            "line": 56,
+            "line": 59,
             "column": 52,
             "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#",
             "source": "preg_match()",
@@ -1099,10 +1131,10 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/package-manager/src/Api/Controller/CompatController.php#L53-L59",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/package-manager/src/Api/Controller/CompatController.php#L56-L62",
             "snippet": [
                 {
-                    "number": 53,
+                    "number": 56,
                     "focus": false,
                     "runs": [
                         [
@@ -1112,7 +1144,7 @@
                     ]
                 },
                 {
-                    "number": 54,
+                    "number": 57,
                     "focus": false,
                     "runs": [
                         [
@@ -1122,7 +1154,7 @@
                     ]
                 },
                 {
-                    "number": 55,
+                    "number": 58,
                     "focus": false,
                     "runs": [
                         [
@@ -1132,7 +1164,7 @@
                     ]
                 },
                 {
-                    "number": 56,
+                    "number": 59,
                     "focus": true,
                     "runs": [
                         [
@@ -1362,7 +1394,7 @@
                     ]
                 },
                 {
-                    "number": 57,
+                    "number": 60,
                     "focus": false,
                     "runs": [
                         [
@@ -1372,7 +1404,7 @@
                     ]
                 },
                 {
-                    "number": 58,
+                    "number": 61,
                     "focus": false,
                     "runs": [
                         [
@@ -1382,7 +1414,7 @@
                     ]
                 },
                 {
-                    "number": 59,
+                    "number": 62,
                     "focus": false,
                     "runs": [
                         [
@@ -1394,11 +1426,11 @@
             ]
         },
         {
-            "id": "f-c8eeefcf74",
+            "id": "f-b41535f5ee",
             "file": "extensions/package-manager/src/Api/Controller/StartController.php",
-            "line": 152,
+            "line": 155,
             "column": 30,
-            "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#",
+            "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#D",
             "source": "preg_match()",
             "location": null,
             "level": "fail",
@@ -1436,10 +1468,10 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/package-manager/src/Api/Controller/StartController.php#L149-L155",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/package-manager/src/Api/Controller/StartController.php#L152-L158",
             "snippet": [
                 {
-                    "number": 149,
+                    "number": 152,
                     "focus": false,
                     "runs": [
                         [
@@ -1449,7 +1481,7 @@
                     ]
                 },
                 {
-                    "number": 150,
+                    "number": 153,
                     "focus": false,
                     "runs": [
                         [
@@ -1459,7 +1491,7 @@
                     ]
                 },
                 {
-                    "number": 151,
+                    "number": 154,
                     "focus": false,
                     "runs": [
                         [
@@ -1469,7 +1501,7 @@
                     ]
                 },
                 {
-                    "number": 152,
+                    "number": 155,
                     "focus": true,
                     "runs": [
                         [
@@ -1689,6 +1721,10 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
+                            "D",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
                             "'",
                             "pg-snippet-pattern pg-snippet-quote"
                         ],
@@ -1699,7 +1735,7 @@
                     ]
                 },
                 {
-                    "number": 153,
+                    "number": 156,
                     "focus": false,
                     "runs": [
                         [
@@ -1709,7 +1745,7 @@
                     ]
                 },
                 {
-                    "number": 154,
+                    "number": 157,
                     "focus": false,
                     "runs": [
                         [
@@ -1719,7 +1755,7 @@
                     ]
                 },
                 {
-                    "number": 155,
+                    "number": 158,
                     "focus": false,
                     "runs": [
                         [
@@ -1773,7 +1809,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/package-manager/src/Console/UpdateCommand.php#L148-L154",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/package-manager/src/Console/UpdateCommand.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -2068,9 +2104,346 @@
             ]
         },
         {
+            "id": "f-48b88b6edd",
+            "file": "extensions/package-manager/src/Discover/AbandonedList.php",
+            "line": 19,
+            "column": 36,
+            "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#",
+            "source": "preg_match()",
+            "location": "via self::PACKAGE_NAME",
+            "level": "fail",
+            "issues": [
+                {
+                    "level": "fail",
+                    "rule": "regex.lint.redos",
+                    "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
+                    "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
+                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 1 \"([_.-]?[a-z0-9]+)\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                },
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.quantifier.nested",
+                    "message": "Nested quantifiers in capturing group 2 \"(([_.]|-{1,2})?[a-z0-9]+)\" can cause catastrophic backtracking.",
+                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
+                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                }
+            ],
+            "rewrite": null,
+            "witness": {
+                "prefix": "0",
+                "pump": "-00",
+                "suffix": "!/",
+                "n": 56,
+                "length": 45,
+                "pcre": "10.49",
+                "limit": 100000
+            },
+            "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/package-manager/src/Discover/AbandonedList.php#L16-L22",
+            "snippet": [
+                {
+                    "number": 16,
+                    "focus": false,
+                    "runs": [
+                        [
+                            " */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 17,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "class AbandonedList",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 18,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 19,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "    protected const PACKAGE_NAME = ",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "_.-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "((",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "_.",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]|",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "{1,2}",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "?",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "z0",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "9",
+                            "pg-snippet-pattern pg-tok-literal pg-snippet-hot"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta pg-snippet-hot"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group pg-snippet-hot"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier pg-snippet-hot"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ";",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 20,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 21,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    /** @param array<string,?string> $entries lowercase name => replacement */",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 22,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    final public function __construct(protected array $entries = [])",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-eabfe0df06",
             "file": "extensions/package-manager/src/Discover/Packagist.php",
-            "line": 304,
+            "line": 337,
             "column": 27,
             "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#",
             "source": "preg_match()",
@@ -2110,10 +2483,10 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/flarum/framework/blob/b43a84be32b0af51a7a566783a6bf559b7332379/extensions/package-manager/src/Discover/Packagist.php#L301-L307",
+            "permalink": "https://github.com/flarum/framework/blob/f47cbd8e460d9c76f76f403cfc366a6b67878a4e/extensions/package-manager/src/Discover/Packagist.php#L334-L340",
             "snippet": [
                 {
-                    "number": 301,
+                    "number": 334,
                     "focus": false,
                     "runs": [
                         [
@@ -2123,7 +2496,7 @@
                     ]
                 },
                 {
-                    "number": 302,
+                    "number": 335,
                     "focus": false,
                     "runs": [
                         [
@@ -2133,7 +2506,7 @@
                     ]
                 },
                 {
-                    "number": 303,
+                    "number": 336,
                     "focus": false,
                     "runs": [
                         [
@@ -2143,7 +2516,7 @@
                     ]
                 },
                 {
-                    "number": 304,
+                    "number": 337,
                     "focus": true,
                     "runs": [
                         [
@@ -2373,7 +2746,7 @@
                     ]
                 },
                 {
-                    "number": 305,
+                    "number": 338,
                     "focus": false,
                     "runs": [
                         [
@@ -2383,7 +2756,7 @@
                     ]
                 },
                 {
-                    "number": 306,
+                    "number": 339,
                     "focus": false,
                     "runs": [
                         [
@@ -2393,7 +2766,7 @@
                     ]
                 },
                 {
-                    "number": 307,
+                    "number": 340,
                     "focus": false,
                     "runs": [
                         [

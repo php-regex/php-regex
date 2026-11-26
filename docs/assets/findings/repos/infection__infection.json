@@ -1,6 +1,6 @@
 {
     "repo": "infection/infection",
-    "sha": "fa08a4f63650c54a0483bc3ea0e01ec8c1630d53",
+    "sha": "c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/fa08a4f63650c54a0483bc3ea0e01ec8c1630d53/src/TestFramework/Coverage/CoverageChecker.php#L168-L174",
+            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/CoverageChecker.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -201,7 +201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/fa08a4f63650c54a0483bc3ea0e01ec8c1630d53/src/TestFramework/Coverage/CoverageChecker.php#L176-L182",
+            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/CoverageChecker.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -364,7 +364,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/fa08a4f63650c54a0483bc3ea0e01ec8c1630d53/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L97-L103",
+            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,
@@ -519,7 +519,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/fa08a4f63650c54a0483bc3ea0e01ec8c1630d53/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L100-L106",
+            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -674,7 +674,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/fa08a4f63650c54a0483bc3ea0e01ec8c1630d53/src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php#L132-L138",
+            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php#L132-L138",
             "snippet": [
                 {
                     "number": 132,

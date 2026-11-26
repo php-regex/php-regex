@@ -8,6 +8,189 @@
     },
     "findings": [
         {
+            "id": "f-44647df4f8",
+            "file": "src/Tracy/BlueScreen/BlueScreen.php",
+            "line": 342,
+            "column": 18,
+            "pattern": "# (['\"])(\\w{3,}(?:\\\\\\w{2,})+)\\1#i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/nette/tracy/blob/d46e9e972563d8f56fd2dff9917442228bc28b46/src/Tracy/BlueScreen/BlueScreen.php#L339-L345",
+            "snippet": [
+                {
+                    "number": 339,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$actions[] = $ex->tracyAction;",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 340,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t}",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 341,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 342,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tif (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            " ",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\'\"",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            ")(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "{3,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(?:",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\\\\\\\",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\w",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "{2,}",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\1",
+                            "pg-snippet-pattern pg-tok-backref"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $ex->getMessage(), $m)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 343,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t$class = $m[2];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 344,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\tif (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 345,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t!class_exists($class, false) && !interface_exists($class, autoload: false) && !trait_exists($class, autoload: false)",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-8f8f0aa4c6",
             "file": "src/Tracy/Helpers.php",
             "line": 453,

@@ -1,6 +1,6 @@
 {
     "repo": "roundcube/roundcubemail",
-    "sha": "069b89eceb1a80f83d5a8b8814622cbb0912424d",
+    "sha": "fba9bf2e31ae014bf31d4cf0abe760fd3455e97b",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/archive/archive.php#L490-L496",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/archive/archive.php#L490-L496",
             "snippet": [
                 {
                     "number": 490,
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/enigma/lib/enigma_engine.php#L608-L614",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/enigma/lib/enigma_engine.php#L608-L614",
             "snippet": [
                 {
                     "number": 608,
@@ -345,7 +345,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/identity_select/identity_select.php#L86-L92",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/identity_select/identity_select.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -532,7 +532,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -671,6 +671,324 @@
             ]
         },
         {
+            "id": "f-69d3e8d611",
+            "file": "plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php",
+            "line": 814,
+            "column": 47,
+            "pattern": "/^[\\x21-\\x39\\x41-\\x7E]+$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L811-L817",
+            "snippet": [
+                {
+                    "number": 811,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 812,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        if (empty($dateheader)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 813,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $dateheader = 'Date';",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 814,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                        } elseif (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x21",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x39\\x41",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x7E",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $dateheader)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 815,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            $this->errors['tests'][$i]['dateheader'] = $this->plugin->gettext('forbiddenchars');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 816,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 817,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-69d3e8d611-2",
+            "file": "plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php",
+            "line": 935,
+            "column": 53,
+            "pattern": "/^[\\x21-\\x39\\x41-\\x7E]+$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L932-L938",
+            "snippet": [
+                {
+                    "number": 932,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                            } elseif ($header == '...') {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 933,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                foreach ($headers as $hr) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 934,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                    // RFC2822: printable ASCII except colon",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 935,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "                                    if (!preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x21",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x39\\x41",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\x7E",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $hr)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 936,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                        $this->errors['tests'][$i]['header'] = $this->plugin->gettext('forbiddenchars');",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 937,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                    }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 938,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "                                }",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-7db3f495da",
             "file": "plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php",
             "line": 1115,
@@ -691,7 +1009,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
             "snippet": [
                 {
                     "number": 1112,
@@ -842,7 +1160,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -989,7 +1307,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/headers.php#L54-L60",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/headers.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1128,7 +1446,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/index.php#L943-L949",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/index.php#L943-L949",
             "snippet": [
                 {
                     "number": 943,
@@ -1323,7 +1641,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/index.php#L1277-L1283",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/index.php#L1277-L1283",
             "snippet": [
                 {
                     "number": 1277,
@@ -1474,7 +1792,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/search.php#L252-L258",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/search.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -1665,7 +1983,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/search.php#L381-L387",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/search.php#L381-L387",
             "snippet": [
                 {
                     "number": 381,
@@ -1912,7 +2230,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/send.php#L107-L113",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/send.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -2075,7 +2393,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/mail/sendmdn.php#L122-L128",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/sendmdn.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -2206,7 +2524,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/actions/settings/index.php#L1782-L1788",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/settings/index.php#L1782-L1788",
             "snippet": [
                 {
                     "number": 1782,
@@ -2446,7 +2764,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1091-L1097",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1091-L1097",
             "snippet": [
                 {
                     "number": 1091,
@@ -2610,7 +2928,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1092-L1098",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1092-L1098",
             "snippet": [
                 {
                     "number": 1092,
@@ -2805,7 +3123,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L1309-L1315",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1309-L1315",
             "snippet": [
                 {
                     "number": 1309,
@@ -3012,7 +3330,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_output_html.php#L2401-L2407",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L2401-L2407",
             "snippet": [
                 {
                     "number": 2401,
@@ -3143,7 +3461,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L243-L249",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -3298,7 +3616,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L266-L272",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -3429,7 +3747,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3529,7 +3847,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3624,7 +3942,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/include/rcmail_sendmail.php#L786-L792",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -3724,7 +4042,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_charset.php#L580-L586",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_charset.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -3819,7 +4137,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_db.php#L1470-L1476",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_db.php#L1470-L1476",
             "snippet": [
                 {
                     "number": 1470,
@@ -3991,7 +4309,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_enriched.php#L70-L76",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_enriched.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -4191,7 +4509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_enriched.php#L81-L87",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_enriched.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -4391,7 +4709,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_html2text.php#L649-L655",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_html2text.php#L649-L655",
             "snippet": [
                 {
                     "number": 649,
@@ -4559,7 +4877,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_html2text.php#L661-L667",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_html2text.php#L661-L667",
             "snippet": [
                 {
                     "number": 661,
@@ -4719,7 +5037,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -4860,7 +5178,7 @@
         {
             "id": "f-e35f1ed608",
             "file": "program/lib/Roundcube/rcube_imap_generic.php",
-            "line": 1307,
+            "line": 1313,
             "column": 36,
             "pattern": "/^\\* VANISHED [()EARLIER]*/i",
             "source": "preg_match()",
@@ -4878,10 +5196,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L1304-L1310",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L1310-L1316",
             "snippet": [
                 {
-                    "number": 1304,
+                    "number": 1310,
                     "focus": false,
                     "runs": [
                         [
@@ -4891,7 +5209,7 @@
                     ]
                 },
                 {
-                    "number": 1305,
+                    "number": 1311,
                     "focus": false,
                     "runs": [
                         [
@@ -4901,7 +5219,7 @@
                     ]
                 },
                 {
-                    "number": 1306,
+                    "number": 1312,
                     "focus": false,
                     "runs": [
                         [
@@ -4911,7 +5229,7 @@
                     ]
                 },
                 {
-                    "number": 1307,
+                    "number": 1313,
                     "focus": true,
                     "runs": [
                         [
@@ -4969,7 +5287,7 @@
                     ]
                 },
                 {
-                    "number": 1308,
+                    "number": 1314,
                     "focus": false,
                     "runs": [
                         [
@@ -4979,7 +5297,7 @@
                     ]
                 },
                 {
-                    "number": 1309,
+                    "number": 1315,
                     "focus": false,
                     "runs": [
                         [
@@ -4989,7 +5307,7 @@
                     ]
                 },
                 {
-                    "number": 1310,
+                    "number": 1316,
                     "focus": false,
                     "runs": [
                         [
@@ -5003,7 +5321,7 @@
         {
             "id": "f-46c24cf909",
             "file": "program/lib/Roundcube/rcube_imap_generic.php",
-            "line": 2206,
+            "line": 2212,
             "column": 65,
             "pattern": "/\\s+$/sm",
             "source": "preg_replace()",
@@ -5026,10 +5344,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2203-L2209",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2209-L2215",
             "snippet": [
                 {
-                    "number": 2203,
+                    "number": 2209,
                     "focus": false,
                     "runs": [
                         [
@@ -5039,7 +5357,7 @@
                     ]
                 },
                 {
-                    "number": 2204,
+                    "number": 2210,
                     "focus": false,
                     "runs": [
                         [
@@ -5049,7 +5367,7 @@
                     ]
                 },
                 {
-                    "number": 2205,
+                    "number": 2211,
                     "focus": false,
                     "runs": [
                         [
@@ -5059,7 +5377,7 @@
                     ]
                 },
                 {
-                    "number": 2206,
+                    "number": 2212,
                     "focus": true,
                     "runs": [
                         [
@@ -5105,7 +5423,7 @@
                     ]
                 },
                 {
-                    "number": 2207,
+                    "number": 2213,
                     "focus": false,
                     "runs": [
                         [
@@ -5115,7 +5433,7 @@
                     ]
                 },
                 {
-                    "number": 2208,
+                    "number": 2214,
                     "focus": false,
                     "runs": [
                         [
@@ -5125,7 +5443,7 @@
                     ]
                 },
                 {
-                    "number": 2209,
+                    "number": 2215,
                     "focus": false,
                     "runs": [
                         [
@@ -5139,7 +5457,7 @@
         {
             "id": "f-b068d2fb4e",
             "file": "program/lib/Roundcube/rcube_imap_generic.php",
-            "line": 2615,
+            "line": 2621,
             "column": 48,
             "pattern": "/\\n[\\t\\s]*/",
             "source": "preg_replace()",
@@ -5157,10 +5475,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2612-L2618",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2618-L2624",
             "snippet": [
                 {
-                    "number": 2612,
+                    "number": 2618,
                     "focus": false,
                     "runs": [
                         [
@@ -5170,7 +5488,7 @@
                     ]
                 },
                 {
-                    "number": 2613,
+                    "number": 2619,
                     "focus": false,
                     "runs": [
                         [
@@ -5180,7 +5498,7 @@
                     ]
                 },
                 {
-                    "number": 2614,
+                    "number": 2620,
                     "focus": false,
                     "runs": [
                         [
@@ -5190,7 +5508,7 @@
                     ]
                 },
                 {
-                    "number": 2615,
+                    "number": 2621,
                     "focus": true,
                     "runs": [
                         [
@@ -5244,7 +5562,7 @@
                     ]
                 },
                 {
-                    "number": 2616,
+                    "number": 2622,
                     "focus": false,
                     "runs": [
                         [
@@ -5254,7 +5572,7 @@
                     ]
                 },
                 {
-                    "number": 2617,
+                    "number": 2623,
                     "focus": false,
                     "runs": [
                         [
@@ -5264,7 +5582,7 @@
                     ]
                 },
                 {
-                    "number": 2618,
+                    "number": 2624,
                     "focus": false,
                     "runs": [
                         [
@@ -5278,7 +5596,7 @@
         {
             "id": "f-e35f1ed608-2",
             "file": "program/lib/Roundcube/rcube_imap_generic.php",
-            "line": 2678,
+            "line": 2684,
             "column": 32,
             "pattern": "/^\\* VANISHED [()EARLIER]*/i",
             "source": "preg_match()",
@@ -5296,10 +5614,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_imap_generic.php#L2675-L2681",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2681-L2687",
             "snippet": [
                 {
-                    "number": 2675,
+                    "number": 2681,
                     "focus": false,
                     "runs": [
                         [
@@ -5309,7 +5627,7 @@
                     ]
                 },
                 {
-                    "number": 2676,
+                    "number": 2682,
                     "focus": false,
                     "runs": [
                         [
@@ -5319,7 +5637,7 @@
                     ]
                 },
                 {
-                    "number": 2677,
+                    "number": 2683,
                     "focus": false,
                     "runs": [
                         [
@@ -5329,7 +5647,7 @@
                     ]
                 },
                 {
-                    "number": 2678,
+                    "number": 2684,
                     "focus": true,
                     "runs": [
                         [
@@ -5387,7 +5705,7 @@
                     ]
                 },
                 {
-                    "number": 2679,
+                    "number": 2685,
                     "focus": false,
                     "runs": [
                         [
@@ -5397,7 +5715,7 @@
                     ]
                 },
                 {
-                    "number": 2680,
+                    "number": 2686,
                     "focus": false,
                     "runs": [
                         [
@@ -5407,7 +5725,7 @@
                     ]
                 },
                 {
-                    "number": 2681,
+                    "number": 2687,
                     "focus": false,
                     "runs": [
                         [
@@ -5444,7 +5762,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message.php#L1274-L1280",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message.php#L1274-L1280",
             "snippet": [
                 {
                     "number": 1274,
@@ -5636,7 +5954,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message.php#L1275-L1281",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message.php#L1275-L1281",
             "snippet": [
                 {
                     "number": 1275,
@@ -5803,7 +6121,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message_part.php#L158-L164",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message_part.php#L158-L164",
             "snippet": [
                 {
                     "number": 158,
@@ -5942,7 +6260,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_message_part.php#L210-L216",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message_part.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -6103,7 +6421,7 @@
                 "limit": 100000
             },
             "subject": "<\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L349-L355",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -6220,7 +6538,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L355-L361",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -6337,7 +6655,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_mime.php#L363-L369",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L363-L369",
             "snippet": [
                 {
                     "number": 363,
@@ -6414,7 +6732,7 @@
         {
             "id": "f-439ee70877",
             "file": "program/lib/Roundcube/rcube_smtp.php",
-            "line": 509,
+            "line": 513,
             "column": 36,
             "pattern": "/[\\s\\t]*\\r?\\n/",
             "source": "preg_replace()",
@@ -6439,10 +6757,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_smtp.php#L506-L512",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_smtp.php#L510-L516",
             "snippet": [
                 {
-                    "number": 506,
+                    "number": 510,
                     "focus": false,
                     "runs": [
                         [
@@ -6452,7 +6770,7 @@
                     ]
                 },
                 {
-                    "number": 507,
+                    "number": 511,
                     "focus": false,
                     "runs": [
                         [
@@ -6462,7 +6780,7 @@
                     ]
                 },
                 {
-                    "number": 508,
+                    "number": 512,
                     "focus": false,
                     "runs": [
                         [
@@ -6472,7 +6790,7 @@
                     ]
                 },
                 {
-                    "number": 509,
+                    "number": 513,
                     "focus": true,
                     "runs": [
                         [
@@ -6530,7 +6848,7 @@
                     ]
                 },
                 {
-                    "number": 510,
+                    "number": 514,
                     "focus": false,
                     "runs": [
                         [
@@ -6540,7 +6858,7 @@
                     ]
                 },
                 {
-                    "number": 511,
+                    "number": 515,
                     "focus": false,
                     "runs": [
                         [
@@ -6550,7 +6868,7 @@
                     ]
                 },
                 {
-                    "number": 512,
+                    "number": 516,
                     "focus": false,
                     "runs": [
                         [
@@ -6582,7 +6900,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_utils.php#L297-L303",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_utils.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -6714,7 +7032,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_utils.php#L925-L931",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_utils.php#L925-L931",
             "snippet": [
                 {
                     "number": 925,
@@ -6849,7 +7167,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_vcard.php#L836-L842",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_vcard.php#L836-L842",
             "snippet": [
                 {
                     "number": 836,
@@ -6956,9 +7274,149 @@
             ]
         },
         {
+            "id": "f-39c9d2b1ca",
+            "file": "program/lib/Roundcube/rcube_washtml.php",
+            "line": 612,
+            "column": 31,
+            "pattern": "#/\\*.*\\*/#Ums",
+            "source": "preg_replace()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.m",
+                    "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                }
+            ],
+            "rewrite": {
+                "optimized": "#/\\*.*\\*/#Us",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L609-L615",
+            "snippet": [
+                {
+                    "number": 609,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    public static function css_unescape($value)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 610,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 611,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Remove comments",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 612,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $value = preg_replace(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "/\\*",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "\\*/",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "#",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Ums",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", '', (string) $value);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 613,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 614,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (!str_contains($value, '\\\\')) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 615,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            return $value;",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-d5c8cda83e",
             "file": "program/lib/Roundcube/rcube_washtml.php",
-            "line": 764,
+            "line": 776,
             "column": 24,
             "pattern": "/<base\\s+href=['\"]*([^'\"]+)/is",
             "source": "preg_match()",
@@ -6981,10 +7439,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_washtml.php#L761-L767",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L773-L779",
             "snippet": [
                 {
-                    "number": 761,
+                    "number": 773,
                     "focus": false,
                     "runs": [
                         [
@@ -6994,7 +7452,7 @@
                     ]
                 },
                 {
-                    "number": 762,
+                    "number": 774,
                     "focus": false,
                     "runs": [
                         [
@@ -7004,7 +7462,7 @@
                     ]
                 },
                 {
-                    "number": 763,
+                    "number": 775,
                     "focus": false,
                     "runs": [
                         [
@@ -7014,7 +7472,7 @@
                     ]
                 },
                 {
-                    "number": 764,
+                    "number": 776,
                     "focus": true,
                     "runs": [
                         [
@@ -7104,7 +7562,7 @@
                     ]
                 },
                 {
-                    "number": 765,
+                    "number": 777,
                     "focus": false,
                     "runs": [
                         [
@@ -7114,7 +7572,7 @@
                     ]
                 },
                 {
-                    "number": 766,
+                    "number": 778,
                     "focus": false,
                     "runs": [
                         [
@@ -7124,7 +7582,7 @@
                     ]
                 },
                 {
-                    "number": 767,
+                    "number": 779,
                     "focus": false,
                     "runs": [
                         [
@@ -7138,7 +7596,7 @@
         {
             "id": "f-00fc12960b",
             "file": "program/lib/Roundcube/rcube_washtml.php",
-            "line": 844,
+            "line": 856,
             "column": 13,
             "pattern": "/<\\!doctype[^>]+>[^<]*/im",
             "source": "preg_replace()",
@@ -7161,10 +7619,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/069b89eceb1a80f83d5a8b8814622cbb0912424d/program/lib/Roundcube/rcube_washtml.php#L841-L847",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L853-L859",
             "snippet": [
                 {
-                    "number": 841,
+                    "number": 853,
                     "focus": false,
                     "runs": [
                         [
@@ -7174,7 +7632,7 @@
                     ]
                 },
                 {
-                    "number": 842,
+                    "number": 854,
                     "focus": false,
                     "runs": [
                         [
@@ -7184,7 +7642,7 @@
                     ]
                 },
                 {
-                    "number": 843,
+                    "number": 855,
                     "focus": false,
                     "runs": [
                         [
@@ -7194,7 +7652,7 @@
                     ]
                 },
                 {
-                    "number": 844,
+                    "number": 856,
                     "focus": true,
                     "runs": [
                         [
@@ -7268,7 +7726,7 @@
                     ]
                 },
                 {
-                    "number": 845,
+                    "number": 857,
                     "focus": false,
                     "runs": [
                         [
@@ -7278,7 +7736,7 @@
                     ]
                 },
                 {
-                    "number": 846,
+                    "number": 858,
                     "focus": false,
                     "runs": [
                         [
@@ -7288,7 +7746,7 @@
                     ]
                 },
                 {
-                    "number": 847,
+                    "number": 859,
                     "focus": false,
                     "runs": [
                         [

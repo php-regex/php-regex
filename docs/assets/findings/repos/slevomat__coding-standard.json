@@ -1,6 +1,6 @@
 {
     "repo": "slevomat/coding-standard",
-    "sha": "606a440f66317d2fa6a9eab5864c0bea1ecde35f",
+    "sha": "a3626af1ca230c42b8e0486c1448c19a8fb9d09f",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/606a440f66317d2fa6a9eab5864c0bea1ecde35f/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php#L173-L179",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php#L173-L179",
             "snippet": [
                 {
                     "number": 173,
@@ -204,7 +204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/606a440f66317d2fa6a9eab5864c0bea1ecde35f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L73-L79",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -352,7 +352,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/606a440f66317d2fa6a9eab5864c0bea1ecde35f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L74-L80",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -495,7 +495,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/606a440f66317d2fa6a9eab5864c0bea1ecde35f/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php#L52-L58",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,

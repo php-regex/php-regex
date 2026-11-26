@@ -1,6 +1,6 @@
 {
     "repo": "modelcontextprotocol/php-sdk",
-    "sha": "7155eaee31aff68cf1e388bcc558b05868a28834",
+    "sha": "92bfdcefc47f6ba03ea1f2ed26b92892c343a75f",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
             "snippet": [
                 {
                     "number": 864,
@@ -203,7 +203,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
             "snippet": [
                 {
                     "number": 911,
@@ -382,7 +382,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -541,6 +541,265 @@
             ]
         },
         {
+            "id": "f-41603e84ad",
+            "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
+            "line": 985,
+            "column": 24,
+            "pattern": "/^([a-zA-Z_\\x80-\\xff][a-zA-Z0-9_\\x80-\\xff]*)\\s*:\\s*(.+)$/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L982-L988",
+            "snippet": [
+                {
+                    "number": 982,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    private function parsePropertyDefinition(string $propDefinition, array &$properties, array &$required): void",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 983,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 984,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        // Match property name and type",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 985,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        if (preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "^",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "[",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\x80",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\xff",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "][",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\x80",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "\\xff",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "]",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ":",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "\\s",
+                            "pg-snippet-pattern pg-tok-escape"
+                        ],
+                        [
+                            "*",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            "(",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            ".",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "+",
+                            "pg-snippet-pattern pg-tok-quantifier"
+                        ],
+                        [
+                            ")",
+                            "pg-snippet-pattern pg-tok-group"
+                        ],
+                        [
+                            "$",
+                            "pg-snippet-pattern pg-tok-anchor"
+                        ],
+                        [
+                            "/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $propDefinition, $matches)) {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 986,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $propName = $matches[1];",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 987,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $propType = trim($matches[2]);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 988,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-25e677beb8",
             "file": "src/Server/Capability/Discovery/SchemaGenerator.php",
             "line": 1035,
@@ -561,7 +820,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
             "snippet": [
                 {
                     "number": 1032,
@@ -880,7 +1139,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/7155eaee31aff68cf1e388bcc558b05868a28834/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
             "snippet": [
                 {
                     "number": 1046,

@@ -1,6 +1,6 @@
 {
     "repo": "yiisoft/yii",
-    "sha": "aa3e3b2e092d918733555097b66f3e792079e96a",
+    "sha": "1214d6d2d0b558ef987bef76c292be778b46d922",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/LiteCommand.php#L176-L182",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/LiteCommand.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -205,7 +205,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/LiteCommand.php#L177-L183",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/LiteCommand.php#L177-L183",
             "snippet": [
                 {
                     "number": 177,
@@ -365,7 +365,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/api/ApiModel.php#L151-L157",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/api/ApiModel.php#L151-L157",
             "snippet": [
                 {
                     "number": 151,
@@ -536,7 +536,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/api/ApiModel.php#L635-L641",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/api/ApiModel.php#L635-L641",
             "snippet": [
                 {
                     "number": 635,
@@ -719,7 +719,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/api/ApiModel.php#L650-L656",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/api/ApiModel.php#L650-L656",
             "snippet": [
                 {
                     "number": 650,
@@ -925,7 +925,7 @@
                 "limit": 100000
             },
             "subject": "<i>!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!<</i>",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/markdown/MarkdownHtml2Tex.php#L225-L231",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/markdown/MarkdownHtml2Tex.php#L225-L231",
             "snippet": [
                 {
                     "number": 225,
@@ -1124,7 +1124,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/markdown/MarkdownHtml2Tex.php#L253-L259",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/markdown/MarkdownHtml2Tex.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1299,7 +1299,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/markdown/MarkdownHtml2Tex.php#L255-L261",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/markdown/MarkdownHtml2Tex.php#L255-L261",
             "snippet": [
                 {
                     "number": 255,
@@ -1446,7 +1446,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/markdown/MarkdownParser.php#L43-L49",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/markdown/MarkdownParser.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -1609,7 +1609,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/commands/markdown/MarkdownParser.php#L47-L53",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/commands/markdown/MarkdownParser.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -1805,7 +1805,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/build/tasks/YiiInitTask.php#L49-L55",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/build/tasks/YiiInitTask.php#L49-L55",
             "snippet": [
                 {
                     "number": 49,
@@ -1960,7 +1960,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/docs/viewer/components/MarkdownParser.php#L50-L56",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/docs/viewer/components/MarkdownParser.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -2123,7 +2123,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/docs/viewer/components/MarkdownParser.php#L54-L60",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/docs/viewer/components/MarkdownParser.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -2306,7 +2306,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/db/CDbCommand.php#L705-L711",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/db/CDbCommand.php#L705-L711",
             "snippet": [
                 {
                     "number": 705,
@@ -2505,7 +2505,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/db/CDbCommand.php#L1591-L1597",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/db/CDbCommand.php#L1591-L1597",
             "snippet": [
                 {
                     "number": 1591,
@@ -2709,7 +2709,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/db/schema/mssql/CMssqlCommandBuilder.php#L327-L333",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/db/schema/mssql/CMssqlCommandBuilder.php#L327-L333",
             "snippet": [
                 {
                     "number": 327,
@@ -2897,7 +2897,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/db/schema/mysql/CMysqlSchema.php#L230-L236",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/db/schema/mysql/CMysqlSchema.php#L230-L236",
             "snippet": [
                 {
                     "number": 230,
@@ -3162,7 +3162,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/i18n/gettext/CGettextPoFile.php#L25-L31",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/i18n/gettext/CGettextPoFile.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -3257,7 +3257,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/logging/CEmailLogRoute.php#L84-L90",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/logging/CEmailLogRoute.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -3432,7 +3432,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/utils/CMarkdownParser.php#L125-L131",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/utils/CMarkdownParser.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -3604,7 +3604,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php#L13556-L13562",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php#L13556-L13562",
             "snippet": [
                 {
                     "number": 13556,
@@ -3704,7 +3704,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php#L13605-L13611",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/htmlpurifier/HTMLPurifier.standalone.php#L13605-L13611",
             "snippet": [
                 {
                     "number": 13605,
@@ -3871,7 +3871,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L105-L111",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -4007,7 +4007,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L528-L534",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L528-L534",
             "snippet": [
                 {
                     "number": 528,
@@ -4102,7 +4102,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L1129-L1135",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L1129-L1135",
             "snippet": [
                 {
                     "number": 1129,
@@ -4253,7 +4253,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L1249-L1255",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L1249-L1255",
             "snippet": [
                 {
                     "number": 1249,
@@ -4348,7 +4348,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L1948-L1954",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L1948-L1954",
             "snippet": [
                 {
                     "number": 1948,
@@ -4496,7 +4496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/vendors/markdown/markdown.php#L2342-L2348",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/vendors/markdown/markdown.php#L2342-L2348",
             "snippet": [
                 {
                     "number": 2342,
@@ -4596,7 +4596,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CClientScript.php#L411-L417",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CClientScript.php#L411-L417",
             "snippet": [
                 {
                     "number": 411,
@@ -4776,7 +4776,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CClientScript.php#L442-L448",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CClientScript.php#L442-L448",
             "snippet": [
                 {
                     "number": 442,
@@ -4936,7 +4936,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CClientScript.php#L461-L467",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CClientScript.php#L461-L467",
             "snippet": [
                 {
                     "number": 461,
@@ -5084,7 +5084,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CHttpRequest.php#L511-L517",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CHttpRequest.php#L511-L517",
             "snippet": [
                 {
                     "number": 511,
@@ -5179,7 +5179,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CHttpRequest.php#L1076-L1082",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CHttpRequest.php#L1076-L1082",
             "snippet": [
                 {
                     "number": 1076,
@@ -5402,7 +5402,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/CSqlDataProvider.php#L87-L93",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/CSqlDataProvider.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -5577,7 +5577,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/helpers/CJSON.php#L519-L525",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/helpers/CJSON.php#L519-L525",
             "snippet": [
                 {
                     "number": 519,
@@ -5804,7 +5804,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/helpers/CJSON.php#L529-L535",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/helpers/CJSON.php#L529-L535",
             "snippet": [
                 {
                     "number": 529,
@@ -6008,7 +6008,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/services/CWebService.php#L243-L249",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/services/CWebService.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -6208,7 +6208,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/services/CWsdlGenerator.php#L349-L355",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/services/CWsdlGenerator.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -6380,7 +6380,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/services/CWsdlGenerator.php#L424-L430",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/services/CWsdlGenerator.php#L424-L430",
             "snippet": [
                 {
                     "number": 424,
@@ -6547,7 +6547,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/services/CWsdlGenerator.php#L451-L457",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/services/CWsdlGenerator.php#L451-L457",
             "snippet": [
                 {
                     "number": 451,
@@ -6718,7 +6718,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/web/widgets/CTextHighlighter.php#L96-L102",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/web/widgets/CTextHighlighter.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -6890,7 +6890,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L2543-L2549",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L2543-L2549",
             "snippet": [
                 {
                     "number": 2543,
@@ -6985,7 +6985,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L2843-L2849",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L2843-L2849",
             "snippet": [
                 {
                     "number": 2843,
@@ -7213,7 +7213,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L6648-L6654",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L6648-L6654",
             "snippet": [
                 {
                     "number": 6648,
@@ -7393,7 +7393,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L6673-L6679",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L6673-L6679",
             "snippet": [
                 {
                     "number": 6673,
@@ -7553,7 +7553,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L6686-L6692",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L6686-L6692",
             "snippet": [
                 {
                     "number": 6686,
@@ -7696,7 +7696,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L9872-L9878",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L9872-L9878",
             "snippet": [
                 {
                     "number": 9872,
@@ -7895,7 +7895,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/framework/yiilite.php#L10246-L10252",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/framework/yiilite.php#L10246-L10252",
             "snippet": [
                 {
                     "number": 10246,
@@ -8099,7 +8099,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii/blob/aa3e3b2e092d918733555097b66f3e792079e96a/requirements/index.php#L210-L216",
+            "permalink": "https://github.com/yiisoft/yii/blob/1214d6d2d0b558ef987bef76c292be778b46d922/requirements/index.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,

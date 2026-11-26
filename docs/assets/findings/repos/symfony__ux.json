@@ -1,6 +1,6 @@
 {
     "repo": "symfony/ux",
-    "sha": "21258b63dec0683057108b89534b9271cd059b41",
+    "sha": "4b5b7df15e24b57b82dadfc6481fff1fafe8f550",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -50,7 +50,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/symfony/ux/blob/21258b63dec0683057108b89534b9271cd059b41/src/Toolkit/src/Assert.php#L51-L57",
+            "permalink": "https://github.com/symfony/ux/blob/4b5b7df15e24b57b82dadfc6481fff1fafe8f550/src/Toolkit/src/Assert.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -365,7 +365,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/ux/blob/21258b63dec0683057108b89534b9271cd059b41/src/Toolkit/src/Registry/GitHubRegistry.php#L47-L53",
+            "permalink": "https://github.com/symfony/ux/blob/4b5b7df15e24b57b82dadfc6481fff1fafe8f550/src/Toolkit/src/Registry/GitHubRegistry.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,

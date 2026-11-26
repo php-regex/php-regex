@@ -1,6 +1,6 @@
 {
     "repo": "schmittjoh/serializer",
-    "sha": "0d13b9e906fada052246106740a2e5d2cc45b554",
+    "sha": "59702642cefd49323ebe1cc17049afed8e80348e",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/schmittjoh/serializer/blob/0d13b9e906fada052246106740a2e5d2cc45b554/src/Metadata/Driver/DocBlockDriver/DocBlockTypeResolver.php#L31-L37",
+            "permalink": "https://github.com/schmittjoh/serializer/blob/59702642cefd49323ebe1cc17049afed8e80348e/src/Metadata/Driver/DocBlockDriver/DocBlockTypeResolver.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -303,7 +303,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/schmittjoh/serializer/blob/0d13b9e906fada052246106740a2e5d2cc45b554/src/XmlSerializationVisitor.php#L556-L562",
+            "permalink": "https://github.com/schmittjoh/serializer/blob/59702642cefd49323ebe1cc17049afed8e80348e/src/XmlSerializationVisitor.php#L556-L562",
             "snippet": [
                 {
                     "number": 556,

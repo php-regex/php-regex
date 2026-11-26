@@ -1,17 +1,17 @@
 ---
 layout: landing
-title: "phpstan/phpstan-src: 5 regex findings"
-description: "PHPRegex on phpstan/phpstan-src: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40."
+title: "phpstan/phpstan-src: 3 regex findings"
+description: "PHPRegex on phpstan/phpstan-src: 0 failures and 3 warnings in its regular expressions, judged for PHP 8.2.99 and PCRE2 10.40."
 permalink: /findings/phpstan/phpstan-src/
 findings_repo: phpstan/phpstan-src
 findings_slug: phpstan__phpstan-src
-findings_count: 5
+findings_count: 3
 findings_fail: 0
-findings_warn: 5
+findings_warn: 3
 findings_php: "8.2.99"
 findings_pcre: "10.40"
-findings_committed: 2026-11-21
-findings_rank: 180
+findings_committed: 2026-11-26
+findings_rank: 181
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."
 ---

@@ -1,13 +1,13 @@
 ---
 layout: landing
-title: "salesagility/SuiteCRM: 135 regex findings"
-description: "PHPRegex on salesagility/SuiteCRM: 3 failures and 132 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
+title: "salesagility/SuiteCRM: 136 regex findings"
+description: "PHPRegex on salesagility/SuiteCRM: 3 failures and 133 warnings in its regular expressions, judged for PHP 8.1 and PCRE2 10.39."
 permalink: /findings/salesagility/SuiteCRM/
 findings_repo: salesagility/SuiteCRM
 findings_slug: salesagility__SuiteCRM
-findings_count: 135
+findings_count: 136
 findings_fail: 3
-findings_warn: 132
+findings_warn: 133
 findings_php: "8.1"
 findings_pcre: "10.39"
 findings_committed: 2026-11-04

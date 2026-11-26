@@ -1,6 +1,6 @@
 {
     "repo": "phpactor/phpactor",
-    "sha": "f3569171db717d32fd4bc3b3e8ddd87fda2eea08",
+    "sha": "1b1941c52a2cedd7f2128982452cce2904d06924",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "class !extends !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!{",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Completion/Bridge/TolerantParser/CompletionContext.php#L262-L268",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Completion/Bridge/TolerantParser/CompletionContext.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -306,7 +306,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Completion/Bridge/TolerantParser/WorseReflection/DoctrineAnnotationCompletor.php#L134-L140",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Completion/Bridge/TolerantParser/WorseReflection/DoctrineAnnotationCompletor.php#L134-L140",
             "snippet": [
                 {
                     "number": 134,
@@ -476,7 +476,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Completion/Core/Util/OffsetHelper.php#L9-L15",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Completion/Core/Util/OffsetHelper.php#L9-L15",
             "snippet": [
                 {
                     "number": 9,
@@ -619,7 +619,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Extension/LanguageServerPhpCsFixer/Provider/PhpCsFixerDiagnosticsProvider.php#L175-L181",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Extension/LanguageServerPhpCsFixer/Provider/PhpCsFixerDiagnosticsProvider.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -778,7 +778,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Extension/WorseReflection/Documentor/DiagnosticDocumentor.php#L54-L60",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Extension/WorseReflection/Documentor/DiagnosticDocumentor.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -969,7 +969,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpactor/phpactor/blob/f3569171db717d32fd4bc3b3e8ddd87fda2eea08/lib/Indexer/Util/PhpNameMatcher.php#L12-L18",
+            "permalink": "https://github.com/phpactor/phpactor/blob/1b1941c52a2cedd7f2128982452cce2904d06924/lib/Indexer/Util/PhpNameMatcher.php#L12-L18",
             "snippet": [
                 {
                     "number": 12,

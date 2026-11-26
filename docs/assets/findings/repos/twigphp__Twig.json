@@ -1,6 +1,6 @@
 {
     "repo": "twigphp/Twig",
-    "sha": "31667a0ff8e37a90d5253d5f8b633b46c1b55ee7",
+    "sha": "6a8d31536b457344adba05a6f07aa5d10b3929a9",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -57,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--",
-            "permalink": "https://github.com/twigphp/Twig/blob/31667a0ff8e37a90d5253d5f8b633b46c1b55ee7/src/Test/IntegrationTestCase.php#L188-L194",
+            "permalink": "https://github.com/twigphp/Twig/blob/6a8d31536b457344adba05a6f07aa5d10b3929a9/src/Test/IntegrationTestCase.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -466,7 +466,7 @@
                 "limit": 100000
             },
             "subject": "--TEST----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)----TEMPLATE()--)--!--EXPECT--",
-            "permalink": "https://github.com/twigphp/Twig/blob/31667a0ff8e37a90d5253d5f8b633b46c1b55ee7/src/Test/IntegrationTestCase.php#L195-L201",
+            "permalink": "https://github.com/twigphp/Twig/blob/6a8d31536b457344adba05a6f07aa5d10b3929a9/src/Test/IntegrationTestCase.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,

@@ -1,6 +1,6 @@
 {
     "repo": "nikic/PHP-Parser",
-    "sha": "679d41ede0ad4236c22dbb52155aaa1b159b4d5c",
+    "sha": "24c72b4d84130ea4ae01b926631faf53f6aea7e0",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -10,7 +10,7 @@
         {
             "id": "f-d17c3a1eee",
             "file": "lib/PhpParser/ParserAbstract.php",
-            "line": 721,
+            "line": 730,
             "column": 81,
             "pattern": "/\\A#!.*\\r?\\n\\z/",
             "source": "preg_match()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nikic/PHP-Parser/blob/679d41ede0ad4236c22dbb52155aaa1b159b4d5c/lib/PhpParser/ParserAbstract.php#L718-L724",
+            "permalink": "https://github.com/nikic/PHP-Parser/blob/24c72b4d84130ea4ae01b926631faf53f6aea7e0/lib/PhpParser/ParserAbstract.php#L727-L733",
             "snippet": [
                 {
-                    "number": 718,
+                    "number": 727,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 719,
+                    "number": 728,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 720,
+                    "number": 729,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 721,
+                    "number": 730,
                     "focus": true,
                     "runs": [
                         [
@@ -123,7 +123,7 @@
                     ]
                 },
                 {
-                    "number": 722,
+                    "number": 731,
                     "focus": false,
                     "runs": [
                         [
@@ -133,7 +133,7 @@
                     ]
                 },
                 {
-                    "number": 723,
+                    "number": 732,
                     "focus": false,
                     "runs": [
                         [
@@ -143,7 +143,7 @@
                     ]
                 },
                 {
-                    "number": 724,
+                    "number": 733,
                     "focus": false,
                     "runs": [
                         [

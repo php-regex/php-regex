@@ -1,6 +1,6 @@
 {
     "repo": "nette/latte",
-    "sha": "4534338eeafdc3475f184449403396ce29ceea58",
+    "sha": "5403b1366b445ef2c6d8a65e23dce984e6c68745",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -10,7 +10,7 @@
         {
             "id": "f-e0da99428f",
             "file": "src/Latte/Compiler/PrintContext.php",
-            "line": 58,
+            "line": 59,
             "column": 4,
             "pattern": "#% (\\d+) \\. (escape|modify(?:Content)?) ( \\( ([^()]*+|(?-2))+ \\) )#xi",
             "source": "preg_replace_callback()",
@@ -28,10 +28,10 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/4534338eeafdc3475f184449403396ce29ceea58/src/Latte/Compiler/PrintContext.php#L55-L61",
+            "permalink": "https://github.com/nette/latte/blob/5403b1366b445ef2c6d8a65e23dce984e6c68745/src/Latte/Compiler/PrintContext.php#L56-L62",
             "snippet": [
                 {
-                    "number": 55,
+                    "number": 56,
                     "focus": false,
                     "runs": [
                         [
@@ -41,7 +41,7 @@
                     ]
                 },
                 {
-                    "number": 56,
+                    "number": 57,
                     "focus": false,
                     "runs": [
                         [
@@ -51,7 +51,7 @@
                     ]
                 },
                 {
-                    "number": 57,
+                    "number": 58,
                     "focus": false,
                     "runs": [
                         [
@@ -61,7 +61,7 @@
                     ]
                 },
                 {
-                    "number": 58,
+                    "number": 59,
                     "focus": true,
                     "runs": [
                         [
@@ -235,7 +235,7 @@
                     ]
                 },
                 {
-                    "number": 59,
+                    "number": 60,
                     "focus": false,
                     "runs": [
                         [
@@ -245,7 +245,7 @@
                     ]
                 },
                 {
-                    "number": 60,
+                    "number": 61,
                     "focus": false,
                     "runs": [
                         [
@@ -255,7 +255,7 @@
                     ]
                 },
                 {
-                    "number": 61,
+                    "number": 62,
                     "focus": false,
                     "runs": [
                         [
@@ -287,7 +287,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/4534338eeafdc3475f184449403396ce29ceea58/src/Latte/Compiler/TemplateParser.php#L457-L463",
+            "permalink": "https://github.com/nette/latte/blob/5403b1366b445ef2c6d8a65e23dce984e6c68745/src/Latte/Compiler/TemplateParser.php#L457-L463",
             "snippet": [
                 {
                     "number": 457,
@@ -438,7 +438,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nette/latte/blob/4534338eeafdc3475f184449403396ce29ceea58/src/Latte/Runtime/HtmlHelpers.php#L231-L237",
+            "permalink": "https://github.com/nette/latte/blob/5403b1366b445ef2c6d8a65e23dce984e6c68745/src/Latte/Runtime/HtmlHelpers.php#L231-L237",
             "snippet": [
                 {
                     "number": 231,

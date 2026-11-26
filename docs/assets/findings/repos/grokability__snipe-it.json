@@ -1,6 +1,6 @@
 {
     "repo": "grokability/snipe-it",
-    "sha": "576e1c3c9e1ad67b7c7d53dcde49b9b7b5d253f8",
+    "sha": "c424a814f9139ee6e6335e3f4ec70926445b9f25",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -28,7 +28,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/576e1c3c9e1ad67b7c7d53dcde49b9b7b5d253f8/app/Providers/ValidationServiceProvider.php#L439-L445",
+            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L439-L445",
             "snippet": [
                 {
                     "number": 439,
@@ -147,7 +147,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/576e1c3c9e1ad67b7c7d53dcde49b9b7b5d253f8/app/Providers/ValidationServiceProvider.php#L443-L449",
+            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L443-L449",
             "snippet": [
                 {
                     "number": 443,
@@ -280,7 +280,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/576e1c3c9e1ad67b7c7d53dcde49b9b7b5d253f8/app/Providers/ValidationServiceProvider.php#L451-L457",
+            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L451-L457",
             "snippet": [
                 {
                     "number": 451,

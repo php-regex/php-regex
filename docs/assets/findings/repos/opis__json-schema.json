@@ -1,6 +1,6 @@
 {
     "repo": "opis/json-schema",
-    "sha": "b99e6ec2ebeb3ffb009fca781876b62db47bb841",
+    "sha": "fa37275e1604aee00d2868a22c432302e4455751",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/opis/json-schema/blob/b99e6ec2ebeb3ffb009fca781876b62db47bb841/src/Errors/ErrorFormatter.php#L216-L222",
+            "permalink": "https://github.com/opis/json-schema/blob/fa37275e1604aee00d2868a22c432302e4455751/src/Errors/ErrorFormatter.php#L216-L222",
             "snippet": [
                 {
                     "number": 216,
@@ -171,11 +171,11 @@
             ]
         },
         {
-            "id": "f-7fdc5c66ac",
+            "id": "f-9e919f813a",
             "file": "src/Formats/DateTimeFormats.php",
             "line": 22,
             "column": 24,
-            "pattern": "/^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/i",
+            "pattern": "/^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])\\z/i",
             "source": "preg_match()",
             "location": "via self::DATE_REGEX",
             "level": "warn",
@@ -191,7 +191,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/opis/json-schema/blob/b99e6ec2ebeb3ffb009fca781876b62db47bb841/src/Formats/DateTimeFormats.php#L19-L25",
+            "permalink": "https://github.com/opis/json-schema/blob/fa37275e1604aee00d2868a22c432302e4455751/src/Formats/DateTimeFormats.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,
@@ -396,7 +396,7 @@
                             "pg-snippet-pattern pg-tok-group"
                         ],
                         [
-                            "$",
+                            "\\z",
                             "pg-snippet-pattern pg-tok-anchor"
                         ],
                         [
@@ -422,7 +422,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    const TIME_REGEX = '/^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)([01][0-9]|2[0-3]):([0-5][0-9]))?$/i';",
+                            "    const TIME_REGEX = '/^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?(Z|([+\\-])([01][0-9]|2[0-3]):([0-5][0-9]))?\\z/i';",
                             ""
                         ]
                     ]
@@ -432,7 +432,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    const DATE_TIME_REGEX = '/^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?(Z|(\\+|-)([01][0-9]|2[0-3]):([0-5][0-9]))?$/i';",
+                            "    const DATE_TIME_REGEX = '/^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\\.[0-9]+)?(Z|([+\\-])([01][0-9]|2[0-3]):([0-5][0-9]))?\\z/i';",
                             ""
                         ]
                     ]
@@ -442,7 +442,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "    const DURATION_REGEX = '/^P?((((\\d+D)|((\\d+M(\\d+D)?)|(\\d+Y(\\d+M(\\d+D)?)?)))(T((\\d+S)|(\\d+M(\\d+S)?)|(\\d+H(\\d+M(\\d+S)?)?)))?)|(T((\\d+S)|(\\d+M(\\d+S)?)|(\\d+H(\\d+M(\\d+S)?)?)))|(\\d+W))$/i';",
+                            "    const DURATION_REGEX = '/^P?((((\\d+D)|((\\d+M(\\d+D)?)|(\\d+Y(\\d+M(\\d+D)?)?)))(T((\\d+S)|(\\d+M(\\d+S)?)|(\\d+H(\\d+M(\\d+S)?)?)))?)|(T((\\d+S)|(\\d+M(\\d+S)?)|(\\d+H(\\d+M(\\d+S)?)?)))|(\\d+W))\\z/i';",
                             ""
                         ]
                     ]

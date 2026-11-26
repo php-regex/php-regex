@@ -1,17 +1,17 @@
 ---
 layout: landing
-title: "espocrm/espocrm: 5 regex findings"
-description: "PHPRegex on espocrm/espocrm: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.3 and PCRE2 10.42."
+title: "espocrm/espocrm: 6 regex findings"
+description: "PHPRegex on espocrm/espocrm: 0 failures and 6 warnings in its regular expressions, judged for PHP 8.4 and PCRE2 10.49."
 permalink: /findings/espocrm/espocrm/
 findings_repo: espocrm/espocrm
 findings_slug: espocrm__espocrm
-findings_count: 5
+findings_count: 6
 findings_fail: 0
-findings_warn: 5
-findings_php: "8.3"
-findings_pcre: "10.42"
-findings_committed: 2026-11-19
-findings_rank: 106
+findings_warn: 6
+findings_php: "8.4"
+findings_pcre: "10.49"
+findings_committed: 2026-11-26
+findings_rank: 107
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."
 ---

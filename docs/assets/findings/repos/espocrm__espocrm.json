@@ -1,9 +1,9 @@
 {
     "repo": "espocrm/espocrm",
-    "sha": "6eac615e1f8a8cddce571424f4cf025d141d5d1f",
+    "sha": "79a88dad96df2914bba808bcc542ac79063d6c33",
     "target": {
-        "php": "8.3",
-        "pcre": "10.42",
+        "php": "8.4",
+        "pcre": "10.49",
         "source": "composer.json config.platform.php"
     },
     "findings": [
@@ -35,7 +35,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/6eac615e1f8a8cddce571424f4cf025d141d5d1f/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -158,6 +158,153 @@
             ]
         },
         {
+            "id": "f-86b80f175e",
+            "file": "application/Espo/Core/Utils/Cache/FileCacheItemPool.php",
+            "line": 167,
+            "column": 24,
+            "pattern": "/[^a-zA-Z0-9_\\/\\-]/i",
+            "source": "preg_match()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/Cache/FileCacheItemPool.php#L164-L170",
+            "snippet": [
+                {
+                    "number": 164,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "    {",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 165,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        if (",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 166,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $key === '' ||",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 167,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "            preg_match(",
+                            ""
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            "/[^",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "a",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "zA",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "Z0",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "-",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "9_\\/\\-",
+                            "pg-snippet-pattern pg-tok-literal"
+                        ],
+                        [
+                            "]/",
+                            "pg-snippet-pattern pg-tok-meta"
+                        ],
+                        [
+                            "i",
+                            "pg-snippet-pattern pg-tok-flag"
+                        ],
+                        [
+                            "'",
+                            "pg-snippet-pattern pg-snippet-quote"
+                        ],
+                        [
+                            ", $key) ||",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 168,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            $key[0] === '/' ||",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 169,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "            str_ends_with($key, '/')",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 170,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        ) {",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-9fe22221fb",
             "file": "application/Espo/Core/Utils/File/Manager.php",
             "line": 981,
@@ -178,7 +325,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/6eac615e1f8a8cddce571424f4cf025d141d5d1f/application/Espo/Core/Utils/File/Manager.php#L978-L984",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/File/Manager.php#L978-L984",
             "snippet": [
                 {
                     "number": 978,
@@ -305,7 +452,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/6eac615e1f8a8cddce571424f4cf025d141d5d1f/application/Espo/Core/Utils/Preload.php#L77-L83",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/Preload.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -456,7 +603,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/6eac615e1f8a8cddce571424f4cf025d141d5d1f/application/Espo/Core/Utils/System.php#L42-L48",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/System.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -599,7 +746,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/6eac615e1f8a8cddce571424f4cf025d141d5d1f/application/Espo/Core/Utils/System.php#L45-L51",
+            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/System.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,

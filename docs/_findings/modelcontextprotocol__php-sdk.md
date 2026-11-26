@@ -1,17 +1,17 @@
 ---
 layout: landing
-title: "modelcontextprotocol/php-sdk: 5 regex findings"
-description: "PHPRegex on modelcontextprotocol/php-sdk: 0 failures and 5 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40."
+title: "modelcontextprotocol/php-sdk: 6 regex findings"
+description: "PHPRegex on modelcontextprotocol/php-sdk: 0 failures and 6 warnings in its regular expressions, judged for PHP 8.2 and PCRE2 10.40."
 permalink: /findings/modelcontextprotocol/php-sdk/
 findings_repo: modelcontextprotocol/php-sdk
 findings_slug: modelcontextprotocol__php-sdk
-findings_count: 5
+findings_count: 6
 findings_fail: 0
-findings_warn: 5
+findings_warn: 6
 findings_php: "8.2"
 findings_pcre: "10.40"
-findings_committed: 2026-11-21
-findings_rank: 145
+findings_committed: 2026-11-24
+findings_rank: 146
 image: /assets/img/findings-social.png
 image_alt: "PHPRegex findings: what the linter reports on real open-source PHP."
 ---

@@ -5553,6 +5553,13 @@
             "issues": [
                 {
                     "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
@@ -13029,6 +13036,106 @@
             ]
         },
         {
+            "id": "f-2d077e2198",
+            "file": "include/php-sql-parser.php",
+            "line": 177,
+            "column": 16,
+            "pattern": "/(`(?:[^`]|``)`|[@A-Za-z0-9_.`-]+(?:\\(\\s*\\)){0,1})\n|(\\+|-|\\*|\\/|!=|>=|<=|<>|>|<|&&|\\|\\||=|\\^)\n|(\\(.*?\\))   # Match FUNCTION(...) OR BAREWORDS\n|('(?:[^']|'')*'+)\n|(\"(?:[^\"]|\"\")*\"+)\n|([^ ,]+)\n/ix",
+            "source": "preg_split()",
+            "location": "via $regex",
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                }
+            ],
+            "rewrite": {
+                "optimized": "/(`(?:[^`]|``)`|[@A-Za-z0-9_.`-]+(?:\\(\\s*\\))?)\n|(\\+|-|\\*|\\/|!=|>=|<=|<>|>|<|&&|\\|\\||=|\\^)\n|(\\(.*?\\))   # Match FUNCTION(...) OR BAREWORDS\n|('(?:[^']|'')*'+)\n|(\"(?:[^\"]|\"\")*\"+)\n|([^ ,]+)\n/ix",
+                "changes": [
+                    "Wrote a quantifier in its short form."
+                ]
+            },
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/php-sql-parser.php#L174-L180",
+            "snippet": [
+                {
+                    "number": 174,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        }",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 175,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 176,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "        $sql = str_replace(array('\\\\\\'','\\\\\"',\"\\r\\n\",\"\\n\",\"()\"), array(\"''\",'\"\"',\" \",\" \",\" \"), $sql);",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 177,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "        $regex=<<<EOREGEX",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 178,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "/(`(?:[^`]|``)`|[@A-Za-z0-9_.`-]+(?:\\(\\s*\\)){0,1})",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 179,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "|(\\+|-|\\*|\\/|!=|>=|<=|<>|>|<|&&|\\|\\||=|\\^)",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 180,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "|(\\(.*?\\))   # Match FUNCTION(...) OR BAREWORDS",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-f2fc6fe298",
             "file": "include/utils.php",
             "line": 1637,
@@ -14369,6 +14476,13 @@
             "issues": [
                 {
                     "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
+                {
+                    "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
@@ -14514,6 +14628,13 @@
             "location": null,
             "level": "warn",
             "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.flag.useless.i",
+                    "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
