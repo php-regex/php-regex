@@ -347,8 +347,8 @@ final class LanguageSolver
      * holds is read too, as a call runs it: "/(?&n)|a(?(DEFINE)(?<n>^.))/"
      * needs the search past the start.
      *
-     * Two patterns that read alike (see readAlike()) run alike everywhere:
-     * no run is needed.
+     * Two patterns that read alike (see readAlike()) run alike in every
+     * call: no run is needed.
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
@@ -424,13 +424,20 @@ final class LanguageSolver
      * aside, the same options before it, and the same flags but for an "s"
      * or an "m" that form already applied. [0-9] and \d, a{1} and a, (?:a)
      * and a read alike. Such patterns run alike in every call, and wherever
-     * their text is spliced into a larger pattern. Without "u", a pattern
-     * that holds "\w" outside a class, or the byte 0xFF, reads like no
-     * other where the tables may hold that byte in "\w": PCRE2 may read
-     * one against the other in the text around it as if 0xFF were no word
-     * character (see AutoPossession::meetsLastByteWhereSpliced()).
+     * their text is spliced as a group into a larger pattern, as the router
+     * splices a requirement into the named group of its variable. Spliced
+     * bare, they need not: PCRE2 stops a lazy repeat at the end of a group,
+     * so that the brackets a pattern brings count there. "(?:a?)" and "a?"
+     * read alike, yet under fr_FR.ISO8859-1 "/\xFF+?(?:a?)\w/" finds
+     * "\xFF\xFF" where "/\xFF+?a?\w/" finds nothing; in a group of their
+     * own, "/\xFF+?(?<v>(?:a?))\w/" and "/\xFF+?(?<v>a?)\w/" find the same.
+     * Without "u", a pattern that holds "\w" outside a class, or the byte
+     * 0xFF, reads like no other where the tables may hold that byte in
+     * "\w": PCRE2 may read one against the other in the text around it as
+     * if 0xFF were no word character (see
+     * AutoPossession::meetsLastByteWhereSpliced()).
      *
-     * @internal the lint asks it of a rewrite it would splice into a larger pattern
+     * @internal the lint asks it of a rewrite it would splice, as a group, into a larger pattern
      *
      * @throws ParserException        When a pattern does not lex or parse
      * @throws SemanticErrorException When the target refuses a pattern
