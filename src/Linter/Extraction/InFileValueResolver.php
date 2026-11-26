@@ -1166,7 +1166,9 @@ final class InFileValueResolver
      * the latest assignment written before the read, which runs first on
      * every path to it: a statement of the body itself, or of the block
      * of braces the read stands in, that no later assignment reaches
-     * through a loop the block holds. Null when the code does not say: an
+     * through a loop the block holds. An array that assignment gives the
+     * variable is read as the call reads it, each item a pattern, when no
+     * item of it reads a variable. Null when the code does not say: an
      * assignment in a branch or a loop of its own may stand between, in a
      * switch, or a block of the alternative syntax.
      *
@@ -1210,6 +1212,13 @@ final class InFileValueResolver
             if ($start > $assignment[1] && $replaced <= $end) {
                 return null;
             }
+        }
+
+        // An array the variable is assigned is read item by item: the
+        // literals the variable gives the call are its own, as union()
+        // keeps no array beside the values of another assignment.
+        if (ValueExpr::ARRAY === $assignment[0]->kind) {
+            return self::readsAVariable($assignment[0]) ? null : $this->literalsIn($variable, $function);
         }
 
         return $this->literalsOf($assignment[0], $function, $depth + 1);

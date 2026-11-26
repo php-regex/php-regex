@@ -31,7 +31,10 @@ use Psalm\Plugin\RegistrationInterface;
  * With <redos>true</redos>, the ReDoS findings the PHPStan extension reports
  * are reported too, from <redosThreshold> on (high by default): RegexRedos
  * for one attempt, RegexRedosSearch for the cost of a search, the loop of a
- * function that looks for every match included.
+ * function that looks for every match included. The static methods of the
+ * wrapper libraries `regex lint` reads, composer/pcre's Preg::match() or
+ * Laravel's Str::isMatch(), are validated and checked for ReDoS as the
+ * preg_* function they run, and not typed.
  *
  * Patterns are judged for the PHP version Psalm analyses for, with the
  * PCRE2 it bundles, unless the plugin's options say otherwise; a PHP below
@@ -69,7 +72,7 @@ final class Plugin implements PluginEntryPointInterface
         // cache directory, which --clear-cache empties; none under --no-cache.
         $cacheDirectory = Config::getInstance()->getCacheDirectory();
         ClassSetProvider::persistIn(null === $cacheDirectory ? null : $cacheDirectory.\DIRECTORY_SEPARATOR.'php-regex');
-        foreach ([PregCallAnalyzer::class, CallbackParameters::class, TargetMarkerAnalyzer::class] as $hooks) {
+        foreach ([PregCallAnalyzer::class, WrapperCallAnalyzer::class, CallbackParameters::class, TargetMarkerAnalyzer::class] as $hooks) {
             // Psalm registers a class only once it is loaded.
             class_exists($hooks);
             $registration->registerHooksFromClass($hooks);

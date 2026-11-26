@@ -40,15 +40,16 @@ Legend:
 ## Library calls
 
 Every preset is read by default; `extraction.interop` (`interop` for PHPStan)
-narrows them. Psalm reads no preset.
+narrows them. Psalm reads the static methods of every preset, on the classes
+it knows, and has no option to narrow them.
 
 | Call | CLI, php-parser | CLI, tokenizer | LSP | PHPStan | Psalm | Laravel | Symfony |
 |---|---|---|---|---|---|---|---|
-| Static methods of `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support` | Yes | Yes | Yes | Yes | No | Yes | Yes |
-| Nette's `utf8: true` adds `u` to the pattern judged | Yes | Yes | Yes | No | No | Yes | Yes |
-| `webmozart-assert`, `beberlei-assert`: `Assert::regex()`, `Assertion::regex()` | Yes | Yes | Yes | Yes | No | Yes | Yes |
+| Static methods of `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support` | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
+| Nette's `utf8: true` adds `u` to the pattern judged | Yes | Yes | Yes | No | Yes | Yes | Yes |
+| `webmozart-assert`, `beberlei-assert`: `Assert::regex()`, `Assertion::regex()` | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | `phpunit` on `$this->`, `self::`, `static::`, `parent::` | Yes | Yes | Yes | No | No | Yes | Yes |
-| `phpunit` on `PHPUnit\Framework\Assert::` or `TestCase::` | Yes | Yes | Yes | Yes | No | Yes | Yes |
+| `phpunit` on `PHPUnit\Framework\Assert::` or `TestCase::` | Yes | Yes | Yes | Yes | Yes | Yes | Yes |
 | `phpunit` functions, `PHPUnit\Framework\assertMatchesRegularExpression()` | Yes | Yes | Yes | No | No | Yes | Yes |
 | `symfony-validator`: `new Regex(...)`, `#[Assert\Regex(...)]` | Yes | Yes | Yes | No | No | Yes | Yes¹ |
 | A method called on an object of a library (`$str->match()`, `u($s)->match()`, `Assert::that($v)->regex()`) | No | No | No | No | No | No | No |

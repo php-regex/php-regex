@@ -46,9 +46,13 @@ CHANGELOG
    the latest assignment before it when that one runs first on every path
    to it: a statement of the body or of the block of braces the call
    stands in, the head of a `foreach` over literals, or a composition of
-   such values. Where one in a branch or a loop of its own may stand
-   between, in a `switch` or in a block of the alternative syntax, the
-   call names no loop.
+   such values. A list of patterns a variable is assigned,
+   `$l = ['/a/', '/b/']; preg_replace($l, '', $s);`, gives each of its
+   items the loop of the call, unless an item reads a variable. Where one
+   in a branch or a loop of its own may stand between, in a `switch` or in
+   a block of the alternative syntax, the call names no loop. A block of
+   braces ends at its brace whatever stands before it, an empty statement
+   or text out of PHP (`?>…<?php`), with nikic/php-parser as without it.
  * Without u, under another locale's tables than PCRE2's own,
    `regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`
    and `regex.lint.overlap.charset` read the characters of a run or a
