@@ -117,12 +117,13 @@ lookarounds; atomic groups, and a possessive quantifier that could have to give 
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
-and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
-anywhere, under which the dot reads a `\r` alone but not one before a `\n`; under
-`(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`, as a search
+and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and a dot or
+`\N` under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`; under
+`(*CRLF)`, `(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`
+and that writes neither a `\r` nor a `\n`, or that a `^` or a `.*` leads, as a search
 may skip the start between a `\r` and the `\n` after it (without the JIT,
 `/(*ANYCRLF)\sa/` finds no match in `"\r\na"`, and `/(*ANYCRLF)\sa|[^\s\S]\n/`, whose
-dead branch writes a `\n`, finds `"\na"`); `(*NOTEMPTY)` and
+dead branch writes a `\n`, finds `"\na"`: the second is read); `(*NOTEMPTY)` and
 `(*NOTEMPTY_ATSTART)`, as `equivalent()` refuses them; an end anchor
 followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
@@ -491,8 +492,13 @@ its first try where a `^` under `/m` or a `.*` leads it, which the JIT does not 
 It skips no other start, so the solver reads the search both ways, every start and every
 start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
 `/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
-`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
-of the whole string starts at its start, and is read whatever the pattern.
+`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A pattern
+that writes a `\r` or a `\n` as a character of its own (`\n`, `\x0a`, `\cJ`, outside a
+class), in a branch no subject takes too, is searched from every start, with the JIT and
+without, unless each of its alternatives starts with `^` or `.*`: it is read as written.
+`/(*ANYCRLF)\na/` finds `"\na"` in `"\r\na"`, and so does `/(*ANYCRLF)\sa|[^\s\S]\n/`,
+where `/(*ANYCRLF)\sa/` finds nothing without the JIT. A match of the whole string starts
+at its start, and is read whatever the pattern.
 
 Under `(*CRLF)` the newline is two characters, which no set of one character says: the dot
 and `\N` take a `\r` and a `\n`, each alone, and not the `\r` a `\n` follows. The solver

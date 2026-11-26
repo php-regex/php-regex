@@ -42,6 +42,7 @@ use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\LocaleBoundClasses;
 use PHPRegex\Automata\Transform\NewlineSequencePossession;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
+use PHPRegex\Automata\Transform\SearchStarts;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\LibraryPcre;
@@ -1008,10 +1009,6 @@ final class LanguageSolver
             throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
         }
 
-        if ('CRLF' === StartOptions::newline($ast->source ?? '')) {
-            throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
-        }
-
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
@@ -1028,11 +1025,20 @@ final class LanguageSolver
         $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 
+        // Under "(*CRLF)" a dot reads a "\r" alone but not one before a
+        // "\n", through a lookahead, which the match solver does not model.
+        $crLf = $translator->crLfNewline();
+        $dot = null === $crLf ? null : RegularSubsetValidator::crLfDot($form, $crLf, true);
+        if (null !== $dot) {
+            throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', $dot->startPosition, $pattern);
+        }
+
         // The search may skip the start between a "\r" and the "\n" after
         // it, and the JIT not always where the interpreter does: a match
         // that may start there, with a "\n" or empty, moves with what the
-        // pattern writes and with the JIT.
-        if (\in_array(StartOptions::newline($ast->source ?? ''), ['ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form)) {
+        // pattern writes and with the JIT, unless the pattern is one whose
+        // search tries every start.
+        if (\in_array(StartOptions::newline($ast->source ?? ''), ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form) && !SearchStarts::triesEveryStart($ast)) {
             throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
         }
 
@@ -1129,8 +1135,10 @@ final class LanguageSolver
         // after its first try where a "^" under /m or a ".*" leads it, which
         // the JIT does not always follow. It skips no other start, so where
         // no match starts there but where another starts too, the subjects
-        // a match is found in are the same whatever the engine skips.
-        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir)) {
+        // a match is found in are the same whatever the engine skips. A
+        // pattern that writes a "\r" or a "\n", and that no "^" nor ".*"
+        // leads, is searched from every start, and read as written.
+        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir) && !SearchStarts::triesEveryStart($ast)) {
             $builder = new DfaBuilder();
             $skipping = $builder->determinize($transformer->transform($hir, $options, true), $options);
             $differ = static fn (bool $left, bool $right): bool => $left !== $right;

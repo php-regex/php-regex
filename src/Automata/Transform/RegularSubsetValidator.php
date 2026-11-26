@@ -142,9 +142,12 @@ final class RegularSubsetValidator
      * lookaround, as the lookahead that stands for it: the one whose body
      * is the newline the translator gave every such dot (see
      * HirTranslator::crLfNewline()). A dot that takes every character,
-     * under s, is a set like any other, and is not one.
+     * under s, is a set like any other, and is not one. Asked as if from
+     * inside a lookaround, it gives the first such dot wherever it stands.
+     *
+     * @internal the match solver asks it for every such dot
      */
-    private static function crLfDot(Hir $hir, LiteralHir $newline, bool $inALookaround): ?LookHir
+    public static function crLfDot(Hir $hir, LiteralHir $newline, bool $inALookaround): ?LookHir
     {
         if ($hir instanceof LookHir) {
             if ($newline === $hir->body) {

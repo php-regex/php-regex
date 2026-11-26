@@ -200,7 +200,14 @@ CHANGELOG
    `matchEquivalent()` refuses a pattern under `(*ANYCRLF)` or `(*ANY)` that
    may match empty or start with a `\n`: `/(*ANYCRLF)\sa/` was proven to
    write the `$matches` of `/(*ANYCRLF)\sa|[^\s\S]\n/`, where without the
-   JIT the one finds nothing in `"\r\na"` and the other `"\na"`.
+   JIT the one finds nothing in `"\r\na"` and the other `"\na"`. A pattern
+   that writes a `\r` or a `\n` as a character of its own, outside a class,
+   and that no `^` nor `.*` leads, is searched from every start, with the
+   JIT and without, and is read as written: `compile()` reads
+   `/(*ANYCRLF)\na/` as finding `"\na"` in `"\r\na"`, and
+   `matchEquivalent()` proves `/(*ANYCRLF)\sa|[^\s\S]\n/` writes the
+   `$matches` of `/\sa/`. `matchEquivalent()` reads a pattern under
+   `(*CRLF)` that holds no dot nor `\N`, where it refused every one.
  * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
    `compile()` read a dot and `\N` under `(*CRLF)` as PCRE2 does: each
    takes a `\r` and a `\n` alone, and not the `\r` a `\n` follows.

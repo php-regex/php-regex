@@ -186,8 +186,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n`, and `(*NOTEMPTY)` and
   `(*NOTEMPTY_ATSTART)`, which refuse an empty match without the JIT and which PHP's JIT ignores.
   `matchEquivalent()` reads the same flags except `m`, which
-  it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and refuses
-  `(*CRLF)` in any pattern: under it the dot reads a `\r` alone but not one before a `\n`.
+  it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and a dot or
+  `\N` under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`. A search that writes a `\r` or a `\n`
+  as a character of its own, and that no `^` nor `.*` leads, tries every start, the one between a `\r` and a `\n`
+  too, with the JIT and without: the solvers read it as written.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
   as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:
   `/(?:^|,)a/` and `/^\d+$/m` are answered. A lookaround inside a lookaround, an anchor or word boundary inside a
