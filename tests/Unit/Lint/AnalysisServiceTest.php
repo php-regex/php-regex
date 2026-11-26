@@ -180,7 +180,9 @@ final class AnalysisServiceTest extends TestCase
 
         $result = self::redosIssuesOf($this->analysis, $patterns);
 
-        $this->assertGreaterThanOrEqual(0, \count($result));
+        // Neither the valid pattern nor the one that does not parse gets a
+        // ReDoS finding, and the run reaches the end of the list.
+        $this->assertSame([], $result);
     }
 
     #[Test]
