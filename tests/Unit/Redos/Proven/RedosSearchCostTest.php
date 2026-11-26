@@ -593,6 +593,9 @@ final class RedosSearchCostTest extends TestCase
     public static function provideBoundedRepeatsBesideTheRun(): iterable
     {
         yield 'a possessive repeat of another character' => ['pattern' => '/a+b|c{1,300}+d/', 'run' => 'a'];
+        // Kept with every way through it, the group reads none of the run.
+        yield 'an atomic group of another character' => ['pattern' => '/a+b|(?>c{1,300})d/', 'run' => 'a'];
+        yield 'a group a repeat of one character stands before' => ['pattern' => '/a+b|x*(?:y)?+z/', 'run' => 'a'];
         yield 'a possessive repeat at the cutoff, unrolled' => ['pattern' => '/a+b|a{1,16}+c/', 'run' => 'a'];
         yield 'a repeat that gives back before the end of a line' => ['pattern' => '/a+b|a{1,100}$/m', 'run' => 'a'];
         yield 'a repeat that gives back before the end of the subject' => ['pattern' => '/a+b|a{1,100}\z/', 'run' => 'a'];
