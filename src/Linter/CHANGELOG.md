@@ -311,6 +311,55 @@ CHANGELOG
    no longer keep the flag, and `\P{Lu}` and `\p{^Lu}` keep it from 10.45,
    where i changes them: `/\P{Lu}/iu` was reported though it matches 2,314
    characters fewer with i on PCRE2 10.49.
+ * Under u or `(*UCP)`, `regex.lint.flag.useless.i` reads `[:upper:]` and
+   `[:lower:]` as PCRE2 reads them in a class there, as `\p{Lu}` and
+   `\p{Ll}`, which i leaves as written on every release:
+   `/[aA[:upper:]]/iu`, `/[[:lower:]]/iu` and `/(*UCP)[aA[:upper:]]/i` are
+   reported, where they kept the flag. Without UCP, i widens them to the
+   letters: `/[aA[:upper:]]/i` and `/(*UTF)[[:upper:]]/i` keep it, as does
+   a pattern that sets an ASCII option, `(?aP)` or `(?a)`, which gives the
+   POSIX classes back to the tables.
+ * `regex.lint.flag.useless.i` reads `[:upper:]` and `[:lower:]` where they
+   stand on their own among the operands of an extended class, from PCRE2
+   10.45: `/(?[ [:upper:] ])/i`, which matches the 52 letters with i and
+   the 26 capitals without, and `/(?[ [:alpha:] - [:lower:] ])/i`, which
+   matches nothing with i, were reported and are no more.
+ * Under u, `regex.lint.flag.useless.i` reads a class under the
+   restriction of caseless matching, set by `(?r)`, the r modifier or
+   `(*CASELESS_RESTRICT)`, as PCRE2 does from 10.43: a caseless set that
+   starts with an ASCII letter is not read, so `k` and `K` fold with each
+   other alone, and the Kelvin sign and the long s with nothing.
+   `/(?r)[kK]/iu`, `/(?r)[sS]/iu` and `/(?r)[a-zA-Z]/iu` are reported,
+   where they kept the flag; `/(?r)[k]/iu`, `/(?r)(?-r)[kK]/iu`, where the
+   restriction is lifted, and `/(?r)[\x{C5}\x{E5}]/iu`, whose set holds the
+   Angstrom sign and no ASCII letter, still keep it.
+ * Under u, `regex.lint.flag.useless.i` no longer gives a character a case
+   for a full mapping of mbstring, one character to several, which PCRE2
+   does not fold: `/\x{149}/iu`, whose `ŉ` has `ʼN` for capital, and
+   `/\x{FB00}/iu` are reported, as `/[\x{149}]/iu` was. Such a character is
+   read from PCRE2's tables of the target's release, which pair the sharp
+   s with its capital, so `/\x{DF}/iu` keeps its flag, and from 10.45
+   `\x{390}` with `\x{1FD3}`. The simple mappings of mbstring are still
+   read: the long s, the Kelvin sign, `İ` and `ı` keep the flag.
+ * `regex.lint.flag.useless.i` reads a backreference to a group that
+   holds a lookaround, a call or the decimal digits. What a lookaround
+   reads is no part of the text the group captures, a call matches what
+   the group it runs matches, and `\p{Nd}` holds no character with a
+   case, as `\d` holds none: `/(\d(?=\w))\1/i`, `/(\d)((?1))\2/i` and
+   `/([\p{Nd}])\1/i` are reported, where they kept the flag.
+   `/(\w)((?1))\2/i`, `/(\P{Nd})\1/i` and a group that calls the whole
+   pattern, `(?R)`, still keep it, as `\p{Nd}` does under another
+   locale's tables.
+ * Without u, under another locale's tables, `regex.lint.flag.useless.i`
+   reads a class of two bytes or more from the pairs of the tables alone,
+   as PCRE2 compiles it with i and without: a byte the interpreter reads
+   otherwise matched alone no longer keeps the flag there. Under macOS's
+   tr_TR.ISO8859-9, whose interpreter takes `\xDD` for `I` or `i` alone,
+   `/[Ii\xDD\xFD]/i`, `/(*UCP)[iI]/i` and `/(*UCP)[iI\xDD\xFD]/i` are
+   reported, each matching the same bytes with i and without; `/[I]/i`,
+   a class of one byte, and `/[i\xDD]/i`, which matches `I` with i alone,
+   keep it. A byte the tables of either side of PCRE2 10.43 hold
+   otherwise still keeps the flag whatever the class holds.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

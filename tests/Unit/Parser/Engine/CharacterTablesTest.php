@@ -119,7 +119,7 @@ final class CharacterTablesTest extends TestCase
         CharacterTables::under($locale, static function () use ($subject, $taken, &$reads): void {
             for ($byte = 0; $byte < 256; $byte++) {
                 preg_match_all(\sprintf('/(*NO_JIT)(*NO_START_OPT)\x%02x/i', $byte), $subject, $onInterpreter);
-                $reads[$byte] = ['class' => $taken(\sprintf('/[\x%02x]/i', $byte)), 'jit' => $taken(\sprintf('/\x%02x/i', $byte)), 'interpreter' => array_map(\ord(...), $onInterpreter[0])];
+                $reads[$byte] = ['class' => $taken(\sprintf('/[\x%02x]/i', $byte)), 'several' => $taken(\sprintf('/[\x00\x%02x]/i', $byte)), 'jit' => $taken(\sprintf('/\x%02x/i', $byte)), 'interpreter' => array_map(\ord(...), $onInterpreter[0])];
             }
         });
 
@@ -131,6 +131,13 @@ final class CharacterTablesTest extends TestCase
             sort($pair);
             $this->assertSame($pair, $reads[$byte]['class'], \sprintf('Oracle: a class of 0x%02X under %s.', $byte, $locale));
             $this->assertSame($pair, $reads[$byte]['jit'], \sprintf('Oracle: 0x%02X alone under %s.', $byte, $locale));
+
+            // A class of the byte and the NUL byte holds both and the other
+            // case of the byte, on the interpreter as on the JIT.
+            $several = array_values(array_unique([0, ...$pair]));
+            sort($several);
+            $this->assertSame($several, $reads[$byte]['several'], \sprintf('Oracle: a class of 0x00 and 0x%02X under %s.', $byte, $locale));
+            $this->assertSame($tables->otherCase($byte, $before) === $tables->otherCase($byte, $from) ? $tables->otherCase($byte, $from) : null, $tables->classOtherCase($byte), \sprintf('0x%02X in a class of several bytes under %s.', $byte, $locale));
 
             $agreed = [] === array_diff($reads[$byte]['interpreter'], $pair) && $tables->otherCase($byte, $before) === $tables->otherCase($byte, $from);
             $this->assertSame($agreed ? $tables->otherCase($byte, $from) : null, $tables->settledOtherCase($byte), \sprintf('0x%02X under %s, the interpreter matching %s.', $byte, $locale, json_encode($reads[$byte]['interpreter'])));
@@ -174,6 +181,14 @@ final class CharacterTablesTest extends TestCase
         $this->assertSame(0x31, $tables->settledOtherCase(0x31));
         $this->assertNull($tables->settledOtherCase(0xDD));
         $this->assertNull($tables->settledOtherCase(0xFF));
+
+        // A class of several bytes is compiled from the pairs alone: what
+        // the interpreter reads of a byte alone does not reach it, what a
+        // release holds otherwise does.
+        $this->assertSame(0x69, $tables->classOtherCase(0xDD));
+        $this->assertSame(0xC9, $tables->classOtherCase(0xE9));
+        $this->assertSame(0x31, $tables->classOtherCase(0x31));
+        $this->assertNull($tables->classOtherCase(0xFF));
         $this->assertSame(0x78, $tables->otherCase(0xFF, new PcreTarget(80400, '10.42', 'C')));
         $this->assertSame(0xFF, $tables->otherCase(0xFF, new PcreTarget(80400, '10.43', 'C')));
 
