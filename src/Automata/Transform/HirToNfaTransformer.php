@@ -521,32 +521,43 @@ final class HirToNfaTransformer
      * under /m, "^" at the start or after a newline more follows, "$"
      * before a newline or at the end. Under "(*ANYCRLF)" and "(*ANY)" a
      * "\r" ends a line and so does a "\n", and the two together end one:
-     * "^" holds between them, and "$" before the "\n".
+     * "^" holds between them, and "$" before the "\n". Under "(*CRLF)" the
+     * two together end a line and neither does alone: "^" holds after
+     * them, "$" before them, and nothing between them.
      */
     private function anchorAsLookaround(AssertionHir $node): Hir
     {
         $any = new ClassHir(CharSet::universe($this->unicode));
         $ends = $this->lineEnds();
-        $newline = $this->crLfEndsALine() ? new ClassHir($ends) : new LiteralHir([$this->lineEnd()]);
+        $pair = 'CRLF' === $this->newline;
+        $newline = $pair ? new LiteralHir([0x0D, 0x0A]) : ($this->crLfEndsALine() ? new ClassHir($ends) : new LiteralHir([$this->lineEnd()]));
         $notNewline = new ClassHir($any->set->subtract($ends));
         $look = static fn (Hir $body, LookKind $kind): LookHir => new LookHir($body, $kind, true, $node->startPosition, $node->endPosition);
 
         return match ($node->kind) {
             AssertionKind::SubjectStart => $look($any, LookKind::NegativeBehind),
             AssertionKind::SubjectEnd => $look($any, LookKind::NegativeAhead),
-            AssertionKind::EndOrFinalNewline => $look(new AlternationHir($this->crLfEndsALine()
-                ? [
-                    $notNewline,
-                    new ConcatHir([new LiteralHir([0x0D]), new ClassHir($any->set->subtract(CharSet::single(0x0A)))]),
-                    new ConcatHir([new LiteralHir([0x0D, 0x0A]), $any]),
-                    new ConcatHir([new ClassHir($ends->subtract(CharSet::single(0x0D))), $any]),
-                ]
-                : [$notNewline, new ConcatHir([$newline, $any])]), LookKind::NegativeAhead),
+            // Under "(*CRLF)": at the end, or before a "\r\n" nothing follows.
+            AssertionKind::EndOrFinalNewline => $pair
+                ? new AlternationHir([
+                    $look($any, LookKind::NegativeAhead),
+                    new ConcatHir([$look($newline, LookKind::Ahead), $look(new ConcatHir([$newline, $any]), LookKind::NegativeAhead)]),
+                ])
+                : $look(new AlternationHir($this->crLfEndsALine()
+                    ? [
+                        $notNewline,
+                        new ConcatHir([new LiteralHir([0x0D]), new ClassHir($any->set->subtract(CharSet::single(0x0A)))]),
+                        new ConcatHir([new LiteralHir([0x0D, 0x0A]), $any]),
+                        new ConcatHir([new ClassHir($ends->subtract(CharSet::single(0x0D))), $any]),
+                    ]
+                    : [$notNewline, new ConcatHir([$newline, $any])]), LookKind::NegativeAhead),
             AssertionKind::LineStart => new AlternationHir([
                 $look($any, LookKind::NegativeBehind),
                 new ConcatHir([$look($newline, LookKind::Behind), $look($any, LookKind::Ahead)]),
             ]),
-            AssertionKind::LineEnd => $look($notNewline, LookKind::NegativeAhead),
+            AssertionKind::LineEnd => $pair
+                ? new AlternationHir([$look($any, LookKind::NegativeAhead), $look($newline, LookKind::Ahead)])
+                : $look($notNewline, LookKind::NegativeAhead),
             // The refusal walk lets no other kind through.
             default => new ConcatHir([]),
         };
@@ -557,12 +568,12 @@ final class HirToNfaTransformer
      * by default, "\r" under "(*CR)", NUL under "(*NUL)", either of the
      * first two under "(*ANYCRLF)", and under "(*ANY)" the vertical tab,
      * the form feed and NEL too, and the line and paragraph separators
-     * under /u. "(*CRLF)", whose lines end at "\r\n" alone, does not reach
-     * here.
+     * under /u. None under "(*CRLF)", whose lines end at "\r\n" alone.
      */
     private function lineEnds(): CharSet
     {
         return match ($this->newline) {
+            'CRLF' => CharSet::empty(),
             'ANYCRLF' => CharSet::single(0x0A)->union(CharSet::single(0x0D)),
             'ANY' => CharSet::range(0x0A, 0x0D)->union(CharSet::single(0x85))->union($this->unicode ? CharSet::range(0x2028, 0x2029) : CharSet::empty()),
             default => CharSet::single($this->lineEnd()),
@@ -838,16 +849,20 @@ final class HirToNfaTransformer
 
         // Without /D, "$" and "\Z" also match before a newline that ends the
         // subject: a search accepts that newline after the match, "\r\n"
-        // too where it ends a line as one.
+        // too where it ends a line as one. Under "(*CRLF)" a "\r" the
+        // subject ends on is no newline.
         $acceptStates = $fragment->acceptStates;
         if (AssertionKind::EndOrFinalNewline === $end) {
             $newline = $this->builder->createState();
             $ends = $this->lineEnds();
             $carriageReturn = null;
-            if ($this->crLfEndsALine()) {
+            $pair = 'CRLF' === $this->newline;
+            if ($pair || $this->crLfEndsALine()) {
                 $carriageReturn = $this->builder->createState();
                 $this->builder->addTransition($carriageReturn, CharSet::single(0x0A), $newline);
-                $acceptStates[] = $carriageReturn;
+                if (!$pair) {
+                    $acceptStates[] = $carriageReturn;
+                }
             }
             foreach ($fragment->acceptStates as $acceptState) {
                 $this->builder->addTransition($acceptState, $ends, $newline);

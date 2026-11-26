@@ -181,9 +181,11 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   matches the Kelvin sign U+212A, `s` the long s U+017F and `å` the angstrom sign U+212B, while the Turkish dotless
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
   modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
-  language says. `A` is refused, and so is a newline convention other than `\n`, such as `(*CR)`, when `$`, `\Z`,
-  `/m` or `(?m)` would read the newline it sets, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, which refuse an
-  empty match without the JIT and which PHP's JIT ignores. `matchEquivalent()` reads the same flags except `m`, which
+  language says. Every newline convention, `(*CR)` or `(*CRLF)` among them, moves `$`, `\Z` and the anchors under
+  `/m` as the engine does. `A` is refused, and so are a dot or `\N` under `(*CRLF)`, a search under `(*CRLF)`,
+  `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n`, and `(*NOTEMPTY)` and
+  `(*NOTEMPTY_ATSTART)`, which refuse an empty match without the JIT and which PHP's JIT ignores.
+  `matchEquivalent()` reads the same flags except `m`, which
   it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and refuses
   `(*CRLF)` in any pattern: under it the dot reads a `\r` alone but not one before a `\n`.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,

@@ -166,12 +166,14 @@ CHANGELOG
    such a rewrite.
  * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
    `compile()` read `^` and `$` under `m`, and `$` and `\Z`, under `(*CR)`,
-   `(*NUL)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they were
-   refused: a line ends at `\r` under the first, at NUL under the second,
-   and under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
+   `(*NUL)`, `(*CRLF)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they
+   were refused: a line ends at `\r` under the first, at NUL under the
+   second, at `\r\n` and at neither character alone under the third, and
+   under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
    at the vertical tab, the form feed and NEL too, and at U+2028 and U+2029
    under `/u`. `^` then holds between a `\r` and a `\n`:
-   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`. `(*CRLF)` stays refused there.
+   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`, where `/(*CRLF)\r^\n/m` matches
+   nothing, and `/(*CRLF)a$/` matches `"a\r\n"` and not `"a\r"`.
  * A search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match
    only from between a `\r` and the `\n` after it is refused: PCRE2 skips
    that start where the pattern writes neither, and after its first try

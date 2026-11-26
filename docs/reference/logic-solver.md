@@ -477,7 +477,10 @@ among many. Anchors at the edges, `\A` leading every alternative of a search or 
 closing it, still cost nothing.
 
 The newline is the one the pattern's options set, the last of them holding: `\r` under
-`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*ANYCRLF)` a `\r` and a `\n`
+`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*CRLF)` a line ends at `\r\n`
+and at neither character alone: `^` holds after the two, `$` before them, and `\Z` before a
+final `"\r\n"`, so `/(*CRLF)a$/` matches `"a\r\n"` and neither `"a\r"` nor `"a\n"`, and
+`/(*CRLF)\r^\n/m` matches nothing. Under `(*ANYCRLF)` a `\r` and a `\n`
 each end a line, and `\r\n` ends one too; under `(*ANY)` so do the vertical tab, the form
 feed and NEL (`\x85`, U+0085 under `/u`), and under `/u` the line and paragraph separators
 U+2028 and U+2029. So under the last two `^` holds between a `\r` and a `\n`, and `$`
@@ -490,8 +493,8 @@ start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
 `/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
 `"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
 of the whole string starts at its start, and is read whatever the pattern. `(*CRLF)`,
-under which a line ends at `\r\n` alone and the dot reads a `\r` alone but not one before
-a `\n`, stays out where an anchor or a dot reads it.
+under which the dot reads a `\r` alone but not one before a `\n`, stays out where a dot
+reads it.
 
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
@@ -518,7 +521,6 @@ verbatim:
 | without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
 | `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
 | a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
@@ -807,11 +809,10 @@ Use this to surface safe failure messages in CI or tooling.
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` is refused, and so is `(*CRLF)` where `$`, `\Z`,
-  `/m`, `(?m)`, a dot or `\N` would read it, and a search under `(*CRLF)`, `(*ANYCRLF)` or
-  `(*ANY)` that may find a match only from between a `\r` and a `\n`, and so are
-  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. The other conventions move the anchors as the
-  engine does.
+  change nothing a language says. `A` is refused, and so is a dot or `\N` under `(*CRLF)`,
+  and a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from
+  between a `\r` and a `\n`, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. Every
+  newline convention moves the anchors as the engine does.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.

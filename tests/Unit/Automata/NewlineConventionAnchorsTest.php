@@ -26,10 +26,10 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * "^" and "$" under /m, "$" and "\Z" read where lines end, which the newline
- * convention says: "\r" under (*CR), NUL under (*NUL), "\r", "\n" or "\r\n"
- * under (*ANYCRLF), and those or "\x0B", "\x0C", "\x85", and U+2028 and
- * U+2029 under /u, under (*ANY). Under the last two "^" holds between "\r"
- * and "\n", and "$" too.
+ * convention says: "\r" under (*CR), NUL under (*NUL), "\r\n" and neither
+ * of the two alone under (*CRLF), "\r", "\n" or "\r\n" under (*ANYCRLF),
+ * and those or "\x0B", "\x0C", "\x85", and U+2028 and U+2029 under /u, under
+ * (*ANY). Under the last two "^" holds between "\r" and "\n", and "$" too.
  */
 final class NewlineConventionAnchorsTest extends TestCase
 {
@@ -112,9 +112,9 @@ final class NewlineConventionAnchorsTest extends TestCase
     }
 
     /**
-     * Under (*CRLF) the dot reads a "\r" alone but not one before a "\n",
-     * and a line ends at "\r\n" alone: neither is read, so both stay out.
-     * Read as the contrast pattern reads it, the subject would hold a match.
+     * Under (*CRLF) the dot reads a "\r" alone but not one before a "\n":
+     * it is not read, and stays out. Read as the contrast pattern reads it,
+     * the subject would hold a match.
      */
     #[Test]
     #[DataProvider('provideCrLfConstructs')]
@@ -158,6 +158,31 @@ final class NewlineConventionAnchorsTest extends TestCase
             'capital Z under (*NUL)' => ['(*NUL)', 'a\Z', ''],
             'dollar before more under (*NUL)' => ['(*NUL)', 'a$[\0\n]?', ''],
             'nul inline multiline among other options' => ['(*NUL)', '(?im)^a', ''],
+            // "\r\n" ends a line, and neither character does alone: "^" holds
+            // after the two, "$" before them, and nothing between them.
+            'line start under (*CRLF)' => ['(*CRLF)', '^b', 'm'],
+            'line end under (*CRLF)' => ['(*CRLF)', 'a$', 'm'],
+            'an empty line under (*CRLF)' => ['(*CRLF)', '^$', 'm'],
+            'a whole line under (*CRLF)' => ['(*CRLF)', '^a\n?$', 'm'],
+            'a line start between cr and lf under (*CRLF)' => ['(*CRLF)', '\r^\n', 'm'],
+            'a line start after cr and lf' => ['(*CRLF)', '\r\n^b?', 'm'],
+            'a line start after a line feed under (*CRLF)' => ['(*CRLF)', 'a\n^b', 'm'],
+            'a line end before cr and lf' => ['(*CRLF)', 'a$\r\n', 'm'],
+            'a line end before a carriage return under (*CRLF)' => ['(*CRLF)', 'a$\r?b?', 'm'],
+            'a line end between cr and lf under (*CRLF)' => ['(*CRLF)', 'a\r$', 'm'],
+            'a line end then start under (*CRLF)' => ['(*CRLF)', 'a$\r\n^b', 'm'],
+            'dollar under (*CRLF)' => ['(*CRLF)', 'a$', ''],
+            'dollar after a carriage return under (*CRLF)' => ['(*CRLF)', 'a\r$', ''],
+            'dollar before more under (*CRLF)' => ['(*CRLF)', 'a$\r?\n?b?', ''],
+            'dollar or a letter under (*CRLF)' => ['(*CRLF)', 'a(?:$|b)', ''],
+            'capital Z under (*CRLF)' => ['(*CRLF)', 'a\Z', ''],
+            'capital Z before more under (*CRLF)' => ['(*CRLF)', 'a\Z\r?\n?b?', ''],
+            'dollar under D and (*CRLF)' => ['(*CRLF)', 'a$\r?\n?', 'D'],
+            'dollar under D and m and (*CRLF)' => ['(*CRLF)', 'a$\r?\n?', 'mD'],
+            'inline multiline under (*CRLF)' => ['(*CRLF)', '(?m)^a', ''],
+            'multiline group under (*CRLF)' => ['(*CRLF)', 'b(?m:^a)?', ''],
+            'crlf multiline turned on after a reset' => ['(*CRLF)', '(?^m)\0|a$', ''],
+            'multiline with no anchor under (*CRLF)' => ['(*CRLF)', 'ab', 'm'],
             // "\r", "\n" and "\r\n" each end a line: "^" holds between "\r"
             // and "\n", and "$" before the "\n".
             'line start under (*ANYCRLF)' => ['(*ANYCRLF)', '^b', 'm'],
@@ -180,6 +205,8 @@ final class NewlineConventionAnchorsTest extends TestCase
             // The last convention the options name holds.
             'a carriage return named after a line feed' => ['(*LF)(*ANYCRLF)', 'a$\r', 'm'],
             'a line feed named after a carriage return' => ['(*CR)(*LF)', 'a$\n?', 'm'],
+            'cr and lf named after a line feed' => ['(*LF)(*CRLF)', 'a$\r?\n?', 'm'],
+            'a line feed named after cr and lf' => ['(*CRLF)(*LF)', 'a$\r?\n?', 'm'],
         ];
         foreach ($rows as $name => [$options, $body, $flags]) {
             yield $name => ['options' => $options, 'body' => $body, 'flags' => $flags, 'letters' => self::BYTES, 'length' => 5];
@@ -240,10 +267,7 @@ final class NewlineConventionAnchorsTest extends TestCase
      */
     public static function provideCrLfConstructs(): iterable
     {
-        $newline = 'A newline convention other than "\n" moves where';
         $dot = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n"';
-        yield 'a dollar under (*CRLF)' => ['pattern' => '/(*CRLF)a\r$/', 'contrast' => '/a\r$/', 'subject' => "a\r\n", 'message' => $newline];
-        yield 'a line start under (*CRLF)' => ['pattern' => '/(*CRLF)\r^\n/m', 'contrast' => '/(*ANYCRLF)\r^\n/m', 'subject' => "\r\n", 'message' => $newline];
         yield 'a dot under (*CRLF)' => ['pattern' => '/(*CRLF)a.\n/', 'contrast' => '/(*CRLF)a.\n/s', 'subject' => "a\r\n", 'message' => $dot];
         yield 'no newline under (*CRLF)' => ['pattern' => '/(*CRLF)a\N\n/', 'contrast' => '/(*CRLF)a[^\n]\n/', 'subject' => "a\r\n", 'message' => $dot];
     }

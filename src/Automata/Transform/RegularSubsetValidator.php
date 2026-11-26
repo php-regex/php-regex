@@ -83,8 +83,8 @@ final class RegularSubsetValidator
     /**
      * "$", "\Z" and the multiline anchors read where lines end, which a start
      * option such as "(*CR)" moves: the match solver reads the newline "\n"
-     * only, the automata every convention but "(*CRLF)". The last convention
-     * the options name holds.
+     * only, the automata every convention. The last convention the options
+     * name holds.
      *
      * @internal the match solver asks it
      *
@@ -120,10 +120,11 @@ final class RegularSubsetValidator
     }
 
     /**
-     * The automata read the lines of every convention but "(*CRLF)", under
-     * which a line ends at "\r\n" alone, and the dot and "\N" read a "\r"
-     * alone but not one before a "\n": "/(*CRLF)a.\n/" finds no match in
-     * "a\r\n". The last convention the options name holds.
+     * The automata read the lines of every convention, those of "(*CRLF)"
+     * too, which end at "\r\n" alone. Under it the dot and "\N" read a "\r"
+     * alone but not one before a "\n", which they do not read:
+     * "/(*CRLF)a.\n/" finds no match in "a\r\n". The last convention the
+     * options name holds.
      *
      * @throws ComplexityException
      */
@@ -137,8 +138,6 @@ final class RegularSubsetValidator
         if (null !== $dot) {
             throw new ComplexityException(self::CRLF_DOT_MESSAGE, $dot->getStartPosition(), $pattern);
         }
-
-        self::assertNewlineConvention($regex, $pattern);
     }
 
     /**
