@@ -247,6 +247,18 @@ final class CharacterTables
     }
 
     /**
+     * The other case of a byte, or the byte itself, as a class of several
+     * bytes is compiled with it on every release: null where the tables of
+     * either side of 10.43 hold it otherwise. What the interpreter reads
+     * of a character matched alone, which settledOtherCase() answers for,
+     * does not reach such a class.
+     */
+    public function classOtherCase(int $byte): ?int
+    {
+        return $this->casesBefore143[$byte] !== $this->casesFrom1043[$byte] ? null : \ord($this->casesFrom1043[$byte]);
+    }
+
+    /**
      * Whether the tables of either side of 10.43 give the second byte as
      * the other case of the first.
      */
