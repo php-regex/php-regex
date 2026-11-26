@@ -63,6 +63,8 @@
       url: /guides/symfony/
     - title: LSP
       url: /guides/lsp/
+    - title: MCP
+      url: /guides/mcp/
     - title: CLI
       url: /guides/cli/
 - title: Concepts

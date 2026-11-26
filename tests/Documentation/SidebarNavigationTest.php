@@ -58,4 +58,26 @@ final class SidebarNavigationTest extends TestCase
         $opens = (string) preg_replace('/\{% if page\.parent and page\.parent == (?:item|child)\.url %\}\{% assign open_group = true %\}\{% endif %\}/', '', $sidebar);
         $this->assertStringNotContainsString('page.parent', $opens, 'The parent opens the group, and nothing else in the list reads it: no link stands as the page.');
     }
+
+    /**
+     * A guide the sidebar does not list is a guide a reader never finds:
+     * every page of docs/guides stands in the navigation, under the address
+     * the site gives it.
+     */
+    #[Test]
+    public function test_every_guide_is_in_the_navigation(): void
+    {
+        $navigation = (string) file_get_contents(__DIR__.'/../../docs/_data/nav.yml');
+        preg_match_all('~^\s*-?\s*url: (/guides/[^\s]+/)$~m', $navigation, $listed);
+        $this->assertNotEmpty($listed[1], 'The navigation lists the guides.');
+
+        foreach (glob(__DIR__.'/../../docs/guides/*.md') ?: [] as $guide) {
+            $name = basename($guide, '.md');
+            if ('index' === $name) {
+                continue;
+            }
+
+            $this->assertContains('/guides/'.$name.'/', $listed[1], $guide.' is listed in the sidebar.');
+        }
+    }
 }
