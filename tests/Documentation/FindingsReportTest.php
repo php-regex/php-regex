@@ -142,7 +142,7 @@ final class FindingsReportTest extends TestCase
             'rule' => 'regex.lint.flag.useless.s',
             'message' => "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
             'hint' => null,
-            'docs' => 'https://php-regex.com/reference/rules/#useless-flag-s-dotall',
+            'docs' => 'https://php-regex.com/reference/rules/useless-flag-s-dotall/',
         ]], $finding['issues']);
         $this->assertSame('#^v\d+#i', $finding['rewrite']['optimized'] ?? null, 'The optimizer\'s own rewrite, as the linter printed it.');
         $this->assertNull($finding['witness']);

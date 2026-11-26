@@ -152,7 +152,7 @@ it reports, whether it runs by default and the section of the docs that
 explains it. Add the rule to `LINT_RULES`, last:
 
 ```php
-RedundantLookaroundRule::ID => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false, 'https://php-regex.com/reference/rules/#lookaround-inside-a-lookaround'],
+RedundantLookaroundRule::ID => ['Report a lookaround at the edge of a lookaround read the same way, which can hold its body (style).', false, 'https://php-regex.com/reference/rules/lookaround-inside-a-lookaround/'],
 ```
 
 Everything else reads the catalogue:
@@ -198,12 +198,19 @@ expected tips end with the new `Read more:` line.
 
 ## Step 5: Document It
 
-- **`docs/reference/rules.md`**: a section under the rule's area, with its
-  heading (the one the catalogue links to), then **Identifier:** (with
+- **`docs/reference/rules/<slug>.md`**: a page of its own, named after the
+  slug the catalogue links to, with its heading, then **Identifier:** (with
   "off by default" when it is), **When it triggers:**, **Message:**,
-  **Example:** and **Fix:**, and a row in the Quick Reference Table.
-  `SonarParityReferenceTest` checks the rows of the rules mapped to a
-  SonarPHP rule.
+  **Example:** and **Fix:**. Its front matter names a `description` (what a
+  search result shows), a `head_title`, `parent: /reference/rules/`, the
+  `rule_category` (its area, as the reference spells it), its `rule_order`
+  there and its `rule_ids`. A link that opens the pattern in the playground
+  ends the page, on a pattern the rule speaks on. `RulePagesTest` reads all
+  of it.
+- **`docs/reference/rules.md`**: a row in the Quick Reference Table. The
+  reference lists the page under its area on its own, from its front
+  matter. `SonarParityReferenceTest` checks the rows of the rules mapped to
+  a SonarPHP rule.
 - **`docs/guides/lsp.md`**: a row in the table of diagnostic codes, with the
   LSP severity its `LintSeverity` maps to.
 - **`docs/reference/diagnostics-cheatsheet.md`**: a quick fix, when the
@@ -350,7 +357,7 @@ is missed:
 | `src/Linter/Rule/LintRuleRegistry.php` | the registration | `LintRuleRegistryTest`, `LintRuleExamplesTest` |
 | `src/Linter/Rule/RuleCatalog.php` | the description, the default, the docs link | `RuleCatalogTest`, `LintRuleConfigurationTest` |
 | `src/Linter/regex.schema.json` | written from the definition | `LintConfigSchemaTest` |
-| `docs/reference/rules.md` | the section and the Quick Reference row | `RuleDocsAnchorsTest` for the heading the link names |
+| `docs/reference/rules/<slug>.md`, `docs/reference/rules.md` | the page of the rule, and the Quick Reference row | `RulePagesTest`; `RuleDocsAnchorsTest` for the page the link names |
 | `docs/guides/lsp.md` | the row of diagnostic codes | nothing: check it by hand |
 | `src/Linter/README.md`, `src/Cli/README.md`, `src/PHPStan/README.md` | the rule count, and the list of rules off by default | `LintRuleInventoryTest` |
 | `CHANGELOG.md`, `src/Linter/CHANGELOG.md` | the entries | `LintRuleInventoryTest`, for a rule off by default |

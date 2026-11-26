@@ -15,11 +15,11 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use PHPRegex\Toolkit\Regex;
 
 /**
  * Each issue the rule reference documents has a page of its own: one
@@ -47,9 +47,9 @@ final class RulePagesTest extends TestCase
     {
         $this->assertFileExists(self::PAGES.$slug.'.md', \sprintf('%s links to the rule page %s, which no file of docs/reference/rules builds.', $id, $slug));
 
-        [$front, $body] = self::read(self::PAGES.$slug.'.md');
-        $this->assertContains($id, $front['rule_ids'] ?? [], $slug.' declares the identifiers it documents.');
-        $this->assertStringContainsString('`'.$id.'`', $body, $slug.' names '.$id.' in its text.');
+        $page = $this->read(self::PAGES.$slug.'.md');
+        $this->assertContains($id, $page['ids'], $slug.' declares the identifiers it documents.');
+        $this->assertStringContainsString('`'.$id.'`', $page['body'], $slug.' names '.$id.' in its text.');
     }
 
     /**
@@ -64,68 +64,55 @@ final class RulePagesTest extends TestCase
         }
     }
 
-    #[Test]
-    public function test_the_rule_reference_has_pages(): void
-    {
-        $this->assertNotEmpty(glob(self::PAGES.'*.md') ?: [], 'The rule reference has a page of its own for its rules.');
-    }
-
-    #[Test]
-    #[DataProvider('provideRulePages')]
-    public function test_a_rule_page_carries_what_the_index_and_a_search_result_read(string $slug): void
-    {
-        [$front, $body] = self::read(self::PAGES.$slug.'.md');
-
-        $this->assertSame('/reference/rules/', $front['parent'] ?? null, $slug.' hangs under the rule reference.');
-        $this->assertContains(self::anchor((string) ($front['rule_category'] ?? '')), self::indexSections(), $slug.' names a section of the index.');
-        $this->assertIsInt($front['rule_order'] ?? null, $slug.' has its place in its section.');
-        $this->assertNotEmpty($front['rule_ids'] ?? [], $slug.' documents at least one identifier.');
-        foreach ($front['rule_ids'] ?? [] as $id) {
-            $this->assertSame($slug, self::slugOf(RuleCatalog::docsUrls()[$id] ?? ''), $slug.' is the page the catalogue links '.$id.' to.');
-        }
-
-        $description = $front['description'] ?? null;
-        $this->assertIsString($description, $slug.' has a description.');
-        $this->assertMatchesRegularExpression('/^.{70,160}$/s', $description, $slug.': a description a search result keeps whole.');
-
-        $title = $front['head_title'] ?? null;
-        $this->assertIsString($title, $slug.' names the title search engines read.');
-        $this->assertLessThanOrEqual(52, \strlen($title), $slug.': the title tag stays under sixty characters with the site name.');
-        $this->assertDoesNotMatchRegularExpression('/[`]/', $title, $slug.': a title tag holds no markup.');
-
-        $this->assertStringStartsWith('# ', $body, $slug.' opens on its heading.');
-        $this->assertStringContainsString('**Identifier:**', $body, $slug.' names the identifier in its text.');
-    }
-
     /**
      * @return iterable<string, array{slug: string}>
      */
     public static function provideRulePages(): iterable
     {
-        foreach (glob(self::PAGES.'*.md') ?: [] as $page) {
+        $pages = glob(self::PAGES.'*.md') ?: [];
+        \assert([] !== $pages, 'The rule reference has a page of its own for its rules.');
+
+        foreach ($pages as $page) {
             $slug = basename($page, '.md');
             yield $slug => ['slug' => $slug];
         }
     }
 
     #[Test]
-    public function test_no_two_rule_pages_share_a_title_or_a_description(): void
+    #[DataProvider('provideRulePages')]
+    public function test_a_rule_page_carries_what_the_index_and_a_search_result_read(string $slug): void
+    {
+        $page = $this->read(self::PAGES.$slug.'.md');
+
+        $this->assertSame('/reference/rules/', $page['parent'], $slug.' hangs under the rule reference.');
+        $this->assertContains(self::anchor($page['category']), self::indexSections(), $slug.' names a section of the index.');
+        $this->assertNotEmpty($page['ids'], $slug.' documents at least one identifier.');
+        foreach ($page['ids'] as $id) {
+            $this->assertSame($slug, self::slugOf(RuleCatalog::docsUrls()[$id] ?? ''), $slug.' is the page the catalogue links '.$id.' to.');
+        }
+
+        $this->assertMatchesRegularExpression('/^.{70,160}$/s', $page['description'], $slug.': a description a search result keeps whole.');
+        $this->assertLessThanOrEqual(52, \strlen($page['title']), $slug.': the title tag stays under sixty characters with the site name.');
+        $this->assertDoesNotMatchRegularExpression('/[`]/', $page['title'], $slug.': a title tag holds no markup.');
+
+        $this->assertStringStartsWith('# ', $page['body'], $slug.' opens on its heading.');
+        $this->assertStringContainsString('**Identifier:**', $page['body'], $slug.' names the identifier in its text.');
+    }
+
+    #[Test]
+    public function test_no_two_rule_pages_share_a_title_a_description_or_a_place(): void
     {
         $titles = $descriptions = $places = [];
-        foreach (glob(self::PAGES.'*.md') ?: [] as $page) {
-            [$front] = self::read($page);
-            $slug = basename($page, '.md');
+        foreach (glob(self::PAGES.'*.md') ?: [] as $file) {
+            $page = $this->read($file);
+            $slug = basename($file, '.md');
 
-            $title = $front['head_title'] ?? null;
-            $description = $front['description'] ?? null;
-            $this->assertIsString($title, $slug.' names one title.');
-            $this->assertIsString($description, $slug.' names one description.');
-            $this->assertArrayNotHasKey($title, $titles, $slug.' shares its title with '.($titles[$title] ?? '').'.');
-            $titles[$title] = $slug;
-            $this->assertArrayNotHasKey($description, $descriptions, $slug.' shares its description with '.($descriptions[$description] ?? '').'.');
-            $descriptions[$description] = $slug;
+            $this->assertArrayNotHasKey($page['title'], $titles, $slug.' shares its title with '.($titles[$page['title']] ?? '').'.');
+            $titles[$page['title']] = $slug;
+            $this->assertArrayNotHasKey($page['description'], $descriptions, $slug.' shares its description with '.($descriptions[$page['description']] ?? '').'.');
+            $descriptions[$page['description']] = $slug;
 
-            $place = ($front['rule_category'] ?? '').':'.($front['rule_order'] ?? '');
+            $place = $page['category'].':'.$page['order'];
             $this->assertArrayNotHasKey($place, $places, $slug.' stands where '.($places[$place] ?? '').' stands.');
             $places[$place] = $slug;
         }
@@ -137,7 +124,7 @@ final class RulePagesTest extends TestCase
     #[DataProvider('provideRulePages')]
     public function test_a_pattern_a_page_sends_to_the_playground_is_the_one_its_link_spells(string $slug): void
     {
-        [, $body] = self::read(self::PAGES.$slug.'.md');
+        $body = $this->read(self::PAGES.$slug.'.md')['body'];
 
         $matched = preg_match_all('/\[Open `([^`]+)` in the playground\]\(\/#pattern=([^)&\s]+)&subject=([^)\s]*)\)/', $body, $links, \PREG_SET_ORDER);
         $this->assertNotFalse($matched);
@@ -146,8 +133,25 @@ final class RulePagesTest extends TestCase
         foreach ($links as [, $spelled, $pattern, $subject]) {
             $this->assertSame($spelled, rawurldecode($pattern), $slug.': the link opens the pattern its text spells.');
             $this->assertTrue(mb_check_encoding((string) rawurldecode($subject), 'UTF-8'), $slug.': the subject decodes as text.');
-            $this->assertStringContainsString('`'.$spelled.'`', $body, $slug.' shows the pattern it opens.');
         }
+    }
+
+    /**
+     * A page that promises the finding shows it: the rule of the page,
+     * on by default, speaks on the pattern the link opens. A pattern the
+     * rule stays silent on would open on a tab with nothing to see.
+     */
+    #[Test]
+    #[DataProvider('provideRulePages')]
+    public function test_a_pattern_a_page_promises_the_finding_of_makes_its_rule_speak(string $slug): void
+    {
+        $page = $this->read(self::PAGES.$slug.'.md');
+        if (1 !== preg_match('/\[Open `([^`]+)` in the playground\]\([^)]*\): the finding is in the Diagnostics tab\./', $page['body'], $link)) {
+            return;
+        }
+
+        $spoken = array_map(static fn (RuleViolation $violation): string => $violation->id, Regex::create()->lint($link[1]));
+        $this->assertNotEmpty(array_intersect($page['ids'], $spoken), $slug.': its rule speaks on the pattern it sends to the playground.');
     }
 
     #[Test]
@@ -163,26 +167,44 @@ final class RulePagesTest extends TestCase
     }
 
     /**
-     * A page that promises the finding shows it: the rule of the page,
-     * on by default, speaks on the pattern the link opens. A pattern the
-     * rule stays silent on would open on a tab with nothing to see.
+     * The reference is an index: it lists the pages by section, it keeps
+     * no section of a rule (the page holds it), and each entry carries the
+     * anchor of the heading the catalogue linked to before the rules had
+     * pages. A link printed then, and a rule the playground names by its
+     * identifier, open the page of the rule.
      */
     #[Test]
-    #[DataProvider('provideRulePages')]
-    public function test_a_pattern_a_page_promises_the_finding_of_makes_its_rule_speak(string $slug): void
+    public function test_the_reference_lists_the_pages_and_sends_an_old_link_to_the_page_of_its_rule(): void
     {
-        [$front, $body] = $this->read(self::PAGES.$slug.'.md');
-        if (1 !== preg_match('/\[Open `([^`]+)` in the playground\]\([^)]*\): the finding is in the Diagnostics tab\./', $body, $link)) {
-            return;
-        }
+        $index = (string) file_get_contents(self::INDEX);
 
-        $spoken = array_map(static fn (RuleViolation $violation): string => $violation->id, Regex::create()->lint($link[1]));
-        $this->assertNotEmpty(array_intersect($front['rule_ids'], $spoken), $slug.': its rule speaks on the pattern it sends to the playground.');
+        $this->assertStringNotContainsString('**Identifier:**', $index, 'The section of a rule is on the page of the rule.');
+        $sections = [];
+        foreach (glob(self::PAGES.'*.md') ?: [] as $file) {
+            $sections[$this->read($file)['category']] = true;
+        }
+        foreach (array_keys($sections) as $section) {
+            $this->assertIsString($section);
+            $this->assertStringContainsString('{%- assign rule_pages = site.pages | where: "rule_category", "'.$section.'" | sort: "rule_order" -%}', $index, 'The index lists the pages of '.$section.'.');
+        }
+        $this->assertStringContainsString('<ul class="rule-index">', $index, 'The entries are a list.');
+        $this->assertStringContainsString('{%- for p in rule_pages -%}', $index);
+        $this->assertStringContainsString('<a href="{{ p.url }}">{{ p.title }}</a>', $index, 'An entry links to its page.');
+        $this->assertStringContainsString('<code>{{ id }}</code>', $index, 'An entry names the identifiers the rule is reported under.');
+        $this->assertStringContainsString("<li id=\"{{ p.path | split: '/' | last | remove: '.md' }}\">", $index, 'An entry carries the anchor of its heading.');
+        $this->assertStringContainsString('window.location.replace(link.href)', $index, 'An old link goes on to the page of the rule.');
+
+        $script = (string) file_get_contents(self::DOCS.'assets/js/filter.js');
+        $this->assertStringContainsString('input.dataset.items', $script, 'The filter narrows the entries a page names, as it narrows heading blocks.');
+
+        $playground = (string) file_get_contents(self::DOCS.'assets/js/playground.js');
+        $this->assertStringContainsString("link.href = '/reference/rules/#' + finding.id;", $playground, 'A finding of the playground names its rule to the reference, which opens the page of the rule.');
     }
 
     /**
-     * The page of a rule, as the catalogue's link names it: the anchor of
-     * the page it shares today, or the page of its own.
+     * The page of a rule, as the catalogue's link names it: its own
+     * address, or the anchor of the page it shared before the rules had
+     * pages.
      */
     private static function slugOf(string $url): string
     {
@@ -220,39 +242,59 @@ final class RulePagesTest extends TestCase
     }
 
     /**
-     * A page's front matter, read as the few shapes these pages write, and
-     * its text.
+     * A rule page: what its front matter names, under the types the site
+     * reads it with, and its text.
      *
-     * @return array{array<string, mixed>, string}
+     * @return array{description: string, title: string, parent: string, category: string, order: int, ids: list<string>, body: string}
      */
-    private function read(string $page): array
+    private function read(string $file): array
     {
-        $text = (string) file_get_contents($page);
-        $this->assertSame(1, preg_match('/\A---\n(.*?)\n---\n(.*)\z/s', $text, $parts), $page.' opens with a front matter.');
+        $text = (string) file_get_contents($file);
+        $this->assertSame(1, preg_match('/\A---\n(.*?)\n---\n(.*)\z/s', $text, $parts), $file.' opens with a front matter.');
+
+        // A quoted value is JSON, a bare one is written as it reads.
+        $scalar = static function (string $value): mixed {
+            if ('"' === $value[0]) {
+                return json_decode($value, true, flags: \JSON_THROW_ON_ERROR);
+            }
+
+            return \is_numeric($value) ? (int) $value : $value;
+        };
 
         $front = [];
-        $list = null;
-        foreach ( explode("\n", $parts[1]) as $line) {
-            if (1 === preg_match('/^(\w+): (.*)$/', $line, $field)) {
-                $list = null;
-                $front[$field[1]] = match (true) {
-                    '"' === $field[2][0], '[' === $field[2][0] => json_decode($field[2], true),
-                    \is_numeric($field[2]) => (int) $field[2],
-                    default => $field[2],
-                };
-                continue;
-            }
-            if (1 === preg_match('/^(\w+):$/', $line, $field)) {
-                $list = $field[1];
-                $front[$list] = [];
-
-                continue;
-            }
-            if (null !== $list && 1 === preg_match('/^  - (.+)$/', $line, $item)) {
-                $front[$list][] = trim($item[1], '"\\');
+        $ids = [];
+        $inIds = false;
+        foreach (explode("\n", $parts[1]) as $line) {
+            if (1 === preg_match('/^(\w+): (.+)$/', $line, $field)) {
+                $inIds = false;
+                $front[$field[1]] = $scalar($field[2]);
+            } elseif (1 === preg_match('/^(\w+):$/', $line, $field)) {
+                $inIds = 'rule_ids' === $field[1];
+            } elseif ($inIds && 1 === preg_match('/^  - (.+)$/', $line, $item)) {
+                $ids[] = $item[1];
             }
         }
 
-        return [$front, $parts[2]];
+        $description = $front['description'] ?? null;
+        $this->assertIsString($description, $file.' names a description.');
+        $title = $front['head_title'] ?? null;
+        $this->assertIsString($title, $file.' names a title.');
+        $parent = $front['parent'] ?? null;
+        $this->assertIsString($parent, $file.' names the page it hangs under.');
+        $category = $front['rule_category'] ?? null;
+        $this->assertIsString($category, $file.' names its section.');
+        $order = $front['rule_order'] ?? null;
+        $this->assertIsInt($order, $file.' names its place in its section.');
+        $this->assertNotEmpty($ids, $file.' lists its identifiers.');
+
+        return [
+            'description' => $description,
+            'title' => $title,
+            'parent' => $parent,
+            'category' => $category,
+            'order' => $order,
+            'ids' => $ids,
+            'body' => $parts[2],
+        ];
     }
 }

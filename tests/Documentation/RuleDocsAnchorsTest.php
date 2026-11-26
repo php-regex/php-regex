@@ -21,9 +21,11 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The link each issue carries lands on a page of php-regex.com that the
- * docs tree builds, on a heading that page generates, and that heading's
- * section names the issue: an anchor the site does not generate opens the
- * top of the page, a page the docs no longer hold opens a 404.
+ * docs tree builds and that names the issue: the page of the rule under
+ * the rule reference, or a section of a guide, on a heading that page
+ * generates. A page the docs do not hold opens a 404; a page that names
+ * another issue explains another one; an anchor the site does not
+ * generate opens the top of the page.
  */
 #[Group('documentation')]
 final class RuleDocsAnchorsTest extends TestCase
@@ -34,17 +36,21 @@ final class RuleDocsAnchorsTest extends TestCase
 
     #[Test]
     #[DataProvider('provideDocsUrls')]
-    public function test_the_link_of_an_issue_lands_on_a_heading_whose_section_names_it(string $id, string $url): void
+    public function test_the_link_of_an_issue_lands_on_a_page_that_names_it(string $id, string $url): void
     {
         $this->assertStringStartsWith(self::SITE, $url);
-        $this->assertSame(1, preg_match('~^'.preg_quote(self::SITE, '~').'((?:[a-z0-9-]+/)+)#([a-z0-9-]+)$~', $url, $parts), $url.' is no page of the site with an anchor.');
+        $this->assertSame(1, preg_match('~^'.preg_quote(self::SITE, '~').'((?:[a-z0-9-]+/)+)(?:#([a-z0-9-]+))?$~', $url, $parts), $url.' is no page of the site.');
 
         $page = self::DOCS_ROOT.rtrim($parts[1], '/').'.md';
         $this->assertFileExists($page, \sprintf('%s links to %s, which no page of docs/ builds.', $id, $url));
 
-        $sections = self::sections((string) file_get_contents($page));
-        $this->assertArrayHasKey($parts[2], $sections, \sprintf('%s links to #%s, which no heading of %s generates.', $id, $parts[2], $page));
-        $this->assertStringContainsString('`'.$id.'`', $sections[$parts[2]], \sprintf('The section #%s does not name %s.', $parts[2], $id));
+        $text = (string) file_get_contents($page);
+        if (isset($parts[2])) {
+            $sections = self::sections($text);
+            $this->assertArrayHasKey($parts[2], $sections, \sprintf('%s links to %s, which no heading of %s generates.', $id, $url, $page));
+            $text = $sections[$parts[2]];
+        }
+        $this->assertStringContainsString('`'.$id.'`', $text, \sprintf('%s links to %s, which does not name it.', $id, $url));
     }
 
     /**

@@ -20,7 +20,9 @@ that keeps braces from a count, `a{(?:)2}`, `a{1,(?:)2}` or `a{(?:),2}` (`{,2}` 
 quantifier since PCRE2 10.43); and one a quantifier repeats: `a(?:)?` matches `a` alone,
 `a?` the empty string too. An unbounded repeat of an empty group, `(?>)+`, is
 `regex.lint.quantifier.emptyRepeat`'s. So is an empty group PCRE2 enters to choose which
-repeats it makes possessive: `/a+(?>(?:)|b)a/` finds `aa`, where `/a+(?>|b)a/` finds nothing.
+repeats it makes possessive: `/a+(?>(?:)|b)a/` finds `aa`, where `/a+(?>|b)a/` finds nothing,
+and one inside a group a call runs that repeats something, or in a pattern that calls itself
+whole: with the JIT, `/(a+(?:)c)x(?1)d/` finds `acxacd` in `acxacxacd`, `/(a+c)x(?1)d/` nothing.
 
 **Example:**
 ```php

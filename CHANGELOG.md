@@ -157,7 +157,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - More lint rules, off by default: `regex.lint.anchor.dollarNewline`, `regex.lint.quantifier.uselessLazy`, `regex.lint.lookaround.edgeQuantifier`, `regex.lint.lookaround.redundant`.
 - `regex.lint.complexity` on demand (`checks.complexity`), and the ReDoS verdict as `regex.lint.redos` and `regex.lint.redos.search`.
 - `checks` in `regex.json` (`checks.lint.rules`, `checks.redos`, `checks.optimizations`, `checks.validation`), each check an object switched by its `enabled` key, `--lint`, `--no-lint`, `--enable-rule`, `--disable-rule`, `--redos`; a rule id is taken short or in full, and a misspelt one or a mistyped command is told the nearest name.
-- Every lint finding links to its section of [the rule reference](docs/reference/rules.md): `docs_url` in JSON, `Read more:` in GitHub and Checkstyle, `codeDescription` in the editor, the PHPStan tip.
+- Every lint finding links to the page of its rule in [the rule reference](docs/reference/rules.md): `docs_url` in JSON, `Read more:` in GitHub and Checkstyle, `codeDescription` in the editor, the PHPStan tip.
 - `@regex-target php>=8.4` and `@regex-target-next-line` narrow the versions a pattern is judged for; `PHP_VERSION_ID` and `version_compare()` guards do the same.
 - `@regex-ignore` takes the identifiers it silences, comma-separated.
 - `--pattern-function` and `extraction.functions` declare project helpers that carry a pattern; `--interop` and `--no-interop` choose the presets.

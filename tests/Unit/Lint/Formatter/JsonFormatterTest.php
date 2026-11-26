@@ -389,8 +389,8 @@ final class JsonFormatterTest extends TestCase
      */
     public static function provideIssuesWithTheirDocs(): iterable
     {
-        yield 'a lint rule' => ['issue' => LintIssueFixtures::finding(LintSeverity::Warning, 'Useless quantifier', 'regex.lint.quantifier.useless'), 'url' => 'https://php-regex.com/reference/rules/#useless-quantifier'];
-        yield 'the ReDoS verdict' => ['issue' => LintIssueFixtures::redos(LintSeverity::Error, 'ReDoS'), 'url' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking'];
+        yield 'a lint rule' => ['issue' => LintIssueFixtures::finding(LintSeverity::Warning, 'Useless quantifier', 'regex.lint.quantifier.useless'), 'url' => 'https://php-regex.com/reference/rules/useless-quantifier/'];
+        yield 'the ReDoS verdict' => ['issue' => LintIssueFixtures::redos(LintSeverity::Error, 'ReDoS'), 'url' => 'https://php-regex.com/reference/rules/catastrophic-backtracking/'];
         yield 'an invalid pattern' => ['issue' => LintIssueFixtures::invalid(), 'url' => null];
         yield 'an issue without identifier' => ['issue' => LintIssueFixtures::finding(LintSeverity::Warning, 'Something'), 'url' => null];
     }

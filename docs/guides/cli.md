@@ -2480,7 +2480,7 @@ vendor/bin/regex lint src/ --redos --redos-mode=confirmed --no-lint --no-optimiz
                     "severity": "error",
                     ...
                     "issue_id": "regex.lint.redos",
-                    "docs_url": "https://php-regex.com/reference/rules/#catastrophic-backtracking",
+                    "docs_url": "https://php-regex.com/reference/rules/catastrophic-backtracking/",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"a\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). ...",
                     "source": "preg_match()",
@@ -2541,7 +2541,7 @@ newline is `%0A`, a carriage return `%0D` and `%` is `%25`. In the `file` and
 `title` properties, `:` and `,` are escaped too, as `%3A` and `%2C`. A lint
 rule, a ReDoS verdict or another issue the [rule reference](../reference/rules.md)
 explains ends its message with `Read more: ` and the address of its section,
-as `https://php-regex.com/reference/rules/#useless-quantifier`.
+as `https://php-regex.com/reference/rules/useless-quantifier/`.
 
 ### Checkstyle (for CI)
 

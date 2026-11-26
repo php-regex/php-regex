@@ -41,9 +41,15 @@ final class RegexPatternRuleDocLinksTest extends TestCase
 
         foreach (self::constantMap('DOC_LINKS') as $concept => $url) {
             $page = self::docsPage($concept, $url);
-            $anchorsByPage[$page] ??= self::headingAnchors($page);
-
             $fragment = (string) parse_url($url, \PHP_URL_FRAGMENT);
+            if ('' === $fragment) {
+                // A concept that names a rule of the reference links to the page of that rule.
+                $this->assertFileExists(self::DOCS_ROOT.$page, \sprintf('The docs page %s does not exist.', $page));
+
+                continue;
+            }
+
+            $anchorsByPage[$page] ??= self::headingAnchors($page);
             $this->assertContains($fragment, $anchorsByPage[$page], \sprintf('%s links to %s#%s, which no heading of docs/%s generates.', $concept, $page, $fragment, $page));
         }
     }
@@ -58,12 +64,12 @@ final class RegexPatternRuleDocLinksTest extends TestCase
         $this->assertFalse((new \ReflectionClass(PatternChecker::class))->hasConstant('LINT_DOC_LINKS'));
 
         foreach ([
-            'regex.lint.quantifier.lazyEnd' => 'https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end',
-            'regex.lint.charclass.literalMetachar' => 'https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class',
-            'regex.lint.unicode.multibyteInClassWithoutU' => 'https://php-regex.com/reference/rules/#multibyte-character-in-a-class',
-            'regex.lint.unicode.quantifiedMultibyteWithoutU' => 'https://php-regex.com/reference/rules/#quantifier-after-a-multibyte-character',
-            'regex.lint.unicode.propertyWithoutU' => 'https://php-regex.com/reference/rules/#unicode-property-without-u',
-            'regex.lint.complexity' => 'https://php-regex.com/reference/rules/#complexity-threshold',
+            'regex.lint.quantifier.lazyEnd' => 'https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/',
+            'regex.lint.charclass.literalMetachar' => 'https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/',
+            'regex.lint.unicode.multibyteInClassWithoutU' => 'https://php-regex.com/reference/rules/multibyte-character-in-a-class/',
+            'regex.lint.unicode.quantifiedMultibyteWithoutU' => 'https://php-regex.com/reference/rules/quantifier-after-a-multibyte-character/',
+            'regex.lint.unicode.propertyWithoutU' => 'https://php-regex.com/reference/rules/unicode-property-without-u/',
+            'regex.lint.complexity' => 'https://php-regex.com/reference/rules/complexity-threshold/',
         ] as $issueId => $url) {
             $this->assertSame($url, RuleCatalog::docsUrl($issueId), $issueId);
         }
@@ -80,7 +86,7 @@ final class RegexPatternRuleDocLinksTest extends TestCase
 
         $this->assertSame(self::SITE.'tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers', $links['possessive quantifiers']);
         $this->assertSame(self::SITE.'tutorial/08-performance-redos/#use-atomic-groups-', $links['atomic groups']);
-        $this->assertSame(self::SITE.'reference/rules/#catastrophic-backtracking', $links['catastrophic backtracking']);
+        $this->assertSame(self::SITE.'reference/rules/catastrophic-backtracking/', $links['catastrophic backtracking']);
     }
 
     /**
@@ -121,7 +127,7 @@ final class RegexPatternRuleDocLinksTest extends TestCase
      */
     private static function docsPage(string $concept, string $url): string
     {
-        self::assertSame(1, preg_match('~^'.preg_quote(self::SITE, '~').'((?:[a-z0-9-]+/)+)#~', $url, $parts), \sprintf('%s does not link to a page of the docs site.', $concept));
+        self::assertSame(1, preg_match('~^'.preg_quote(self::SITE, '~').'((?:[a-z0-9-]+/)+)(?:#|$)~', $url, $parts), \sprintf('%s does not link to a page of the docs site.', $concept));
 
         return rtrim($parts[1], '/').'.md';
     }

@@ -39,18 +39,18 @@ final class RegexPatternRuleHighThresholdTest extends RuleTestCase
                     "\n".
                     "Read more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers\n".
                     "Read more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#use-atomic-groups-\n".
-                    'Read more about catastrophic backtracking: https://php-regex.com/reference/rules/#catastrophic-backtracking',
+                    'Read more about catastrophic backtracking: https://php-regex.com/reference/rules/catastrophic-backtracking/',
                 ),
             ],
             [
                 'Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.',
                 23,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk",
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/",
             ],
             [
                 'Quantified capturing group 1 "(a+)" with "+": only the last iteration\'s capture is retained.',
                 23,
-                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/#quantified-capturing-group",
+                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/quantified-capturing-group/",
             ],
             // Line 24 is a proven polynomial of degree >= 3, so high: reported at the 'high'
             // threshold (a…a!b fails at 4 pumps with the JIT on, 5 with it off, backtrack_limit
@@ -63,13 +63,13 @@ final class RegexPatternRuleHighThresholdTest extends RuleTestCase
                     'high, polynomial degree 60 (proven)',
                     true,
                     "Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity.\n".
-                    "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n\nRead more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers\nRead more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#use-atomic-groups-\nRead more about catastrophic backtracking: https://php-regex.com/reference/rules/#catastrophic-backtracking",
+                    "Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking.\n\nRead more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers\nRead more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#use-atomic-groups-\nRead more about catastrophic backtracking: https://php-regex.com/reference/rules/catastrophic-backtracking/",
                 ),
             ],
             [
                 'Concatenated quantifiers can be optimized when one character set is a subset of the other.',
                 24,
-                "The first quantifier can match zero times already: consider dropping the whole quantified term.\nRead more: https://php-regex.com/reference/rules/#optimal-quantifier-concatenation",
+                "The first quantifier can match zero times already: consider dropping the whole quantified term.\nRead more: https://php-regex.com/reference/rules/optimal-quantifier-concatenation/",
             ],
         ]);
     }

@@ -49,7 +49,7 @@ final class ErrorFactoryTest extends TestCase
             'Quantifier is useless.',
             'regex.lint.quantifier.useless',
             4,
-            "Remove it.\nRead more: https://php-regex.com/reference/rules/#useless-quantifier",
+            "Remove it.\nRead more: https://php-regex.com/reference/rules/useless-quantifier/",
             ErrorFactory::lintIssue('regex.lint.quantifier.useless', 'Quantifier is useless.', 'Remove it.', 4),
         );
         $this->assertError('Something.', 'regex.lint.nowhere', 4, null, ErrorFactory::lintIssue('regex.lint.nowhere', 'Something.', null, 4));
@@ -68,7 +68,7 @@ final class ErrorFactoryTest extends TestCase
             'Quadratic search (ReDoS): /\s+$/',
             'regex.redos.search',
             5,
-            "Quadratic search: \\x3C.\nAttack \\x3Cb>.\n\nRead more about catastrophic backtracking: https://php-regex.com/reference/rules/#catastrophic-backtracking",
+            "Quadratic search: \\x3C.\nAttack \\x3Cb>.\n\nRead more about catastrophic backtracking: https://php-regex.com/reference/rules/catastrophic-backtracking/",
             ErrorFactory::searchCost('/\s+$/', 'Quadratic search: <.', 'Attack <b>.', 5),
         );
     }

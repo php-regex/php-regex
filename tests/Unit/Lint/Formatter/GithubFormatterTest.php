@@ -443,7 +443,7 @@ final class GithubFormatterTest extends TestCase
 
         $output = $this->formatter->format(new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]));
 
-        $this->assertStringContainsString("::warning file=test.php,line=1,title=Lint (regex.lint.quantifier.useless)::Useless quantifier%0ARead more: https://php-regex.com/reference/rules/#useless-quantifier\n", $output);
+        $this->assertStringContainsString("::warning file=test.php,line=1,title=Lint (regex.lint.quantifier.useless)::Useless quantifier%0ARead more: https://php-regex.com/reference/rules/useless-quantifier/\n", $output);
         $this->assertSame(1, substr_count($output, 'Read more'));
     }
 }

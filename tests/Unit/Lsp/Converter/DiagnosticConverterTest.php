@@ -239,10 +239,10 @@ final class DiagnosticConverterTest extends TestCase
         $range = ['start' => ['line' => 0, 'character' => 0], 'end' => ['line' => 0, 'character' => 1]];
 
         $lint = $this->converter->convert(new RuleViolation(id: 'regex.lint.quantifier.useless', message: 'Useless.', offset: 1), $this->span);
-        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/#useless-quantifier'], $lint['codeDescription'] ?? null);
+        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/useless-quantifier/'], $lint['codeDescription'] ?? null);
 
         $redos = $this->converter->fromRedos('regex.lint.redos', 'Risky.', [], false, $this->span);
-        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking'], $redos['codeDescription'] ?? null);
+        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/catastrophic-backtracking/'], $redos['codeDescription'] ?? null);
 
         $unmatched = $this->converter->fromUnmatchedIgnore('Silences nothing.', $range);
         $this->assertSame(['href' => 'https://php-regex.com/guides/cli/#markers-that-silence-nothing'], $unmatched['codeDescription'] ?? null);

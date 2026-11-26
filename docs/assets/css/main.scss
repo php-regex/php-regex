@@ -2998,6 +2998,41 @@ a:focus-visible .article-nav-arrow {
   transform: translateX(.25em);
 }
 
+/* ---- The rule reference's index --------------------------------------------
+ * One rule per row: its page, the identifiers it is reported under as
+ * quiet chips, then what it reports, in the page's own words. A row
+ * carries the anchor of the heading a report linked to before the rules
+ * had pages of their own.
+   -------------------------------------------------------------------------- */
+
+.rule-index {
+  margin: .4rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rule-index > li {
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--line-soft);
+  line-height: 1.65;
+}
+
+.rule-index > li:last-child {
+  border-bottom: 0;
+}
+
+.rule-index-ids {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  margin-right: .35rem;
+}
+
+.rule-index-ids code {
+  font-size: .74em;
+  white-space: nowrap;
+}
+
 /* ---- The projects directory -----------------------------------------------
  * The findings index: one row per repository, the whole row a link —
  * the owner pictured as the playground's tree pictures it, the counts

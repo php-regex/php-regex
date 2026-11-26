@@ -46,12 +46,12 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
             [
                 'Redundant non-capturing group "(?:a)" at offset 0; it can be removed without changing behavior.',
                 20,
-                'Read more: '.self::DOCS.'#redundant-non-capturing-group',
+                'Read more: '.self::DOCS.'redundant-non-capturing-group/',
             ],
             [
                 'Flag \'s\' is useless: the pattern contains no unescaped dot outside a character class.',
                 21,
-                'Read more: '.self::DOCS.'#useless-flag-s-dotall',
+                'Read more: '.self::DOCS.'useless-flag-s-dotall/',
             ],
             [
                 'Exponential backtracking (ReDoS): /(a+)+$/',
@@ -65,18 +65,18 @@ final class RegexPatternRuleRulesNeonTest extends RuleTestCase
                     "\n".
                     "Read more about possessive quantifiers: https://php-regex.com/tutorial/04-quantifiers/#6-a-note-on-possessive-quantifiers\n".
                     "Read more about atomic groups: https://php-regex.com/tutorial/08-performance-redos/#use-atomic-groups-\n".
-                    'Read more about catastrophic backtracking: '.self::DOCS.'#catastrophic-backtracking',
+                    'Read more about catastrophic backtracking: '.self::DOCS.'catastrophic-backtracking/',
                 ),
             ],
             [
                 'Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.',
                 22,
-                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'#nested-quantifiers-redos-risk',
+                "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.\nRead more: ".self::DOCS.'nested-quantifiers-redos-risk/',
             ],
             [
                 'Quantified capturing group 1 "(a+)" with "+": only the last iteration\'s capture is retained.',
                 22,
-                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/#quantified-capturing-group",
+                "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.\nRead more: https://php-regex.com/reference/rules/quantified-capturing-group/",
             ],
         ]);
     }

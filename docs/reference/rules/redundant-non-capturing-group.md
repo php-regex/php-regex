@@ -23,6 +23,19 @@ whose brackets decide which repeats PCRE2 makes possessive stays too: PCRE2 make
 repeated before an atomic group, or a possessive repeat of a group, that may match nothing
 possessive, as if the group could not be skipped, so `/a+(?:b)?+a/` finds nothing in `aa`
 where `/a+b?+a/` finds it, and `/(?:a)+(?:b)?+a/` finds `aa` where `/a+(?:b)?+a/` does not.
+The engine reads those brackets on its way from the repeated character to the group it may
+skip, no further than the first character that must be there: `(?:b)` stays in
+`/a+c?(?:b)?+a/`, and is reported in `/a+x(?:b)?+a/`, as `(?:\\)` is in
+`/(?:\\)?define [a-z]++ (?:,x)*+ /`. A group repeated more than once is read again for each
+round, `(?:b)` in `/(?:(?>(?:b)?)a+){2}/` staying for the `a+` of the round before, and a
+pattern that holds a subroutine call is read whole: there a group stays wherever a repeat
+stands before such a group. A group inside a group a call runs that repeats something some
+number of times, or anywhere in a pattern that calls itself whole, stays wherever it stands:
+PCRE2 makes such a repeat possessive by the brackets around it, and its JIT then misses
+matches, so `/(a+b)c(?1)d/` finds nothing in `abcabcabd` where `/((?:a)+b)c(?1)d/` and
+`/(a+(?:b))c(?1)d/` find `abcabd`, and `/x(?R)a|a*/` finds the empty string in `xaa` where
+`/x(?R)a|(?:a)*/` finds `xaa`. `(?:a)` is still reported in `/(?:a)+b(?1)(c)/`, outside the
+group the call runs.
 
 **Example:**
 ```php

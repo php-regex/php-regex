@@ -21,8 +21,10 @@ unless the pattern reads a character caselessly where the engine's paths read so
 otherwise: under glibc's `tr_TR.ISO-8859-9`, which pairs `i` with `\xDD` and `I` with
 `\xFD`, `/i+I+$/i` stays silent, its two tokens taking no character in common, and
 `/i+\xDD+$/i` is reported; under `fr_FR.ISO8859-1`, so is `"/\xC9+\xE9+$/i"`, with the
-bytes written as they are.
-hold both cases of its letters (`/^A?[^a]*\z/i` stays silent). Nor does it speak of a token
+bytes written as they are. Under `u` an ASCII letter written alone, `i`, `\x69`, `[i]` or
+`[^i]`, takes the cases those tables give it, where a class of several characters takes
+Unicode's: under glibc's `tr_TR.UTF-8`, which gives `i` and `I` no other case, `/i+I+$/iu`
+stays silent and `/i+[ij]+$/iu` is reported. Nor does it speak of a token
 PCRE2 makes possessive before an atomic group, or a possessive repeat of a group, that may
 match nothing: dropped or fixed to a count, it gives back what PCRE2 took from the token
 before it, and `/[ab]{2,}a?(?:b){0,2}+a/` finds nothing in `aaa` where

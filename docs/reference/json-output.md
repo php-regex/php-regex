@@ -439,7 +439,7 @@ line 12 of `app/Search.php`, where `$prefix` is a parameter, is this result:
             "offset": null,
             "end": null,
             "issue_id": "regex.lint.source.dynamicPart",
-            "docs_url": "https://php-regex.com/reference/rules/#pattern-around-a-part-built-at-run-time",
+            "docs_url": "https://php-regex.com/reference/rules/pattern-around-a-part-built-at-run-time/",
             "message": "The pattern holds a part built at run time: it is not verified.",
             "hint": null,
             "tip": null,
@@ -467,7 +467,7 @@ An issue repeats the location of its result, so it can be read alone.
 | `offset` | int \| null | Where in the pattern body the issue starts, 0-based, in bytes; `null` when it concerns the whole pattern |
 | `end` | int \| null | Where it ends, exclusive, as a hotspot's `end`: a lint rule's span is the node it names (`4` for the `a{1}` of `/a{1}/`); `null` where unknown, as for an invalid pattern, whose `offset` is where PCRE stopped |
 | `issue_id` | string | What was found: a lint rule (`regex.lint.quantifier.nested`), the ReDoS verdict (`regex.lint.redos`), the cost of an unanchored search (`regex.lint.redos.search`), a complexity warning (`regex.lint.complexity`), a pattern argument built at run time (`regex.lint.source.dynamic`, `regex.lint.source.dynamicPart`, `regex.lint.source.quotedPart`), an inline marker or a baseline entry that silences nothing (`regex.ignore.unmatched`), a `@regex-target` marker that cannot be read (`regex.target.invalid`) or keeps no version judged (`regex.target.empty`), or the error code of an invalid pattern (`regex.group.unclosed`), `regex.pcre.runtime` for one the engine refuses without a code of its own; an open set, and a baseline matches on it. Every issue carries one |
-| `docs_url` | string \| null | The page of php-regex.com that explains what was found, as `https://php-regex.com/reference/rules/#useless-quantifier`: every lint rule, the ReDoS verdict and the search cost, the complexity warning, a file the lint could not read, a marker that silences nothing or cannot be read; `null` for the error code of an invalid pattern, which [Diagnostics: Error Codes](diagnostics.md#error-codes) lists. For people: a link may move with the docs, so match on `issue_id` |
+| `docs_url` | string \| null | The page of php-regex.com that explains what was found, as `https://php-regex.com/reference/rules/useless-quantifier/`: every lint rule, the ReDoS verdict and the search cost, the complexity warning, a file the lint could not read, a marker that silences nothing or cannot be read; `null` for the error code of an invalid pattern, which [Diagnostics: Error Codes](diagnostics.md#error-codes) lists. For people: a link may move with the docs, so match on `issue_id` |
 | `message` | string | The finding, for people; not frozen |
 | `hint` | string \| null | How to fix it, for people |
 | `tip` | string \| null | A further suggestion for an invalid pattern |

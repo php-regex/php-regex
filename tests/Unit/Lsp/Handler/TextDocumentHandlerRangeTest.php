@@ -94,7 +94,7 @@ final class TextDocumentHandlerRangeTest extends TestCase
         // The body, between the delimiters.
         $this->assertSame('From PHP 8.0 (PCRE2 10.35) a group that holds a reference to itself may be backtracked into; before, PCRE2 made such a group atomic: /^(a|ab|\\1x)+b$/ finds "abb" in "abb" from 10.35 and nothing before.', $diagnostics[0]['message'] ?? null);
         $this->assertSame(['start' => ['line' => 2, 'character' => 13], 'end' => ['line' => 2, 'character' => 28]], $diagnostics[0]['range'] ?? null);
-        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions'], $diagnostics[0]['codeDescription'] ?? null);
+        $this->assertSame(['href' => 'https://php-regex.com/reference/rules/meaning-that-changes-across-php-versions/'], $diagnostics[0]['codeDescription'] ?? null);
     }
 
     /**

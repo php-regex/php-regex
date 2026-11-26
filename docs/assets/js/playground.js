@@ -1525,7 +1525,8 @@
       head.appendChild(text('span', 'pg-diag-message', finding.message));
       item.appendChild(head);
       var link = text('a', 'pg-diag-rule', finding.id);
-      link.href = '/reference/rules/';
+      // The reference opens the page of the rule an identifier names.
+      link.href = '/reference/rules/#' + finding.id;
       var factsLine = text('p', 'pg-diag-facts');
       if (typeof finding.offset === 'number') {
         factsLine.appendChild(rangeButton('bytes ' + finding.offset + (typeof finding.end === 'number' ? '–' + finding.end : ''), finding.offset, finding.end));

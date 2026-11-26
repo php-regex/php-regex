@@ -138,12 +138,12 @@ final class RuleCatalogTest extends TestCase
      */
     public static function provideDocsUrls(): iterable
     {
-        yield 'a lint rule' => ['id' => 'regex.lint.quantifier.useless', 'url' => 'https://php-regex.com/reference/rules/#useless-quantifier'];
-        yield 'a rule with no link before' => ['id' => 'regex.lint.backref.undefined', 'url' => 'https://php-regex.com/reference/rules/#undefined-backreference'];
-        yield 'the ReDoS verdict' => ['id' => RedosVerdict::ISSUE_ID, 'url' => 'https://php-regex.com/reference/rules/#catastrophic-backtracking'];
-        yield 'the cost of a search' => ['id' => RedosVerdict::SEARCH_ISSUE_ID, 'url' => 'https://php-regex.com/reference/rules/#quadratic-search'];
-        yield 'the complexity warning' => ['id' => RuleCatalog::COMPLEXITY, 'url' => 'https://php-regex.com/reference/rules/#complexity-threshold'];
-        yield 'a source the lint cannot read' => ['id' => RuleCatalog::SOURCE_UNREADABLE, 'url' => 'https://php-regex.com/reference/rules/#unreadable-source-file'];
+        yield 'a lint rule' => ['id' => 'regex.lint.quantifier.useless', 'url' => 'https://php-regex.com/reference/rules/useless-quantifier/'];
+        yield 'a rule with no link before' => ['id' => 'regex.lint.backref.undefined', 'url' => 'https://php-regex.com/reference/rules/undefined-backreference/'];
+        yield 'the ReDoS verdict' => ['id' => RedosVerdict::ISSUE_ID, 'url' => 'https://php-regex.com/reference/rules/catastrophic-backtracking/'];
+        yield 'the cost of a search' => ['id' => RedosVerdict::SEARCH_ISSUE_ID, 'url' => 'https://php-regex.com/reference/rules/quadratic-search/'];
+        yield 'the complexity warning' => ['id' => RuleCatalog::COMPLEXITY, 'url' => 'https://php-regex.com/reference/rules/complexity-threshold/'];
+        yield 'a source the lint cannot read' => ['id' => RuleCatalog::SOURCE_UNREADABLE, 'url' => 'https://php-regex.com/reference/rules/unreadable-source-file/'];
         yield 'a marker that silences nothing' => ['id' => LintService::ISSUE_ID_UNMATCHED_IGNORE, 'url' => 'https://php-regex.com/guides/cli/#markers-that-silence-nothing'];
         yield 'a target marker that keeps nothing' => ['id' => LintService::ISSUE_ID_TARGET_EMPTY, 'url' => 'https://php-regex.com/guides/cli/#code-that-runs-on-some-php-versions-only'];
         yield 'a rule written short' => ['id' => 'quantifier.useless', 'url' => null];
@@ -152,12 +152,14 @@ final class RuleCatalogTest extends TestCase
     }
 
     /**
-     * An issue the library reports links to its section of the docs site;
-     * the identifier is read as the issue carries it.
+     * An issue the library reports links to its page of the docs site: a
+     * page of its own under the rule reference, or a section of the CLI
+     * guide for a marker that silences or keeps nothing. The identifier
+     * is read as the issue carries it.
      */
     #[Test]
     #[DataProvider('provideDocsUrls')]
-    public function test_an_issue_links_to_its_section_of_the_docs(string $id, ?string $url): void
+    public function test_an_issue_links_to_its_page_of_the_docs(string $id, ?string $url): void
     {
         $this->assertSame($url, RuleCatalog::docsUrl($id));
     }
@@ -167,8 +169,7 @@ final class RuleCatalogTest extends TestCase
     {
         $this->assertNotSame([], RuleCatalog::docsUrls());
         foreach (RuleCatalog::docsUrls() as $id => $url) {
-            $this->assertStringStartsWith('https://php-regex.com/', $url, $id);
-            $this->assertStringContainsString('/#', $url, $id);
+            $this->assertMatchesRegularExpression('~^https://php-regex\.com/(?:reference/rules/[a-z0-9-]+/|guides/[a-z0-9-]+/#[a-z0-9-]+)$~', $url, $id.' links to a page of the rule reference, or to a section of a guide.');
         }
         foreach (RuleCatalog::lintRuleIds() as $id) {
             $this->assertArrayHasKey('regex.lint.'.$id, RuleCatalog::docsUrls());
@@ -187,8 +188,8 @@ final class RuleCatalogTest extends TestCase
 
     /**
      * The three issues of a pattern argument built at run time are issues
-     * of the catalogue: each links to a section of its own on the page of
-     * the rules. None is a lint rule, and a rules map names none of them:
+     * of the catalogue: each links to a page of its own under the rule
+     * reference. None is a lint rule, and a rules map names none of them:
      * the report is asked for apart.
      */
     #[Test]
@@ -197,11 +198,11 @@ final class RuleCatalogTest extends TestCase
     {
         $url = RuleCatalog::docsUrl($id);
         $this->assertIsString($url);
-        $this->assertMatchesRegularExpression('~^https://php-regex\.com/reference/rules/#[a-z0-9-]+$~', $url);
+        $this->assertMatchesRegularExpression('~^https://php-regex\.com/reference/rules/[a-z0-9-]+/$~', $url);
         $this->assertSame($url, RuleCatalog::docsUrls()[$id] ?? null);
 
         $others = array_diff_key(RuleCatalog::docsUrls(), [$id => true]);
-        $this->assertNotContains($url, $others, 'A section of its own.');
+        $this->assertNotContains($url, $others, 'A page of its own.');
 
         $short = substr($id, \strlen('regex.lint.'));
         $this->assertFalse(RuleCatalog::isConfigurable($id));

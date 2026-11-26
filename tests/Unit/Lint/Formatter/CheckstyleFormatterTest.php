@@ -327,7 +327,7 @@ final class CheckstyleFormatterTest extends TestCase
 
         $output = $this->formatter->format(new LintReport([$result], ['errors' => 1, 'warnings' => 1, 'optimizations' => 0]));
 
-        $this->assertStringContainsString('message="Useless quantifier&#10;Read more: https://php-regex.com/reference/rules/#useless-quantifier" source="regex.lint.quantifier.useless"', $output);
+        $this->assertStringContainsString('message="Useless quantifier&#10;Read more: https://php-regex.com/reference/rules/useless-quantifier/" source="regex.lint.quantifier.useless"', $output);
         $this->assertSame(1, substr_count($output, 'Read more:'));
     }
 }

@@ -116,7 +116,7 @@ final class DynamicArgumentIssuesTest extends TestCase
             ],
         );
         $this->assertIsString($issue['docs_url']);
-        $this->assertStringStartsWith('https://php-regex.com/reference/rules/#', $issue['docs_url']);
+        $this->assertStringStartsWith('https://php-regex.com/reference/rules/', $issue['docs_url']);
     }
 
     /**

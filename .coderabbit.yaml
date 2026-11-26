@@ -144,7 +144,7 @@ reviews:
       instructions: |
         - A lint rule must not fire on a pattern it cannot prove wrong or wasteful: flag false-positive risks with a concrete counter-example.
         - An optimizer rewrite must keep the matched language, the capture groups (numbering and names) and the flags; check byte versus UTF-8 mode.
-        - A new rule has an id, a `docs_url` to https://php-regex.com/reference/rules/#…, an entry in docs/reference, and tests.
+        - A new rule has an id, a `docs_url` to https://php-regex.com/reference/rules/<slug>/, an entry in docs/reference, and tests.
 
     - path: "src/{Symfony,Laravel,PHPStan,Psalm,Rector,PHPUnit,LanguageServer,Mcp,Cli}/**"
       instructions: |
