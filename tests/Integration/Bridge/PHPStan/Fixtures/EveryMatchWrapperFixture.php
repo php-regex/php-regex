@@ -43,5 +43,6 @@ final class EveryMatchWrapperFixture
         Strings::match($subject, '/(?:a+\d)?/'); // the first match ends the search
         Regex::match('/(?:a+\d)?/', $subject);
         Str::isMatch('/(?:a+\d)?/', $subject);
+        Strings::matchAll($subject, '/(?:a+\d)??/', lazy: true); // no retry after the empty match it finds first
     }
 }

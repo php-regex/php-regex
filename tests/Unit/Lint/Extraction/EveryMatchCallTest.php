@@ -19,6 +19,7 @@ use PHPRegex\Linter\Extraction\ExtractorInterface;
 use PHPRegex\Linter\Extraction\InteropPresets;
 use PHPRegex\Linter\Extraction\PatternFunctionRegistry;
 use PHPRegex\Linter\Extraction\PhpParserExtractionStrategy;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Tests\Support\TemporaryProject;
@@ -110,13 +111,14 @@ final class EveryMatchCallTest extends TestCase
 
         // nette/utils 4.1, src/Utils/Strings.php: matchAll() calls
         // preg_match_all() unless lazy, where its generator calls
-        // preg_match() from the end of each match, with no retry; split()
+        // preg_match() from the end of each match, with no retry, a loop of
+        // its own, which goes on after each empty match as well; split()
         // calls preg_split() and replace() preg_replace(), or
         // preg_replace_callback() for a callable, each with its $limit.
         yield 'nette/utils matchAll' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/');", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::NETTE_UTILS]];
         yield 'nette/utils matchAll not lazy' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: false);", 'function' => 'preg_match_all', 'limit' => null, 'everyMatch' => 'preg_match_all', 'presets' => [InteropPresets::NETTE_UTILS]];
-        yield 'nette/utils matchAll lazy' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: true);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
-        yield 'nette/utils matchAll lazy by position' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', false, 0, false, false, false, TRUE);", 'function' => 'preg_match', 'limit' => null, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils matchAll lazy' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', lazy: true);", 'function' => PregFunctions::MATCH_LOOP, 'limit' => null, 'everyMatch' => PregFunctions::MATCH_LOOP, 'presets' => [InteropPresets::NETTE_UTILS]];
+        yield 'nette/utils matchAll lazy by position' => ['call' => "\\Nette\\Utils\\Strings::matchAll(\$s, '/p/', false, 0, false, false, false, TRUE);", 'function' => PregFunctions::MATCH_LOOP, 'limit' => null, 'everyMatch' => PregFunctions::MATCH_LOOP, 'presets' => [InteropPresets::NETTE_UTILS]];
         yield 'nette/utils split' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/');", 'function' => 'preg_split', 'limit' => null, 'everyMatch' => 'preg_split', 'presets' => [InteropPresets::NETTE_UTILS]];
         yield 'nette/utils split with no limit' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/', limit: -1);", 'function' => 'preg_split', 'limit' => -1, 'everyMatch' => 'preg_split', 'presets' => [InteropPresets::NETTE_UTILS]];
         yield 'nette/utils split with a limit' => ['call' => "\\Nette\\Utils\\Strings::split(\$s, '/p/', false, false, 2);", 'function' => 'preg_split', 'limit' => 2, 'everyMatch' => null, 'presets' => [InteropPresets::NETTE_UTILS]];
@@ -555,6 +557,7 @@ final class EveryMatchCallTest extends TestCase
             'preg_replace_callback' => null === preg_replace_callback(self::PROBE, $replace, $subject, $limit ?? -1, $count) ? false : $count,
             'preg_replace_callback_array' => null === preg_replace_callback_array([self::PROBE => $replace], $subject, $limit ?? -1, $count) ? false : $count,
             'preg_split' => preg_split(self::PROBE, $subject, $limit ?? -1),
+            PregFunctions::MATCH_LOOP => self::matchLoop($subject),
             default => false,
         };
         // The pieces of preg_split() are one more than its matches.
@@ -564,6 +567,25 @@ final class EveryMatchCallTest extends TestCase
         self::assertIsInt($made, 'Oracle: '.$function.' failed.');
 
         return $made;
+    }
+
+    /**
+     * How many matches the loop of nette/utils' Strings::matchAll() makes
+     * under lazy with the probe on the subject, as its generator runs it
+     * (nette/utils 4.1, src/Utils/Strings.php): preg_match() from the end
+     * of each match, one byte on after an empty one.
+     */
+    private static function matchLoop(string $subject): int
+    {
+        $offset = 0;
+        $counter = 0;
+        $m = [];
+        while ($offset <= \strlen($subject) - ($counter ? 1 : 0) && preg_match(self::PROBE, $subject, $m, \PREG_OFFSET_CAPTURE, $offset)) {
+            $offset = $m[0][1] + max(1, \strlen($m[0][0]));
+            $counter++;
+        }
+
+        return $counter;
     }
 
     /**

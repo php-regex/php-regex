@@ -27,6 +27,7 @@ use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Extraction\IgnoreMarker;
 use PHPRegex\Linter\Extraction\InlineIgnores;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\Linter\PatternLinter;
@@ -778,10 +779,12 @@ final class TextDocumentHandler
             );
         }
 
-        // One for each such call of the literal.
+        // One for each such call of the literal. A call that runs the loop
+        // itself, through preg_match(), pays another cost, which this one
+        // does not stand for: `regex lint` prices it.
         $everyMatchCost = $redos->everyMatchSearchCost;
         if (null !== $everyMatchCost) {
-            foreach ($everyMatch as $function) {
+            foreach (array_diff($everyMatch, [PregFunctions::MATCH_LOOP]) as $function) {
                 $diagnostics[] = $this->diagnosticConverter->fromRedos(
                     RedosVerdict::SEARCH_ISSUE_ID,
                     RedosVerdict::everyMatchMessage($function, $everyMatchCost),

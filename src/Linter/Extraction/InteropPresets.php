@@ -216,13 +216,14 @@ final class InteropPresets
             // Nette puts the subject first and takes an array of pattern =>
             // replacement; utf8: true appends "u" to every pattern.
             // matchAll() calls preg_match_all() unless lazy, where its
-            // generator calls preg_match() from the end of each match;
+            // generator calls preg_match() from the end of each match, a
+            // loop of its own;
             // split() calls preg_split(), replace() preg_replace(), or
             // preg_replace_callback() for an object or an array, each with
             // its limit (nette/utils 4.1, src/Utils/Strings.php).
             self::NETTE_UTILS => [
                 'nette\utils\strings::match' => new PatternFunction('Strings::match', 1, utf8Argument: [5, 'utf8']),
-                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1, utf8Argument: [6, 'utf8'], everyMatch: 'preg_match_all', loopArgument: [7, 'lazy', [0 => 'preg_match_all']]),
+                'nette\utils\strings::matchall' => new PatternFunction('Strings::matchAll', 1, utf8Argument: [6, 'utf8'], everyMatch: 'preg_match_all', loopArgument: [7, 'lazy', [0 => 'preg_match_all', 1 => PregFunctions::MATCH_LOOP]]),
                 'nette\utils\strings::split' => new PatternFunction('Strings::split', 1, utf8Argument: [5, 'utf8'], everyMatch: 'preg_split', limitArgument: [4, 'limit']),
                 'nette\utils\strings::replace' => new PatternFunction('Strings::replace', 1, keysArePatterns: true, replacementIndex: 2, utf8Argument: [6, 'utf8'], everyMatch: 'preg_replace', limitArgument: [3, 'limit'], callbackArgument: [2, 'replacement']),
             ],

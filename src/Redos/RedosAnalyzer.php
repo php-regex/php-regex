@@ -92,7 +92,58 @@ final class RedosAnalyzer
      */
     public function analyze(string $regex, ?RedosOptions $options = null): RedosAnalysis
     {
-        $options ??= $this->options;
+        return $this->analysis($regex, $options ?? $this->options, false);
+    }
+
+    /**
+     * The verdict of a pattern that a loop runs through preg_match(),
+     * called again where each match ends and one byte on after an empty
+     * one, with no retry there, as the generator nette/utils'
+     * Strings::matchAll() returns under "lazy" does: what analyze() gives,
+     * with the cost of that loop as $everyMatchSearchCost, in place of the
+     * one of the functions that look for every match.
+     *
+     * @internal the linter prices the calls that run such a loop
+     */
+    public function analyzeMatchLoop(string $regex, ?RedosOptions $options = null): RedosAnalysis
+    {
+        return $this->analysis($regex, $options ?? $this->options, true);
+    }
+
+    /**
+     * Whether analyze($regex) proves one attempt linear, from the proof
+     * alone: no heuristics, no witness, no cost of the search, and nothing
+     * of the pattern kept in the parser.
+     *
+     * @internal the repair of a pattern asks it of every rewrite it tries
+     */
+    public function provesSafe(string $regex): bool
+    {
+        if ($this->shouldIgnore($regex)) {
+            return false;
+        }
+
+        try {
+            $parser = $this->parser->withoutCache();
+            // A valid pattern comes with the tree it was judged on, any
+            // other with none.
+            $ast = $parser->validate($regex)->ast;
+            if (null === $ast) {
+                return false;
+            }
+
+            // The outcome holds a result only where the model met no limit.
+            return RedosComplexity::Linear === $this->prover($this->options)->prove($ast, $regex, $parser->target())->result?->complexity;
+        } catch (ExceptionInterface) {
+            return false;
+        }
+    }
+
+    /**
+     * @param bool $matchLoop whether the loop of every match is one that calls preg_match() itself
+     */
+    private function analysis(string $regex, RedosOptions $options, bool $matchLoop): RedosAnalysis
+    {
         $mode = $options->mode;
         $threshold = $options->threshold;
         $confirmOptions = $options->confirmation;
@@ -161,7 +212,11 @@ final class RedosAnalyzer
                 $prover = new SearchCostProver();
                 $replay = RedosMode::Confirmed === $mode && RedosSeverity::Medium->rank() >= $threshold->rank();
                 $searchCost = $prover->find($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions);
-                $everyMatchSearchCost = null === $searchCost ? $prover->findEveryMatch($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions) : null;
+                $everyMatchSearchCost = match (true) {
+                    null !== $searchCost => null,
+                    $matchLoop => $prover->findMatchLoop($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions),
+                    default => $prover->findEveryMatch($regex, $ast, $outcome, $replay, $parser->target(), $confirmOptions),
+                };
             }
 
             $analysis = new RedosAnalysis(
@@ -203,35 +258,6 @@ final class RedosAnalyzer
             return $confirmed;
         } catch (ExceptionInterface $e) {
             return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
-        }
-    }
-
-    /**
-     * Whether analyze($regex) proves one attempt linear, from the proof
-     * alone: no heuristics, no witness, no cost of the search, and nothing
-     * of the pattern kept in the parser.
-     *
-     * @internal the repair of a pattern asks it of every rewrite it tries
-     */
-    public function provesSafe(string $regex): bool
-    {
-        if ($this->shouldIgnore($regex)) {
-            return false;
-        }
-
-        try {
-            $parser = $this->parser->withoutCache();
-            // A valid pattern comes with the tree it was judged on, any
-            // other with none.
-            $ast = $parser->validate($regex)->ast;
-            if (null === $ast) {
-                return false;
-            }
-
-            // The outcome holds a result only where the model met no limit.
-            return RedosComplexity::Linear === $this->prover($this->options)->prove($ast, $regex, $parser->target())->result?->complexity;
-        } catch (ExceptionInterface) {
-            return false;
         }
     }
 

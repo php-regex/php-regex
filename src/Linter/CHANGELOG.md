@@ -145,10 +145,23 @@ CHANGELOG
    with the message `Quadratic search after an empty match: ...` naming the
    function, `preg_replace_callback()` for a replacement written as a
    closure. A literal limit that bounds the call keeps it quiet, and so does
-   a `preg_match()` call, a lazy nette/utils `Strings::matchAll()` and a
-   `RegexIterator` mode the call does not spell out.
+   a `preg_match()` call and a `RegexIterator` mode the call does not spell
+   out.
    Severity `medium`: hidden at the default `high`
    threshold, shown from `--redos-threshold=medium`.
+ * `regex.lint.redos.search` prices the loop a lazy nette/utils
+   `Strings::matchAll()` runs itself: `preg_match()` again where each match
+   ended, one byte on after an empty one, with no retry there. A call that
+   spells out `lazy: true` gets the cost of that loop where each of its
+   attempts reads to the end of the run before it settles on a match, short
+   or empty, with a message that names it, `Quadratic search over short
+   matches: ... the loop that calls preg_match() again where each match
+   ends ...`. `/(?:a+\d)?/` costs that loop 1.2, 3.7 and 13 ms on 2,000,
+   4,000 and 8,000 `a` (`pcre.jit=1`) and is reported there; `/(?:a+\d)??/`,
+   which costs it 0.5, 1.1 and 2.1 ms and `preg_match_all()` its retries, is
+   reported at the `preg_match_all()` call alone. A pattern holding `\K`
+   is not read for that loop, and the language server leaves the call
+   unreported.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
    `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that

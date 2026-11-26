@@ -46,6 +46,21 @@ CHANGELOG
    replays each, a match now short within 64 run words of the pinned
    attempt. `/(?<=a)a(?:a+\d)?/` stays unreported: the model keeps no
    lookaround's condition.
+ * The cost of short matches is also read for a loop that looks for every
+   match with `preg_match()` itself, called again where each match ended
+   and one byte on after an empty one, with no retry there, as the
+   generator nette/utils' `Strings::matchAll()` returns under `lazy` does:
+   a call may then end on an empty match, once its attempt has read to the
+   end of the run. `/(?:a+\d)?/` costs that loop 1.2, 3.7 and 13 ms on
+   2,000, 4,000 and 8,000 `a` with `pcre.jit=1`; `/(?:a+\d)??/`, which
+   costs `preg_match_all()` its retries, costs it 0.5, 1.1 and 2.1 ms.
+   Confirmed mode replays the attempt pinned inside the run and the calls
+   the loop makes after it, past one run word: on a run of `ab`,
+   `/b(?:ab)*|(?:(?:ab)+\d)?/` reads the run before each empty match on an
+   `a`, but the call one byte on matches from the `b` to the end of the
+   run. The linter and the PHPStan extension ask for it at the calls that
+   run such a loop; `RedosAnalyzer::analyze()` keeps the cost of the
+   functions that look for every match.
  * The search cost lets the attempts after the run match: the search tries
    those the breaker starts, and the one at the subject's end, once every
    attempt of the run has read to its end and failed. `/\s*$/` (131, 521

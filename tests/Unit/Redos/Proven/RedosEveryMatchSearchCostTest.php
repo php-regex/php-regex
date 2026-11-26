@@ -842,6 +842,13 @@ final class RedosEveryMatchSearchCostTest extends TestCase
 
                 throw new ResourceLimitException('The replay ran out of its limits.', ErrorCode::PatternTooLong);
             }
+
+            public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                $this->called = true;
+
+                throw new ResourceLimitException('The replay ran out of its limits.', ErrorCode::PatternTooLong);
+            }
         };
 
         $this->assertNull(self::findEveryMatch('/(?:a+\d)?/', $failing));
@@ -852,6 +859,15 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $this->assertInstanceOf(RedosSearchCost::class, self::findEveryMatch('/a(?:a+\d)?/', new SearchCostReplayer()), 'control: the witness of short matches is found and replayed');
         $this->assertNull(self::findEveryMatch('/a(?:a+\d)?/', $failing));
         $this->assertTrue($failing->called, 'The failure was met inside the proof of short matches.');
+
+        // So does the replay of a loop that calls preg_match() itself.
+        $failing->called = false;
+        $ast = RegexParser::create()->parse('/(?:a+\d)?/');
+        $options = new RedosOptions();
+        $outcome = (new BacktrackProver($options->maxStates, $options->maxSteps, $options->boundedRepeatCutoff))->prove($ast);
+        $this->assertInstanceOf(RedosSearchCost::class, (new SearchCostProver(new SearchCostReplayer()))->findMatchLoop('/(?:a+\d)?/', $ast, $outcome, true), 'control: the witness of the loop is found and replayed');
+        $this->assertNull((new SearchCostProver($failing))->findMatchLoop('/(?:a+\d)?/', $ast, $outcome, true));
+        $this->assertTrue($failing->called, 'The failure was met inside the proof of the loop.');
     }
 
     /**

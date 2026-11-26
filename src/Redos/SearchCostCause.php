@@ -40,6 +40,8 @@ enum SearchCostCause: string
      * The attempt that ends each short match inside the run reads to the end
      * of the run before it settles on it, and the functions that look for
      * every match start a call where it ends: RedosAnalysis::$everyMatchSearchCost.
+     * A loop that calls preg_match() itself, and makes no retry, pays it
+     * for the empty matches such an attempt settles on too.
      */
     case ShortMatch = 'short_match';
 }

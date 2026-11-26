@@ -275,12 +275,45 @@ final class SearchCostProver
     }
 
     /**
-     * @param bool $everyMatch whether the witness is the one of the loop of every match
+     * The witness of a search quadratic in a loop that looks for every
+     * match with preg_match() itself, for the pattern whose own search
+     * find() gave none: the loop calls it again where each match ended,
+     * one byte on after an empty one, and makes no retry there, as the
+     * generator nette/utils' Strings::matchAll() returns under "lazy"
+     * does. Each call pays the run when the paths its first attempt tries
+     * before its match read to the end of the run, the match short or
+     * empty: "(?:a+\d)?" reads the rest of the run at each position before
+     * it settles on the empty string. A match found before those paths, as
+     * the empty one of "(?:a+\d)??", costs that loop nothing, where PHP's
+     * retry after it costs the functions that look for every match. The
+     * RedosSearchCost names SearchCostCause::ShortMatch.
+     *
+     * A pattern holding "\K" is not read: the loop goes on from where the
+     * reported match starts. Under u a call that ends on an empty match
+     * before a character of several bytes starts the next one inside that
+     * character, which PCRE2 refuses: no run of such a character is read.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for; the
+     *                                running engine's when null
      */
-    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target, ?ConfirmationOptions $options, bool $everyMatch): ?RedosSearchCost
+    public function findMatchLoop(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, ?PcreTarget $target = null, ?ConfirmationOptions $options = null): ?RedosSearchCost
+    {
+        try {
+            return $this->seek($pattern, $regex, $proof, $replay, $target ?? PcreTarget::runtime(), $options, true, true);
+        } catch (ExceptionInterface) {
+            return null;
+        }
+    }
+
+    /**
+     * @param bool $everyMatch whether the witness is the one of the loop of every match
+     * @param bool $matchLoop  whether that loop calls preg_match() itself, with no retry after an empty
+     *                         match
+     */
+    private function seek(string $pattern, RegexNode $regex, ProofOutcome $proof, bool $replay, PcreTarget $target, ?ConfirmationOptions $options, bool $everyMatch, bool $matchLoop = false): ?RedosSearchCost
     {
         $search = $proof->search;
-        if (null === $search || (!$everyMatch && str_contains($regex->flags, 'A'))) {
+        if (null === $search || (!$everyMatch && str_contains($regex->flags, 'A')) || ($matchLoop && self::holds($regex->pattern, static fn (NodeInterface $node): bool => $node instanceof KeepNode))) {
             return null;
         }
 
@@ -339,8 +372,9 @@ final class SearchCostProver
         $starts = self::starts($automaton, \in_array('NO_START_OPT', $startOptions, true) ? null : $first, $unicode);
 
         try {
-            // Under "(*NOTEMPTY)" no match is empty, and PHP never retries.
-            $found = null === $refused ? null : $this->witness($automaton, $budget, $required, $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused, $starts);
+            // Under "(*NOTEMPTY)" no match is empty, and PHP never retries;
+            // nor does a loop that calls preg_match() itself.
+            $found = null === $refused || $matchLoop ? null : $this->witness($automaton, $budget, $required, $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused, $starts);
             // preg_match() stops at an empty match inside the run, where the
             // loop of every match retries: without one, every call pays the
             // run.
@@ -358,7 +392,7 @@ final class SearchCostProver
             // finds after it read the run, and the loop starts a call where
             // that match ends.
             if ($everyMatch && null === $found) {
-                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts, !$tied);
+                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts, !$tied, $matchLoop);
                 $cause = SearchCostCause::ShortMatch;
                 $exact = $exact && null !== $found && $found['exact'];
             }
@@ -403,12 +437,15 @@ final class SearchCostProver
         $counted = self::countingReads($pattern, $regex, $sets, $unicode, $caseless);
         $replayed = null;
         $measured = true;
-        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $counted, $prefix, $run, $options, $cause, &$replayed, &$measured): void {
+        CharacterTables::under($target->locale, function () use ($pinnable, $breakers, $counted, $prefix, $run, $options, $cause, $matchLoop, &$replayed, &$measured): void {
             foreach ($pinnable ? $breakers : [] as $breaker) {
-                $replays = match ($cause) {
-                    SearchCostCause::ShortMatch => $this->replayer->replaysShortMatches($counted, $prefix, $run, $breaker, $options),
-                    SearchCostCause::EmptyMatchRetry => $this->replayer->replaysEveryMatch($counted, $prefix, $run, $breaker, $options),
-                    SearchCostCause::UnanchoredSearch => $this->replayer->replays($counted, $prefix, $run, $breaker, $options),
+                $replays = match (true) {
+                    $matchLoop => $this->replayer->replaysMatchLoop($counted, $prefix, $run, $breaker, $options),
+                    default => match ($cause) {
+                        SearchCostCause::ShortMatch => $this->replayer->replaysShortMatches($counted, $prefix, $run, $breaker, $options),
+                        SearchCostCause::EmptyMatchRetry => $this->replayer->replaysEveryMatch($counted, $prefix, $run, $breaker, $options),
+                        SearchCostCause::UnanchoredSearch => $this->replayer->replays($counted, $prefix, $run, $breaker, $options),
+                    },
                 };
                 if (true === $replays) {
                     $replayed = $breaker;
@@ -1150,16 +1187,18 @@ final class SearchCostProver
      *                                           when one starts anywhere
      * @param bool                 $searches     whether a call goes on to the next character when its
      *                                           attempt fails: not where it is tied to its start
+     * @param bool                 $emptyToo     whether a call may end on an empty match, the loop
+     *                                           going one byte on with no retry
      *
      * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>, exact: bool}|null
      */
-    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused, ?array $starts, bool $searches): ?array
+    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused, ?array $starts, bool $searches, bool $emptyToo = false): ?array
     {
         foreach ($this->runWords($automaton, $budget, $jumps) as $word) {
             $exact = true;
-            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $starts, $searches, $exact);
+            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $starts, $searches, $emptyToo, $exact);
             if (null === $after) {
                 continue;
             }
@@ -1199,6 +1238,9 @@ final class SearchCostProver
      *                                       one starts anywhere
      * @param bool                 $searches whether a call goes on to the next character when its attempt
      *                                       fails
+     * @param bool                 $emptyToo whether a call may end on an empty match: the next one then
+     *                                       starts one byte on, which under u is inside a character of
+     *                                       several
      * @param bool                 $exact    whether every path the calls went through is one the model
      *                                       reads as the engine does
      *
@@ -1208,7 +1250,7 @@ final class SearchCostProver
      *
      * @return array<int, true>|null
      */
-    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, ?array $starts, bool $searches, bool &$exact): ?array
+    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, ?array $starts, bool $searches, bool $emptyToo, bool &$exact): ?array
     {
         $length = \count($word);
         $calls = [[0, $automaton->initials[0]['items']]];
@@ -1216,11 +1258,11 @@ final class SearchCostProver
         $after = [];
         for ($index = 0; $index < \count($calls); $index++) {
             [$phase, $items] = $calls[$index];
-            $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $exact);
+            $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $emptyToo, $exact);
             for ($moved = 0; 0 === $index && $searches && false === $match && $moved < $length; $moved++) {
                 $items = $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$word[$phase]]));
                 $phase = ($phase + 1) % $length;
-                $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $exact);
+                $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $emptyToo, $exact);
                 $started[0] = false;
             }
 
@@ -1236,6 +1278,16 @@ final class SearchCostProver
             }
 
             $after += $runEnd;
+            if (0 === $match[0]) {
+                // The loop goes one byte on: inside the character, under u,
+                // when that one is written with several.
+                if ($automaton->pnfa->unicode && self::characters($automaton, [$word[$end]], $starts)[0] > 0x7F) {
+                    return null;
+                }
+
+                $end = ($end + 1) % $length;
+            }
+
             if (true !== ($started[$end] ?? false)) {
                 $started[$end] = true;
                 $before = $automaton->representatives[$word[($end + $length - 1) % $length]];
@@ -1269,17 +1321,18 @@ final class SearchCostProver
      *
      * @return array{int, array<int, true>}|false|null
      */
-    private static function attemptMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, ?array $starts, bool &$exact): array|false|null
+    private static function attemptMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, ?array $starts, bool $emptyToo, bool &$exact): array|false|null
     {
-        return null !== $starts && !isset($starts[$word[$phase]]) ? false : self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $exact);
+        return null !== $starts && !isset($starts[$word[$phase]]) ? false : self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $emptyToo, $exact);
     }
 
     /**
      * How many characters the match of an attempt reads, and the items of
      * the paths the attempt tries before that match once they read the
      * character after it. False when the attempt fails inside the run;
-     * null when it reads on with no match, matches empty, or reads more
-     * than MAX_MATCH_WORDS run words. The items are kept in the order PCRE2
+     * null when it reads on with no match, matches empty where the loop
+     * retries after such a match, or reads more than MAX_MATCH_WORDS run
+     * words. The items are kept in the order PCRE2
      * tries them, each where it comes first: a success ends the items
      * after it, which are never tried, and those before it go on. The
      * match is the last success met once they all fail, or come back to
@@ -1295,7 +1348,7 @@ final class SearchCostProver
      *
      * @return array{int, array<int, true>}|false|null
      */
-    private static function shortMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, bool &$exact): array|false|null
+    private static function shortMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, bool $emptyToo, bool &$exact): array|false|null
     {
         $length = \count($word);
         $current = [];
@@ -1356,7 +1409,7 @@ final class SearchCostProver
             return [] === $current ? false : null;
         }
 
-        if (0 === $match[0] || $match[0] > self::MAX_MATCH_WORDS * $length) {
+        if ((0 === $match[0] && !$emptyToo) || $match[0] > self::MAX_MATCH_WORDS * $length) {
             return null;
         }
 

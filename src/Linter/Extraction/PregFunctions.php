@@ -54,6 +54,16 @@ final class PregFunctions
     public const EVERY_MATCH = ['preg_match_all', 'preg_replace', 'preg_filter', 'preg_replace_callback', 'preg_replace_callback_array', 'preg_split'];
 
     /**
+     * The loop of a call that looks for every match with preg_match()
+     * itself: it calls it again where each match ended, one byte on after
+     * an empty one, and makes no retry there, as the generator nette/utils'
+     * Strings::matchAll() returns under lazy does. Named apart from the
+     * functions of EVERY_MATCH, whose loop PHP runs: the cost of one is not
+     * the cost of the other.
+     */
+    public const MATCH_LOOP = 'preg_match loop';
+
+    /**
      * The modes of RegexIterator and RecursiveRegexIterator under which
      * accept() looks for every match, each with the function whose loop it
      * runs, without a limit (ext/spl/spl_iterators.c): ALL_MATCHES that of

@@ -1130,6 +1130,11 @@ final class RedosSearchCostTest extends TestCase
             {
                 throw new \LogicException('The replay of short matches is not asked.');
             }
+
+            public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of a loop of preg_match() calls is not asked.');
+            }
         };
 
         $this->assertNull(self::findSearchCost('/\s+$/', $failing));
@@ -1169,6 +1174,11 @@ final class RedosSearchCostTest extends TestCase
             public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('The replay of short matches is not asked.');
+            }
+
+            public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of a loop of preg_match() calls is not asked.');
             }
         };
 

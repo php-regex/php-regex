@@ -138,7 +138,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   / 17 / 64 ms; with `pcre.jit=1` 0.7 / 2.8 / 11 / 43 ms, 0.7 / 2.8 / 11 / 43 ms and 1.1 / 4.2 / 16 / 65 ms.
 - **Guarantee:** None in the other direction, as for `search_cost`. Confirmed mode replays the retry pinned at two
   offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`); for short matches, the attempt
-  pinned at two offsets, which must match within 64 run words.
+  pinned at two offsets, which must match within 64 run words; for the loop of a lazy `Strings::matchAll()`, also
+  the calls that loop makes next, past one run word, each of which must match within 64 run words of where it
+  starts.
 - **Limits:**
   - **The JIT** does not avoid the cost of the retry: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the
     retry always runs in the interpreter. It may avoid the cost of short matches for some patterns.
@@ -149,9 +151,12 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     counts no success behind one.
   - **A call whose loop an argument decides** is reported only when the call spells out a value that makes it loop:
     a `RegexIterator` mode in a variable, or changed later with `setMode()`, is not read. A lazy `Strings::matchAll()`
-    of nette/utils loops through `preg_match()` from the end of each match, with no retry: that loop is not priced,
-    though `/(?:a+\d)?/` costs it n² too (1.2 / 3.6 / 12.5 ms on n = 2,000 / 4,000 / 8,000, PHP 8.4.28, PCRE2
-    10.49).
+    of nette/utils loops through `preg_match()` from the end of each match, one byte on after an empty one, with no
+    retry: a loop of its own, priced as the cost of short matches where each of its attempts reads to the end of
+    the run before it settles on a match, short or empty (`/(?:a+\d)?/`: 1.2 / 3.7 / 13 ms on n = 2,000 / 4,000 /
+    8,000, PHP 8.4.28, PCRE2 10.49, `pcre.jit=1`), and never as the cost of PHP's retry, which it does not make
+    (`/(?:a+\d)??/`). A pattern holding `\K` is not read for that loop, nor a run on which it would stop inside a
+    character under `u`; the language server leaves the call unreported.
   - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
     written, with one finding for each function of those calls that looks for every match. Through a variable, a call
     runs in its loop the value of the latest assignment before it when that one runs first on every path to the call:

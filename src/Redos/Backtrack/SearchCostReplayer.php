@@ -177,7 +177,30 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
     #[\Override]
     public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
     {
-        $options ??= new ConfirmationOptions();
+        return self::endsOnShortMatches($pattern, $prefix, $run, $breaker, $options ?? new ConfirmationOptions(), true);
+    }
+
+    /**
+     * Whether the engine, without its JIT, ends the attempt pinned a quarter
+     * and half-way through the run on a match within MAX_MATCH_WORDS run
+     * words, an empty one too, as the call started there by a loop that
+     * calls preg_match() again where each match ends does, and whether the
+     * attempt takes one more step at least per run word left; null when
+     * the engine cannot count. Such a loop makes no retry after an empty
+     * match: it goes one byte on.
+     */
+    #[\Override]
+    public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool
+    {
+        return self::endsOnShortMatches($pattern, $prefix, $run, $breaker, $options ?? new ConfirmationOptions(), false);
+    }
+
+    /**
+     * @param bool $retries whether the loop is PHP's own, which goes on from a match that reads a
+     *                      character and retries after one "\K" leaves empty
+     */
+    private static function endsOnShortMatches(string $pattern, string $prefix, string $run, string $breaker, ConfirmationOptions $options, bool $retries): ?bool
+    {
         $counted = self::counted($pattern);
         if (null === $counted) {
             return false;
@@ -199,13 +222,13 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
             // Counted, the attempt finishes under the same limits: it
             // matches or fails.
             $match = self::matchFrom($pinned, $subject, $start, $options);
-            if (!\is_array($match) || $match[0] <= $start || $match[0] > $start + $bound) {
+            if (!\is_array($match) || ($retries && $match[0] === $start) || $match[0] > $start + $bound) {
                 return false;
             }
 
             // The loop retries after a match "\K" leaves empty; one the
             // limits stop cannot be counted either.
-            if ($match[1]) {
+            if ($retries && $match[1]) {
                 $retried = self::matchFrom($retry, $subject, $match[0], $options);
                 if (null === $retried) {
                     return null;
@@ -216,10 +239,47 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
                 }
             }
 
+            // The calls a loop of preg_match() makes next must go on inside
+            // the run, past a run word: after an empty match the next one
+            // starts one byte on, inside the run word.
+            if (!$retries) {
+                $goesOn = self::goesOn($counted, $subject, $match, $start + \strlen($run), $bound, $options);
+                if (true !== $goesOn) {
+                    return $goesOn;
+                }
+            }
+
             $steps[] = $step;
         }
 
         return $steps[0] - $steps[1] >= $quarter;
+    }
+
+    /**
+     * Whether the calls a loop of preg_match() makes after a match, each
+     * searching from where the last match ended, one byte on after an empty
+     * one, reach the offset, each on a match that ends within the bound of
+     * where it starts; null when the limits of the options stop the engine.
+     *
+     * @param array{int, bool} $match where the match ends, and whether it is empty
+     */
+    private static function goesOn(string $counted, string $subject, array $match, int $until, int $bound, ConfirmationOptions $options): ?bool
+    {
+        $offset = $match[1] ? $match[0] + 1 : $match[0];
+        while ($offset < $until) {
+            $next = self::matchFrom($counted, $subject, $offset, $options);
+            if (!\is_array($next)) {
+                return $next;
+            }
+
+            if ($next[0] > $offset + $bound) {
+                return false;
+            }
+
+            $offset = $next[1] ? $next[0] + 1 : $next[0];
+        }
+
+        return true;
     }
 
     /**

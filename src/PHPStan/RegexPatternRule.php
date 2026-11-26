@@ -589,7 +589,8 @@ final class RegexPatternRule implements Rule
      * decides whether it looks for every match leaves it, Nette's lazy for
      * one: left out, as it is; given, the loop its value makes it run, as
      * its type says, and none when the type allows a value that makes it
-     * run none, or one that is no boolean.
+     * run none, one that is no boolean, or two values that make it run two
+     * different loops, as a lazy that may be true or false does.
      *
      * @param array<Arg> $args
      */
@@ -608,14 +609,19 @@ final class RegexPatternRule implements Rule
         }
 
         $decided = $function->decidedBy(null);
+        $loops = [];
         foreach ($scope->getType($argument)->getConstantScalarValues() as $value) {
             $decided = $function->decidedBy(\is_bool($value) ? (int) $value : null);
             if (null === $decided->everyMatch) {
                 return $decided;
             }
+
+            $loops[$decided->everyMatch] = true;
         }
 
-        return $decided;
+        // Values that make it run two different loops name neither: the
+        // cost of one is not the cost of the other.
+        return \count($loops) > 1 ? $function->decidedBy(null) : $decided;
     }
 
     private function formatSource(string $functionName): string
