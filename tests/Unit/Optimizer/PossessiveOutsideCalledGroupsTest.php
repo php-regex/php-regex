@@ -88,8 +88,9 @@ final class PossessiveOutsideCalledGroupsTest extends TestCase
         yield 'a repetition in a group that calls itself' => ['pattern' => '/(x(?1)?ca+b?)c/', 'possessive' => '/(x(?1)?ca++b?)c/', 'witness' => null, 'optimized' => '/(x(?1)?ca+b?)c/', 'changes' => []];
         yield 'a repetition in a group a DEFINE holds that calls itself' => ['pattern' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'possessive' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca++b?))/', 'witness' => null, 'optimized' => '/(?&n)c(?(DEFINE)(?<n>x(?&n)?ca+b?))/', 'changes' => []];
         yield 'a repetition in a pattern that calls itself whole' => ['pattern' => '/x(?R)?ca+b?()/', 'possessive' => '/x(?R)?ca++b?()/', 'witness' => null, 'optimized' => '/x(?R)?ca+b?()/', 'changes' => []];
-        // The other rewrites ship.
-        yield 'a class in a group a DEFINE holds' => ['pattern' => '/(?&n)x(?(DEFINE)(?<n>[0-9]+))/', 'possessive' => '/(?&n)x(?(DEFINE)(?<n>\d++))/', 'witness' => null, 'optimized' => '/(?&n)x(?(DEFINE)(?<n>\d+))/', 'changes' => [Rewriter::DIGITS]];
+        // The other rewrites ship, outside the group: one that rewrites the
+        // group, which repeats, ships nowhere (see RepeatInCalledGroupTest).
+        yield 'a class beside a group a DEFINE holds' => ['pattern' => '/(?&n)[0-9](?(DEFINE)(?<n>a+))/', 'possessive' => '/(?&n)[0-9](?(DEFINE)(?<n>a++))/', 'witness' => null, 'optimized' => '/(?&n)\d(?(DEFINE)(?<n>a+))/', 'changes' => [Rewriter::DIGITS]];
     }
 
     /**

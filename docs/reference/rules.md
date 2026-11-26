@@ -679,7 +679,13 @@ skip, no further than the first character that must be there: `(?:b)` stays in
 `/(?:\\)?define [a-z]++ (?:,x)*+ /`. A group repeated more than once is read again for each
 round, `(?:b)` in `/(?:(?>(?:b)?)a+){2}/` staying for the `a+` of the round before, and a
 pattern that holds a subroutine call is read whole: there a group stays wherever a repeat
-stands before such a group.
+stands before such a group. A group inside a group a call runs that repeats something some
+number of times, or anywhere in a pattern that calls itself whole, stays wherever it stands:
+PCRE2 makes such a repeat possessive by the brackets around it, and its JIT then misses
+matches, so `/(a+b)c(?1)d/` finds nothing in `abcabcabd` where `/((?:a)+b)c(?1)d/` and
+`/(a+(?:b))c(?1)d/` find `abcabd`, and `/x(?R)a|a*/` finds the empty string in `xaa` where
+`/x(?R)a|(?:a)*/` finds `xaa`. `(?:a)` is still reported in `/(?:a)+b(?1)(c)/`, outside the
+group the call runs.
 
 **Example:**
 ```php
@@ -707,7 +713,9 @@ that keeps braces from a count, `a{(?:)2}`, `a{1,(?:)2}` or `a{(?:),2}` (`{,2}` 
 quantifier since PCRE2 10.43); and one a quantifier repeats: `a(?:)?` matches `a` alone,
 `a?` the empty string too. An unbounded repeat of an empty group, `(?>)+`, is
 `regex.lint.quantifier.emptyRepeat`'s. So is an empty group PCRE2 enters to choose which
-repeats it makes possessive: `/a+(?>(?:)|b)a/` finds `aa`, where `/a+(?>|b)a/` finds nothing.
+repeats it makes possessive: `/a+(?>(?:)|b)a/` finds `aa`, where `/a+(?>|b)a/` finds nothing,
+and one inside a group a call runs that repeats something, or in a pattern that calls itself
+whole: with the JIT, `/(a+(?:)c)x(?1)d/` finds `acxacd` in `acxacxacd`, `/(a+c)x(?1)d/` nothing.
 
 **Example:**
 ```php

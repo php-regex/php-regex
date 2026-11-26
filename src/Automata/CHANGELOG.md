@@ -121,6 +121,18 @@ CHANGELOG
    `acacad` from PCRE2 10.34 to 10.49, where `/(a+)c(?1)d/` and the
    interpreter match `acad`. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
    refused too, though no subject was found on which they differ.
+ * `matchEquivalent()` refuses two patterns that write apart a group a
+   call runs that repeats something some number of times, or a pattern
+   that calls itself whole, and `runsOfEveryCall()` names no run for them:
+   PCRE2 makes such a repeat possessive by the brackets and the classes
+   written around it, and its JIT then misses matches. `/((?:a)+b)c(?1)d/`
+   and `/(a+b)c(?1)d/` were proven alike, yet with the JIT the second finds
+   nothing in `abcabcabd` where the first finds `abcabd`, from PCRE2 10.39
+   to 10.49; so were `/([0-9]+b)c(?1)d/` and `/(\d+b)c(?1)d/`, and
+   `/x(?R)a|(?:a)*/` and `/x(?R)a|a*/`, which the interpreter too reads
+   apart from PCRE2 10.44. The same parts, spelled alike, are read as
+   before, whatever stands outside them: `/(?:a)+b(?1)(c)/` and
+   `/a+b(?1)(c)/` are proven alike.
  * `matchEquivalent()` runs a group a `(?(DEFINE)...)` holds where a call
    of it stands, under the options in force where the DEFINE stands, not
    where the call does: `/(?&n)c(?(DEFINE)(?<n>a|ab))/` and

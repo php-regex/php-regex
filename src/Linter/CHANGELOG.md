@@ -151,6 +151,17 @@ CHANGELOG
    next. `regex.lint.quantifier.concatenation` keeps a repeat of such a
    round as written, and so does `regex.lint.group.redundant` where the
    pattern holds a subroutine call.
+ * `regex.lint.group.redundant` and `regex.lint.group.empty` no longer call
+   a group removable inside a group a call runs that repeats something
+   some number of times, nor anywhere in a pattern that calls itself whole:
+   PCRE2 makes such a repeat possessive by the brackets around it, and its
+   JIT then misses matches. `(?:a)` in `/((?:a)+b)c(?1)d/` and `(?:b)` in
+   `/(a+(?:b))c(?1)d/` were reported, yet `/(a+b)c(?1)d/` finds nothing in
+   `abcabcabd` with the JIT where both find `abcabd`, from PCRE2 10.39 to
+   10.49; so was `(?:a)` in `/x(?R)a|(?:a)*/`, yet `/x(?R)a|a*/` finds the
+   empty string in `xaa`, with and without the JIT from PCRE2 10.44, and
+   `(?:)` in `/(a+(?:)c)x(?1)d/`. `(?:a)` in `/(?:a)+b(?1)(c)/`, outside
+   the group the call runs, is still reported.
  * Without u, `regex.lint.group.redundant` and `regex.lint.group.empty` no
    longer call a group removable in a pattern that holds a repeat of the
    byte 0xFF before `\w`, or of `\w` before that byte, or would hold one

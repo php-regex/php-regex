@@ -62,7 +62,10 @@ final class PossessiveBrackets
      * and the brackets that decide it differ. "(?>)" in "/a(?>)b/" can go.
      * So may a pattern that, a group a repeat reads taken out, holds a
      * repeat PCRE2 may make possessive as if the byte 0xFF were no word
-     * character (see AutoPossession::bracketsDecideBesideLastByte()).
+     * character (see AutoPossession::bracketsDecideBesideLastByte()), or a
+     * group that stands where a call runs a repeat (see
+     * AutoPossession::standsWhereACallRunsARepeat()): "(?:)" in
+     * "/(a+(?:)c)x(?1)d/" stays.
      */
     public static function groupDecides(GroupNode $group, LintContext $context): bool
     {
@@ -73,7 +76,8 @@ final class PossessiveBrackets
         // holds none has no such group for the brackets to decide.
         return ([] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
             && AutoPossession::groupDecides($pattern, $group))
-            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale);
+            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale)
+            || AutoPossession::standsWhereACallRunsARepeat($pattern, $group);
     }
 
     /**
@@ -81,7 +85,9 @@ final class PossessiveBrackets
      * reads on its way from a repeated character to a group it may skip
      * decide (see AutoPossession::groupDecidesBesideARepeat()). "(?:\\)" in
      * "/(?:\\)?define [a-z]++ (?:,x)*+ /" can go: the engine judges "\\?"
-     * against the "d" after it and reads no further.
+     * against the "d" after it and reads no further. A group that stands
+     * where a call runs a repeat stays wherever it stands: "(?:b)" in
+     * "/(a+(?:b))c(?1)d/" and "(?:a)" in "~x(?R)a|(?:a)*~".
      */
     public static function groupDecidesBesideARepeat(GroupNode $group, LintContext $context): bool
     {
@@ -90,7 +96,8 @@ final class PossessiveBrackets
 
         return ([] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
             && AutoPossession::groupDecidesBesideARepeat($pattern, $group))
-            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale);
+            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale)
+            || AutoPossession::standsWhereACallRunsARepeat($pattern, $group);
     }
 
     /**

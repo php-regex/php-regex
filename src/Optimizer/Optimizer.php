@@ -168,8 +168,9 @@ final class Optimizer
             // change the language PCRE matches. This gate runs on its own, not
             // only under verifyWithAutomata, because the rewrite rules that
             // possessify are on by default. So does one that changes the
-            // brackets PCRE2 reads to make a repeat possessive, which the
-            // next branch checks when the options ask for every check.
+            // brackets PCRE2 reads to make a repeat possessive, or rewrites
+            // a pattern whose calls run a repeat, which the next branch
+            // checks when the options ask for every check.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return null;
             }
@@ -273,10 +274,18 @@ final class Optimizer
      * the byte 0xFF possessive before "\w", and one of "\w" before that
      * byte, as if 0xFF were no word character: where the tables may hold it
      * in "\w", a rewrite of a pattern that holds such a repeat, or that
-     * makes one, is checked.
+     * makes one, is checked. So is any rewrite of a pattern that repeats
+     * something some number of times inside a group a call runs: PCRE2
+     * makes such a repeat possessive by how the pattern writes it, and its
+     * JIT misses matches of it, "/(a+b)c(?1)d/" none in "abcabcabd" where
+     * "/((?:a)+b)c(?1)d/" finds "abcabd".
      */
     private function movesAutoPossession(RegexNode $original, string $optimized): bool
     {
+        if ([] !== AutoPossession::repeatingPartsACallRuns($original->pattern)) {
+            return true;
+        }
+
         try {
             $rewritten = $this->parser->parse($optimized);
         } catch (RegexException) {

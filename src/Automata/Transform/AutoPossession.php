@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Automata\Transform;
 
 use PHPRegex\Automata\Solver\RewriteSites;
+use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Node\AlternationNode;
@@ -61,6 +62,15 @@ final class AutoPossession
      * @var \WeakMap<NodeInterface, bool>|null
      */
     private static ?\WeakMap $besideLastByte = null;
+
+    /**
+     * The nodes of each pattern asked about that stand in a part a call
+     * runs that repeats (see repeatingPartsACallRuns()), kept as long as its
+     * tree is: a rule asks at each group it would report.
+     *
+     * @var \WeakMap<NodeInterface, \WeakMap<NodeInterface, true>>|null
+     */
+    private static ?\WeakMap $whereACallRunsARepeat = null;
 
     /**
      * The first atomic group or possessive repeat of a group that may match
@@ -359,6 +369,74 @@ final class AutoPossession
         }
 
         return null;
+    }
+
+    /**
+     * The parts of the pattern a call runs that repeat something but a call
+     * some number of times, each once, in the order the calls name them:
+     * each group a call runs, or the whole pattern where it calls itself
+     * whole. PCRE2
+     * makes such a repeat possessive by how the pattern writes it and what
+     * stands around it, and its JIT then misses matches its interpreter
+     * finds: "/(a+b)c(?1)d/" finds nothing in "abcabcabd" with the JIT,
+     * where "/((?:a)+b)c(?1)d/", "/(a+(?:b))c(?1)d/" and "/((?:a+)b)c(?1)d/"
+     * find "abcabd", and "/(\d+b)c(?1)d/" nothing in "1bc1bc1bd", where
+     * "/([0-9]+b)c(?1)d/" finds "1bc1bd", from PCRE2 10.39 to 10.49. In a
+     * pattern that calls itself whole the interpreter makes a repeat at its
+     * end possessive too, from PCRE2 10.44: "~x(?R)a|a*~" finds the empty
+     * string in "xaa", where "~x(?R)a|(?:a)*~" finds "xaa". A repeat
+     * outside every such part reads alike written either way: "/a+b(?1)(c)/"
+     * and "/(?:a)+b(?1)(c)/" find the same, with and without the JIT.
+     *
+     * Read wider than the engine reads: every repeat of such a part counts,
+     * whatever stands around it.
+     *
+     * @return list<NodeInterface>
+     */
+    public static function repeatingPartsACallRuns(NodeInterface $pattern): array
+    {
+        $groups = GroupIndex::of($pattern);
+
+        return array_values(array_filter($groups->recursesWhole() ? [$pattern] : $groups->subroutineTargets(), self::repeatsSomething(...)));
+    }
+
+    /**
+     * Whether the node stands in a part a call runs that repeats something
+     * some number of times (see repeatingPartsACallRuns()), the part itself
+     * included: taking a group out there, or rewriting what stands there,
+     * may change which repeats PCRE2 makes possessive where its JIT misses
+     * matches of them.
+     */
+    public static function standsWhereACallRunsARepeat(NodeInterface $pattern, NodeInterface $node): bool
+    {
+        self::$whereACallRunsARepeat ??= new \WeakMap();
+        if (!isset(self::$whereACallRunsARepeat[$pattern])) {
+            /** @var \WeakMap<NodeInterface, true> $inside */
+            $inside = new \WeakMap();
+            foreach (self::repeatingPartsACallRuns($pattern) as $part) {
+                foreach (self::nodes($part) as $member) {
+                    $inside[$member] = true;
+                }
+            }
+            self::$whereACallRunsARepeat[$pattern] = $inside;
+        }
+
+        return isset(self::$whereACallRunsARepeat[$pattern][$node]);
+    }
+
+    /**
+     * Whether the part repeats something but a call some number of times: a
+     * repeat of a call compiles no repeat PCRE2 makes possessive.
+     */
+    private static function repeatsSomething(NodeInterface $part): bool
+    {
+        foreach (self::nodes($part) as $node) {
+            if ($node instanceof QuantifierNode && !$node->node instanceof SubroutineNode && self::repeatsSomeNumberOfTimes($node)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
