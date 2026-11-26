@@ -36,12 +36,17 @@ use PHPRegex\Parser\Node\SequenceNode;
  * Detects nested variable quantifiers that can cause catastrophic
  * backtracking.
  *
- * A loop counted with every repeat inside it, and read in 2,048 ways at
- * most, is left out: one attempt then costs a number of steps the pattern
- * alone bounds, under 8,200 on PCRE2 10.49 for every such loop measured,
- * which no subject grows. The syllable patterns of an Indic shaper, "?",
- * "{0,2}", "{0,3}" and "{0,4}" nested, take 73 steps at most; "/^(a{0,16}){0,16}$/" runs
- * past PHP's default pcre.backtrack_limit and is reported. See
+ * The loops of a pattern whose every repeat is bounded, and that the
+ * engine reads in few ways, are left out: one attempt then costs a number
+ * of steps the pattern alone bounds, which no subject grows. The whole
+ * pattern is counted; 2,048 ways are allowed where every attempt starts at
+ * one place, one attempt staying under 10,000 steps on PCRE2 10.49, and 7
+ * where a search may start anywhere and pays the attempt at every offset,
+ * 100,000 characters then costing about twenty milliseconds without the
+ * JIT. The syllable patterns of an Indic shaper, "?", "{0,2}", "{0,3}" and
+ * "{0,4}" nested under "^", take 73 steps at most; "/^(a{0,16}){0,16}$/"
+ * runs past PHP's default pcre.backtrack_limit and "/(a?){0,10}(?:b|c)/"
+ * takes about ten seconds on 100,000 "a": both are reported. See
  * LoopShape::isReadInAFewWays().
  *
  * @internal

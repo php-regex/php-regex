@@ -57,10 +57,17 @@ final class LoopShape
     private const VERTICAL_WHITESPACE = [0x0A, 0x0B, 0x0C, 0x0D, 0x85, 0x2028, 0x2029];
 
     /**
-     * The ways a counted loop may be read in past which the nested-loop
-     * rule speaks: see isReadInAFewWays().
+     * The ways a pattern every attempt of which starts at one place may be
+     * read in, past which the nested-loop rule speaks of a counted loop:
+     * see isReadInAFewWays().
      */
     private const MAX_WAYS = 2048;
+
+    /**
+     * The ways a pattern a search may start anywhere may be read in, past
+     * which the nested-loop rule speaks of a counted loop.
+     */
+    private const MAX_WAYS_FROM_ANY_START = 7;
 
     private function __construct() {}
 
@@ -123,10 +130,14 @@ final class LoopShape
     }
 
     /**
-     * Whether the loop is counted, with every repeat inside it, and the
-     * engine reads it in a few ways, 2,048 at most: however long the
-     * subject, one attempt then tries a number of ways the pattern alone
-     * bounds, and no subject grows it.
+     * Whether the loop is counted, and the pattern around it with it, and
+     * the engine reads the pattern in a few ways: however long the subject,
+     * one attempt then tries a number of ways the pattern alone bounds, and
+     * no subject grows it. The whole pattern is counted, as what comes
+     * before the loop decides how often it is entered and what comes after
+     * it how often it is tried again: "/^(a?){0,10}(a?){0,10}$/", each
+     * loop read in 2,047 ways, runs past PHP's default pcre.backtrack_limit
+     * on 7 "a" then "!", and "/^\w*(a?){0,10}$/" on 400 "a" then "!".
      *
      * The ways are counted from the pattern. Items in a row multiply
      * theirs; branches add theirs, or count as the widest of them where no
@@ -135,26 +146,36 @@ final class LoopShape
      * that can follow it, is read one way for each way of its body, each
      * time it runs: "[ZJ]{0,3}M" is read one way. One that may stop where
      * it could go on is read once for each count it may stop at: "a{0,3}a"
-     * in four ways. What follows the loop is read where the loop is
-     * written, through the sequences around it. A loop that another runs
-     * again, each time it repeats, is read in the ways of the outermost
-     * loop around it: in "(?:(?>(?:c?.?){0,4}a)(?:\d|)){0,12}b" the inner
-     * loop is read in 341 ways each time, and the loop around it in more
-     * than 2,048. A loop a subroutine call runs is not counted.
+     * in four ways. Items that end the pattern and cannot fail are tried
+     * once, and their ways add to those of what comes before them.
      *
-     * The bound is set from PCRE2 10.49, the interpreter with its start
+     * The bounds are set from PCRE2 10.49, the interpreter with its start
      * optimizations off, by the smallest pcre.backtrack_limit under which
-     * preg_match() finishes on the costliest subject a search finds: where
-     * every repeat may stop anywhere, the steps follow the ways, and
+     * one attempt finishes on the costliest subject a search finds.
+     *
+     * Where every attempt starts at one place, the pattern opening with "^"
+     * read without m, "\A" or "\G" in each branch, or under the A
+     * modifier, the attempt is the cost, and 2,048 ways are allowed: it
+     * stays under a hundredth of the default pcre.backtrack_limit.
      * "/^(a?){0,10}$/", read in 2,047 ways, takes 2,559 steps, its lazy
-     * twin 4,094, and "/^(a{0,4}){0,4}$/", in 781, takes 438. Of 811
-     * random patterns whose loops are read in 2,048 ways or fewer, the
-     * costliest takes 8,187 steps, under a hundredth of PHP's default
-     * pcre.backtrack_limit; past the bound, "/^(a?){0,12}$/", in 8,191
-     * ways, takes 10,239 steps, "/^(a{0,6}){0,6}$/" 56,024, and
-     * "/^(a{0,8}){0,8}b/" and "/^(a{0,16}){0,16}$/" run past the limit on
-     * 17 and 7 "a". The bounds alone tell nothing: "/^(a?a?a?a?a?a?){0,4}$/"
-     * runs past the limit on 8 "a".
+     * twin 4,094, and "/^(a{0,4}){0,4}$/", in 781, takes 438; past the
+     * bound, "/^(a?){0,12}$/", in 8,191 ways, takes 10,239 steps,
+     * "/^(a{0,6}){0,6}$/" 56,024, and "/^(a{0,8}){0,8}b/" and
+     * "/^(a{0,16}){0,16}$/" run past the limit on 17 and 7 "a". The bounds
+     * alone tell nothing: "/^(a?a?a?a?a?a?){0,4}$/" runs past it on 8 "a".
+     * Of 418 random patterns of that kind left out, the costliest takes
+     * 5,117 steps.
+     *
+     * A search that may start anywhere pays the attempt at every offset,
+     * and the limit counts each start apart: 7 ways are allowed, so that
+     * 100,000 characters cost about twenty milliseconds without the JIT.
+     * "/(a?){0,2}(?:b|c)/", read in 7 ways, takes 14 steps a start and
+     * 18 to 23 ms on 100,000 "a"; past the bound, "/(a{0,2}){0,2}(?:b|c)/",
+     * in 13 ways, takes 19 steps and 26 to 33 ms, "/(a?){0,3}(?:b|c)/", in
+     * 15, 30 steps and 44 to 58 ms, "/(a?){0,4}(?:b|c)/" 103 ms, and
+     * "/(a?){0,10}(?:b|c)/" 9.7 s. Of 8 random patterns of that kind left
+     * out, the costliest takes 26 steps a start, its paths long but read
+     * one way each.
      *
      * Not counted, and so not read in a few ways: an unbounded repeat, a
      * reference, a subroutine call, a conditional, a verb, and anything
@@ -162,23 +183,11 @@ final class LoopShape
      */
     public static function isReadInAFewWays(QuantifierNode $loop, LintContext $context): bool
     {
-        if ($context->isReenteredBySubroutine($loop)) {
-            return false;
-        }
+        $pattern = $context->parents()[0] ?? $loop;
+        $flags = $context->charSetAnalyzer->flagsAtTheStart(NodePredicates::modifierFlags($context->pattern->flags));
+        $bound = $context->pattern->hasFlag('A') || self::startsAtOnePlace($pattern, $flags) ? self::MAX_WAYS : self::MAX_WAYS_FROM_ANY_START;
 
-        $parents = $context->parents();
-        $flags = $context->activeFlags();
-        foreach ($parents as $depth => $parent) {
-            if ($parent instanceof QuantifierNode && QuantifierMath::isRepeatable($parent)) {
-                $flags = FlagScope::flagsAt($parent, $parents[0], self::flagsAtTheStart($context)) ?? $flags;
-                $parents = \array_slice($parents, 0, $depth);
-                $loop = $parent;
-
-                break;
-            }
-        }
-
-        return self::ways($loop, $flags, self::bytesAfter($loop, $parents, $context), $context) <= self::MAX_WAYS;
+        return self::ways($pattern, $flags, ByteCharSet::empty(), $context, true) <= $bound;
     }
 
     /**
@@ -336,18 +345,37 @@ final class LoopShape
      * The ways the engine can read the node, one more than MAX_WAYS for
      * any number past it and for a node that is not counted. $after holds
      * the bytes that can follow the node, not known where anything can.
+     * With $ends, the node ends the pattern: the items that end it and
+     * cannot fail are tried once, the first way through them that matches
+     * being the match, and their ways add to those of what comes before
+     * them: in "/^(a?){0,4}x(a?){0,9}/" the engine never comes back past
+     * the "x" it reached, and the pattern is read in 31 ways and 1,023.
+     * The last item that may fail ends the pattern too, and so do its own
+     * last items.
      */
-    private static function ways(NodeInterface $node, string $flags, ByteCharSet $after, LintContext $context): int
+    private static function ways(NodeInterface $node, string $flags, ByteCharSet $after, LintContext $context, bool $ends = false): int
     {
         if ($node instanceof SequenceNode) {
+            // The items that end the pattern and cannot fail are tried once,
+            // after what comes before them: their ways add up. The others
+            // multiply theirs.
             $ways = 1;
+            $last = 0;
             $flagsAt = FlagScope::flagsAtEachChild($node, $flags);
             foreach (array_reverse($node->children, true) as $index => $child) {
-                $ways = min(self::MAX_WAYS + 1, $ways * self::ways($child, $flagsAt[$index], $after, $context));
+                $read = self::ways($child, $flagsAt[$index], $after, $context, $ends);
+                if ($ends && self::cannotFail($child)) {
+                    $last += $read;
+                } else {
+                    // The last item that may fail still ends the pattern.
+                    $ways = min(self::MAX_WAYS + 1, $ways * $read);
+                    $ends = false;
+                }
+
                 $after = self::bytesFrom($child, $flagsAt[$index], $after, $context);
             }
 
-            return $ways;
+            return min(self::MAX_WAYS + 1, $ways + $last);
         }
 
         if ($node instanceof AlternationNode) {
@@ -358,7 +386,7 @@ final class LoopShape
             $starts = ByteCharSet::empty();
             $apart = true;
             foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtBranch) {
-                $branch = self::ways($node->alternatives[$index], $flagsAtBranch, $after, $context);
+                $branch = self::ways($node->alternatives[$index], $flagsAtBranch, $after, $context, $ends);
                 $sum = min(self::MAX_WAYS + 1, $sum + $branch);
                 $widest = max($widest, $branch);
                 $start = self::bytesFrom($node->alternatives[$index], $flagsAtBranch, $after, $context);
@@ -371,7 +399,7 @@ final class LoopShape
 
         if ($node instanceof GroupNode) {
             // What follows a lookaround is read from where it started.
-            return self::ways($node->child, FlagScope::flagsInside($node, $flags), NodePredicates::isTransparentGroup($node->type) ? $after : ByteCharSet::unknown(), $context);
+            return self::ways($node->child, FlagScope::flagsInside($node, $flags), NodePredicates::isTransparentGroup($node->type) ? $after : ByteCharSet::unknown(), $context, $ends && \in_array($node->type, self::PLAIN_GROUPS, true));
         }
 
         if ($node instanceof QuantifierNode) {
@@ -430,44 +458,74 @@ final class LoopShape
     }
 
     /**
-     * The bytes that can follow the loop where it is written: those the
-     * items after it start with, in each sequence around it, up to one that
-     * reads a character. Not known in a lookaround, a conditional or a
-     * script run.
-     *
-     * @param list<NodeInterface> $parents the nodes around the loop, the whole pattern first
+     * Whether every attempt of the pattern starts at one place: each way
+     * through it opens with "^" read without m, "\A" or "\G", past the
+     * groups that only wrap it. An attempt from any other offset fails on
+     * its first item.
      */
-    private static function bytesAfter(QuantifierNode $loop, array $parents, LintContext $context): ByteCharSet
+    private static function startsAtOnePlace(NodeInterface $node, string $flags): bool
     {
-        $root = $parents[0] ?? $loop;
-        $start = self::flagsAtTheStart($context);
-        $bytes = ByteCharSet::empty();
-        $child = $loop;
-        foreach (array_reverse($parents) as $parent) {
-            if ($parent instanceof SequenceNode) {
-                $position = (int) array_search($child, $parent->children, true);
-                foreach (\array_slice($parent->children, $position + 1) as $next) {
-                    $bytes = self::bytesFrom($next, FlagScope::flagsAt($next, $root, $start) ?? $start, ByteCharSet::empty(), $context)->union($bytes);
-                    if (!NodePredicates::canBeEmpty($next)) {
-                        return $bytes;
-                    }
+        if ($node instanceof AlternationNode) {
+            foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtBranch) {
+                if (!self::startsAtOnePlace($node->alternatives[$index], $flagsAtBranch)) {
+                    return false;
                 }
-            } elseif (!$parent instanceof QuantifierNode && !$parent instanceof AlternationNode && !($parent instanceof GroupNode && NodePredicates::isTransparentGroup($parent->type))) {
-                return ByteCharSet::unknown();
             }
 
-            $child = $parent;
+            return true;
         }
 
-        return $bytes;
+        if ($node instanceof SequenceNode) {
+            return self::startsAtOnePlace($node->children[0], $flags);
+        }
+
+        if ($node instanceof GroupNode) {
+            return \in_array($node->type, self::PLAIN_GROUPS, true) && self::startsAtOnePlace($node->child, FlagScope::flagsInside($node, $flags));
+        }
+
+        return ($node instanceof AnchorNode && '^' === $node->value && !str_contains($flags, 'm'))
+            || ($node instanceof AssertionNode && \in_array($node->value, ['A', 'G'], true));
     }
 
     /**
-     * The flags the pattern starts with.
+     * Whether the item always has a way to match, the empty text at
+     * worst: a repeat that may run no time, a group or a row of such
+     * items, a choice of which one is, an empty text or a comment. An
+     * anchor, an assertion or a lookaround may fail.
      */
-    private static function flagsAtTheStart(LintContext $context): string
+    private static function cannotFail(NodeInterface $node): bool
     {
-        return $context->charSetAnalyzer->flagsAtTheStart(NodePredicates::modifierFlags($context->pattern->flags));
+        if ($node instanceof QuantifierNode) {
+            [$min] = QuantifierMath::parseRange($node);
+
+            return 0 === $min || self::cannotFail($node->node);
+        }
+
+        if ($node instanceof GroupNode) {
+            return \in_array($node->type, self::PLAIN_GROUPS, true) && self::cannotFail($node->child);
+        }
+
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                if (!self::cannotFail($child)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        if ($node instanceof AlternationNode) {
+            foreach ($node->alternatives as $alternative) {
+                if (self::cannotFail($alternative)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        return $node instanceof CommentNode || ($node instanceof LiteralNode && '' === $node->value);
     }
 
     /**
