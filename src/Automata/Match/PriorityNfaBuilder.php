@@ -91,7 +91,7 @@ final class PriorityNfaBuilder
 
     public const LOCALE_TABLES_MESSAGE = 'Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier proven on a byte past ASCII against a class holds under the tables of C alone, and the target names no other locale.';
 
-    public const ASSERTED_FIRST_CHARACTER_MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a", which the match solver does not read.';
+    public const ASSERTED_FIRST_CHARACTER_MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a"; and it takes the case of the first alternative of the lookahead that starts with the character, "/(?=A|[Aa])/" finding nothing in "a", which the match solver does not read.';
 
     /**
      * The copy of the whole pattern, beside the groups keyed by object id.

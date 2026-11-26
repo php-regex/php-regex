@@ -25,6 +25,7 @@ use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\JitInAFreshProcess;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -49,11 +50,12 @@ use PHPUnit\Framework\TestCase;
  */
 final class LookaheadBeforeRequiredCharacterTest extends TestCase
 {
+    use PcreGates;
     use PhpUnitForwardCompat;
 
-    private const MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a", which the automata solver does not read.';
+    private const MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a"; and it takes the case of the first alternative of the lookahead that starts with the character, "/(?=A|[Aa])/" finding nothing in "a", which the automata solver does not read.';
 
-    private const MATCH_MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a", which the match solver does not read.';
+    private const MATCH_MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a"; and it takes the case of the first alternative of the lookahead that starts with the character, "/(?=A|[Aa])/" finding nothing in "a", which the match solver does not read.';
 
     /**
      * PCRE2 10.39 to 10.44 find nothing in the witness, with the JIT and
@@ -148,6 +150,11 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
         yield 'the lookahead caseless' => ['pattern' => '/(?i:(?=A))b?a/', 'witness' => 'a'];
         yield 'a class of both cases in the lookahead' => ['pattern' => '/(?=[Aa])b?a/', 'witness' => 'a'];
         yield 'a class of both cases required' => ['pattern' => '/(?=A)b?[aA]/i', 'witness' => 'a'];
+        yield 'a letter, then a class of both its cases, in the lookahead' => ['pattern' => '/(?=A|[Aa])/', 'witness' => 'a'];
+        yield 'a letter, then itself caseless, in the lookahead' => ['pattern' => '/(?=A|(?i)A)/', 'witness' => 'a'];
+        yield 'alternatives in a group of the lookahead' => ['pattern' => '/(?=(?:A|[Aa]))/', 'witness' => 'a'];
+        yield 'alternatives that go on' => ['pattern' => '/(?=AB|[Aa]C)/', 'witness' => 'aC'];
+        yield 'a repeat, then a class of both cases' => ['pattern' => '/(?=A+|[Aa])/', 'witness' => 'a'];
         yield 'bytes past ASCII under (*UCP)' => ['pattern' => '/(*UCP)(?=\xE9)b?(?i:\xC9)/', 'witness' => "\xE9"];
         yield 'a character the lookahead may skip first' => ['pattern' => '/(?=(?:a?\x61))A?(?i:A)/', 'witness' => 'a'];
         yield 'a caret before the lookahead' => ['pattern' => '/^(?=a)b?(?i:A)/', 'witness' => 'a'];
@@ -358,6 +365,26 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
         yield 'no start optimisation' => ['pattern' => '/(*NO_START_OPT)(?=a)b?a/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
         yield 'the character once' => ['pattern' => '/(?=a)b?\w/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
         yield 'symbols 0x20 apart' => ['pattern' => '/(?=@)b?`?@/', 'witness' => '@', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'a class of two letters required' => ['pattern' => '/(?=a)[ab]/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'a class of two letters in the lookahead' => ['pattern' => '/(?=[a-b])b?a/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'a character read first after a caret' => ['pattern' => '/^(?=(?>a+)-)a+-$/', 'witness' => 'aa-', 'missedBy' => 'nothing', 'at' => null];
+        yield 'a character read first after a group of lookaheads' => ['pattern' => '/(?:(?=a{99})){100}a{99}/', 'witness' => str_repeat('a', 99), 'missedBy' => 'nothing', 'at' => null];
+        yield 'a class of two letters repeated with a lookahead' => ['pattern' => '/^(?:(?=.*b)[ab]){1,40}$/u', 'witness' => 'abab', 'missedBy' => 'nothing', 'at' => null];
+        yield 'alternatives that require other characters' => ['pattern' => '/^(?:(?=.*a)x|(?=.*b)y){1,12}[ab]{2}$/su', 'witness' => 'yxab', 'missedBy' => 'nothing', 'at' => null];
+        yield 'the character in one alternative only' => ['pattern' => '/(?=a)b?(?:a|b)/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'an alternative without a lookahead' => ['pattern' => '/(?:(?=a)b?a|x)/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'the character optional' => ['pattern' => '/(?=a)b?a?c/', 'witness' => 'ac', 'missedBy' => 'nothing', 'at' => null];
+        yield 'the character first after a caret' => ['pattern' => '/^(?=a)a/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'a character read first after mixed alternatives' => ['pattern' => '/(?=A|[Aa])a/i', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
+        yield 'mixed alternatives' => ['pattern' => '/(?=A|[Aa])/', 'witness' => 'a', 'missedBy' => 'every release', 'at' => 0];
+        yield 'the character in every alternative' => ['pattern' => '/(?=a)b?(?:a|ab)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'the character in every alternative, later in one' => ['pattern' => '/(?=a)b?(?:ba|a)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'the character in a repeated group' => ['pattern' => '/(?=a)(?:b?a){1,2}/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'the character in both branches of a conditional' => ['pattern' => '/(?=a)(?(?=x)xa|a)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'a caret under an option setting' => ['pattern' => '/(?m)(?=b)^b/', 'witness' => "a\nb", 'missedBy' => 'releases before 10.45', 'at' => 4];
+        yield 'the character a lookahead requires in another alternative' => ['pattern' => '/(?=a)b?(?:(?=xa)|a)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'the character a lookahead requires in another alternative, after one' => ['pattern' => '/(?=a)b?(?:(?=xa)x|a)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
+        yield 'the character a lookahead requires in another alternative, by an escape' => ['pattern' => '/(?=a)(?:(?=\na)|\x61)(?<!b)/', 'witness' => 'a', 'missedBy' => 'releases before 10.45', 'at' => 0];
         yield 'a character of its own read first' => ['pattern' => '/(?=A)a/i', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
         yield 'a character read first after \K' => ['pattern' => '/(?=a)\Ka/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
         yield 'a character read first after what sets none' => ['pattern' => '/(?=a)(?#c)(?!x)\b(*MARK:m)(?C1)(?i)a/', 'witness' => 'a', 'missedBy' => 'nothing', 'at' => null];
@@ -394,6 +421,10 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
     #[DataProvider('provideLookaheadsFoundWider')]
     public function test_a_lookahead_is_found_wider_than_pcre2_looks_for_it_amiss(string $pattern, string $witness, string $release): void
     {
+        // Before 10.45 the engine misses this one: it is refused there for
+        // what it is, and read wider from 10.45.
+        $this->requiresPcre2For($pattern, ['10.45' => ['/(?=a)b?[aA]/']]);
+
         $found = preg_match('/(*NO_START_OPT)'.substr($pattern, 1), $witness);
         $this->assertSame($found, preg_match($pattern, $witness), $pattern);
         $this->assertSame($found, preg_match('/(*NO_JIT)'.substr($pattern, 1), $witness), $pattern.', without the JIT.');
@@ -407,7 +438,9 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
      */
     public static function provideLookaheadsFoundWider(): iterable
     {
-        yield 'a class of two characters' => ['pattern' => '/(?=[a-b])b?a/', 'witness' => 'a', 'release' => '10.44'];
+        yield 'a class of a character and its other case' => ['pattern' => '/(?=a)b?[aA]/', 'witness' => 'a', 'release' => '10.45'];
+        yield 'a class of both cases, then the letter' => ['pattern' => '/(?=[Aa]|A)/', 'witness' => 'a', 'release' => '10.45'];
+        yield 'the letter, then itself caseless in a group' => ['pattern' => '/(?=A|(?i:A))/', 'witness' => 'a', 'release' => '10.45'];
         yield 'two bytes past ASCII' => ['pattern' => '/(?=\xE9)b?\xC9/', 'witness' => "\xE9", 'release' => '10.45'];
         yield 'a byte past ASCII and i' => ['pattern' => '/(?=\xDD)b?i/', 'witness' => "\xDDi", 'release' => '10.45'];
         yield 'I and a byte past ASCII' => ['pattern' => '/(?=I)b?\xFD/', 'witness' => "I\xFD", 'release' => '10.45'];
@@ -415,7 +448,6 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
         yield 'a caret before the lookahead' => ['pattern' => '/^(?=a)b?a/', 'witness' => 'a', 'release' => '10.44'];
         yield '\A before the lookahead' => ['pattern' => '/\A(?=a)b?a/', 'witness' => 'a', 'release' => '10.44'];
         yield 'an empty group before the lookahead' => ['pattern' => '/(?:)(?=a)b?a/', 'witness' => 'a', 'release' => '10.44'];
-        yield 'an alternative without a lookahead' => ['pattern' => '/(?:(?=a)b?a|x)/', 'witness' => 'a', 'release' => '10.44'];
         yield 'alternatives of the lookahead that disagree' => ['pattern' => '/(?=a|b)x?a/', 'witness' => 'a', 'release' => '10.44'];
         yield 'a lookahead that may match nothing first' => ['pattern' => '/(?=b?a)b?a/', 'witness' => 'a', 'release' => '10.44'];
         yield 'after a commitment' => ['pattern' => '/(*COMMIT)(?=a)b?a/', 'witness' => 'a', 'release' => '10.44'];
