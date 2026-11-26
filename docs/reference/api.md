@@ -181,7 +181,9 @@ $solver->equivalent('/[0-9]+/', '/\d+/')->isEquivalent; // true
 A pattern the target refuses has no language to compare: every method throws
 what `validate()` refuses, as `info()` does, the exception `parse()` throws or
 a `SemanticErrorException` carrying the validation error. A pattern outside
-the regular subset, or a limit reached, throws a `ComplexityException`.
+the regular subset, or a limit reached, throws a `ComplexityException`, whose
+`isLimitReached()` tells the two apart: a limit reached names its `$phase` and
+its `$limit`, and a larger budget in `SolverOptions` may answer.
 
 See [the logic solver reference](logic-solver.md#php-api) for the options, the
 DFA cache and the classes of the namespace that are public.

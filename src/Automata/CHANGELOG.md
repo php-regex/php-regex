@@ -4,6 +4,13 @@ CHANGELOG
 2.0
 ---
 
+ * `ComplexityException::isLimitReached()` tells a budget that ran out from a
+   pattern outside what the automata read, and `$phase` (`?string`) and
+   `$limit` (`?int`) are the `phase` and `limit` of `getDiagnostic()`, typed.
+   The budgets of a `Language` name theirs: `enumeration`, 50,000 for the
+   memory of `strings()` and `nonMembers()` and 1,000,000 for their steps
+   between two strings, where they named none; so does the alignment of
+   `rewritesAlikeInPlace()`, `rewrite alignment`, 65,536 cells.
  * `IntersectionResult`, `SubsetResult`, `EquivalenceResult` and
    `MatchEquivalenceResult` carry `$target`, the `PcreTarget` the patterns
    were read for: the PHP version, the PCRE2 release and the locale of the

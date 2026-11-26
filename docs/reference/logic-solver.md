@@ -798,10 +798,29 @@ When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic
 - `limit`: configured budget
 
 A state cap reached (`maxNfaStates`, `maxDfaStates`, the match solver's
-configurations) carries a `phase` and the `limit` too. A construct the
-automata do not read (a backreference, a lookaround the solver refuses)
-carries no `limit`: the diagnostic tells "too costly to answer" from "outside
-what the solver reads".
+configurations) carries a `phase` and the `limit` too, and so do the budgets
+of a `Language` (`product`, 100,000 pairs of states; `enumeration`, the
+50,000 lengths and states `strings()` and `nonMembers()` remember and the
+million steps they take between two strings). A construct the automata do not
+read (a backreference, a lookaround the solver refuses) carries no `limit`:
+the diagnostic tells "too costly to answer" from "outside what the solver
+reads". The exception says it typed: `isLimitReached()` is true when a budget
+ran out, and `$phase` (`?string`) and `$limit` (`?int`) are the diagnostic's
+`phase` and `limit`, null when it names none.
+
+```php
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+
+try {
+    (new LanguageSolver())->equivalent('/^(a|b)*a(a|b){6}$/', '/^[ab]*a[ab]{6}$/', new SolverOptions(maxDfaStates: 20));
+} catch (ComplexityException $exception) {
+    var_dump($exception->isLimitReached()); // bool(true)
+    var_dump($exception->phase);            // string(15) "determinization"
+    var_dump($exception->limit);            // int(20)
+}
+```
 
 The bodies of a pattern's lookarounds are compiled to automata of their own,
 and they share one allowance between them rather than one each: a single

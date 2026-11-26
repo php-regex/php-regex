@@ -20,11 +20,28 @@ use PHPRegex\Parser\Exception\VisualContextInterface;
 use PHPRegex\Parser\Exception\VisualContextTrait;
 
 /**
- * Raised when a regex exceeds the supported regular subset for automata conversion.
+ * Raised when a pattern is outside what the automata read, or when a budget
+ * ran out on the way to an answer: isLimitReached() tells the two apart, and
+ * $phase and $limit name the budget.
  */
 final class ComplexityException extends RegexException implements ExceptionInterface, VisualContextInterface
 {
     use VisualContextTrait;
+
+    /**
+     * The step the solver was at when it gave up, as getDiagnostic() names
+     * it ("determinization", "comparison", "match exploration"…); null when
+     * the diagnostic names none, as for most constructs the automata do
+     * not read.
+     */
+    public readonly ?string $phase;
+
+    /**
+     * The budget that ran out, in the unit of its phase (states, pairs of
+     * states, units of work); null when the pattern is outside what the
+     * automata read, which no larger budget answers.
+     */
+    public readonly ?int $limit;
 
     /**
      * @internal the library throws its exceptions; catch them, read them
@@ -41,8 +58,22 @@ final class ComplexityException extends RegexException implements ExceptionInter
         private ?array $diagnostic = null,
     ) {
         $caretSnippet = $this->initializeContext($offset, $pattern);
+        $phase = $diagnostic['phase'] ?? null;
+        $this->phase = \is_string($phase) ? $phase : null;
+        $limit = $diagnostic['limit'] ?? null;
+        $this->limit = \is_int($limit) ? $limit : null;
 
         parent::__construct($message, $errorCode, $offset, $caretSnippet, $previous);
+    }
+
+    /**
+     * Whether a budget ran out: a larger one in SolverOptions may answer,
+     * where a pattern outside what the automata read is refused whatever
+     * the budget.
+     */
+    public function isLimitReached(): bool
+    {
+        return null !== $this->limit;
     }
 
     /**
