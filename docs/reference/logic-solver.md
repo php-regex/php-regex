@@ -377,7 +377,8 @@ on). Two results with different stamps describe two engines' languages; compare
 them only knowing that.
 
 The constructor takes the parser that reads the patterns, so they are read for its PHP and PCRE2 target, and a DFA cache
-that keeps compiled patterns between questions:
+that keeps compiled patterns between questions: the DFAs `compile()`, `language()`, `acceptsPrefix()` and the eager
+search build, and beside them the NFAs the lazy search reads (see [Search Strategies](#search-strategies)):
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -636,8 +637,14 @@ The lazy search keeps its pairs under `maxDfaStates`, each counted as it is
 reached, and charges each move to `maxTransitionsProcessed`; past either
 limit it gives up and leaves the answer to the eager search, which reads the
 patterns under its own limits: the answer is the eager one's, and so is a
-refusal. With a DFA cache, whose compiled DFAs it reuses, or for a pattern
-read as UTF-8 beside one read as bytes, the search is the eager one.
+refusal. For a pattern read as UTF-8 beside one read as bytes, the search is
+the eager one.
+
+A DFA cache does not choose the search: the lazy one runs first with a cache
+as without one, and the eager one, when it runs, reads its DFAs from the cache
+and compiles into it. Beside the cache, the solver keeps the NFA of each
+pattern the lazy search read, bounded as the DFAs are and emptied with them,
+so that a route compared with every other route is built once.
 
 The strategy is the solver's own choice: `Options\SolverStrategy` and
 `SolverOptions::$strategy` are `@internal`, and a minor release may change them.

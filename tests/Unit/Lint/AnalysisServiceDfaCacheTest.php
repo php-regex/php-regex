@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\KeptNfas;
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
@@ -24,8 +25,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * The automata a lint run builds are kept for the whole run: a pattern
- * repeated across files, or asked about by several rules, is determinized
- * once.
+ * repeated across files, or asked about by several rules, is built once,
+ * its NFA beside the DFA cache of the run, and its DFA in the cache where
+ * a question needs one.
  */
 final class AnalysisServiceDfaCacheTest extends TestCase
 {
@@ -41,8 +43,13 @@ final class AnalysisServiceDfaCacheTest extends TestCase
         $this->assertSame(2, array_count_values($ids)['regex.lint.lookaround.impossible'] ?? 0);
         $this->assertSame(2, array_count_values($ids)['regex.lint.quantifier.possessiveImpossible'] ?? 0);
         $this->assertSame(2, array_count_values($ids)['regex.lint.anchor.impossible.boundary'] ?? 0);
-        $this->assertNotSame([], $cache->sets, 'The rules ask the automata through the cache of the analysis.');
-        $this->assertSame(array_fill_keys(array_keys($cache->sets), 1), $cache->sets, 'Every automaton is built once.');
+        $built = \count(KeptNfas::beside($cache));
+        $this->assertGreaterThan(0, $built, 'The rules ask the automata through the cache of the analysis.');
+        $this->assertSame(array_fill_keys(array_keys($cache->sets), 1), $cache->sets, 'Every DFA is compiled once.');
+
+        // The same patterns again, in a third file: nothing more is built.
+        $analysis->lint([new PatternOccurrence('/a(?=b)c/', 'third.php', 1, 'preg_match'), new PatternOccurrence('/[a-z]\b[0-9]/', 'third.php', 2, 'preg_match')]);
+        $this->assertCount($built, KeptNfas::beside($cache), 'Every automaton is built once.');
     }
 
     /**

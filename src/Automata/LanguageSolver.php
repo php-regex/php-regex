@@ -29,6 +29,7 @@ use PHPRegex\Automata\Options\SolverStrategy;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\KeptNfas;
 use PHPRegex\Automata\Solver\LazyDfa;
 use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
@@ -126,7 +127,9 @@ final class LanguageSolver
 
     /**
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
-     * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
+     * @param DfaCacheInterface|null $dfaCache Keeps compiled automata between questions: the DFAs compile(), language(), acceptsPrefix()
+     *                                         and the eager search build and, beside it, the NFAs the lazy search reads; it does not
+     *                                         choose the search, and nothing is kept when null
      */
     private readonly RegexParser $parser;
 
@@ -1196,11 +1199,11 @@ final class LanguageSolver
 
     /**
      * The NFAs of both patterns, for the lazy search; null where the eager
-     * search answers: under the Eager strategy, with a DFA cache, whose
-     * compiled DFAs it reuses, or for a pattern read as UTF-8 beside one
-     * read as bytes, which the eager search reads through the UTF-8 of each
-     * character. The modes are read from the patterns before any NFA is
-     * built.
+     * search answers: under the Eager strategy, or for a pattern read as
+     * UTF-8 beside one read as bytes, which the eager search reads through
+     * the UTF-8 of each character. The modes are read from the patterns
+     * before any NFA is built. A DFA cache does not choose the search: it
+     * keeps what the eager one compiles, once the lazy one gave up.
      *
      * @throws ComplexityException
      *
@@ -1208,7 +1211,7 @@ final class LanguageSolver
      */
     private function lazyNfas(string $left, string $right, SolverOptions $options): ?array
     {
-        if (SolverStrategy::Lazy !== $options->strategy || null !== $this->dfaCache) {
+        if (SolverStrategy::Lazy !== $options->strategy) {
             return null;
         }
 
@@ -1218,9 +1221,33 @@ final class LanguageSolver
             return null;
         }
 
-        $leftNfa = $this->buildNfa($left, $leftAst, $options);
+        $leftNfa = $this->lazyNfa($left, $leftAst, $options);
 
-        return [$leftNfa, $left === $right ? $leftNfa : $this->buildNfa($right, $rightAst, $options)];
+        return [$leftNfa, $left === $right ? $leftNfa : $this->lazyNfa($right, $rightAst, $options)];
+    }
+
+    /**
+     * The NFA of a pattern for the lazy search, built once for a solver
+     * that keeps its automata: beside its DFA cache, under the key the DFA
+     * of the pattern takes there.
+     *
+     * @throws ComplexityException
+     */
+    private function lazyNfa(string $pattern, RegexNode $ast, SolverOptions $options): Nfa
+    {
+        if (null === $this->dfaCache) {
+            return $this->buildNfa($pattern, $ast, $options);
+        }
+
+        $kept = KeptNfas::beside($this->dfaCache);
+        $key = $this->cacheKey($pattern, $options);
+        $nfa = $kept->get($key);
+        if (null === $nfa) {
+            $nfa = $this->buildNfa($pattern, $ast, $options);
+            $kept->set($key, $nfa);
+        }
+
+        return $nfa;
     }
 
     /**

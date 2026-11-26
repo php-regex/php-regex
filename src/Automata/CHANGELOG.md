@@ -4,6 +4,16 @@ CHANGELOG
 2.0
 ---
 
+ * A DFA cache no longer forces the eager search: `intersection()`,
+   `subsetOf()` and `equivalent()` run the lazy search first with a cache as
+   without one, and fall back to the eager one past its limits, which reads
+   and fills the cache. `intersection('/^(a|b)*a(a|b){15}$/', '/^b+$/')`
+   is empty at once either way, where a solver given a cache ran the DFA of
+   the left pattern past the 10,000-state limit and threw a
+   `ComplexityException`. Beside the cache, the solver keeps the NFA of
+   each pattern the lazy search read, 50,000 states in all at most, emptied
+   by `clearCaches()` with the DFAs: two hundred routes compared with one
+   another take about half the work they took.
  * `LanguageSolver` refuses a pattern PCRE2 refuses to compile, in every
    method: the pattern is judged first, for the target of the solver's
    parser, and one `validate()` refuses throws a `SemanticErrorException`
@@ -53,8 +63,8 @@ CHANGELOG
    search stops at the depth of the shortest witness, keeps its pairs under
    `maxDfaStates` as it reaches them, and past either limit leaves the answer
    to the eager search: 2,000 branches `a|a|…`, four million pairs of NFA
-   states, are answered from their three-state DFA. With a DFA cache, or a
-   pattern read as UTF-8 beside one read as bytes, the search stays eager.
+   states, are answered from their three-state DFA. For a pattern read as
+   UTF-8 beside one read as bytes, the search stays eager.
    `SolverStrategy` and `SolverOptions::$strategy` are `@internal`.
  * A determinized state holds one target per class of its automaton's
    alphabet, the ranges held once by an alphabet every state shares:

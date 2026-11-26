@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Automata\Model\Dfa;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
+use PHPRegex\Automata\Solver\KeptNfas;
 use PHPRegex\Linter\Rule\GroupIndex;
 use PHPRegex\Linter\Rule\LintContext;
 use PHPRegex\Linter\Rule\PatternInfo;
@@ -34,8 +35,13 @@ final class LanguageQuestionsTest extends TestCase
 {
     use PcreGates;
 
+    /**
+     * A question reads its patterns lazily and compiles no DFA: the NFA of
+     * each pattern is kept beside the cache the rule passes along, and a
+     * question asked again of the same patterns builds none.
+     */
     #[Test]
-    public function test_a_question_asked_again_reads_the_dfas_the_cache_kept(): void
+    public function test_a_question_asked_again_reads_the_automata_kept_beside_the_cache(): void
     {
         $cache = new class implements DfaCacheInterface {
             public int $hits = 0;
@@ -59,11 +65,18 @@ final class LanguageQuestionsTest extends TestCase
             }
         };
 
+        $this->assertSame(1, preg_match('/^(?:[ab])$/', 'a'));
+
         $this->assertTrue(LanguageQuestions::isSubset('/a/', '/[ab]/', $cache));
         $this->assertSame(0, $cache->hits);
+        $this->assertCount(2, KeptNfas::beside($cache), 'the first question builds the automaton of each pattern');
 
         $this->assertFalse(LanguageQuestions::areDisjoint('/a/', '/[ab]/', $cache));
-        $this->assertSame(2, $cache->hits, 'the second question finds both DFAs the first one built');
+        $this->assertSame(0, $cache->hits, 'neither question compiles a DFA');
+        $this->assertCount(2, KeptNfas::beside($cache), 'the second question finds both automata the first one built');
+
+        $this->assertTrue(LanguageQuestions::areDisjoint('/a/', '/c/', $cache));
+        $this->assertCount(3, KeptNfas::beside($cache), 'a pattern not read yet is built');
     }
 
     /**

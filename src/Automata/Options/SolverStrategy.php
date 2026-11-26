@@ -16,8 +16,9 @@ namespace PHPRegex\Automata\Options;
 /**
  * How intersection(), subsetOf() and equivalent() search for a witness.
  *
- * @internal the solver chooses its search: with a DFA cache, or for a pattern
- *           read as UTF-8 beside one read as bytes, it is the eager one
+ * @internal the solver chooses its search: for a pattern read as UTF-8 beside
+ *           one read as bytes, and past the limits of the lazy one, it is
+ *           the eager one, with a DFA cache or without
  */
 enum SolverStrategy: string
 {
