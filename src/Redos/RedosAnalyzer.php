@@ -98,7 +98,7 @@ final class RedosAnalyzer
         $confirmOptions = $options->confirmation;
 
         if (RedosMode::Off === $mode || $this->shouldIgnore($regex)) {
-            return RedosAnalysis::skipped($mode);
+            return RedosAnalysis::skipped($mode, $this->parser->target());
         }
 
         try {
@@ -109,7 +109,7 @@ final class RedosAnalyzer
             // safe: PCRE refuses to compile it.
             $validation = $parser->validate($regex);
             if (!$validation->isValid) {
-                return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.');
+                return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.', null, $parser->target());
             }
 
             $outcome = $this->prover($options)->prove($ast, $regex, $parser->target());
@@ -187,6 +187,7 @@ final class RedosAnalyzer
                 upperBoundDegree: $outcome->stepBound,
                 searchCost: $searchCost,
                 everyMatchSearchCost: $everyMatchSearchCost,
+                target: $parser->target(),
             );
 
             if (RedosMode::Confirmed !== $mode || !$analysis->exceedsThreshold($threshold)) {
@@ -202,7 +203,7 @@ final class RedosAnalyzer
 
             return $confirmed;
         } catch (ExceptionInterface $e) {
-            return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
+            return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage(), $this->parser->target());
         }
     }
 

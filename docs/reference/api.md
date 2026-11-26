@@ -163,8 +163,10 @@ most code does, and takes no offset: `preg_match()` takes one only after
 the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
 return a result carrying the shortest string that proves the answer, and
 `compile()` returns a pattern's DFA. Every character set is asked from the
-running PCRE2, so the three results also carry the release that answered, in
-`pcreVersion`.
+running PCRE2, so each result carries the release that answered, in
+`pcreVersion`, beside the target the patterns were read for, in `target`
+(a `PcreTarget`): the target of the solver's parser, which the running engine
+need not be.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -229,7 +231,10 @@ is the running engine, `PcreTarget::bundledWith(80400)` a PHP version with its
 bundled PCRE2, and `new PcreTarget(80400, '10.42', 'tr_TR.UTF-8')` any of them,
 under the runtime's locale when the third is left out. `withLocale()` gives the
 same PHP and PCRE2 under another locale, and `key()` tells two targets apart,
-as `'80400/10.42/tr_TR.UTF-8'`. `RegexParser` judges for one too (its
+as `'80400/10.42/tr_TR.UTF-8'`; `toArray()` writes it as the JSON documents
+do, `['php' => '8.4', 'pcre' => '10.42', 'locale' => 'tr_TR.UTF-8']`, and a
+ReDoS analysis and the solver's results carry the one they were computed for
+in `$target`. `RegexParser` judges for one too (its
 `target()`), and `ParserOptions` carries the one the `php_version`,
 `pcre_version` and `locale` options name. `withTarget()`, on `Regex` and on
 `RegexParser`, gives an instance judging for another target with every other
@@ -458,7 +463,8 @@ var_dump($confirmed->replayed);                               // bool(true)
 | `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()` |
 | `replayed`         | bool\|null        | Whether the witness made the running PCRE fail; `null` when not replayed |
 | `abstractions`     | list<string>      | What the model analysed differently from the pattern |
-| `pcreVersion`      | string            | PCRE2 release the verdict was computed with |
+| `target`           | PcreTarget        | The PHP version, the PCRE2 release and the locale the verdict was computed for |
+| `pcreVersion`      | string            | PCRE2 release that ran the analysis: the running engine, which `target` need not be |
 | `analysisVersion`  | string            | `RedosAnalyzer::ANALYSIS_VERSION`         |
 | `confidence`       | RedosConfidence       | Analysis confidence, `Low` when nothing raised it |
 | `confirmation`     | Confirmation\|null | Bounded evidence details              |

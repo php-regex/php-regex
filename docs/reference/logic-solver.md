@@ -374,7 +374,10 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 Each of the four result objects also carries `pcreVersion`, the PCRE2 release
 that ran the solver (`"10.49"` on the engine this page's examples ran
 on). Two results with different stamps describe two engines' languages; compare
-them only knowing that.
+them only knowing that. Each carries `target` too, the `PcreTarget` the
+patterns were read for: the PHP version, the PCRE2 release and the locale of
+the solver's parser, which decide what a pattern means (`a{,2}` repeats from
+PCRE2 10.43 and is text before) and which the running engine need not be.
 
 The constructor takes the parser that reads the patterns, so they are read for its PHP and PCRE2 target, and a DFA cache
 that keeps compiled patterns between questions: the DFAs `compile()`, `language()`, `acceptsPrefix()` and the eager

@@ -4,6 +4,11 @@ CHANGELOG
 2.0
 ---
 
+ * `IntersectionResult`, `SubsetResult`, `EquivalenceResult` and
+   `MatchEquivalenceResult` carry `$target`, the `PcreTarget` the patterns
+   were read for: the PHP version, the PCRE2 release and the locale of the
+   solver's parser. `$pcreVersion` stays the engine that ran the solver,
+   which the target need not be.
  * A DFA cache no longer forces the eager search: `intersection()`,
    `subsetOf()` and `equivalent()` run the lazy search first with a cache as
    without one, and fall back to the eager one past its limits, which reads

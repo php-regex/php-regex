@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosAnalysis::$target` is the `PcreTarget` the verdict was computed
+   for: the PHP version, the PCRE2 release and the locale of the analyzer's
+   parser. `$pcreVersion` and `$phpVersion` stay the engine that ran the
+   analysis, which the target need not be: under one running engine,
+   `/^(?:a{,3}b?)+$/` is exponential for PHP 8.4 and linear for PHP 8.2.
+   In JSON the analysis carries it as `target`, `{"php": "8.4", "pcre":
+   "10.44", "locale": "C"}`, before `pcre_version`.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.

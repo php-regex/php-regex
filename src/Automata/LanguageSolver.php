@@ -156,7 +156,7 @@ final class LanguageSolver
                 $classes = (new ProductSearch($options))->intersection($leftNfa, $rightNfa);
                 $example = null === $classes ? null : ProductSearch::spell($classes, $leftNfa->alphabet, $bytes);
 
-                return new IntersectionResult(null === $example, $example);
+                return new IntersectionResult(null === $example, $example, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -171,7 +171,7 @@ final class LanguageSolver
             $options,
         );
 
-        return new IntersectionResult(null === $example, $example);
+        return new IntersectionResult(null === $example, $example, target: $this->parser->target());
     }
 
     /**
@@ -194,7 +194,7 @@ final class LanguageSolver
                 // if it leaves the regular subset, before this answer.
                 $example = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
 
-                return new SubsetResult(null === $example, $example);
+                return new SubsetResult(null === $example, $example, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -209,7 +209,7 @@ final class LanguageSolver
             $options,
         );
 
-        return new SubsetResult(null === $example, $example);
+        return new SubsetResult(null === $example, $example, target: $this->parser->target());
     }
 
     /**
@@ -231,7 +231,7 @@ final class LanguageSolver
                 $leftOnlyExample = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
                 $rightOnlyExample = $left === $right ? null : $this->lazyDifference($rightNfa, $leftNfa, $bytes, $options);
 
-                return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+                return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -253,7 +253,7 @@ final class LanguageSolver
             $options,
         );
 
-        return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+        return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample, target: $this->parser->target());
     }
 
     /**
@@ -313,7 +313,7 @@ final class LanguageSolver
             // same in every run: the patterns differ only in possessive
             // quantifiers that give nothing back, however deep the calls run.
             if (PriorityNfaBuilder::CALL_MESSAGE === $refusal->getMessage() && $this->possessivesGiveNothingBack($left, $right, $options)) {
-                return new MatchEquivalenceResult(true);
+                return new MatchEquivalenceResult(true, target: $this->parser->target());
             }
 
             throw $refusal;
@@ -327,8 +327,8 @@ final class LanguageSolver
 
         // The sets the answer is computed from come from the running engine,
         // whatever PCRE2 is judged: the result carries the running release,
-        // like every other question.
-        return new MatchEquivalenceResult(null === $counterExample, $counterExample);
+        // like every other question, beside the target judged.
+        return new MatchEquivalenceResult(null === $counterExample, $counterExample, target: $this->parser->target());
     }
 
     /**

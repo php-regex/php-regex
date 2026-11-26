@@ -26,7 +26,7 @@ Documentation: [php-regex.com](https://php-regex.com) — the [logic solver refe
 Features
 --------
 
-- Equivalence, intersection and subset checks, each answered with the shortest witness or counter-example string, and stamped with the PCRE2 release that answered (`pcreVersion`)
+- Equivalence, intersection and subset checks, each answered with the shortest witness or counter-example string, and stamped with the PCRE2 release that answered (`pcreVersion`) and the target the patterns were read for (`target`)
 - Patterns compile to DFAs: NFA construction, determinization, then Hopcroft or Moore minimization
 - Two match semantics: the whole input (`MatchMode::Full`) or any substring (`MatchMode::Partial`)
 - The `i`, `s` and `u` flags, character classes and ranges, dot, `^`/`$`, alternation, groups and quantifiers — and POSIX classes, Unicode properties (`\p{...}`), Perl extended classes (`(?[ ... ])`) and `\C`

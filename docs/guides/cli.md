@@ -401,7 +401,7 @@ defuse it).`, the confidence stays `MEDIUM`, and the command exits with 0. A
 polynomial verdict is never replayed.
 
 `--format=json` prints the same verdict under `redos`, with `complexity`,
-`degree`, `proof`, `witness`, `replayed`, `abstractions`, `pcre_version`,
+`degree`, `proof`, `witness`, `replayed`, `abstractions`, `target`, `pcre_version`,
 `php_version` and `analysis_version` next to `severity`, `score` and the other keys (every key is in the
 [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis)):
 
@@ -428,6 +428,11 @@ vendor/bin/regex analyze '/(a+)+$/' --format=json
     },
     "replayed": null,
     "abstractions": [],
+    "target": {
+        "php": "8.4.26",
+        "pcre": "10.49",
+        "locale": "C"
+    },
     "pcre_version": "10.49",
     "php_version": "8.4.26",
     "analysis_version": "1"

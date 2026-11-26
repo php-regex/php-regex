@@ -13,30 +13,42 @@ declare(strict_types=1);
 
 namespace PHPRegex\Automata\Solver;
 
+use PHPRegex\Parser\PcreTarget;
+
 /**
  * Result of a subset check between two regexes.
  */
 final class SubsetResult
 {
     /**
-     * The PCRE2 release that ran the solver, which it asks what the classes
-     * of the patterns hold. The patterns are read for the target of the
-     * solver's parser, which may be another PHP and PCRE2.
+     * The PCRE2 release that ran the solver, the engine it asks what the
+     * classes of the patterns hold: the running one. The patterns are read
+     * for $target, which may be another PHP and PCRE2.
      */
     public readonly string $pcreVersion;
 
     /**
+     * The PHP version, the PCRE2 release and the locale the patterns were
+     * read for, the target of the solver's parser: it decides what a
+     * pattern means, "a{,2}" a repeat from PCRE2 10.43 and text before.
+     */
+    public readonly PcreTarget $target;
+
+    /**
      * @internal built by LanguageSolver::subsetOf()
      *
-     * @param bool        $isSubset       Whether the left language is subset of the right
-     * @param string|null $counterExample Example string accepted by left but not right
-     * @param string|null $pcreVersion    The PCRE2 release that ran the solver; the running one when null
+     * @param bool            $isSubset       Whether the left language is subset of the right
+     * @param string|null     $counterExample Example string accepted by left but not right
+     * @param string|null     $pcreVersion    The PCRE2 release that ran the solver; the running one when null
+     * @param PcreTarget|null $target         The target the patterns were read for; the running engine when null
      */
     public function __construct(
         public readonly bool $isSubset,
         public readonly ?string $counterExample = null,
         ?string $pcreVersion = null,
+        ?PcreTarget $target = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
+        $this->target = $target ?? PcreTarget::runtime();
     }
 }

@@ -1220,7 +1220,8 @@ lint issue. It is the JSON form of `RedosAnalysis`; the
 | `witness` | object \| null | The attack of a proven vulnerable verdict |
 | `replayed` | bool \| null | Whether the witness made the running PCRE fail; `null` when it was not replayed |
 | `abstractions` | list of strings | What the model analysed differently from the pattern as written |
-| `pcre_version` | string | The PCRE2 release that ran the analysis, as `10.49`; the pattern is read for the target, which may name another PHP and PCRE2 |
+| `target` | object | The PHP, the PCRE2 and the locale the verdict was computed for: an [analysis target](#analysis-target-redos_analysistarget) |
+| `pcre_version` | string | The PCRE2 release that ran the analysis, as `10.49`; the pattern is read for `target`, which may name another PHP and PCRE2 |
 | `php_version` | string | The PHP release that ran the analysis, as `8.4.26`: under `iu` the proof reads a character's other case from its mbstring tables |
 | `analysis_version` | string | The version of the model; a verdict is the same for the same release and model version |
 | `search_cost` | object \| null | The cost of an unanchored search whose every attempt is proven linear: a [search cost](#search-cost-redos_analysissearch_cost); `null` when no witness was found, which does not prove the search linear |
@@ -1256,6 +1257,22 @@ the analysis carries no finding and no hotspot, and `vulnerable_part`,
 | `severity` | string | As in the analysis |
 | `pattern` | string | The sub-pattern in the span |
 | `trigger` | string \| null | The construct at fault |
+
+### Analysis target: `redos_analysis.target`
+
+What the verdict is a verdict of: the target of the parser that read the
+pattern, as `PcreTarget::toArray()` writes it. It is not the engine that ran
+the analysis, which `pcre_version` and `php_version` name: under one running
+engine, `/^(?:a{,3}b?)+$/` is exponential for PHP 8.4, where `{,3}` repeats,
+and linear for PHP 8.2, where it is text. In the documents of the `regex`
+command it is the floor of the document's own
+[`target`](#target-linttarget).
+
+| key | type | meaning |
+|---|---|---|
+| `php` | string | The PHP version, as `major.minor`, or `major.minor.patch` when its patch is not 0 |
+| `pcre` | string | The PCRE2 release, as `major.minor` |
+| `locale` | string | The `LC_CTYPE` locale the pattern was read under, as the C library names it: `C` for PCRE2's own character tables |
 
 ### Witness: `redos_analysis.witness`
 
