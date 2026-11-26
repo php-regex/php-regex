@@ -184,10 +184,15 @@ CHANGELOG
    may match empty or start with a `\n`: `/(*ANYCRLF)\sa/` was proven to
    write the `$matches` of `/(*ANYCRLF)\sa|[^\s\S]\n/`, where without the
    JIT the one finds nothing in `"\r\na"` and the other `"\na"`.
- * `equivalent()`, `intersection()` and `subsetOf()` refuse a dot or `\N`
-   under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`:
+ * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` read a dot and `\N` under `(*CRLF)` as PCRE2 does: each
+   takes a `\r` and a `\n` alone, and not the `\r` a `\n` follows.
    `/(*CRLF)a.\n/` was read as matching `"a\r\n"`, where `preg_match()`
-   finds nothing.
+   finds nothing. Such a dot inside a lookaround is refused. A dot there
+   reads like no class of every character, and unlike the dot under `s`:
+   `readAlike()` and the check of a rewrite held `/(*CRLF)a./` and
+   `/(*CRLF)a./s` to run alike, where the first finds nothing in `"a\r\n"`
+   and the second finds `"a\r"`.
  * `matchEquivalent()` refuses a newline convention other than `\n`, such as
    `(*CR)`, where `$` or `\Z` reads it, as `equivalent()` does:
    `/(*CR)a$/` was proven to write the `$matches` of `/a$/`, where

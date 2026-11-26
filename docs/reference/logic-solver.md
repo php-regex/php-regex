@@ -492,9 +492,14 @@ It skips no other start, so the solver reads the search both ways, every start a
 start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
 `/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
 `"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
-of the whole string starts at its start, and is read whatever the pattern. `(*CRLF)`,
-under which the dot reads a `\r` alone but not one before a `\n`, stays out where a dot
-reads it.
+of the whole string starts at its start, and is read whatever the pattern.
+
+Under `(*CRLF)` the newline is two characters, which no set of one character says: the dot
+and `\N` take a `\r` and a `\n`, each alone, and not the `\r` a `\n` follows. The solver
+reads each as the set with a lookahead before it, `(?!\r\n)`: `/(*CRLF)a.\n/` matches
+`"a\n\n"` and finds nothing in `"a\r\n"`. So a dot there reads like no class, and unlike
+the dot under `/s`, which takes every character.
+Inside a lookaround such a dot would be a lookahead inside another, and is refused.
 
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
@@ -521,7 +526,7 @@ verbatim:
 | without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
+| under `(*CRLF)`, a dot without `/s` or `\N` inside a lookaround | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.` |
 | a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
@@ -809,8 +814,8 @@ Use this to surface safe failure messages in CI or tooling.
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` is refused, and so is a dot or `\N` under `(*CRLF)`,
-  and a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from
+  change nothing a language says. `A` is refused, and so is a dot or `\N` under `(*CRLF)`
+  inside a lookaround, and a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from
   between a `\r` and a `\n`, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. Every
   newline convention moves the anchors as the engine does.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends

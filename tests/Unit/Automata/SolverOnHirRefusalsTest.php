@@ -107,8 +107,9 @@ final class SolverOnHirRefusalsTest extends TestCase
         // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
         // Oracle: under (*CRLF) the dot takes a "\r" unless a "\n" follows it,
-        // so "a\r\n" holds no "a.\n", where it does once the dot takes all.
-        yield 'a dot under (*CRLF)' => ['pattern' => '/(*CRLF)a.\n/m', 'expected' => 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n"', 'engine' => ['/(*CRLF)a.\n/s', '/(*CRLF)a.\n/m', "a\r\n"]];
+        // so in "a\r\n" no "a" stands before a ".\n", where one does once the
+        // dot takes all. The dot looks ahead for it, here inside a lookahead.
+        yield 'a dot in a lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a(?=.\n)/m', 'expected' => 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.', 'engine' => ['/(*CRLF)a(?=.\n)/s', '/(*CRLF)a(?=.\n)/m', "a\r\n"]];
         // Without the JIT the option refuses the empty match "/a?/" finds
         // at 0; the JIT ignores it: test_the_jit_decides_what_an_empty_match_option_refuses().
         yield 'not empty' => ['pattern' => '/(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY)a?/', '/a?/', 'b']];

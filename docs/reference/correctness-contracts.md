@@ -182,7 +182,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
   modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
   language says. Every newline convention, `(*CR)` or `(*CRLF)` among them, moves `$`, `\Z` and the anchors under
-  `/m` as the engine does. `A` is refused, and so are a dot or `\N` under `(*CRLF)`, a search under `(*CRLF)`,
+  `/m` as the engine does. `A` is refused, and so are a dot or `\N` under `(*CRLF)` inside a lookaround, a search under `(*CRLF)`,
   `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n`, and `(*NOTEMPTY)` and
   `(*NOTEMPTY_ATSTART)`, which refuse an empty match without the JIT and which PHP's JIT ignores.
   `matchEquivalent()` reads the same flags except `m`, which

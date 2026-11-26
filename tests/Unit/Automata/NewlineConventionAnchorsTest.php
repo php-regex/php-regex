@@ -30,6 +30,8 @@ use PHPUnit\Framework\TestCase;
  * of the two alone under (*CRLF), "\r", "\n" or "\r\n" under (*ANYCRLF),
  * and those or "\x0B", "\x0C", "\x85", and U+2028 and U+2029 under /u, under
  * (*ANY). Under the last two "^" holds between "\r" and "\n", and "$" too.
+ * Under (*CRLF) the dot and "\N" take a "\r" and a "\n", each alone, and
+ * not the "\r" a "\n" follows.
  */
 final class NewlineConventionAnchorsTest extends TestCase
 {
@@ -50,6 +52,7 @@ final class NewlineConventionAnchorsTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideAnchorsUnderAConvention')]
+    #[DataProvider('provideDotsUnderCrLf')]
     public function test_the_automata_match_what_the_engine_matches(string $options, string $body, string $flags, array $letters, int $length): void
     {
         $search = '/'.$options.$body.'/'.$flags;
@@ -112,9 +115,10 @@ final class NewlineConventionAnchorsTest extends TestCase
     }
 
     /**
-     * Under (*CRLF) the dot reads a "\r" alone but not one before a "\n":
-     * it is not read, and stays out. Read as the contrast pattern reads it,
-     * the subject would hold a match.
+     * Under (*CRLF) the dot reads a "\r" alone but not one before a "\n",
+     * which it asks of what follows it: inside a lookaround, it would be a
+     * lookahead inside another, and stays out. Read as the contrast pattern
+     * reads it, the subject would hold a match.
      */
     #[Test]
     #[DataProvider('provideCrLfConstructs')]
@@ -255,6 +259,9 @@ final class NewlineConventionAnchorsTest extends TestCase
         yield 'a space after a space under (*ANYCRLF)' => ['options' => '(*ANYCRLF)', 'body' => '(?<=\s)\s', 'flags' => '', 'withJit' => 0, 'withoutJit' => 0];
         yield 'a space after a space under (*ANY)' => ['options' => '(*ANY)', 'body' => '(?<=\s)\s', 'flags' => '', 'withJit' => 0, 'withoutJit' => 0];
         yield 'a space after a space under (*CRLF)' => ['options' => '(*CRLF)', 'body' => '(?<=\s)\s', 'flags' => '', 'withJit' => 0, 'withoutJit' => 0];
+        // The dot does not take the "\r" of the pair, and the "\n" is skipped.
+        yield 'a dot under (*CRLF)' => ['options' => '(*CRLF)', 'body' => '.', 'flags' => '', 'withJit' => 0, 'withoutJit' => 0];
+        yield 'no newline under (*CRLF)' => ['options' => '(*CRLF)', 'body' => '\N+', 'flags' => 's', 'withJit' => 0, 'withoutJit' => 0];
         // A leading ".*" tries the starts of lines alone, as a "^" does.
         yield 'a line feed after a run of dots' => ['options' => '(*ANY)', 'body' => '.*\n', 'flags' => '', 'withJit' => 0, 'withoutJit' => 0];
         // The engine tries the start between here, the pattern writing a
@@ -267,9 +274,55 @@ final class NewlineConventionAnchorsTest extends TestCase
      */
     public static function provideCrLfConstructs(): iterable
     {
-        $dot = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n"';
-        yield 'a dot under (*CRLF)' => ['pattern' => '/(*CRLF)a.\n/', 'contrast' => '/(*CRLF)a.\n/s', 'subject' => "a\r\n", 'message' => $dot];
-        yield 'no newline under (*CRLF)' => ['pattern' => '/(*CRLF)a\N\n/', 'contrast' => '/(*CRLF)a[^\n]\n/', 'subject' => "a\r\n", 'message' => $dot];
+        $dot = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.';
+        yield 'a dot in a lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a(?=.\n)/', 'contrast' => '/(*CRLF)a(?=.\n)/s', 'subject' => "a\r\n", 'message' => $dot];
+        yield 'no newline in a lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a(?=\N\n)/', 'contrast' => '/(*CRLF)a(?=[^\n]\n)/', 'subject' => "a\r\n", 'message' => $dot];
+        // The dot of a lookbehind reads past where the lookbehind stands.
+        yield 'a dot in a lookbehind under (*CRLF)' => ['pattern' => '/(*CRLF)a\r(?<=.)\n/', 'contrast' => '/(*CRLF)a\r(?<=.)\n/s', 'subject' => "a\r\n", 'message' => $dot];
+        // A "\n" alone is a character the dot takes.
+        yield 'a dot in a negative lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a(?!.)\n/', 'contrast' => '/(*CRLF)a(?![^\n])\n/', 'subject' => "a\n", 'message' => $dot];
+        // A lookahead written inside another is refused as one, beside a dot or not.
+        yield 'a lookahead written in a lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a.(?=(?!\r\n)[\s\S])/', 'contrast' => '/(*CRLF)a.(?=[\s\S])/', 'subject' => "ab\r\n", 'message' => 'A lookaround inside a lookaround is beyond what the automata solver reads.'];
+    }
+
+    /**
+     * @return iterable<string, array{options: string, body: string, flags: string, letters: list<string>, length: int}>
+     */
+    public static function provideDotsUnderCrLf(): iterable
+    {
+        $rows = [
+            'a dot before a line feed' => ['(*CRLF)', 'a.\n', ''],
+            'no newline before a line feed' => ['(*CRLF)', 'a\N\n', ''],
+            'a dot under s' => ['(*CRLF)', 'a.\n', 's'],
+            'no newline under s' => ['(*CRLF)', 'a\N\n', 's'],
+            'a dot under an inline s' => ['(*CRLF)', 'a(?s:.)\n', ''],
+            'a dot with s turned off' => ['(*CRLF)', 'a(?-s:.)\n', 's'],
+            'a dot after s was set' => ['(*CRLF)', 'a(?s).\n?(?-s).', ''],
+            'a dot at the end' => ['(*CRLF)', 'a.', ''],
+            'two dots' => ['(*CRLF)', 'a..', ''],
+            'a dot then a carriage return' => ['(*CRLF)', 'a.\r', ''],
+            'a run of dots' => ['(*CRLF)', 'a.*b', ''],
+            'a lazy run of dots' => ['(*CRLF)', 'a.*?\r', ''],
+            'one dot or more' => ['(*CRLF)', 'a.+\n', ''],
+            'a counted run of dots' => ['(*CRLF)', 'a\N{2}b?', ''],
+            'a dot or cr and lf' => ['(*CRLF)', 'a(?:.|\r\n)b', ''],
+            'a group of a dot repeated' => ['(*CRLF)', 'a(?:.\r)+\n', ''],
+            'a dot in a capture' => ['(*CRLF)', 'a(.)?\n', ''],
+            'a line of dots' => ['(*CRLF)', '^a.*$', 'm'],
+            'a dot before a dollar' => ['(*CRLF)', 'a.$', ''],
+            'no newline before a capital Z' => ['(*CRLF)', 'a\N\Z', ''],
+            'a dot before a line end' => ['(*CRLF)', 'a.$', 'm'],
+            'a dot under m' => ['(*CRLF)', 'a.\n', 'm'],
+            // Under s the dot takes every character, in a lookaround too.
+            'a dot under s in a lookahead' => ['(*CRLF)', 'a(?=.\n)', 's'],
+            'a dot under s in a lookbehind' => ['(*CRLF)', 'a\r(?<=.)\n', 's'],
+            'a dot beside a lookahead' => ['(*CRLF)', 'a.(?=\n)', ''],
+            'a dot after cr and lf was named last' => ['(*LF)(*CRLF)', 'a.\n', ''],
+            'a dot after a line feed was named last' => ['(*CRLF)(*LF)', 'a.\n', ''],
+        ];
+        foreach ($rows as $name => [$options, $body, $flags]) {
+            yield $name => ['options' => $options, 'body' => $body, 'flags' => $flags, 'letters' => self::BYTES, 'length' => 5];
+        }
     }
 
     private static function accepts(Dfa $dfa, string $subject, bool $unicode): bool
