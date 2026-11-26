@@ -72,6 +72,12 @@ final class BacktrackProver
     private const BOUNDED_SUFFIXES = 3;
 
     /**
+     * The largest bound whose copies are written out to witness an
+     * ambiguity left without witness where the repeat was read as unbounded.
+     */
+    private const MAX_WRITTEN_BOUND = 64;
+
+    /**
      * @param Budget|null $pool the budget every proof of this prover draws its steps from too,
      *                          shared with other provers: running it out stops a proof as
      *                          running out its own budget does; none when each proof has its
@@ -102,10 +108,38 @@ final class BacktrackProver
         try {
             $result = $this->attempt($regex, null === $pattern ? null : self::withoutLimits($pattern), $builder, $budget, $stepBound, $search, $target);
         } catch (ModelLimitException $limit) {
-            return ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
+            $widest = $builder->widestBound();
+            $written = $limit->unwitnessed && null !== $widest && $widest <= self::MAX_WRITTEN_BOUND ? $this->written($regex, $pattern, $widest, $target) : null;
+
+            return $written ?? ProofOutcome::limited($limit, $builder->abstractions(), $stepBound, $search);
         }
 
         return ProofOutcome::proven($result, $builder->abstractions(), $stepBound, $search);
+    }
+
+    /**
+     * The proof again, on a budget of its own, with the bounded repeats
+     * written out as their copies up to the widest bound read as unbounded:
+     * such a repeat read as a loop accepts whatever follows,
+     * "[^x]{0,20}(?:x|\z)" read as "[^x]*(?:x|\z)", and leaves an ambiguity
+     * before it without witness, where its copies reject twenty-one
+     * characters that are not an "x". The outcome when it proves the
+     * attempt exponential or polynomial; null otherwise.
+     */
+    private function written(RegexNode $regex, ?string $pattern, int $cutoff, ?PcreTarget $target): ?ProofOutcome
+    {
+        $budget = $this->budget();
+        $builder = new PnfaBuilder($regex, $budget, $cutoff, $target);
+        $stepBound = null;
+        $search = null;
+
+        try {
+            $result = $this->attempt($regex, null === $pattern ? null : self::withoutLimits($pattern), $builder, $budget, $stepBound, $search, $target);
+        } catch (ModelLimitException) {
+            return null;
+        }
+
+        return RedosComplexity::Linear === $result->complexity ? null : ProofOutcome::proven($result, $builder->abstractions(), $stepBound, $search);
     }
 
     /**

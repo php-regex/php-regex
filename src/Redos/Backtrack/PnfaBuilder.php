@@ -217,6 +217,11 @@ final class PnfaBuilder
     private array $singles = [];
 
     /**
+     * The largest bound of a repeat read as unbounded past the cutoff.
+     */
+    private ?int $widestBound = null;
+
+    /**
      * @var array<int, true> the atomic groups and possessive repeats of a
      *                       group a repeat of one character may stand right
      *                       before, by object id (exposures())
@@ -382,6 +387,15 @@ final class PnfaBuilder
     public function abstractions(): array
     {
         return [...$this->abstractions, ...array_values($this->ambiguousRepeats), ...array_values($this->atomicAbstractions)];
+    }
+
+    /**
+     * The largest bound of a repeat read as unbounded because it is past
+     * the cutoff; null when there is none.
+     */
+    public function widestBound(): ?int
+    {
+        return $this->widestBound;
     }
 
     /**
@@ -1182,6 +1196,7 @@ final class PnfaBuilder
         if ($node instanceof QuantifierNode) {
             $bounds = $node->bounds;
             if (null !== $bounds && null !== $bounds->max && $bounds->max > $this->boundedRepeatCutoff && $bounds->max !== $bounds->min) {
+                $this->widestBound = max($this->widestBound ?? 0, $bounds->max);
                 $this->abstractions[] = \sprintf(
                     '%s at offset %d analysed as {%d,}',
                     $node->quantifier,

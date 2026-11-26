@@ -62,6 +62,13 @@ CHANGELOG
    verdict. Patterns proven exponential or polynomial only through the
    other alternatives may be proven linear or of a lower degree, as the
    engine runs them: `/^(?>.*|x)(?:a|a)*?$/i` is linear.
+ * An ambiguity left without witness where a bounded repeat past the cutoff
+   was read as unbounded is looked for again with the bounded repeats
+   written out as their copies, up to 64: read as a loop, such a repeat
+   accepts whatever follows. `/^(?:a|a)+[^x]{0,20}(?:x|\z)/`, which PHP
+   fails on with 20 `a` and 30 `b`, is exponential (proven) and
+   `/^a*a*[^x]{0,20}(?:x|\z)/` quadratic, where both got the heuristics'
+   verdict.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.
