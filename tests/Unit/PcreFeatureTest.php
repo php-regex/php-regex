@@ -63,6 +63,7 @@ final class PcreFeatureTest extends TestCase
         yield 'overflowing backslash number as octal' => [PcreFeature::OverflowingBackslashNumberIsOctal, '10.36', '10.37'];
         yield 'scan substring' => [PcreFeature::ScanSubstring, '10.44', '10.45'];
         yield 'caseless case properties' => [PcreFeature::CaselessCasePropertiesMatchCasedLetters, '10.44', '10.45'];
+        yield 'asserted first character checked against the required one' => [PcreFeature::AssertedFirstCharacterCheckedAgainstRequired, '10.44', '10.45'];
         yield 'group list errors' => [PcreFeature::GroupListErrors, '10.46', '10.47'];
         yield 'substring scan listing each group once' => [PcreFeature::ScanSubstringListsEachGroupOnce, '10.46', '10.47'];
         yield 'offsets past the fault' => [PcreFeature::ErrorOffsetPastTheFault, '10.46', '10.47'];

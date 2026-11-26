@@ -79,6 +79,8 @@ final class HirToNfaTransformer
 
     public const NEWLINE_SEQUENCE_MESSAGE = 'PCRE2 makes a repeat of the dot or "\N" possessive before "\R", and one of "\R" before a dot or "\N", as if "\R" took no character the dot takes, which the automata solver does not read.';
 
+    public const ASSERTED_FIRST_CHARACTER_MESSAGE = 'PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a", which the automata solver does not read.';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;

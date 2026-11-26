@@ -170,6 +170,27 @@ names a locale whose tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does. A t
 names no locale but C may run under any, and is refused too. `u` reads `\w` from the
 Unicode properties, and is read.
 
+Where a pattern sets no first character of its own, PCRE2 may take the one a lookahead
+it opens on asserts: the compiler takes `a` from `(?=a)`, and the start-up study the one
+every match starts with, from `(?=a?a)` too. It then tries a match only where that character
+stands, and looks for the character the pattern requires from past it. Where the two are
+one character, a match that holds it once is missed, with and without the JIT: before
+PCRE2 10.45, the releases PHP 7.3 to 8.5 bundle, `/(?=a)b?a/` finds nothing in `a` and
+`/(?=b)^b/m` nothing in `"a\nb"`. PCRE2 10.45 leaves the asserted character out where the
+required one is the same, but not where it is the same letter in the other case:
+`/(?=a)b?A/i` and `/(?=a?a)b?(?i:A)/` find nothing in `a` up to 10.49. The engine then finds
+fewer matches than the pattern says, never more, so the solvers answer what no missed match
+changes: two patterns with no string in common, a pattern whose strings another holds all.
+They refuse the rest, the first kind for a target before 10.45, the second for any:
+`equivalent()`, a string in common, a string the pattern alone matches, a pattern that holds
+it, `language()`, `compile()`, `acceptsPrefix()` and `matchEquivalent()`. Such a pattern
+reads like no other there: `/(?:)(?=a)b?a/`, whose empty group keeps the compiler from
+looking for the `a`, finds the match. They find the lookahead wider than PCRE2 does: where a
+match may start past what may match nothing, any of its first characters, any other literal
+of it outside the lookarounds counting as the one required. A pattern of one alternative
+that reads a character first, as `/(?=A)a/i`, sets that one, and is read. `(*NO_START_OPT)`
+turns the search off, and the pattern is read.
+
 A lookaround is read, and never run. Two patterns that hold one write the same `$matches`
 when the solver builds one automaton for both, the lookaround and its body included:
 `/(?=x)[0-9]/` and `/(?=x)\d/`, or `/(?<=x)a{2}/` and `/(?<=x)aa/`. Two patterns it builds
@@ -595,6 +616,7 @@ verbatim:
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | under `(*CRLF)`, a dot without `/s` or `\N` inside a lookaround | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.` |
 | a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
+| a lookahead opening the pattern on a character the pattern requires again, for a target before PCRE2 10.45, or in the other case, for any target: `(?=a)b?a`, `(?=a)b?A` under `i`; an empty intersection, and a subset of which it is the left side, are still answered | `PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a", which the automata solver does not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 

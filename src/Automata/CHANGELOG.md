@@ -203,6 +203,27 @@ CHANGELOG
    `/a(a)*+b/` writes `a` to group 1 on `aacab`, where `/a(a)*b/` leaves it
    unset. The target answers it as
    `PcreFeature::PossessiveRepeatGroupsClearedEachStart`.
+ * Where a pattern sets no first character of its own, PCRE2 may take the
+   one a lookahead it opens on asserts, then looks for the character the
+   pattern requires from past it, and misses a match that holds the two as
+   one, with and without the JIT: before PCRE2 10.45, `/(?=a)b?a/` finds
+   nothing in `a` and `/(?=b)^b/m` nothing in `"a\nb"`, and in every release
+   up to 10.49 `/(?=a)b?A/i` and `/(?=a?a)b?(?i:A)/` find nothing in `a`.
+   The solvers read every start and said they match. The engine finds
+   fewer matches than such a pattern says, never more: `intersection()`
+   still answers that two patterns have no string in common, and
+   `subsetOf()` that the pattern's strings are all another's; they refuse
+   any other answer, as `equivalent()`, `language()`, `compile()`,
+   `acceptsPrefix()`, `nfa()` and `matchEquivalent()` refuse the pattern,
+   the first kind for a target before 10.45, the second for any.
+   `readAlike()`, `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it
+   like no other pattern: `/(?:)(?=a)b?a/`, whose empty group keeps the
+   compiler from looking for the `a`, finds the match before 10.45. The
+   lookahead is found wider than PCRE2 finds it, any literal of its
+   character outside the lookarounds counting as the one required, and a
+   pattern that reads a character first, as `/(?=A)a/i`, is read as
+   before. The target answers it as
+   `PcreFeature::AssertedFirstCharacterCheckedAgainstRequired`.
  * Without `u`, under a target that names no locale but C,
    `matchEquivalent()`, `equivalent()`, `intersection()` and `subsetOf()`
    refuse a possessive quantifier, or an atomic group, proven on a byte past
