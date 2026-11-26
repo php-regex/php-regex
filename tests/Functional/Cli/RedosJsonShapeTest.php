@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Functional\Cli;
 use PHPRegex\Cli\Command\AnalyzeCommand;
 use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosOptions;
@@ -37,8 +38,9 @@ final class RedosJsonShapeTest extends TestCase
         'trigger', 'false_positive_risk', 'suggested_rewrite', 'recommendations', 'error', 'findings',
         'hotspots', 'confirmation',
         // The verdict.
-        'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions', 'pcre_version',
-        'php_version', 'analysis_version',
+        'complexity', 'degree', 'proof', 'witness', 'replayed', 'abstractions',
+        // What was judged, then what computed it.
+        'target', 'pcre_version', 'php_version', 'analysis_version',
         // The search cost.
         'search_cost',
         // The ceiling on the steps of one attempt.
@@ -176,6 +178,7 @@ final class RedosJsonShapeTest extends TestCase
         $this->assertNotSame('', $json['pcre_version']);
         $this->assertStringStartsWith($json['pcre_version'], \PCRE_VERSION);
         $this->assertSame(\PHP_VERSION, $json['php_version']);
+        $this->assertSame(PcreTarget::runtime()->toArray(), $json['target']);
         $this->assertIsArray($json['abstractions']);
 
         if (null !== ($json['search_cost'] ?? null)) {
@@ -196,7 +199,7 @@ final class RedosJsonShapeTest extends TestCase
 
         // Vulnerable verdicts: the escaped witness parts, never the input for n pumps.
         $this->assertIsArray($json['witness']);
-        $this->assertSame(['prefix', 'pump', 'suffix'], array_keys($json['witness']));
+        $this->assertSame(['prefix', 'pump', 'suffix', 'call'], array_keys($json['witness']));
         self::assertOnlyStrings($json['witness']);
     }
 

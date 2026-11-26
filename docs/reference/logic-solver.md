@@ -413,10 +413,14 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 Each of the four result objects also carries `pcreVersion`, the PCRE2 release
 that ran the solver (`"10.49"` on the engine this page's examples ran
 on). Two results with different stamps describe two engines' languages; compare
-them only knowing that.
+them only knowing that. Each carries `target` too, the `PcreTarget` the
+patterns were read for: the PHP version, the PCRE2 release and the locale of
+the solver's parser, which decide what a pattern means (`a{,2}` repeats from
+PCRE2 10.43 and is text before) and which the running engine need not be.
 
 The constructor takes the parser that reads the patterns, so they are read for its PHP and PCRE2 target, and a DFA cache
-that keeps compiled patterns between questions:
+that keeps compiled patterns between questions: the DFAs `compile()`, `language()`, `acceptsPrefix()` and the eager
+search build, and beside them the NFAs the lazy search reads (see [Search Strategies](#search-strategies)):
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -432,6 +436,22 @@ automata go first, and one larger than that alone is not kept. Any `DfaCacheInte
 
 A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
+
+A pattern is judged before it is read, for the target of the solver's parser. One PCRE2 refuses to compile
+matches nothing an answer could describe, so every method throws for it what `validate()` says: the exception
+`parse()` throws when the pattern does not parse, else a `SemanticErrorException` carrying the validation
+error, its code, its offset and its hint, as `Regex::info()` does.
+
+```php
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+
+try {
+    (new LanguageSolver())->intersection('/a{2,1}/', '/a/');
+} catch (SemanticErrorException $e) {
+    echo $e->getMessage(); // Invalid quantifier range "{2,1}": min > max.
+}
+```
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
@@ -551,7 +571,9 @@ and the [work budget](#safety-limits--work-budget) counts its moves.
 
 ## What the Solver Refuses
 
-One taxonomy, one exception (`ComplexityException`), one message per reason.
+One taxonomy, one exception (`ComplexityException`), one message per reason,
+for a pattern the engine compiles: one it refuses is refused before any of
+these, with [the validation error](#php-api).
 The messages below are the texts the library prints; `getMessage()` returns them
 verbatim:
 
@@ -639,15 +661,17 @@ An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:
 this solver answers languages, it does not read anything "as any character".
 Naming a surrogate code point under `/u` — a literal `\x{D800}`, a class
-member, or the endpoint of a range — is the same kind of refusal with its own
-message: PCRE refuses to compile the pattern at all, so there is no language
-to read. A range that straddles the block with both endpoints outside it
-(`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps the two real ends with
-the hole out.
+member, or the endpoint of a range — is refused before the taxonomy: PCRE
+refuses to compile the pattern at all, so there is no language to read, and
+the solver throws the validation error, `Code point "\x{D800}" is a surrogate,
+which is not allowed in Unicode mode.` A range that straddles the block with
+both endpoints outside it (`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps
+the two real ends with the hole out.
 
 On the command line the same refusal is summarized as
 `Comparison not supported: Pattern contains advanced features (e.g., backreferences).`
-and the command exits with code 1.
+and the command exits with code 1. A pattern the engine refuses prints its
+validation error instead, `Comparison failed: Invalid quantifier range "{2,1}": min > max.`
 
 ## How it Works (Under the Hood)
 
@@ -682,8 +706,14 @@ The lazy search keeps its pairs under `maxDfaStates`, each counted as it is
 reached, and charges each move to `maxTransitionsProcessed`; past either
 limit it gives up and leaves the answer to the eager search, which reads the
 patterns under its own limits: the answer is the eager one's, and so is a
-refusal. With a DFA cache, whose compiled DFAs it reuses, or for a pattern
-read as UTF-8 beside one read as bytes, the search is the eager one.
+refusal. For a pattern read as UTF-8 beside one read as bytes, the search is
+the eager one.
+
+A DFA cache does not choose the search: the lazy one runs first with a cache
+as without one, and the eager one, when it runs, reads its DFAs from the cache
+and compiles into it. Beside the cache, the solver keeps the NFA of each
+pattern the lazy search read, bounded as the DFAs are and emptied with them,
+so that a route compared with every other route is built once.
 
 The strategy is the solver's own choice: `Options\SolverStrategy` and
 `SolverOptions::$strategy` are `@internal`, and a minor release may change them.
@@ -834,10 +864,29 @@ When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic
 - `limit`: configured budget
 
 A state cap reached (`maxNfaStates`, `maxDfaStates`, the match solver's
-configurations) carries a `phase` and the `limit` too. A construct the
-automata do not read (a backreference, a lookaround the solver refuses)
-carries no `limit`: the diagnostic tells "too costly to answer" from "outside
-what the solver reads".
+configurations) carries a `phase` and the `limit` too, and so do the budgets
+of a `Language` (`product`, 100,000 pairs of states; `enumeration`, the
+50,000 lengths and states `strings()` and `nonMembers()` remember and the
+million steps they take between two strings). A construct the automata do not
+read (a backreference, a lookaround the solver refuses) carries no `limit`:
+the diagnostic tells "too costly to answer" from "outside what the solver
+reads". The exception says it typed: `isLimitReached()` is true when a budget
+ran out, and `$phase` (`?string`) and `$limit` (`?int`) are the diagnostic's
+`phase` and `limit`, null when it names none.
+
+```php
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+
+try {
+    (new LanguageSolver())->equivalent('/^(a|b)*a(a|b){6}$/', '/^[ab]*a[ab]{6}$/', new SolverOptions(maxDfaStates: 20));
+} catch (ComplexityException $exception) {
+    var_dump($exception->isLimitReached()); // bool(true)
+    var_dump($exception->phase);            // string(15) "determinization"
+    var_dump($exception->limit);            // int(20)
+}
+```
 
 The bodies of a pattern's lookarounds are compiled to automata of their own,
 and they share one allowance between them rather than one each: a single

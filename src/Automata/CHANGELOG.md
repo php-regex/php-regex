@@ -4,6 +4,41 @@ CHANGELOG
 2.0
 ---
 
+ * `ComplexityException::isLimitReached()` tells a budget that ran out from a
+   pattern outside what the automata read, and `$phase` (`?string`) and
+   `$limit` (`?int`) are the `phase` and `limit` of `getDiagnostic()`, typed.
+   The budgets of a `Language` name theirs: `enumeration`, 50,000 for the
+   memory of `strings()` and `nonMembers()` and 1,000,000 for their steps
+   between two strings, where they named none; so does the alignment of
+   `rewritesAlikeInPlace()`, `rewrite alignment`, 65,536 cells.
+ * `IntersectionResult`, `SubsetResult`, `EquivalenceResult` and
+   `MatchEquivalenceResult` carry `$target`, the `PcreTarget` the patterns
+   were read for: the PHP version, the PCRE2 release and the locale of the
+   solver's parser. `$pcreVersion` stays the engine that ran the solver,
+   which the target need not be.
+ * A DFA cache no longer forces the eager search: `intersection()`,
+   `subsetOf()` and `equivalent()` run the lazy search first with a cache as
+   without one, and fall back to the eager one past its limits, which reads
+   and fills the cache. `intersection('/^(a|b)*a(a|b){15}$/', '/^b+$/')`
+   is empty at once either way, where a solver given a cache ran the DFA of
+   the left pattern past the 10,000-state limit and threw a
+   `ComplexityException`. Beside the cache, the solver keeps the NFA of
+   each pattern the lazy search read, 50,000 states in all at most, emptied
+   by `clearCaches()` with the DFAs: two hundred routes compared with one
+   another take about half the work they took.
+ * `LanguageSolver` refuses a pattern PCRE2 refuses to compile, in every
+   method: the pattern is judged first, for the target of the solver's
+   parser, and one `validate()` refuses throws a `SemanticErrorException`
+   carrying the validation error, its code, its offset and its hint, as
+   `Regex::info()` does. The solver read the tree and answered:
+   `intersection('/a{2,1}/', '/a/')` was empty and
+   `acceptsPrefix('/^a{2,1}$/', 'a')` false, while `preg_match()` returns
+   false for both. A surrogate named under `u`, refused with a
+   `ComplexityException`, is refused with the validation error too.
+   `TrivialMatchClassifier` names no string function for such a pattern,
+   where `/^\N{U+41}/` was `str_starts_with($s, 'A')`, and
+   `FirstMatchPartition` refuses the candidate that holds one, its
+   `FirstMatchCell::$refused` the validation error.
  * Without u, the sets of a pattern are read as the target's PCRE2 reads
    them: under `(*UCP)` a byte read caselessly has the tables' case before
    10.35, `/(*UCP)\xC9/i` matching `\xC9` alone for PHP 7.4 with PCRE2
@@ -40,8 +75,8 @@ CHANGELOG
    search stops at the depth of the shortest witness, keeps its pairs under
    `maxDfaStates` as it reaches them, and past either limit leaves the answer
    to the eager search: 2,000 branches `a|a|…`, four million pairs of NFA
-   states, are answered from their three-state DFA. With a DFA cache, or a
-   pattern read as UTF-8 beside one read as bytes, the search stays eager.
+   states, are answered from their three-state DFA. For a pattern read as
+   UTF-8 beside one read as bytes, the search stays eager.
    `SolverStrategy` and `SolverOptions::$strategy` are `@internal`.
  * A determinized state holds one target per class of its automaton's
    alphabet, the ranges held once by an alphabet every state shares:

@@ -33,6 +33,7 @@ use PHPRegex\Linter\Rule\Support\LanguageQuestions;
 use PHPRegex\Optimizer\OptimizationResult;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Optimizer\RewriteKind;
 use PHPRegex\Parser\Cache\AstSerializer;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
@@ -836,6 +837,10 @@ final class AnalysisService
             ValidationErrorCategory::class,
             OptimizationResult::class,
             RedosAnalysis::class,
+            // The target a ReDoS analysis was computed for.
+            PcreTarget::class,
+            // The kinds of the rewrites of an optimization.
+            RewriteKind::class,
         ];
 
         // Every class of the AST and of the ReDoS result, found next to a class

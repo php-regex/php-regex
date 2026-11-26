@@ -26,13 +26,13 @@ Documentation: [php-regex.com](https://php-regex.com) — the [logic solver refe
 Features
 --------
 
-- Equivalence, intersection and subset checks, each answered with the shortest witness or counter-example string, and stamped with the PCRE2 release that answered (`pcreVersion`)
+- Equivalence, intersection and subset checks, each answered with the shortest witness or counter-example string, and stamped with the PCRE2 release that answered (`pcreVersion`) and the target the patterns were read for (`target`)
 - Patterns compile to DFAs: NFA construction, determinization, then Hopcroft or Moore minimization
 - Two match semantics: the whole input (`MatchMode::Full`) or any substring (`MatchMode::Partial`)
 - The `i`, `s` and `u` flags, character classes and ranges, dot, `^`/`$`, alternation, groups and quantifiers — and POSIX classes, Unicode properties (`\p{...}`), Perl extended classes (`(?[ ... ])`) and `\C`
 - Every character set is asked from the PCRE2 that runs in your PHP, so verdicts follow the engine (bytes without `/u`, code points minus the surrogate block with it)
 - Lookarounds, `(?=...)`, `(?!...)`, `(?<=...)` and `(?<!...)`, read as the regular languages they keep: a password rule `^(?=.*\d)(?=.*[a-z]).{8,}$` compares like any pattern
-- Backreferences, recursion and other non-regular constructs throw a `ComplexityException` instead of a wrong answer
+- Backreferences, recursion and other non-regular constructs throw a `ComplexityException` instead of a wrong answer, and a pattern PCRE2 refuses to compile throws its validation error
 - NFA, DFA and transition budgets bound the work on pathological patterns
 - A pluggable DFA cache (`DfaCacheInterface`) reuses compiled automata across questions
 - `compile()` exposes the DFA of a single pattern
@@ -61,7 +61,7 @@ Every question takes an optional `SolverOptions` object as its last argument.
 | `determinizationAlgorithm` | `DeterminizationAlgorithm::SubsetIndexed`, `::Subset` | `SubsetIndexed` |
 | `maxTransitionsProcessed` | int, `null` to disable the guard | `1000000` |
 
-Reaching a limit throws the same `ComplexityException` as an unsupported construct; only a limit names it in `getDiagnostic()['limit']`. `maxDfaStates` also bounds retained state pairs per comparison search, which bounds witness length. `maxTransitionsProcessed` also bounds comparison transition probes and the threads `matchEquivalent()` steps. The solver constructor also accepts a `DfaCacheInterface` (`InMemoryDfaCache` ships with the package) to reuse compiled DFAs across questions.
+Reaching a limit throws the same `ComplexityException` as an unsupported construct; only a limit names it, `isLimitReached()` then true and `$phase` and `$limit` naming the budget, as `getDiagnostic()` does. `maxDfaStates` also bounds retained state pairs per comparison search, which bounds witness length. `maxTransitionsProcessed` also bounds comparison transition probes and the threads `matchEquivalent()` steps. The solver constructor also accepts a `DfaCacheInterface` (`InMemoryDfaCache` ships with the package) to reuse compiled automata across questions; a cache does not change how the solver searches, nor what it answers.
 
 Usage
 -----
@@ -127,6 +127,18 @@ try {
 ```
 
 Every reason has its own message — conditionals, nested lookarounds, atomic groups, zero-width conditions, unsafe possessives, unsupported flags — listed in the [logic solver reference](https://php-regex.com/reference/logic-solver/#what-the-solver-refuses).
+
+A pattern PCRE2 refuses to compile has no language at all: every method throws what `validate()` says of it, the parser's exception or a `SemanticErrorException` carrying the validation error:
+
+```php
+use PHPRegex\Parser\Exception\SemanticErrorException;
+
+try {
+    $solver->intersection('/a{2,1}/', '/a/');
+} catch (SemanticErrorException $e) {
+    echo $e->getMessage(); // Invalid quantifier range "{2,1}": min > max.
+}
+```
 
 Documentation
 -------------

@@ -377,7 +377,7 @@ final class Language
 
         // Reserve before recursion, so active calls also count toward the cap.
         if (\count($memo) >= self::MAX_ENUMERATION_MEMO) {
-            throw new ComplexityException('Language enumeration memo budget exceeded.');
+            throw new ComplexityException('Language enumeration memo budget exceeded.', diagnostic: ['phase' => 'enumeration', 'limit' => self::MAX_ENUMERATION_MEMO]);
         }
         $memo[$key] = false;
 
@@ -403,7 +403,7 @@ final class Language
     private function spendEnumerationWork(int &$work): void
     {
         if (++$work > self::MAX_ENUMERATION_WORK) {
-            throw new ComplexityException('Language enumeration work budget exceeded.');
+            throw new ComplexityException('Language enumeration work budget exceeded.', diagnostic: ['phase' => 'enumeration', 'limit' => self::MAX_ENUMERATION_WORK]);
         }
     }
 

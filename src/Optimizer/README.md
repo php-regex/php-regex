@@ -170,6 +170,8 @@ $result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/');
 
 echo $result->optimized;   // '/\d{4}/'
 echo $result->changes[0];  // 'Wrote [0-9] as \d.'
+echo $result->kinds[0]->value; // 'digits', a RewriteKind
+var_dump($result->proven);     // bool(true): the automata checked the rewrite
 ```
 
 Each rewrite is opt-out: turn off the ones you do not want, keep the rest.

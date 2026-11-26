@@ -1218,6 +1218,17 @@ refuses, as `info()` and the new `captureShape()` do, where 1.x described or rew
 pattern PCRE refuses to compile (`/\k<x>/`). `explain()`, `format()` and
 `highlight()` render the text of any pattern that parses.
 
+`LanguageSolver` refuses such a pattern too, in every method:
+`intersection('/a{2,1}/', '/a/')` throws the `SemanticErrorException` of the
+validation error, where it answered that the two share no string, and a
+surrogate named under `u` throws it where it threw a `ComplexityException`.
+Code that catches `ComplexityException` around a question, for a pattern the
+solver cannot read, catches `SemanticErrorException` beside it when the
+pattern may be one PCRE refuses, or calls `validate()` first.
+`TrivialMatchClassifier` still throws nothing, and names no function for such
+a pattern; a `FirstMatchPartition` candidate that holds one gets a refused
+cell.
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::$offset` count from the
@@ -1448,6 +1459,16 @@ keys of `json_encode()` on an `OptimizationResult` do not change; on a
   and column whatever `--jobs` says, and gives `file` relative to the working
   directory with `/`. `stats` gains `redos_errors`, `infos`, `lint_errors`
   and `parser_fallbacks`; the report gains `target`.
+- A ReDoS analysis gains `target`, the `{php, pcre, locale}` it was computed
+  for, in every document that carries one (`analyze.redos`, `debug.redos`,
+  the `analysis` of a lint issue) and in `json_encode($redosAnalysis)`;
+  `pcre_version` and `php_version` stay the engine that ran it. In PHP it is
+  `RedosAnalysis::$target`, a `PcreTarget`, which the four results of
+  `LanguageSolver` carry too.
+- The `witness` of a ReDoS analysis gains `call`, `with_matches` or
+  `without_matches`: the call of `preg_match()` the attack gives up in.
+  `RedosWitness::toArray()` gains it too, and `RedosWitness::$call` is a
+  `WitnessCall`.
 - `analyze` on an invalid pattern prints its document, with `validation`
   saying why, and `redos` and `explain` null; its `parse` object is gone,
   `validation.is_valid` says the same. `debug` always carries `validation`,

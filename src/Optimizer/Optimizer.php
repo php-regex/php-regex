@@ -159,6 +159,8 @@ final class Optimizer
             return null;
         }
 
+        // Whether the automata checked the rewrite that ships.
+        $proven = false;
         if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || (!$options->verifyWithAutomata && $this->movesAutoPossession($ast, $optimizedPattern)))) {
             // A rewrite that adds a possessive quantifier or an atomic group
             // ships only when the solver verifies it: the solver refuses the
@@ -171,12 +173,14 @@ final class Optimizer
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return null;
             }
+            $proven = true;
         } elseif ($optimizedPattern !== $regex && $options->verifyWithAutomata) {
             // Only a proven rewrite ships: one the automata disprove, or
             // cannot prove, leaves the pattern as written.
             if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
                 return null;
             }
+            $proven = true;
         }
 
         if ($optimizedPattern === $regex) {
@@ -191,7 +195,7 @@ final class Optimizer
             $appliedChanges = [Rewriter::RESPELLED];
         }
 
-        return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+        return new OptimizationResult($regex, $optimizedPattern, kinds: array_map(RewriteKind::named(...), $appliedChanges), proven: $proven);
     }
 
     /**

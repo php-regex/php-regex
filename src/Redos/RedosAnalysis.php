@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Redos;
 
 use PHPRegex\Parser\Node\NodeInterface;
+use PHPRegex\Parser\PcreTarget;
 
 /**
  * Encapsulates the results of a Regular Expression Denial of Service (ReDoS) analysis.
@@ -26,15 +27,15 @@ use PHPRegex\Parser\Node\NodeInterface;
  *
  * @phpstan-import-type WitnessArray from RedosWitness
  * @phpstan-import-type SearchCostArray from RedosSearchCost
+ * @phpstan-import-type TargetArray from PcreTarget
  */
 final class RedosAnalysis implements \JsonSerializable
 {
     /**
-     * The PCRE2 release that ran the analysis, which the proof asks what
-     * the classes of the pattern hold. The pattern is read for the target
-     * of the analyzer's parser, which may be another PHP: under one
-     * release, "/^(?:a{,3}b?)+$/" is exponential for PHP 8.4 and linear for
-     * PHP 8.2, where "{,3}" is no quantifier.
+     * The PCRE2 release that ran the analysis, the engine the proof asks
+     * what the classes of the pattern hold and the replay runs on: the
+     * running one. The pattern is read for $target, which may be another
+     * PHP and PCRE2.
      */
     public readonly string $pcreVersion;
 
@@ -44,6 +45,15 @@ final class RedosAnalysis implements \JsonSerializable
      * follow the PHP release, not the PCRE2 one.
      */
     public readonly string $phpVersion;
+
+    /**
+     * The PHP version, the PCRE2 release and the locale the verdict is one
+     * of: the target of the analyzer's parser, which decides what the
+     * pattern means. Under one running engine, "/^(?:a{,3}b?)+$/" is
+     * exponential for PHP 8.4 and linear for PHP 8.2, where "{,3}" is no
+     * quantifier.
+     */
+    public readonly PcreTarget $target;
 
     /**
      * @internal built by RedosAnalyzer::analyze() and Regex::redos()
@@ -58,6 +68,7 @@ final class RedosAnalysis implements \JsonSerializable
      * @param int|null             $upperBoundDegree     the degree d of a proven bound n^d on the steps of one attempt; null when no polynomial bound is proven
      * @param RedosSearchCost|null $searchCost           the witness of a quadratic unanchored search, looked for only when one attempt is proven linear; null when none was found, never a proof of a linear search
      * @param RedosSearchCost|null $everyMatchSearchCost the witness of a search quadratic only in the functions that look for every match, through PHP's retry after an empty match or the attempt that finds each short match, looked for only when one attempt is proven linear and $searchCost is null; null when none was found
+     * @param PcreTarget|null      $target               the target the pattern was read for; the running engine when null
      */
     public function __construct(
         public readonly RedosSeverity $severity,
@@ -85,9 +96,11 @@ final class RedosAnalysis implements \JsonSerializable
         public readonly ?int $upperBoundDegree = null,
         public readonly ?RedosSearchCost $searchCost = null,
         public readonly ?RedosSearchCost $everyMatchSearchCost = null,
+        ?PcreTarget $target = null,
     ) {
         $this->pcreVersion = $pcreVersion ?? explode(' ', \PCRE_VERSION)[0];
         $this->phpVersion = \PHP_VERSION;
+        $this->target = $target ?? PcreTarget::runtime();
     }
 
     /**
@@ -95,10 +108,12 @@ final class RedosAnalysis implements \JsonSerializable
      * pattern is one the caller ignores. Nothing ran, so nothing is at risk.
      *
      * @internal built by RedosAnalyzer::analyze()
+     *
+     * @param PcreTarget|null $target the target the analyzer judges for; the running engine when null
      */
-    public static function skipped(RedosMode $mode): self
+    public static function skipped(RedosMode $mode, ?PcreTarget $target = null): self
     {
-        return new self(RedosSeverity::Safe, 0, confidence: RedosConfidence::Low, mode: $mode, proof: RedosProof::NotAnalyzed);
+        return new self(RedosSeverity::Safe, 0, confidence: RedosConfidence::Low, mode: $mode, proof: RedosProof::NotAnalyzed, target: $target);
     }
 
     /**
@@ -106,8 +121,10 @@ final class RedosAnalysis implements \JsonSerializable
      * the error says why, and the one recommendation what was not done.
      *
      * @internal built by RedosAnalyzer::analyze()
+     *
+     * @param PcreTarget|null $target the target the analyzer judges for; the running engine when null
      */
-    public static function failed(RedosMode $mode, string $error, ?string $recommendation = null): self
+    public static function failed(RedosMode $mode, string $error, ?string $recommendation = null, ?PcreTarget $target = null): self
     {
         // Scored as a medium risk, as the analyzer scores an unknown
         // severity: a failure is never ranked with the safe patterns.
@@ -119,6 +136,7 @@ final class RedosAnalysis implements \JsonSerializable
             confidence: RedosConfidence::Low,
             mode: $mode,
             proof: RedosProof::NotAnalyzed,
+            target: $target,
         );
     }
 
@@ -157,6 +175,7 @@ final class RedosAnalysis implements \JsonSerializable
             $this->upperBoundDegree,
             $this->searchCost,
             $this->everyMatchSearchCost,
+            $this->target,
         );
     }
 
@@ -257,7 +276,7 @@ final class RedosAnalysis implements \JsonSerializable
     }
 
     /**
-     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null, upper_bound_degree: int|null, every_match_search_cost: SearchCostArray|null}
+     * @return array{severity: string, score: int, mode: string, confirmed: bool, confidence: string, vulnerable_part: string|null, trigger: string|null, false_positive_risk: string|null, suggested_rewrite: string|null, recommendations: array<int|string, string>, error: string|null, findings: array<int|string, Finding>, hotspots: array<int|string, Hotspot>, confirmation: Confirmation|null, complexity: string, degree: int|null, proof: string, witness: WitnessArray|null, replayed: bool|null, abstractions: list<string>, target: TargetArray, pcre_version: string, php_version: string, analysis_version: string, search_cost: SearchCostArray|null, upper_bound_degree: int|null, every_match_search_cost: SearchCostArray|null}
      */
     public function jsonSerialize(): array
     {
@@ -282,6 +301,7 @@ final class RedosAnalysis implements \JsonSerializable
             'witness' => $this->witness?->toArray(),
             'replayed' => $this->replayed,
             'abstractions' => $this->abstractions,
+            'target' => $this->target->toArray(),
             'pcre_version' => $this->pcreVersion,
             'php_version' => $this->phpVersion,
             'analysis_version' => $this->analysisVersion,

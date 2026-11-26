@@ -149,7 +149,7 @@ final class RedosAnalyzer
         $confirmOptions = $options->confirmation;
 
         if (RedosMode::Off === $mode || $this->shouldIgnore($regex)) {
-            return RedosAnalysis::skipped($mode);
+            return RedosAnalysis::skipped($mode, $this->parser->target());
         }
 
         try {
@@ -160,7 +160,7 @@ final class RedosAnalyzer
             // safe: PCRE refuses to compile it.
             $validation = $parser->validate($regex);
             if (!$validation->isValid) {
-                return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.');
+                return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.', null, $parser->target());
             }
 
             $outcome = $this->prover($options)->prove($ast, $regex, $parser->target());
@@ -198,7 +198,7 @@ final class RedosAnalyzer
             $severity = null === $proof ? $heuristics['severity'] : self::provenSeverity($proof);
             $witness = null === $proof || null === $proof->pump
                 ? null
-                : new RedosWitness((string) $proof->prefix, $proof->pump, (string) $proof->suffix, $proof->unicode);
+                : new RedosWitness((string) $proof->prefix, $proof->pump, (string) $proof->suffix, $proof->unicode, $proof->withoutMatches ? WitnessCall::WithoutMatches : WitnessCall::WithMatches);
 
             // One attempt proven linear: what the retries of the search cost,
             // replayed in confirmed mode when its severity, that of a proven
@@ -242,6 +242,7 @@ final class RedosAnalyzer
                 upperBoundDegree: $outcome->stepBound,
                 searchCost: $searchCost,
                 everyMatchSearchCost: $everyMatchSearchCost,
+                target: $parser->target(),
             );
 
             if (RedosMode::Confirmed !== $mode || !$analysis->exceedsThreshold($threshold)) {
@@ -257,7 +258,7 @@ final class RedosAnalyzer
 
             return $confirmed;
         } catch (ExceptionInterface $e) {
-            return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage());
+            return RedosAnalysis::failed($mode, $e->getMessage(), 'Analysis incomplete: '.$e->getMessage(), $this->parser->target());
         }
     }
 
@@ -373,7 +374,7 @@ final class RedosAnalyzer
         $candidates = [$witness];
         foreach ($proof->otherSuffixes as $suffix) {
             if ($suffix !== $witness->suffix) {
-                $candidates[] = new RedosWitness($witness->prefix, $witness->pump, $suffix, $witness->unicode);
+                $candidates[] = new RedosWitness($witness->prefix, $witness->pump, $suffix, $witness->unicode, $witness->call);
             }
         }
 
@@ -386,7 +387,7 @@ final class RedosAnalyzer
         foreach (self::endingLiterals($this->parser, $regex) as $literal) {
             foreach ($candidates as $candidate) {
                 if (!str_contains($candidate->build(1), $literal)) {
-                    $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode);
+                    $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode, $candidate->call);
                 }
             }
         }

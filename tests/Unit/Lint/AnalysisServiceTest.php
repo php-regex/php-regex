@@ -19,9 +19,11 @@ use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\RedosVerdict;
+use PHPRegex\Optimizer\RewriteKind;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -466,6 +468,7 @@ final class AnalysisServiceTest extends TestCase
 
         $this->assertEquals($sequential, $parallel);
         $this->assertSame(['a.php', 'b.php'], array_column($parallel, 'file'));
+        $this->assertSame([RewriteKind::Digits], $parallel[1]['optimization']->kinds, 'The kinds come back from the worker.');
         $this->assertSame(4, $sequentialProgress->advancedTotal());
         $this->assertSame(4, $parallelProgress->advancedTotal());
         $this->assertSame([], $sequentialProgress->workerCounts());
@@ -658,6 +661,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame($serial[0]->severity, $read->severity);
         $this->assertCount(\count($serial[0]->findings), $read->findings);
         $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
+        $this->assertSame($serial[0]->target->key(), $read->target->key(), 'The target judged comes back with the verdict.');
         $this->assertCount(1, $redos);
         $this->assertInstanceOf(NodeInterface::class, $redos[0]->analysis?->culpritNode);
     }
@@ -692,6 +696,8 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($allowed);
         $this->assertContains(ProofResult::class, $allowed);
         $this->assertContains(RedosAnalysis::class, $allowed);
+        $this->assertContains(PcreTarget::class, $allowed, 'A ReDoS analysis carries the target it judged.');
+        $this->assertContains(RewriteKind::class, $allowed, 'An optimization carries the kinds of its rewrites.');
         $this->assertNotContains(NodeInterface::class, $allowed);
     }
 

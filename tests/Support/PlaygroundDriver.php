@@ -40,7 +40,7 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type Format array{protocol: int, notices: list<string>, format: array{pattern: string, changed: bool, refusal: array{code: string, message: string}|null}|null, error: Fault|null, timing: array{formatMs: float}}
  * @phpstan-type Hotspot array{start: int, end: int, severity: string, pattern: string, trigger: ?string}
  * @phpstan-type Confirmation array{confirmed: bool, evidence: ?string, backtrack_limit: ?int, samples: list<array<string, mixed>>}
- * @phpstan-type Verdict array{severity: string, complexity: string, mode: string, confirmed: bool, error: ?string, hotspots: list<Hotspot>, witness: array{prefix: string, pump: string, suffix: string}|null, confirmation: Confirmation|null, linear: bool, attack: ?string, replay_error: ?string}
+ * @phpstan-type Verdict array{severity: string, complexity: string, mode: string, confirmed: bool, error: ?string, hotspots: list<Hotspot>, witness: array{prefix: string, pump: string, suffix: string, call: string}|null, confirmation: Confirmation|null, linear: bool, attack: ?string, replay_error: ?string}
  * @phpstan-type Redos array{protocol: int, notices: list<string>, redos: Verdict|null, error: Fault|null, timing: array{redosMs: float}}
  * @phpstan-type TranspileDocument array{dialect: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: list<string>, notes: list<string>}
  * @phpstan-type Transpile array{protocol: int, notices: list<string>, transpile: TranspileDocument|null, refusal: array{message: string}|null, error: Fault|null, timing: array{transpileMs: float}}

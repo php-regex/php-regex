@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RewriteKind` names each kind of rewrite, its `message()` the sentence
+   `OptimizationResult::$changes` holds for it. `OptimizationResult::$kinds`
+   lists the kinds of the rewrites made, in the order first made, and
+   `$changes` is the message of each; `$proven` says whether the automata
+   checked the rewrite, true under `verifyWithAutomata` and for a possessive
+   rewrite, false for one shipped unchecked or a pattern left as written.
+   The JSON of a result keeps its keys.
  * `Modernizer` takes the `PcreTarget` the pattern runs for, null when its
    release and locale are unknown, and writes `\s` for `[\t\n\x0B\f\r ]` under
    a target whose locale is `C` or `POSIX`. `RedosRepairer` takes a parser

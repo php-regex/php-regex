@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `PcreTarget::toArray()` writes a target as the JSON documents name it,
+   `['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C']`: the PHP version
+   as major.minor, with its patch when that is not 0, the PCRE2 release and
+   the locale. The shape is the alias `TargetArray`.
  * `Exception\LexerException` extends `Exception\ParserException`: one
    `catch (ParserException)` holds every pattern `parse()` refuses as
    malformed, whichever stage of the parser met the fault.

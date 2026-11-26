@@ -25,6 +25,7 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Exception\ExceptionInterface;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
 use PHPRegex\Parser\Node\GroupNode;
@@ -227,7 +228,7 @@ final class RouteConflictAnalyzer
                     $passesSomeOn = null === $equivalence->rightOnlyExample && $this->passesOnAPathEndingOnTheSlash($earlier, $later, $options);
                     $keepsAPath = null === $equivalence->rightOnlyExample && $this->keepsAPathWithOneMoreSlash($earlier, $later, $options);
                     $laterFirstRedirectsEarlier = null !== $equivalence->leftOnlyExample && $this->redirectsEveryPathOf($later, $earlier, $options);
-                } catch (ComplexityException) {
+                } catch (ComplexityException|SemanticErrorException) {
                     $skippedPairs++;
 
                     continue;
@@ -1166,7 +1167,7 @@ final class RouteConflictAnalyzer
 
         try {
             return $this->solver->subsetOf($this->pathsTakenAsIs($later, $options), $earlier['slashPattern'], $options)->isSubset;
-        } catch (ComplexityException) {
+        } catch (ComplexityException|SemanticErrorException) {
             return false;
         }
     }
@@ -1420,7 +1421,7 @@ final class RouteConflictAnalyzer
         try {
             $hostIntersections++;
             $intersection = $this->solver->intersection($left['hostPattern'], $right['hostPattern'], $options);
-        } catch (ComplexityException) {
+        } catch (ComplexityException|SemanticErrorException) {
             $skippedPairs++;
             $hostSkipped++;
 
@@ -1462,7 +1463,7 @@ final class RouteConflictAnalyzer
 
         try {
             return null === $this->solver->equivalent($outer['hostPattern'], $inner['hostPattern'], $options)->rightOnlyExample;
-        } catch (ComplexityException) {
+        } catch (ComplexityException|SemanticErrorException) {
             return true;
         }
     }

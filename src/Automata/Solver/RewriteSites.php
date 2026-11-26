@@ -215,7 +215,7 @@ final class RewriteSites
         [$leftCount, $rightCount] = [\count($left), \count($right)];
         // Check before shaping or allocating, using division to avoid overflow.
         if ($leftCount + 1 > intdiv($this->alignmentCellsRemaining, $rightCount + 1)) {
-            throw new ComplexityException(\sprintf('Rewrite alignment cell budget exceeded (%d).', self::MAX_ALIGNMENT_CELLS));
+            throw new ComplexityException(\sprintf('Rewrite alignment cell budget exceeded (%d).', self::MAX_ALIGNMENT_CELLS), diagnostic: ['phase' => 'rewrite alignment', 'limit' => self::MAX_ALIGNMENT_CELLS]);
         }
         $this->alignmentCellsRemaining -= ($leftCount + 1) * ($rightCount + 1);
 

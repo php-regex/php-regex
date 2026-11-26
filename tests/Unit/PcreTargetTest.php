@@ -13,9 +13,11 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit;
 
+use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Tests\Support\InstalledLocales;
+use PHPRegex\Tests\Support\LastByteWords;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -34,6 +36,47 @@ final class PcreTargetTest extends TestCase
         $this->assertSame(\PHP_VERSION_ID, $target->phpVersionId);
         $this->assertSame(explode(' ', \PCRE_VERSION)[0], $target->pcreVersion);
         $this->assertTrue($target->isRunningEngine());
+    }
+
+    /**
+     * The target as the JSON documents name it: the PHP version as the lint
+     * report writes it, major.minor, with its patch when that is not 0, the
+     * PCRE2 release and the locale.
+     *
+     * @param array{php: string, pcre: string, locale: string} $expected
+     */
+    #[Test]
+    #[DataProvider('provideTargetsAsArrays')]
+    public function test_a_target_is_written_as_its_php_its_pcre2_and_its_locale(int $phpVersionId, string $pcreVersion, array $expected): void
+    {
+        $target = new PcreTarget($phpVersionId, $pcreVersion, 'C');
+
+        $this->assertSame($expected, $target->toArray());
+        $this->assertSame(ProjectTarget::phpLabel($phpVersionId), $target->toArray()['php'], 'The PHP is spelled as the lint report spells it.');
+    }
+
+    /**
+     * @return iterable<string, array{phpVersionId: int, pcreVersion: string, expected: array{php: string, pcre: string, locale: string}}>
+     */
+    public static function provideTargetsAsArrays(): iterable
+    {
+        yield 'a minor version' => ['phpVersionId' => 80400, 'pcreVersion' => '10.44', 'expected' => ['php' => '8.4', 'pcre' => '10.44', 'locale' => 'C']];
+        yield 'a patch release' => ['phpVersionId' => 80425, 'pcreVersion' => '10.44', 'expected' => ['php' => '8.4.25', 'pcre' => '10.44', 'locale' => 'C']];
+        yield 'the first patch release' => ['phpVersionId' => 80401, 'pcreVersion' => '10.44', 'expected' => ['php' => '8.4.1', 'pcre' => '10.44', 'locale' => 'C']];
+        yield 'the last patch release' => ['phpVersionId' => 80099, 'pcreVersion' => '10.36', 'expected' => ['php' => '8.0.99', 'pcre' => '10.36', 'locale' => 'C']];
+        yield 'a minor version of two digits' => ['phpVersionId' => 81000, 'pcreVersion' => '10.49', 'expected' => ['php' => '8.10', 'pcre' => '10.49', 'locale' => 'C']];
+        yield 'a minor and a patch of two digits' => ['phpVersionId' => 71133, 'pcreVersion' => '10.32', 'expected' => ['php' => '7.11.33', 'pcre' => '10.32', 'locale' => 'C']];
+        yield 'another major, a release as PCRE_VERSION spells it' => ['phpVersionId' => 70300, 'pcreVersion' => '10.32 2018-09-10', 'expected' => ['php' => '7.3', 'pcre' => '10.32', 'locale' => 'C']];
+    }
+
+    #[Test]
+    public function test_a_target_written_as_an_array_names_its_locale(): void
+    {
+        $this->assertSame(['php', 'pcre', 'locale'], array_keys(PcreTarget::runtime()->toArray()));
+        $this->assertSame(PcreTarget::runtime()->locale, PcreTarget::runtime()->toArray()['locale']);
+
+        LastByteWords::give();
+        $this->assertSame(LastByteWords::LATIN1, (new PcreTarget(80400, '10.44', LastByteWords::LATIN1))->toArray()['locale']);
     }
 
     #[Test]

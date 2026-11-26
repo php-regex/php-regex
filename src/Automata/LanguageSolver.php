@@ -29,6 +29,7 @@ use PHPRegex\Automata\Options\SolverStrategy;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\KeptNfas;
 use PHPRegex\Automata\Solver\LazyDfa;
 use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\PrefixReader;
@@ -45,8 +46,11 @@ use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Transform\SearchStarts;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -93,6 +97,10 @@ use PHPRegex\Parser\TraversalAction;
  * in another, an anchor or a boundary inside one, (*napla:...) and the like
  * throw a ComplexityException instead of an answer that would be wrong.
  *
+ * A pattern is judged before it is read, at the target of the solver's
+ * parser: one PCRE2 refuses to compile matches nothing an answer could
+ * describe, and every question throws what validate() says of it.
+ *
  * @phpstan-import-type AlphabetRange from Dfa
  */
 final class LanguageSolver
@@ -121,7 +129,9 @@ final class LanguageSolver
 
     /**
      * @param RegexParser|null       $parser   Reads the patterns, for its PHP and PCRE2 target; a default parser when null
-     * @param DfaCacheInterface|null $dfaCache Keeps compiled DFAs between questions; nothing is kept when null
+     * @param DfaCacheInterface|null $dfaCache Keeps compiled automata between questions: the DFAs compile(), language(), acceptsPrefix()
+     *                                         and the eager search build and, beside it, the NFAs the lazy search reads; it does not
+     *                                         choose the search, and nothing is kept when null
      */
     private readonly RegexParser $parser;
 
@@ -133,11 +143,13 @@ final class LanguageSolver
     /**
      * Whether some string matches both patterns, and the shortest such string.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -146,7 +158,7 @@ final class LanguageSolver
                 $classes = (new ProductSearch($options))->intersection($leftNfa, $rightNfa);
                 $example = null === $classes ? null : ProductSearch::spell($classes, $leftNfa->alphabet, $bytes);
 
-                return new IntersectionResult(null === $example, $example);
+                return new IntersectionResult(null === $example, $example, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -161,18 +173,20 @@ final class LanguageSolver
             $options,
         );
 
-        return new IntersectionResult(null === $example, $example);
+        return new IntersectionResult(null === $example, $example, target: $this->parser->target());
     }
 
     /**
      * Whether every string the left pattern matches is matched by the right one,
      * and the shortest string that is not.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -182,7 +196,7 @@ final class LanguageSolver
                 // if it leaves the regular subset, before this answer.
                 $example = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
 
-                return new SubsetResult(null === $example, $example);
+                return new SubsetResult(null === $example, $example, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -197,18 +211,20 @@ final class LanguageSolver
             $options,
         );
 
-        return new SubsetResult(null === $example, $example);
+        return new SubsetResult(null === $example, $example, target: $this->parser->target());
     }
 
     /**
      * Whether both patterns match exactly the same strings, and the shortest
      * string only one side matches, for each side.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -217,7 +233,7 @@ final class LanguageSolver
                 $leftOnlyExample = $left === $right ? null : $this->lazyDifference($leftNfa, $rightNfa, $bytes, $options);
                 $rightOnlyExample = $left === $right ? null : $this->lazyDifference($rightNfa, $leftNfa, $bytes, $options);
 
-                return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+                return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample, target: $this->parser->target());
             } catch (ComplexityException) {
                 // Past its limits, the answer is the eager search's.
             }
@@ -239,7 +255,7 @@ final class LanguageSolver
             $options,
         );
 
-        return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample);
+        return new EquivalenceResult(null === $leftOnlyExample && null === $rightOnlyExample, $leftOnlyExample, $rightOnlyExample, target: $this->parser->target());
     }
 
     /**
@@ -265,8 +281,9 @@ final class LanguageSolver
      * quantifier that gives nothing back read as the greedy one,
      * "/(?=x)xa+b/" and "/(?=x)xa++b/", and are refused otherwise.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalent(string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
@@ -280,11 +297,13 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
 
         foreach ([$left, $right] as $pattern) {
@@ -301,7 +320,7 @@ final class LanguageSolver
             // same in every run: the patterns differ only in possessive
             // quantifiers that give nothing back, however deep the calls run.
             if (PriorityNfaBuilder::CALL_MESSAGE === $refusal->getMessage() && $this->possessivesGiveNothingBack($left, $right, $options)) {
-                return new MatchEquivalenceResult(true);
+                return new MatchEquivalenceResult(true, target: $this->parser->target());
             }
 
             throw $refusal;
@@ -315,8 +334,8 @@ final class LanguageSolver
 
         // The sets the answer is computed from come from the running engine,
         // whatever PCRE2 is judged: the result carries the running release,
-        // like every other question.
-        return new MatchEquivalenceResult(null === $counterExample, $counterExample);
+        // like every other question, beside the target judged.
+        return new MatchEquivalenceResult(null === $counterExample, $counterExample, target: $this->parser->target());
     }
 
     /**
@@ -335,18 +354,22 @@ final class LanguageSolver
      * holds is read too, as a call runs it: "/(?&n)|a(?(DEFINE)(?<n>^.))/"
      * needs the search past the start.
      *
-     * Two patterns that read alike (see readAlike()) run alike everywhere:
-     * no run is needed. Nor is one for two patterns that hold a lookbehind
-     * when the match solver builds one automaton for both, each possessive
-     * quantifier that gives nothing back read as the greedy one: "/(?<=x)a+b/"
-     * and "/(?<=x)a++b/".
+     * Two patterns that read alike (see readAlike()) run alike in every
+     * call: no run is needed. Nor is one for two patterns that hold a
+     * lookbehind when the match solver builds one automaton for both, each
+     * possessive quantifier that gives nothing back read as the greedy one:
+     * "/(?<=x)a+b/" and "/(?<=x)a++b/".
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
+     *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
      *
      * @return list<MatchRun>|null
      */
     public function runsOfEveryCall(string $left, string $right): ?array
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $translator = new HirTranslator($this->parser->target());
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
@@ -416,16 +439,27 @@ final class LanguageSolver
      * aside, the same options before it, and the same flags but for an "s"
      * or an "m" that form already applied. [0-9] and \d, a{1} and a, (?:a)
      * and a read alike. Such patterns run alike in every call, and wherever
-     * their text is spliced into a larger pattern. Without "u", a pattern
-     * that holds "\w" outside a class, or the byte 0xFF, reads like no
-     * other where the tables may hold that byte in "\w": PCRE2 may read
-     * one against the other in the text around it as if 0xFF were no word
-     * character (see AutoPossession::meetsLastByteWhereSpliced()).
+     * their text is spliced as a group into a larger pattern, as the router
+     * splices a requirement into the named group of its variable. Spliced
+     * bare, they need not: PCRE2 stops a lazy repeat at the end of a group,
+     * so that the brackets a pattern brings count there. "(?:a?)" and "a?"
+     * read alike, yet under fr_FR.ISO8859-1 "/\xFF+?(?:a?)\w/" finds
+     * "\xFF\xFF" where "/\xFF+?a?\w/" finds nothing; in a group of their
+     * own, "/\xFF+?(?<v>(?:a?))\w/" and "/\xFF+?(?<v>a?)\w/" find the same.
+     * Without "u", a pattern that holds "\w" outside a class, or the byte
+     * 0xFF, reads like no other where the tables may hold that byte in
+     * "\w": PCRE2 may read one against the other in the text around it as
+     * if 0xFF were no word character (see
+     * AutoPossession::meetsLastByteWhereSpliced()).
      *
-     * @internal the lint asks it of a rewrite it would splice into a larger pattern
+     * @internal the lint asks it of a rewrite it would splice, as a group, into a larger pattern
+     *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
      */
     public function readAlike(string $left, string $right): bool
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $translator = new HirTranslator($this->parser->target());
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
@@ -457,10 +491,13 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite asks it where the match solver does not read the pattern
      *
-     * @throws ComplexityException When a part outgrows the limits of the options, or when pairing two long sequences by the parts both keep takes more than 65,536 cells
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a part outgrows the limits of the options, or when pairing two long sequences by the parts both keep takes more than 65,536 cells
      */
     public function rewritesAlikeInPlace(string $left, string $right, ?SolverOptions $options = null): bool
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
         if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
@@ -512,11 +549,13 @@ final class LanguageSolver
      * UTF mode, a prefix ending in the middle of a character is viable when
      * one way to finish the character is.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function acceptsPrefix(string $regex, string $prefix, ?SolverOptions $options = null): bool
     {
+        $this->refuseWhatTheEngineRefuses($regex);
         $dfa = $this->buildDfa($regex, $options ?? new SolverOptions());
 
         return PrefixReader::begins($dfa, $prefix, $this->parser->parse($regex)->isUnicode());
@@ -527,11 +566,14 @@ final class LanguageSolver
      * options: whether it is finite, how many strings of each length it
      * holds, each of them, and the strings it rejects.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function language(string $regex, ?SolverOptions $options = null): Language
     {
+        $this->refuseWhatTheEngineRefuses($regex);
+
         return new Language($this->buildDfa($regex, $options ?? new SolverOptions()), $this->parser->parse($regex)->isUnicode());
     }
 
@@ -539,11 +581,14 @@ final class LanguageSolver
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $regex, ?SolverOptions $options = null): Dfa
     {
+        $this->refuseWhatTheEngineRefuses($regex);
+
         return $this->buildDfa($regex, $options ?? new SolverOptions());
     }
 
@@ -553,10 +598,14 @@ final class LanguageSolver
      *
      * @internal
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function nfa(string $pattern, ?SolverOptions $options = null): Nfa
     {
+        $this->refuseWhatTheEngineRefuses($pattern);
+
         return $this->buildNfa($pattern, $this->parser->parse($pattern), $options ?? new SolverOptions());
     }
 
@@ -592,6 +641,26 @@ final class LanguageSolver
         ];
 
         return \hash('sha256', \implode('|', $parts));
+    }
+
+    /**
+     * A pattern PCRE2 refuses has no matches a question could be about: it
+     * is refused with what validate() says of it, as Regex::info() refuses
+     * it. One that does not lex or parse throws what the parser throws.
+     *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     */
+    private function refuseWhatTheEngineRefuses(string ...$regexes): void
+    {
+        foreach ($regexes as $regex) {
+            $validation = $this->parser->validate($regex);
+            if (!$validation->isValid) {
+                $this->parser->parse($regex);
+
+                throw new SemanticErrorException($validation->error ?? 'The pattern is invalid.', $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, DelimitedPattern::fromDelimited($regex, $this->parser->target())->pattern, hint: $validation->hint);
+            }
+        }
     }
 
     /**
@@ -1182,11 +1251,11 @@ final class LanguageSolver
 
     /**
      * The NFAs of both patterns, for the lazy search; null where the eager
-     * search answers: under the Eager strategy, with a DFA cache, whose
-     * compiled DFAs it reuses, or for a pattern read as UTF-8 beside one
-     * read as bytes, which the eager search reads through the UTF-8 of each
-     * character. The modes are read from the patterns before any NFA is
-     * built.
+     * search answers: under the Eager strategy, or for a pattern read as
+     * UTF-8 beside one read as bytes, which the eager search reads through
+     * the UTF-8 of each character. The modes are read from the patterns
+     * before any NFA is built. A DFA cache does not choose the search: it
+     * keeps what the eager one compiles, once the lazy one gave up.
      *
      * @throws ComplexityException
      *
@@ -1194,7 +1263,7 @@ final class LanguageSolver
      */
     private function lazyNfas(string $left, string $right, SolverOptions $options): ?array
     {
-        if (SolverStrategy::Lazy !== $options->strategy || null !== $this->dfaCache) {
+        if (SolverStrategy::Lazy !== $options->strategy) {
             return null;
         }
 
@@ -1204,9 +1273,33 @@ final class LanguageSolver
             return null;
         }
 
-        $leftNfa = $this->buildNfa($left, $leftAst, $options);
+        $leftNfa = $this->lazyNfa($left, $leftAst, $options);
 
-        return [$leftNfa, $left === $right ? $leftNfa : $this->buildNfa($right, $rightAst, $options)];
+        return [$leftNfa, $left === $right ? $leftNfa : $this->lazyNfa($right, $rightAst, $options)];
+    }
+
+    /**
+     * The NFA of a pattern for the lazy search, built once for a solver
+     * that keeps its automata: beside its DFA cache, under the key the DFA
+     * of the pattern takes there.
+     *
+     * @throws ComplexityException
+     */
+    private function lazyNfa(string $pattern, RegexNode $ast, SolverOptions $options): Nfa
+    {
+        if (null === $this->dfaCache) {
+            return $this->buildNfa($pattern, $ast, $options);
+        }
+
+        $kept = KeptNfas::beside($this->dfaCache);
+        $key = $this->cacheKey($pattern, $options);
+        $nfa = $kept->get($key);
+        if (null === $nfa) {
+            $nfa = $this->buildNfa($pattern, $ast, $options);
+            $kept->set($key, $nfa);
+        }
+
+        return $nfa;
     }
 
     /**

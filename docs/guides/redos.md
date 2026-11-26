@@ -216,7 +216,11 @@ witness reproduces with `$matches`, and `preg_match() without $matches fails`
 for the patterns that only blow up on PHP's second try — an empty first match
 makes `preg_match()` retry the offset with `NOTEMPTY_ATSTART | ANCHORED` when
 no `$matches` was passed. The analysis models both forms; a verdict is only
-replayed the way it was proven.
+replayed the way it was proven. The witness says which, in
+`RedosWitness::$call` (`WitnessCall::WithMatches` or `WitnessCall::WithoutMatches`,
+`call` in JSON), and `ConfirmationRunner` replays it by that call, whether the
+analyzer runs it or you pass one to `RedosAnalyzer`: `/(?:|(?:a|a)*$)/` gives
+up on `"aa" x n . "!"` only without `$matches`.
 
 When the replay never fails, the verdict stays and its confidence stays `medium`:
 
@@ -506,7 +510,8 @@ Next to `severity`, `score`, `confidence`, `findings`, `hotspots`, `recommendati
 | `witness` | `?RedosWitness` | the attack of a proven vulnerable verdict |
 | `replayed` | `?bool` | whether the witness made the running PCRE fail; `null` when no replay was attempted |
 | `abstractions` | `list<string>` | what the model analysed differently from the pattern as written |
-| `pcreVersion` | `string` | the PCRE2 release that ran the analysis; the pattern is read for the target, which may name another |
+| `target` | `PcreTarget` | the PHP version, the PCRE2 release and the locale the verdict was computed for |
+| `pcreVersion` | `string` | the PCRE2 release that ran the analysis; the pattern is read for `target`, which may name another |
 | `analysisVersion` | `string` | `RedosAnalyzer::ANALYSIS_VERSION`, raised when the model changes |
 | `searchCost` | `?RedosSearchCost` | the witness of a quadratic unanchored search, looked for when one attempt is proven linear; `null` when none was found, never a proof of a linear search |
 
@@ -525,7 +530,7 @@ $analyzer->analyze('/(a)?(?(1)a|b)/')->isSafe();         // true:  no risk found
 $analyzer->analyze('/(a)?(?(1)a|b)/')->isProvenSafe();   // false
 ```
 
-The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`pcre_version`, `analysis_version`, `search_cost`, `upper_bound_degree`), and the witness as its three escaped parts; the [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis) lists every key:
+The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`, `lint --format=json`) carries the same fields in snake case (`target`, `pcre_version`, `analysis_version`, `search_cost`, `upper_bound_degree`), and the witness as its three escaped parts; the [JSON output reference](../reference/json-output.md#redos-analysis-redos_analysis) lists every key:
 
 ```json
 "complexity": "exponential",
@@ -534,10 +539,16 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "witness": {
     "prefix": "",
     "pump": "a",
-    "suffix": "!"
+    "suffix": "!",
+    "call": "with_matches"
 },
 "replayed": true,
 "abstractions": [],
+"target": {
+    "php": "8.4.26",
+    "pcre": "10.49",
+    "locale": "C"
+},
 "pcre_version": "10.49",
 "php_version": "8.4.26",
 "analysis_version": "1",

@@ -24,6 +24,7 @@ use PHPRegex\Linter\LintService;
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\Source\PatternSourceCollection;
+use PHPRegex\Optimizer\RewriteKind;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalyzer;
@@ -808,6 +809,30 @@ final class LintServiceTest extends TestCase
         $this->assertSame([], $this->optimized('{^\d+$}sD', 'route:home:id'));
         $this->assertSame(['{^\d+$}sD'], $this->optimized('{^[0-9]+$}sD', 'route:home:id'));
         $this->assertSame(['{^ab$}sDu'], $this->optimized('{^a{1}b$}sDu', 'route:home:id'));
+    }
+
+    /**
+     * The rewrite of a route requirement, written again under the router's
+     * flags, keeps the kinds of its rewrites and its proof.
+     */
+    #[Test]
+    public function test_a_route_optimization_keeps_its_kinds_and_its_proof(): void
+    {
+        $this->assertSame(1, preg_match('{^.[0-9]+$}sD', "\n42"));
+        $this->assertSame(1, preg_match('{^.\d+$}sD', "\n42"));
+
+        $result = (new LintService($this->analysis, $this->sources))->analyze(
+            [new PatternOccurrence('{^.[0-9]+$}sD', 'test.php', 1, 'route:home:id')],
+            new LintRequest(['.'], [], 1),
+            null,
+        );
+
+        $optimizations = array_merge(...array_map(static fn (array $item): array => $item['optimizations'], array_values($result->results)));
+        $this->assertCount(1, $optimizations);
+        $this->assertSame('{^.\d+$}sD', $optimizations[0]['optimization']->optimized);
+        $this->assertSame([RewriteKind::Digits], $optimizations[0]['optimization']->kinds);
+        $this->assertSame([RewriteKind::Digits->message()], $optimizations[0]['optimization']->changes);
+        $this->assertTrue($optimizations[0]['optimization']->proven);
     }
 
     /**
