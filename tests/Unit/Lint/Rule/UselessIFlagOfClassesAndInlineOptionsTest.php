@@ -118,6 +118,16 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
             // With i, [:upper:] matches the small letters too, and \p{Lu}.
             'a letter and its capital with the capitals' => ['/[aA[:upper:]]/i', false],
             'a letter and its capital with the capital property' => ['/[aA\p{Lu}]/i', false],
+            // Under (*UCP) they read as \p{Lu} and \p{Ll}, which i leaves as
+            // written in a class.
+            'a letter and its capital with the capitals under (*UCP)' => ['/(*UCP)[aA[:upper:]]/i', true],
+            'a letter and its capital with the small letters under (*UCP)' => ['/(*UCP)[aA[:lower:]]/i', true],
+            'the small letters under (*UCP)' => ['/(*UCP)[[:lower:]]/i', true],
+            'every byte but the capitals under (*UCP)' => ['/(*UCP)[[:^upper:]]/i', true],
+            'a Latin-1 letter and its capital with the capitals under (*UCP)' => ['/(*UCP)[\xC9\xE9[:upper:]]/i', true],
+            'a letter with the small letters under (*UCP)' => ['/(*UCP)[a[:lower:]]/i', false],
+            'the small letters' => ['/[[:lower:]]/i', false],
+            'a letter and its capital with the capitals under (*UCP) and the ASCII option of the POSIX classes' => ['/(*UCP)(?aP)[aA[:upper:]]/i', false],
             'a letter and its capital with the last byte' => ['/[aA\xFF]/i', true],
             'a letter and its capital with a Latin-1 letter' => ['/[aA\xE9]/i', true],
             'every byte' => ['/[\x00-\xFF]/i', true],

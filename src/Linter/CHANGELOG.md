@@ -288,6 +288,14 @@ CHANGELOG
    no longer keep the flag, and `\P{Lu}` and `\p{^Lu}` keep it from 10.45,
    where i changes them: `/\P{Lu}/iu` was reported though it matches 2,314
    characters fewer with i on PCRE2 10.49.
+ * Under u or `(*UCP)`, `regex.lint.flag.useless.i` reads `[:upper:]` and
+   `[:lower:]` as PCRE2 reads them in a class there, as `\p{Lu}` and
+   `\p{Ll}`, which i leaves as written on every release:
+   `/[aA[:upper:]]/iu`, `/[[:lower:]]/iu` and `/(*UCP)[aA[:upper:]]/i` are
+   reported, where they kept the flag. Without UCP, i widens them to the
+   letters: `/[aA[:upper:]]/i` and `/(*UTF)[[:upper:]]/i` keep it, as does
+   a pattern that sets an ASCII option, `(?aP)` or `(?a)`, which gives the
+   POSIX classes back to the tables.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

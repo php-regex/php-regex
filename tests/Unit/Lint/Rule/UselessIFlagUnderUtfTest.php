@@ -41,12 +41,13 @@ final class UselessIFlagUnderUtfTest extends TestCase
 
     /**
      * The rows verified against a newer release than the floor: the casing
-     * verbs come with 10.45, and Unicode 17, which pairs U+A7CE with U+A7CF
-     * and U+16EA0 with U+16EBB, with 10.48.
+     * verbs come with 10.45, the restriction and the ASCII options with
+     * 10.43, and Unicode 17, which pairs U+A7CE with U+A7CF and U+16EA0
+     * with U+16EBB, with 10.48.
      */
     private const RELEASES = [
         '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu'],
-        '10.43' => ['/(?r)[kK]/iu'],
+        '10.43' => ['/(?r)[kK]/iu', '/(?aP)[[:upper:]]/iu', '/(?a)[[:lower:]]/iu', '/(?aP:[[:upper:]])/iu', '/(?aD)[[:upper:]]/iu', '/(?aP)(?-aP)[[:upper:]]/iu', '/(?aP:)[[:upper:]]/iu'],
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
     ];
 
@@ -146,10 +147,37 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'the Latin Extended-A letters with the long s' => ['pattern' => '/[\x{100}-\x{17F}]/iu', 'useless' => false, 'reported' => false];
         yield 'a small letter and its capital with a script' => ['pattern' => '/[aA\p{Greek}]/iu', 'useless' => true, 'reported' => true];
         yield 'a small letter and its capital with the word characters' => ['pattern' => '/[aA\w]/iu', 'useless' => true, 'reported' => true];
-        // Under u, [:upper:] reads as \p{Lu}, which i leaves as written in
-        // a class: the rule, which reads it as the capitals i widens without
-        // u, keeps the flag.
-        yield 'a small letter and its capital with the capitals' => ['pattern' => '/[aA[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // Under u, which sets UCP, [:upper:] and [:lower:] read as \p{Lu}
+        // and \p{Ll}, which i leaves as written in a class on every
+        // release: i widens them to the letters without UCP alone, as under
+        // (*UTF) or the ASCII option of the POSIX classes.
+        yield 'a small letter and its capital with the capitals' => ['pattern' => '/[aA[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital with the small letters' => ['pattern' => '/[aA[:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals' => ['pattern' => '/[[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the small letters' => ['pattern' => '/[[:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a negated class of the capitals' => ['pattern' => '/[^[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'every character but the small letters' => ['pattern' => '/[[:^lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals and the small letters' => ['pattern' => '/[[:upper:][:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter with the small letters' => ['pattern' => '/[a[:lower:]]/iu', 'useless' => false, 'reported' => false];
+        // The capital i adds is among the capitals: the rule, which reads
+        // the letters written apart from the POSIX class, keeps the flag.
+        yield 'a small letter with the capitals' => ['pattern' => '/[a[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals under the UTF and UCP verbs' => ['pattern' => '/(*UTF)(*UCP)[[:upper:]]/i', 'useless' => true, 'reported' => true];
+        yield 'the capitals under the UTF verb alone' => ['pattern' => '/(*UTF)[[:upper:]]/i', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital with the capitals under the UTF verb alone' => ['pattern' => '/(*UTF)[aA[:upper:]]/i', 'useless' => false, 'reported' => false];
+        yield 'the capitals under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP)[[:upper:]]/iu', 'useless' => false, 'reported' => false];
+        yield 'the small letters under every ASCII option' => ['pattern' => '/(?a)[[:lower:]]/iu', 'useless' => false, 'reported' => false];
+        yield 'the capitals in a group under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP:[[:upper:]])/iu', 'useless' => false, 'reported' => false];
+        // An ASCII option of another kind, or one turned off or ended by
+        // its group, leaves the POSIX classes to UCP: the rule, which looks
+        // for the letter of the option anywhere in the pattern, keeps the
+        // flag.
+        yield 'the capitals under the ASCII option of the digits' => ['pattern' => '/(?aD)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals after the ASCII option of the POSIX classes turned off' => ['pattern' => '/(?aP)(?-aP)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals after a group under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP:)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // A group named "a", or options without that letter, set none.
+        yield 'the capitals in a group named a' => ['pattern' => '/(?<a>[[:upper:]])/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals in a group setting other options' => ['pattern' => '/(?s-m:[[:upper:]])/iu', 'useless' => true, 'reported' => true];
         // PCRE2 folds neither the dotted capital I nor the dotless small i
         // with another character but under Turkish rules, which pair them
         // with "i" and "I": the class is read under neither.

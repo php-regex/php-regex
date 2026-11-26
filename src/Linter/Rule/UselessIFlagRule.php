@@ -83,6 +83,17 @@ final class UselessIFlagRule extends AbstractLintRule
     private bool $unicodeCase = false;
 
     /**
+     * Whether UCP is set, by the u modifier or by "(*UCP)": a POSIX class
+     * then reads as a Unicode property.
+     */
+    private bool $ucp = false;
+
+    /**
+     * The body of the pattern, as written.
+     */
+    private string $source = '';
+
+    /**
      * Under another locale's tables than PCRE2's own, those tables, which
      * give the other case of each byte, "\xE9" and "\xC9" under Latin-1's:
      * null under PCRE2's own.
@@ -134,8 +145,11 @@ final class UselessIFlagRule extends AbstractLintRule
         $this->flagMatters = !$context->pattern->hasFlag('i');
         $this->flagsWithoutI = str_replace('i', '', $context->activeFlags());
         $this->unicodeMode = $context->pattern->unicodeMode;
+        $this->source = $context->pattern->source;
+        $ucpVerb = str_contains(StartOptions::of($this->source), '(*UCP)');
+        $this->ucp = $ucpVerb || $context->pattern->hasFlag('u');
         $this->unicodeCase = $this->unicodeMode
-            || (str_contains(StartOptions::of($context->pattern->source), '(*UCP)') && $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
+            || ($ucpVerb && $context->target->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf));
         // The target read the tables of its locale when it was made.
         $this->tables = CharacterTables::BUILT_IN === $context->target->locale ? null : CharacterTables::forLocale($context->target->locale);
         $this->target = $context->target;
@@ -696,10 +710,22 @@ final class UselessIFlagRule extends AbstractLintRule
         return Ascii::lower($normalized);
     }
 
+    /**
+     * Whether i changes what the POSIX class matches: "[:upper:]" and
+     * "[:lower:]" match the letters under i where the tables are read for
+     * them. Under UCP they read as "\p{Lu}" and "\p{Ll}", which i leaves
+     * as written in a class on every release, the conversion of 10.45 to
+     * every cased letter reading a property written as one alone. An
+     * ASCII option, "(?aP)" or "(?a)" from 10.43, gives the POSIX classes
+     * back to the tables: a pattern that sets any keeps the flag, the
+     * options in force at the class not being told apart. After "(?^" the
+     * pattern's own i holds no more.
+     */
     private function posixClassHasCaseSensitiveLetters(string $class): bool
     {
         $normalized = Ascii::lower(ltrim($class, '^'));
 
-        return \in_array($normalized, ['upper', 'lower'], true);
+        return \in_array($normalized, ['upper', 'lower'], true)
+            && (!$this->ucp || 1 === LibraryPcre::match('/\(\?[a-zA-Z-]*a/', $this->source));
     }
 }
