@@ -8,6 +8,19 @@
   the possession beside 0xFF already reads such a target as running under
   any tables, and the mutation judge reads plain classes the C way. The
   reading 2.0.0 ships is the contract.
+- Since #450 the proof of a linear search gives up past 1,024 paths at
+  once, and three patterns of the corpus traded "safe (proven)" for a
+  guess. The semver.org pattern (`FOSSBilling`,
+  `src/core/System/Version.php`, and the same pattern between `/^` and
+  `$/`) reads "Potential backtracking (heuristic)", MEDIUM, and
+  `regex.lint.quantifier.nested` adds "can cause catastrophic
+  backtracking", where PCRE2 10.49 spends 352 steps on the costliest
+  subject of 120 characters a search found, and 174 on one of 60. Two
+  patterns of `mpdf` (`src/Shaper/Indic.php`, lines 313 and 317), whose
+  repeats are all bounded (`?`, `{0,2}`, `{0,3}`, `{0,4}`), get the same
+  warning for 67 steps at most. Ship the guess, or find what the count
+  takes for paths there and keep the rule quiet where no repeat is
+  unbounded.
 - Names and shapes #481 left as they are, each to settle before the tag or
   to keep for all of 2.x:
   - `OptimizerOptions::$word` rewrites nothing today, as its docblock says:
