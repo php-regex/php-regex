@@ -3,5 +3,6 @@ php_regex:
     redos:
         enabled: true
         threshold: medium
-    analysis:
-        warning_threshold: 30
+    complexity:
+        enabled: true
+        threshold: 30
