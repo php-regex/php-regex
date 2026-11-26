@@ -126,6 +126,13 @@ final class UselessIFlagRule extends AbstractLintRule
      */
     private ?PcreGroups $groups = null;
 
+    /**
+     * Whether caseless matching is restricted where the node read stands,
+     * by "(?r)", the r modifier or "(*CASELESS_RESTRICT)": from PCRE2
+     * 10.43 an ASCII letter then folds with no character past ASCII.
+     */
+    private bool $restricted = false;
+
     public function getRuleIds(): array
     {
         return [self::ID];
@@ -169,6 +176,7 @@ final class UselessIFlagRule extends AbstractLintRule
             return [];
         }
 
+        $this->restricted = str_contains($context->activeFlags(), 'r') && $this->target->supports(PcreFeature::CaselessRestrictModifier);
         $this->flagMatters = $this->hasCase($node) && !$this->setsIAgain($node, $context);
 
         return [];
@@ -403,7 +411,10 @@ final class UselessIFlagRule extends AbstractLintRule
      * adds to one it holds: its caseless set, "K", "k" and the Kelvin sign
      * for "k", or its other case, from PCRE2's Unicode tables of the
      * target's release. A type, a POSIX class or a property without a case
-     * matches the same characters with i, and is read apart.
+     * matches the same characters with i, and is read apart. Restricted, a
+     * set that holds an ASCII letter, which it starts with, is not read,
+     * and each of its characters keeps the other case of the tables: "k"
+     * and "K" each other, the Kelvin sign none.
      *
      * @param array<NodeInterface> $parts
      */
@@ -444,7 +455,12 @@ final class UselessIFlagRule extends AbstractLintRule
             }
 
             foreach ($cased as $codePoint) {
-                foreach ($sets[$codePoint] ?? [$this->otherCases->otherCase($codePoint)] as $other) {
+                $set = $sets[$codePoint] ?? null;
+                if (null === $set || ($this->restricted && [] !== array_filter($set, CodePoints::isAsciiLetter(...)))) {
+                    $set = [$this->otherCases->otherCase($codePoint)];
+                }
+
+                foreach ($set as $other) {
                     if (!self::inRanges($other, $ranges)) {
                         return false;
                     }

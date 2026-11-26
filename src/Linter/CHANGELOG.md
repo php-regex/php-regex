@@ -301,6 +301,15 @@ CHANGELOG
    10.45: `/(?[ [:upper:] ])/i`, which matches the 52 letters with i and
    the 26 capitals without, and `/(?[ [:alpha:] - [:lower:] ])/i`, which
    matches nothing with i, were reported and are no more.
+ * Under u, `regex.lint.flag.useless.i` reads a class under the
+   restriction of caseless matching, set by `(?r)`, the r modifier or
+   `(*CASELESS_RESTRICT)`, as PCRE2 does from 10.43: a caseless set that
+   starts with an ASCII letter is not read, so `k` and `K` fold with each
+   other alone, and the Kelvin sign and the long s with nothing.
+   `/(?r)[kK]/iu`, `/(?r)[sS]/iu` and `/(?r)[a-zA-Z]/iu` are reported,
+   where they kept the flag; `/(?r)[k]/iu`, `/(?r)(?-r)[kK]/iu`, where the
+   restriction is lifted, and `/(?r)[\x{C5}\x{E5}]/iu`, whose set holds the
+   Angstrom sign and no ASCII letter, still keep it.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

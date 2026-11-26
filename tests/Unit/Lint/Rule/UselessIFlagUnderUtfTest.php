@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\OtherCases;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -46,8 +48,8 @@ final class UselessIFlagUnderUtfTest extends TestCase
      * U+A7CF and U+16EA0 with U+16EBB, with 10.48.
      */
     private const RELEASES = [
-        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu', '/(?[ [:upper:] ])/iu', '/(?[ [:alpha:] - [:lower:] ])/iu', '/(?aP)(?[ [:upper:] ])/iu', '/(*UTF)(?[ ![:lower:] ])/i'],
-        '10.43' => ['/(?r)[kK]/iu', '/(?aP)[[:upper:]]/iu', '/(?a)[[:lower:]]/iu', '/(?aP:[[:upper:]])/iu', '/(?aD)[[:upper:]]/iu', '/(?aP)(?-aP)[[:upper:]]/iu', '/(?aP:)[[:upper:]]/iu'],
+        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu', '/(*CASELESS_RESTRICT)[kK]/iu', '/(?[ [:upper:] ])/iu', '/(?[ [:alpha:] - [:lower:] ])/iu', '/(?aP)(?[ [:upper:] ])/iu', '/(*UTF)(?[ ![:lower:] ])/i'],
+        '10.43' => ['/(?r)[kK]/iu', '/(?r)[sS]/iu', '/(?r)[a-zA-Z]/iu', '/(?r)[^kK]/iu', '/(?r)[\x{212A}]/iu', '/(?r)[\x{17F}]/iu', '/(?r)[k]/iu', '/(?r)[\x{C5}\x{E5}]/iu', '/(?r)[\x{C5}\x{E5}\x{212B}]/iu', '/(?r:[kK])/iu', '/(?r)(?-r)[kK]/iu', '/(?r:1)|[kK]/iu', '/(?aP)[[:upper:]]/iu', '/(?a)[[:lower:]]/iu', '/(?aP:[[:upper:]])/iu', '/(?aD)[[:upper:]]/iu', '/(?aP)(?-aP)[[:upper:]]/iu', '/(?aP:)[[:upper:]]/iu'],
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
     ];
 
@@ -191,13 +193,57 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'both cases of "i" and the Turkish ones' => ['pattern' => '/[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => true];
         yield 'both cases of "i" and the Turkish ones under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => false];
         yield 'both cases of "i" under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[iI]/iu', 'useless' => false, 'reported' => false];
-        // The rule reads the caseless sets whole, as a caseless class holds
-        // them where nothing restricts it: restricted to ASCII, the Kelvin
-        // sign folds with neither "k" nor "K", and the flag is kept.
-        yield 'a small letter and its capital whose caseless set holds the Kelvin sign, restricted' => ['pattern' => '/(?r)[kK]/iu', 'useless' => true, 'reported' => false];
+        // Restricted, a caseless set that starts with an ASCII letter is
+        // not read: "k" and "K" fold with each other alone, as "s" and "S"
+        // do, and the Kelvin sign and the long s with nothing. The other
+        // sets are read as they are without the restriction.
+        yield 'a small letter and its capital whose caseless set holds the Kelvin sign, restricted' => ['pattern' => '/(?r)[kK]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital whose caseless set holds the long s, restricted' => ['pattern' => '/(?r)[sS]/iu', 'useless' => true, 'reported' => true];
+        yield 'the ASCII letters, restricted' => ['pattern' => '/(?r)[a-zA-Z]/iu', 'useless' => true, 'reported' => true];
+        yield 'a negated class of a small letter and its capital, restricted' => ['pattern' => '/(?r)[^kK]/iu', 'useless' => true, 'reported' => true];
+        yield 'the Kelvin sign in a class, restricted' => ['pattern' => '/(?r)[\x{212A}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the long s in a class, restricted' => ['pattern' => '/(?r)[\x{17F}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter without its capital, restricted' => ['pattern' => '/(?r)[k]/iu', 'useless' => false, 'reported' => false];
+        yield 'the A with ring above and its capital without the Angstrom sign, restricted' => ['pattern' => '/(?r)[\x{C5}\x{E5}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the A with ring above, its capital and the Angstrom sign, restricted' => ['pattern' => '/(?r)[\x{C5}\x{E5}\x{212B}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital in a group that restricts' => ['pattern' => '/(?r:[kK])/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital after the restriction is lifted' => ['pattern' => '/(?r)(?-r)[kK]/iu', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital beside a group that restricts' => ['pattern' => '/(?r:1)|[kK]/iu', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital under the verb that restricts' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'useless' => true, 'reported' => true];
         // An inline option decides the case of what follows it either way.
         yield 'a Latin-1 letter after i turned off' => ['pattern' => '/(?-i)\x{E9}/iu', 'useless' => true, 'reported' => true];
         yield 'a Latin-1 letter after i turned on again' => ['pattern' => '/(?i)\x{E9}/iu', 'useless' => true, 'reported' => true];
+    }
+
+    /**
+     * The restriction is read from the release that has it, PCRE2 10.43:
+     * before it "(?r)" and the r modifier are refused, and the verb, which
+     * no release before 10.45 reads, restricts nothing the rule reads.
+     */
+    #[Test]
+    #[DataProvider('provideRestrictedClassesByRelease')]
+    public function test_a_class_is_read_restricted_from_the_release_that_restricts(string $pattern, string $pcre, bool $reported): void
+    {
+        // Oracle: an engine that reads the verb matches the same characters
+        // with i and without; one that does not refuses the pattern.
+        if (PcreTarget::runtime()->supports(PcreFeature::CasingSettingVerbs)) {
+            $without = (string) preg_replace('/i([a-z]*)$/', '$1', $pattern);
+            $this->assertSame(preg_match_all($without, self::everyCharacter()), preg_match_all($pattern, self::everyCharacter()), 'Oracle: '.$pattern);
+        } else {
+            $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE2 refuses '.$pattern);
+        }
+
+        $this->assertSame($reported, self::reports($pattern, $pcre), $pattern.' on PCRE2 '.$pcre);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, pcre: string, reported: bool}>
+     */
+    public static function provideRestrictedClassesByRelease(): iterable
+    {
+        yield 'the verb before the release that restricts' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.42', 'reported' => false];
+        yield 'the verb on the release that reads it' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.45', 'reported' => true];
+        yield 'the verb on the latest release' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.49', 'reported' => true];
     }
 
     /**
@@ -247,9 +293,9 @@ final class UselessIFlagUnderUtfTest extends TestCase
         return self::$everyCharacter;
     }
 
-    private static function reports(string $pattern): bool
+    private static function reports(string $pattern, ?string $pcre = null): bool
     {
-        $regex = Regex::create(['cache' => null]);
+        $regex = Regex::create(['cache' => null] + (null === $pcre ? [] : ['pcre_version' => $pcre]));
         $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
