@@ -104,6 +104,13 @@ CHANGELOG
    `/(?:(?>(?:b)?)a+){2}/`, which finds nothing in `aa` where
    `/(?:(?>b?)a+){2}/` finds it, was reported and no longer is. A pattern
    that holds a subroutine call is read whole, as before.
+ * `regex.lint.group.empty` no longer calls `(?:)` removable in
+   `/(?:(?>(?:)|b)a+){2}/`, which finds `aa` where `/(?:(?>|b)a+){2}/`
+   finds nothing: in a counted group, compiled once per round, the repeat
+   that ends one round is read against the atomic group that opens the
+   next. `regex.lint.quantifier.concatenation` keeps a repeat of such a
+   round as written, and so does `regex.lint.group.redundant` where the
+   pattern holds a subroutine call.
  * Without u, `regex.lint.group.redundant` and `regex.lint.group.empty` no
    longer call a group removable in a pattern that holds a repeat of the
    byte 0xFF before `\w`, or of `\w` before that byte, or would hold one

@@ -66,7 +66,12 @@ final class AutoPossession
      * The first atomic group or possessive repeat of a group that may match
      * nothing and that a character repeated some number of times precedes,
      * or null. Every possessive repeat of a group from zero counts, "*+"
-     * too, which PCRE2 compiles otherwise and reads as written today.
+     * too, which PCRE2 compiles otherwise and reads as written today. A
+     * group counted is compiled once per round, so that the repeat of one
+     * round precedes the group that opens the next, wherever the two stand
+     * in it: "/(?:(?>(?:b)?)a+){2}/" finds nothing in "aa", where
+     * "/(?:(?>b?)a+){2}/" finds it, with and without the JIT, from PCRE2
+     * 10.39 to 10.49.
      *
      * @param GroupNode|null $unwrapped a group read as its body, as if it
      *                                  were taken out
@@ -91,20 +96,29 @@ final class AutoPossession
             }
         }
 
+        $ancestors = null;
+        foreach ($skippable as $node) {
+            if ([] !== self::repeatsOfItsRounds($node, $ancestors ??= self::ancestors($pattern), $unwrapped)) {
+                return $node;
+            }
+        }
+
         return null;
     }
 
     /**
      * The repeats of one character PCRE2 may make possessive, by the offset
      * each starts at: those that end before an atomic group or a possessive
-     * repeat of a group that may match nothing. Such a repeat runs as
-     * written where its possessive spelling gives nothing back.
+     * repeat of a group that may match nothing, and those a counted group
+     * holds with one, which each round compiles before the next. Such a
+     * repeat runs as written where its possessive spelling gives nothing
+     * back.
      *
      * @return array<int, true>
      */
     public static function repeatsBeforeSkippableGroups(NodeInterface $pattern): array
     {
-        $lastSkippableStart = null;
+        $skippable = [];
         $repeats = [];
         foreach (self::nodes($pattern) as $node) {
             if ($node instanceof QuantifierNode && !self::groupLike($node->node) && self::repeatsSomeNumberOfTimes($node)) {
@@ -112,15 +126,25 @@ final class AutoPossession
             }
 
             if (self::skippable($node)) {
-                $lastSkippableStart = $node->getStartPosition();
+                $skippable[] = $node;
             }
         }
 
-        if (null === $lastSkippableStart) {
+        $last = end($skippable);
+        if (false === $last) {
             return [];
         }
 
-        return array_fill_keys(array_keys(array_filter($repeats, static fn (int $end): bool => $end <= $lastSkippableStart)), true);
+        $lastSkippableStart = $last->getStartPosition();
+        $made = array_fill_keys(array_keys(array_filter($repeats, static fn (int $end): bool => $end <= $lastSkippableStart)), true);
+        $ancestors = self::ancestors($pattern);
+        foreach ($skippable as $node) {
+            foreach (self::repeatsOfItsRounds($node, $ancestors) as $repeat) {
+                $made[$repeat->getStartPosition()] = true;
+            }
+        }
+
+        return $made;
     }
 
     /**
@@ -538,6 +562,45 @@ final class AutoPossession
         }
 
         return true;
+    }
+
+    /**
+     * The repeats of one character that stand in a group compiled once per
+     * round with the node, an atomic group or a possessive repeat of a
+     * group: each precedes the node of the next round.
+     *
+     * @param \WeakMap<NodeInterface, list<NodeInterface>> $ancestors
+     * @param GroupNode|null                               $unwrapped a group read as its body
+     *
+     * @return list<QuantifierNode>
+     */
+    private static function repeatsOfItsRounds(NodeInterface $skipped, \WeakMap $ancestors, ?GroupNode $unwrapped = null): array
+    {
+        $repeats = [];
+        foreach ($ancestors[$skipped] as $round) {
+            if (!$round instanceof QuantifierNode || !self::compiledMoreThanOnce($round)) {
+                continue;
+            }
+
+            foreach (self::nodes($round->node, $unwrapped) as $node) {
+                if ($node instanceof QuantifierNode && !self::groupLike(null !== $unwrapped && $node->node === $unwrapped ? $unwrapped->child : $node->node) && self::repeatsSomeNumberOfTimes($node)) {
+                    $repeats[] = $node;
+                }
+            }
+        }
+
+        return $repeats;
+    }
+
+    /**
+     * Whether PCRE2 compiles the operand of the quantifier more than once:
+     * a count of two or more, or from two up, where "+", "*" and "{1,}"
+     * loop over one copy, which the engine reads no further than; and one
+     * whose count is not read.
+     */
+    private static function compiledMoreThanOnce(QuantifierNode $node): bool
+    {
+        return null === $node->bounds || ($node->bounds->max ?? $node->bounds->min) > 1;
     }
 
     /**

@@ -24,6 +24,13 @@ CHANGELOG
    Such a rewrite is checked by the automata whatever `verifyWithAutomata`
    says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
    `/a+b?+a/`.
+ * The same brackets stay where they open a counted group, which PCRE2
+   compiles once per round: the repeat that ends one round is read against
+   the group that opens the next, and `/(?:(?:b)?+a+){2}/` finds nothing in
+   `aa`, where `/(?:b?+a+){2}/`, which the check proved alike and the
+   optimizer wrote, finds it. The pattern now ships as written;
+   `/(?:(?:b)?+a+c){2}/`, where a letter that must be there parts the
+   rounds, still becomes `/(?:b?+a+c){2}/`.
  * The group around a repeat of the byte 0xFF before `\w`, or of `\w`
    before that byte, stays as written without `u`: PCRE2 makes the repeat
    possessive once the group is out, as if 0xFF were no word character,

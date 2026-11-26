@@ -120,6 +120,16 @@ CHANGELOG
    `/(?:a)+(?:b)?+a/` and `/a+b?+a/` match `aa`, where `/a+(?:b)?+a/` does
    not. The optimizer no longer rewrites `/a+(?:b|c)?+a/` into
    `/a+[bc]?+a/`, which matches `aa`.
+ * PCRE2 compiles a counted group once per round, so that the repeat that
+   ends one round is read against the atomic group that opens the next:
+   `/(?:(?>(?:b)?)a+){2}/` finds nothing in `aa`, where `/(?:(?>b?)a+){2}/`
+   finds it, with and without the JIT, from PCRE2 10.39 to 10.49.
+   `equivalent()` called the two equivalent; it now refuses a counted group
+   that holds a repeated character and such a group, in whatever order, as
+   `intersection()` and `subsetOf()` do, and `matchEquivalent()` reads the
+   repeat as written only where its possessive spelling gives nothing
+   back. A group repeated with `+`, `*` or `{1,}` is compiled once, and
+   read as before.
  * `matchEquivalent()` refuses a possessive repeat of a group that holds a
    capturing group for a target before PCRE2 10.44: the JIT of 10.39 to
    10.42 leaves the group set from an earlier start of the match, and
