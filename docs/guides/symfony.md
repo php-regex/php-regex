@@ -585,7 +585,11 @@ a route with a condition, or a host the analysis cannot read, takes none.
 A route ending on a variable whose value may end on the slash, or be
 empty, may keep the path the router's optional slash ends after it:
 `/{p<a/|b/>}` after `/{x<a>}` and `/{x<b>}` keeps `GET /a//`, and is
-reachable.
+reachable. Such a route with no slash after its variable may read a path
+of its own ending on the slash for the slash, and pass on the requests it
+does not redirect: for those methods it is read as taking its paths that
+end on no slash alone, so `/a/` after `/{x<.+?>}` keeps `POST /a/`, and is
+reachable too.
 
 `regex:validator` needs Symfony Validator and its `validator` service:
 `composer require symfony/validator`, which FrameworkBundle enables unless
@@ -769,7 +773,10 @@ an overlap, and `/` takes no request but its own,
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
-it. A request it passes on is none it loses, nor is one the earlier route
+it. A route that takes no `GET` redirects nothing, and passes the `HEAD`
+request on as well: `/files/{q<a>}/` for `HEAD` after
+`/files/{p<a|a/>}` for `HEAD` keeps `HEAD /files/a/`. A request it passes
+on is none it loses, nor is one the earlier route
 passes on, so a pair whose shortest shared path either route passes on
 for the methods both routes take is counted among the pairs skipped; a
 redirect of an earlier route leading to

@@ -1159,6 +1159,29 @@ final class RouteConflictAnalyzerTest extends TestCase
             'type' => null,
             'skipped' => 1,
         ];
+        // A route that takes no GET redirects nothing: it passes on the
+        // HEAD request it reads for its slash, as it passes on a POST one.
+        yield 'a requirement that can end on the slash, for HEAD alone, before a route ending on a slash whose only path it passes on' => [
+            'earlier' => ['/files/{p<a|a/>}', ['HEAD'], []],
+            'later' => ['/files/{q<a>}/', ['HEAD'], []],
+            'probes' => [['HEAD', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, for HEAD and POST, before a route for HEAD ending on a slash whose only path it passes on' => [
+            'earlier' => ['/files/{p<a|a/>}', ['HEAD', 'POST'], []],
+            'later' => ['/files/{q<a>}/', ['HEAD'], []],
+            'probes' => [['HEAD', 'http', '/files/a/', true], ['HEAD', 'http', '/files/a', false]],
+            'type' => null,
+            'skipped' => 1,
+        ];
+        yield 'a requirement that can end on the slash, for GET, before a route for HEAD ending on a slash whose only path it redirects' => [
+            'earlier' => ['/files/{p<a|a/>}', ['GET'], []],
+            'later' => ['/files/{q<a>}/', ['HEAD'], []],
+            'probes' => [['HEAD', 'http', '/files/a/', false], ['HEAD', 'http', '/files/a', false]],
+            'type' => 'shadowed',
+            'skipped' => 0,
+        ];
         yield 'a requirement that can end on the slash, for GET, before a route ending on a slash whose only path it redirects' => [
             'earlier' => ['/files/{p<a|a/>}', ['GET'], []],
             'later' => ['/files/{q<a>}/', ['GET'], []],

@@ -37,6 +37,13 @@ CHANGELOG
    holds a variable next to other characters in its label, or one whose
    requirement may match a dot, are counted among the pairs skipped on
    those releases, and read in the order they are declared since.
+ * `regex:routes` reads a route that takes no `GET` as redirecting
+   nothing: it passes on the `HEAD` request of a path it reads for its
+   trailing slash, so `/files/{q<a>}/` for `HEAD` after `/files/{p<a|a/>}`
+   for `HEAD` keeps `HEAD /files/a/`, where it was reported shadowed.
+   `regex:routes --reachability` reads the requests a route may pass on
+   so too: `/a/` after `/{x<.+?>}` keeps `POST /a/`, where it was reported
+   unreachable.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,

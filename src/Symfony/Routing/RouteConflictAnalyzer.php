@@ -383,7 +383,7 @@ final class RouteConflictAnalyzer
         $candidates = [];
         $pairs = 0;
         foreach ($routes as $i => $route) {
-            $requests[$i] = $this->requestsOf($route);
+            $requests[$i] = $this->requestsOf($route, $options);
             if (null === $requests[$i]) {
                 $candidates[] = null;
 
@@ -742,7 +742,9 @@ final class RouteConflictAnalyzer
      * no slash after it, and a requirement that may end on the slash, it
      * takes a path ending on the slash as is when the value captured ends
      * on it, and redirects it otherwise, which it does for GET and HEAD
-     * alone. The later route may then keep a request of another method on
+     * alone, and only when it takes GET: a route for HEAD alone passes the
+     * HEAD request on. The later route may then keep a request of another
+     * method, or any when the earlier route takes no GET, on
      * a path of its own that ends on the slash, "/" aside, which the
      * matcher never reads for its slash: a path of its regex, or one the
      * "/?" of the dumper ends.
@@ -756,7 +758,7 @@ final class RouteConflictAnalyzer
     {
         return !str_ends_with($earlier['path'], '/')
             && self::endsOnAVariable($earlier['path'])
-            && !$this->listHolds(['GET', 'HEAD'], $later['methods'])
+            && (!$this->listHolds(['GET', 'HEAD'], $later['methods']) || !$this->listHolds($earlier['methods'], ['GET']))
             && $this->sharesAString($this->pathsTakenAsIs($later, $options), '^.+/$', $options)
             && $this->readsOwnPathsForTheSlash($earlier, $options);
     }
@@ -841,8 +843,10 @@ final class RouteConflictAnalyzer
 
     /**
      * Whether one of the two routes passes on to the routes after it every
-     * request of the shared path, for the methods both routes take: none
-     * is GET or HEAD, and it reads the path for the slash. The earlier
+     * request of the shared path, for the methods both routes take: it
+     * reads the path for the slash, and none is GET or HEAD, which it
+     * redirects when it takes GET. A route that takes no GET redirects
+     * nothing, and passes the HEAD request on too. The earlier
      * route then takes none of them, or the later route would not have:
      * the path tells no request the later route loses. Another shared path
      * may, which the pair is left out rather than judged on.
@@ -853,11 +857,14 @@ final class RouteConflictAnalyzer
     private function passesOnTheExample(array $earlier, array $later, ?string $path): bool
     {
         $methods = $this->intersectMethods($earlier['methods'], $later['methods']);
+        if (null === $path || [] === $methods) {
+            return false;
+        }
 
-        return null !== $path
-            && [] !== $methods
-            && [] === array_intersect($methods, ['GET', 'HEAD'])
-            && (self::capturesWithoutTheSlash($earlier, $path) || self::capturesWithoutTheSlash($later, $path));
+        $redirected = [] !== array_intersect($methods, ['GET', 'HEAD']);
+
+        return (self::capturesWithoutTheSlash($earlier, $path) && !($redirected && $this->listHolds($earlier['methods'], ['GET'])))
+            || (self::capturesWithoutTheSlash($later, $path) && !($redirected && $this->listHolds($later['methods'], ['GET'])));
     }
 
     /**
@@ -1289,11 +1296,20 @@ final class RouteConflictAnalyzer
      * scheme, a host and a path. Null when it takes none for certain (no
      * method or no scheme it accepts) or when its host cannot be read.
      *
+     * A route ending on a variable that may end on the slash, with no
+     * slash after it, reads a path of its own ending on the slash for the
+     * slash when PCRE captured the value without it, "/" aside: it then
+     * redirects a GET or HEAD request, when it takes GET, and passes any
+     * other on. Which path it reads so is PCRE's ordered choice: for the
+     * methods it does not redirect, such a route is read as taking its
+     * paths that end on no slash alone, as it is when the solver gives up
+     * on its requirement.
+     *
      * @phpstan-param RouteDescriptor $route
      *
      * @return list<list<string>>|null
      */
-    private function requestsOf(array $route): ?array
+    private function requestsOf(array $route, SolverOptions $options): ?array
     {
         if (self::NO_REQUEST === $route['methods'] || self::NO_REQUEST === $route['schemes'] || $route['hostUnsupported']) {
             return null;
@@ -1301,9 +1317,22 @@ final class RouteConflictAnalyzer
 
         $unicode = str_contains(DelimitedPattern::fromDelimited($route['pathPattern'])->flags, 'u');
         $host = $route['hasHostRequirement'] ? $route['hostPattern'] : '{^.*$}s'.($unicode ? 'u' : '');
-        $methods = \in_array('GET', $route['methods'], true) ? [...$route['methods'], 'HEAD'] : $route['methods'];
-        $requests = [[self::listOf($methods, '[A-Z]+'), self::listOf($route['schemes'], '[a-z][a-z0-9+.\-]*'), $host, $route['pathPattern']]];
-        if ($this->listHolds($route['methods'], ['GET'])) {
+        $methods = self::listOf(\in_array('GET', $route['methods'], true) ? [...$route['methods'], 'HEAD'] : $route['methods'], '[A-Z]+');
+        $schemes = self::listOf($route['schemes'], '[a-z][a-z0-9+.\-]*');
+        $redirects = $this->listHolds($route['methods'], ['GET']);
+
+        try {
+            $end = $this->readsOwnPathsForTheSlash($route, $options) ? strrpos($route['pathPattern'], '$') : false;
+        } catch (ComplexityException) {
+            $end = strrpos($route['pathPattern'], '$');
+        }
+
+        $requests = [[$methods, $schemes, $host, false === $end ? $route['pathPattern'] : substr_replace($route['pathPattern'], '(?<!./)', $end, 0)]];
+        if ($redirects && false !== $end) {
+            $requests[] = [self::listOf(['GET', 'HEAD'], ''), $schemes, $host, $route['pathPattern']];
+        }
+
+        if ($redirects) {
             $requests[] = [self::listOf(['GET', 'HEAD'], ''), self::listOf([], '[a-z][a-z0-9+.\-]*'), $host, $route['redirectPattern']];
         }
 

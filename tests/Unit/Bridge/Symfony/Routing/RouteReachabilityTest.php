@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteReachabilityReport;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Route;
@@ -186,6 +187,73 @@ final class RouteReachabilityTest extends TestCase
 
         $this->assertFalse($slash['reachable']);
         $this->assertSame(['both'], array_column($slash['takenBy'], 'name'));
+    }
+
+    /**
+     * A route ending on a variable that may end on the slash reads a path
+     * of its own ending on the slash for the slash when PCRE captured the
+     * value without it: it redirects a GET or HEAD request, when it takes
+     * GET, and passes any other on to the routes after it. A later route
+     * keeps the requests it may pass on.
+     *
+     * @param array{0: string, 1: list<string>}                 $earlier path, methods
+     * @param array{0: string, 1: list<string>}                 $later   path, methods
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes  method, path, and the route the request reaches
+     */
+    #[Test]
+    #[DataProvider('provideRoutesReadingAPathForTheSlash')]
+    public function test_a_route_keeps_the_requests_an_earlier_one_may_pass_on_for_the_slash(array $earlier, array $later, array $probes, bool $reachable): void
+    {
+        $routes = self::collection([
+            'earlier' => new Route($earlier[0], methods: $earlier[1]),
+            'later' => new Route($later[0], methods: $later[1]),
+        ]);
+
+        $reached = [];
+        foreach ($probes as [$method, $path, $winner]) {
+            $reached[] = FrameworkMatcher::reached($routes, $method, $path);
+            $this->assertSame($winner, end($reached), $method.' '.$path);
+        }
+        $this->assertSame($reachable, \in_array('later', $reached, true));
+
+        $route = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'later');
+
+        $this->assertSame($reachable, $route['reachable']);
+        if ($reachable) {
+            $this->assertNotNull($route['example']);
+            $this->assertSame('later', FrameworkMatcher::reached($routes, $route['example']['method'], $route['example']['path']), 'later takes '.json_encode($route['example']));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>}, later: array{0: string, 1: list<string>}, probes: list<array{0: string, 1: string, 2: string|null}>, reachable: bool}>
+     */
+    public static function provideRoutesReadingAPathForTheSlash(): iterable
+    {
+        yield 'a lazy catch-all for any method before a route for any method ending on a slash' => [
+            'earlier' => ['/{x<.+?>}', []],
+            'later' => ['/a/', []],
+            'probes' => [['GET', '/a/', 'earlier'], ['HEAD', '/a/', 'earlier'], ['POST', '/a/', 'later']],
+            'reachable' => true,
+        ];
+        yield 'a route for HEAD alone before a route for HEAD ending on a slash' => [
+            'earlier' => ['/files/{p<a|a/>}', ['HEAD']],
+            'later' => ['/files/{q<a>}/', ['HEAD']],
+            'probes' => [['HEAD', '/files/a', 'earlier'], ['HEAD', '/files/a/', 'later']],
+            'reachable' => true,
+        ];
+        yield 'a lazy catch-all for GET before a route for GET ending on a slash' => [
+            'earlier' => ['/{x<.+?>}', ['GET']],
+            'later' => ['/a/', ['GET']],
+            'probes' => [['GET', '/a/', 'earlier'], ['HEAD', '/a/', 'earlier'], ['GET', '/a', 'earlier']],
+            'reachable' => false,
+        ];
+        yield 'a route whose values end on no slash, for any method, before the same paths' => [
+            'earlier' => ['/n/{x<\\d+>}', []],
+            'later' => ['/n/{y<\\d+>}', []],
+            'probes' => [['GET', '/n/1', 'earlier'], ['POST', '/n/1', 'earlier'], ['GET', '/n/1/', 'earlier'], ['POST', '/n/1/', null]],
+            'reachable' => false,
+        ];
     }
 
     #[Test]
