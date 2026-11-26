@@ -61,27 +61,27 @@ final class AnalysisBench
     }
 
     #[DataProvider('redosCases')]
-    #[ExpectedFor('bounded-alternation-200', instructions: '159.3M', cycles: '214.3M', memory: '749.3KiB')]
-    #[ExpectedFor('email-exponential', instructions: '14.08M', cycles: '20.92M', memory: '117.4KiB')]
+    #[ExpectedFor('bounded-alternation-200', instructions: '164.4M', cycles: '221.7M', memory: '749.4KiB')]
+    #[ExpectedFor('email-exponential', instructions: '14.38M', cycles: '21.33M', memory: '118.0KiB')]
     #[ExpectedFor('nested-bounded-repeats', instructions: '38.86M', cycles: '50.11M', memory: '528.0KiB')]
     #[ExpectedFor('nested-bounded-repeats-then-loop', instructions: '39.87M', cycles: '52.56M', memory: '532.5KiB')]
-    #[ExpectedFor('nested-plus', instructions: '2.050M', cycles: '4.436M', memory: '44.26KiB')]
-    #[ExpectedFor('same-alternation-star', instructions: '2.348M', cycles: '4.724M', memory: '46.65KiB')]
+    #[ExpectedFor('nested-plus', instructions: '2.106M', cycles: '4.552M', memory: '45.24KiB')]
+    #[ExpectedFor('same-alternation-star', instructions: '2.415M', cycles: '4.860M', memory: '47.63KiB')]
     #[ExpectedFor('unicode-scripts', instructions: '723.1M', cycles: '778.6M', memory: '6.422MiB')]
-    #[ExpectedFor('every-match-retry', instructions: '2.205M', cycles: '4.621M', memory: '34.15KiB')]
+    #[ExpectedFor('every-match-retry', instructions: '2.267M', cycles: '4.784M', memory: '34.45KiB')]
     #[ExpectedFor('empty-groups-around-loops', instructions: '723.0M', cycles: '818.4M', memory: '3.301MiB')]
-    #[ExpectedFor('loop-chain', instructions: '491.4M', cycles: '536.6M', memory: '2.409MiB')]
+    #[ExpectedFor('loop-chain', instructions: '510.7M', cycles: '557.5M', memory: '2.409MiB')]
     public function benchRedos(string $group, string $pattern, string $expected): void
     {
         Workloads::redos($pattern, $this->parser);
     }
 
     #[DataProvider('automataCases')]
-    #[ExpectedFor('arabic-block', instructions: '1.024M', cycles: '2.416M', memory: '17.20KiB')]
+    #[ExpectedFor('arabic-block', instructions: '1.732M', cycles: '3.728M', memory: '28.01KiB')]
     #[ExpectedFor('counted-past-budget', instructions: '25.03M', cycles: '31.80M', memory: '2.657MiB')]
-    #[ExpectedFor('mixed-blocks', instructions: '1.199M', cycles: '2.662M', memory: '17.86KiB')]
-    #[ExpectedFor('nested-same-alternation', instructions: '5.262M', cycles: '7.474M', memory: '312.4KiB')]
-    #[ExpectedFor('same-alternation-counted', instructions: '6.286M', cycles: '8.586M', memory: '499.0KiB')]
+    #[ExpectedFor('mixed-blocks', instructions: '2.112M', cycles: '4.257M', memory: '29.47KiB')]
+    #[ExpectedFor('nested-same-alternation', instructions: '6.387M', cycles: '9.293M', memory: '324.9KiB')]
+    #[ExpectedFor('same-alternation-counted', instructions: '6.978M', cycles: '9.837M', memory: '488.0KiB')]
     public function benchAutomata(string $group, string $pattern, string $expected): void
     {
         try {
