@@ -47,6 +47,12 @@ CHANGELOG
    `/^(?:\n|\n)+\n*(?>(?:y|z)*)[\s\S]/` were safe (proven), while PHP
    exhausts its backtrack limit on 26 newlines, which both match without
    auto-possession.
+ * A possessive run whose bound is read as unbounded, alone or in an atomic
+   group, is kept with every way through it: read as the longest run, it
+   left nothing to what follows, where the engine stops at the bound.
+   `/x.{0,20}+\b(?:a|a)+$/` and `/x(?>.{0,20})\b(?:a|a)+$/` were safe
+   (proven), while PHP exhausts its backtrack limit on an `x`, twenty `!`,
+   thirty `a` and a `!`; they are exponential.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.

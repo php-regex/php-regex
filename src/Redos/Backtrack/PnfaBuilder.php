@@ -821,8 +821,11 @@ final class PnfaBuilder
         $possessive = $atomic || QuantifierType::Possessive === $node->type;
         $greedy = $possessive || !$this->isLazy($node, $flags);
         // A bounded possessive repeat of a group a repeat of one character
-        // may stand before is kept with every way through it (keptWhole()).
-        $exact = $possessive && !(null !== $bounds->max && $this->keptWhole($node, $node));
+        // may stand before is kept with every way through it (keptWhole()),
+        // and so is a bounded repeat read as unbounded: as a possessive run
+        // it would read on past the bound, where the engine stops and leaves
+        // the rest to what follows.
+        $exact = $possessive && !($abstracted ?? false) && !(null !== $bounds->max && $this->keptWhole($node, $node));
 
         // A possessive run of one character set leaves only before a
         // character outside the set: the one way PCRE reads it.

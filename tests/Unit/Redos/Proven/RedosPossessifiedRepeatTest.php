@@ -84,6 +84,36 @@ final class RedosPossessifiedRepeatTest extends TestCase
     }
 
     /**
+     * A bounded repeat past the cutoff is read as unbounded. Possessive, or
+     * alone in an atomic group, it would read every character of the set
+     * and leave nothing to what follows, where the engine stops at the
+     * bound: after twenty "!", the loop reads the run of "a" and fails on
+     * the last "!" every way it splits it. Such a run is kept with every way
+     * through it.
+     */
+    #[Test]
+    #[DataProvider('providePossessiveRunsPastTheCutoff')]
+    public function test_a_possessive_run_read_as_unbounded_is_kept_whole(string $pattern, int $offset): void
+    {
+        $subject = 'x'.str_repeat('!', 20).str_repeat('a', 30).'!';
+        $this->assertFalse(@preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' on '.$subject.'.');
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, preg_last_error(), 'Oracle: '.$pattern.' on '.$subject.'.');
+
+        $analysis = (new RedosAnalyzer())->analyze($pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern.' is "'.$analysis->headline().'".');
+        $this->assertContains('atomic group at offset '.$offset.' over-approximated', $analysis->abstractions, $pattern.' keeps its run whole.');
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, offset: int}>
+     */
+    public static function providePossessiveRunsPastTheCutoff(): iterable
+    {
+        yield 'a possessive run' => ['pattern' => '/x.{0,20}+\b(?:a|a)+$/', 'offset' => 1];
+        yield 'a run alone in an atomic group' => ['pattern' => '/x(?>.{0,20})\b(?:a|a)+$/', 'offset' => 4];
+    }
+
+    /**
      * Where no repeat of one character comes right before it, or the group
      * is one repeat of one character itself, PCRE2 reads the group as it
      * is, and the success after it stays sure: the newline the loop gives
