@@ -8366,22 +8366,19 @@
     {
         "pattern": "/^r?([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G(JN?)?){0,4}[CR]J?((Z?F)?[N]{0,2})?A?((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
         "pattern": "/^(RH|r)?V((Z?F)?[N]{0,2})?(J|([ZJ]?G(JN?)?[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2})/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {
         "pattern": "/^(RH|r)?((Z?F)?[N]{0,2})?(([ZJ]?G(JN?)?)[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/",
         "issues": [
-            "regex.lint.group.quantifiedCapture",
-            "regex.lint.quantifier.nested"
+            "regex.lint.group.quantifiedCapture"
         ]
     },
     {

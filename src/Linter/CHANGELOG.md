@@ -6,6 +6,42 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.overlap.charset` reads the text a branch starts with through
+   an atomic group and a script run, and tells two texts one of which
+   starts the other apart by what follows the shorter one, where both are
+   read in their own case: `/(?:(?>ab)|ac)+/`, `/(?:(*sr:öa)|öb)+x/u`,
+   `/(?:a\d|aa)+/` and `/(?:a\d|a[a-z])+/`, no input of which starts two
+   branches, are no longer reported. `/(?:a\w|ab)+/` still is, and so are
+   `/(?:a\d|aa)+/i` and `/(?:a\d|aa)+/u`: read caselessly, or where the
+   bytes of what follows are not known, the texts alone are compared. Two
+   literal branches written alike are reported wherever they stand:
+   `/(?:é|é|)+/u` and `/(?:É|É|)+/iu` were missed, past ASCII beside a
+   branch that may match nothing, though `/^(?:é|é|)+$/u` exhausts the
+   backtrack limit on 20 `é` then `!`.
+ * Under u, `regex.lint.alternation.overlap`, `regex.lint.overlap.charset`,
+   `regex.lint.quantifier.nested` and `regex.lint.quantifier.concatenation`
+   read an ASCII letter written alone, `i`, `\x69`, `[i]` or `[^i]`, with
+   the case the tables of the target's locale give it, as PCRE2 compares
+   it, where they read Unicode's: a class of several characters and a
+   backreference still read Unicode's cases. Under glibc's tr_TR.UTF-8,
+   whose tables give `i` and `I` no other case and where `/^I$/iu` does not
+   match `i`, `/(?:i|I)+$/iu`, `/(?:i+I)+$/iu` and `/i+I+$/iu` are no
+   longer reported, while `/(?:[ij]|I)+$/iu` still is and
+   `/(?:[^i]+I)+$/iu`, whose class takes `I` there, now is. `k` and `s`,
+   which Unicode pairs with the Kelvin sign and the long s, keep both
+   cases. Nothing changes under C.
+ * `regex.lint.quantifier.nested` no longer reports the loops of a pattern
+   whose every repeat is bounded and that the engine reads in few ways:
+   one attempt then costs a number of steps the pattern alone bounds. The
+   whole pattern is counted, and 2,048 ways are allowed where every attempt
+   starts at one place (`^` without m, `\A`, `\G` or the A modifier), 7
+   where a search may start anywhere, as it pays the attempt at every
+   offset. `/^(a{0,4}){0,4}$/`, `/^(a?){0,10}$/`, `/(a?){0,2}(?:b|c)/` and
+   the syllable patterns of an Indic shaper that nest `?`, `{0,2}`, `{0,3}`
+   and `{0,4}`, 73 steps at most on PCRE2 10.49, are no longer reported;
+   `/^(a?){0,12}$/`, `/^(a{0,16}){0,16}$/`, `/^(a?){0,10}(a?){0,10}$/`,
+   `/^\w*(a?){0,10}$/` and `/(a?){0,10}(?:b|c)/`, which takes about ten
+   seconds on 100,000 `a` without the JIT, still are.
  * The overlap rules read an escape that names one character, `\x41`,
    `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
    literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported

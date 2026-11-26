@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\Rule\Support\BranchOverlaps;
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Hir\CharSet;
 use PHPRegex\Parser\Text\Bytes;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -27,9 +28,10 @@ use PHPUnit\Framework\TestCase;
  *
  * A branch is written [text, caseless, ranges]: the text it starts with,
  * whether it reads its start in either case, and the characters it can
- * start with.
+ * start with; then, where the test gives them, the bytes it can go on with
+ * past its text, null where they are not known.
  *
- * @phpstan-type Branch array{string, bool, list<array{int, int}>}
+ * @phpstan-type Branch array{0: string, 1: bool, 2: list<array{int, int}>, 3?: list<array{int, int}>|null}
  */
 final class BranchOverlapsTest extends TestCase
 {
@@ -317,6 +319,212 @@ final class BranchOverlapsTest extends TestCase
         $this->assertLessThan(3000, $pairs);
     }
 
+    /**
+     * Two texts read in their own case, one starting the other, are told
+     * apart by what follows the shorter one: the bytes its branch can go on
+     * with past its text hold the next byte of the longer text, or, where
+     * the texts are the same, a byte the other branch can go on with too.
+     *
+     * @param Branch $one
+     * @param Branch $other
+     */
+    #[Test]
+    #[DataProvider('providePairsWithWhatFollowsTheirText')]
+    public function test_two_texts_overlap_when_the_shorter_can_go_on_as_the_longer_does(array $one, array $other, bool $expected): void
+    {
+        $this->assertSame($expected, self::overlapping($one, $other));
+        $this->assertSame($expected, self::overlaps([$one, $other])->overlap(0, 1));
+        $this->assertSame($expected, self::overlaps([$other, $one])->overlap(0, 1));
+        $this->assertSame($expected, self::overlaps([$one, $other])->overlap(1, 0));
+        $this->assertSame($expected ? [0, 1] : null, self::overlaps([$one, $other])->first());
+    }
+
+    /**
+     * @return iterable<string, array{one: Branch, other: Branch, expected: bool}>
+     */
+    public static function providePairsWithWhatFollowsTheirText(): iterable
+    {
+        $digits = [[0x30, 0x39]];
+        $letters = [[0x61, 0x7A]];
+
+        yield 'a text going on with the next byte of the longer one' => ['one' => ['a', false, self::ANY, $letters], 'other' => ['ab', false, self::ANY, null], 'expected' => true];
+        yield 'a text going on with another byte than the next of the longer one' => ['one' => ['a', false, self::ANY, $digits], 'other' => ['ab', false, self::ANY, null], 'expected' => false];
+        yield 'a text that may end where the longer one goes on' => ['one' => ['a', false, self::ANY, null], 'other' => ['ab', false, self::ANY, $digits], 'expected' => true];
+        yield 'what follows the longer text is not read' => ['one' => ['a', false, self::ANY, $letters], 'other' => ['ab', false, self::ANY, $digits], 'expected' => true];
+        yield 'the byte right after the shorter text, not the one before it' => ['one' => ['ab', false, self::ANY, [[0x62, 0x62]]], 'other' => ['abcd', false, self::ANY, null], 'expected' => false];
+        yield 'the byte right after the shorter text, not the one after it' => ['one' => ['ab', false, self::ANY, [[0x64, 0x64]]], 'other' => ['abcd', false, self::ANY, null], 'expected' => false];
+        yield 'the byte right after the shorter text' => ['one' => ['ab', false, self::ANY, [[0x63, 0x63]]], 'other' => ['abcd', false, self::ANY, null], 'expected' => true];
+        yield 'a byte above ASCII after the shorter text' => ['one' => ['a', false, self::ANY, [[0x80, 0xFF]]], 'other' => ["a\xC3\xA9", false, self::ANY, null], 'expected' => true];
+        yield 'a byte above ASCII the shorter text does not go on with' => ['one' => ['a', false, self::ANY, $letters], 'other' => ["a\xC3\xA9", false, self::ANY, null], 'expected' => false];
+        yield 'the same text, going on apart' => ['one' => ['a', false, self::ANY, $digits], 'other' => ['a', false, self::ANY, $letters], 'expected' => false];
+        yield 'the same text, going on alike' => ['one' => ['a', false, self::ANY, $digits], 'other' => ['a', false, self::ANY, [[0x39, 0x41]]], 'expected' => true];
+        yield 'the same text, one branch ending there' => ['one' => ['a', false, self::ANY, $digits], 'other' => ['a', false, self::ANY, null], 'expected' => true];
+        yield 'the same text, both branches ending there' => ['one' => ['a', false, self::ANY, null], 'other' => ['a', false, self::ANY, null], 'expected' => true];
+        yield 'texts told apart, whatever follows them' => ['one' => ['ab', false, self::ANY, $letters], 'other' => ['ac', false, self::ANY, $letters], 'expected' => false];
+        yield 'sets apart, whatever follows the texts' => ['one' => ['a', false, [[1, 2]], $letters], 'other' => ['ab', false, [[3, 4]], null], 'expected' => false];
+        // A branch that starts with no text goes on with its first bytes.
+        yield 'no text, going on with the first byte of the other' => ['one' => ['', false, self::ANY, $letters], 'other' => ['ab', false, self::ANY, null], 'expected' => true];
+        yield 'no text, going on with another byte than the first of the other' => ['one' => ['', false, self::ANY, $digits], 'other' => ['ab', false, self::ANY, null], 'expected' => false];
+        // A text read caselessly meets the other in either case: what
+        // follows it is not read.
+        yield 'a caseless text, whatever follows it' => ['one' => ['a', true, self::ANY, $digits], 'other' => ['AB', false, self::ANY, null], 'expected' => true];
+        yield 'a text beside a caseless one, whatever follows it' => ['one' => ['a', false, self::ANY, $digits], 'other' => ['AB', true, self::ANY, null], 'expected' => true];
+    }
+
+    #[Test]
+    public function test_texts_read_in_two_cases_meet_whatever_follows_them(): void
+    {
+        $overlaps = new BranchOverlaps(
+            ['a', 'aB'],
+            ['a', 'ab'],
+            [false, true],
+            array_fill(0, 2, CharSet::fromRanges(self::ANY)),
+            [[['a', 'a', false]], [['a', 'a', false], ['B', 'b', true]]],
+            static fn (int $branch): ByteCharSet => 0 === $branch ? ByteCharSet::fromRange(0x30, 0x39) : ByteCharSet::unknown(),
+        );
+
+        $this->assertTrue($overlaps->overlap(0, 1));
+        $this->assertSame([0, 1], $overlaps->first());
+    }
+
+    /**
+     * @param list<Branch>     $branches
+     * @param ?array{int, int} $expected
+     */
+    #[Test]
+    #[DataProvider('provideBranchesWithWhatFollowsTheirText')]
+    public function test_the_first_pair_is_looked_for_past_the_branches_told_apart_by_what_follows(array $branches, ?array $expected): void
+    {
+        $this->assertSame($expected, self::pairwise($branches));
+        $this->assertSame($expected, self::overlaps($branches)->first());
+    }
+
+    /**
+     * @return iterable<string, array{branches: list<Branch>, expected: ?array{int, int}}>
+     */
+    public static function provideBranchesWithWhatFollowsTheirText(): iterable
+    {
+        $digits = [[0x30, 0x39]];
+
+        yield 'a pair told apart, alone' => [
+            'branches' => [['a', false, self::ANY, $digits], ['ab', false, self::ANY, null]],
+            'expected' => null,
+        ];
+        yield 'a pair told apart before one that overlaps' => [
+            'branches' => [['a', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['abc', false, self::ANY, null]],
+            'expected' => [1, 2],
+        ];
+        yield 'a branch told apart from one text, not from a later one' => [
+            'branches' => [['a', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['x', false, self::ANY, null], ['a1', false, self::ANY, null]],
+            'expected' => [0, 3],
+        ];
+        yield 'two branches told apart from every text they start' => [
+            'branches' => [['a', false, self::ANY, $digits], ['b', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['bc', false, self::ANY, null], ['x', false, self::ANY, null]],
+            'expected' => null,
+        ];
+        yield 'two branches told apart, then a pair far from them' => [
+            'branches' => [['a', false, self::ANY, $digits], ['b', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['bc', false, self::ANY, null], ['x', false, self::ANY, null], ['xy', false, self::ANY, null]],
+            'expected' => [4, 5],
+        ];
+        yield 'a branch told apart, whose text a later branch shares and goes on alike' => [
+            'branches' => [['a', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['a', false, self::ANY, [[0x35, 0x35]]]],
+            'expected' => [0, 2],
+        ];
+        yield 'a branch with no text told apart from a text by its first bytes' => [
+            'branches' => [['', false, self::ANY, $digits], ['ab', false, self::ANY, null], ['ac', false, self::ANY, null]],
+            'expected' => null,
+        ];
+    }
+
+    #[Test]
+    public function test_generated_branches_with_what_follows_give_the_pair_of_the_pairwise_comparison(): void
+    {
+        $sets = [[[0, 0]], [[0, 1]], [[1, 3]], [[0, 5]]];
+        $follows = [null, null, [[0x61, 0x61]], [[0x62, 0x62]], [[0x61, 0x62]], [[0x41, 0x41]], []];
+        $letters = ['a', 'b', 'A'];
+        $state = 20261126;
+        $next = static function (int $below) use (&$state): int {
+            $state = ($state * 1103515245 + 12345) & 0x7FFFFFFF;
+
+            return ($state >> 8) % $below;
+        };
+
+        $pairs = 0;
+        $apart = 0;
+        for ($case = 0; $case < 4000; $case++) {
+            $branches = [];
+            for ($count = $next(9); $count > 0; $count--) {
+                $text = '';
+                for ($length = $next(4); $length > 0; $length--) {
+                    $text .= $letters[$next(3)];
+                }
+
+                $branches[] = [$text, 0 === $next(4), $sets[$next(\count($sets))], $follows[$next(\count($follows))]];
+            }
+
+            $expected = self::pairwise($branches);
+            $pairs += null === $expected ? 0 : 1;
+            // The same branches, what follows their texts left unread.
+            $apart += $expected === self::pairwise(array_map(static fn (array $branch): array => \array_slice($branch, 0, 3), $branches)) ? 0 : 1;
+            $this->assertSame($expected, self::overlaps($branches)->first(), json_encode($branches, \JSON_THROW_ON_ERROR));
+        }
+
+        // The corpus holds both answers in number, and what follows the
+        // texts changes the answer of many.
+        $this->assertGreaterThan(1000, $pairs);
+        $this->assertLessThan(3000, $pairs);
+        $this->assertGreaterThan(300, $apart);
+    }
+
+    /**
+     * What follows a text is asked of the branches whose texts start one
+     * another, once each, however many times they are compared.
+     */
+    #[Test]
+    public function test_what_follows_a_text_is_asked_once_of_the_branches_that_need_it(): void
+    {
+        $asked = [];
+        $follows = static function (int $branch) use (&$asked): ByteCharSet {
+            $asked[] = $branch;
+
+            return 0 === $branch || 3 === $branch ? ByteCharSet::fromRange(0x30, 0x39) : ByteCharSet::unknown();
+        };
+        // "a" starts "ab" and "ac", and stands twice; "x" starts nothing.
+        $texts = ['a', 'ab', 'ac', 'a', 'x', 'y'];
+        $overlaps = new BranchOverlaps($texts, $texts, array_fill(0, 6, false), array_fill(0, 6, CharSet::fromRanges(self::ANY)), null, $follows);
+
+        $this->assertSame([0, 3], $overlaps->first());
+        $this->assertTrue($overlaps->overlap(0, 3));
+        $this->assertFalse($overlaps->overlap(0, 1));
+        $this->assertFalse($overlaps->overlap(2, 0));
+        // Branch 0 with 1, with 2, then with 3, which is asked in turn.
+        $this->assertSame([0, 3], $asked);
+    }
+
+    #[Test]
+    public function test_a_branch_told_apart_from_every_text_it_starts_costs_one_row_of_comparisons(): void
+    {
+        $compared = [];
+        foreach ([200, 800] as $total) {
+            // The first text starts every other, and goes on with no digit.
+            $branches = [['shared_', false, self::ANY, [[0x61, 0x7A]]]];
+            for ($index = 1; $index < $total; $index++) {
+                $branches[] = [\sprintf('shared_%05d', $index), false, self::ANY, null];
+            }
+
+            $overlaps = self::overlaps($branches);
+            $this->assertNull($overlaps->first());
+            $compared[$total] = $overlaps->compared();
+        }
+
+        // Every pair would be 19,900 comparisons, then 319,600. The texts
+        // are read in byte order, each against the one before it and
+        // against the first, which starts it; the first branch is compared
+        // with each later one, and the texts left are read once more.
+        $this->assertSame(397 + 199 + 198, $compared[200]);
+        $this->assertSame(1597 + 799 + 798, $compared[800]);
+    }
+
     #[Test]
     public function test_branches_sharing_a_long_start_are_compared_a_few_times_each(): void
     {
@@ -473,12 +681,42 @@ final class BranchOverlapsTest extends TestCase
      */
     private static function overlaps(array $branches): BranchOverlaps
     {
+        $follows = null;
+        foreach ($branches as $branch) {
+            if (\array_key_exists(3, $branch)) {
+                $follows = static fn (int $asked): ByteCharSet => self::bytes($branches[$asked][3] ?? null);
+
+                break;
+            }
+        }
+
         return new BranchOverlaps(
             array_column($branches, 0),
             array_map(strtolower(...), array_column($branches, 0)),
             array_column($branches, 1),
             array_map(static fn (array $branch): CharSet => CharSet::fromRanges($branch[2]), $branches),
+            null,
+            $follows,
         );
+    }
+
+    /**
+     * The bytes of the ranges, not known for null.
+     *
+     * @param list<array{int, int}>|null $ranges
+     */
+    private static function bytes(?array $ranges): ByteCharSet
+    {
+        if (null === $ranges) {
+            return ByteCharSet::unknown();
+        }
+
+        $set = ByteCharSet::empty();
+        foreach ($ranges as [$from, $to]) {
+            $set = $set->union(ByteCharSet::fromBytes($from, $to));
+        }
+
+        return $set;
     }
 
     /**
@@ -558,7 +796,37 @@ final class BranchOverlapsTest extends TestCase
         }
 
         [$first, $second] = $one[1] || $other[1] ? [strtolower($one[0]), strtolower($other[0])] : [$one[0], $other[0]];
+        if (!$meet || !(str_starts_with($first, $second) || str_starts_with($second, $first))) {
+            return false;
+        }
 
-        return $meet && (str_starts_with($first, $second) || str_starts_with($second, $first));
+        // What follows the texts tells two branches read in their own case
+        // apart, where the test gives it.
+        if ($one[1] || $other[1] || !\array_key_exists(3, $one) || !\array_key_exists(3, $other)) {
+            return true;
+        }
+
+        [$short, $long] = \strlen($one[0]) <= \strlen($other[0]) ? [$one, $other] : [$other, $one];
+        if (null === $short[3]) {
+            return true;
+        }
+
+        // The bytes the longer branch has past the shorter text: the next
+        // byte of its own text, or what follows it where the texts end
+        // together.
+        $next = \strlen($long[0]) > \strlen($short[0]) ? [[\ord($long[0][\strlen($short[0])]), \ord($long[0][\strlen($short[0])])]] : $long[3];
+        if (null === $next) {
+            return true;
+        }
+
+        foreach ($short[3] as [$from, $to]) {
+            foreach ($next as [$nextFrom, $nextTo]) {
+                if ($from <= $nextTo && $nextFrom <= $to) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

@@ -24,8 +24,11 @@ use PHPRegex\Parser\Analysis\CharSetAnalyzer;
 use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Node\AlternationNode;
+use PHPRegex\Parser\Node\CharClassNode;
+use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\GroupType;
+use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
@@ -33,6 +36,7 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Syntax\StartOptions;
+use PHPRegex\Parser\Text\Bytes;
 
 /**
  * Per-run lint context: immutable pattern facts plus the mutable traversal
@@ -84,6 +88,13 @@ final class LintContext
      * Whether the rules compare the sets of two nodes every byte, read once.
      */
     private ?bool $comparesEveryByte = null;
+
+    /**
+     * The letters of ASCII that match themselves alone, once read.
+     */
+    private ?ByteCharSet $lettersOfOneCase = null;
+
+    private bool $lettersOfOneCaseRead = false;
 
     /**
      * @param (\Closure(string): bool)|null $ruleEnabled whether the configuration turns a rule on, by its
@@ -175,6 +186,92 @@ final class LintContext
         return $this->comparesEveryByte ??= $this->readsEveryByte()
             && (!$this->readsCaselessly()
                 || (!str_contains(StartOptions::of($this->pattern->source), '(*TURKISH_CASING)') && CharacterTables::forLocale($this->target->locale)->settlesEveryCase()));
+    }
+
+    /**
+     * The letters of ASCII that match themselves alone when they are read
+     * alone under i and UTF, or null where every letter matches its other
+     * case. PCRE2 compares a letter written alone, "i", "\x69", "[i]" or
+     * "[^i]", by the tables of the target's locale, UTF or not, where a
+     * class of several characters and a back-reference read Unicode's
+     * cases: under glibc's tr_TR.UTF-8, whose tables give "i" and "I" no
+     * other case, "/^I$/iu" does not match "i", and "/^[IJ]$/iu" does. A
+     * letter is one of them where the tables settle its case and its
+     * capital's, and pair neither with the other nor both with one byte.
+     * "k" and "s", which Unicode also pairs with the Kelvin sign and the
+     * long s, are compared by Unicode's cases whatever the tables say.
+     * Without UTF the rules read every byte under those tables instead:
+     * see readsEveryByte().
+     */
+    public function lettersOfOneCase(): ?ByteCharSet
+    {
+        if ($this->lettersOfOneCaseRead) {
+            return $this->lettersOfOneCase;
+        }
+
+        $letters = ByteCharSet::empty();
+        if ($this->pattern->unicodeMode && CharacterTables::BUILT_IN !== $this->target->locale) {
+            $tables = CharacterTables::forLocale($this->target->locale);
+            foreach (Bytes::split('abcdefghijlmnopqrtuvwxyz') as $letter) {
+                $small = \ord($letter);
+                $capital = $small - 0x20;
+                $ofSmall = $tables->settledOtherCase($small);
+                $ofCapital = $tables->settledOtherCase($capital);
+                if (null !== $ofSmall && null !== $ofCapital && $capital !== $ofSmall && $small !== $ofCapital && $ofSmall !== $ofCapital) {
+                    $letters = $letters->union(ByteCharSet::fromRange($capital, $capital))->union(ByteCharSet::fromRange($small, $small));
+                }
+            }
+        }
+
+        $this->lettersOfOneCaseRead = true;
+
+        return $this->lettersOfOneCase = $letters->isEmpty() ? null : $letters;
+    }
+
+    /**
+     * The letter of lettersOfOneCase() the node writes alone, and whether
+     * the node refuses it: a literal, an escape that names the letter,
+     * "\x69", a class of it alone, "[i]", or one that refuses it alone,
+     * "[^i]", through the groups and the repeats around it. Null for any
+     * other node.
+     *
+     * @return ?array{int, bool}
+     */
+    public function letterWrittenAlone(NodeInterface $node): ?array
+    {
+        $alone = $this->lettersOfOneCase();
+        if (null === $alone) {
+            return null;
+        }
+
+        while (($node instanceof GroupNode && NodePredicates::isTransparentGroup($node->type)) || $node instanceof QuantifierNode) {
+            $node = $node instanceof GroupNode ? $node->child : $node->node;
+        }
+
+        $letter = $node instanceof CharClassNode ? $node->expression : $node;
+        $byte = match (true) {
+            $letter instanceof LiteralNode && 1 === \strlen($letter->value) => \ord($letter->value),
+            $letter instanceof CharLiteralNode => $letter->codePoint,
+            default => null,
+        };
+
+        return null !== $byte && $byte <= 0x7F && $alone->intersects(ByteCharSet::fromRange($byte, $byte))
+            ? [$byte, $node instanceof CharClassNode && $node->isNegated]
+            : null;
+    }
+
+    /**
+     * A set folded, the other case of each of its ASCII letters added,
+     * without the letters added for a letter that matches itself alone:
+     * "I" for an "i" the target's tables give no other case under UTF. A
+     * letter the set held before it was folded stays: a class of several
+     * characters reads Unicode's cases, and its set holds them already.
+     */
+    public function foldedAsReadAlone(ByteCharSet $folded, ByteCharSet $set): ByteCharSet
+    {
+        $alone = $this->lettersOfOneCase();
+
+        return null === $alone ? $folded : $folded->intersect($set->union($alone->complement()));
     }
 
     /**
@@ -451,10 +548,23 @@ final class LintContext
      * under the flags at its start. A lookaround reads nothing, as the
      * analyzer has it, whatever options its body sets: "(?=(?i:b))b"
      * starts with "b" alone. With $everyByte, the analyzer reading every
-     * byte under the tables of the target's locale reads them.
+     * byte under the tables of the target's locale reads them. Under UTF,
+     * a letter written alone that those tables give no other case is
+     * read as letterWrittenAlone() names it.
      */
     private function charsInForce(NodeInterface $node, string $flags, bool $fromStart, bool $everyByte = false): ByteCharSet
     {
+        // A letter written alone which matches itself alone under the
+        // target's tables: the analyzer, which reads PCRE2's own, would
+        // give it its other case under i, and take that case from a class
+        // that refuses the letter alone, which takes it there.
+        $alone = $this->letterWrittenAlone($node);
+        if (null !== $alone) {
+            $letter = ByteCharSet::fromRange($alone[0], $alone[0]);
+
+            return $alone[1] ? $letter->complement() : $letter;
+        }
+
         if (FlagScope::containsInlineFlags($node)) {
             if ($node instanceof GroupNode) {
                 return NodePredicates::isTransparentGroup($node->type)

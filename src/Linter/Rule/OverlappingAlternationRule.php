@@ -16,6 +16,7 @@ namespace PHPRegex\Linter\Rule;
 use PHPRegex\Linter\Rule\Support\BranchOverlaps;
 use PHPRegex\Linter\Rule\Support\FlagScope;
 use PHPRegex\Linter\Rule\Support\LanguageQuestions;
+use PHPRegex\Linter\Rule\Support\LoopShape;
 use PHPRegex\Linter\Rule\Support\NodePredicates;
 use PHPRegex\Linter\Rule\Support\QuantifierMath;
 use PHPRegex\Linter\Rule\Support\SourceQuote;
@@ -131,8 +132,11 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
         // Each literal branch, once, with the case each of its characters
         // is read in: under i, or the options a group or a setting in the
-        // branch gives where it stands.
-        $literals = [];
+        // branch gives where it stands. A branch written twice, the same
+        // text read in the same case, is kept with the place it first
+        // stands at: the first of them in the order of the alternation.
+        $literals = $places = [];
+        $twice = null;
         $flags = $context->flagsAtEachChild($node);
         foreach ($node->alternatives as $index => $alt) {
             $literal = self::literalText($alt, $flags[$index] ?? $context->activeFlags(), $context->pattern->unicodeMode);
@@ -140,13 +144,18 @@ final class OverlappingAlternationRule extends AbstractLintRule
                 continue;
             }
 
-            $literals[$literal[0].'|'.$literal[1]] = $literal;
+            $key = $literal[0].'|'.$literal[1];
+            $literals[$key] = $literal;
+            $places[$key] ??= $index;
+            if ($places[$key] < ($twice[0] ?? $index)) {
+                $twice = [$places[$key], $index];
+            }
         }
 
         // Literal branches are compared by their text alone: one set of
         // first characters for all of them.
         $texts = array_column($literals, 0);
-        $pair = $this->firstOverlap($texts, array_column($literals, 1), array_fill(0, \count($texts), CharSet::single(0)), $context);
+        $pair = $this->firstOverlap($texts, array_column($literals, 1), array_fill(0, \count($texts), CharSet::single(0)), null, $context);
         if (null !== $pair) {
             $issues[] = new RuleViolation(
                 self::ID_OVERLAP,
@@ -160,8 +169,12 @@ final class OverlappingAlternationRule extends AbstractLintRule
             return $issues;
         }
 
-        // Check for semantic overlaps using character set analysis
-        $charsetIssue = $this->checkSemanticOverlaps($node, $context);
+        // Check for semantic overlaps using character set analysis. Where
+        // the sets tell nothing, past ASCII under u beside a branch that
+        // may match nothing, a literal branch written twice still takes
+        // every input its other writing takes.
+        $charsetIssue = $this->checkSemanticOverlaps($node, $context)
+            ?? (null === $twice ? null : $this->makeCharsetViolation($node, $twice[0], $twice[1], $context));
         if (null !== $charsetIssue) {
             $issues[] = $charsetIssue;
         }
@@ -206,7 +219,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $folded = match (true) {
                 !$caseless => $charSet,
                 $everyByte => ByteCharSet::unknown(),
-                default => self::foldCharSet($charSet),
+                default => $context->foldedAsReadAlone(self::foldCharSet($charSet), $charSet),
             };
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
@@ -248,15 +261,19 @@ final class OverlappingAlternationRule extends AbstractLintRule
         // Two branches whose sets meet are still told apart by the texts
         // they start with: when neither text is a prefix of the other,
         // "associative-array" and "array", an input one branch takes the
-        // other never does. A branch that starts with no literal tells
-        // nothing. Each character of a text is read in the case in force
-        // where it stands.
-        $texts = $cases = [];
+        // other never does; and when the shorter text goes on with no
+        // character the longer one has there, "a\d" beside "aa". A branch
+        // that starts with no literal tells nothing. Each character of a
+        // text is read in the case in force where it stands.
+        $texts = $cases = $ends = [];
         foreach ($node->alternatives as $index => $alternative) {
-            [$texts[], $cases[]] = self::leadingText($alternative, $flagsAt[$index] ?? $context->activeFlags(), $context->pattern->unicodeMode);
+            [$texts[], $cases[], $ends[]] = self::leadingText($alternative, $flagsAt[$index] ?? $context->activeFlags(), $context->pattern->unicodeMode);
         }
 
-        $pair = $this->firstOverlap($texts, $cases, $sets, $context);
+        // What follows a text is read for the branches whose texts start
+        // one another alone: most alternations hold none.
+        $follows = static fn (int $branch): ByteCharSet => self::following($ends[$branch], $context);
+        $pair = $this->firstOverlap($texts, $cases, $sets, $follows, $context);
 
         return null === $pair ? null : $this->makeCharsetViolation($node, $pair[0], $pair[1], $context);
     }
@@ -267,13 +284,15 @@ final class OverlappingAlternationRule extends AbstractLintRule
      * the text of the other, a character meeting another in either case
      * where either is read caselessly.
      *
-     * @param list<string>  $texts the text each branch starts with
-     * @param list<string>  $cases the case each byte of each text is read in: "i" for either case, "-" for its own
-     * @param list<CharSet> $sets  the characters each branch can start with
+     * @param list<string>                      $texts   the text each branch starts with
+     * @param list<string>                      $cases   the case each byte of each text is read in: "i" for either case, "-" for its own
+     * @param list<CharSet>                     $sets    the characters each branch can start with
+     * @param (\Closure(int): ByteCharSet)|null $follows the bytes a branch can go on with past its text, by branch; null
+     *                                                   where the texts alone are compared
      *
      * @return ?array{int, int}
      */
-    private function firstOverlap(array $texts, array $cases, array $sets, LintContext $context): ?array
+    private function firstOverlap(array $texts, array $cases, array $sets, ?\Closure $follows, LintContext $context): ?array
     {
         // A text read in two cases is compared character by character, and
         // so are the others beside it.
@@ -292,6 +311,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             array_map(static fn (string $case): bool => str_contains($case, 'i'), $cases),
             $sets,
             $units,
+            $follows,
         );
         $pair = $overlaps->first();
         $this->comparisons += $overlaps->compared();
@@ -323,37 +343,62 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The literal text a branch starts with, through the groups that only
-     * capture or set options, up to its first item that is no literal:
-     * "callable-" for "callable-(?:string|object)", "" for "a+b"; and the
-     * case each byte of it is read in, as literalText() gives them.
+     * capture, set options or keep what they matched, and through a script
+     * run, which reads what its body reads, up to its first item that is
+     * no literal: "callable-" for "callable-(?:string|object)", "ab" for
+     * "(?>ab)" and for "(*sr:ab)", "" for "a+b"; the case each byte of it
+     * is read in, as literalText() gives them; and the item that ends it,
+     * with the flags in force there, none where the text is the whole
+     * branch.
      *
-     * @return array{string, string}
+     * @return array{string, string, ?array{NodeInterface, string}}
      */
     private static function leadingText(NodeInterface $node, string $flags, bool $unicode): array
     {
-        while ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags], true)) {
-            $flags = FlagScope::flagsInside($node, $flags);
-            $node = $node->child;
+        while (true) {
+            if ($node instanceof GroupNode && \in_array($node->type, [GroupType::Capturing, GroupType::NonCapturing, GroupType::Named, GroupType::InlineFlags, GroupType::Atomic], true)) {
+                $flags = FlagScope::flagsInside($node, $flags);
+                $node = $node->child;
+            } elseif ($node instanceof ScriptRunNode && null !== $node->content) {
+                $node = $node->content;
+            } else {
+                break;
+            }
         }
 
         // A branch of one item holds one character of text at most, which
         // the other text starts with or not as it does with no text at all.
         if (!$node instanceof SequenceNode) {
-            return ['', ''];
+            return ['', '', null];
         }
 
         $text = $case = '';
         foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtChild) {
             $piece = self::literalText($node->children[$index], $flagsAtChild, $unicode);
             if (null === $piece) {
-                break;
+                return [$text, $case, [$node->children[$index], $flagsAtChild]];
             }
 
             $text .= $piece[0];
             $case .= $piece[1];
         }
 
-        return [$text, $case];
+        return [$text, $case, null];
+    }
+
+    /**
+     * The bytes a branch can go on with at the item that ends its text:
+     * those the item can start with, read in its own case, as
+     * LoopShape::firstBytesInItsOwnCase() gives them. Not known where the
+     * text is the whole branch, nor for an item that may match nothing, an
+     * optional one, a lookaround or an anchor, after which the branch goes
+     * on with what follows it.
+     *
+     * @param ?array{NodeInterface, string} $end the item that ends the text and the flags in force there
+     */
+    private static function following(?array $end, LintContext $context): ByteCharSet
+    {
+        return null === $end || NodePredicates::canBeEmpty($end[0]) ? ByteCharSet::unknown() : LoopShape::firstBytesInItsOwnCase($end[0], $end[1], $context);
     }
 
     /**
@@ -501,6 +546,14 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // An atom is read under the options in force where it stands:
             // those a group opening the branch sets included.
             $atomSet = static function (NodeInterface $leaf) use ($alternative, $flagsAt, $index, $root, $startVerbs, $unicodeFlag, $context): ?CharSet {
+                // A letter written alone that the target's tables give no
+                // other case under UTF: the probe, which reads a character
+                // under u by PCRE2's own tables, would pair it.
+                $alone = $context->letterWrittenAlone($leaf);
+                if (null !== $alone) {
+                    return $alone[1] ? CharSet::universe(true)->subtract(CharSet::single($alone[0])) : CharSet::single($alone[0]);
+                }
+
                 $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
                 $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
                 $read = self::asciiCharacter($leaf, $modifiers);
@@ -1008,7 +1061,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The text with its letters in one case, as PCRE folds them: every
-     * letter under u; without it the ASCII ones under PCRE2's own tables,
+     * letter under u, but an ASCII one the tables of the target's locale
+     * give no other case, which PCRE2 compares by those tables when it is
+     * written alone; without u the ASCII ones under PCRE2's own tables,
      * and under another locale's each byte those tables pair with another
      * both ways, as the target's release reads them and the JIT compares
      * them: "\xC9" with "\xE9" under fr_FR.ISO8859-1. A byte paired one way
@@ -1019,9 +1074,20 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function fold(string $text, LintContext $context): string
     {
         // The simple case folding, as PCRE compares caselessly: a final
-        // sigma folds to the sigma, "ß" stays itself.
+        // sigma folds to the sigma, "ß" stays itself. A letter of ASCII the
+        // target's tables give no other case stays itself too.
         if ($context->pattern->unicodeMode) {
-            return mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            $alone = $context->lettersOfOneCase();
+            if (null === $alone) {
+                return mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            }
+
+            $folded = '';
+            foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+                $folded .= $alone->intersects(ByteCharSet::fromChar($character)) ? $character : mb_convert_case($character, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            }
+
+            return $folded;
         }
 
         if (CharacterTables::BUILT_IN === $context->target->locale) {

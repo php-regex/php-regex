@@ -36,6 +36,19 @@ use PHPRegex\Parser\Node\SequenceNode;
  * Detects nested variable quantifiers that can cause catastrophic
  * backtracking.
  *
+ * The loops of a pattern whose every repeat is bounded, and that the
+ * engine reads in few ways, are left out: one attempt then costs a number
+ * of steps the pattern alone bounds, which no subject grows. The whole
+ * pattern is counted; 2,048 ways are allowed where every attempt starts at
+ * one place, one attempt staying under 10,000 steps on PCRE2 10.49, and 7
+ * where a search may start anywhere and pays the attempt at every offset,
+ * 100,000 characters then costing about twenty milliseconds without the
+ * JIT. The syllable patterns of an Indic shaper, "?", "{0,2}", "{0,3}" and
+ * "{0,4}" nested under "^", take 73 steps at most; "/^(a{0,16}){0,16}$/"
+ * runs past PHP's default pcre.backtrack_limit and "/(a?){0,10}(?:b|c)/"
+ * takes about ten seconds on 100,000 "a": both are reported. See
+ * LoopShape::isReadInAFewWays().
+ *
  * @internal
  */
 final class NestedQuantifierRule extends AbstractLintRule
@@ -250,10 +263,17 @@ final class NestedQuantifierRule extends AbstractLintRule
     }
 
     /**
+     * The finding, or none for a counted loop the engine reads in a few
+     * ways, whose cost no subject grows: see LoopShape::isReadInAFewWays().
+     *
      * @return list<RuleViolation>
      */
     private function violation(QuantifierNode $node, LintContext $context): array
     {
+        if (LoopShape::isReadInAFewWays($node, $context)) {
+            return [];
+        }
+
         return [new RuleViolation(
             self::ID,
             \sprintf(
@@ -564,7 +584,9 @@ final class NestedQuantifierRule extends AbstractLintRule
      * Where the rules read every byte, each set is read under the flags of
      * its own item, a case as the tables of the target's locale give it,
      * and folds no further: those tables may pair "i" with another byte
-     * than "I", as glibc's tr_TR.ISO-8859-9 pairs it with 0xDD.
+     * than "I", as glibc's tr_TR.ISO-8859-9 pairs it with 0xDD. Under UTF,
+     * a letter those tables give no other case, read alone, is given none
+     * here: see LintContext::lettersOfOneCase().
      */
     private function fold(ByteCharSet $set, bool $caseless, LintContext $context): ByteCharSet
     {
@@ -587,7 +609,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             }
         }
 
-        return $folded;
+        return $context->foldedAsReadAlone($folded, $set);
     }
 
     /**

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter\Rule\Support;
 
+use PHPRegex\Parser\Analysis\ByteCharSet;
 use PHPRegex\Parser\Hir\CharSet;
 
 /**
@@ -27,19 +28,42 @@ use PHPRegex\Parser\Hir\CharSet;
  * caselessly. A branch that starts with no text overlaps every branch its
  * characters meet.
  *
+ * Two texts read in their own case are told apart by what follows the
+ * shorter one as well: in "a\d|aa" no input starts both branches, the "a"
+ * the second goes on with being no digit. Where the texts are the same,
+ * the branches go on apart when no byte follows both, "a\d|a[a-z]". A
+ * branch read caselessly is compared by its text alone.
+ *
  * Comparing each branch with every later one costs the square of their
  * number: seconds for a list of two thousand names. The pair that
  * comparison meets first is the pair of the first branch that overlaps
  * another, so that branch is looked for first, by what rules pairs out
  * together: the sets are walked through the alphabet, where only the
  * branches holding one character can overlap, and their texts are read in
- * byte order, where a text comes right before the texts it starts.
+ * byte order, where a text comes right before the texts it starts. A
+ * branch found that way which what follows the texts tells apart from
+ * every later one is set aside, and the search starts again without it.
  *
  * @internal
  */
 final class BranchOverlaps
 {
     private int $compared = 0;
+
+    /**
+     * The branches found to overlap no other, by branch.
+     *
+     * @var array<int, true>
+     */
+    private array $apart = [];
+
+    /**
+     * The bytes the branches asked about so far can go on with past their
+     * text, by branch.
+     *
+     * @var array<int, ByteCharSet>
+     */
+    private array $followed = [];
 
     /**
      * @param list<string>                                 $texts    the text each branch starts with, "" for a branch that starts with no literal
@@ -49,6 +73,10 @@ final class BranchOverlaps
      * @param list<list<array{string, string, bool}>>|null $units    each text character by character, as written, in one
      *                                                               case, and whether it is read in either case; null where
      *                                                               each text is read in one case throughout
+     * @param (\Closure(int): ByteCharSet)|null            $follows  the bytes a branch can go on with past its text, by
+     *                                                               branch, not known where it may end there: asked of
+     *                                                               the branches whose texts start one another, once
+     *                                                               each; null where the texts alone are compared
      */
     public function __construct(
         private readonly array $texts,
@@ -56,6 +84,7 @@ final class BranchOverlaps
         private readonly array $caseless,
         private readonly array $sets,
         private readonly ?array $units = null,
+        private readonly ?\Closure $follows = null,
     ) {}
 
     /**
@@ -67,14 +96,19 @@ final class BranchOverlaps
      */
     public function first(): ?array
     {
-        // No branch before the first that overlaps another has a pair.
+        // No branch before the first that overlaps another has a pair. A
+        // branch found by its text and its set that overlaps no later one,
+        // read character by character or by what follows its text,
+        // overlaps none: the next is looked for without it.
         $total = \count($this->texts);
-        for ($one = $this->firstOverlapping(); $one < $total; $one++) {
+        while (($one = $this->firstOverlapping()) < $total) {
             for ($other = $one + 1; $other < $total; $other++) {
                 if ($this->overlap($one, $other)) {
                     return [$one, $other];
                 }
             }
+
+            $this->apart[$one] = true;
         }
 
         return null;
@@ -96,11 +130,15 @@ final class BranchOverlaps
         }
 
         // A caseless branch meets the other in either case.
-        [$first, $second] = $this->caseless[$one] || $this->caseless[$other]
+        $caseless = $this->caseless[$one] || $this->caseless[$other];
+        [$first, $second] = $caseless
             ? [$this->folded[$one], $this->folded[$other]]
             : [$this->texts[$one], $this->texts[$other]];
+        if (!str_starts_with($first, $second) && !str_starts_with($second, $first)) {
+            return false;
+        }
 
-        return str_starts_with($first, $second) || str_starts_with($second, $first);
+        return $caseless || null === $this->follows || $this->goOnAlike($one, $other, $this->follows);
     }
 
     /**
@@ -113,8 +151,27 @@ final class BranchOverlaps
     }
 
     /**
-     * The first branch that overlaps another, or the number of branches
-     * when none does.
+     * Whether two branches read in their own case, the text of one
+     * starting the text of the other, can read one byte more alike: the
+     * branch whose text ends first goes on with the next byte of the other
+     * text, or, where both texts end together, with a byte the other branch
+     * goes on with too. Bytes that are not known meet every byte.
+     *
+     * @param \Closure(int): ByteCharSet $follows the bytes a branch can go on with past its text
+     */
+    private function goOnAlike(int $one, int $other, \Closure $follows): bool
+    {
+        [$short, $long] = str_starts_with($this->texts[$other], $this->texts[$one]) ? [$one, $other] : [$other, $one];
+        $next = $this->texts[$long][\strlen($this->texts[$short])] ?? '';
+        $this->followed[$short] ??= $follows($short);
+
+        return $this->followed[$short]->intersects('' === $next ? $this->followed[$long] ??= $follows($long) : ByteCharSet::fromChar($next));
+    }
+
+    /**
+     * The first branch that overlaps another by its set and its text, or
+     * the number of branches when none does; the branches set apart are
+     * left out.
      */
     private function firstOverlapping(): int
     {
@@ -122,6 +179,10 @@ final class BranchOverlaps
         // letter is one set.
         $ranges = $members = $textless = [];
         foreach ($this->sets as $branch => $set) {
+            if (isset($this->apart[$branch])) {
+                continue;
+            }
+
             $key = $set->key();
             $ranges[$key] = $set->ranges;
             $members[$key][] = $branch;
