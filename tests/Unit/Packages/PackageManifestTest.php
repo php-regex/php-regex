@@ -273,6 +273,9 @@ final class PackageManifestTest extends TestCase
             // <redos> runs the analysis the PHPStan extension runs, and
             // words its findings in the extension's words.
             'Linter\AnalysisService', 'Linter\RedosFinding',
+            // The static methods of the wrapper libraries are read through
+            // the presets the lint and the PHPStan extension read.
+            'Linter\Extraction\PatternFunction', 'Linter\Extraction\PatternFunctionRegistry',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',

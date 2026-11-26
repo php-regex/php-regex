@@ -14,6 +14,16 @@ CHANGELOG
    attempt (`regex.redos`), `RegexRedosSearch` for the cost of a search
    (`regex.redos.search`), the loop of the functions that look for every
    match included. A constant subject is not reported.
+ * The static methods of the wrapper libraries are read as the `preg_*`
+   function they run, through the presets `regex lint` and the PHPStan
+   extension read: composer/pcre, nette/utils, spatie/regex, Laravel's
+   `Str`, PHPUnit's `Assert`, webmozart/assert and beberlei/assert. A
+   constant pattern the target refuses is `InvalidRegexPattern` on its
+   argument, and `<redos>true</redos>` reports `RegexRedos` and
+   `RegexRedosSearch` there, the loop of a method that looks for every match
+   included, in the words of a `preg_*` call. nette/utils' `utf8: true` is
+   applied; the subject of a wrapper is not told apart, and nothing is
+   typed.
  * The callback of `preg_replace_callback()` keeps the shape of its matches
    on Psalm 7.7 and later, which type that callback with a provider of their
    own, asked before the plugins: the plugin's is asked first, and a call it

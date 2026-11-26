@@ -40,9 +40,11 @@ use Psalm\Type\Union;
  * analysis is regex lint's, theoretical, read once per process for a
  * pattern, the lowest version judged and the loop of the call.
  *
- * Off unless <redos> turns it on. A call whose subject is constant, a
- * literal or an array of literals, carries no attack and is not reported,
- * and neither is a pattern the running engine does not compile.
+ * Off unless <redos> turns it on. A preg_* call whose subject is constant,
+ * a literal or an array of literals, carries no attack and is not reported,
+ * and neither is a pattern the running engine does not compile. The call
+ * of a wrapper library is reported whatever its subject, which is not told
+ * apart there, with the loop of the preg function it runs.
  *
  * @internal
  */
@@ -106,11 +108,28 @@ final class RedosFindings
     public static function report(string $function, array $arguments, string $pattern, Expr $node, RegexParser $floor, RegexParser $target, StatementsSource $source): void
     {
         $nodeTypes = $source->getNodeTypeProvider();
-        if (!self::$enabled || self::constantSubject($function, $arguments, $nodeTypes) || null !== (new PcreEngine())->compile($pattern)) {
+        if (!self::$enabled || self::constantSubject($function, $arguments, $nodeTypes)) {
             return;
         }
 
-        $everyMatch = self::everyMatch($function, $arguments, $nodeTypes);
+        self::reportLoop(self::everyMatch($function, $arguments, $nodeTypes), $pattern, $node, $floor, $target, $source);
+    }
+
+    /**
+     * Reports the findings of one constant pattern on the node it stands
+     * at, run by a call whose loop is known: the preg function it runs the
+     * pattern in when it looks for every match, null when it stops at the
+     * first one. The call of a wrapper library is reported so, whatever
+     * its subject.
+     *
+     * @param RegexParser $target the parser of the target, whose repairs the details offer
+     */
+    public static function reportLoop(?string $everyMatch, string $pattern, Expr $node, RegexParser $floor, RegexParser $target, StatementsSource $source): void
+    {
+        if (!self::$enabled || null !== (new PcreEngine())->compile($pattern)) {
+            return;
+        }
+
         $key = CallTarget::key($floor)."\0".self::$threshold."\0".($everyMatch ?? '')."\0".$pattern;
         foreach (self::$findings[$key] ??= self::findings($pattern, $everyMatch, $floor, $target) as [$search, $message]) {
             $location = new CodeLocation($source, $node);
