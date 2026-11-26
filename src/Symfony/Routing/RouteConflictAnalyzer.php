@@ -779,7 +779,7 @@ final class RouteConflictAnalyzer
     {
         try {
             return $this->pathsTakenAsIs($route, $options);
-        } catch (ComplexityException) {
+        } catch (ComplexityException|SemanticErrorException) {
             return $route['slashPattern'];
         }
     }
@@ -1298,7 +1298,7 @@ final class RouteConflictAnalyzer
 
         try {
             $end = $this->readsOwnPathsForTheSlash($route, $options) ? strrpos($route['pathPattern'], '$') : false;
-        } catch (ComplexityException) {
+        } catch (ComplexityException|SemanticErrorException) {
             $end = strrpos($route['pathPattern'], '$');
         }
 

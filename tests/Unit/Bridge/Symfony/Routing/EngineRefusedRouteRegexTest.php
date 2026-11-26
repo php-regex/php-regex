@@ -66,6 +66,26 @@ final class EngineRefusedRouteRegexTest extends TestCase
         $this->assertSame(1, $report->stats['refused']);
     }
 
+    #[Test]
+    #[DataProvider('provideRefusedRequirementsAndWhy')]
+    public function test_a_route_pcre_refuses_beside_a_trailing_slash_has_no_verdict(string $requirement, string $error): void
+    {
+        // The paths a route passes on for its slash, and those the "/?" of
+        // the dumper ends, are read through the solver too.
+        $collection = new RouteCollection();
+        $collection->add('slashed', new Route('/x/{p}/', [], ['p' => '[a-z]+'], [], '', [], ['GET']));
+        $collection->add('refused', new Route('/x/{a}/', [], ['a' => $requirement], [], '', [], ['GET']));
+        $collection->add('list', new Route('/x/list/', [], [], [], '', [], ['GET']));
+        $this->assertFalse(@preg_match($collection->get('refused')?->compile()->getRegex() ?? '', '/x/list/'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyzeReachability($collection);
+
+        $routes = array_column($report->routes, null, 'name');
+        $this->assertNull($routes['refused']['reachable']);
+        $this->assertSame($error, $routes['refused']['refused']);
+        $this->assertSame(1, $report->stats['refused']);
+    }
+
     /**
      * @return iterable<string, array{requirement: string}>
      */
