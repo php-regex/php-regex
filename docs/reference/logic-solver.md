@@ -141,7 +141,10 @@ over a group included: `/a+(?:b)?+c/` is read, `/a+(?:b)?+a/` and `/a+(?:b)*+a/`
 refused. A repeat written as a group, `/(?:a)+(?:b)?+a/`, and a letter repeated
 possessively, `/a+b?+a/`, are not made possessive, and two patterns whose brackets tell
 such a group apart never read alike. `equivalent()`, `intersection()` and `subsetOf()`
-refuse a character repeated before such a group. For a target before PCRE2 10.44, a
+refuse a character repeated before such a group. A counted group is compiled once per
+round, so the repeat that ends a round stands before the group that opens the next:
+`/(?:(?>(?:b)?)a+){2}/` finds nothing in `aa` and is refused, where `/(?:(?>(?:b)?)a+)+/`,
+compiled once, is read. For a target before PCRE2 10.44, a
 possessive repeat of a group that holds a capturing group is refused: the JIT of 10.39 to
 10.42 leaves the group set from an earlier start of the match, and `/a(a)*+b/` writes `a` to
 group 1 on `aacab`, where `/a(a)*b/` leaves it unset. Without `u`, PHP hands

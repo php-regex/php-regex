@@ -587,7 +587,9 @@ too: a pattern with `^` or `\A`, or that may match empty, is checked in those ru
 text before where the search starts (a lookbehind, `\b`, `\B`, `^` under `m`, `\K`) keeps only a rewrite that reads
 as it does or whose changed parts are each proven alone (see [the logic solver](logic-solver.md)). Under `possessive`, a
 rewrite refused for its possessive quantifiers is made again without them, and the other rewrites ship:
-`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`.
+`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`. A rewrite refused whole
+still loses the `s` or the `m` nothing in the pattern reads: the flag moves no bracket and no repeat, and goes
+without a proof. `/a+(?:b)?+a/m` becomes `/a+(?:b)?+a/`, the group kept, which PCRE2 reads to make `a+` possessive.
 
 ---
 
@@ -710,6 +712,14 @@ Notes:
   inline `(?xx)` in force, which Python carries: `[^\S]`, six ASCII bytes, gets no warning, and `[ ^a]`, which is
   `[^a]` under `(?xx)`, gets one there. Under `u` there is none, and a set the target refuses (`\H`, `\V`, `\N`, `\C`,
   `\R`, `\X`, a POSIX class) is refused as before.
+- PCRE2 makes a character repeated before an atomic group, or a possessive repeat of a group, that may match nothing
+  possessive, as if the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`, where JavaScript finds it
+  with `a+(?:b)?a` and Python, from 3.11.5, with `a+(?:b)?+a`. Such a pattern is written, and `$result->warnings`
+  names the first such repeat and the group PCRE2 reads it against, once per pattern: `PCRE2 makes "a+" at offset 0
+  possessive before "(?:b)?+" at offset 2, as if that group could not be skipped, and this target does not: the two
+  differ on a subject where the repeat must give back to what follows the group.` PCRE2 reads the repeat against what
+  stands after it, no further than the first character that must be there, and leaves a lazy repeat as written:
+  `/a+x(?:b)?+a/` and `/a+?(?:b)?+a/` get no warning, and under `U` the repeat written lazy is the one named.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.

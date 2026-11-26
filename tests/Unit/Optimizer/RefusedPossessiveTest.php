@@ -83,18 +83,25 @@ final class RefusedPossessiveTest extends TestCase
     /**
      * The rewrite made again goes through the checks the first went
      * through: one PCRE refuses, or the check cannot prove, leaves the
-     * pattern as written.
+     * pattern as written, but for a flag nothing in it reads.
      */
     #[Test]
     public function test_the_rewrite_made_again_is_checked_as_the_first(): void
     {
         // The PCRE2 PHP 8.2 bundles refuses a lookbehind branch of two
-        // lengths: the lookbehind factorized, possessive or not.
+        // lengths: the lookbehind factorized, possessive or not. The "s"
+        // no dot reads goes on its own, the class and the lookbehind as
+        // written.
         $parser = RegexParser::create(['cache' => null, 'php_version' => '8.2']);
         $this->assertTrue($parser->validate('/(?<=abc|abde)[0-9]+x/s')->isValid);
         $this->assertFalse($parser->validate('/(?<=ab(?:c|de))\d+x/')->isValid);
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertSame(self::matched('/(?<=abc|abde)[0-9]+x/s', 'abc'.$subject), self::matched('/(?<=abc|abde)[0-9]+x/', 'abc'.$subject), \sprintf('Oracle: the flag changes the match on "%s".', $subject));
+        }
 
-        $this->assertSame('/(?<=abc|abde)[0-9]+x/s', (new Optimizer($parser))->optimize('/(?<=abc|abde)[0-9]+x/s', new OptimizerOptions(possessive: true, factorize: true))->optimized);
+        $refused = (new Optimizer($parser))->optimize('/(?<=abc|abde)[0-9]+x/s', new OptimizerOptions(possessive: true, factorize: true));
+        $this->assertSame('/(?<=abc|abde)[0-9]+x/', $refused->optimized);
+        $this->assertSame([Rewriter::UNUSED_FLAG], $refused->changes);
 
         // Past the alignment the in-place proof may fill, the rewrite
         // without the possessive is not proven either.

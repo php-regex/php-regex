@@ -59,6 +59,31 @@ final class PossessiveBracketsUnverifiedTest extends TestCase
         yield 'a class in a group repeated possessively, the group dropped' => ['pattern' => '/a+(?:[b])?+a/', 'unchecked' => '/a+[b]?+a/'];
         yield 'an optional group in an atomic group, the group dropped' => ['pattern' => '/a+(?>(?:b)?)a/', 'unchecked' => '/a+(?>b?)a/'];
         yield 'an empty group in an atomic group, dropped' => ['pattern' => '/a+(?>(?:)|b)a/', 'unchecked' => '/a+(?>|b)a/'];
+        // A counted group is compiled once per round: the repeat that ends
+        // one round is read against the group that opens the next.
+        yield 'a group repeated possessively that opens a counted group, dropped' => ['pattern' => '/(?:(?:b)?+a+){2}/', 'unchecked' => '/(?:b?+a+){2}/'];
+    }
+
+    /**
+     * The rewrite the check proved for a counted group is refused with
+     * every check on too, and still made where a letter that must be there
+     * parts the repeat of one round from the group of the next.
+     */
+    #[Test]
+    public function test_the_brackets_that_open_the_next_round_of_a_counted_group_are_kept(): void
+    {
+        // Oracle, PHP 8.4.28 / PCRE2 10.49, and 10.39 to 10.44.
+        $this->assertSame([0, 1], [preg_match('/(?:(?:b)?+a+){2}/', 'aa'), preg_match('/(?:b?+a+){2}/', 'aa')]);
+        $this->assertSame([0, 1], [preg_match(PcreInterpreter::pattern('/(?:(?:b)?+a+){2}/'), 'aa'), preg_match(PcreInterpreter::pattern('/(?:b?+a+){2}/'), 'aa')]);
+        foreach (['', 'ac', 'acac', 'aacbac', 'bacbaac', 'aca', 'acbc', 'aacaac'] as $subject) {
+            $this->assertSame(preg_match('/(?:(?:b)?+a+c){2}/', $subject, $kept), preg_match('/(?:b?+a+c){2}/', $subject, $dropped), $subject);
+            $this->assertSame($kept, $dropped, $subject);
+        }
+
+        $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
+
+        $this->assertSame('/(?:(?:b)?+a+){2}/', $optimizer->optimize('/(?:(?:b)?+a+){2}/')->optimized);
+        $this->assertSame('/(?:b?+a+c){2}/', $optimizer->optimize('/(?:(?:b)?+a+c){2}/')->optimized);
     }
 
     /**

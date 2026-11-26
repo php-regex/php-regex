@@ -32,6 +32,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\QuantifierType;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreTarget;
 
@@ -65,7 +66,12 @@ final class AutoPossession
      * The first atomic group or possessive repeat of a group that may match
      * nothing and that a character repeated some number of times precedes,
      * or null. Every possessive repeat of a group from zero counts, "*+"
-     * too, which PCRE2 compiles otherwise and reads as written today.
+     * too, which PCRE2 compiles otherwise and reads as written today. A
+     * group counted is compiled once per round, so that the repeat of one
+     * round precedes the group that opens the next, wherever the two stand
+     * in it: "/(?:(?>(?:b)?)a+){2}/" finds nothing in "aa", where
+     * "/(?:(?>b?)a+){2}/" finds it, with and without the JIT, from PCRE2
+     * 10.39 to 10.49.
      *
      * @param GroupNode|null $unwrapped a group read as its body, as if it
      *                                  were taken out
@@ -90,20 +96,29 @@ final class AutoPossession
             }
         }
 
+        $ancestors = null;
+        foreach ($skippable as $node) {
+            if ([] !== self::repeatsOfItsRounds($node, $ancestors ??= self::ancestors($pattern), $unwrapped)) {
+                return $node;
+            }
+        }
+
         return null;
     }
 
     /**
      * The repeats of one character PCRE2 may make possessive, by the offset
      * each starts at: those that end before an atomic group or a possessive
-     * repeat of a group that may match nothing. Such a repeat runs as
-     * written where its possessive spelling gives nothing back.
+     * repeat of a group that may match nothing, and those a counted group
+     * holds with one, which each round compiles before the next. Such a
+     * repeat runs as written where its possessive spelling gives nothing
+     * back.
      *
      * @return array<int, true>
      */
     public static function repeatsBeforeSkippableGroups(NodeInterface $pattern): array
     {
-        $lastSkippableStart = null;
+        $skippable = [];
         $repeats = [];
         foreach (self::nodes($pattern) as $node) {
             if ($node instanceof QuantifierNode && !self::groupLike($node->node) && self::repeatsSomeNumberOfTimes($node)) {
@@ -111,15 +126,25 @@ final class AutoPossession
             }
 
             if (self::skippable($node)) {
-                $lastSkippableStart = $node->getStartPosition();
+                $skippable[] = $node;
             }
         }
 
-        if (null === $lastSkippableStart) {
+        $last = end($skippable);
+        if (false === $last) {
             return [];
         }
 
-        return array_fill_keys(array_keys(array_filter($repeats, static fn (int $end): bool => $end <= $lastSkippableStart)), true);
+        $lastSkippableStart = $last->getStartPosition();
+        $made = array_fill_keys(array_keys(array_filter($repeats, static fn (int $end): bool => $end <= $lastSkippableStart)), true);
+        $ancestors = self::ancestors($pattern);
+        foreach ($skippable as $node) {
+            foreach (self::repeatsOfItsRounds($node, $ancestors) as $repeat) {
+                $made[$repeat->getStartPosition()] = true;
+            }
+        }
+
+        return $made;
     }
 
     /**
@@ -238,6 +263,105 @@ final class AutoPossession
     }
 
     /**
+     * groupDecides() read where the engine reads: PCRE2 judges a repeated
+     * character against what stands after it, no further than the first
+     * item that must take a character, and a group it never reaches on the
+     * way decides nothing. The group stays where a repeat stands beside a
+     * group the engine may skip (see beside()) and the brackets of the
+     * group are read for that repeat: they are the repeat's own, as "(?:a)"
+     * in "/(?:a)+(?:b)?+a/", or they stand where the engine reads from the
+     * repeat, as "(?:b)" in "/a+(?:b)?+a/" and in "/a+(?:b)?(?>(?:c)?)a/".
+     * It can go once a character that must be there parts it from the
+     * repeat, or the repeat from the group the engine may skip: "(?:b)" in
+     * "/a+x(?:b)?+a/", "(?:a)" in "/(?:a)+x(?:b)?+a/" and "(?:\\)" in
+     * "/(?:\\)?define [a-z]++ (?:,x)*+ /" match alike with and without
+     * their brackets, with and without the JIT, from PCRE2 10.39 to 10.49.
+     *
+     * A pattern that holds a call is read whole, as groupDecides() reads
+     * it: PCRE2's JIT misses matches of a repeat made possessive inside a
+     * group a call runs, "/(a+b)c(?1)d/" none in "abcabcabd" where
+     * "/((?:a)+b)c(?1)d/" finds "abcabd".
+     */
+    public static function groupDecidesBesideARepeat(NodeInterface $pattern, GroupNode $group): bool
+    {
+        $ancestors = self::ancestors($pattern);
+        $above = $ancestors[$group];
+        $own = end($above);
+        // The repeat taking the group out makes: a character where a group
+        // was repeated.
+        $made = $own instanceof QuantifierNode && !self::groupLike($group->child) ? $own : null;
+        $repeats = [];
+        $skippable = [];
+        foreach (self::nodes($pattern) as $node) {
+            if ($node instanceof SubroutineNode) {
+                return self::groupDecides($pattern, $group);
+            }
+
+            if ($node instanceof QuantifierNode && ($node === $made || !self::groupLike($node->node)) && self::repeatsSomeNumberOfTimes($node)) {
+                $repeats[] = $node;
+            }
+
+            if (self::skippable($node)) {
+                $skippable[] = $node;
+            }
+        }
+
+        foreach ($skippable as $skipped) {
+            foreach ($repeats as $repeat) {
+                if (self::beside($repeat, $skipped, $ancestors) && ($repeat === $made || self::beside($repeat, $group, $ancestors))) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The first repeat PCRE2 may make possessive where the pattern lets it
+     * give back, with the group it is read against, or null: a repeat of
+     * one character, not written possessive, that stands beside (see
+     * beside()) an atomic group or a possessive repeat of a group that may
+     * match nothing. An engine that runs the pattern as written finds "aa"
+     * with "/a+(?:b)?+a/", as PCRE2 does under "(*NO_AUTO_POSSESS)"; PCRE2
+     * finds nothing. It leaves a repeat that runs lazy as written,
+     * "/a+?(?:b)?+a/" finding "aa", from PCRE2 10.39 to 10.49: only the
+     * repeats written as the caller says the greedy ones are count, "a+?"
+     * under "U".
+     *
+     * @param list<QuantifierType> $greedy how a repeat that runs greedy may be written
+     *
+     * @return array{QuantifierNode, NodeInterface}|null the repeat, then the group
+     */
+    public static function repeatBesideSkippableGroup(NodeInterface $pattern, array $greedy): ?array
+    {
+        $ancestors = null;
+        $repeats = [];
+        $skippable = [];
+        foreach (self::nodes($pattern) as $node) {
+            if ($node instanceof QuantifierNode && !self::groupLike($node->node) && self::repeatsSomeNumberOfTimes($node) && \in_array($node->type, $greedy, true)) {
+                $repeats[] = $node;
+            }
+
+            if (self::skippable($node)) {
+                $skippable[] = $node;
+            }
+        }
+
+        foreach ($repeats as $repeat) {
+            foreach ($skippable as $skipped) {
+                // Read once a repeat and a group are both there, as few
+                // patterns hold the two.
+                if (self::beside($repeat, $skipped, $ancestors ??= self::ancestors($pattern))) {
+                    return [$repeat, $skipped];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Without "u", where the tables of the locale may hold 0xFF in "\w":
      * those of one that names no locale but C may.
      */
@@ -335,6 +459,157 @@ final class AutoPossession
         }
 
         return $nodes;
+    }
+
+    /**
+     * The nodes above each node of the tree, the pattern first.
+     *
+     * @return \WeakMap<NodeInterface, list<NodeInterface>>
+     */
+    private static function ancestors(NodeInterface $pattern): \WeakMap
+    {
+        /** @var \WeakMap<NodeInterface, list<NodeInterface>> $ancestors */
+        $ancestors = new \WeakMap();
+        $ancestors[$pattern] = [];
+        $pending = [$pattern];
+        while (null !== $node = array_pop($pending)) {
+            $above = [...$ancestors[$node], $node];
+            foreach ($node->getChildren() as $child) {
+                $ancestors[$child] = $above;
+                $pending[] = $child;
+            }
+        }
+
+        return $ancestors;
+    }
+
+    /**
+     * Whether PCRE2, judging the repeat against what stands after it, may
+     * read as far as where the node starts: it reads on through each item
+     * that may match nothing, into each group and out of it, and stops at
+     * the first item that must take a character. "(?:b)?+" stands beside
+     * "a+" in "/a+c?(?:b)?+a/", which finds nothing in "aa", and not in
+     * "/a+x(?:b)?+a/". A group repeated more than once is compiled once
+     * per round, so that a repeat stands before what opens the next round:
+     * "/(?:(?>(?:b)?)a+){2}/" finds nothing in "aa", where
+     * "/(?:(?>b?)a+){2}/" finds it, with and without the JIT, from PCRE2
+     * 10.39 to 10.49.
+     *
+     * Read wider than the engine reads: whatever may match nothing is read
+     * through, and every repeat of a group that may run twice is read
+     * again, "(?:...)+" too, which PCRE2 compiles once.
+     *
+     * @param \WeakMap<NodeInterface, list<NodeInterface>> $ancestors
+     */
+    private static function beside(QuantifierNode $repeat, NodeInterface $node, \WeakMap $ancestors): bool
+    {
+        $lineage = [...$ancestors[$node], $node];
+        $from = $repeat;
+        foreach (array_reverse($ancestors[$repeat]) as $parent) {
+            if ($parent instanceof SequenceNode) {
+                $passed = false;
+                foreach ($parent->children as $next) {
+                    if ($passed && \in_array($next, $lineage, true)) {
+                        return self::readFromItsStart($next, $node, $ancestors);
+                    }
+
+                    if ($passed && !self::mayMatchNothing($next)) {
+                        return false;
+                    }
+
+                    $passed = $passed || $next === $from;
+                }
+            }
+
+            if ($parent instanceof QuantifierNode && self::runsMoreThanOnce($parent) && \in_array($parent->node, $lineage, true)) {
+                return self::readFromItsStart($parent->node, $node, $ancestors);
+            }
+
+            $from = $parent;
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether PCRE2, reading the part from its start, may read as far as
+     * where the node in it starts: nothing before the node, in the part,
+     * must take a character.
+     *
+     * @param \WeakMap<NodeInterface, list<NodeInterface>> $ancestors
+     */
+    private static function readFromItsStart(NodeInterface $part, NodeInterface $node, \WeakMap $ancestors): bool
+    {
+        $inner = $node;
+        foreach (array_reverse($ancestors[$node]) as $parent) {
+            if ($inner === $part) {
+                break;
+            }
+
+            if ($parent instanceof SequenceNode) {
+                foreach ($parent->children as $before) {
+                    if ($before === $inner) {
+                        break;
+                    }
+
+                    if (!self::mayMatchNothing($before)) {
+                        return false;
+                    }
+                }
+            }
+
+            $inner = $parent;
+        }
+
+        return true;
+    }
+
+    /**
+     * The repeats of one character that stand in a group compiled once per
+     * round with the node, an atomic group or a possessive repeat of a
+     * group: each precedes the node of the next round.
+     *
+     * @param \WeakMap<NodeInterface, list<NodeInterface>> $ancestors
+     * @param GroupNode|null                               $unwrapped a group read as its body
+     *
+     * @return list<QuantifierNode>
+     */
+    private static function repeatsOfItsRounds(NodeInterface $skipped, \WeakMap $ancestors, ?GroupNode $unwrapped = null): array
+    {
+        $repeats = [];
+        foreach ($ancestors[$skipped] as $round) {
+            if (!$round instanceof QuantifierNode || !self::compiledMoreThanOnce($round)) {
+                continue;
+            }
+
+            foreach (self::nodes($round->node, $unwrapped) as $node) {
+                if ($node instanceof QuantifierNode && !self::groupLike(null !== $unwrapped && $node->node === $unwrapped ? $unwrapped->child : $node->node) && self::repeatsSomeNumberOfTimes($node)) {
+                    $repeats[] = $node;
+                }
+            }
+        }
+
+        return $repeats;
+    }
+
+    /**
+     * Whether PCRE2 compiles the operand of the quantifier more than once:
+     * a count of two or more, or from two up, where "+", "*" and "{1,}"
+     * loop over one copy, which the engine reads no further than; and one
+     * whose count is not read.
+     */
+    private static function compiledMoreThanOnce(QuantifierNode $node): bool
+    {
+        return null === $node->bounds || ($node->bounds->max ?? $node->bounds->min) > 1;
+    }
+
+    /**
+     * Whether the quantifier may run its operand twice or more: any but
+     * "?" and a count of one, and one whose count is not read.
+     */
+    private static function runsMoreThanOnce(QuantifierNode $node): bool
+    {
+        return null === $node->bounds || 1 !== $node->bounds->max;
     }
 
     /**

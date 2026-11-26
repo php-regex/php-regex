@@ -320,6 +320,9 @@ final class PackageManifestTest extends TestCase
             // The character a byte of a class without u is part of, found in
             // the source so that the refusal still advises u for it.
             'Parser\Text\Utf8',
+            // A repeat PCRE2 makes possessive before a group it may skip,
+            // which the targets run as written, is warned of.
+            'Automata\Transform\AutoPossession',
         ],
     ];
 

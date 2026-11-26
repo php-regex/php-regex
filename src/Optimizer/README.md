@@ -81,7 +81,10 @@ which is proven whatever the option says. A rewrite whose possessive
 quantifiers are not proven is made again without them, and the other rewrites
 ship: the proof reads no possessive quantifier in a pattern that holds a
 lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
-`/\d+x(?!y)/`. A call of a group is read as the body of the group run where
+`/\d+x(?!y)/`. A rewrite refused whole still loses the `s` or the `m` nothing
+in the pattern reads, which moves no bracket and no repeat and needs no proof:
+`/a+(?:b)?+a/m` becomes `/a+(?:b)?+a/`, the group PCRE2 reads to make `a+`
+possessive kept. A call of a group is read as the body of the group run where
 the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
 DEFINE holds is read there under the options in force where the DEFINE stands:
 `/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A

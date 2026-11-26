@@ -41,7 +41,8 @@ Installation
 composer require php-regex/regex-transpiler
 ```
 
-PHP 8.1 or newer. `php-regex/regex-parser` is pulled in automatically.
+PHP 8.1 or newer. `php-regex/regex-parser` and `php-regex/regex-automata` are
+pulled in automatically.
 
 Configuration
 -------------
@@ -188,6 +189,27 @@ echo $result->warnings[0]; // Without the u flag "\S" at offset 1 takes one byte
 
 var_dump($transpiler->transpile('/^\S+$/Du', 'javascript')->hasWarnings()); // bool(false)
 ```
+
+PCRE2 makes a character repeated before an atomic group, or a possessive repeat
+of a group, that may match nothing possessive, as if the group could not be
+skipped: `/a+(?:b)?+a/` finds nothing in `aa`. JavaScript and Python run the
+repeat as written, and find `aa` with what is written for them, `a+(?:b)?a` and,
+from Python 3.11.5, `a+(?:b)?+a`. Such a pattern is not refused either, most
+subjects leaving the repeat nothing to give back: the first such repeat is named
+in a warning, once per pattern, with the group PCRE2 reads it against:
+
+```php
+$result = $transpiler->transpile('/a+(?:b)?+a/', 'javascript');
+
+echo $result->literal;     // /a+(?:b)?a/
+echo $result->warnings[0]; // PCRE2 makes "a+" at offset 0 possessive before "(?:b)?+" at offset 2, as if that group could not be skipped, and this target does not: the two differ on a subject where the repeat must give back to what follows the group.
+
+var_dump($transpiler->transpile('/a+x(?:b)?+a/', 'javascript')->hasWarnings()); // bool(false)
+```
+
+PCRE2 reads the repeat against what stands after it, no further than the first
+character that must be there, and leaves a lazy repeat as written: neither
+`/a+x(?:b)?+a/` nor `/a+?(?:b)?+a/` is warned of.
 
 Documentation
 -------------

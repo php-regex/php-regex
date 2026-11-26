@@ -24,6 +24,13 @@ CHANGELOG
    Such a rewrite is checked by the automata whatever `verifyWithAutomata`
    says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
    `/a+b?+a/`.
+ * The same brackets stay where they open a counted group, which PCRE2
+   compiles once per round: the repeat that ends one round is read against
+   the group that opens the next, and `/(?:(?:b)?+a+){2}/` finds nothing in
+   `aa`, where `/(?:b?+a+){2}/`, which the check proved alike and the
+   optimizer wrote, finds it. The pattern now ships as written;
+   `/(?:(?:b)?+a+c){2}/`, where a letter that must be there parts the
+   rounds, still becomes `/(?:b?+a+c){2}/`.
  * The group around a repeat of the byte 0xFF before `\w`, or of `\w`
    before that byte, stays as written without `u`: PCRE2 makes the repeat
    possessive once the group is out, as if 0xFF were no word character,
@@ -94,6 +101,16 @@ CHANGELOG
    lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
    now lose their useless `s`, as they do without the option. The second
    rewrite runs only on such a refusal.
+ * A rewrite the check refuses whole no longer keeps the `s` or the `m`
+   nothing in the pattern reads: the flag goes on its own, the rest of the
+   pattern as written. `/(\[(?:[^\]\[]+|(?R))*+\])/m`, where the check
+   proves no rewrite of a pattern that holds a possessive quantifier a call
+   runs, and `/a+(?:b)?+a/m`, whose rewrite takes out a group PCRE2 reads
+   to make `a+` possessive, lose their `m` and nothing else; they came back
+   as written. So does `/(?<=abc|abde)[0-9]+x/s` its `s` for a PCRE2 that
+   refuses the lookbehind factorized. Dropping such a flag moves no bracket
+   and no repeat, and PCRE compiles the pattern alike without it: it is not
+   sent to the check, whatever `verifyWithAutomata` says.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.

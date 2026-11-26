@@ -77,6 +77,23 @@ final class PossessiveBrackets
     }
 
     /**
+     * groupDecides() read where the engine reads: only the brackets PCRE2
+     * reads on its way from a repeated character to a group it may skip
+     * decide (see AutoPossession::groupDecidesBesideARepeat()). "(?:\\)" in
+     * "/(?:\\)?define [a-z]++ (?:,x)*+ /" can go: the engine judges "\\?"
+     * against the "d" after it and reads no further.
+     */
+    public static function groupDecidesBesideARepeat(GroupNode $group, LintContext $context): bool
+    {
+        $pattern = $context->parents()[0] ?? $group;
+        self::$shapes ??= new \WeakMap();
+
+        return ([] !== (self::$shapes[$pattern] ??= AutoPossession::shape($pattern, false))
+            && AutoPossession::groupDecidesBesideARepeat($pattern, $group))
+            || AutoPossession::bracketsDecideBesideLastByte($pattern, $context->pattern->flags, $context->target->locale);
+    }
+
+    /**
      * The repeats of one character PCRE2 may make possessive in the pattern
      * the node stands in, by the offset each starts at: dropping one, or
      * fixing its count, gives back what PCRE2 took from the repeat before
