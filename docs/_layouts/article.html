@@ -46,7 +46,18 @@
           {% for tag in page.tags %}<span class="article-tag">{{ tag }}</span>{% unless forloop.last %} {% endunless %}{% endfor %}
         </div>
         {% endif %}
-        <div class="article-content">{{ content }}</div>
+        {% comment %}
+          The source of an article opens on its heading, as every page of
+          the site does: the heading is the title, printed once above the
+          byline. The body starts after it, at the first closing tag of a
+          title; a source that opens on no heading is printed whole.
+        {% endcomment %}
+        {% assign article_parts = content | split: '</h1>' %}
+        {% if article_parts.size > 1 %}
+          {% assign article_rest = article_parts | slice: 1, article_parts.size %}
+          {% assign article_body = article_rest | join: '</h1>' %}
+        {% else %}{% assign article_body = content %}{% endif %}
+        <div class="article-content">{{ article_body }}</div>
         <footer class="article-footer">
           <p class="article-signature">Written by <a href="{{ article_author.url }}">{{ article_author.name }}</a></p>
           {% assign sorted_articles = site.articles | sort: 'date' %}

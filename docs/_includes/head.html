@@ -16,6 +16,13 @@
   <meta name="description" content="{{ page.description | default: site.description | strip_html | escape }}">
   <link rel="canonical" href="{{ page.url | absolute_url }}">
   {% comment %}
+    While no article is published, the index of the articles says only that
+    the first ones are coming: a search engine is asked to keep that one
+    page out of its index until there is an article there to read.
+  {% endcomment %}
+  {% assign published_articles = site.articles | where_exp: 'a', 'a.published != false' %}
+  {% if page.url == '/blog/' and published_articles.size == 0 %}<meta name="robots" content="noindex">{% endif %}
+  {% comment %}
     The site's one live feed is the articles collection's; the tag the feed
     plugin provides would advertise the (empty) posts feed instead.
   {% endcomment %}

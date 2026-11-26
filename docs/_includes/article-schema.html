@@ -12,8 +12,8 @@
   "@type": "TechArticle",
   "headline": {{ page.title | strip_html | jsonify }},
   "description": {{ page.description | default: site.description | strip_html | jsonify }},
-  "datePublished": {{ page.date | date_to_xmlschema }},
-  "dateModified": {{ page.last_modified_at | default: page.date | date_to_xmlschema }},
+  "datePublished": {{ page.date | date_to_xmlschema | jsonify }},
+  "dateModified": {{ page.last_modified_at | default: page.date | date_to_xmlschema | jsonify }},
   "author": {
     "@type": "{% if schema_author %}Person{% else %}Organization{% endif %}",
     "name": {{ schema_author.name | default: 'PHPRegex' | jsonify }}{% if schema_author.url %},
