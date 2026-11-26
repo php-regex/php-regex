@@ -562,11 +562,12 @@ final class RouteConflictAnalyzer
     /**
      * Whether the matcher may try the later of two routes on overlapping
      * hosts first. When a route names a host, the dumper sorts the routes
-     * by the literal end of their host, letter case included, as
+     * by their host, read as text from its end, letter case included, as
      * StaticPrefixCollection::addRoute() groups them, and may move a route
-     * before an earlier one whose literal end parts from its own: no host
-     * matches both, unless they part on letter case alone, which the
-     * matcher ignores in a host.
+     * before an earlier one whose host parts from its own: no host matches
+     * both, unless they part on letter case alone, which the matcher
+     * ignores in a host, at their end, "A.COM" and "a.com", or before a
+     * variable they share, "A.{sub}.example.com" and "a.{sub}.example.com".
      *
      * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
      * dumper also groups the routes on every variable of their host, as if
@@ -585,36 +586,19 @@ final class RouteConflictAnalyzer
      */
     private static function mayBeTriedFirst(array $earlier, array $later): bool
     {
-        if (self::partOnLetterCaseAlone($earlier['host'], $later['host'])) {
-            return true;
-        }
-
-        $loose = [...$earlier['looseHostVariables'], ...$later['looseHostVariables']];
-        if ([] === $loose || $earlier['host'] === $later['host']) {
-            return false;
-        }
-
         $shared = 0;
         $longest = min(\strlen($earlier['host']), \strlen($later['host']));
         while ($shared < $longest && $earlier['host'][-1 - $shared] === $later['host'][-1 - $shared]) {
             $shared++;
         }
 
-        return min($loose) <= $shared && self::groupsHostsOnAnyVariable();
-    }
-
-    /**
-     * Whether the literal ends of the two hosts part on letter case alone.
-     */
-    private static function partOnLetterCaseAlone(string $earlierHost, string $laterHost): bool
-    {
-        $earlierEnd = self::literalEnd($earlierHost);
-        $laterEnd = self::literalEnd($laterHost);
-        if ('' === $earlierEnd || '' === $laterEnd || str_ends_with($earlierEnd, $laterEnd) || str_ends_with($laterEnd, $earlierEnd)) {
-            return false;
+        if ($shared < $longest && strtolower($earlier['host'][-1 - $shared]) === strtolower($later['host'][-1 - $shared])) {
+            return true;
         }
 
-        return str_ends_with(strtolower($earlierEnd), strtolower($laterEnd)) || str_ends_with(strtolower($laterEnd), strtolower($earlierEnd));
+        $loose = [...$earlier['looseHostVariables'], ...$later['looseHostVariables']];
+
+        return [] !== $loose && $earlier['host'] !== $later['host'] && min($loose) <= $shared && self::groupsHostsOnAnyVariable();
     }
 
     /**
@@ -664,16 +648,6 @@ final class RouteConflictAnalyzer
         }
 
         return self::$groupsHostsOnAnyVariable;
-    }
-
-    /**
-     * The host after its last variable.
-     */
-    private static function literalEnd(string $host): string
-    {
-        $variableEnd = strrpos($host, '}');
-
-        return false === $variableEnd ? $host : substr($host, $variableEnd + 1);
     }
 
     /**

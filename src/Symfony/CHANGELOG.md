@@ -44,6 +44,10 @@ CHANGELOG
    `regex:routes --reachability` reads the requests a route may pass on
    so too: `/a/` after `/{x<.+?>}` keeps `POST /a/`, where it was reported
    unreachable.
+ * `regex:routes` skips two routes whose hosts part on letter case alone
+   before a variable they share, `A.{sub}.example.com` and
+   `a.{sub}.example.com`, as it skips `A.COM` and `a.com`: the router may
+   try the later one first, which was reported shadowed.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,

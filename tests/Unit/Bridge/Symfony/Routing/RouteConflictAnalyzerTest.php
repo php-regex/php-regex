@@ -1504,6 +1504,45 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * The dumper reads a host as text from its end, a variable that takes
+     * a whole label included: two hosts that part on letter case alone
+     * before a variable they share are sorted apart as two that part on it
+     * at their end, and the later route may answer first.
+     *
+     * @param array{0: string, 1: string} $host      the hosts of the second and the third route
+     * @param list<string>                $conflicts
+     */
+    #[Test]
+    #[DataProvider('provideHostsPartingBeforeAVariable')]
+    public function test_two_routes_whose_hosts_part_on_letter_case_before_a_variable_are_skipped(array $host, string $winner, array $conflicts, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        $collection->add('first', (new Route('/other'))->setHost('a.{sub}.example.com'));
+        $collection->add('earlier', (new Route('/p'))->setHost($host[0]));
+        $collection->add('later', (new Route('/p'))->setHost($host[1]));
+
+        $this->assertSame($winner, FrameworkMatcher::reached($collection, 'GET', '/p', 'http', 'a.x.example.com'));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+    }
+
+    /**
+     * @return iterable<string, array{host: array{0: string, 1: string}, winner: string, conflicts: list<string>, skipped: int}>
+     */
+    public static function provideHostsPartingBeforeAVariable(): iterable
+    {
+        yield 'hosts parting on letter case before the variable' => ['host' => ['A.{sub}.example.com', 'a.{sub}.example.com'], 'winner' => 'later', 'conflicts' => [], 'skipped' => 1];
+        yield 'the same host' => ['host' => ['a.{sub}.example.com', 'a.{sub}.example.com'], 'winner' => 'earlier', 'conflicts' => ['shadowed earlier later'], 'skipped' => 0];
+        yield 'hosts parting on another letter' => ['host' => ['b.{sub}.example.com', 'a.{sub}.example.com'], 'winner' => 'later', 'conflicts' => [], 'skipped' => 0];
+    }
+
+    /**
      * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
      * dumper groups the routes on every variable of their host, as if it
      * were the text of one label: it may try a route before an earlier one

@@ -680,7 +680,8 @@ host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` Two routes whose hosts part on
-letter case alone, `A.COM` and `a.com`, are counted among the pairs
+letter case alone, `A.COM` and `a.com`, or `A.{sub}.example.com` and
+`a.{sub}.example.com`, are counted among the pairs
 skipped: the router sorts the routes that name a host by the end of it,
 letter case included, and may try the later one first. Before
 `symfony/routing` 6.4.51, 7.4.24 and 8.1.12, and on 8.0, it also sorts them

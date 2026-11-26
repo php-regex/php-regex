@@ -329,6 +329,28 @@ final class RouteReachabilityTest extends TestCase
         $this->assertSame($groups ? [] : ['sub'], array_column($app['takenBy'], 'name'));
     }
 
+    /**
+     * Two hosts that part on letter case alone before a variable they
+     * share take the same names, and the dumper may try the later route
+     * first: the earlier one takes nothing from it.
+     */
+    #[Test]
+    public function test_a_route_on_a_host_parting_on_letter_case_before_a_variable_loses_nothing_to_the_earlier_one(): void
+    {
+        $routes = self::collection([
+            'first' => new Route('/other', host: 'a.{sub}.example.com'),
+            'upper' => new Route('/p', host: 'A.{sub}.example.com'),
+            'lower' => new Route('/p', host: 'a.{sub}.example.com'),
+        ]);
+
+        $this->assertSame('lower', FrameworkMatcher::reached($routes, 'GET', '/p', 'http', 'a.x.example.com'));
+
+        $lower = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'lower');
+
+        $this->assertTrue($lower['reachable']);
+        $this->assertSame([], $lower['takenBy']);
+    }
+
     #[Test]
     public function test_a_route_taking_no_method_is_left_out(): void
     {
