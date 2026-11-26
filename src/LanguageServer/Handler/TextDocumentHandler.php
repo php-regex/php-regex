@@ -630,7 +630,7 @@ final class TextDocumentHandler
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];
-        } catch (LexerException|ParserException $e) {
+        } catch (ParserException $e) {
             $analysis = ['unread', $e->getMessage(), $e->errorCode, $e->offset, $regex->validate($pattern)->hint];
         }
 

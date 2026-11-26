@@ -21,8 +21,6 @@ use PHPRegex\Cli\Option\Option;
 use PHPRegex\Cli\Option\Options;
 use PHPRegex\Cli\Output;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Exception\LexerException;
-use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Transpiler\Dialect;
@@ -104,9 +102,10 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             // The translation is the product on stdout: what the range says
             // of the pattern goes to stderr.
             return $this->reportRange($output, $range, $args['pattern'], $this->renderConsoleOutput($output, $style, $result));
-        } catch (LexerException|ParserException|TranspileException $e) {
-            // A valid pattern the target cannot express: what the range says
-            // of it still goes to stderr.
+        } catch (TranspileException $e) {
+            // A valid pattern the target cannot express, the pattern being
+            // validated above: what the range says of it still goes to
+            // stderr.
             if ('json' === $args['format']) {
                 $output->writeDocument(JsonDocument::error($e->getMessage(), JsonDocument::STAGE_PATTERN));
 
@@ -114,7 +113,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             }
             $output->write('  '.$output->error('Transpile failed: '.$e->getMessage())."\n");
 
-            if ($e instanceof TranspileException && null !== $e->offset) {
+            if (null !== $e->offset) {
                 $output->write('  At offset '.$e->offset."\n");
             }
 
