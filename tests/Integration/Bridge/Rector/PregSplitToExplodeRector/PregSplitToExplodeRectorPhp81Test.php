@@ -34,9 +34,12 @@ final class PregSplitToExplodeRectorPhp81Test extends AbstractRectorTestCase
         // "{,0}" repeats only from PCRE2 10.43: before that release the
         // running engine reads "/a{,0}b/" as its text, agrees with the 8.1
         // target, and rewrites the call the fixture holds as left alone.
-        // The row is replayed where 10.43 runs.
+        // The row is replayed where 10.43 runs, and judges PHP 8.1 with the
+        // 10.39 it bundles: a PHP 8.1 running 10.43 or later judges a
+        // project that pins no PCRE2 with that release, and agrees too.
         if ('skip_quantifier_without_a_minimum' === basename($filePath, '.php.inc')) {
             $this->requiresPcre2('10.43', '/a{,0}b/');
+            $this->requiresBundledPcre2('8.1', '/a{,0}b/');
         }
 
         $this->doTestFile($filePath);

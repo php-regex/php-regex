@@ -50,7 +50,7 @@ final class PregCallTargetTest extends TestCase
     public function test_another_minor_is_judged_with_the_pcre2_it_bundles(): void
     {
         $this->pinPcre2(null);
-        $other = 803 === intdiv(\PHP_VERSION_ID, 100) ? 80200 : 80300;
+        $other = self::anotherMinor();
 
         $this->assertSame(PcreTarget::bundledWith($other)->pcreVersion, PregCall::target($other)->pcreVersion);
         $this->assertSame($other, PregCall::target($other)->phpVersionId);
@@ -96,7 +96,7 @@ final class PregCallTargetTest extends TestCase
     {
         $this->pinPcre2($release);
 
-        $this->assertSame(PcreTarget::bundledWith(80300)->pcreVersion, PregCall::target(80300)->pcreVersion);
+        $this->assertSame(PcreTarget::bundledWith(self::anotherMinor())->pcreVersion, PregCall::target(self::anotherMinor())->pcreVersion);
     }
 
     #[Test]
@@ -106,7 +106,7 @@ final class PregCallTargetTest extends TestCase
         file_put_contents($this->composer, '{"config": {"platform": {"lib-pcre": 10.44}}}');
         putenv('COMPOSER='.$this->composer);
 
-        $this->assertSame(PcreTarget::bundledWith(80300)->pcreVersion, PregCall::target(80300)->pcreVersion);
+        $this->assertSame(PcreTarget::bundledWith(self::anotherMinor())->pcreVersion, PregCall::target(self::anotherMinor())->pcreVersion);
     }
 
     #[Test]
@@ -116,7 +116,7 @@ final class PregCallTargetTest extends TestCase
         file_put_contents($this->composer, '{"name": "acme/app"}');
         putenv('COMPOSER='.$this->composer);
 
-        $this->assertSame(PcreTarget::bundledWith(80300)->pcreVersion, PregCall::target(80300)->pcreVersion);
+        $this->assertSame(PcreTarget::bundledWith(self::anotherMinor())->pcreVersion, PregCall::target(self::anotherMinor())->pcreVersion);
     }
 
     #[Test]
@@ -125,6 +125,15 @@ final class PregCallTargetTest extends TestCase
         $this->pinPcre2(null);
 
         $this->assertSame(70000, PregCall::target(50300)->phpVersionId);
+    }
+
+    /**
+     * A PHP other than the running one's minor version, which a project
+     * pinning no PCRE2 is judged with the release it bundles at.
+     */
+    private static function anotherMinor(): int
+    {
+        return 803 === intdiv(\PHP_VERSION_ID, 100) ? 80200 : 80300;
     }
 
     /**

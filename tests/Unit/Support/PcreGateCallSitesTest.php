@@ -70,6 +70,7 @@ final class PcreGateCallSitesTest extends TestCase
         yield 'a php the suite does not judge' => ['method' => 'requiresPhp', 'argument' => '8.7'];
         yield 'a php ceiling below every php' => ['method' => 'forbidsPhp', 'argument' => '5.0'];
         yield 'a php ceiling the suite does not judge' => ['method' => 'forbidsPhp', 'argument' => '8.7'];
+        yield 'a bundled pcre2 of a php the suite does not judge' => ['method' => 'requiresBundledPcre2', 'argument' => '8.7'];
     }
 
     #[Test]
@@ -94,6 +95,7 @@ final class PcreGateCallSitesTest extends TestCase
         yield 'the ceiling itself' => ['method' => 'requiresPcre2', 'argument' => '10.49'];
         yield 'the php floor the suite judges' => ['method' => 'requiresPhp', 'argument' => '8.4'];
         yield 'the php ceiling the suite judges' => ['method' => 'forbidsPhp', 'argument' => '8.5'];
+        yield 'the bundled pcre2 of a php the suite judges' => ['method' => 'requiresBundledPcre2', 'argument' => '8.3'];
         // A compile probe takes a pattern, not a version: nothing to judge.
         yield 'a compile probe pattern' => ['method' => 'requiresCompile', 'argument' => '/a{2,1}/'];
     }
@@ -154,7 +156,7 @@ final class PcreGateCallSitesTest extends TestCase
             $source = (string) \file_get_contents($file->getPathname());
 
             \preg_match_all(
-                "/->(requiresPcre2|requiresPhp|forbidsPhp|requiresCompile)\s*\(\s*(['\"])([^'\"]*)\\2/",
+                "/->(requiresPcre2|requiresPhp|forbidsPhp|requiresBundledPcre2|requiresCompile)\s*\(\s*(['\"])([^'\"]*)\\2/",
                 $source,
                 $matches,
                 \PREG_SET_ORDER,
@@ -196,7 +198,7 @@ final class PcreGateCallSitesTest extends TestCase
         foreach ($callSites as $callSite) {
             $judged = match ($callSite['method']) {
                 'requiresPcre2' => PcreGateLimits::KNOWN_RELEASES,
-                'requiresPhp', 'forbidsPhp' => PcreGateLimits::KNOWN_PHP_VERSIONS,
+                'requiresPhp', 'forbidsPhp', 'requiresBundledPcre2' => PcreGateLimits::KNOWN_PHP_VERSIONS,
                 default => null,
             };
 

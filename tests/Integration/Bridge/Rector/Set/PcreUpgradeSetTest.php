@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector\Set;
 
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Rector\Testing\PHPUnit\AbstractRectorTestCase;
@@ -23,10 +24,14 @@ use Rector\Testing\PHPUnit\AbstractRectorTestCase;
  */
 final class PcreUpgradeSetTest extends AbstractRectorTestCase
 {
+    use PcreGates;
+
     #[Test]
     #[DataProvider('provideFixtures')]
     public function test_fixture_is_rewritten_or_left_alone(string $filePath): void
     {
+        $this->requiresBundledPcre2('8.2', 'Each fixture of the PCRE upgrade set');
+
         $this->doTestFile($filePath);
     }
 

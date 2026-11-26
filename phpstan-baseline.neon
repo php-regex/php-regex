@@ -1117,7 +1117,7 @@ parameters:
 		-
 			rawMessage: Catching internal class PHPUnit\Framework\SkippedWithMessageException.
 			identifier: catch.internalClass
-			count: 15
+			count: 16
 			path: tests/Unit/Support/PcreGatesTest.php
 
 		-

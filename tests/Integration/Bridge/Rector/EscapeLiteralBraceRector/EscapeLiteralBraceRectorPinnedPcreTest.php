@@ -65,11 +65,13 @@ final class EscapeLiteralBraceRectorPinnedPcreTest extends AbstractRectorTestCas
 
     /**
      * A lib-pcre that names no release is passed over, as `regex lint`
-     * passes it over: the PHP is judged with the PCRE2 it bundles.
+     * passes it over: the PHP is judged as in a project that pins none,
+     * with the PCRE2 it bundles.
      */
     #[Test]
     public function test_a_pin_that_names_no_release_is_passed_over(): void
     {
+        $this->requiresBundledPcre2('8.3', '"a{,3}" escaped for a pin that names no release');
         $this->pinPcre2('latest');
 
         $this->doTestFile(__DIR__.'/Fixture/brace_without_minimum.php.inc');
