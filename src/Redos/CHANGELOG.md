@@ -83,6 +83,19 @@ CHANGELOG
    `\xdf` with no breaker, on which the engine tries no attempt; its
    breaker now holds `\xff`, and confirmed mode replays it
    (`replayed: true`).
+ * The search cost reads the first code unit PCRE2's compiler sets as it
+   reads the last one it requires: the interpreter starts an attempt only
+   where the subject holds it, in the one case it looks for, the attempt
+   the `A` modifier pins included. Under `ru_RU.KOI8-R`, `/\xff+!/i` and
+   `/[\xff\xdf]+!/` were reported with a run of `\xdf`, on which
+   `pcre.jit=0` starts no attempt (0.0 ms on 20,000 of them, where the JIT
+   finds a match in `\xdf!` that the interpreter misses), and confirmed
+   mode said `replayed: false`. The run is now `\xff`, which both try (9,
+   34 then 133 ms on 5,000, 10,000 then 20,000 with `pcre.jit=0`), and
+   confirmed mode replays it; so are the short matches of
+   `/\xff(?:\xff+\d)?/i` through `preg_match_all()`. A run word at whose
+   first character no attempt starts is passed over, and `(*NO_START_OPT)`
+   keeps the run as it was.
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a

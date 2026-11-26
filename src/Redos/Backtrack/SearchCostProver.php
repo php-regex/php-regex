@@ -69,7 +69,11 @@ use PHPRegex\Redos\SearchCostCause;
  * attempt would match the bare run, as "^\s+" does in the trim regex
  * "/^\s+|\s+$/". The run word is one character, a cycle's word, or up to
  * four characters of different classes, so that a "\b" holds inside the
- * run.
+ * run. It starts with a character the interpreter starts an attempt at:
+ * PCRE2 looks for the first code unit its compiler set before each
+ * attempt, in the one case it flags it in, so a run word whose first
+ * character holds none is passed over, and the class of that code unit is
+ * written with the character it was read from.
  *
  * PCRE2 ties every attempt to the search start under "A", and when each
  * alternative opens with "^" (without m), "\A", "\G", or a ".*" under s
@@ -302,10 +306,15 @@ final class SearchCostProver
         $emptyRefused = \in_array('NOTEMPTY', $startOptions, true) || \in_array('NOTEMPTY_ATSTART', $startOptions, true);
         $cause = $everyMatch ? SearchCostCause::EmptyMatchRetry : SearchCostCause::UnanchoredSearch;
         $exact = [] === $pnfa->marks && [] === $pnfa->approximated;
+        // The interpreter starts an attempt only where the subject holds
+        // the first code unit the compiler set, unless the pattern turns
+        // the start-up optimizations off.
+        [$first, $required] = LastCodeUnit::firstAndRequired($regex, $target);
+        $starts = self::starts($automaton, \in_array('NO_START_OPT', $startOptions, true) ? null : $first, $unicode);
 
         try {
             // Under "(*NOTEMPTY)" no match is empty, and PHP never retries.
-            $found = null === $refused ? null : $this->witness($automaton, $budget, LastCodeUnit::required($regex, $target), $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused);
+            $found = null === $refused ? null : $this->witness($automaton, $budget, $required, $lineStart ? $lineEnds : null, $jumps, $pnfa->readsFinalNewline, $refused, $starts);
             // preg_match() stops at an empty match inside the run, where the
             // loop of every match retries: without one, every call pays the
             // run.
@@ -317,7 +326,7 @@ final class SearchCostProver
             // finds after it read the run, and the loop starts a call where
             // that match ends.
             if ($everyMatch && null === $found) {
-                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused);
+                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts);
                 $cause = SearchCostCause::ShortMatch;
                 $exact = $exact && null !== $found && $found['exact'];
             }
@@ -445,6 +454,56 @@ final class SearchCostProver
         foreach ($node->getChildren() as $child) {
             self::repeatedCharacters($child, $sets, $universe, $unicode, $caseless, $atoms);
         }
+    }
+
+    /**
+     * The character of each class an attempt may start at, where PCRE2's
+     * compiler set a first code unit: the interpreter starts an attempt
+     * only where the subject holds it, in the one case it looks for or in
+     * either. The class's own character where that one holds the code
+     * unit, and the character the code unit was read from for its class:
+     * "\xFF" for the class of "\xDF" and "\xFF" under ru_RU.KOI8-R,
+     * where PCRE2 looks for "\xFF" alone. A class left out starts no
+     * attempt; null when an attempt starts at any character.
+     *
+     * @param array{int, ?int}|null $first the character of the first code unit, and its other case when
+     *                                     PCRE2 looks for either
+     *
+     * @return array<int, int>|null
+     */
+    private static function starts(ItemAutomaton $automaton, ?array $first, bool $unicode): ?array
+    {
+        if (null === $first) {
+            return null;
+        }
+
+        $units = [Utf8::character($first[0], $unicode)[0] => true];
+        if (null !== $first[1]) {
+            $units[Utf8::character($first[1], $unicode)[0]] = true;
+        }
+
+        $starts = [];
+        foreach ($automaton->representatives as $class => $representative) {
+            if (isset($units[Utf8::character($representative, $unicode)[0]])) {
+                $starts[$class] = $representative;
+            }
+        }
+
+        return $starts + [$automaton->classOf($first[0]) => $first[0]];
+    }
+
+    /**
+     * The characters of the classes: of each the one an attempt starts at,
+     * else the one that stands for the class.
+     *
+     * @param list<int>            $classes
+     * @param array<int, int>|null $starts
+     *
+     * @return list<int>
+     */
+    private static function characters(ItemAutomaton $automaton, array $classes, ?array $starts): array
+    {
+        return array_map(static fn (int $class): int => $starts[$class] ?? $automaton->representatives[$class], $classes);
     }
 
     /**
@@ -874,12 +933,14 @@ final class SearchCostProver
      * @param array<int, true>      $jumps        where the repeats that jump to the end read
      * @param bool                  $finalNewline whether "$" or "\Z" may hold before a final newline
      * @param int                   $refused      the attempts that refuse an empty match
+     * @param array<int, int>|null  $starts       the character of each class an attempt starts at; null
+     *                                            when one starts anywhere
      *
      * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>}|null
      */
-    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, ?CharSet $lineStart, array $jumps, bool $finalNewline, int $refused): ?array
+    private function witness(ItemAutomaton $automaton, Budget $budget, ?array $required, ?CharSet $lineStart, array $jumps, bool $finalNewline, int $refused, ?array $starts): ?array
     {
         $prefixes = [[]];
         for ($class = 0; $class < $automaton->classCount() && \count($prefixes) <= self::MAX_PREFIXES; $class++) {
@@ -892,12 +953,14 @@ final class SearchCostProver
                 continue;
             }
 
+            // The search starts no attempt at a run word whose first
+            // character holds no first code unit.
             $later = self::later($automaton, $last, $refused);
-            if (!$this->entersItself($automaton, $budget, $later, $word, $jumps)) {
+            if ((null !== $starts && !isset($starts[$word[0]])) || !$this->entersItself($automaton, $budget, $later, $word, $jumps)) {
                 continue;
             }
 
-            $run = array_map(static fn (int $class): int => $automaton->representatives[$class], $word);
+            $run = self::characters($automaton, $word, $starts);
             $missing = null === $required || self::holdsCodeUnit($run, ...$required) ? [] : [$required[0]];
             // The shortest prefix after which the attempt at the run's start
             // reads the run too, and no attempt succeeds inside it.
@@ -913,7 +976,7 @@ final class SearchCostProver
                 $breakers = $this->breakers($automaton, $budget, $inside, $missing, $finalNewline ? $last : null);
                 if ([] !== $breakers) {
                     return [
-                        'prefix' => array_map(static fn (int $class): int => $automaton->representatives[$class], $prefix),
+                        'prefix' => self::characters($automaton, $prefix, $starts),
                         'run' => $run,
                         'breakers' => $breakers,
                     ];
@@ -943,18 +1006,20 @@ final class SearchCostProver
      * The breakers stop the paths tried before each match, at the run's
      * end, without a success.
      *
-     * @param array<int, true> $jumps
-     * @param bool             $emptyRefused whether each call refuses an empty match at its start
+     * @param array<int, true>     $jumps
+     * @param bool                 $emptyRefused whether each call refuses an empty match at its start
+     * @param array<int, int>|null $starts       the character of each class an attempt starts at; null
+     *                                           when one starts anywhere
      *
      * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>, exact: bool}|null
      */
-    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused): ?array
+    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused, ?array $starts): ?array
     {
         foreach ($this->runWords($automaton, $budget, $jumps) as $word) {
             $exact = true;
-            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $exact);
+            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $starts, $exact);
             if (null === $after) {
                 continue;
             }
@@ -964,7 +1029,7 @@ final class SearchCostProver
             if ([] !== $breakers) {
                 return [
                     'prefix' => [],
-                    'run' => array_map(static fn (int $class): int => $automaton->representatives[$class], $word),
+                    'run' => self::characters($automaton, $word, $starts),
                     'breakers' => $breakers,
                     'exact' => $exact,
                 ];
@@ -980,10 +1045,12 @@ final class SearchCostProver
      * short, or when those paths succeed or fail before the run's end. The
      * calls start at the phases of the run word their matches end at.
      *
-     * @param non-empty-list<int> $word
-     * @param array<int, true>    $jumps
-     * @param bool                $exact whether every path the calls went through is one the model reads as
-     *                                   the engine does
+     * @param non-empty-list<int>  $word
+     * @param array<int, true>     $jumps
+     * @param array<int, int>|null $starts the character of each class an attempt starts at; null when
+     *                                     one starts anywhere
+     * @param bool                 $exact  whether every path the calls went through is one the model reads
+     *                                     as the engine does
      *
      * @param-out bool $exact
      *
@@ -991,7 +1058,7 @@ final class SearchCostProver
      *
      * @return array<int, true>|null
      */
-    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, bool &$exact): ?array
+    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, ?array $starts, bool &$exact): ?array
     {
         $length = \count($word);
         $calls = [[0, $automaton->initials[0]['items']]];
@@ -999,7 +1066,9 @@ final class SearchCostProver
         $after = [];
         for ($index = 0; $index < \count($calls); $index++) {
             [$phase, $items] = $calls[$index];
-            $match = self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $exact);
+            // The call starts no attempt where the character holds no
+            // first code unit.
+            $match = null !== $starts && !isset($starts[$word[$phase]]) ? null : self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $exact);
             if (null === $match) {
                 return null;
             }
