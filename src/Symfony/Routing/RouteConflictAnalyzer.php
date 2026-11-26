@@ -755,7 +755,8 @@ final class RouteConflictAnalyzer
      *
      * @phpstan-param RouteDescriptor $route
      *
-     * @throws ComplexityException When the solver gives up on the requirement
+     * @throws ComplexityException    When the solver gives up on the requirement
+     * @throws SemanticErrorException When PCRE2 refuses the requirement
      */
     private function pathsTakenAsIs(array $route, SolverOptions $options): string
     {
@@ -849,7 +850,8 @@ final class RouteConflictAnalyzer
      *
      * @phpstan-param RouteDescriptor $route
      *
-     * @throws ComplexityException When the solver gives up on the requirement
+     * @throws ComplexityException    When the solver gives up on the requirement
+     * @throws SemanticErrorException When PCRE2 refuses the requirement
      */
     private function readsOwnPathsForTheSlash(array $route, SolverOptions $options): bool
     {
