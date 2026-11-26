@@ -99,6 +99,19 @@ CHANGELOG
    `/(?(DEFINE)(?<n>a++b?))a/`. A repetition outside every group a call
    runs reads what follows it as before: `/a+;(x)(?1)/` becomes
    `/a++;(x)(?1)/`.
+ * A group a call runs that repeats something some number of times, and
+   a pattern that calls itself whole, are no longer rewritten: PCRE2 makes
+   such a repeat possessive by the brackets and the classes written around
+   it, and its JIT then misses matches. `/((?:a)+b)c(?1)d/` became
+   `/(a+b)c(?1)d/`, which finds nothing in `abcabcabd` with the JIT where
+   the pattern finds `abcabd`, from PCRE2 10.39 to 10.49; `/(a+(?:b))c(?1)d/`,
+   `/(a+(?:b|c))x(?1)d/` and `/([0-9]+b)c(?1)d/` lost a group, an
+   alternation or a class the same way, and `/x(?R)a|(?:a)*/` became
+   `/x(?R)a|a*/`, which finds the empty string in `xaa` where the pattern
+   finds `xaa`, with and without the JIT from PCRE2 10.44. What stands
+   outside every such group is rewritten as before: `/(?:a)+b(?1)(c)/`
+   still becomes `/a+b(?1)(c)/`. The check of the result refuses such a
+   rewrite whether `verifyWithAutomata` is on or off.
  * The check of the result runs the body of a group where each call of it
    stands, a group a DEFINE holds included, under the options in force
    where the DEFINE stands: `/(?(DEFINE)(?<n>a|b))x(?&n)/` becomes
