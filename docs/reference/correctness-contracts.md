@@ -156,8 +156,10 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
     a statement of the body, or of the block of braces the call stands in, that no later assignment reaches through a
     loop the block holds. `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`. The head of a
     `foreach` over literals gives each of them to a call in its body the body does not write it in first, and a
-    composition joins what each variable holds where it is read. Where an assignment in a branch or a loop of its own
-    may stand between, in a `switch` or in a block of the alternative syntax, the call names no loop.
+    composition joins what each variable holds where it is read. A list of patterns a variable is assigned gives each
+    of its items to the `preg_replace()`, `preg_replace_callback()` or `preg_filter()` that reads it, unless an item
+    reads a variable. Where an assignment in a branch or a loop of its own may stand between, in a `switch` or in a
+    block of the alternative syntax, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 
