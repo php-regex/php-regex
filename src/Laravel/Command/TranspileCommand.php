@@ -143,7 +143,7 @@ final class TranspileCommand extends Command
             $this->line('  '.ConsoleWriter::pattern($this->regex, $this->output, $pattern));
             $this->newLine();
 
-            $this->line('<fg=white;options=bold>Target ('.ucfirst($result->target).'):</>');
+            $this->line('<fg=white;options=bold>Target ('.ucfirst($result->dialect->value).'):</>');
             $targetPattern = $result->pattern;
             if ('' !== $result->flags) {
                 $targetPattern .= ' <fg=gray>(flags: '.$result->flags.')</>';

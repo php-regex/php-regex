@@ -79,7 +79,7 @@ final class FirstErrorLocator
      */
     public function earlierError(string $regex, LexerException|ParserException|RecursionLimitException $error): ?RegexException
     {
-        $position = $error->position ?? 0;
+        $position = $error->offset ?? 0;
 
         try {
             [$pattern, $flags, $delimiter] = PatternParser::extractPatternAndFlags($regex, $this->target);
@@ -131,15 +131,15 @@ final class FirstErrorLocator
             $this->firstOpenerConditionErrorBefore($read, $pattern, $flags, $delimiter, $limit),
         ];
         foreach ($laterErrors as $laterError) {
-            if (null !== $laterError && (null === $earlier || ($laterError->position ?? $position) < ($earlier->position ?? $position))) {
+            if (null !== $laterError && (null === $earlier || ($laterError->offset ?? $position) < ($earlier->offset ?? $position))) {
                 $earlier = $laterError;
             }
         }
 
         // What the tree read shows comes last, and only before the error
         // found so far: the search stops short of it.
-        $readError = $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, null === $earlier ? $limit : min($limit, $earlier->position ?? $position));
-        if (null !== $readError && (null === $earlier || ($readError->position ?? $position) < ($earlier->position ?? $position))) {
+        $readError = $this->firstErrorReadBefore($read, $pattern, $flags, $delimiter, null === $earlier ? $limit : min($limit, $earlier->offset ?? $position));
+        if (null !== $readError && (null === $earlier || ($readError->offset ?? $position) < ($earlier->offset ?? $position))) {
             $earlier = $readError;
         }
 
@@ -165,7 +165,7 @@ final class FirstErrorLocator
             try {
                 (new TokenParser($this->maxRecursionDepth, $this->target))->parse($stream, $flags, $delimiter, \strlen($pattern));
             } catch (LexerException|LimitException|ParserException $syntaxError) {
-                $at = $syntaxError->position ?? $position;
+                $at = $syntaxError->offset ?? $position;
                 // A body that never closes is read to the end: an error met
                 // there, other than that ")" missing, comes first. So does
                 // one in the item that ends a class never closed, but for a
@@ -175,7 +175,7 @@ final class FirstErrorLocator
                     && (ErrorCode::GroupUnclosed === $error->errorCode
                         || (ErrorCode::CharclassUnclosed === $error->errorCode && null !== $last
                             && !\in_array($last->type, [TokenType::Range, TokenType::QuoteModeStart, TokenType::QuoteModeEnd], true)));
-                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->position ?? $position))
+                if (($at < min($limit, $readUpTo) || $atTheEnd) && (null === $earlier || $at < ($earlier->offset ?? $position))
                     && !($error instanceof LexerException && $this->rangeEndsWhereTokenizingStopped($syntaxError, $syntaxTokens))) {
                     return $this->escapeErrorEndingRange($syntaxError, $syntaxTokens, $pattern, $flags) ?? $syntaxError;
                 }
@@ -213,7 +213,7 @@ final class FirstErrorLocator
             return null;
         }
 
-        $end = self::rangeEndAfterHyphen($tokens, $error->position ?? 0);
+        $end = self::rangeEndAfterHyphen($tokens, $error->offset ?? 0);
         if (null === $end) {
             return null;
         }
@@ -245,7 +245,7 @@ final class FirstErrorLocator
             }
         }
 
-        return null !== $last && TokenType::Range === $last->type && $last->end() === $error->position;
+        return null !== $last && TokenType::Range === $last->type && $last->end() === $error->offset;
     }
 
     /**
@@ -657,7 +657,7 @@ final class FirstErrorLocator
                 // A class read alone opens no group, so no limit is met
                 // here today; one would escape the error being reported. A
                 // range the parser refuses leaves the items before it.
-                $error = $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($position, $classError->position ?? $position));
+                $error = $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($position, $classError->offset ?? $position));
                 if (null !== $error) {
                     return $error;
                 }
@@ -696,7 +696,7 @@ final class FirstErrorLocator
 
         // The missing "]" and a reversed range the lexer found come after
         // every item read; an escape it refuses, after those before it.
-        $position = $lexerError->position ?? 0;
+        $position = $lexerError->offset ?? 0;
         $atTheEnd = \in_array($lexerError->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true);
         $end = \strlen($pattern);
         $class = [...\array_slice($tokens, $opening), new Token(TokenType::CharClassClose, ']', $end, 0), new Token(TokenType::Eof, '', $end)];
@@ -705,11 +705,11 @@ final class FirstErrorLocator
             $ast = (new TokenParser($this->maxRecursionDepth, $this->target))->parse(new TokenStream($class, $pattern), $flags, $delimiter, $end);
             $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
         } catch (SemanticErrorException $error) {
-            return $atTheEnd || ($error->position ?? $position) < $position ? $error : null;
+            return $atTheEnd || ($error->offset ?? $position) < $position ? $error : null;
         } catch (LexerException|LimitException|ParserException $classError) {
             // A range the parser refuses leaves the items before it, and
             // before the error the lexer found.
-            return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($classError->position ?? $end, $position));
+            return $this->firstItemErrorBefore($class, $pattern, $flags, $delimiter, min($classError->offset ?? $end, $position));
         }
 
         return null;
@@ -798,7 +798,7 @@ final class FirstErrorLocator
 
                 return null;
             } catch (SemanticErrorException $error) {
-                $at = $error->position ?? $limit;
+                $at = $error->offset ?? $limit;
 
                 return $at < $limit || ($atTheLimit && $at === $limit) ? $error : null;
             } catch (LexerException|LimitException|ParserException) {
@@ -830,7 +830,7 @@ final class FirstErrorLocator
                     ->parse(new TokenStream([$token, new Token(TokenType::Eof, '', $token->end())], $pattern), $flags, $delimiter, \strlen($pattern));
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (RegexException $error) {
-                if (($error->position ?? $position) < $position) {
+                if (($error->offset ?? $position) < $position) {
                     return $error;
                 }
             }
@@ -894,7 +894,7 @@ final class FirstErrorLocator
 
                 $ast->accept(new Validator($this->maxLookbehindLength, $pattern, $this->target));
             } catch (SemanticErrorException $versionError) {
-                if (($versionError->position ?? $position) < $position) {
+                if (($versionError->offset ?? $position) < $position) {
                     return $versionError;
                 }
             } catch (LexerException|LimitException|ParserException) {

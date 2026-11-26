@@ -345,7 +345,7 @@ final class UnclosedClassRangeOrderTest extends TestCase
             $this->fail(\sprintf('%s is refused', $pattern));
         } catch (LexerException $exception) {
             $this->assertSame($code, $exception->errorCode, $pattern);
-            $this->assertSame($offset, $exception->position, $pattern);
+            $this->assertSame($offset, $exception->offset, $pattern);
         }
     }
 

@@ -279,7 +279,7 @@ final class LexerTest extends TestCase
         }
 
         $this->assertInstanceOf(LexerException::class, $caught, \sprintf('%s ends on a backslash but was read.', $pattern));
-        $this->assertSame([ErrorCode::EscapeTrailingBackslash, $offset], [$caught->errorCode, $caught->position], $pattern);
+        $this->assertSame([ErrorCode::EscapeTrailingBackslash, $offset], [$caught->errorCode, $caught->offset], $pattern);
     }
 
     /**

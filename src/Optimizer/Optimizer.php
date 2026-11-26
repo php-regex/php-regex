@@ -17,7 +17,6 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ExceptionInterface;
-use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\GroupNode;
@@ -61,7 +60,6 @@ final class Optimizer
      * @param OptimizerOptions|null $options What may be rewritten; null reads the defaults. A config
      *                                       array becomes one through OptimizerOptions::fromArray()
      *
-     * @throws LexerException  when the pattern does not lex
      * @throws ParserException when the pattern does not parse: directly, on a delimiter or
      *                         modifier the reader refuses, or as one of its leaves
      *                         (SyntaxErrorException, RecursionLimitException or

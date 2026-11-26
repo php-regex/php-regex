@@ -85,7 +85,7 @@ final class FacadeTest extends LaravelTestCase
         $report = Regex::analyze('/^[a-z]+$/');
 
         $this->assertInstanceOf(AnalysisReport::class, $report);
-        $this->assertTrue($report->isValid);
+        $this->assertTrue($report->validation->isValid);
     }
 
     #[Test]

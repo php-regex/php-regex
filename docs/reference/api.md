@@ -354,10 +354,10 @@ empty string for a valid pattern.
 
 ---
 
-### analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): AnalysisReport
+### analyze(string $regex, ?RedosOptions $options = null): AnalysisReport
 
-Aggregates validation, lint, ReDoS analysis, optimization, and explanation into a single report.
-The three optional arguments are those of `redos()`, below, and
+Aggregates validation, lint, ReDoS analysis and optimization into a single report: each part is what
+`validate()`, `lint()`, `redos()` and `optimize()` return alone. The options are those of `redos()`, below, and
 `$report->redos` is what `redos()` returns with them.
 
 ```php
@@ -365,25 +365,24 @@ use PHPRegex\Toolkit\Regex;
 
 $report = Regex::create()->analyze('/(a+)+b/');
 
-var_export($report->isValid);     // true or false
-echo count($report->errors);      // Validation errors
-echo count($report->lintIssues);  // Lint warnings
-echo $report->redos->severity->value;  // 'critical', 'safe', etc.
-echo $report->explanation;        // Human explanation
-echo $report->highlighted;        // Syntax-highlighted pattern
+var_export($report->validation->isValid); // true or false
+echo $report->validation->error;          // why the target refuses the pattern; null when it accepts it
+echo count($report->violations);          // what the lint rules report
+echo $report->redos->severity->value;     // 'critical', 'safe', etc.
+echo $report->optimization->optimized;    // the rewrite offered
 ```
 
 **AnalysisReport Fields:**
 
 | Field           | Type                 | Description                    |
 |-----------------|----------------------|--------------------------------|
-| `isValid`       | bool                 | Pattern is syntactically valid |
-| `errors`        | array\<string\>      | Validation error messages      |
-| `lintIssues`    | list\<RuleViolation\> | Lint findings, as `lint()` gives them |
+| `validation`    | ValidationResult     | Whether the target accepts the pattern, and why not: the error, its code, its offset, its hint |
+| `violations`    | list\<RuleViolation\> | Lint findings, as `lint()` gives them; none for a pattern the target refuses |
 | `redos`         | RedosAnalysis        | ReDoS analysis result          |
 | `optimization`  | OptimizationResult   | Suggested optimizations        |
-| `explanation`   | string               | Human explanation              |
-| `highlighted`   | string               | Highlighted pattern            |
+| `errors`        | list\<string\>       | What kept the lint or the optimizer from finishing on a valid pattern, as a limit of the library; empty otherwise |
+
+The explanation and the highlighted pattern are not part of the report: call `explain()` and `highlight()`.
 
 ---
 
@@ -406,21 +405,24 @@ foreach (Regex::create()->lint('/(?=a)b/') as $violation) {
 
 Each `RuleViolation` (`PHPRegex\Linter\Rule\RuleViolation`) carries the rule's `id`, its `message`, the `offset`
 and `end` of the text it names in the pattern body, a `hint` when the rule has one, and its `severity`
-(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`. Without the facade,
+(`LintSeverity`). `analyze()` puts the same list in `$report->violations`. Without the facade,
 `(new PatternLinter($parser->target()))->analyze($parser->parse($regex))` returns it too: `PatternLinter`
 (`PHPRegex\Linter\PatternLinter`) takes the target, then a map turning rules on and off by id.
 
 ---
 
-### redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null): RedosAnalysis
+### redos(string $regex, ?RedosOptions $options = null): RedosAnalysis
 
 Analyzes ReDoS risk without an analysis report. Default mode is **theoretical**: the pattern is read, never run, and the verdict is proven where the backtracking model covers the pattern, heuristic elsewhere. **Confirmed** mode replays the attack on the running PCRE (see [the ReDoS guide](../guides/redos.md)).
+
+`RedosOptions` (`PHPRegex\Redos\RedosOptions`) says how the pattern is analysed, in one object: the `mode`, the `threshold` (the severity a verdict is replayed from in confirmed mode, `RedosSeverity::High` by default; it filters nothing out of the analysis), the `confirmation` limits of the replay (a `ConfirmationOptions`) and the budget of the proof (`maxStates`, `maxSteps`, `boundedRepeatCutoff`).
 
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 
-$analysis = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Theoretical);
+$analysis = Regex::create()->redos('/(a+)+b/');
 
 echo $analysis->severity->value;          // 'critical'
 echo $analysis->headline();               // 'Exponential backtracking (proven)'
@@ -433,7 +435,7 @@ echo $analysis->vulnerablePart;           // 'a+'
 echo $analysis->recommendations[0];       // Suggested fix
 
 // Optional: replay the attack on the running PCRE
-$confirmed = Regex::create()->redos('/(a+)+b/', mode: RedosMode::Confirmed);
+$confirmed = Regex::create()->redos('/(a+)+b/', new RedosOptions(RedosMode::Confirmed));
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical'; // 'confirmed'
 var_dump($confirmed->replayed);                               // bool(true)
 ```
@@ -908,11 +910,9 @@ Returned by `analyze()`. Comprehensive pattern analysis.
 ```php
 $report = Regex::create()->analyze('/(a+)+b/');
 
-if (!$report->isValid) {
-    // Handle validation errors: each entry is the message string
-    foreach ($report->errors as $error) {
-        echo $error, "\n";
-    }
+if (!$report->validation->isValid) {
+    // The verdict of validate(): its message, its code, where the fault is
+    echo $report->validation->error, "\n";
 }
 
 // Check ReDoS safety
@@ -921,8 +921,10 @@ if ($report->redos->severity->value !== 'safe') {
     echo $report->redos->recommendations[0];
 }
 
-// Get explanation
-echo $report->explanation;
+// The lint findings, as lint() gives them
+foreach ($report->violations as $violation) {
+    echo $violation->id, ': ', $violation->message, "\n";
+}
 ```
 
 ---
@@ -967,7 +969,7 @@ Returned by `transpile()`. Includes the output for the target, JavaScript, the H
 ```php
 $result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
 
-echo $result->target;      // javascript
+echo $result->dialect->value; // javascript
 echo $result->pattern;     // (?<word>\w+)
 echo $result->flags;       // i
 echo $result->literal;     // /(?<word>\w+)/i
@@ -1019,10 +1021,10 @@ Exception hierarchy (simplified):
   - `UnknownLintRuleException` (a rules map that names a rule the linter does not run)
   - `UnsupportedTargetException` (a target PHP whose engine the library does not judge: PHP 7.2 and earlier ship PCRE1)
   - `JsonEncodingException` (a value the JSON output cannot write)
-  - `RegexException` (base exception with position and error code)
-    - `LexerException` (tokenization failure)
-    - `ParserException`
-      - `SyntaxErrorException` (invalid syntax)
+  - `RegexException` (base exception with offset and error code)
+    - `ParserException` (a malformed pattern)
+      - `LexerException` (met while reading the tokens)
+      - `SyntaxErrorException` (met while reading the grammar)
     - `LimitException` (the library stopped at one of its own limits)
       - `RecursionLimitException` (max recursion depth)
       - `ResourceLimitException` (max pattern length, or a text explanation or ASCII tree past 8 MiB)
@@ -1058,26 +1060,25 @@ the library reads patterns with then gives up. `$pcreError` holds the
 `preg_last_error()` code. Raise the limits, or allow `ini_set()`.
 
 `VisualContextInterface` marks the exceptions that carry the failing pattern
-with a caret under the offending character, in `RegexException::$snippet`, and
-the pattern it is drawn from, `getPattern()`: `ParserException` and its syntax
-subclass, `LimitException` (and its recursion and resource subclasses),
-`LexerException`, `SemanticErrorException`, `TranspileException` and the
+with a caret under the offending character, in `RegexException::$caretSnippet`, and
+the pattern it is drawn from, `getPattern()`: `ParserException` and its
+subclasses, `LimitException` (and its recursion and resource subclasses),
+`SemanticErrorException`, `TranspileException` and the
 automata `ComplexityException`. Test for it with `instanceof` to render the
 snippet when the caught exception has one. A line longer than 80 bytes is cut
 around the caret, never inside a UTF-8 character.
 
-Which one to catch: `LexerException`, `ParserException` and its subclass
-`SyntaxErrorException` all mean a pattern PCRE refuses; which of them is
-thrown follows the stage of the library that met the fault, which may move
-between releases. Catch `RegexException` for every judgement on a pattern
-(a semantic error and a limit of the library included), or read
+Which one to catch: `ParserException` holds every malformed pattern, one
+`parse()` refuses. Its subclasses `LexerException` and `SyntaxErrorException`
+say which stage of the library met the fault, which may move between
+releases: catch the parent. Catch `RegexException` for every judgement on a
+pattern (a semantic error and a limit of the library included), or read
 `validate()`, which reports each with its category and error code.
 
 **Usage Examples:**
 
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 
@@ -1089,8 +1090,6 @@ try {
 
 try {
     $ast = Regex::create()->parse('/[unclosed/');
-} catch (LexerException $e) {
-    echo "Tokenization failed: {$e->getMessage()}";
 } catch (ParserException $e) {
     echo "Parse failed: {$e->getMessage()}";
 }

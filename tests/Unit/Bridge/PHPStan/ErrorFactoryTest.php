@@ -18,6 +18,7 @@ use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
 use PHPRegex\PHPStan\ErrorFactory;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPStan\Rules\IdentifierRuleError;
@@ -134,7 +135,7 @@ final class ErrorFactoryTest extends TestCase
         // the library's validation, unfinished, of unknown severity.
         $pattern = '/[z-a]+$/';
         $this->assertFalse(self::runningEngineCompiles($pattern));
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(threshold: RedosSeverity::Low));
         $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);
 
         $error = ErrorFactory::redos($pattern, $analysis, null, 1);

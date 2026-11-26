@@ -106,7 +106,7 @@ function readPatterns(string $source): array
 function describe(\Throwable $e): string
 {
     $code = $e instanceof RegexException ? $e->errorCode->name : '';
-    $position = $e instanceof RegexException ? (string) $e->position : '';
+    $position = $e instanceof RegexException ? (string) $e->offset : '';
 
     return 'E:'.$e::class.'|'.$code.'|'.$position.'|'.$e->getMessage();
 }

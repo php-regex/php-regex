@@ -6,6 +6,14 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Exception\LexerException` extends `Exception\ParserException`: one
+   `catch (ParserException)` holds every pattern `parse()` refuses as
+   malformed, whichever stage of the parser met the fault.
+ * `Exception\RegexException` names where the fault is as
+   `Validation\ValidationResult` does: `$offset` and `$caretSnippet`.
+ * `Validation\ValidationErrorCategory::PcreRuntime` is `pcre_runtime`, in
+   snake_case as every other value the JSON documents carry (1.x
+   `pcre-runtime`).
  * `ParserOptions` holds no ReDoS list: `ParserOptions::fromArray()` and
    `RegexParser::create()`, which dropped `redos_ignored_patterns`, refuse
    it and name `RedosAnalyzer`'s `$ignoredPatterns`. Every argument of
@@ -326,7 +334,7 @@ CHANGELOG
  * `php_version` is read whole, each part after the major at most 99, and a
    PHP_VERSION_ID is at least `ParserOptions::OLDEST_PHP_VERSION_ID`, 70000;
    the constructor of `ParserOptions` checks the ranges of the limits.
- * `RegexException::$snippet` is the one snippet accessor:
+ * `RegexException::$caretSnippet` is the one snippet accessor:
    `VisualContextInterface::getVisualSnippet()` is gone, the interface declares
    `getPattern()`. A snippet is never cut inside a UTF-8 character.
  * `Exception\InternalFailureException`: the library could not finish its own

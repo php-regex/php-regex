@@ -18,6 +18,7 @@ use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -37,7 +38,7 @@ final class JavaScriptTranspilerTest extends TestCase
         $regex = Regex::create();
         $result = $regex->transpile('/foo/i', 'javascript');
 
-        $this->assertSame('javascript', $result->target);
+        $this->assertSame(Dialect::JavaScript, $result->dialect);
         $this->assertSame('foo', $result->pattern);
         $this->assertSame('i', $result->flags);
         $this->assertSame('/foo/i', $result->literal);

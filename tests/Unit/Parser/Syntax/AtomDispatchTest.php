@@ -104,7 +104,7 @@ final class AtomDispatchTest extends TestCase
             $this->fail('Expected the pattern to be refused.');
         } catch (ParserException $e) {
             $this->assertSame($code, $e->errorCode);
-            $this->assertSame($position, $e->position);
+            $this->assertSame($position, $e->offset);
         }
     }
 

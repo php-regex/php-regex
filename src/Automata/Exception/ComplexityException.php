@@ -31,7 +31,7 @@ final class ComplexityException extends RegexException implements ExceptionInter
      */
     public function __construct(
         string $message,
-        ?int $position = null,
+        ?int $offset = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
         ErrorCode $errorCode = ErrorCode::Complexity,
@@ -40,9 +40,9 @@ final class ComplexityException extends RegexException implements ExceptionInter
          */
         private ?array $diagnostic = null,
     ) {
-        $snippet = $this->initializeContext($position, $pattern);
+        $caretSnippet = $this->initializeContext($offset, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $snippet, $previous);
+        parent::__construct($message, $errorCode, $offset, $caretSnippet, $previous);
     }
 
     /**

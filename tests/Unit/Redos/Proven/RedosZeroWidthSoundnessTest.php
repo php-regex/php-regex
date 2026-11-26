@@ -17,6 +17,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -77,7 +78,7 @@ final class RedosZeroWidthSoundnessTest extends TestCase
     #[DataProvider('provideVulnerablePatterns')]
     public function test_confirmed_mode_replays_the_zero_width_witness(string $pattern): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $this->assertTrue($analysis->replayed, $pattern);

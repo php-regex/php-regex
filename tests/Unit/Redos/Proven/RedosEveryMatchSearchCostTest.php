@@ -103,7 +103,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
         $this->assertNull($analysis->searchCost, $pattern.': preg_match() stops at the first empty match.');
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
         $this->assertSame(SearchCostCause::EmptyMatchRetry, $confirmed->cause, $pattern.': the retry after an empty match pays the run.');
@@ -158,7 +158,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
         $this->assertNull($analysis->searchCost, $pattern.': preg_match() stops at the first short match.');
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
         $this->assertSame(SearchCostCause::ShortMatch, $confirmed->cause, $pattern);
@@ -235,7 +235,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->everyMatchSearchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->everyMatchSearchCost, $pattern.' in confirmed mode');
     }
 
     /**
@@ -427,7 +427,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->everyMatchSearchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->everyMatchSearchCost, $pattern.' in confirmed mode');
     }
 
     /**
@@ -584,7 +584,7 @@ final class RedosEveryMatchSearchCostTest extends TestCase
     #[Test]
     public function test_every_match_search_cost_survives_the_confirmation_of_the_attempt(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(?:a+\d)?/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze('/(?:a+\d)?/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
         $copy = $analysis->withConfirmation(null, $analysis->confidence, $analysis->witness, $analysis->replayed);
 
         $this->assertSame($analysis->everyMatchSearchCost, $copy->everyMatchSearchCost);

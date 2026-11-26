@@ -55,12 +55,16 @@ patterns skipped by their body, whatever their delimiters and modifiers:
 listing `/(a+)+b/` skips `/(a+)+b/i` too; an entry written with modifiers
 names that pattern only, the same body under the same modifiers in any order
 and between any delimiters: `/(a+)+b/i` skips `#(a+)+b#i`, not `/(a+)+b/` or
-`/(a+)+b/is`), `threshold`
-(`RedosSeverity::High`, the lowest severity that triggers a confirmation run)
-and `options` (a `RedosOptions`).
+`/(a+)+b/is`), `confirmationRunner` (what replays a heuristic verdict in
+confirmed mode) and `options` (a `RedosOptions`, the options of every call
+that names none).
 
-`RedosOptions` is the budget of the backtracking model, counted in states and
-steps, never in time — the same pattern gets the same verdict on every machine:
+`RedosOptions` says how a pattern is analysed, in one object: its `mode`
+(`RedosMode::Theoretical` by default), the `threshold` a verdict is replayed
+from in confirmed mode (`RedosSeverity::High`; it filters nothing out of the
+analysis), the `confirmation` limits of that replay (a `ConfirmationOptions`),
+and the budget of the backtracking model, counted in states and steps, never
+in time — the same pattern gets the same verdict on every machine:
 
 | Option | Default | Role |
 | --- | --- | --- |
@@ -80,8 +84,8 @@ steps, never in time — the same pattern gets the same verdict on every machine
 A value below its floor, as `steps: 0` or a `maxInputLength` below
 `minInputLength`, throws `InvalidRegexOptionException` naming the option.
 
-`analyze()` also takes `threshold` (the constructor one by default), `mode` and
-`confirmOptions`. `RedosMode::Off` skips the analysis, `RedosMode::Theoretical`
+`analyze()` takes a `RedosOptions` of its own, which replaces the analyzer's
+for that call. `RedosMode::Off` skips the analysis, `RedosMode::Theoretical`
 reads the AST, and runs the pattern only to check a witness through a
 lookaround on a few short inputs; `RedosMode::Confirmed` runs the
 confirmation for you.
@@ -127,8 +131,9 @@ Confirmed mode replays an exponential witness on the running engine; it tries se
 
 ```php
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 
-$replayed = (new RedosAnalyzer())->analyze('/(a+)+b/', mode: RedosMode::Confirmed);
+$replayed = (new RedosAnalyzer())->analyze('/(a+)+b/', new RedosOptions(RedosMode::Confirmed));
 
 echo $replayed->witness->render(), "\n";         // "a" x n . "!b"
 var_dump($replayed->replayed);                   // bool(true)

@@ -114,8 +114,8 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             }
             $output->write('  '.$output->error('Transpile failed: '.$e->getMessage())."\n");
 
-            if ($e instanceof TranspileException && null !== $e->position) {
-                $output->write('  At offset '.$e->position."\n");
+            if ($e instanceof TranspileException && null !== $e->offset) {
+                $output->write('  At offset '.$e->offset."\n");
             }
 
             return $this->reportRange($output, $range, $args['pattern'], self::FAILURE);
@@ -187,7 +187,7 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         $style->renderSection('Transpilation Result', 1, 1);
 
         $style->renderKeyValueBlock([
-            'Target' => $output->success(Ascii::upper($result->target)),
+            'Target' => $output->success(Ascii::upper($result->dialect->value)),
             'Source' => $result->source,
         ]);
 

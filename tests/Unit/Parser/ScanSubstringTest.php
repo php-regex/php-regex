@@ -130,7 +130,7 @@ final class ScanSubstringTest extends TestCase
         $this->assertStringContainsString('scan of groups 1', (string) $diagram);
         $this->assertSame($pattern, $regex->optimize($pattern)->original);
         $this->assertInstanceOf(RedosAnalysis::class, $regex->redos($pattern));
-        $this->assertTrue($regex->analyze($pattern)->isValid);
+        $this->assertTrue($regex->analyze($pattern)->validation->isValid);
 
         try {
             (new RegularSubsetValidator())->assertSupported($ast, $pattern, new SolverOptions());

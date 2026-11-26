@@ -37,6 +37,7 @@ use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\Heatmap;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -174,7 +175,7 @@ final class DebugCommand extends AbstractCommand implements JsonCommandInterface
 
         try {
             $patternInfo = DelimitedPattern::fromDelimited($pattern, $target);
-            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode);
+            $analysis = $regex->redos($pattern, new RedosOptions($redosMode, $redosThreshold ?? RedosSeverity::High));
             // The analysis reports a pattern it cannot parse as its error;
             // the exit code reports an invalid pattern, syntax or semantic
             // error alike, as a problem of the pattern.

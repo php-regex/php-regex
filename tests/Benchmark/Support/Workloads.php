@@ -20,7 +20,6 @@ use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Redos\RedosMode;
 
 /**
  * The work a growth series measures, shared by the benchmarks and the test
@@ -93,6 +92,6 @@ final class Workloads
      */
     public static function redos(string $pattern, ?RegexParser $parser = null): RedosAnalysis
     {
-        return (new RedosAnalyzer($parser ?? RegexParser::create(['cache' => null])))->analyze($pattern, null, RedosMode::Theoretical);
+        return (new RedosAnalyzer($parser ?? RegexParser::create(['cache' => null])))->analyze($pattern);
     }
 }

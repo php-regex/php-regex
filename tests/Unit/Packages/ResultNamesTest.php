@@ -32,7 +32,7 @@ final class ResultNamesTest extends TestCase
         $properties = array_map(static fn (\ReflectionProperty $property): string => $property->getName(), (new \ReflectionClass(AnalysisReport::class))->getProperties());
 
         $this->assertSame('/a+/', $report->optimization->original);
-        $this->assertNotSame('', $report->explanation);
+        $this->assertSame(['validation', 'violations', 'redos', 'optimization', 'errors'], $properties);
         $this->assertNotContains('explain', $properties);
         $this->assertNotContains('optimizations', $properties);
     }

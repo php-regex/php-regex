@@ -89,7 +89,7 @@ final class ValidatorReuseTest extends TestCase
         try {
             $tree->accept($validator);
         } catch (SemanticErrorException $error) {
-            return [$error->errorCode->value, $error->position, $error->getMessage()];
+            return [$error->errorCode->value, $error->offset, $error->getMessage()];
         }
 
         return null;

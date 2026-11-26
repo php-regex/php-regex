@@ -260,7 +260,7 @@ final class ClassParserTest extends TestCase
             self::parse($pattern, '', PcreTarget::runtime());
             $this->fail('No error for '.$pattern);
         } catch (ParserException $error) {
-            $this->assertSame([$code, $pcre['offset']], [$error->errorCode, $error->position], 'Oracle: '.$pattern);
+            $this->assertSame([$code, $pcre['offset']], [$error->errorCode, $error->offset], 'Oracle: '.$pattern);
         }
     }
 
@@ -343,13 +343,13 @@ final class ClassParserTest extends TestCase
             try {
                 $expected = RegexParser::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $release])->parse('/'.$pattern.'/'.$flags)->pattern;
             } catch (ParserException $error) {
-                $expected = [$error->errorCode, $error->position, $error->getMessage()];
+                $expected = [$error->errorCode, $error->offset, $error->getMessage()];
             }
 
             try {
                 $actual = self::parse($pattern, $flags, $target);
             } catch (ParserException $error) {
-                $actual = [$error->errorCode, $error->position, $error->getMessage()];
+                $actual = [$error->errorCode, $error->offset, $error->getMessage()];
             }
 
             $this->assertEquals($expected, $actual, \sprintf('%s/%s on %s', $pattern, $flags, $release));

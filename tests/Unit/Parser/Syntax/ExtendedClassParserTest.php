@@ -78,7 +78,7 @@ final class ExtendedClassParserTest extends TestCase
             self::parse('(?[ [z-a] + ])');
         } catch (ParserException $error) {
             $this->assertSame(ErrorCode::RangeReversed, $error->errorCode);
-            $this->assertSame(8, $error->position);
+            $this->assertSame(8, $error->offset);
 
             throw $error;
         }

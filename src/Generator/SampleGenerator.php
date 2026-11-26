@@ -21,7 +21,6 @@ use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\ErrorCode;
-use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Hir\ClassSetProvider;
@@ -300,7 +299,6 @@ final class SampleGenerator extends AbstractNodeVisitor
      * @param string $regex The delimited pattern
      *
      * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
-     * @throws LexerException            when the pattern does not tokenize
      * @throws LimitException            when the pattern passes a limit of the parser
      * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
      *                                   exist, holds a property the running engine cannot read as the target does,

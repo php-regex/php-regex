@@ -912,9 +912,9 @@ final class PatternInfoAnalyzerTest extends TestCase
         } catch (SemanticErrorException $refusal) {
             $this->assertSame($validation->error, $refusal->getMessage());
             $this->assertSame(ErrorCode::KeepInLookaround, $refusal->errorCode);
-            $this->assertSame($validation->offset, $refusal->position);
+            $this->assertSame($validation->offset, $refusal->offset);
             $this->assertSame($validation->hint, $refusal->hint);
-            $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', (string) $refusal->snippet);
+            $this->assertStringStartsWith('Line 1: (?<=a\Kb)c', (string) $refusal->caretSnippet);
         }
     }
 

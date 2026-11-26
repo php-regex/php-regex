@@ -20,6 +20,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -56,13 +57,13 @@ final class RedosFindingTest extends TestCase
         $long = PcreAttemptSteps::steps($attempt, str_repeat('a', 2 * $run).'!');
         $this->assertGreaterThanOrEqual(4 * $short, $long, \sprintf('Oracle: one attempt of %s takes %d then %d steps.', $pattern, $short, $long));
 
-        $this->assertSame($headline, RedosFinding::headline($pattern, (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low)));
+        $this->assertSame($headline, RedosFinding::headline($pattern, (new RedosAnalyzer())->analyze($pattern, new RedosOptions(threshold: RedosSeverity::Low))));
     }
 
     #[Test]
     public function test_details_carry_the_verdict_the_attack_and_the_proven_repair(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', RedosSeverity::Low);
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(threshold: RedosSeverity::Low));
         $repair = RedosFinding::repair(RegexParser::create(), '/(a+)+$/');
         $this->assertInstanceOf(RedosRepair::class, $repair);
         $this->assertInstanceOf(RedosWitness::class, $analysis->witness);

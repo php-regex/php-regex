@@ -14,6 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Integration\Sweep;
 
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Finding;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosConfidence;
@@ -37,19 +38,18 @@ final class RedosSweepTest extends TestCase
         $optimizations = new OptimizationResult('/a+b/', '/a+b/', []);
         $redos = new RedosAnalysis(RedosSeverity::Safe, 0);
 
+        $validation = new ValidationResult(true);
+
         $report = new AnalysisReport(
-            isValid: true,
-            errors: [],
-            lintIssues: [],
+            validation: $validation,
+            violations: [],
             redos: $redos,
             optimization: $optimizations,
-            explanation: 'Test explanation',
-            highlighted: '<span>Test</span>',
         );
 
         $this->assertSame($optimizations, $report->optimization);
-        $this->assertSame('Test explanation', $report->explanation);
-        $this->assertSame('<span>Test</span>', $report->highlighted);
+        $this->assertSame($validation, $report->validation);
+        $this->assertSame([], $report->errors);
     }
 
     #[Test]

@@ -14,6 +14,7 @@ declare(strict_types=1);
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 
 /*
@@ -61,15 +62,15 @@ $analyzer = new RedosAnalyzer(RegexParser::create());
 // keyed by pattern hold a thousand entries, fewer than the corpus, so the
 // first pass alone would leave half of them cold.
 foreach ($patterns as $pattern) {
-    $analyzer->analyze($pattern, null, RedosMode::Theoretical);
+    $analyzer->analyze($pattern, new RedosOptions(RedosMode::Theoretical));
 }
 
 $times = [];
 $proofs = [];
 foreach ($patterns as $pattern) {
-    $analyzer->analyze($pattern, null, RedosMode::Theoretical);
+    $analyzer->analyze($pattern, new RedosOptions(RedosMode::Theoretical));
     $start = hrtime(true);
-    $analysis = $analyzer->analyze($pattern, null, RedosMode::Theoretical);
+    $analysis = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Theoretical));
     $times[] = (hrtime(true) - $start) / 1_000_000;
     $proofs[$analysis->proof->value] = ($proofs[$analysis->proof->value] ?? 0) + 1;
 }

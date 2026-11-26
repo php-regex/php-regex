@@ -64,7 +64,7 @@ final class PatternTextTest extends TestCase
             $this->fail('A text that is no UTF-8 was read in UTF mode.');
         } catch (LexerException $exception) {
             $this->assertSame(ErrorCode::EncodingInvalidUtf8, $exception->errorCode);
-            $this->assertSame($offset, $exception->position);
+            $this->assertSame($offset, $exception->offset);
             $this->assertSame('Input string is not valid UTF-8.', $exception->getMessage());
         }
     }

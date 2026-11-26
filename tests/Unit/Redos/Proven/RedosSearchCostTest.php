@@ -512,7 +512,7 @@ final class RedosSearchCostTest extends TestCase
         $theoretical = $analyzer->analyze($pattern);
         $this->assertTrue($theoretical->isProvenSafe(), $pattern);
         $this->assertNull(self::searchCostOf($theoretical), $pattern);
-        $this->assertNull(self::searchCostOf($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)), $pattern);
+        $this->assertNull(self::searchCostOf($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))), $pattern);
     }
 
     /**
@@ -536,7 +536,7 @@ final class RedosSearchCostTest extends TestCase
         $analyzer = new RedosAnalyzer();
 
         $this->assertNull(self::searchCostOf($analyzer->analyze('/\G\s+$|(?<=y)\s+z/')));
-        $this->assertNull(self::searchCostOf($analyzer->analyze('/\G\s+$|(?<=y)\s+z/', RedosSeverity::Low, RedosMode::Confirmed)));
+        $this->assertNull(self::searchCostOf($analyzer->analyze('/\G\s+$|(?<=y)\s+z/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))));
     }
 
     /**
@@ -812,7 +812,7 @@ final class RedosSearchCostTest extends TestCase
     #[DataProvider('provideAttemptsNotProvenLinear')]
     public function test_search_cost_is_computed_only_on_an_attempt_proven_linear(string $pattern, RedosMode $mode, RedosProof $proof): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, null, $mode);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode));
 
         $this->assertSame($proof, $analysis->proof, $pattern);
         $this->assertNull(self::searchCostOf($analysis), $pattern);
@@ -843,7 +843,7 @@ final class RedosSearchCostTest extends TestCase
 
         $this->assertNull(self::searchCostOf($analyzer->analyze($pattern)), $pattern);
 
-        $cost = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
         $this->assertTrue($cost->replayed, $pattern);
@@ -864,7 +864,7 @@ final class RedosSearchCostTest extends TestCase
     #[Test]
     public function test_confirmed_mode_replays_the_search_cost_witness(): void
     {
-        $cost = (new RedosAnalyzer())->analyze('/\s+$/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze('/\s+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost);
         $this->assertTrue($cost->replayed);
@@ -918,7 +918,7 @@ final class RedosSearchCostTest extends TestCase
     #[DataProvider('provideAnalysesWithoutSearchCost')]
     public function test_search_cost_json_key_is_null_without_a_witness(string $pattern, RedosMode $mode): void
     {
-        $json = self::encode((new RedosAnalyzer())->analyze($pattern, null, $mode));
+        $json = self::encode((new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode)));
 
         $this->assertArrayHasKey('search_cost', $json);
         $this->assertNull($json['search_cost']);
@@ -1093,11 +1093,11 @@ final class RedosSearchCostTest extends TestCase
     {
         $analyzer = new RedosAnalyzer();
 
-        $replayed = $analyzer->analyze('/\s+$/', RedosSeverity::Medium, RedosMode::Confirmed)->searchCost;
+        $replayed = $analyzer->analyze('/\s+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Medium))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $replayed);
         $this->assertTrue($replayed->replayed);
 
-        $kept = $analyzer->analyze('/\s+$/', RedosSeverity::High, RedosMode::Confirmed)->searchCost;
+        $kept = $analyzer->analyze('/\s+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::High))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $kept);
         $this->assertNull($kept->replayed);
         $this->assertArrayNotHasKey('jit_linear', $kept->toArray());

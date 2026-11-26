@@ -241,8 +241,9 @@ In PHP:
 ```php
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 
-$analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', mode: RedosMode::Confirmed);
+$analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', new RedosOptions(RedosMode::Confirmed));
 
 echo $analysis->witness->render(), "\n";                      // "a" x n . "!b"
 var_dump($analysis->replayed);                                // bool(true)
@@ -433,7 +434,9 @@ vendor/bin/regex analyze '/^(?:(?:\d{1,16}\.){1,16}\d{1,16})(?:,(?:\d{1,16}\.){1
   Note: analysis budget exceeded, the heuristics decided
 ```
 
-`RedosOptions` sets the budget on a `RedosAnalyzer` you build yourself:
+`RedosOptions` sets the budget, beside the mode, the `threshold` a verdict is replayed from and the
+`confirmation` limits of the replay. Pass it to `analyze()` or to `Regex::redos()` for one call, or to a
+`RedosAnalyzer` you build yourself for every call that names none:
 
 | option | default | role |
 |---|---|---|

@@ -27,6 +27,7 @@ use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\PHPUnit\RegexAssertions;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPRegex\Tests\Unit\Parser\Printer\JsonDumperTest;
 use PHPRegex\Toolkit\Regex;
@@ -666,6 +667,7 @@ final class PlaygroundDriverTest extends TestCase
             InvalidRegexOptionException::class,
             FormattingException::class,
             RedosMode::class,
+            RedosOptions::class,
             SampleGenerator::class,
             TestCaseGenerator::class,
             TranspileOptions::class,

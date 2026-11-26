@@ -62,6 +62,7 @@ use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Printer\JsonDumper;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Transpiler\TranspileOptions;
 
@@ -846,7 +847,7 @@ if (!\function_exists('phpregex_playground_run')) {
             'source' => $source,
             'class' => phpregex_playground_short_class($error),
             'message' => $error->getMessage(),
-            'position' => $error->position,
+            'position' => $error->offset,
             'code' => $error->errorCode->value,
             'hint' => $error instanceof SemanticErrorException ? $error->hint : null,
         ];
@@ -1092,7 +1093,7 @@ if (!\function_exists('phpregex_playground_run')) {
         $replayError = null;
 
         try {
-            $analysis = $library->redos($regex, null, $mode);
+            $analysis = $library->redos($regex, new RedosOptions($mode));
             $verdict = phpregex_playground_verdict($analysis);
         } catch (RegexException $e) {
             $answer['error'] = phpregex_playground_error($e, 'redos');
@@ -1108,7 +1109,7 @@ if (!\function_exists('phpregex_playground_run')) {
                 throw $e;
             }
             $replayError = phpregex_playground_short_class($e).': '.$e->getMessage();
-            $analysis = $library->redos($regex, null, RedosMode::Theoretical);
+            $analysis = $library->redos($regex, new RedosOptions(RedosMode::Theoretical));
             $verdict = phpregex_playground_verdict($analysis);
         }
 

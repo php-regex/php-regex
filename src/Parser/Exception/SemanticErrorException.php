@@ -27,20 +27,20 @@ final class SemanticErrorException extends RegexException implements ExceptionIn
     /**
      * @internal the library throws its exceptions; catch them, read them
      *
-     * @param int|null    $snippetPosition where the caret stands in $pattern when that is not
-     *                                     $position: a fault counted from the body is shown in
-     *                                     the whole pattern
-     * @param string|null $hint            how to fix the pattern, when one way is clear
+     * @param int|null    $caretOffset where the caret stands in $pattern when that is not
+     *                                 $offset: a fault counted from the body is shown in
+     *                                 the whole pattern
+     * @param string|null $hint        how to fix the pattern, when one way is clear
      */
     public function __construct(
         string $message,
         ErrorCode $errorCode,
-        ?int $position = null,
+        ?int $offset = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
-        ?int $snippetPosition = null,
+        ?int $caretOffset = null,
         public readonly ?string $hint = null,
     ) {
-        $this->buildWithContext($message, $errorCode, $position, $pattern, $previous, $snippetPosition);
+        $this->buildWithContext($message, $errorCode, $offset, $pattern, $previous, $caretOffset);
     }
 }

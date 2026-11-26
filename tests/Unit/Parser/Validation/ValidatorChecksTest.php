@@ -117,7 +117,7 @@ final class ValidatorChecksTest extends TestCase
         try {
             $node->accept(new Validator(target: new PcreTarget(80400, '10.49')));
         } catch (SemanticErrorException $e) {
-            $found = [$e->errorCode, $e->position, $e->getMessage()];
+            $found = [$e->errorCode, $e->offset, $e->getMessage()];
         }
 
         $this->assertSame($error, $found);

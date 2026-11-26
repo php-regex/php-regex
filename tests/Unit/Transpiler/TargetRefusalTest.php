@@ -51,7 +51,7 @@ final class TargetRefusalTest extends TestCase
             $this->fail('Transpiled '.$pattern.' to '.$target.'.');
         } catch (TranspileException $e) {
             $this->assertSame($message, $e->getMessage());
-            $this->assertSame($position, $e->position);
+            $this->assertSame($position, $e->offset);
         }
     }
 
@@ -71,9 +71,9 @@ final class TargetRefusalTest extends TestCase
             Regex::create(['cache' => null])->transpile($pattern, $target);
             $this->fail('Transpiled '.$pattern.' to '.$target.'.');
         } catch (TranspileException $e) {
-            $this->assertSame($position, $e->position);
+            $this->assertSame($position, $e->offset);
             $this->assertSame($body, $e->getPattern());
-            $this->assertSame('Line 1: '.$body."\n".str_repeat(' ', 8 + $position).'^', $e->snippet);
+            $this->assertSame('Line 1: '.$body."\n".str_repeat(' ', 8 + $position).'^', $e->caretSnippet);
         }
     }
 
@@ -104,7 +104,7 @@ final class TargetRefusalTest extends TestCase
             $this->fail('Printed the reference \q.');
         } catch (TranspileException $e) {
             $this->assertSame('Unsupported backreference syntax for JavaScript: \q.', $e->getMessage());
-            $this->assertSame("Line 1: (a)\\q\n".str_repeat(' ', 11).'^', $e->snippet);
+            $this->assertSame("Line 1: (a)\\q\n".str_repeat(' ', 11).'^', $e->caretSnippet);
         }
     }
 
@@ -163,7 +163,7 @@ final class TargetRefusalTest extends TestCase
             $this->fail('Transpiled a lookbehind turned off.');
         } catch (TranspileException $e) {
             $this->assertSame('Lookbehind is disabled for JavaScript targets.', $e->getMessage());
-            $this->assertSame(0, $e->position);
+            $this->assertSame(0, $e->offset);
         }
     }
 

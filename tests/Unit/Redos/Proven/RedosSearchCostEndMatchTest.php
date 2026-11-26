@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -70,7 +71,7 @@ final class RedosSearchCostEndMatchTest extends TestCase
         $analysis = $analyzer->analyze($pattern);
         $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity], $pattern);
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertSame([2, $prefix, $run, $breaker, true], [$confirmed->degree, $confirmed->prefix, $confirmed->run, $confirmed->breaker, $confirmed->replayed], $pattern);
 
@@ -131,7 +132,7 @@ final class RedosSearchCostEndMatchTest extends TestCase
         $analysis = $analyzer->analyze($pattern);
         $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity], $pattern);
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertSame([2, $prefix, $run, $breaker, true], [$confirmed->degree, $confirmed->prefix, $confirmed->run, $confirmed->breaker, $confirmed->replayed], $pattern);
 

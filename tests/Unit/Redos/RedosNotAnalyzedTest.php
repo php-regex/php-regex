@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos;
 
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +31,7 @@ final class RedosNotAnalyzedTest extends TestCase
     #[Test]
     public function test_a_pattern_not_analysed_as_asked_reads_safe_and_says_so(): void
     {
-        foreach ([(new RedosAnalyzer(ignoredPatterns: ['(a+)+b']))->analyze('/(a+)+b/'), (new RedosAnalyzer())->analyze('/(a+)+b/', null, RedosMode::Off)] as $analysis) {
+        foreach ([(new RedosAnalyzer(ignoredPatterns: ['(a+)+b']))->analyze('/(a+)+b/'), (new RedosAnalyzer())->analyze('/(a+)+b/', new RedosOptions(RedosMode::Off))] as $analysis) {
             $this->assertTrue($analysis->isSafe());
             $this->assertFalse($analysis->isProvenSafe());
             $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);

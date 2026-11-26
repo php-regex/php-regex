@@ -222,6 +222,7 @@ vendor/bin/regex lint src/
 ```php
 use PHPRegex\Toolkit\Regex;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 
 $regex = Regex::create([
     'runtime_pcre_validation' => true,
@@ -243,7 +244,7 @@ echo $analysis->headline();        // 'Exponential backtracking (proven)'
 echo $analysis->witness->render(); // '"a" x n . "!"': the input that triggers it
 
 // Optional: replay the attack on the running PCRE
-$confirmed = $regex->redos('/(a+)+$/', mode: RedosMode::Confirmed);
+$confirmed = $regex->redos('/(a+)+$/', new RedosOptions(RedosMode::Confirmed));
 echo $confirmed->isConfirmed() ? 'confirmed' : 'theoretical'; // 'confirmed'
 
 // Get human-readable explanation

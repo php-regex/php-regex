@@ -52,7 +52,7 @@ final class RegexEdgeCasesTest extends TestCase
         $report = $regex->analyze('/abc/');
 
         // A cache that throws is a broken cache, not a broken pattern.
-        $this->assertTrue($report->isValid);
+        $this->assertTrue($report->validation->isValid);
         $this->assertSame([], $report->errors);
     }
 

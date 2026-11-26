@@ -153,7 +153,7 @@ Tolerant parsing returns a partial AST plus errors, allowing tools to continue e
 use PHPRegex\Toolkit\Regex;
 
 // Strict parsing - throws on error
-$ast = Regex::create()->parse('/[broken/');  // Throws LexerException (extends RegexException)
+$ast = Regex::create()->parse('/[broken/');  // Throws LexerException (a ParserException)
 
 // Tolerant parsing - returns partial AST
 $result = Regex::create()->parseTolerant('/[broken/');

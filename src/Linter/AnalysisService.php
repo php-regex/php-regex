@@ -50,6 +50,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 
@@ -386,12 +387,7 @@ final class AnalysisService
             return [...$issues, ...$lintIssues];
         }
 
-        $redos = (new RedosAnalyzer($this->regex))->analyze(
-            $occurrence->pattern,
-            $this->redosSeverityThreshold,
-            $this->redosMode,
-            $this->redosConfirmOptions,
-        );
+        $redos = (new RedosAnalyzer($this->regex))->analyze($occurrence->pattern, new RedosOptions($this->redosMode, $this->redosSeverityThreshold, $this->redosConfirmOptions));
 
         // The heuristic rules guess what the analysis just proved: once it
         // shows one attempt linear, their warnings go.

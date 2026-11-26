@@ -359,7 +359,7 @@ final class JavaScriptEngineParityTest extends TestCase
             Regex::create(['cache' => null])->transpile($pattern, 'javascript', $options);
             $refusal = null;
         } catch (TranspileException $e) {
-            $refusal = [$e->getMessage(), substr($pattern, 1 + (int) $e->position)];
+            $refusal = [$e->getMessage(), substr($pattern, 1 + (int) $e->offset)];
         }
 
         $this->assertSame($expected, $refusal);

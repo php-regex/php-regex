@@ -17,8 +17,10 @@ use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\RecursionLimitException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
+use PHPRegex\Parser\Exception\SyntaxErrorException;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -50,8 +52,8 @@ final class ExceptionSurfaceTest extends TestCase
     public static function provideRepeatingGetters(): iterable
     {
         yield 'error code' => ['class' => RegexException::class, 'getter' => 'getErrorCode', 'property' => 'errorCode'];
-        yield 'position' => ['class' => ParserException::class, 'getter' => 'getPosition', 'property' => 'position'];
-        yield 'snippet' => ['class' => RegexException::class, 'getter' => 'getSnippet', 'property' => 'snippet'];
+        yield 'offset' => ['class' => ParserException::class, 'getter' => 'getOffset', 'property' => 'offset'];
+        yield 'caret snippet' => ['class' => RegexException::class, 'getter' => 'getCaretSnippet', 'property' => 'caretSnippet'];
         yield 'hint' => ['class' => SemanticErrorException::class, 'getter' => 'getHint', 'property' => 'hint'];
     }
 
@@ -63,32 +65,79 @@ final class ExceptionSurfaceTest extends TestCase
             $this->fail('"/a(/" does not parse.');
         } catch (ParserException $exception) {
             $this->assertSame(ErrorCode::GroupUnclosed, $exception->errorCode);
-            $this->assertSame(2, $exception->position);
-            $this->assertSame("Line 1: a(\n".str_repeat(' ', 10).'^', $exception->snippet);
+            $this->assertSame(2, $exception->offset);
+            $this->assertSame("Line 1: a(\n".str_repeat(' ', 10).'^', $exception->caretSnippet);
+        }
+    }
+
+    /**
+     * One catch holds every pattern parse() refuses as malformed, whichever
+     * part of the parser met the fault: its delimiters, its tokens or its
+     * grammar.
+     *
+     * @param class-string<ParserException> $thrown
+     */
+    #[Test]
+    #[DataProvider('provideMalformedPatterns')]
+    public function test_a_parser_exception_holds_every_malformed_pattern(string $regex, string $thrown): void
+    {
+        try {
+            Regex::create()->parse($regex);
+            $this->fail($regex.' does not parse.');
+        } catch (ParserException $exception) {
+            $this->assertInstanceOf($thrown, $exception);
+        }
+    }
+
+    /**
+     * @return iterable<string, array{regex: string, thrown: class-string<ParserException>}>
+     */
+    public static function provideMalformedPatterns(): iterable
+    {
+        yield 'no delimiter' => ['regex' => 'abc', 'thrown' => ParserException::class];
+        yield 'a class left open, met while reading the tokens' => ['regex' => '/[a/', 'thrown' => LexerException::class];
+        yield 'a group left open, met while reading the grammar' => ['regex' => '/a(/', 'thrown' => SyntaxErrorException::class];
+    }
+
+    /**
+     * A limit of the library is no verdict on the pattern: a handler for
+     * malformed patterns does not take it for one.
+     */
+    #[Test]
+    public function test_a_limit_is_no_parser_exception(): void
+    {
+        try {
+            Regex::create()->parse('/'.str_repeat('(', 600).str_repeat(')', 600).'/');
+            $this->fail('600 nested groups pass the nesting limit.');
+        } catch (ParserException $malformed) {
+            $this->fail('A limit was taken for a malformed pattern: '.$malformed->getMessage());
+        } catch (LimitException $limit) {
+            $this->assertInstanceOf(RecursionLimitException::class, $limit);
+            $this->assertSame(ErrorCode::NestingTooDeep, $limit->errorCode);
         }
     }
 
     /**
      * The exceptions that show the pattern are built one way: the caret
-     * stands at the snippet position when one is given, at the position
-     * otherwise, and the position stays what it was.
+     * stands at the caret offset when one is given, at the offset
+     * otherwise, and the offset stays what it was.
      *
      * @param class-string<LexerException|LimitException|ParserException> $class
      */
     #[Test]
     #[DataProvider('provideExceptionsShowingThePattern')]
-    public function test_the_caret_stands_at_the_snippet_position(string $class): void
+    public function test_the_caret_stands_at_the_caret_offset(string $class): void
     {
         $shifted = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 5, '/abcdefgh/', null, 2);
         $atTwo = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 2, '/abcdefgh/');
         $atFive = $class::withContext('Bad.', ErrorCode::GroupUnclosed, 5, '/abcdefgh/');
 
         $this->assertInstanceOf($class, $shifted);
-        $this->assertSame(5, $shifted->position);
+        $this->assertSame(5, $shifted->offset);
         $this->assertSame('/abcdefgh/', $shifted->getPattern());
-        $this->assertSame($atTwo->snippet, $shifted->snippet);
-        $this->assertNotSame($atFive->snippet, $shifted->snippet);
-        $this->assertStringEndsWith(str_repeat(' ', 13).'^', (string) $atFive->snippet);
+        $this->assertSame($atTwo->caretSnippet, $shifted->caretSnippet);
+        $this->assertNotSame($atFive->caretSnippet, $shifted->caretSnippet);
+        $this->assertStringEndsWith(str_repeat(' ', 13).'^', (string) $atFive->caretSnippet);
     }
 
     /**

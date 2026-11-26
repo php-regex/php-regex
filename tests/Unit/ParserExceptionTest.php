@@ -40,7 +40,7 @@ final class ParserExceptionTest extends TestCase
     {
         $exception = new ParserException('Error', ErrorCode::TokenUnexpected);
 
-        $this->assertSame('', $exception->snippet);
+        $this->assertSame('', $exception->caretSnippet);
     }
 
     #[Test]
@@ -48,7 +48,7 @@ final class ParserExceptionTest extends TestCase
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 0, 'abc');
 
-        $this->assertSame("Line 1: abc\n".str_repeat(' ', 8).'^', $exception->snippet);
+        $this->assertSame("Line 1: abc\n".str_repeat(' ', 8).'^', $exception->caretSnippet);
     }
 
     #[Test]
@@ -56,7 +56,7 @@ final class ParserExceptionTest extends TestCase
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 3, 'abc');
 
-        $this->assertSame("Line 1: abc\n".str_repeat(' ', 11).'^', $exception->snippet);
+        $this->assertSame("Line 1: abc\n".str_repeat(' ', 11).'^', $exception->caretSnippet);
     }
 
     #[Test]
@@ -64,7 +64,7 @@ final class ParserExceptionTest extends TestCase
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 4, 'foo(bar)baz');
 
-        $this->assertSame("Line 1: foo(bar)baz\n".str_repeat(' ', 12).'^', $exception->snippet);
+        $this->assertSame("Line 1: foo(bar)baz\n".str_repeat(' ', 12).'^', $exception->caretSnippet);
     }
 
     #[Test]
@@ -72,7 +72,7 @@ final class ParserExceptionTest extends TestCase
     {
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 5, "foo\nbar\nbaz");
 
-        $this->assertSame("Line 2: bar\n".str_repeat(' ', 9).'^', $exception->snippet);
+        $this->assertSame("Line 2: bar\n".str_repeat(' ', 9).'^', $exception->caretSnippet);
     }
 
     #[Test]
@@ -81,7 +81,7 @@ final class ParserExceptionTest extends TestCase
         $pattern = str_repeat('a', 50).'X'.str_repeat('b', 50);
         $exception = ParserException::withContext('Error', ErrorCode::TokenUnexpected, 50, $pattern);
 
-        $snippet = (string) $exception->snippet;
+        $snippet = (string) $exception->caretSnippet;
         [$line, $caretLine] = explode("\n", $snippet);
 
         $this->assertStringStartsWith('Line 1: ...', $line);

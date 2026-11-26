@@ -48,6 +48,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
@@ -624,13 +625,13 @@ final class TextDocumentHandler
             } else {
                 $issues = (new PatternLinter($regex->target(), $this->lintRules))->analyze($ast);
 
-                $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, $this->redosThreshold, $this->redosMode);
+                $redos = RedosMode::Off === $this->redosMode ? null : $regex->redos($pattern, new RedosOptions($this->redosMode, $this->redosThreshold));
                 $analysis = ['read', $ast->source ?? '', $issues, $redos, null, null];
             }
         } catch (LimitException $e) {
             $analysis = ['limit', $e->getMessage(), $e->errorCode];
         } catch (LexerException|ParserException $e) {
-            $analysis = ['unread', $e->getMessage(), $e->errorCode, $e->position, $regex->validate($pattern)->hint];
+            $analysis = ['unread', $e->getMessage(), $e->errorCode, $e->offset, $regex->validate($pattern)->hint];
         }
 
         $this->analyses[$key] = $analysis;

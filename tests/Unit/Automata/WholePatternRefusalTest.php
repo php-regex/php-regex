@@ -43,7 +43,7 @@ final class WholePatternRefusalTest extends TestCase
             $this->fail('The solver answers.');
         } catch (ComplexityException $refusal) {
             $this->assertStringContainsString($message, $refusal->getMessage());
-            $this->assertSame(0, $refusal->position);
+            $this->assertSame(0, $refusal->offset);
         }
     }
 

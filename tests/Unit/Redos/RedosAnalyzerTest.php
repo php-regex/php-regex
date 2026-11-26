@@ -22,6 +22,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -110,8 +111,8 @@ final class RedosAnalyzerTest extends TestCase
             }
         };
 
-        $analyzer = new RedosAnalyzer(null, [], RedosSeverity::Low, $runner);
-        $analysis = $analyzer->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions());
+        $analyzer = new RedosAnalyzer(null, [], $runner);
+        $analysis = $analyzer->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions()));
 
         $this->assertSame(1, $runner->calls);
         $this->assertSame(RedosMode::Confirmed, $analysis->mode);

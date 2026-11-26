@@ -25,6 +25,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\Test;
@@ -196,7 +197,7 @@ final class LintIssueTest extends TestCase
     #[Test]
     public function test_a_redos_verdict_shows_its_own_attack_beside_a_search_cost(): void
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/\s+$/', RedosSeverity::Low, RedosMode::Theoretical);
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/\s+$/', new RedosOptions(RedosMode::Theoretical, RedosSeverity::Low));
         $this->assertInstanceOf(RedosSearchCost::class, $analysis->searchCost);
         $evidence = RedosVerdict::evidence($analysis);
 
@@ -221,7 +222,7 @@ final class LintIssueTest extends TestCase
     #[Test]
     public function test_a_redos_finding_is_a_security_diagnostic_with_its_attack(): void
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Theoretical);
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', new RedosOptions(RedosMode::Theoretical, RedosSeverity::Low));
         $this->assertNotSame([], RedosVerdict::evidence($analysis));
 
         $hints = RedosHints::forAnalysis($analysis, '/(a+)+$/');
@@ -243,7 +244,7 @@ final class LintIssueTest extends TestCase
     #[Test]
     public function test_a_redos_issue_without_a_suggestion_entry_falls_back_on_its_analysis(): void
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Theoretical);
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', new RedosOptions(RedosMode::Theoretical, RedosSeverity::Low));
 
         $diagnostic = (new LintIssue(LintSeverity::Warning, 'ReDoS.', 'a.php', 1, issueId: RedosVerdict::ISSUE_ID, hint: 'unused', analysis: $analysis))->diagnostic();
 
@@ -265,7 +266,7 @@ final class LintIssueTest extends TestCase
     #[Test]
     public function test_a_search_cost_is_a_security_diagnostic_with_its_own_attack(): void
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/\s+$/', RedosSeverity::Low, RedosMode::Theoretical);
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/\s+$/', new RedosOptions(RedosMode::Theoretical, RedosSeverity::Low));
         $searchCost = $analysis->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $searchCost);
 

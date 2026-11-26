@@ -17,6 +17,7 @@ use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Tests\Support\ProbeDelimiters;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -238,7 +239,7 @@ final class HtmlPatternTargetTest extends TestCase
     {
         $result = Regex::create(['cache' => null])->transpile('/^\d+$/', 'html');
 
-        $this->assertSame('html-pattern', $result->target);
+        $this->assertSame(Dialect::HtmlPattern, $result->dialect);
         $this->assertSame('new RegExp("^(?:^\\\\d+$)$", "v")', $result->constructor);
     }
 }

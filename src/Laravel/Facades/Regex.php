@@ -30,10 +30,8 @@ use PHPRegex\Parser\Token\Token;
 use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\PatternCompatibility;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
-use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Toolkit\AnalysisReport;
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\HighlightFormat;
@@ -54,9 +52,9 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static TolerantParseResult           parseTolerant(string $regex)
  * @method static ValidationResult              validate(string $regex)
  * @method static RegexNode                     parsePattern(string $pattern, string $flags = '', string $delimiter = '/')
- * @method static AnalysisReport                analyze(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
+ * @method static AnalysisReport                analyze(string $regex, ?RedosOptions $options = null)
  * @method static list<RuleViolation>           lint(string $regex)
- * @method static RedosAnalysis                 redos(string $regex, ?RedosSeverity $threshold = null, RedosMode $mode = RedosMode::Theoretical, ?ConfirmationOptions $confirmOptions = null)
+ * @method static RedosAnalysis                 redos(string $regex, ?RedosOptions $options = null)
  * @method static OptimizationResult            optimize(string $regex, ?OptimizerOptions $options = null)
  * @method static FormatResult                  format(string $regex, int $width = 80)
  * @method static FormatResult                  compact(string $regex)

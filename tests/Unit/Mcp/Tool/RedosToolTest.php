@@ -84,6 +84,23 @@ final class RedosToolTest extends TestCase
         $this->assertSame('confirmed', JsonContract::asArray($result->structured['redos'])['mode']);
     }
 
+    /**
+     * The threshold reaches the analysis: in confirmed mode the cost of a
+     * search is replayed from a medium threshold down, and stands on its
+     * proof alone under the default, high.
+     */
+    #[Test]
+    public function test_the_threshold_decides_what_confirmed_mode_replays(): void
+    {
+        $tool = ToolCatalog::create()->get('regex_redos')->tool;
+
+        $medium = $tool->execute(['pattern' => '/a+b/', 'mode' => 'confirmed', 'threshold' => 'medium']);
+        $default = $tool->execute(['pattern' => '/a+b/', 'mode' => 'confirmed']);
+
+        $this->assertTrue(JsonContract::asArray(JsonContract::asArray($medium->structured['redos'])['search_cost'])['replayed']);
+        $this->assertNull(JsonContract::asArray(JsonContract::asArray($default->structured['redos'])['search_cost'])['replayed']);
+    }
+
     #[Test]
     public function test_an_invalid_pattern_is_the_envelope_with_its_validation(): void
     {

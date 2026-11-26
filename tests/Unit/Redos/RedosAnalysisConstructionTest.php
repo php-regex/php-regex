@@ -25,6 +25,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -119,7 +120,7 @@ final class RedosAnalysisConstructionTest extends TestCase
     #[Test]
     public function test_the_analyzer_skips_with_the_analysis_off(): void
     {
-        $this->assertEquals(RedosAnalysis::skipped(RedosMode::Off), (new RedosAnalyzer())->analyze('/(a+)+$/', null, RedosMode::Off));
+        $this->assertEquals(RedosAnalysis::skipped(RedosMode::Off), (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(RedosMode::Off)));
     }
 
     #[Test]
@@ -169,7 +170,7 @@ final class RedosAnalysisConstructionTest extends TestCase
         } catch (ParserException $exception) {
         }
 
-        $analysis = (new RedosAnalyzer())->analyze('/(/', null, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze('/(/', new RedosOptions(RedosMode::Confirmed));
 
         $this->assertSame($exception->getMessage(), $analysis->error);
         $this->assertSame(['Analysis incomplete: '.$exception->getMessage()], $analysis->recommendations);

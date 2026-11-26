@@ -70,11 +70,11 @@ final class ExceptionLayoutTest extends TestCase
         $atTwo = new SemanticErrorException('Bad.', ErrorCode::GroupUnclosed, 2, '/abcdefgh/');
         $hinted = new SemanticErrorException('Bad.', ErrorCode::GroupUnclosed, 2, '/abcdefgh/', hint: 'Close the group.');
 
-        $this->assertSame(5, $shifted->position);
-        $this->assertSame($atTwo->snippet, $shifted->snippet);
+        $this->assertSame(5, $shifted->offset);
+        $this->assertSame($atTwo->caretSnippet, $shifted->caretSnippet);
         $this->assertNull($shifted->hint);
         $this->assertSame('Close the group.', $hinted->hint);
-        $this->assertSame($atTwo->snippet, $hinted->snippet);
+        $this->assertSame($atTwo->caretSnippet, $hinted->caretSnippet);
         $this->assertSame('Bad.', $hinted->getMessage());
     }
 

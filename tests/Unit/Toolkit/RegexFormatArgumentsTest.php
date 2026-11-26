@@ -144,7 +144,7 @@ final class RegexFormatArgumentsTest extends TestCase
     {
         $regex = Regex::create(['cache' => null]);
 
-        $this->assertSame('python', $regex->transpile('/a+/', Dialect::Python)->target);
+        $this->assertSame(Dialect::Python, $regex->transpile('/a+/', Dialect::Python)->dialect);
         $this->assertSame($regex->transpile('/a+/', 'py')->literal, $regex->transpile('/a+/', Dialect::Python)->literal);
     }
 }

@@ -106,7 +106,7 @@ final class LookaroundSolverTest extends TestCase
         } catch (ComplexityException $e) {
             $this->assertSame(['phase' => 'lookaround bodies', 'limit' => $limit], $e->getDiagnostic());
             // The caret stands under the lookaround refused, "(?=b{10})".
-            $this->assertSame(9, $e->position);
+            $this->assertSame(9, $e->offset);
         }
     }
 

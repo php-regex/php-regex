@@ -14,13 +14,14 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Validation;
 
 /**
- * Categorizes validation errors for diagnostics and UX.
+ * Categorizes validation errors for diagnostics and UX. The values are
+ * written in snake_case, as every value the JSON documents carry.
  */
 enum ValidationErrorCategory: string
 {
     case Syntax = 'syntax';
     case Semantic = 'semantic';
-    case PcreRuntime = 'pcre-runtime';
+    case PcreRuntime = 'pcre_runtime';
 
     /**
      * The library stopped at one of its own limits (pattern length, nesting

@@ -22,6 +22,7 @@ use PHPRegex\Cli\Input;
 use PHPRegex\Linter\Config\LintArguments;
 use PHPRegex\Linter\Config\LintConfigLoader;
 use PHPRegex\Linter\Config\LintDefaultsBuilder;
+use PHPRegex\Tests\Support\JsonContract;
 use PHPRegex\Tests\Support\TemporaryProject;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -104,6 +105,37 @@ final class RedosThresholdOptionTest extends TestCase
 
         $this->assertSame(0, $analyzeExit);
         $this->assertSame(0, $debugExit);
+    }
+
+    /**
+     * The threshold reaches the analysis: in confirmed mode the cost of a
+     * search is replayed from a medium threshold down, and stands on its
+     * proof alone under the default, high.
+     *
+     * @param list<string> $threshold
+     */
+    #[Test]
+    #[DataProvider('provideThresholdsOfTheReplay')]
+    public function test_the_threshold_decides_what_confirmed_mode_replays(string $name, array $threshold, ?bool $replayed): void
+    {
+        $command = 'analyze' === $name ? new AnalyzeCommand() : new DebugCommand();
+
+        [$exitCode, $buffer] = $this->runCommand($command, $name, ['/a+b/', '--format=json', '--redos-mode=confirmed', ...$threshold]);
+
+        $this->assertSame(0, $exitCode, $buffer);
+        $searchCost = JsonContract::asArray(JsonContract::asArray(JsonContract::decodeDocument($buffer)['redos'])['search_cost']);
+        $this->assertSame($replayed, $searchCost['replayed']);
+    }
+
+    /**
+     * @return iterable<string, array{name: string, threshold: list<string>, replayed: bool|null}>
+     */
+    public static function provideThresholdsOfTheReplay(): iterable
+    {
+        yield 'analyze, a medium threshold' => ['name' => 'analyze', 'threshold' => ['--redos-threshold=medium'], 'replayed' => true];
+        yield 'analyze, the default threshold' => ['name' => 'analyze', 'threshold' => [], 'replayed' => null];
+        yield 'debug, a medium threshold' => ['name' => 'debug', 'threshold' => ['--redos-threshold=medium'], 'replayed' => true];
+        yield 'debug, the default threshold' => ['name' => 'debug', 'threshold' => [], 'replayed' => null];
     }
 
     #[Test]

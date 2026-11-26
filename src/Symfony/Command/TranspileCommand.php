@@ -125,7 +125,7 @@ final class TranspileCommand extends Command
 
         $io->title('Transpilation Result');
 
-        $io->text('<info>Target:</info> '.strtoupper($result->target));
+        $io->text('<info>Target:</info> '.strtoupper($result->dialect->value));
         $io->text('<info>Source:</info> '.$result->source);
         $io->newLine();
 

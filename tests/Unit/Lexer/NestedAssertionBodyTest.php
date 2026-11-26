@@ -351,6 +351,6 @@ final class NestedAssertionBodyTest extends TestCase
 
     private static function fault(RegexException $exception): string
     {
-        return \sprintf('%s@%s: %s', $exception->errorCode->value, $exception->position ?? '-', $exception->getMessage());
+        return \sprintf('%s@%s: %s', $exception->errorCode->value, $exception->offset ?? '-', $exception->getMessage());
     }
 }

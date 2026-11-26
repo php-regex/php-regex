@@ -60,7 +60,7 @@ final class CalloutTest extends TestCase
             Callout::read(new Token(TokenType::Callout, $value, 0), $pattern, new PcreTarget(80400, $release));
             $this->fail('No error for '.$pattern);
         } catch (ParserException $error) {
-            $this->assertSame([$code, $offset, $message], [$error->errorCode, $error->position, $error->getMessage()]);
+            $this->assertSame([$code, $offset, $message], [$error->errorCode, $error->offset, $error->getMessage()]);
         }
     }
 

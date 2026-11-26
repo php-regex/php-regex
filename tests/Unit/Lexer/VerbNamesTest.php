@@ -48,8 +48,8 @@ final class VerbNamesTest extends TestCase
             $this->fail(\sprintf('"%s" was not refused.', $pattern));
         } catch (LexerException $exception) {
             $this->assertSame($code, $exception->errorCode);
-            $this->assertNotNull($exception->position);
-            $this->assertStringContainsString('at offset '.$exception->position, (string) $warning);
+            $this->assertNotNull($exception->offset);
+            $this->assertStringContainsString('at offset '.$exception->offset, (string) $warning);
         }
     }
 
@@ -146,7 +146,7 @@ final class VerbNamesTest extends TestCase
             $this->fail('A name of 40 letters was read by PCRE2 10.32.');
         } catch (LexerException $exception) {
             $this->assertSame(ErrorCode::GroupNameTooLong, $exception->errorCode);
-            $this->assertSame(35, $exception->position);
+            $this->assertSame(35, $exception->offset);
         }
 
         VerbNames::refuseLongLetterRun($old, 32, 0);
@@ -170,7 +170,7 @@ final class VerbNamesTest extends TestCase
             $this->fail('A name of 33 code units was read by PCRE2 10.42.');
         } catch (LexerException $exception) {
             $this->assertSame(ErrorCode::GroupNameTooLong, $exception->errorCode);
-            $this->assertSame(35, $exception->position);
+            $this->assertSame(35, $exception->offset);
         }
     }
 
@@ -180,7 +180,7 @@ final class VerbNamesTest extends TestCase
         $exception = VerbNames::conditionWantsAName(3, '(?(*x)');
 
         $this->assertSame(ErrorCode::ConditionalInvalid, $exception->errorCode);
-        $this->assertSame(3, $exception->position);
+        $this->assertSame(3, $exception->offset);
         $this->assertSame('Invalid conditional construct at position 3. Condition must be a group reference, lookaround, or (DEFINE).', $exception->getMessage());
     }
 

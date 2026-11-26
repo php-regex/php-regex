@@ -4,6 +4,8 @@ CHANGELOG
 2.0
 ---
 
+ * `TranspileResult::$dialect` is the `Dialect` the pattern was written
+   for, where `$target` held its name; its name is `$dialect->value`.
  * The `Dialect` enum names the dialects a pattern transpiles to:
    `JavaScript`, `HtmlPattern` and `Python`. `Transpiler::transpile()` takes
    a case or a name, as `transpile($regex, Dialect::Python)` or

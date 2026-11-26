@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Transpiler;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\Test;
@@ -30,7 +31,7 @@ final class PythonTranspilerTest extends TestCase
     {
         $result = Regex::create()->transpile('/foo/im', 'python');
 
-        $this->assertSame('python', $result->target);
+        $this->assertSame(Dialect::Python, $result->dialect);
         $this->assertSame('foo', $result->pattern);
         // /m is applied while printing; without u PCRE reads ASCII, as re.ASCII does.
         $this->assertSame('ai', $result->flags);

@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 /**
- * Marks the exceptions that show the pattern: RegexException::$snippet holds
+ * Marks the exceptions that show the pattern: RegexException::$caretSnippet holds
  * the line at fault with a caret under it, drawn from getPattern().
  */
 interface VisualContextInterface
