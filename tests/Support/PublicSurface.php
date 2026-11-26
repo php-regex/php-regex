@@ -47,7 +47,7 @@ final class PublicSurface
         ],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
         'Linter' => ['PatternLinter', 'LintSeverity', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
-        'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
+        'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'RewriteKind', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
             'TolerantParseResult', 'NodeVisitorInterface', 'AbstractNodeVisitor', 'AbstractTraversingVisitor',
@@ -79,7 +79,7 @@ final class PublicSurface
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
-            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost', 'SearchCostCause',
+            'RedosComplexity', 'RedosProof', 'RedosWitness', 'WitnessCall', 'RedosOptions', 'RedosSearchCost', 'SearchCostCause',
             'IgnoreList',
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
