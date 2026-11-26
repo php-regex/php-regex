@@ -78,8 +78,10 @@ final class CompatibilityCheckerTest extends TestCase
             }
         }
 
-        $verdicts = (new CompatibilityChecker())->check('/a/')->verdicts();
+        $compatibility = (new CompatibilityChecker())->check('/a/');
+        $verdicts = $compatibility->verdicts;
 
+        $this->assertSame($verdicts, $compatibility->verdicts());
         $this->assertContainsOnlyInstancesOf(TargetVerdict::class, $verdicts);
         $this->assertSame($expected, array_map(
             static fn (TargetVerdict $verdict): array => [$verdict->target->phpVersionId, $verdict->target->pcreVersion],

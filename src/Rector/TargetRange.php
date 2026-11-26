@@ -38,7 +38,9 @@ final class TargetRange
     public const FUNCTIONS = ['preg_match', 'preg_match_all', 'preg_replace', 'preg_replace_callback', 'preg_split', 'preg_grep', 'preg_filter'];
 
     /**
-     * @var array<int, RangeDiff>
+     * By target (PcreTarget::key()) and pinned PCRE2 release.
+     *
+     * @var array<string, RangeDiff>
      */
     private static array $ranges = [];
 
@@ -75,17 +77,29 @@ final class TargetRange
     /**
      * From the PHP the code targets to the newest the library knows,
      * through every PHP version a verdict may change at: never a single
-     * target. One range per PHP version, kept for the run, each target read
-     * by the parser of the PHP the code targets (PregCall::targetParser()).
-     * Rector takes targets from PHP 5.3 to PHP 10.0, which the library
-     * judges from PHP 7.0 to PHP 9.99.
+     * target. Each PHP is judged with its PCRE2 as PregCall::target()
+     * resolves it, the project's pinned release first, and read by a parser
+     * with the options of the target's (PregCall::targetParser()). One
+     * range per target, kept for the run.
      */
     public static function from(int $phpVersion): RangeDiff
     {
-        $phpVersion = min(max($phpVersion, ParserOptions::OLDEST_PHP_VERSION_ID), ParserOptions::LATEST_PHP_VERSION_ID);
-        $boundaries = PcreTarget::phpVersionBoundaries();
+        $floor = PregCall::target($phpVersion);
+        $pinned = PregCall::pinnedPcre();
+        $key = $floor->key().'/'.($pinned ?? 'unpinned');
+        if (isset(self::$ranges[$key])) {
+            return self::$ranges[$key];
+        }
 
-        return self::$ranges[$phpVersion] ??= RangeDiff::between($phpVersion, max($phpVersion, $boundaries[\count($boundaries) - 1]), PregCall::targetParser($phpVersion));
+        $parser = PregCall::targetParser($phpVersion);
+        $later = [];
+        foreach (PcreTarget::phpVersionBoundaries() as $point) {
+            if ($point > $floor->phpVersionId) {
+                $later[] = $parser->withTarget(ParserOptions::resolveTarget($point, $pinned, $floor->locale, true));
+            }
+        }
+
+        return self::$ranges[$key] = new RangeDiff($parser, $later);
     }
 
     /**

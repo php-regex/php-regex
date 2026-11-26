@@ -46,12 +46,16 @@ $result = $regex->validate('/foo|bar/');
 echo $result->isValid ? 'Valid' : 'Invalid';
 ```
 
-The options are a closed shape, `OptionsArray` (imported from
-`PHPRegex\Parser\ParserOptions`): PHPStan reports a misspelt key or a value
+The options are a closed shape, `RegexOptionsArray` (imported from
+`PHPRegex\Toolkit\Regex`): the parser's `OptionsArray` (imported from
+`PHPRegex\Parser\ParserOptions`), which `RegexParser::create()` takes, and
+`redos_ignored_patterns`, which the facade hands to the analyzer of `redos()`
+and `analyze()`. PHPStan reports a misspelt key or a value
 of the wrong type where the array is written, and `create()` checks the
 ranges when it reads them. Options read from a configuration file go through
 `ParserOptions::fromArray()`, which checks every key and value, then to
-`Regex::fromOptions()` (or `RegexParser::fromOptions()`):
+`Regex::fromOptions()` (or `RegexParser::fromOptions()`), whose ReDoS analysis
+skips no pattern:
 
 ```php
 use PHPRegex\Parser\ParserOptions;
@@ -136,14 +140,16 @@ $engine = new PcreEngine();
 
 $engine->compile('/(?1)a/')?->message;  // "reference to non-existent subpattern at offset 3"
 $engine->match('/a(b)/', 'xab')->groups; // ['ab', 'b']
-$engine->match('/\Ga/', 'ba', null, 1)->matched; // true: the search starts at byte 1
-$engine->match('/(a+)+$/', str_repeat('a', 20).'!', new PcreLimits(10, 100000))->error;
+$engine->match('/\Ga/', 'ba', offset: 1)->matched; // true: the search starts at byte 1
+$engine->match('/(a+)+$/', str_repeat('a', 20).'!', limits: new PcreLimits(10, 100000))->error;
 // "Backtrack limit exhausted"
 ```
 
 `compile()` returns a `PcreError` (message and offset, as PHP reports them for
-the pattern as written) or `null`; `match()` returns a `PcreMatch` whose
-`matched` is `null` when the engine gave no answer. The offset `match()` takes
+the pattern as written) or `null`; `match()` takes its flags and its offset in
+`preg_match()`'s order, then the limits, and returns a `PcreMatch` whose
+`matched` is `null` when the engine gave no answer, `$pcreError` then holding
+the `preg_last_error()` code. The offset `match()` takes
 is the one `preg_match()` takes: the byte the search starts at in the whole
 subject, so `\b` and a lookbehind still see what lies before it, and `^` does
 not hold there; past the end of the subject the answer is `null`, with the
@@ -177,7 +183,9 @@ DFA cache and the classes of the namespace that are public.
 
 ## Configuration Options
 
-All options are validated. Unknown keys throw `InvalidRegexOptionException`.
+All options are validated. Unknown keys throw `InvalidRegexOptionException`. The exception names the option at
+fault in `$option`, by its key (`"php_version"`, `"max_pattern_length"`), and null for unknown keys: read which
+option was refused there, never from the message.
 
 | Option                    | Type                                   | Default           | Description                    | Performance Impact              |
 |---------------------------|----------------------------------------|-------------------|--------------------------------|---------------------------------|
@@ -185,7 +193,7 @@ All options are validated. Unknown keys throw `InvalidRegexOptionException`.
 | `max_pattern_length`      | `int`                                  | `100_000`         | Maximum length of the regex as written, in bytes, delimiters and modifiers included | Low - prevents abuse            |
 | `max_lookbehind_length`   | `int`                                  | `255`             | Maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535 | Low - PCRE compliance           |
 | `runtime_pcre_validation` | `bool`                                 | `false`           | Compile-check via preg_match() | Medium - extra compile step     |
-| `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns to skip ReDoS         | Low - reduces false positives   |
+| `redos_ignored_patterns`  | `array<string>`                        | `[]`              | Patterns `redos()` and `analyze()` skip; `Regex::create()` only: `RegexParser::create()` refuses it, `RedosAnalyzer` takes them as `$ignoredPatterns` | Low - reduces false positives   |
 | `max_recursion_depth`     | `int`                                  | `512`             | Parser recursion guard         | Low - prevents stack overflow   |
 | `php_version`             | `string` \| `int`                      | the running PHP   | PHP version judged, with the PCRE2 it bundles | Low - feature validation        |
 | `pcre_version`            | `string`                               | the linked PCRE2  | PCRE2 release judged, `"10.42"` | Low - feature validation        |
@@ -398,7 +406,9 @@ foreach (Regex::create()->lint('/(?=a)b/') as $violation) {
 
 Each `RuleViolation` (`PHPRegex\Linter\Rule\RuleViolation`) carries the rule's `id`, its `message`, the `offset`
 and `end` of the text it names in the pattern body, a `hint` when the rule has one, and its `severity`
-(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`.
+(`LintSeverity`). `analyze()` puts the same list in `$report->lintIssues`. Without the facade,
+`(new PatternLinter($parser->target()))->analyze($parser->parse($regex))` returns it too: `PatternLinter`
+(`PHPRegex\Linter\PatternLinter`) takes the target, then a map turning rules on and off by id.
 
 ---
 
@@ -523,7 +533,7 @@ $compatibility->isValidEverywhere();                        // false: PHP 8.5 re
 $compatibility->invalidVerdicts()[0]->target->phpVersionId; // 80500
 ```
 
-`verdicts()` lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
+`$verdicts`, which `verdicts()` gives too, lists one `TargetVerdict` per point, ordered by PHP version, then by PCRE2 release: its `target` (a
 `PcreTarget`) and its `validation` (a `ValidationResult`). `invalidVerdicts()` keeps the ones that refuse the pattern.
 Validity is not monotone, and the matrix widens when the library learns a PHP or PCRE2 release, so a minor release may
 add verdicts. `new CompatibilityChecker($parser)` gives the same answer from `php-regex/regex-parser`, each point judged
@@ -603,7 +613,8 @@ echo $result->pattern;
 ```
 
 The formatter parses its own output before returning it; if the tree differs from the input's, it throws
-`FormattingException` (code `regex.formatting.unsafe`) instead of returning a different pattern. See
+`FormattingException` (code `regex.formatting.unsafe`) instead of returning a different pattern: a bug of the
+library, reported with the pattern in `$pattern`, and no `RegexException`, since the pattern is not at fault. See
 [Formatting patterns](../guides/formatting.md) for the layout rules and the refusals.
 
 ---
@@ -620,14 +631,15 @@ echo Regex::create()->compact("/\n    (?<year>\d{4})   # year\n    -\n    (?<mon
 
 ---
 
-### transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
+### transpile(string $regex, Dialect|string $dialect, ?TranspileOptions $options = null): TranspileResult
 
 Transpiles a PCRE literal to another regex dialect: JavaScript, the HTML `pattern` attribute, or Python.
 
 ```php
 use PHPRegex\Toolkit\Regex;
+use PHPRegex\Transpiler\Dialect;
 
-$result = Regex::create()->transpile('/(?P<word>\\w+)/i', 'javascript');
+$result = Regex::create()->transpile('/(?P<word>\\w+)/i', Dialect::JavaScript);
 
 echo $result->literal;     // /(?<word>\w+)/i
 echo $result->constructor; // new RegExp("(?<word>\\w+)", "i")
@@ -639,6 +651,10 @@ echo $result->constructor; // re.compile(r'(?P<word>\w+)', re.ASCII | re.IGNOREC
 ```
 
 Notes:
+- The dialect is a case of `PHPRegex\Transpiler\Dialect` (`JavaScript`, `HtmlPattern`, `Python`), or a name
+  `Dialect::fromName()` takes: `javascript` or `js`, `html-pattern` or `html`, `python` or `py`, in any case.
+  `Dialect::names()` lists them. A name no dialect answers to throws `InvalidRegexOptionException`, before the
+  pattern is read.
 - A pattern the engine refuses throws what `validate()` refuses, as `info()` does: `/\N{U+41}/` without `u` has
   nothing to translate. `Transpiler`, called directly, reads the tree as it parses.
 - Unsupported PCRE constructs throw `TranspileException`, and so does a construct the target engine would match
@@ -934,7 +950,7 @@ foreach ($result->changes as $change) {
 
 ### FormatResult
 
-Returned by `format()` and `compact()`.
+Returned by `format()` and `compact()`, never built by hand: its constructor is internal.
 
 | property | type | meaning |
 |---|---|---|
@@ -998,7 +1014,8 @@ Exception hierarchy (simplified):
   - `InvalidRegexOptionException` (invalid configuration option)
   - `CacheException` (a cache directory or file that cannot be written)
   - `InternalFailureException` (the library could not finish its own work: no verdict on the pattern)
-  - `LintException` (a lint formatter or worker that failed)
+  - `FormattingException` (the formatter could not keep the pattern's meaning: a bug of the library to report with `$pattern`)
+  - `LintException` (`@internal`: a lint formatter or worker that failed, inside the lint commands)
   - `UnknownLintRuleException` (a rules map that names a rule the linter does not run)
   - `UnsupportedTargetException` (a target PHP whose engine the library does not judge: PHP 7.2 and earlier ship PCRE1)
   - `JsonEncodingException` (a value the JSON output cannot write)
@@ -1010,13 +1027,13 @@ Exception hierarchy (simplified):
       - `RecursionLimitException` (max recursion depth)
       - `ResourceLimitException` (max pattern length, or a text explanation or ASCII tree past 8 MiB)
     - `SemanticErrorException` (semantic validation failure)
-    - `TranspileException` (unsupported target or feature during transpile)
+    - `TranspileException` (a construct or a flag the dialect cannot carry)
     - `SampleGenerationException` (no sample the pattern matches was found)
     - `ComplexityException` (a pattern outside what the automata can decide)
 
 Each class lives in the `Exception` namespace of its package:
 `PHPRegex\Parser\Exception\ExceptionInterface` and the parser's own,
-`PHPRegex\Linter\Exception\LintException`,
+`PHPRegex\Linter\Exception\LintException` (internal),
 `PHPRegex\Linter\Exception\UnknownLintRuleException`,
 `PHPRegex\Linter\Exception\UnsupportedTargetException`,
 `PHPRegex\Transpiler\Exception\TranspileException`,
@@ -1106,7 +1123,7 @@ try {
 | `info($regex)`          | PatternInfo             | PCRE2 facts, lengths, anchors |
 | `compatibility($regex)` | PatternCompatibility    | Valid on which PHP and PCRE2 |
 | `optimize($regex)`      | OptimizationResult      | Optimize pattern  |
-| `transpile($regex, $target)` | TranspileResult    | Convert dialects  |
+| `transpile($regex, $dialect)` | TranspileResult   | Convert dialects  |
 | `explain($regex)`       | string                  | Human explanation |
 | `highlight($regex)`     | string                  | Syntax highlight  |
 | `format($regex, $width)` | FormatResult           | Pretty-print with line wrapping |
@@ -1148,6 +1165,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 |---|---|---|
 | `CacheStats` | `Parser\Cache\RemovableCacheInterface` | `{hits: int, misses: int}` |
 | `OptionsArray` | `Parser\ParserOptions` | the eight configuration keys, each optional |
+| `RegexOptionsArray` | `Toolkit\Regex` | the eight configuration keys and `redos_ignored_patterns`, each optional, as `Regex::create()` reads them |
 | `OptimizerOptionsArray` | `Optimizer\OptimizerOptions` | the eight optimizer options, in snake_case, each optional, as `OptimizerOptions::fromArray()` reads them |
 | `ConfigArray` | `PHPStan\RegexPatternRule` | the `phpRegex` parameter of the PHPStan extension, every key optional |
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |

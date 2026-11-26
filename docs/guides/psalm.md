@@ -345,7 +345,7 @@ does not know it. Only `preg_match()` reads such a pattern;
   (the second is reported): it leaves `$matches` as it was, so no branch can
   say what it holds.
 - A pattern past the library's length limit (100,000 bytes,
-  `RegexParser::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
+  `ParserOptions::DEFAULT_MAX_PATTERN_LENGTH`): neither typed nor reported.
 - A shape of more keys than `maxShapedArraySize`: Psalm keeps no such shape.
 - A `preg_match_all()` call whose pattern holds `\K`, or whose offset is not
   a constant ≤ 0: it may return `false` and leave `[]`.
@@ -378,7 +378,7 @@ The plugin reads the same facts of a pattern as the
   with nothing. The PHPStan extension reports it as
   `regex.replacement.undefinedGroup`.
 - The plugin reads the `preg_*` calls only. The static methods of the wrapper
-  libraries the extension reads under `phpRegex.interop`, composer/pcre's
+  libraries the extension reads under `phpRegex.extraction.interop`, composer/pcre's
   `Preg::match()` or Laravel's `Str::isMatch()` for instance, are neither
   validated nor checked for ReDoS.
 
@@ -701,5 +701,6 @@ vendor/bin/psalm --set-baseline=psalm-baseline.xml
 
 A minor release may type a pattern more narrowly than the one before, which
 may require regenerating the baseline; its CHANGELOG says so. The `Plugin`
-class, the `InvalidRegexPattern`, `RegexRedos` and `RegexRedosSearch` names
-and the options stay for all of 2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).
+class, the `InvalidRegexPattern`, `InvalidRegexTarget`, `RegexRedos` and
+`RegexRedosSearch` names and the options (`<phpVersion>`, `<pcreVersion>`,
+`<locale>`, `<redos>`, `<redosThreshold>`) stay for all of 2.x: see [the backward compatibility promise](../reference/backward-compatibility.md).

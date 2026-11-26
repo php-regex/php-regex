@@ -18,6 +18,7 @@ use PHPRegex\LanguageServer\Server;
 use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Redos\SearchCostCause;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\TestUtils\FileUri;
@@ -139,7 +140,7 @@ final class ServerEveryMatchSearchCostTest extends TestCase
 
         $this->assertCount(1, $published);
         $lines = explode("\n", \is_string($published[0]['message']) ? $published[0]['message'] : '');
-        $this->assertSame(RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, '', 'a', '', false, null, true)), $lines[0]);
+        $this->assertSame(RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, SearchCostCause::ShortMatch, '', 'a', '', false)), $lines[0]);
         $this->assertContains('Attack: "a" x n.', $lines);
         $this->assertSame(2, $published[0]['severity'], 'A warning.');
 
@@ -183,7 +184,7 @@ final class ServerEveryMatchSearchCostTest extends TestCase
      */
     private static function retried(): RedosSearchCost
     {
-        return new RedosSearchCost(2, '', 'a', '', false);
+        return new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false);
     }
 
     /**

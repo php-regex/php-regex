@@ -38,15 +38,16 @@ use PHPRegex\Toolkit\AnalysisReport;
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\HighlightFormat;
 use PHPRegex\Toolkit\Regex as ToolkitRegex;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\TranspileResult;
 
 /**
  * Laravel Facade for the PHPRegex library.
  *
- * @phpstan-import-type OptionsArray from ParserOptions
+ * @phpstan-import-type RegexOptionsArray from ToolkitRegex
  *
- * @method static ToolkitRegex                  create(OptionsArray $options = [])
+ * @method static ToolkitRegex                  create(RegexOptionsArray $options = [])
  * @method static ToolkitRegex                  fromOptions(ParserOptions $options)
  * @method static RegexNode                     parse(string $regex)
  * @method static RegexParser                   parser()
@@ -59,7 +60,7 @@ use PHPRegex\Transpiler\TranspileResult;
  * @method static OptimizationResult            optimize(string $regex, ?OptimizerOptions $options = null)
  * @method static FormatResult                  format(string $regex, int $width = 80)
  * @method static FormatResult                  compact(string $regex)
- * @method static TranspileResult               transpile(string $regex, string $target, ?TranspileOptions $options = null)
+ * @method static TranspileResult               transpile(string $regex, Dialect|string $dialect, ?TranspileOptions $options = null)
  * @method static string                        explain(string $regex, string|ExplainFormat $format = ExplainFormat::Text)
  * @method static string                        highlight(string $regex, string|HighlightFormat $format = HighlightFormat::Console)
  * @method static LiteralExtractionResult       literals(string $regex)

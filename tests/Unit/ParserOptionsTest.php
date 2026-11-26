@@ -23,6 +23,7 @@ use PHPRegex\Tests\Support\EngineProbe;
 use PHPRegex\Tests\Support\InstalledLocales;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -341,27 +342,24 @@ final class ParserOptionsTest extends TestCase
         $this->assertInstanceOf(FilesystemCache::class, $options->cache);
     }
 
+    /**
+     * The patterns the ReDoS analysis skips are no parser option: the
+     * parser never read them, and RegexParser::create() dropped them.
+     */
     #[Test]
-    public function test_from_array_invalid_redos_ignored_patterns(): void
+    public function test_from_array_refuses_the_redos_ignored_patterns(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must be a list of strings.');
-        ParserOptions::fromArray(['redos_ignored_patterns' => 'invalid']);
+        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" is no parser option: pass the patterns to RedosAnalyzer\'s $ignoredPatterns argument, or to Regex::create().');
+        ParserOptions::fromArray(['redos_ignored_patterns' => ['/(a+)+$/']]);
     }
 
     #[Test]
-    public function test_from_array_invalid_redos_ignored_patterns_elements(): void
+    public function test_from_array_lists_the_parser_options_it_takes(): void
     {
         $this->expectException(InvalidRegexOptionException::class);
-        $this->expectExceptionMessageIsOrContains('"redos_ignored_patterns" must contain only strings.');
-        ParserOptions::fromArray(['redos_ignored_patterns' => [123]]);
-    }
-
-    #[Test]
-    public function test_from_array_redos_ignored_patterns_deduplicates(): void
-    {
-        $options = ParserOptions::fromArray(['redos_ignored_patterns' => ['/a/', '/a/', '/b/']]);
-        $this->assertSame(['/a/', '/b/'], $options->redosIgnoredPatterns);
+        $this->expectExceptionMessageIsOrContains('Unknown option(s): unknown_option. Allowed options are: max_pattern_length, max_lookbehind_length, cache, runtime_pcre_validation, max_recursion_depth, php_version, pcre_version, locale.');
+        ParserOptions::fromArray(['unknown_option' => true]);
     }
 
     #[Test]
@@ -422,5 +420,58 @@ final class ParserOptionsTest extends TestCase
         $this->expectException(InvalidRegexOptionException::class);
         $this->expectExceptionMessageIsOrContains(\sprintf('"runtime_pcre_validation" compiles with the running PHP, which does not judge the target (locale "%s"); drop one of them.', $other));
         ParserOptions::fromArray(['runtime_pcre_validation' => true, 'locale' => $other]);
+    }
+
+    /**
+     * The exception names the option at fault, as fromArray() reads its
+     * keys: an entry point that names the option otherwise reads which one
+     * it is from there, never from the message. Unknown keys name none.
+     *
+     * @param array<string, mixed> $options
+     */
+    #[Test]
+    #[DataProvider('provideRefusedOptions')]
+    public function test_a_refused_option_is_named_by_its_key(array $options, ?string $option): void
+    {
+        try {
+            ParserOptions::fromArray($options);
+            $this->fail('The options were not refused.');
+        } catch (InvalidRegexOptionException $e) {
+            $this->assertSame($option, $e->option, $e->getMessage());
+            $this->assertNull($e->getPrevious());
+        }
+    }
+
+    /**
+     * @return iterable<string, array{options: array<string, mixed>, option: string|null}>
+     */
+    public static function provideRefusedOptions(): iterable
+    {
+        yield 'an unknown key' => ['options' => ['max_length' => 1], 'option' => null];
+        yield 'a length of another type' => ['options' => ['max_pattern_length' => '1'], 'option' => 'max_pattern_length'];
+        yield 'a length of zero' => ['options' => ['max_pattern_length' => 0], 'option' => 'max_pattern_length'];
+        yield 'a lookbehind length of another type' => ['options' => ['max_lookbehind_length' => '1'], 'option' => 'max_lookbehind_length'];
+        yield 'a negative lookbehind length' => ['options' => ['max_lookbehind_length' => -1], 'option' => 'max_lookbehind_length'];
+        yield 'a depth of another type' => ['options' => ['max_recursion_depth' => '1'], 'option' => 'max_recursion_depth'];
+        yield 'a depth of zero' => ['options' => ['max_recursion_depth' => 0], 'option' => 'max_recursion_depth'];
+        yield 'a runtime validation of another type' => ['options' => ['runtime_pcre_validation' => 'yes'], 'option' => 'runtime_pcre_validation'];
+        yield 'a runtime validation of another engine' => ['options' => ['runtime_pcre_validation' => true, 'pcre_version' => '10.30'], 'option' => 'runtime_pcre_validation'];
+        yield 'a cache of another type' => ['options' => ['cache' => 1], 'option' => 'cache'];
+        yield 'an empty cache path' => ['options' => ['cache' => ' '], 'option' => 'cache'];
+        yield 'ignored patterns of another type' => ['options' => ['redos_ignored_patterns' => '/a/'], 'option' => 'redos_ignored_patterns'];
+        yield 'an ignored pattern of another type' => ['options' => ['redos_ignored_patterns' => [1]], 'option' => 'redos_ignored_patterns'];
+        yield 'a PHP version of another type' => ['options' => ['php_version' => 8.2], 'option' => 'php_version'];
+        yield 'a PHP version that names none' => ['options' => ['php_version' => 'eight'], 'option' => 'php_version'];
+        yield 'a PHP version of zero' => ['options' => ['php_version' => '0.0'], 'option' => 'php_version'];
+        yield 'a PHP version integer of zero' => ['options' => ['php_version' => 0], 'option' => 'php_version'];
+        yield 'a PHP version written as a number' => ['options' => ['php_version' => 82], 'option' => 'php_version'];
+        yield 'a PHP version id below PHP 7' => ['options' => ['php_version' => 8000], 'option' => 'php_version'];
+        yield 'a PHP version below PHP 7' => ['options' => ['php_version' => '6.0'], 'option' => 'php_version'];
+        yield 'a PHP version past PHP 9.99' => ['options' => ['php_version' => '10.0'], 'option' => 'php_version'];
+        yield 'a PCRE2 release of another type' => ['options' => ['pcre_version' => 10.44], 'option' => 'pcre_version'];
+        yield 'a PCRE2 release that names none' => ['options' => ['pcre_version' => 'ten'], 'option' => 'pcre_version'];
+        yield 'a PCRE2 release before 10.00' => ['options' => ['pcre_version' => '8.45'], 'option' => 'pcre_version'];
+        yield 'a locale of another type' => ['options' => ['locale' => 1], 'option' => 'locale'];
+        yield 'a locale the machine cannot set' => ['options' => ['locale' => 'xx_NOWHERE.UTF-8'], 'option' => 'locale'];
     }
 }

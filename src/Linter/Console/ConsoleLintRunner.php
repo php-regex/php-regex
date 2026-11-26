@@ -52,11 +52,6 @@ final class ConsoleLintRunner
     private const FORMAT_CONSOLE = 'console';
 
     /**
-     * The steps of a run: the scan, the analysis and the optimizations.
-     */
-    private const STEPS = 3;
-
-    /**
      * @param bool|null $forking whether this PHP can fork the workers; null reads it from the pool
      */
     public function __construct(private readonly FormatterRegistry $formatters = new FormatterRegistry(), private readonly ?bool $forking = null) {}
@@ -109,6 +104,7 @@ final class ConsoleLintRunner
             excludePaths: $request->exclude,
             minSavings: $minSavings,
             disabledSources: $request->disabledSources,
+            checkOptimizations: $request->checkOptimizations,
             analysisWorkers: $jobs,
             optimizations: $request->optimizations,
             declarationPaths: $request->declarationPaths,
@@ -122,9 +118,10 @@ final class ConsoleLintRunner
         $startTime = microtime(true);
         $progress = null;
         if ($console && !$output->isQuiet()) {
-            // The bridges always suggest optimizations, a step of their own.
-            $progress = new LintProgressBar($output, self::STEPS);
-            $progress->writeln('  <fg=gray>[1/'.self::STEPS.'] Scanning files</>');
+            // The optimizations are a step of their own, when the run suggests them.
+            $steps = $request->checkOptimizations ? 3 : 2;
+            $progress = new LintProgressBar($output, $steps);
+            $progress->writeln('  <fg=gray>[1/'.$steps.'] Scanning files</>');
         }
 
         $runner = new LintRunner($setup->lint);
@@ -234,7 +231,7 @@ final class ConsoleLintRunner
         $locale = $target->target()->locale;
         $lines = [
             'Runtime' => 'PHP <fg=yellow>'.\PHP_VERSION.'</>',
-            'Target' => \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->source()),
+            'Target' => \sprintf('PHP <fg=yellow>%s</>, PCRE2 <fg=yellow>%s</>%s (%s)', $target->php(), $target->target()->pcreVersion, 'C' === $locale ? '' : ', locale <fg=yellow>'.$locale.'</>', $target->origins()),
             // where this PHP cannot fork, Windows among others, the workers
             // asked for run as this one process, said here once
             'Processes' => $forking || $jobs <= 1 ? '<fg=yellow>'.$jobs.'</>' : '<fg=yellow>1</> (this PHP cannot fork: --jobs '.$jobs.' ran in one process)',
@@ -267,7 +264,7 @@ final class ConsoleLintRunner
         foreach ($setup->warnings as $warning) {
             $errors->writeln('Warning: '.$warning, OutputInterface::OUTPUT_RAW);
         }
-        $errors->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->source()), OutputInterface::OUTPUT_RAW);
+        $errors->writeln(\sprintf('Target: %s (%s)', $target->label(), $target->origins()), OutputInterface::OUTPUT_RAW);
     }
 
     /**

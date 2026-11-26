@@ -65,7 +65,7 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 | `reportDynamic` | `false` | List each pattern argument built at run time, which no rule can verify, as an info: `regex.lint.source.dynamic`, `regex.lint.source.dynamicPart` or `regex.lint.source.quotedPart` |
 | `extraction.interop` | every preset | Libraries whose calls carry a pattern: `composer-pcre`, `nette-utils`, `spatie-regex`, `illuminate-support`, `phpunit`, `webmozart-assert`, `beberlei-assert`, `symfony-validator`; a list reads exactly those, `[]` none of them (the native calls and your own functions are still read), an unknown name is an error that names the preset it most likely means |
 | `extraction.functions` | `[]` | Project helpers carrying a pattern, as `App\Support\Str::matches#1` |
-| `checks.validation` | `true` | Syntax and semantic validation |
+| `checks.validation.enabled` | `true` | Syntax and semantic validation |
 | `checks.redos.enabled` | `false` | ReDoS analysis |
 | `checks.redos.mode`, `checks.redos.threshold` | `theoretical`, `high` | Analysis mode, and the lowest severity reported |
 | `checks.optimizations.enabled`, `checks.optimizations.minSavings` | `true`, `1` | Optimization suggestions, and the minimum characters saved to report one |
@@ -77,16 +77,15 @@ The lint command reads `regex.dist.json` (the committed defaults), then `regex.j
 Usage
 -----
 
-`PatternLinter` is a node visitor: run it on any parsed AST.
+`PatternLinter::analyze()` takes the tree `parse()` gives and returns the findings of the rules on it.
 
 ```php
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\RegexParser;
 
 $linter = new PatternLinter();
-RegexParser::create()->parse('/(a+)+b/')->accept($linter);
 
-foreach ($linter->getIssues() as $violation) {
+foreach ($linter->analyze(RegexParser::create()->parse('/(a+)+b/')) as $violation) {
     echo $violation->id, ': ', $violation->message, "\n";
 }
 ```
@@ -95,23 +94,26 @@ regex.lint.quantifier.nested: Nested quantifiers in capturing group 1 "(a+)" can
 regex.lint.group.quantifiedCapture: Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
 
-The constructor takes the target second, `new PatternLinter([], $parser->target())`: a rule that asks what a
+`getIssues()` gives the findings of the last pattern read again. The linter walks the tree as a node visitor, so
+`$ast->accept($linter)` on the root reads it as `analyze()` does; its `visit*()` methods are `@internal`, and a node
+below the root is no pattern to lint: the rules read its groups and flags from the root.
+
+The constructor takes the target first, `new PatternLinter($parser->target())`: a rule that asks what a
 part of the pattern matches then reads it as that PHP and PCRE2 read it, the running ones without it. With the
 toolkit installed, `Regex::create()->lint('/(a+)+b/')` runs the rules for the facade's target in one call.
 
-Turn rules on or off by id — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
+Turn rules on or off by id with the second argument, `rules` — the same map `checks.lint.rules` reads from `regex.json`, each id without `regex.lint.` or in full. An id the linter does not run throws `UnknownLintRuleException`, which names the nearest one:
 
 ```php
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\RegexParser;
 
-$linter = new PatternLinter([
+$linter = new PatternLinter(rules: [
     'quantifier.nested' => false,        // disable one rule
     'unicode.shorthandWithoutU' => true, // enable the opt-in rule
 ]);
-RegexParser::create()->parse('/^\w+\d*$/')->accept($linter);
 
-foreach ($linter->getIssues() as $violation) {
+foreach ($linter->analyze(RegexParser::create()->parse('/^\w+\d*$/')) as $violation) {
     echo $violation->id, ': ', $violation->message, "\n";
 }
 ```

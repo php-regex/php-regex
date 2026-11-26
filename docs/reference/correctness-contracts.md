@@ -130,7 +130,7 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 - **Semantics, short matches:** Or a witness on which the first attempt of each call of the loop, read in the order
   PCRE2 tries its paths, first tries paths that read to the end of the run and fail there, then succeeds after one
   character at least and four run words at most: the search of `preg_match()` stops at that short match, and each
-  call of the loop starts where the last match ended, inside the run. `RedosSearchCost::$shortMatch` is `true`, and the
+  call of the loop starts where the last match ended, inside the run. `RedosSearchCost::$cause` is `ShortMatch`, and the
   lint message starts with `Quadratic search over short matches`. A match `\K` leaves empty makes PHP retry where it
   ends, refusing an empty match at its start only: that retry ends on the next short match the same way. Measured with
   PHP 8.4.28 and PCRE2 10.49 on `"a" x n`, n = 2,000 / 4,000 / 8,000 / 16,000, `preg_match_all()` with

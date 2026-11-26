@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package; see the
    [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Application::run()` serves the catalog `ToolCatalog::create()` builds
+   for the target, and `Application::serve()` a catalog built beforehand;
+   the constructor takes the logger only. `ToolCatalog::with()`, the
+   constructor of `ToolDefinition` and `ServerInterface` are `@internal`.
  * The server speaks to `mcp/sdk` 0.9 and 0.10: Composer installs 0.9 on
    PHP 8.1 and 0.10, which requires PHP 8.2, from PHP 8.2. The phar carries
    0.9.
@@ -20,10 +24,11 @@ CHANGELOG
    version. The tool's answer is computed for the lowest version, and the
    pattern is checked at every later version where one of the library's
    rules changes. The server reads no file from its working directory.
- * Every structured answer ends with `target`, the PHP versions judged
-   (`php_target` for `regex_transpile`, whose `target` is the dialect), and
+ * Every structured answer ends with `target`, the PHP versions judged, and
    `range`, the verdict of each version on the pattern. The output schemas
-   declare both.
+   declare both. `regex_transpile` takes its dialect in `dialect`
+   (`javascript` or `js`, `html-pattern` or `html`, `python` or `py`) and
+   names it `dialect` in its answer.
  * Each tool's output schema is an object at its root (`"type": "object"`
    beside the `oneOf` of the success document and the error envelope), as
    the protocol's tool schema requires: a client that checks it, as the

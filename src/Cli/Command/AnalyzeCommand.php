@@ -122,13 +122,12 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             $redosThreshold = $parsed['redosThreshold'];
 
             $validation = $regex->validate($pattern);
-            // The report holds an invalid pattern, its parse failed and the
-            // analyses that need a valid pattern left empty.
+            // The report holds an invalid pattern, its validation saying
+            // why and the analyses that need a valid pattern left empty.
             if ('json' === $format && !$validation->isValid) {
                 $output->writeDocument(JsonDocument::encode([
                     'pattern' => $pattern,
                     'runtime' => $runtime,
-                    'parse' => ['ok' => false],
                     'validation' => $validation,
                     'redos' => null,
                     'explain' => null,
@@ -247,7 +246,6 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
         $payload = [
             'pattern' => $pattern,
             'runtime' => $runtime,
-            'parse' => ['ok' => true],
             'validation' => $validation,
             'redos' => $analysis,
             'explain' => $explain,

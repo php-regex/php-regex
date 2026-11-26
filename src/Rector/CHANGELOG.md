@@ -7,6 +7,13 @@ CHANGELOG
  * First release: `PregMatchToStringComparisonRector`, `PregReplaceToStrReplaceRector`,
    `PregSplitToExplodeRector` and the `RegexSetList::STRING_FUNCTIONS` set;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * Rector builds the rules from their class name: their constructors are
+   `@internal`.
+ * The rules judge each PHP with its PCRE2 as `regex lint` resolves it: the
+   release `composer.json` pins in `config.platform.lib-pcre`, else the
+   running PCRE2 for the running PHP's minor version, else the one the PHP
+   bundles. A project on PCRE2 10.43 or later keeps `/a{,3}/`, which its
+   PHP 8.3 already reads as a quantifier.
  * The `RegexSetList::UPGRADE_2_0` set: code written for `yoeunes/regex-parser`
    1.3 moves to the 2.0 names, every class, enum case and renamed method.
  * The rules judge the PHP the code targets under the locale Rector runs

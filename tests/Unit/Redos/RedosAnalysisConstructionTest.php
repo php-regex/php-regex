@@ -29,6 +29,7 @@ use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
+use PHPRegex\Redos\SearchCostCause;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -202,8 +203,8 @@ final class RedosAnalysisConstructionTest extends TestCase
             pcreVersion: '10.40' === PcreTarget::runtime()->pcreVersion ? '10.44' : '10.40',
             analysisVersion: '0',
             upperBoundDegree: 4,
-            searchCost: new RedosSearchCost(2, '', 'a', '!', false),
-            everyMatchSearchCost: new RedosSearchCost(2, '', 'b', '', false),
+            searchCost: new RedosSearchCost(2, SearchCostCause::UnanchoredSearch, '', 'a', '!', false),
+            everyMatchSearchCost: new RedosSearchCost(2, SearchCostCause::ShortMatch, '', 'b', '', false),
         );
     }
 }

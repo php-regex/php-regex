@@ -58,7 +58,9 @@ Configuration
 | `max_recursion_depth` | positive int | `512` | how deep groups may nest before the parser stops; PCRE refuses parentheses nested past 250 |
 | `runtime_pcre_validation` | bool | `false` | also compile with the running PHP; only when the judged engine is the running one |
 | `cache` | `null`, directory or `CacheInterface` | in memory | `null` disables caching, a string names a directory, an instance is used as is |
-| `redos_ignored_patterns` | list of strings | `[]` | patterns handed to the ReDoS layer to skip |
+
+The patterns the ReDoS analysis skips are no parser option: `RegexParser::create()` refuses
+`redos_ignored_patterns`, which `Regex::create()` takes and `RedosAnalyzer` takes as `$ignoredPatterns`.
 
 Usage
 -----

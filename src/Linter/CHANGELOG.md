@@ -49,8 +49,6 @@ CHANGELOG
    such values. Where one in a branch or a loop of its own may stand
    between, in a `switch` or in a block of the alternative syntax, the
    call names no loop.
-   `PatternOccurrence::$everyMatchElsewhere` names the functions of the
-   other calls, and `everyMatchCalls()` all of them.
  * Without u, under another locale's tables than PCRE2's own,
    `regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`
    and `regex.lint.overlap.charset` read the characters of a run or a
@@ -149,8 +147,7 @@ CHANGELOG
    closure. A literal limit that bounds the call keeps it quiet, and so does
    a `preg_match()` call, a lazy nette/utils `Strings::matchAll()` and a
    `RegexIterator` mode the call does not spell out.
-   `PatternOccurrence::$everyMatch` names the function whose loop the call
-   runs. Severity `medium`: hidden at the default `high`
+   Severity `medium`: hidden at the default `high`
    threshold, shown from `--redos-threshold=medium`.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
@@ -562,9 +559,23 @@ CHANGELOG
  * The error for an `ide` value `regex.json` refuses names every placeholder
    a template may hold, `%f`, `%file%`, `%relFile%`, `%l`, `%line%`, `%c` and
    `%column%`, where it named `%f` and `%l` only though `%c` alone was taken.
+ * `PatternOccurrence` is read through `$pattern`, `$file`, `$line`,
+   `$column` and `$source`, the five an extractor of your own gives
+   `found()`; its other properties are `@internal`.
+ * `PatternLinter::analyze($ast)` returns the findings of the rules on the
+   tree `parse()` gives, and `getIssues()` those of the last tree read; the
+   `visit*()` methods of the linter are `@internal`.
+ * `LintException` is `@internal`: only the lint commands' own services
+   throw it, a formatter they do not know or a worker that failed. Catch
+   `ExceptionInterface` around them.
+ * `new PatternLinter($target, $rules)` takes the `PcreTarget` its rules read
+   the pattern for, the running PHP's when null, and then the map turning
+   rules on and off, as `checks.lint.rules` does.
  * `PatternLinter` throws `UnknownLintRuleException` for a rules map naming
    a rule it does not run, the nearest rule named, where a typo turned
    nothing off; the map takes each id short or in full.
+ * `checks.validation` in `regex.json` is an object, `{"enabled": false}`,
+   as every other check: a boolean is refused, the object it means named.
  * `checks.lint.rules` takes a rule id in full as well as short, and a
    misspelt id is told the nearest one, in `regex.json` and on the command
    line; an inline marker reads a short id as that issue, where it was a
@@ -753,3 +764,12 @@ CHANGELOG
    each reader of the file, in the middle of the report of `regex lint`, a
    checkstyle, JUnit or GitHub document included, and of the JSON report of
    `php artisan regex:lint`.
+ * A lint issue of the JSON report places itself in the pattern body with
+   `offset` and `end`, exclusive, the span of the node a lint rule names,
+   `null` where unknown; its `issue_id` is always a string, an invalid
+   pattern refused without an error code of its own reported as
+   `regex.pcre.runtime`, as the language server reports it, and baselined
+   under it.
+ * The target of the JSON report names where each of its parts came from:
+   `source` the PHP's alone, `pcre_source` the PCRE2 release's and
+   `locale_source` the locale's, `null` when nothing named them.

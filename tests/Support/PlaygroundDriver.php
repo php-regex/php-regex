@@ -42,7 +42,7 @@ namespace PHPRegex\Tests\Support;
  * @phpstan-type Confirmation array{confirmed: bool, evidence: ?string, backtrack_limit: ?int, samples: list<array<string, mixed>>}
  * @phpstan-type Verdict array{severity: string, complexity: string, mode: string, confirmed: bool, error: ?string, hotspots: list<Hotspot>, witness: array{prefix: string, pump: string, suffix: string}|null, confirmation: Confirmation|null, linear: bool, attack: ?string, replay_error: ?string}
  * @phpstan-type Redos array{protocol: int, notices: list<string>, redos: Verdict|null, error: Fault|null, timing: array{redosMs: float}}
- * @phpstan-type TranspileDocument array{target: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: list<string>, notes: list<string>}
+ * @phpstan-type TranspileDocument array{dialect: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: list<string>, notes: list<string>}
  * @phpstan-type Transpile array{protocol: int, notices: list<string>, transpile: TranspileDocument|null, refusal: array{message: string}|null, error: Fault|null, timing: array{transpileMs: float}}
  * @phpstan-type Samples array{protocol: int, notices: list<string>, samples: array{matching: list<string>, nonMatching: list<string>, seed: int, dropped: int}|null, error: Fault|null, timing: array{samplesMs: float}}
  * @phpstan-type Check array{matched: ?int, error: ?string, groups: array<int|string, array{string, int}|null>|null}

@@ -61,6 +61,8 @@ final class RegexPatternArgumentRule implements Rule
     private readonly PatternChecker $checker;
 
     /**
+     * @internal built by extension.neon; configure through `phpRegex`
+     *
      * @param ConfigArray                        $config          the "phpRegex" parameter, as RegexPatternRule reads it
      * @param PhpVersion|null                    $phpVersion      the PHP version PHPStan analyses the project for
      * @param int|array{min: int, max: int}|null $phpVersionRange PHPStan's "phpVersion" parameter

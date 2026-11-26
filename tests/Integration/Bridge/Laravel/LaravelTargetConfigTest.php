@@ -270,7 +270,8 @@ final class LaravelTargetConfigTest extends LaravelTestCase
         [, $json] = $this->lintJson();
 
         $this->assertSame('fr_FR.ISO8859-1', $json['target']['locale'] ?? null);
-        $this->assertSame('running PHP; config php-regex.locale', $json['target']['source'] ?? null);
+        $this->assertSame('running PHP', $json['target']['source'] ?? null);
+        $this->assertSame('config php-regex.locale', $json['target']['locale_source'] ?? null);
         $this->assertSame(PcreTarget::runtime()->locale, $this->regexService()->target()->locale);
     }
 
@@ -316,7 +317,7 @@ final class LaravelTargetConfigTest extends LaravelTestCase
     public function test_analysis_redos_threshold_is_gone_from_the_config(): void
     {
         $this->assertFalse(config()->has('php-regex.analysis.redos_threshold'));
-        $this->assertSame(50, config('php-regex.analysis.warning_threshold'));
+        $this->assertSame(50, config('php-regex.complexity.threshold'));
     }
 
     #[Test]

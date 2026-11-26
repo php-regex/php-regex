@@ -25,7 +25,9 @@ use PHPRegex\Parser\Text\Ascii;
  * Configuration options for Regex parser.
  *
  * Provides a simple, validated way to configure regex parsing behavior
- * including limits, caching, and ReDoS pattern exclusions.
+ * including limits, caching and the target judged. The patterns the ReDoS
+ * analysis skips are no parser option: RedosAnalyzer takes them, and
+ * Regex::create() hands them to the analyzer it builds.
  *
  * The keys are closed and each value has its type; the ranges (a positive
  * length, a version that names a release) are checked where the options
@@ -35,7 +37,6 @@ use PHPRegex\Parser\Text\Ascii;
  *     max_pattern_length?: int,
  *     max_lookbehind_length?: int,
  *     cache?: CacheInterface|string|null,
- *     redos_ignored_patterns?: array<string>,
  *     runtime_pcre_validation?: bool,
  *     max_recursion_depth?: int,
  *     php_version?: int|string|null,
@@ -65,11 +66,6 @@ final class ParserOptions
     public const DEFAULT_MAX_RECURSION_DEPTH = 512;
 
     /**
-     * What "php_version" takes, said when it holds something else.
-     */
-    public const PHP_VERSION_EXPECTED = '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
-
-    /**
      * The smallest PHP_VERSION_ID "php_version" takes, PHP 7.0's: a smaller
      * integer is a version written as a number ("8", "82") or no version.
      */
@@ -81,13 +77,17 @@ final class ParserOptions
     public const LATEST_PHP_VERSION_ID = 99999;
 
     /**
+     * What "php_version" takes, said when it holds something else.
+     */
+    private const PHP_VERSION_EXPECTED = '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, or "runtime".';
+
+    /**
      * Allowed option keys for configuration.
      */
     private const VALID_OPTIONS = [
         'max_pattern_length',
         'max_lookbehind_length',
         'cache',
-        'redos_ignored_patterns',
         'runtime_pcre_validation',
         'max_recursion_depth',
         'php_version',
@@ -107,8 +107,7 @@ final class ParserOptions
      * @param int             $maxPatternLength      Maximum allowed regex pattern length
      * @param int             $maxLookbehindLength   Maximum length of a variable-length lookbehind; a
      *                                               fixed-length one is only limited by PCRE's 65535
-     * @param CacheInterface  $cache                 Cache implementation to use
-     * @param array<string>   $redosIgnoredPatterns  Patterns to ignore in ReDoS analysis
+     * @param CacheInterface  $cache                 Cache implementation to use, a new ArrayCache when left out
      * @param bool            $runtimePcreValidation Whether to validate against the PCRE runtime
      * @param int             $maxRecursionDepth     Maximum recursion depth during parsing
      * @param PcreTarget|null $target                The PHP, PCRE2 and locale judged; the running ones when null
@@ -116,24 +115,23 @@ final class ParserOptions
      * @throws InvalidRegexOptionException when a length or a depth is out of its range
      */
     public function __construct(
-        public readonly int $maxPatternLength,
-        public readonly int $maxLookbehindLength,
-        public readonly CacheInterface $cache,
-        public readonly array $redosIgnoredPatterns = [],
+        public readonly int $maxPatternLength = self::DEFAULT_MAX_PATTERN_LENGTH,
+        public readonly int $maxLookbehindLength = self::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+        public readonly CacheInterface $cache = new ArrayCache(),
         public readonly bool $runtimePcreValidation = false,
         public readonly int $maxRecursionDepth = self::DEFAULT_MAX_RECURSION_DEPTH,
         ?PcreTarget $target = null,
     ) {
         if ($maxPatternLength <= 0) {
-            throw new InvalidRegexOptionException('"max_pattern_length" must be a positive integer.');
+            throw new InvalidRegexOptionException('"max_pattern_length" must be a positive integer.', 'max_pattern_length');
         }
 
         if ($maxLookbehindLength < 0) {
-            throw new InvalidRegexOptionException('"max_lookbehind_length" must be a non-negative integer.');
+            throw new InvalidRegexOptionException('"max_lookbehind_length" must be a non-negative integer.', 'max_lookbehind_length');
         }
 
         if ($maxRecursionDepth <= 0) {
-            throw new InvalidRegexOptionException('"max_recursion_depth" must be a positive integer.');
+            throw new InvalidRegexOptionException('"max_recursion_depth" must be a positive integer.', 'max_recursion_depth');
         }
 
         $this->target = $target ?? PcreTarget::runtime();
@@ -148,7 +146,7 @@ final class ParserOptions
                 $this->target->withLocale($running->locale)->isRunningEngine()
                     ? \sprintf('locale "%s"', $this->target->locale)
                     : \sprintf('PHP %d.%d, PCRE2 %s', intdiv($this->target->phpVersionId, 10000), intdiv($this->target->phpVersionId, 100) % 100, $this->target->pcreVersion),
-            ));
+            ), 'runtime_pcre_validation');
         }
     }
 
@@ -167,7 +165,7 @@ final class ParserOptions
     public static function fromArray(array $options): self
     {
         if ([] === $options) {
-            return self::createDefault();
+            return new self();
         }
 
         self::validateOptionKeys($options);
@@ -175,12 +173,11 @@ final class ParserOptions
         $maxLength = self::getPatternLength($options);
         $lookbehindLength = self::getLookbehindLength($options);
         $cache = self::createCache($options);
-        $patterns = self::getIgnoredPatterns($options);
         $runtimeValidation = self::getRuntimePcreValidation($options);
         $recursionDepth = self::getRecursionDepth($options);
         $target = self::getTarget($options);
 
-        return new self($maxLength, $lookbehindLength, $cache, $patterns, $runtimeValidation, $recursionDepth, $target);
+        return new self($maxLength, $lookbehindLength, $cache, $runtimeValidation, $recursionDepth, $target);
     }
 
     /**
@@ -209,7 +206,7 @@ final class ParserOptions
             if (1 === LibraryPcre::match('/^([0-9]++)\.([0-9]{1,2})(?:\.([0-9]{1,2}))?$/D', $version, $parts)) {
                 $version = (int) $parts[1] * 10000 + (int) $parts[2] * 100 + (int) ($parts[3] ?? 0);
                 if (0 === $version) {
-                    throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+                    throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED, 'php_version');
                 }
 
                 return self::notPastTheLatest($version, $written);
@@ -219,11 +216,11 @@ final class ParserOptions
         }
 
         if (!\is_int($version)) {
-            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED, 'php_version');
         }
 
         if ($version <= 0) {
-            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED, 'php_version');
         }
 
         if ($version >= self::OLDEST_PHP_VERSION_ID) {
@@ -233,10 +230,10 @@ final class ParserOptions
         // 8 reads as PHP 8.0, 82 as PHP 8.2: a version written as a number.
         [$major, $minor] = $version < 10 ? [$version, 0] : [intdiv($version, 10), $version % 10];
         if ($version < 100 && $major >= 7) {
-            throw new InvalidRegexOptionException(\sprintf('"php_version" %d is no PHP_VERSION_ID: write PHP %2$d.%3$d as %4$d or "%2$d.%3$d".', $version, $major, $minor, $major * 10000 + $minor * 100));
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %d is no PHP_VERSION_ID: write PHP %2$d.%3$d as %4$d or "%2$d.%3$d".', $version, $major, $minor, $major * 10000 + $minor * 100), 'php_version');
         }
 
-        throw new InvalidRegexOptionException(\sprintf('"php_version" %d is below %d, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $version, self::OLDEST_PHP_VERSION_ID));
+        throw new InvalidRegexOptionException(\sprintf('"php_version" %d is below %d, the PHP_VERSION_ID of PHP 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $version, self::OLDEST_PHP_VERSION_ID), 'php_version');
     }
 
     /**
@@ -273,28 +270,17 @@ final class ParserOptions
     }
 
     /**
-     * Create default configuration with no custom options.
-     *
-     * @return self Default configuration instance
-     */
-    private static function createDefault(): self
-    {
-        return new self(
-            self::DEFAULT_MAX_PATTERN_LENGTH,
-            self::DEFAULT_MAX_LOOKBEHIND_LENGTH,
-            new ArrayCache(),
-            [],
-            false,
-        );
-    }
-
-    /**
      * Validate that all provided option keys are supported.
      *
      * @param array<string, mixed> $options Options to validate
      */
     private static function validateOptionKeys(array $options): void
     {
+        // The parser never read them: the analyzer that skips them takes them.
+        if (\array_key_exists('redos_ignored_patterns', $options)) {
+            throw new InvalidRegexOptionException('"redos_ignored_patterns" is no parser option: pass the patterns to RedosAnalyzer\'s $ignoredPatterns argument, or to Regex::create().', 'redos_ignored_patterns');
+        }
+
         $invalidKeys = array_diff(
             array_keys($options),
             self::VALID_OPTIONS,
@@ -322,9 +308,7 @@ final class ParserOptions
 
         // The range is the constructor's to check.
         if (!\is_int($length)) {
-            throw new InvalidRegexOptionException(
-                '"max_pattern_length" must be a positive integer.',
-            );
+            throw new InvalidRegexOptionException('"max_pattern_length" must be a positive integer.', 'max_pattern_length');
         }
 
         return $length;
@@ -342,9 +326,7 @@ final class ParserOptions
         $length = $options['max_lookbehind_length'] ?? self::DEFAULT_MAX_LOOKBEHIND_LENGTH;
 
         if (!\is_int($length)) {
-            throw new InvalidRegexOptionException(
-                '"max_lookbehind_length" must be a non-negative integer.',
-            );
+            throw new InvalidRegexOptionException('"max_lookbehind_length" must be a non-negative integer.', 'max_lookbehind_length');
         }
 
         return $length;
@@ -360,9 +342,7 @@ final class ParserOptions
         $runtimeValidation = $options['runtime_pcre_validation'] ?? false;
 
         if (!\is_bool($runtimeValidation)) {
-            throw new InvalidRegexOptionException(
-                '"runtime_pcre_validation" must be a boolean.',
-            );
+            throw new InvalidRegexOptionException('"runtime_pcre_validation" must be a boolean.', 'runtime_pcre_validation');
         }
 
         return $runtimeValidation;
@@ -380,9 +360,7 @@ final class ParserOptions
         $depth = $options['max_recursion_depth'] ?? self::DEFAULT_MAX_RECURSION_DEPTH;
 
         if (!\is_int($depth)) {
-            throw new InvalidRegexOptionException(
-                '"max_recursion_depth" must be a positive integer.',
-            );
+            throw new InvalidRegexOptionException('"max_recursion_depth" must be a positive integer.', 'max_recursion_depth');
         }
 
         return $depth;
@@ -400,13 +378,13 @@ final class ParserOptions
     {
         $locale = $options['locale'] ?? null;
         if (null !== $locale && !\is_string($locale)) {
-            throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($locale)));
+            throw new InvalidRegexOptionException(\sprintf('"locale" must be a locale name like "tr_TR.UTF-8", not a %s.', get_debug_type($locale)), 'locale');
         }
 
         $pcreVersion = $options['pcre_version'] ?? null;
 
         if (null !== $pcreVersion && !\is_string($pcreVersion)) {
-            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not a %s.', get_debug_type($pcreVersion)));
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not a %s.', get_debug_type($pcreVersion)), 'pcre_version');
         }
 
         // "runtime", as PHPStan's phpVersion takes it: the running PHP, with
@@ -433,12 +411,12 @@ final class ParserOptions
         }
 
         if (!\is_int($version) && !\is_string($version)) {
-            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED);
+            throw new InvalidRegexOptionException(self::PHP_VERSION_EXPECTED, 'php_version');
         }
 
         $phpVersionId = self::phpVersionIdOf($version);
         if ($phpVersionId < self::OLDEST_PHP_VERSION_ID) {
-            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is below 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', trim((string) $version, " \t\n\r\0\x0B")));
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is below 7.0: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', trim((string) $version, " \t\n\r\0\x0B")), 'php_version');
         }
 
         return $phpVersionId;
@@ -447,7 +425,7 @@ final class ParserOptions
     private static function notPastTheLatest(int $phpVersionId, int|string $written): int
     {
         if ($phpVersionId > self::LATEST_PHP_VERSION_ID) {
-            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is past PHP 9.99: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $written));
+            throw new InvalidRegexOptionException(\sprintf('"php_version" %s is past PHP 9.99: write a version as "8.2", or as its PHP_VERSION_ID, 80200.', $written), 'php_version');
         }
 
         return $phpVersionId;
@@ -481,9 +459,7 @@ final class ParserOptions
             return $cacheOption;
         }
 
-        throw new InvalidRegexOptionException(
-            'The "cache" option must be null, a cache path, or a CacheInterface implementation.',
-        );
+        throw new InvalidRegexOptionException('The "cache" option must be null, a cache path, or a CacheInterface implementation.', 'cache');
     }
 
     /**
@@ -498,58 +474,9 @@ final class ParserOptions
         $trimmedPath = trim($path, " \t\n\r\0\x0B");
 
         if ('' === $trimmedPath) {
-            throw new InvalidRegexOptionException(
-                'The "cache" option cannot be an empty string.',
-            );
+            throw new InvalidRegexOptionException('The "cache" option cannot be an empty string.', 'cache');
         }
 
         return new FilesystemCache($trimmedPath);
-    }
-
-    /**
-     * Get ignored ReDoS patterns from options.
-     *
-     * @param array<string, mixed> $options Configuration options
-     *
-     * @return array<string> List of ignored patterns
-     */
-    private static function getIgnoredPatterns(array $options): array
-    {
-        $patterns = $options['redos_ignored_patterns'] ?? [];
-
-        if (!\is_array($patterns)) {
-            throw new InvalidRegexOptionException(
-                '"redos_ignored_patterns" must be a list of strings.',
-            );
-        }
-
-        if ([] === $patterns) {
-            return [];
-        }
-
-        self::validatePatternStrings($patterns);
-
-        /** @var array<string> $result */
-        $result = array_values(array_unique($patterns));
-
-        return $result;
-    }
-
-    /**
-     * Validate that all patterns are strings.
-     *
-     * @param array<mixed> $patterns Patterns to validate
-     *
-     * @phpstan-assert array<string> $patterns
-     */
-    private static function validatePatternStrings(array $patterns): void
-    {
-        foreach ($patterns as $pattern) {
-            if (!\is_string($pattern)) {
-                throw new InvalidRegexOptionException(
-                    '"redos_ignored_patterns" must contain only strings.',
-                );
-            }
-        }
     }
 }

@@ -148,7 +148,7 @@ final class LintReportLocationTest extends TestCase
         )->results;
 
         $this->assertCount(1, $results);
-        $this->assertSame($expected, array_map(static fn (LintIssue $issue): array => [$issue->position, $issue->issueId], array_values($results[0]['issues'])));
+        $this->assertSame($expected, array_map(static fn (LintIssue $issue): array => [$issue->offset, $issue->issueId], array_values($results[0]['issues'])));
     }
 
     /**
@@ -199,7 +199,7 @@ final class LintReportLocationTest extends TestCase
 
         // (b+)+$: a nested-quantifier warning and a quantified-capture info,
         // both at position 0, ordered by identifier.
-        $issues = array_map(static fn (LintIssue $issue): array => [$issue->position, $issue->issueId], $forward[4]['issues']);
+        $issues = array_map(static fn (LintIssue $issue): array => [$issue->offset, $issue->issueId], $forward[4]['issues']);
         $sorted = $issues;
         sort($sorted);
         $this->assertGreaterThan(1, \count($issues));

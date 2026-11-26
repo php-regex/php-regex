@@ -40,7 +40,7 @@ final class ServerWorkingDirectoryTest extends TestCase
             'regex.json' => '{"phpVersion": "8.2", "pcreVersion": "10.40"}',
         ]);
 
-        $result = ToolCatalog::v1()->get('regex_validate')->tool->execute(['pattern' => '/a/']);
+        $result = ToolCatalog::create()->get('regex_validate')->tool->execute(['pattern' => '/a/']);
 
         $this->assertFalse($result->isError, $result->text);
         $this->assertSame(ProjectTarget::fromSources([], [], null, [])->toArray(), $result->structured['target'] ?? null);

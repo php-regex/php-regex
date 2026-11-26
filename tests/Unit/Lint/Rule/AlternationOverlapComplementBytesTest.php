@@ -87,7 +87,7 @@ final class AlternationOverlapComplementBytesTest extends TestCase
         $this->assertSame($reported, [1, 1] === $taken->getArrayCopy(), \sprintf('Oracle: %s under %s takes %s in %s.', addcslashes($pattern, "\200..\377"), $locale, bin2hex($byte), json_encode($taken->getArrayCopy())));
 
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         $ids = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());
@@ -250,7 +250,7 @@ final class AlternationOverlapComplementBytesTest extends TestCase
     private static function overlapRules(string $pattern, string $locale): array
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return array_values(array_intersect([OverlappingAlternationRule::ID_OVERLAP, self::ID], array_map(static fn ($issue): string => $issue->id, $linter->getIssues())));

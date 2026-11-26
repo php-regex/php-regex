@@ -493,11 +493,12 @@ parameters:
         # its character tables decide the size of a few classes. null for
         # the locale of the PHP running PHPStan.
         locale: null
-        # The libraries whose static methods carry a pattern:
-        # composer-pcre, nette-utils, spatie-regex, illuminate-support,
-        # phpunit, webmozart-assert, beberlei-assert, symfony-validator;
-        # null for every preset, [] for the native functions only.
-        interop: null
+        extraction:
+            # The libraries whose static methods carry a pattern:
+            # composer-pcre, nette-utils, spatie-regex, illuminate-support,
+            # phpunit, webmozart-assert, beberlei-assert, symfony-validator;
+            # null for every preset, [] for the native functions only.
+            interop: null
         checks:
             lint:
                 enabled: false
@@ -542,7 +543,7 @@ pattern second), `Regex::match()` of spatie/regex, `Str::isMatch()` of
 Laravel, `Assert::regex()` of webmozart/assert and `Assertion::regex()` of
 beberlei/assert (the pattern second), and PHPUnit's assertions called as
 `PHPUnit\Framework\Assert::assertMatchesRegularExpression()`. Every preset is
-read unless `interop` lists some; a list reads exactly the presets it names.
+read unless `extraction.interop` lists some; a list reads exactly the presets it names.
 The class is resolved as PHP resolves it, an aliased import included; a method
 of another class with the same name is not read. The subject of such a call is
 not told apart, so a constant subject does not quiet a ReDoS report as it does
@@ -551,12 +552,13 @@ in `preg_match()`.
 ```neon
 parameters:
     phpRegex:
-        interop: [composer-pcre, nette-utils]
+        extraction:
+            interop: [composer-pcre, nette-utils]
 ```
 {: data-file="phpstan.neon" }
 
 A name that is no preset stops the analysis, with the preset it most likely
-means: `Unknown extraction preset "phpunt" in phpRegex.interop: did you mean "phpunit"?`.
+means: `Unknown extraction preset "phpunt" in phpRegex.extraction.interop: did you mean "phpunit"?`.
 
 The rule reads static calls only. An assertion called on the test case,
 `$this->assertMatchesRegularExpression()` or `self::…`, PHPUnit's

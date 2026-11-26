@@ -46,6 +46,15 @@ final class MatchesPatternTest extends TestCase
         $this->assertThat($subject, new MatchesPattern($pattern, $expected));
     }
 
+    /**
+     * The expectation is named after what it holds: the captures.
+     */
+    #[Test]
+    public function test_matches_pattern_takes_the_captures_by_name(): void
+    {
+        $this->assertThat('2024-05', new MatchesPattern(pattern: '/(?<year>\d{4})-(\d{2})/', captures: ['year' => '2024', 2 => ['05', 5]]));
+    }
+
     #[Test]
     public function test_matches_pattern_fails_when_the_subject_does_not_match(): void
     {

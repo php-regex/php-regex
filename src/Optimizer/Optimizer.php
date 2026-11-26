@@ -57,7 +57,7 @@ final class Optimizer
     /**
      * Optimize a regular expression for better performance.
      *
-     * "     * @param string                $regex   The regular expression to optimize
+     * @param string                $regex   The regular expression to optimize
      * @param OptimizerOptions|null $options What may be rewritten; null reads the defaults. A config
      *                                       array becomes one through OptimizerOptions::fromArray()
      *

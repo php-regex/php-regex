@@ -55,7 +55,8 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 
 /**
- * Lints regex patterns for semantic issues like useless flags.
+ * Lints regex patterns for semantic issues like useless flags: analyze()
+ * takes the tree of a pattern and returns the findings of the rules on it.
  *
  * @phpstan-import-type CapturingGroupInfo from GroupIndex
  *
@@ -127,18 +128,17 @@ final class PatternLinter extends AbstractNodeVisitor
     private array $enabledRules;
 
     /**
-     * @param array<string, bool> $enabledRules the rules to turn on or off by id, as regex.json's
-     *                                          checks.lint.rules names them, without "regex.lint." or
-     *                                          in full; the others keep their default
-     * @param PcreTarget|null     $target       the PHP, PCRE2 and locale the rules read the pattern
-     *                                          for, as RegexParser::target() gives them; the running
-     *                                          ones when null
+     * @param PcreTarget|null     $target the PHP, PCRE2 and locale the rules read the pattern for, as
+     *                                    RegexParser::target() gives them; the running ones when null
+     * @param array<string, bool> $rules  the rules to turn on or off by id, as regex.json's
+     *                                    checks.lint.rules names them, without "regex.lint." or in
+     *                                    full; the others keep their default
      *
      * @throws UnknownLintRuleException when the map names a rule the linter does not run
      */
-    public function __construct(array $enabledRules = [], private readonly ?PcreTarget $target = null)
+    public function __construct(private readonly ?PcreTarget $target = null, array $rules = [])
     {
-        $this->enabledRules = self::known($enabledRules);
+        $this->enabledRules = self::known($rules);
         $this->charSetAnalyzer = new CharSetAnalyzer();
         $this->groups = PcreGroups::empty();
         $this->useRules(new LintRuleRegistry());
@@ -150,12 +150,12 @@ final class PatternLinter extends AbstractNodeVisitor
      *
      * @internal custom rule registries are not a public extension point
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      */
-    public static function withRegistry(array $enabledRules, LintRuleRegistry $registry): self
+    public static function withRegistry(LintRuleRegistry $registry, array $rules = []): self
     {
         $linter = new self();
-        $linter->enabledRules = self::known($enabledRules, $registry);
+        $linter->enabledRules = self::known($rules, $registry);
         $linter->useRules($registry);
 
         return $linter;
@@ -168,17 +168,34 @@ final class PatternLinter extends AbstractNodeVisitor
      *
      * @internal the DFA cache and the target of a run are the analysis service's business
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      */
-    public static function withDfaCache(array $enabledRules, DfaCacheInterface $dfaCache, ?PcreTarget $target = null): self
+    public static function withDfaCache(DfaCacheInterface $dfaCache, ?PcreTarget $target = null, array $rules = []): self
     {
-        $linter = new self($enabledRules, $target);
+        $linter = new self($target, $rules);
         $linter->dfaCache = $dfaCache;
 
         return $linter;
     }
 
     /**
+     * The findings of the rules on a pattern, read from the root of its
+     * tree, as RegexParser::parse() gives it: the rules read the groups and
+     * the flags of the whole pattern.
+     *
+     * @return list<RuleViolation>
+     */
+    public function analyze(RegexNode $ast): array
+    {
+        $ast->accept($this);
+
+        return $this->issues;
+    }
+
+    /**
+     * The findings of the last pattern read, by analyze() or by accept()
+     * on the root of its tree.
+     *
      * @return list<RuleViolation>
      */
     public function getIssues(): array
@@ -186,6 +203,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $this->issues;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitRegex(RegexNode $node): NodeInterface
     {
@@ -218,6 +238,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitLiteral(LiteralNode $node): NodeInterface
     {
@@ -226,6 +249,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitComment(CommentNode $node): NodeInterface
     {
@@ -234,6 +260,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitExtendedCharClass(ExtendedCharClassNode $node): NodeInterface
     {
@@ -243,6 +272,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitClassSetOperation(ClassSetOperationNode $node): NodeInterface
     {
@@ -253,6 +285,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharClass(CharClassNode $node): NodeInterface
     {
@@ -261,6 +296,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitDot(DotNode $node): NodeInterface
     {
@@ -269,6 +307,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitAnchor(AnchorNode $node): NodeInterface
     {
@@ -277,6 +318,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitAlternation(AlternationNode $node): NodeInterface
     {
@@ -294,6 +338,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitSequence(SequenceNode $node): NodeInterface
     {
@@ -311,6 +358,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitScriptRun(ScriptRunNode $node): NodeInterface
     {
@@ -320,6 +370,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitGroup(GroupNode $node): NodeInterface
     {
@@ -329,6 +382,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitBackref(BackrefNode $node): NodeInterface
     {
@@ -337,6 +393,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitSubroutine(SubroutineNode $node): NodeInterface
     {
@@ -345,6 +404,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitQuantifier(QuantifierNode $node): NodeInterface
     {
@@ -357,6 +419,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharLiteral(CharLiteralNode $node): NodeInterface
     {
@@ -365,6 +430,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitUnicodeProp(UnicodePropNode $node): NodeInterface
     {
@@ -373,6 +441,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitCharType(CharTypeNode $node): NodeInterface
     {
@@ -381,6 +452,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitConditional(ConditionalNode $node): NodeInterface
     {
@@ -390,6 +464,9 @@ final class PatternLinter extends AbstractNodeVisitor
         return $node;
     }
 
+    /**
+     * @internal the walk analyze() runs
+     */
     #[\Override]
     public function visitDefine(DefineNode $node): NodeInterface
     {
@@ -403,27 +480,27 @@ final class PatternLinter extends AbstractNodeVisitor
      * The rules map, each identifier of which a rules map may name or a
      * rule of the registry reports, short or in full.
      *
-     * @param array<string, bool> $enabledRules
+     * @param array<string, bool> $rules
      *
      * @throws UnknownLintRuleException
      *
      * @return array<string, bool>
      */
-    private static function known(array $enabledRules, ?LintRuleRegistry $registry = null): array
+    private static function known(array $rules, ?LintRuleRegistry $registry = null): array
     {
         $reported = [];
         foreach ($registry?->all() ?? [] as $rule) {
             array_push($reported, ...$rule->getRuleIds());
         }
 
-        foreach (array_keys($enabledRules) as $id) {
+        foreach (array_keys($rules) as $id) {
             $id = (string) $id;
             if (!RuleCatalog::isConfigurable($id) && !\in_array(RuleId::full($id), $reported, true)) {
                 throw new UnknownLintRuleException($id, RuleCatalog::suggestion($id));
             }
         }
 
-        return $enabledRules;
+        return $rules;
     }
 
     /**

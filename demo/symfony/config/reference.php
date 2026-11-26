@@ -705,38 +705,50 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *     max_pattern_length?: int|Param, // The maximum allowed length for a regex pattern string to parse. // Default: 100000
  *     max_lookbehind_length?: int|Param, // The maximum length of a variable-length lookbehind; a fixed-length one is only limited by PCRE's 65535. // Default: 255
  *     runtime_pcre_validation?: bool|Param, // Whether the php_regex.regex service also compiles every pattern with the running PHP (preg_match compile check). regex:lint never does: it judges for php_version / pcre_version. // Default: false
- *     php_version?: scalar|Param|null, // The PHP version regex:lint judges patterns for ("8.2", "8.2.4" or 80200). Unset: the lowest PHP composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP. // Default: null
- *     pcre_version?: scalar|Param|null, // The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles. // Default: null
+ *     php_version?: scalar|Param|null, // The PHP version regex:lint judges patterns for: one version ("8.2", "8.2.4" or 80200), or a Composer constraint (">=8.1", "^8.1 <8.5"), judged from its lowest version and at each later one it allows. Unset: the range composer.json allows, else the running PHP. The php_regex.regex service always judges for the running PHP. // Default: null
+ *     pcre_version?: scalar|Param|null, // The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the one composer.json pins in config.platform.lib-pcre, else the running PCRE2 when the PHP judged is the running PHP's minor version, else the one that PHP bundles. // Default: null
+ *     locale?: scalar|Param|null, // The LC_CTYPE locale regex:lint judges patterns under ("tr_TR.UTF-8"): its character tables decide the size of some classes. Unset: the locale of the PHP running the command. The php_regex.regex service always judges under the running PHP's locale. // Default: null
  *     cache?: array{ // Cache configuration for storing parsed regex patterns.
  *         pool?: scalar|Param|null, // Symfony cache pool service id (PSR-6). Takes precedence over "directory" when set. // Default: null
  *         directory?: scalar|Param|null, // Directory path for cached AST files. Set to null to disable caching. // Default: "%kernel.cache_dir%/php_regex"
  *         prefix?: scalar|Param|null, // Cache key prefix for PSR-6 cache pools. // Default: "regex_"
  *     },
  *     extractor_service?: scalar|Param|null, // Custom regex pattern extractor service ID. If not provided, PhpParser-based extraction will be tried first, then token-based extraction. // Default: null
+ *     extraction?: array{ // Which calls regex:lint reads patterns from, beyond the native preg_* functions, RegexIterator and filter_var(): the shape of regex.json's "extraction", which the bundle does not read. Unused when extractor_service is set.
+ *         interop?: Param|string|list<scalar|Param|null>,
+ *         functions?: Param|string|list<scalar|Param|null>,
+ *     },
  *     redos?: array{
  *         enabled?: bool|Param, // Enable ReDoS vulnerability analysis. Disabled by default for performance; enable explicitly when needed. // Default: false
  *         threshold?: scalar|Param|null, // Minimum ReDoS severity to report (low|medium|high|critical, in any case). // Default: "high"
  *         ignored_patterns?: list<scalar|Param|null>,
  *     },
- *     analysis?: array{
- *         warning_threshold?: int|Param, // Complexity score above which a warning is emitted. // Default: 50
+ *     complexity?: array{ // The complexity report of regex:lint, as regex.json's "checks.complexity".
+ *         enabled?: bool|Param, // Whether regex:lint reports the patterns whose complexity score reaches the threshold. Setting the threshold does not switch it on. // Default: false
+ *         threshold?: int|Param, // Complexity score from which regex:lint reports a pattern: the complexityScore of Regex::validate(). // Default: 50
  *     },
  *     automata?: array{
  *         minimization_algorithm?: scalar|Param|null, // DFA minimization strategy for automata comparisons (hopcroft|moore). // Default: "hopcroft"
  *         determinization_algorithm?: scalar|Param|null, // NFA determinization strategy for automata comparisons (subset|subset-indexed). // Default: "subset-indexed"
  *     },
- *     optimizations?: array{ // Default optimization options for regex:lint.
- *         digits?: bool|Param, // Optimize digit character classes (e.g., [0-9] -> \d). // Default: true
- *         word?: bool|Param, // Optimize word character classes (e.g., [A-Za-z0-9_] -> \w). // Default: true
- *         ranges?: bool|Param, // Allow range merging inside character classes. // Default: true
- *         canonicalize_char_classes?: bool|Param, // Normalize character class order and deduplicate elements. // Default: true
- *         possessive?: bool|Param, // Enable auto-possessive quantifier optimizations. // Default: false
- *         factorize?: bool|Param, // Enable alternation factorization optimizations. // Default: false
- *         min_quantifier_count?: int|Param, // Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}). // Default: 4
+ *     optimizations?: array{ // The optimization suggestions of regex:lint, as regex.json's "checks.optimizations".
+ *         enabled?: bool|Param, // Whether regex:lint suggests optimizations. Setting min_savings or options does not switch them on. // Default: true
+ *         min_savings?: int|Param, // Characters a rewrite must save to be suggested, unless --min-savings says otherwise. // Default: 1
+ *         options?: array{ // What the optimizer may rewrite.
+ *             digits?: bool|Param, // Optimize digit character classes (e.g., [0-9] -> \d). // Default: true
+ *             word?: bool|Param, // Write [A-Za-z0-9_] as \w where they match alike: never today, as \w follows the locale without u and Unicode with it. // Default: true
+ *             ranges?: bool|Param, // Allow range merging inside character classes. // Default: true
+ *             canonicalize_char_classes?: bool|Param, // Normalize character class order and deduplicate elements. // Default: true
+ *             possessive?: bool|Param, // Enable auto-possessive quantifier optimizations. // Default: false
+ *             factorize?: bool|Param, // Enable alternation factorization optimizations. // Default: false
+ *             min_quantifier_count?: int|Param, // Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}). // Default: 4
+ *             verify_with_automata?: bool|Param, // Suggest only the rewrites the automata prove to match the same subjects. // Default: true
+ *         },
  *     },
  *     paths?: list<scalar|Param|null>,
  *     exclude?: list<scalar|Param|null>,
- *     ide?: scalar|Param|null, // IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Falls back to framework.ide. // Default: "%env(default::SYMFONY_IDE)%"
+ *     report_unmatched_ignores?: bool|Param, // Whether regex:lint reports as regex.ignore.unmatched each @regex-ignore marker, or issue identifier it names, that silences nothing. // Default: true
+ *     ide?: scalar|Param|null, // IDE shorthand (vscode, phpstorm, etc.) or custom URL template for clickable links (e.g., phpstorm://open?file=%%file%%&line=%%line%%&column=%%column%%). Unset: the editor FrameworkBundle links to, framework.ide, which defaults to the SYMFONY_IDE environment variable. // Default: null
  * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,

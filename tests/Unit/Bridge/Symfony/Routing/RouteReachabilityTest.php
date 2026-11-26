@@ -218,6 +218,28 @@ final class RouteReachabilityTest extends TestCase
         $this->assertSame('late', FrameworkMatcher::reached($routes, 'GET', '/a'));
     }
 
+    /**
+     * A route the solver gives up on has no verdict: it is neither
+     * reachable nor unreachable, shadows nothing, and is counted refused.
+     */
+    #[Test]
+    public function test_a_route_the_solver_gives_up_on_has_no_verdict(): void
+    {
+        $report = self::analyzer()->analyzeReachability(self::collection([
+            'long' => new Route('/a/{x}', requirements: ['x' => '[a-z]{6000}']),
+            'any' => new Route('/a/{y}'),
+        ]));
+
+        $long = self::route($report->routes, 'long');
+        $this->assertNull($long['reachable']);
+        $this->assertNotNull($long['refused']);
+        $this->assertFalse($long['cumulative']);
+        $this->assertTrue(self::route($report->routes, 'any')['reachable']);
+        $this->assertSame([], $report->unreachable());
+        $this->assertSame(0, $report->stats['unreachable']);
+        $this->assertSame(1, $report->stats['refused']);
+    }
+
     #[Test]
     public function test_a_hundred_routes_are_read_in_time(): void
     {

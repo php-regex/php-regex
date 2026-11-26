@@ -19,6 +19,7 @@ use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Minimization\MinimizationAlgorithm;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Ordered\FirstMatchCandidate;
 use PHPRegex\Automata\Ordered\FirstMatchPartition;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Parser\DelimitedPattern;
@@ -271,23 +272,29 @@ final class SecurityAccessControlAnalyzer
     private function cumulativeShadows(array $rules, SolverOptions $options): array
     {
         $candidates = [];
-        $rivals = [];
         foreach ($rules as $i => $rule) {
-            $candidates[$i] = [] === $rule['methodsTaken'] ? null : [[
+            if ([] === $rule['methodsTaken']) {
+                $candidates[] = null;
+
+                continue;
+            }
+
+            $rivals = [];
+            for ($j = 0; $j < $i; $j++) {
+                if (self::takesEveryRequestItMatches($rules[$j]) && self::methodsOverlap($rules[$j], $rule)) {
+                    $rivals[] = $j;
+                }
+            }
+
+            $candidates[] = new FirstMatchCandidate([[
                 self::methodPattern($rule['methodsTaken']),
                 $rule['hostPattern'] ?? '{^.*$}s'.(str_contains(DelimitedPattern::fromDelimited($rule['pattern'])->flags, 'u') ? 'u' : ''),
                 $rule['pattern'],
-            ]];
-            $rivals[$i] = [];
-            for ($j = 0; $j < $i; $j++) {
-                if (self::takesEveryRequestItMatches($rules[$j]) && self::methodsOverlap($rules[$j], $rule)) {
-                    $rivals[$i][] = $j;
-                }
-            }
+            ]], rivals: $rivals);
         }
 
         try {
-            $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates, $rivals);
+            $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates);
         } catch (ComplexityException|\InvalidArgumentException) {
             return [];
         }

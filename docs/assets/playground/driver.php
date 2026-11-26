@@ -53,6 +53,7 @@ use PHPRegex\Explain\TextExplainer;
 use PHPRegex\Generator\SampleGenerator;
 use PHPRegex\Generator\TestCaseGenerator;
 use PHPRegex\Parser\DelimitedPattern;
+use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -1013,7 +1014,7 @@ if (!\function_exists('phpregex_playground_run')) {
             $answer['error'] = ['source' => 'format', 'class' => phpregex_playground_short_class($e), 'message' => $e->getMessage(), 'position' => null, 'code' => null, 'hint' => null];
 
             return phpregex_playground_timed($answer, 'formatMs', $started);
-        } catch (RegexException $e) {
+        } catch (FormattingException $e) {
             // The formatter refused to hand over a pattern that would not read
             // back as the same one: the pattern stays as written.
             $answer['format'] = ['pattern' => $regex, 'changed' => false, 'refusal' => phpregex_playground_format_refusal('round_trip')];
@@ -1113,8 +1114,10 @@ if (!\function_exists('phpregex_playground_run')) {
 
         $verdict['replay_error'] = $replayError;
         // The rule regex-phpunit's assertPatternIsLinear() applies: a linear
-        // attempt and a linear unanchored search.
-        $verdict['linear'] = $analysis->isProvenSafe() && null === $analysis->searchCost;
+        // attempt and a linear unanchored search, whatever the functions
+        // that look for every match cost. The verdict of the attempt is read
+        // as its JSON spells it.
+        $verdict['linear'] = 'proven' === $analysis->proof->value && 'linear' === $analysis->complexity->value && null === $analysis->searchCost;
         // The witness as bytes, built here: its JSON spelling is escaped text.
         $verdict['attack'] = null;
         $witness = $analysis->witness;
@@ -1178,7 +1181,7 @@ if (!\function_exists('phpregex_playground_run')) {
         $started = hrtime(true);
         $regex = phpregex_playground_string($input, 'regex');
         // The dialect has a key of its own: "target" names the engine to judge for.
-        $target = phpregex_playground_string($input, 'dialect');
+        $dialect = phpregex_playground_string($input, 'dialect');
         $library = phpregex_playground_library(phpregex_playground_target($input));
         $answer = ['protocol' => PHPREGEX_PLAYGROUND_PROTOCOL, 'transpile' => null, 'refusal' => null, 'error' => null, 'timing' => ['transpileMs' => 0.0]];
 
@@ -1202,9 +1205,9 @@ if (!\function_exists('phpregex_playground_run')) {
         }
 
         try {
-            $answer['transpile'] = $library->transpile($regex, $target, $options)->jsonSerialize();
-        } catch (RegexException $e) {
-            // A construct the target has no spelling for, or a target the
+            $answer['transpile'] = $library->transpile($regex, $dialect, $options)->jsonSerialize();
+        } catch (RegexException|InvalidRegexOptionException $e) {
+            // A construct the dialect has no spelling for, or a dialect the
             // transpiler does not know: content, in the transpiler's words.
             $answer['refusal'] = ['message' => $e->getMessage()];
         }
@@ -1239,12 +1242,12 @@ if (!\function_exists('phpregex_playground_run')) {
         $matching = [];
         foreach ([0, 1, 2] as $draw) {
             try {
-                $matching[] = (new SampleGenerator(3, seed: $seed + $draw))->generate($regex, $library->parser());
+                $matching[] = (new SampleGenerator(3, $seed + $draw, $library->parser()))->generate($regex);
             } catch (RegexException $e) {
                 break;
             }
         }
-        $cases = $library->parse($regex)->accept(new TestCaseGenerator());
+        $cases = $library->parse($regex)->accept(new TestCaseGenerator($library->parser()));
         $matching = array_merge($matching, $cases['matching']);
         $nonMatching = $cases['non_matching'];
 
@@ -1483,7 +1486,7 @@ if (!\function_exists('phpregex_playground_run')) {
         }
 
         $analysis = $library->redos($regex);
-        $linear = $analysis->isProvenSafe() && null === $analysis->searchCost;
+        $linear = 'proven' === $analysis->proof->value && 'linear' === $analysis->complexity->value && null === $analysis->searchCost;
 
         // A name owning two numbers, under (?J), is asserted by number alone.
         $names = phpregex_playground_group_names($library->parse($regex)->accept(new JsonDumper()));

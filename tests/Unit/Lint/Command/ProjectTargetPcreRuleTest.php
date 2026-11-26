@@ -101,7 +101,9 @@ final class ProjectTargetPcreRuleTest extends TestCase
         foreach ($target->range() as $point) {
             $this->assertSame('10.43', $point->pcreVersion, (string) $point->phpVersionId);
         }
-        $this->assertSame('composer.json require.php; composer.json config.platform.lib-pcre', $target->source());
+        $this->assertSame('composer.json require.php', $target->source());
+        $this->assertSame('composer.json config.platform.lib-pcre', $target->pcreSource());
+        $this->assertNull($target->localeSource());
 
         $judged = $target->judgedRange(RegexParser::create($target->regexOptions()));
         $this->assertSame('10.43', $judged->narrow(TargetConstraint::phpFrom(80405, 80500))[0]->pcreVersion);

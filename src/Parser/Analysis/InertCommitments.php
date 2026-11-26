@@ -41,12 +41,12 @@ final class InertCommitments
      * line ends are read under the newline convention its start options
      * name.
      */
-    public static function of(RegexNode $regex): self
+    public static function of(RegexNode $ast): self
     {
         try {
-            $lineFeedNewline = 'LF' === StartOptions::newline($regex->source ?? '');
+            $lineFeedNewline = 'LF' === StartOptions::newline($ast->source ?? '');
 
-            return (new AtomicInertiaAnalyzer(wholeSubject: false, lineFeedNewline: $lineFeedNewline))->inertCommitments((new HirTranslator())->translate($regex));
+            return (new AtomicInertiaAnalyzer(wholeSubject: false, lineFeedNewline: $lineFeedNewline))->inertCommitments((new HirTranslator())->translate($ast));
         } catch (\Throwable) {
             return new self();
         }

@@ -78,9 +78,9 @@ final class CommandTest extends TestCase
         $this->assertSame('/a+/', $payload['pattern']);
         $this->assertIsString($payload['pattern']);
 
-        $parse = $this->requireArrayKey($payload, 'parse');
-        $this->assertArrayHasKey('ok', $parse);
-        $this->assertTrue((bool) $parse['ok']);
+        // The validation says whether the pattern is valid: no other key repeats it.
+        $this->assertArrayNotHasKey('parse', $payload);
+        $this->assertTrue($this->requireArrayKey($payload, 'validation')['is_valid'] ?? null);
 
         $this->requireArrayKey($payload, 'runtime');
         $this->requireArrayKey($payload, 'validation');
@@ -234,7 +234,8 @@ final class CommandTest extends TestCase
         $this->assertIsString($payload['pattern']);
 
         $this->requireArrayKey($payload, 'runtime');
-        $analysis = $this->requireArrayKey($payload, 'analysis');
+        $this->assertArrayNotHasKey('analysis', $payload);
+        $analysis = $this->requireArrayKey($payload, 'redos');
         $this->assertArrayHasKey('severity', $analysis);
         $this->assertArrayHasKey('mode', $analysis);
 

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Symfony\Validator\Constraints;
 
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
@@ -66,11 +67,14 @@ final class ValidRegexValidator extends ConstraintValidator
         }
 
         $analysis = $this->regex->redos($value);
+        // A quadratic search comes with a linear attempt, safe: its cost
+        // ranks medium.
+        $severity = $analysis->hasQuadraticSearch() ? RedosSeverity::Medium : $analysis->severity;
 
-        if ($analysis->exceedsThreshold($constraint->redosThreshold)) {
+        if ($severity->rank() >= $constraint->redosThreshold->rank()) {
             $this->context->buildViolation($constraint->redosMessage)
                 ->setParameter('{{ value }}', $this->formatValue($value))
-                ->setParameter('{{ severity }}', $analysis->severity->value)
+                ->setParameter('{{ severity }}', $severity->value)
                 ->setInvalidValue($value)
                 ->setCode(ValidRegex::REDOS_ERROR)
                 ->addViolation();

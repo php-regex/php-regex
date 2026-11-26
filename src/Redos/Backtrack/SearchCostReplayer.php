@@ -296,6 +296,6 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
     {
         $limits = new PcreLimits(min($limit, $options->backtrackLimit), $options->recursionLimit);
 
-        return (new PcreEngine())->match($counted, $subject, $limits, $offset, $flags);
+        return (new PcreEngine())->match($counted, $subject, $flags, $offset, $limits);
     }
 }

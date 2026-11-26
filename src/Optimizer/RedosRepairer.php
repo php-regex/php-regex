@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Parser\Engine\PcreEngine;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Node\GroupNode;
@@ -60,19 +61,21 @@ final class RedosRepairer
 
     private readonly LanguageSolver $solver;
 
-    public function __construct(
-        ?RegexParser $parser = null,
-        ?RedosAnalyzer $analyzer = null,
-        ?LanguageSolver $solver = null,
-    ) {
+    /**
+     * @param RegexParser|null       $parser   reads the pattern and its rewrites, for its PHP and PCRE2 target; a default parser when null
+     * @param DfaCacheInterface|null $dfaCache keeps the DFAs the proofs compile, read for that target; nothing is kept when null
+     */
+    public function __construct(?RegexParser $parser = null, ?DfaCacheInterface $dfaCache = null)
+    {
         $this->parser = $parser ?? RegexParser::create();
-        $this->analyzer = $analyzer ?? new RedosAnalyzer($this->parser);
-        $this->solver = $solver ?? new LanguageSolver($this->parser);
+        $this->analyzer = new RedosAnalyzer($this->parser);
+        $this->solver = new LanguageSolver($this->parser, $dfaCache);
     }
 
     /**
      * The repairs proven linear, certified ones first; none when the
-     * pattern is not open to catastrophic backtracking.
+     * pattern is not open to catastrophic backtracking, or does not lex or
+     * parse: nothing is thrown.
      *
      * @return list<RedosRepair>
      */
@@ -87,7 +90,8 @@ final class RedosRepairer
     }
 
     /**
-     * The repair repair() offers first, or null when it offers none. The
+     * The repair repair() offers first, or null when it offers none, a
+     * pattern that does not lex or parse included. The
      * search stops at the first rewrite certified that writes the same
      * $matches, as none after it can come before it: the rewrites after it
      * are not proven, the optimizer's own among them.

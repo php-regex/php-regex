@@ -26,6 +26,10 @@ CHANGELOG
    its strings and whether only several of them together take them all. A
    candidate is a set of tuples of patterns (a method, a scheme, a host, a
    path), joined by a separator past Unicode, never through their text.
+   `partition()` takes a list of `Ordered\FirstMatchCandidate`, each with
+   the tuples it takes, those it keeps and its rivals, or null for one that
+   may take nothing. A `FirstMatchCell` holds the `$example` it keeps, and
+   `$reachable` is null when the solver gave up on the candidate.
  * `SolverOptions::$strategy` chooses how `intersection()`, `subsetOf()` and
    `equivalent()` search: `SolverStrategy::Lazy`, the default, walks the
    product of the NFAs as it is reached, the right side of an inclusion
@@ -38,6 +42,7 @@ CHANGELOG
    to the eager search: 2,000 branches `a|a|…`, four million pairs of NFA
    states, are answered from their three-state DFA. With a DFA cache, or a
    pattern read as UTF-8 beside one read as bytes, the search stays eager.
+   `SolverStrategy` and `SolverOptions::$strategy` are `@internal`.
  * A determinized state holds one target per class of its automaton's
    alphabet, the ranges held once by an alphabet every state shares:
    `^[\p{L}\p{N}]{3,64}$/u ⊆ ^\w{3,64}$/u` takes 22 ms and 1.4 MB, where it
@@ -50,6 +55,13 @@ CHANGELOG
    take further, `(?<=\R)`.
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `TrivialMatchClassifier` takes a parser and a DFA cache, and builds its
+   solver from the parser: the patterns and the proofs are read for one
+   target. `LanguageSolver::acceptsPrefix()` takes `$regex` and `$prefix`,
+   `TrivialMatch::phpExpression()` takes `$subjectCode`, and the methods of
+   `LanguageSolver` that read a pattern say they throw `LexerException` or
+   `ParserException` on one that does not lex or parse. `Model\Dfa::$alphabet`
+   is `@internal`.
  * `equivalent()`, `intersection()` and `subsetOf()` compare a pattern read
    as UTF-8 with one read as bytes, `(*UTF)` or `u` on one side only, on the
    valid UTF-8 strings: the one read as bytes reads each character as its

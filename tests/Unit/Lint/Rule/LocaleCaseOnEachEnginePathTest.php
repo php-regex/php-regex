@@ -166,7 +166,7 @@ final class LocaleCaseOnEachEnginePathTest extends TestCase
     private static function issues(string $pattern, string $locale): array
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

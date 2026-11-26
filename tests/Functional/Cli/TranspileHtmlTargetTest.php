@@ -33,7 +33,7 @@ final class TranspileHtmlTargetTest extends TestCase
         $this->assertSame(0, $code);
         $report = json_decode($output, true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($report);
-        $this->assertSame('html-pattern', $report['target'] ?? null);
+        $this->assertSame('html-pattern', $report['dialect'] ?? null);
         $this->assertSame('[\s\S]*(?:\d{4})[\s\S]*', $report['literal'] ?? null);
     }
 

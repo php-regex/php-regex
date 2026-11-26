@@ -56,19 +56,20 @@ final class TrivialMatch
     }
 
     /**
-     * The call as PHP code, on the subject given as code: "str_starts_with($s, 'foo')".
+     * The call as PHP code, on the subject given as code: "str_starts_with($s, 'foo')"
+     * for the code "$s".
      */
-    public function phpExpression(string $subject): string
+    public function phpExpression(string $subjectCode): string
     {
         $literal = self::phpString($this->literals[0] ?? '');
 
         return match ($this->kind) {
-            TrivialMatchKind::Contains => \sprintf('str_contains(%s, %s)', $subject, $literal),
-            TrivialMatchKind::StartsWith => \sprintf('str_starts_with(%s, %s)', $subject, $literal),
-            TrivialMatchKind::EndsWith => \sprintf('str_ends_with(%s, %s)', $subject, $literal),
-            TrivialMatchKind::Equals => \sprintf('%s === %s', $literal, $subject),
-            TrivialMatchKind::OneOf => \sprintf('in_array(%s, [%s], true)', $subject, implode(', ', array_map(self::phpString(...), $this->literals))),
-            TrivialMatchKind::IsEmpty => \sprintf("'' === %s", $subject),
+            TrivialMatchKind::Contains => \sprintf('str_contains(%s, %s)', $subjectCode, $literal),
+            TrivialMatchKind::StartsWith => \sprintf('str_starts_with(%s, %s)', $subjectCode, $literal),
+            TrivialMatchKind::EndsWith => \sprintf('str_ends_with(%s, %s)', $subjectCode, $literal),
+            TrivialMatchKind::Equals => \sprintf('%s === %s', $literal, $subjectCode),
+            TrivialMatchKind::OneOf => \sprintf('in_array(%s, [%s], true)', $subjectCode, implode(', ', array_map(self::phpString(...), $this->literals))),
+            TrivialMatchKind::IsEmpty => \sprintf("'' === %s", $subjectCode),
         };
     }
 

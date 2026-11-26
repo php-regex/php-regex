@@ -34,16 +34,6 @@ final class PythonTarget implements TargetInterface
      */
     private const SUPPORTED_FLAGS = ['a', 'i', 's'];
 
-    public function getName(): string
-    {
-        return 'python';
-    }
-
-    public function getAliases(): array
-    {
-        return ['py'];
-    }
-
     public function getDefaultDelimiter(): string
     {
         return "'";

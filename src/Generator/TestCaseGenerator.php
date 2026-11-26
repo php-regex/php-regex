@@ -13,9 +13,9 @@ declare(strict_types=1);
 
 namespace PHPRegex\Generator;
 
-use PHPRegex\Generator\Exception\SampleGenerationException;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
@@ -46,6 +46,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
 use PHPRegex\Parser\Printer\PatternPrinter;
+use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Text\Bytes;
 
 /**
@@ -66,9 +67,22 @@ final class TestCaseGenerator extends AbstractNodeVisitor
     private const MAX_CASE_LENGTH = 1048576;
 
     /**
-     * @param PcreEngine $engine Asks the running engine which characters a class holds
+     * Asks the running engine which characters a class holds, and checks
+     * each case.
      */
-    public function __construct(private readonly PcreEngine $engine = new PcreEngine()) {}
+    private readonly PcreEngine $engine;
+
+    private readonly RegexParser $parser;
+
+    /**
+     * @param RegexParser|null $parser Reads and judges the pattern of the samples drawn for the matching cases the
+     *                                 heuristics miss; RegexParser::create() when null
+     */
+    public function __construct(?RegexParser $parser = null)
+    {
+        $this->engine = new PcreEngine();
+        $this->parser = $parser ?? RegexParser::create();
+    }
 
     /**
      * Visits a RegexNode and generates test cases for its pattern, each one
@@ -95,14 +109,13 @@ final class TestCaseGenerator extends AbstractNodeVisitor
         $matching = $this->kept($pattern, $candidates['matching'], true);
         if ([] === $matching) {
             // The sample generator reads what the heuristics skip, such as a
-            // reference to a group; fixed seeds keep the cases stable.
+            // reference to a group, with this generator's parser; fixed seeds
+            // keep the cases stable.
             $samples = [];
             foreach ([1, 2, 3] as $seed) {
-                $generator = new SampleGenerator(engine: $this->engine, seed: $seed);
-
                 try {
-                    $samples[] = $node->accept($generator);
-                } catch (SampleGenerationException) {
+                    $samples[] = (new SampleGenerator(seed: $seed, parser: $this->parser))->generate($pattern);
+                } catch (RegexException) {
                     break;
                 }
             }

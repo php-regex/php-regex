@@ -172,7 +172,7 @@ final class UselessLazyTest extends TestCase
      */
     private function messages(string $pattern, bool $enabled): array
     {
-        $linter = new PatternLinter($enabled ? ['quantifier.uselessLazy' => true] : []);
+        $linter = new PatternLinter(rules: $enabled ? ['quantifier.uselessLazy' => true] : []);
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
         $messages = [];

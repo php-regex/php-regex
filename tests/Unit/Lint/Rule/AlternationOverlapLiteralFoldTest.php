@@ -172,7 +172,7 @@ final class AlternationOverlapLiteralFoldTest extends TestCase
     private static function overlapRules(string $pattern, string $locale, string $php = '8.4'): array
     {
         $regex = Regex::create(['cache' => null, 'php_version' => $php, 'locale' => $locale]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         $ids = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

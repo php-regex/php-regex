@@ -49,9 +49,10 @@ Configuration
 -------------
 
 - `maxRepetition` (int, default `3`): extra repetitions drawn for `*`, `+` and `{n,}`
-- `seed` (`?int`, default `null`, last argument of the `SampleGenerator` constructor): locks the random source for reproducible samples; each sample drawn starts again from it, and the draws `generate()` checks before it settles on one go on from one another
+- `seed` (`?int`, default `null`, second argument of the `SampleGenerator` constructor): locks the random source for reproducible samples; each sample drawn starts again from it, and the draws `generate()` checks before it settles on one go on from one another
 - `setSeed(int $seed)` and `resetSeed()`: lock the random source later, or unlock it
-- `PcreEngine $engine` (constructor of both generators): the engine asked what a class or a property holds
+- `parser` (`?RegexParser`, default `null`, last argument of `SampleGenerator` and only one of `TestCaseGenerator`): reads and judges every pattern `generate()` takes, and the patterns of the samples `TestCaseGenerator` draws, with its options and its target; `null` builds `RegexParser::create()` on the first pattern
+- What a class or a property holds is asked of the running PCRE engine, which checks every sample and every case
 
 Usage
 -----

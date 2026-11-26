@@ -226,9 +226,13 @@ CHANGELOG
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each
    `@regex-ignore` marker, or issue identifier it names, that silences
    nothing, as `regex.ignore.unmatched`.
- * `analysis.complexity`, off by default, makes `regex:lint` report the
-   patterns whose complexity score reaches `analysis.warning_threshold`,
-   as `regex lint` does under `checks.complexity`.
+ * `complexity.enabled`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `complexity.threshold`, 1 or
+   more, as `regex lint` does under `checks.complexity`; `analysis` is gone.
+ * `optimizations` is nested as `checks.optimizations` of `regex.json`:
+   `enabled` switches the suggestions of `regex:lint`, `min_savings` is the
+   saving `--min-savings` defaults to, and `options` holds the optimizer
+   switches that sat at its top level.
  * `regex:explain` explains a pattern, with `--format=console|html` and
    `--highlight` as in the Laravel package and the CLI, and the optimization,
    the ReDoS risk, the lint issues and a sample beside it.
@@ -248,6 +252,7 @@ CHANGELOG
    bundle's `Regex` service: the library's message and hint as `{{ error }}`
    and `{{ hint }}`, and with `redos: true` a ReDoS severity from
    `redosThreshold` (`high`) up refused too. Needs `symfony/validator`.
+   A pattern whose search is quadratic, as `/\s*$/`, ranks `medium`.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

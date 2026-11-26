@@ -169,16 +169,16 @@ final class KeyedChildrenSweepTest extends TestCase
             'javascript' => static fn (): object => $regex->transpile($pattern, 'javascript'),
             'python' => static fn (): object => $regex->transpile($pattern, 'python'),
             'sample' => static function () use ($regex, $pattern): string {
-                $generator = new SampleGenerator();
+                $generator = new SampleGenerator(parser: $regex->parser());
                 $generator->setSeed(42);
 
-                return $generator->generate($pattern, $regex->parser());
+                return $generator->generate($pattern);
             },
             'test cases' => static fn (): array => $tree->accept(new TestCaseGenerator()),
             'optimizer' => static fn (): object => $regex->optimize($pattern),
             'rewriter' => static fn (): string => self::print($tree->accept(new Rewriter(possessive: true, factorize: true))),
             'modernizer' => static fn (): string => self::print($tree->accept(new Modernizer())),
-            'capture shape' => static fn (): object => (new CaptureShapeAnalyzer())->analyze($tree),
+            'capture shape' => static fn (): object => CaptureShapeAnalyzer::forEveryRelease()->analyze($tree),
             'literals' => static fn (): object => $tree->accept(new LiteralExtractor()),
         ];
     }

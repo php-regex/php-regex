@@ -69,7 +69,7 @@ final class AlternationOverlapUnderUcpTest extends TestCase
         }
 
         $regex = Regex::create(['cache' => null, 'php_version' => $php, 'pcre_version' => $pcre, 'locale' => CharacterTables::BUILT_IN]);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         $ids = array_map(static fn ($issue): string => $issue->id, $linter->getIssues());

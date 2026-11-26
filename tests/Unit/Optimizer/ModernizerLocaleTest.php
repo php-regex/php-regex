@@ -18,8 +18,10 @@ use PHPRegex\Parser\Node\AlternationNode;
 use PHPRegex\Parser\Node\PcreVerbNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\InstalledLocales;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use PHPUnit\Framework\Attributes\Test;
@@ -37,6 +39,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class ModernizerLocaleTest extends TestCase
 {
+    use InstalledLocales;
+
     /**
      * Locales that give "\s" the byte 0xA0 on some systems, or another
      * locale than C where none of them is installed.
@@ -47,9 +51,27 @@ final class ModernizerLocaleTest extends TestCase
     #[DataProvider('provideClasses')]
     public function test_a_class_becomes_a_shorthand_only_under_a_locale_known_to_match_alike(string $pattern, ?string $locale, string $expected): void
     {
-        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+        if (null !== $locale) {
+            $this->requiresLocale($locale, $pattern);
+        }
 
-        $this->assertSame($expected, $tree->accept(new Modernizer($locale))->accept(PatternPrinter::asWritten()));
+        $tree = RegexParser::create(['cache' => null])->parse($pattern);
+        $target = null === $locale ? null : PcreTarget::runtime()->withLocale($locale);
+
+        $this->assertSame($expected, $tree->accept(new Modernizer($target))->accept(PatternPrinter::asWritten()));
+    }
+
+    /**
+     * The target of a parser names its locale, "C" unless the parser is told
+     * another: the Modernizer reads it from there.
+     */
+    #[Test]
+    public function test_the_locale_is_read_from_the_target_of_a_parser(): void
+    {
+        $parser = RegexParser::create(['cache' => null, 'locale' => 'C']);
+        $this->assertSame('C', $parser->target()->locale);
+
+        $this->assertSame('/\s/', $parser->parse('/[\t\n\x0B\f\r ]/')->accept(new Modernizer($parser->target()))->accept(PatternPrinter::asWritten()));
     }
 
     /**
@@ -78,7 +100,7 @@ final class ModernizerLocaleTest extends TestCase
     {
         $parsed = RegexParser::create(['cache' => null])->parse($pattern);
         $sourceFree = new RegexNode($parsed->pattern, $parsed->flags, $parsed->delimiter, $parsed->getStartPosition(), $parsed->getEndPosition());
-        $modernizer = new Modernizer('C');
+        $modernizer = new Modernizer(PcreTarget::runtime()->withLocale('C'));
 
         foreach ([$parsed, $sourceFree] as $tree) {
             for ($visit = 0; $visit < 2; $visit++) {
@@ -108,7 +130,7 @@ final class ModernizerLocaleTest extends TestCase
             $parsed->getEndPosition(),
         );
 
-        $printed = $tree->accept(new Modernizer('C'))->accept(PatternPrinter::asWritten());
+        $printed = $tree->accept(new Modernizer(PcreTarget::runtime()->withLocale('C')))->accept(PatternPrinter::asWritten());
 
         $this->assertSame('/(*UTF)(*UCP)^[0-9]$/', $printed);
         $this->assertSame(0, preg_match('/(*UTF)(*UCP)^[0-9]$/', "\u{663}"));
@@ -180,7 +202,7 @@ final class ModernizerLocaleTest extends TestCase
 
         $parser = RegexParser::create(['cache' => null]);
         foreach (['/^[\t\n\x0B\f\r ]$/u', '/^[0-9]$/u'] as $pattern) {
-            $this->assertSame($pattern, $parser->parse($pattern)->accept(new Modernizer('C'))->accept(PatternPrinter::asWritten()));
+            $this->assertSame($pattern, $parser->parse($pattern)->accept(new Modernizer(PcreTarget::runtime()->withLocale('C')))->accept(PatternPrinter::asWritten()));
         }
     }
 }

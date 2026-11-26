@@ -14,14 +14,22 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Packages;
 
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Ordered\FirstMatchPartition;
+use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
+use PHPRegex\Linter\PatternLinter;
+use PHPRegex\Optimizer\Modernizer;
 use PHPRegex\Optimizer\RedosRepairer;
 use PHPRegex\Parser\Analysis\CaptureShapeAnalyzer;
 use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\Analysis\InertCommitments;
 use PHPRegex\Parser\Analysis\PatternInfoAnalyzer;
 use PHPRegex\Parser\Analysis\RequiredLiteralAnalyzer;
 use PHPRegex\Parser\Engine\PcreEngine;
+use PHPRegex\Parser\Printer\PatternFormatter;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
+use PHPRegex\Parser\Validation\RangeDiff;
 use PHPRegex\Transpiler\Transpiler;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -83,15 +91,23 @@ final class ParameterNamesTest extends TestCase
     public static function provideSignatures(): iterable
     {
         yield 'Transpiler::__construct' => ['class' => Transpiler::class, 'method' => '__construct', 'names' => ['parser']];
-        yield 'Transpiler::transpile' => ['class' => Transpiler::class, 'method' => 'transpile', 'names' => ['regex', 'target']];
-        yield 'LanguageSolver::acceptsPrefix' => ['class' => LanguageSolver::class, 'method' => 'acceptsPrefix', 'names' => ['regex', 'subject']];
+        yield 'Transpiler::transpile' => ['class' => Transpiler::class, 'method' => 'transpile', 'names' => ['regex', 'dialect']];
+        yield 'LanguageSolver::acceptsPrefix' => ['class' => LanguageSolver::class, 'method' => 'acceptsPrefix', 'names' => ['regex', 'prefix', 'options']];
         yield 'LanguageSolver::language' => ['class' => LanguageSolver::class, 'method' => 'language', 'names' => ['regex']];
         yield 'LanguageSolver::compile' => ['class' => LanguageSolver::class, 'method' => 'compile', 'names' => ['regex']];
         yield 'TrivialMatchClassifier::classify' => ['class' => TrivialMatchClassifier::class, 'method' => 'classify', 'names' => ['regex']];
         yield 'TrivialMatchClassifier::matchedLiteral' => ['class' => TrivialMatchClassifier::class, 'method' => 'matchedLiteral', 'names' => ['regex']];
+        yield 'TrivialMatchClassifier::__construct' => ['class' => TrivialMatchClassifier::class, 'method' => '__construct', 'names' => ['parser', 'dfaCache']];
+        yield 'TrivialMatch::phpExpression' => ['class' => TrivialMatch::class, 'method' => 'phpExpression', 'names' => ['subjectCode']];
+        yield 'FirstMatchPartition::__construct' => ['class' => FirstMatchPartition::class, 'method' => '__construct', 'names' => ['solver', 'options']];
+        yield 'FirstMatchPartition::partition' => ['class' => FirstMatchPartition::class, 'method' => 'partition', 'names' => ['candidates']];
         yield 'RedosRepairer::repair' => ['class' => RedosRepairer::class, 'method' => 'repair', 'names' => ['regex']];
+        yield 'PatternLinter::__construct' => ['class' => PatternLinter::class, 'method' => '__construct', 'names' => ['target', 'rules']];
+        yield 'PatternLinter::analyze' => ['class' => PatternLinter::class, 'method' => 'analyze', 'names' => ['ast']];
+        yield 'RedosRepairer::__construct' => ['class' => RedosRepairer::class, 'method' => '__construct', 'names' => ['parser', 'dfaCache']];
+        yield 'Modernizer::__construct' => ['class' => Modernizer::class, 'method' => '__construct', 'names' => ['target']];
         yield 'PcreEngine::compile' => ['class' => PcreEngine::class, 'method' => 'compile', 'names' => ['regex']];
-        yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject']];
+        yield 'PcreEngine::match' => ['class' => PcreEngine::class, 'method' => 'match', 'names' => ['regex', 'subject', 'flags', 'offset', 'limits']];
         yield 'PcreEngine::test' => ['class' => PcreEngine::class, 'method' => 'test', 'names' => ['regex', 'subject']];
         yield 'PcreEngine::matchAll' => ['class' => PcreEngine::class, 'method' => 'matchAll', 'names' => ['regex', 'subject']];
         yield 'CaptureShapeAnalyzer::__construct' => ['class' => CaptureShapeAnalyzer::class, 'method' => '__construct', 'names' => ['target']];
@@ -100,5 +116,10 @@ final class ParameterNamesTest extends TestCase
         yield 'PatternInfoAnalyzer::analyzePattern' => ['class' => PatternInfoAnalyzer::class, 'method' => 'analyzePattern', 'names' => ['parser', 'regex']];
         yield 'RequiredLiteralAnalyzer::analyze' => ['class' => RequiredLiteralAnalyzer::class, 'method' => 'analyze', 'names' => ['ast']];
         yield 'GroupNumberingCollector::collect' => ['class' => GroupNumberingCollector::class, 'method' => 'collect', 'names' => ['ast']];
+        yield 'InertCommitments::of' => ['class' => InertCommitments::class, 'method' => 'of', 'names' => ['ast']];
+        yield 'PatternFormatter::format' => ['class' => PatternFormatter::class, 'method' => 'format', 'names' => ['ast']];
+        yield 'PatternFormatter::compact' => ['class' => PatternFormatter::class, 'method' => 'compact', 'names' => ['ast']];
+        yield 'PatternPrinter::__construct' => ['class' => PatternPrinter::class, 'method' => '__construct', 'names' => ['pretty', 'collapseExtendedComments']];
+        yield 'RangeDiff::diff' => ['class' => RangeDiff::class, 'method' => 'diff', 'names' => ['regex', 'compareTrees']];
     }
 }

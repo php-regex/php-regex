@@ -35,13 +35,13 @@ final class MixedTypeBaselineTest extends TestCase
         'Automata' => 2,
         'Cli' => 3,
         'LanguageServer' => 10,
-        'Laravel' => 7,
+        'Laravel' => 10,
         'Linter' => 33,
         'Mcp' => 15,
         'Optimizer' => 3,
         'PHPStan' => 2,
         'PHPUnit' => 21,
-        'Parser' => 64,
+        'Parser' => 62,
         'Symfony' => 20,
     ];
 

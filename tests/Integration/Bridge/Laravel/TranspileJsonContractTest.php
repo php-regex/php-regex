@@ -133,7 +133,7 @@ final class TranspileJsonContractTest extends LaravelTestCase
      */
     private static function withoutRange(array $document): array
     {
-        unset($document['php_target'], $document['range']);
+        unset($document['target'], $document['range']);
 
         return $document;
     }

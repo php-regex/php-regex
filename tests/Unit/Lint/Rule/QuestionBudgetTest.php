@@ -72,7 +72,7 @@ final class QuestionBudgetTest extends TestCase
         $other = \sprintf($piece, 0x3B1, 0x3B2);
         $this->assertSame(0, preg_match('/'.$other.'/'.$flags, "\u{3B1}\u{3B2}\u{3B1}\u{3B1}"), $other);
 
-        $linter = new PatternLinter($rules);
+        $linter = new PatternLinter(rules: $rules);
         $expected = intdiv(QuestionBudget::QUESTIONS_PER_PATTERN, $questionsEach);
 
         $this->assertCount($expected, self::issues($linter, self::pieces($piece, $flags, 0x100, 0x200), $id));
@@ -129,7 +129,7 @@ final class QuestionBudgetTest extends TestCase
         $this->assertSame($lazy, $class);
 
         $alternatives = array_map(static fn (int $i): string => '.*?'.\chr(0x40 + $i), range(1, QuestionBudget::QUESTIONS_PER_PATTERN + 2));
-        $linter = new PatternLinter(['quantifier.lazyToClass' => true]);
+        $linter = new PatternLinter(rules: ['quantifier.lazyToClass' => true]);
 
         $this->assertCount(QuestionBudget::QUESTIONS_PER_PATTERN, self::issues($linter, '/'.implode('|', $alternatives).'/', 'regex.lint.quantifier.lazyToClass'));
         $this->assertCount(1, self::issues($linter, '/.*?;/', 'regex.lint.quantifier.lazyToClass'));

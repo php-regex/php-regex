@@ -114,7 +114,7 @@ final class RedosZeroWidthSoundnessTest extends TestCase
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
         $this->assertSame(RedosSeverity::Safe, $analysis->severity, $pattern);
         $this->assertNull($analysis->witness, $pattern);
-        $this->assertTrue($analysis->isProvenSafe(), $pattern);
+        $this->assertSame(!$analysis->hasQuadraticSearch(), $analysis->isProvenSafe(), $pattern);
     }
 
     /**

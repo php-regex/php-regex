@@ -688,7 +688,7 @@ $regex = Regex::create();
 // Step 1: Require a pattern proven safe from ReDoS
 $analysis = $regex->redos($pattern);
 if (!$analysis->isProvenSafe()) {
-    throw new \InvalidArgumentException('ReDoS: '.$analysis->headline());
+    throw new \InvalidArgumentException('ReDoS: '.($analysis->hasQuadraticSearch() ? 'quadratic search' : $analysis->headline()));
 }
 
 // Step 2: Validate the pattern itself

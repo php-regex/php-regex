@@ -443,7 +443,7 @@ final class Server
             foreach ($target->notices() as $notice) {
                 $this->log(Transport::LOG_INFO, $notice);
             }
-            $this->log(Transport::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->source()));
+            $this->log(Transport::LOG_INFO, \sprintf('Target: %s (%s)', $target->label(), $target->origins()));
 
             $regex = Regex::create($target->regexOptions());
             $this->judgeWith($regex, $lintRules, $redosMode, $redosThreshold, $arguments->reportUnmatchedIgnores, $target->judgedRange($regex->parser()));

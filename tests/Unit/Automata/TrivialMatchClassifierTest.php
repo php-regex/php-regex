@@ -13,9 +13,13 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Automata;
 
+use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Automata\TrivialMatch;
 use PHPRegex\Automata\TrivialMatchClassifier;
 use PHPRegex\Automata\TrivialMatchKind;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\RegexParser;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\RunInSeparateProcess;
@@ -29,6 +33,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class TrivialMatchClassifierTest extends TestCase
 {
+    use PcreGates;
+
     private const SUBJECTS = ['', 'foo', 'xfoo', 'foox', "foo\n", "xfoo\n", 'FOO', 'GET', 'POST', 'GETX', 'a', 'b', 'ab', 'f.o', 'fxo', "it's", "\n", 'color', 'colour', 'colouur'];
 
     /**
@@ -43,7 +49,7 @@ final class TrivialMatchClassifierTest extends TestCase
         $this->assertInstanceOf(TrivialMatch::class, $match);
         $this->assertSame($kind, $match->kind);
         $this->assertSame($literals, $match->literals);
-        $this->assertSame($expression, $match->phpExpression('$subject'));
+        $this->assertSame($expression, $match->phpExpression(subjectCode: '$subject'));
 
         foreach (self::SUBJECTS as $subject) {
             $this->assertSame(1 === preg_match($pattern, $subject), $match->accepts($subject), \sprintf('%s and %s disagree on %s.', $pattern, $expression, json_encode($subject)));
@@ -55,6 +61,60 @@ final class TrivialMatchClassifierTest extends TestCase
     public function test_a_pattern_no_function_answers_alike_is_not_named(string $pattern): void
     {
         $this->assertNull((new TrivialMatchClassifier())->classify($pattern));
+    }
+
+    /**
+     * The classifier reads the pattern for its parser, and the DFAs it
+     * keeps in the cache it is given are those of that target: for PHP 8.2,
+     * whose PCRE2 reads "{,2}" as text, "/^a{,2}\z/" is the string "a{,2}".
+     */
+    #[Test]
+    public function test_the_classifier_reads_the_pattern_for_its_parser_with_a_dfa_cache(): void
+    {
+        $cache = new InMemoryDfaCache();
+        $parser = RegexParser::create(['php_version' => '8.2']);
+        $this->assertFalse($parser->target()->supports(PcreFeature::OpenAndPaddedRepeatCounts));
+
+        $match = (new TrivialMatchClassifier($parser, dfaCache: $cache))->classify('/^a{,2}\z/');
+
+        $this->assertSame('\'a{,2}\' === $subject', $match?->phpExpression('$subject'));
+        $this->assertSame('a{,2}', (new TrivialMatchClassifier($parser, dfaCache: $cache))->matchedLiteral('/a{,2}/'));
+    }
+
+    /**
+     * Where the running PCRE2 reads "{,2}" as a repeat, so does the
+     * classifier of the runtime: "/^a{,2}\z/" is then no string function.
+     */
+    #[Test]
+    public function test_the_classifier_of_the_runtime_reads_a_repeat_without_minimum(): void
+    {
+        $this->requiresPcre2('10.43', '"{,2}"');
+        $this->assertSame(1, preg_match('/^a{,2}\z/', 'aa'), 'Oracle: "{,2}" repeats from PCRE2 10.43.');
+
+        $this->assertNull((new TrivialMatchClassifier(dfaCache: new InMemoryDfaCache()))->classify('/^a{,2}\z/'));
+    }
+
+    /**
+     * A pattern that does not parse is no string function: classify() and
+     * matchedLiteral() answer null, as PCRE refuses it.
+     */
+    #[Test]
+    #[DataProvider('provideInvalidPatterns')]
+    public function test_an_invalid_pattern_is_not_named(string $regex): void
+    {
+        $this->assertFalse(@preg_match($regex, ''), 'Oracle: PCRE refuses '.$regex);
+
+        $this->assertNull((new TrivialMatchClassifier())->classify($regex));
+        $this->assertNull((new TrivialMatchClassifier())->matchedLiteral($regex));
+    }
+
+    /**
+     * @return iterable<string, array{regex: string}>
+     */
+    public static function provideInvalidPatterns(): iterable
+    {
+        yield 'an unclosed class' => ['regex' => '/[a/'];
+        yield 'an unclosed group' => ['regex' => '/(a/'];
     }
 
     #[Test]

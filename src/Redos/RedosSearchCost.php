@@ -29,9 +29,9 @@ use PHPRegex\Redos\Backtrack\WitnessRenderer;
  * run: "^\s+" in "/^\s+|\s+$/" would.
  *
  * The cost of the functions that look for every match,
- * RedosAnalysis::$everyMatchSearchCost, comes two ways: after an empty match
- * inside the run, PHP's retry at the same offset reads to the end of the
- * run, or, with $shortMatch, the attempt that ends each short match reads
+ * RedosAnalysis::$everyMatchSearchCost, comes two ways, which $cause names:
+ * after an empty match inside the run, PHP's retry at the same offset reads
+ * to the end of the run, or the attempt that ends each short match reads
  * to the end of the run before it settles on it, as "a(?:a+\d)?" and
  * "a*b|a" do. The loop then starts a call where each match ends, inside the
  * run.
@@ -41,27 +41,26 @@ use PHPRegex\Redos\Backtrack\WitnessRenderer;
  *
  * @api
  *
- * @phpstan-type SearchCostArray array{degree: int, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
+ * @phpstan-type SearchCostArray array{degree: int, cause: value-of<SearchCostCause>, witness: array{prefix: string, run: string, breaker: string}, replayed: bool|null}
  */
 final class RedosSearchCost
 {
     /**
-     * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$searchCost
+     * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$searchCost and $everyMatchSearchCost
      *
-     * @param int       $degree     the degree of the search's cost in the run's length: 2
-     * @param string    $prefix     what comes before the run: the first attempt fails on it
-     * @param bool|null $replayed   whether the engine replay, without the JIT, counted attempts growing with the rest of the run; null when no replay was made
-     * @param bool      $shortMatch for the cost of the functions that look for every match, whether each call pays the run
-     *                              in the attempt that ends a short match, rather than in the retry after an empty one
+     * @param int             $degree   the degree of the search's cost in the run's length: 2
+     * @param SearchCostCause $cause    what starts an attempt at each position of the run
+     * @param string          $prefix   what comes before the run: the first attempt fails on it
+     * @param bool|null       $replayed whether the engine replay, without the JIT, counted attempts growing with the rest of the run; null when no replay was made
      */
     public function __construct(
         public readonly int $degree,
+        public readonly SearchCostCause $cause,
         public readonly string $prefix,
         public readonly string $run,
         public readonly string $breaker,
         public readonly bool $unicode,
         public readonly ?bool $replayed = null,
-        public readonly bool $shortMatch = false,
     ) {}
 
     /**
@@ -92,8 +91,8 @@ final class RedosSearchCost
     }
 
     /**
-     * The degree, the witness parts as the inside of PHP double-quoted
-     * literals, and what the replay found.
+     * The degree, the cause, the witness parts as the inside of PHP
+     * double-quoted literals, and what the replay found.
      *
      * @return SearchCostArray
      */
@@ -101,6 +100,7 @@ final class RedosSearchCost
     {
         return [
             'degree' => $this->degree,
+            'cause' => $this->cause->value,
             'witness' => [
                 'prefix' => WitnessRenderer::literal($this->prefix, $this->unicode),
                 'run' => WitnessRenderer::literal($this->run, $this->unicode),

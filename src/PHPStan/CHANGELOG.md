@@ -60,9 +60,9 @@ CHANGELOG
    version, stop PHPStan while it loads the extension's bootstrap file,
    before any file is analysed. A single version still overrides PHPStan's
    range, and `composer.json`'s `require.php` is not read for it.
- * The `$phpVersionRange` constructor parameter of `RegexPatternRule` and
-   `RegexPatternArgumentRule` is typed `int|array|null`, as PHPStan's
-   `phpVersion` parameter is, where it took `mixed`.
+ * PHPStan builds `RegexPatternRule` and `RegexPatternArgumentRule` from
+   `extension.neon`: their constructors are `@internal`, and the rules are
+   configured through `phpRegex`.
  * `RegexPatternRule` exports `ConfigArray`, the shape of the `phpRegex`
    parameter, which both rules take as their `$config`.
  * `RegexPatternArgumentRule` checks the constant pattern passed to a
@@ -81,8 +81,8 @@ CHANGELOG
    pattern and a replacement that both vary are not paired value by value: a
    reference is reported only when no possible pattern defines its group.
  * The static methods of every preset `regex lint` reads are judged by
-   default; `phpRegex.interop` takes the preset names of
-   `extraction.interop` to read only some, and refuses an unknown one, naming
+   default; `phpRegex.extraction.interop` takes the preset names of
+   `regex.json`'s `extraction.interop` to read only some, and refuses an unknown one, naming
    the preset it most likely means, as the other bridges do. A named argument is read under the name the library
    gives its pattern parameter.
  * A named argument is matched with its case, as PHP does: `PATTERN:` names

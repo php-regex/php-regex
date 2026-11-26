@@ -341,6 +341,30 @@ final class ConsoleLintRunnerTest extends TestCase
         $this->assertSame('routes.php', JsonContract::asArray($results[0])['file'] ?? null);
     }
 
+    /**
+     * With the optimizations off, the run names two steps and suggests no
+     * rewrite; on, the same pattern gets its suggestion in a third step.
+     */
+    #[Test]
+    public function test_without_optimizations_the_run_names_two_steps_and_suggests_nothing(): void
+    {
+        $this->assertSame(0, $this->lint(self::request(['/[0-9]+/'], checkOptimizations: false)));
+        $error = $this->error();
+        $this->assertStringStartsWith("  [1/2] Scanning files\n", $error);
+        $this->assertStringContainsString('[2/2] Analyzing patterns', $error);
+        $this->assertStringNotContainsString('Suggesting optimizations', $error);
+        $this->assertStringNotContainsString('[3/', $error);
+        $this->assertStringContainsString('0 optimizations', $this->standard());
+    }
+
+    #[Test]
+    public function test_with_optimizations_the_same_pattern_gets_its_suggestion(): void
+    {
+        $this->assertSame(0, $this->lint(self::request(['/[0-9]+/'])));
+        $this->assertStringContainsString('[3/3] Suggesting optimizations', $this->error());
+        $this->assertStringContainsString('1 optimizations', $this->standard());
+    }
+
     #[Test]
     public function test_the_lint_request_carries_what_the_bridge_mapped(): void
     {
@@ -564,8 +588,9 @@ final class ConsoleLintRunnerTest extends TestCase
         ?\Closure $setup = null,
         ?\Throwable $failure = null,
         array $arguments = [],
+        bool $checkOptimizations = true,
     ): \Closure {
-        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $minSavings, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure, $arguments): ConsoleLintRequest {
+        return static function (self $test) use ($patterns, $format, $paths, $pathsSetting, $jobs, $minSavings, $exclude, $excludeBase, $projectDir, $warnings, $unread, $setup, $failure, $arguments, $checkOptimizations): ConsoleLintRequest {
             $occurrences = [
                 ...array_map(static fn (string $pattern): PatternOccurrence => new PatternOccurrence($pattern, 'test.php', 3, 'php'), $patterns),
                 ...ArgumentCarriers::of($arguments, 'other.php'),
@@ -611,6 +636,7 @@ final class ConsoleLintRunnerTest extends TestCase
                 jobs: $jobs,
                 disabledSources: ['routes'],
                 optimizations: new OptimizerOptions(verifyWithAutomata: true),
+                checkOptimizations: $checkOptimizations,
                 checkRedos: false,
                 checkComplexity: false,
                 reportUnmatchedIgnores: true,

@@ -258,7 +258,9 @@ final class LintConfigLoaderTest extends TestCase
             $this->assertNull($result->error);
             $this->assertSame([
                 'checks' => [
-                    'validation' => false,
+                    'validation' => [
+                        'enabled' => false,
+                    ],
                     'redos' => [
                         'enabled' => true,
                         'mode' => 'confirmed',

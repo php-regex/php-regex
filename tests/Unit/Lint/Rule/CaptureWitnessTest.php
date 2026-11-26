@@ -221,7 +221,7 @@ final class CaptureWitnessTest extends TestCase
         $registry = new LintRuleRegistry();
         $registry->register($rule);
 
-        $linter = PatternLinter::withRegistry([], $registry);
+        $linter = PatternLinter::withRegistry($registry);
         Regex::create(['cache' => null])->parse($pattern)->accept($linter);
 
         $seen = [];

@@ -13,66 +13,24 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target;
 
-use PHPRegex\Parser\Text\Ascii;
-use PHPRegex\Transpiler\Exception\TranspileException;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Target\JavaScript\HtmlPatternTarget;
 use PHPRegex\Transpiler\Target\JavaScript\JavaScriptTarget;
 use PHPRegex\Transpiler\Target\Python\PythonTarget;
 
 /**
- * Registry for available transpilation targets.
+ * The target that writes each dialect.
  *
  * @internal
  */
 final class TargetRegistry
 {
-    /**
-     * @var array<string, TargetInterface>
-     */
-    private array $targets = [];
-
-    /**
-     * @param array<int, TargetInterface> $targets
-     */
-    public function __construct(array $targets = [])
+    public function get(Dialect $dialect): TargetInterface
     {
-        foreach ($targets as $target) {
-            $this->register($target);
-        }
-
-        $this->register(new JavaScriptTarget());
-        $this->register(new HtmlPatternTarget());
-        $this->register(new PythonTarget());
-    }
-
-    public function register(TargetInterface $target): void
-    {
-        $this->targets[$target->getName()] = $target;
-
-        foreach ($target->getAliases() as $alias) {
-            $this->targets[$alias] = $target;
-        }
-    }
-
-    public function get(string $name): TargetInterface
-    {
-        $key = Ascii::lower(trim($name, " \t\n\r\0\x0B"));
-
-        if (isset($this->targets[$key])) {
-            return $this->targets[$key];
-        }
-
-        throw new TranspileException(\sprintf('Unknown transpile target: %s. Expected one of: %s.', $name, implode(', ', $this->listTargets())));
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function listTargets(): array
-    {
-        $names = array_keys($this->targets);
-        sort($names);
-
-        return array_values(array_unique($names));
+        return match ($dialect) {
+            Dialect::JavaScript => new JavaScriptTarget(),
+            Dialect::HtmlPattern => new HtmlPatternTarget(),
+            Dialect::Python => new PythonTarget(),
+        };
     }
 }

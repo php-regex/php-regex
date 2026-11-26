@@ -55,8 +55,10 @@ library's or the engine's words.
 
 ## The capture expectation
 
-`assertPatternMatches()` takes an expectation keyed by group number or
-name. An empty expectation asks only whether the pattern matched.
+`assertPatternMatches(string $pattern, string $subject, array $captures = [],
+string $message = '')` takes the capture expectation, `$captures`, keyed by
+group number or name; `new MatchesPattern($pattern, $captures)` takes it the
+same way. An empty expectation asks only whether the pattern matched.
 
 | expectation | asks |
 |-------------|------|

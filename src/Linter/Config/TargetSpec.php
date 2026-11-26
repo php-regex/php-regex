@@ -40,8 +40,8 @@ final class TargetSpec
 
     /**
      * The refusal of a string that names neither a version nor a range: the
-     * option is named by its key, which an entry point replaces with its own
-     * name, as it does for ParserOptions::PHP_VERSION_EXPECTED.
+     * option is named by its key, "php_version", which the exception holds
+     * in $option for an entry point to replace with its own name.
      */
     public const RANGE_EXPECTED = '"php_version" must be a version string like "8.2", a PHP_VERSION_ID integer, "runtime", or a Composer constraint like ">=8.1" that names a lowest version.';
 
@@ -79,7 +79,7 @@ final class TargetSpec
             return null;
         }
 
-        return ComposerConstraint::intervals($value, strict: true) ?? throw new InvalidRegexOptionException(self::RANGE_EXPECTED);
+        return ComposerConstraint::intervals($value, strict: true) ?? throw new InvalidRegexOptionException(self::RANGE_EXPECTED, 'php_version');
     }
 
     /**
@@ -97,7 +97,7 @@ final class TargetSpec
         [$last, $series] = self::bound($max);
         $below = $series ? ComposerConstraint::nextAt($last, 2) : $last + 1;
         if ($from >= $below) {
-            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
+            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED, 'php_version');
         }
 
         return [$from, $below];
@@ -132,7 +132,7 @@ final class TargetSpec
         }
 
         if (!\is_string($bound) || 1 !== LibraryPcre::match(self::VERSION_BOUND, $bound, $parts)) {
-            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED);
+            throw new InvalidRegexOptionException(self::OBJECT_EXPECTED, 'php_version');
         }
 
         $patch = $parts[3] ?? null;

@@ -38,14 +38,13 @@ use Symfony\Component\Console\Output\OutputInterface;
  * run itself is the one the Laravel package's regex:lint makes.
  *
  * The options patterns are read with are RegexOptions: those of
- * Regex::create() but the target, which is the project's, and the runtime
- * validation, which only the running PHP can do.
+ * RegexParser::create() but the target, which is the project's, and the
+ * runtime validation, which only the running PHP can do.
  *
  * @phpstan-type RegexOptions array{
  *     max_pattern_length?: int,
  *     max_lookbehind_length?: int,
  *     cache?: CacheInterface|string|null,
- *     redos_ignored_patterns?: array<string>,
  *     max_recursion_depth?: int,
  * }
  *
@@ -72,9 +71,9 @@ final class LintCommand extends Command
     /**
      * @param array<string>           $defaultPaths
      * @param array<string>           $defaultExcludePaths
-     * @param array<string, bool|int> $defaultOptimizations   the bundle's optimizations, in snake_case
-     * @param RegexOptions            $regexOptions           what Regex::create() takes, but the target and the
-     *                                                        runtime validation: the settings patterns are read with
+     * @param array<string, bool|int> $defaultOptimizations   the bundle's optimizations.options, in snake_case
+     * @param RegexOptions            $regexOptions           what RegexParser::create() takes, but the target and
+     *                                                        the runtime validation: the settings patterns are read with
      * @param string|int|null         $phpVersion             the bundle's php_version
      * @param string|null             $pcreVersion            the bundle's pcre_version
      * @param string|null             $projectDir             where composer.json is read; null reads none
@@ -82,6 +81,9 @@ final class LintCommand extends Command
      *                                                        ignores, printed before the report
      * @param bool                    $reportUnmatchedIgnores the bundle's report_unmatched_ignores
      * @param string|null             $locale                 the bundle's locale
+     * @param bool                    $checkOptimizations     the bundle's optimizations.enabled
+     * @param int                     $minSavings             the bundle's optimizations.min_savings: the saving a
+     *                                                        suggestion needs unless --min-savings says otherwise
      */
     public function __construct(
         private readonly LintService $lint,
@@ -100,6 +102,8 @@ final class LintCommand extends Command
         private readonly array $warnings = [],
         private readonly bool $reportUnmatchedIgnores = true,
         private readonly ?string $locale = null,
+        private readonly bool $checkOptimizations = true,
+        private readonly int $minSavings = 1,
     ) {
         $paths = self::stringList($defaultPaths);
         $exclude = self::stringList($defaultExcludePaths);
@@ -116,7 +120,7 @@ final class LintCommand extends Command
         $this
             ->addArgument('paths', InputArgument::IS_ARRAY | InputArgument::OPTIONAL, \sprintf('The paths to analyze, read from the working directory (default: %s, read from the project directory)', implode(', ', $this->defaultPaths)))
             ->addOption('exclude', null, InputOption::VALUE_IS_ARRAY | InputOption::VALUE_OPTIONAL, 'Paths to exclude', $this->defaultExcludePaths)
-            ->addOption('min-savings', null, InputOption::VALUE_OPTIONAL, 'Minimum optimization savings in characters', 1)
+            ->addOption('min-savings', null, InputOption::VALUE_OPTIONAL, 'Minimum optimization savings in characters', $this->minSavings)
             ->addOption('jobs', 'j', InputOption::VALUE_OPTIONAL, 'Parallel workers for analysis (auto-detected if not specified)')
             ->addOption('no-routes', null, InputOption::VALUE_NONE, 'Skip route validation')
             ->addOption('no-validators', null, InputOption::VALUE_NONE, 'Skip validator validation')
@@ -177,12 +181,14 @@ final class LintCommand extends Command
             // An exclude names a directory of the project: one of the same
             // name above it, where the project lives, excludes nothing.
             excludeBase: $configured ? $this->projectDir : null,
-            // --min-savings with no value is no number either.
-            minSavings: $input->hasParameterOption(['--min-savings'], true) ? (\is_string($minSavings) ? $minSavings : '') : null,
+            // --min-savings with no value is no number either; without it,
+            // the bundle's min_savings.
+            minSavings: $input->hasParameterOption(['--min-savings'], true) ? (\is_string($minSavings) ? $minSavings : '') : (string) $this->minSavings,
             // --jobs with no value is no count either.
             jobs: $input->hasParameterOption(['--jobs', '-j'], true) ? (\is_string($jobs) ? $jobs : '') : null,
             disabledSources: array_keys(array_filter(['routes' => (bool) $input->getOption('no-routes'), 'validators' => (bool) $input->getOption('no-validators'), 'twig' => (bool) $input->getOption('no-twig')])),
             optimizations: $this->defaultOptimizations,
+            checkOptimizations: $this->checkOptimizations,
             checkRedos: $this->checkRedos,
             checkComplexity: $this->checkComplexity,
             reportUnmatchedIgnores: $this->reportUnmatchedIgnores,

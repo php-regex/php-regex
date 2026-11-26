@@ -22,6 +22,7 @@ use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
 use PHPRegex\Redos\RedosSearchCost;
+use PHPRegex\Redos\SearchCostCause;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -121,14 +122,14 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
 
         $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_match()', everyMatchElsewhere: ['preg_match_all', 'preg_split']));
 
-        $this->assertSame([RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, '', 'a', '', false)), RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_match_all', new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false)), RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
         foreach ($issues as $issue) {
             $this->assertSame('warning', $issue->severity->level());
             $this->assertSame([1, 'file.php'], [$issue->line, $issue->file], 'Raised where the literal is written.');
         }
 
         $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_split()', everyMatch: 'preg_split', everyMatchElsewhere: ['preg_split']));
-        $this->assertSame([RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
+        $this->assertSame([RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false))], array_map(static fn (LintIssue $issue): string => $issue->message, $issues));
     }
 
     #[Test]
@@ -218,7 +219,7 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
     {
         $this->assertSame(
             "Quadratic search after an empty match: one attempt is linear (proven), but preg_split() finds an empty match at each position of the run and, as PHP does after every empty match, tries that position again for a non-empty one, which reads to the end of the run; PHP runs that retry in PCRE2's interpreter, whatever pcre.jit. Severity: MEDIUM.",
-            RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, '', 'a', '', false)),
+            RedosVerdict::everyMatchMessage('preg_split', new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false)),
         );
 
         $this->assertSame([
@@ -226,9 +227,9 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
             'pcre.backtrack_limit does not stop it: the limit counts each call apart.',
             'preg_match() and preg_grep() stop at the first match and make no such retry.',
             'Make every match read at least one character, or bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.',
-        ], RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false), '10.49'));
+        ], RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false), '10.49'));
 
-        $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, false), '10.49'));
+        $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, SearchCostCause::EmptyMatchRetry, '', 'a', '', false, false), '10.49'));
     }
 
     /**
@@ -238,7 +239,7 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
     #[Test]
     public function test_every_match_search_cost_words_of_short_matches(): void
     {
-        $cost = new RedosSearchCost(2, '', 'a', '', false, null, true);
+        $cost = new RedosSearchCost(2, SearchCostCause::ShortMatch, '', 'a', '', false);
 
         $this->assertSame(
             "Quadratic search over short matches: one attempt is linear (proven), but preg_split() finds a short match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: MEDIUM.",
@@ -252,8 +253,8 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
             'Bound the length of the run; ^ or \A before every alternative stops it, \G and the A modifier do not.',
         ], RedosVerdict::everyMatchEvidence($cost, '10.49'));
 
-        $this->assertContains('Replayed on PCRE2 10.49 without the JIT: the attempt at a position further from the end of the run takes more steps.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, true, true), '10.49'));
-        $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, '', 'a', '', false, false, true), '10.49'));
+        $this->assertContains('Replayed on PCRE2 10.49 without the JIT: the attempt at a position further from the end of the run takes more steps.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, SearchCostCause::ShortMatch, '', 'a', '', false, true), '10.49'));
+        $this->assertContains('Not confirmed by the step replay on PCRE2 10.49.', RedosVerdict::everyMatchEvidence(new RedosSearchCost(2, SearchCostCause::ShortMatch, '', 'a', '', false, false), '10.49'));
     }
 
     /**
@@ -278,7 +279,7 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
         $this->assertInstanceOf(RedosAnalysis::class, $analysis);
         $cost = $analysis->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost);
-        $this->assertTrue($cost->shortMatch);
+        $this->assertSame(SearchCostCause::ShortMatch, $cost->cause);
         $this->assertSame(RedosVerdict::everyMatchMessage('preg_match_all', $cost), $issues[0]->message);
         $this->assertStringStartsWith('Quadratic search over short matches:', (string) $issues[0]->message);
         $this->assertSame(RedosVerdict::everyMatchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);

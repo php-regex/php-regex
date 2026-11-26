@@ -41,11 +41,11 @@ final class MatchesPattern extends Constraint
 
     /**
      * @param string                   $pattern  the pattern as the caller wrote it, also the one the failure shows
-     * @param array<int|string, mixed> $expected the capture expectation: true (participated), false (did not
+     * @param array<int|string, mixed> $captures the capture expectation: true (participated), false (did not
      *                                           participate), a string value, or [value, byte offset], keyed by
      *                                           group number or name
      */
-    public function __construct(private readonly string $pattern, private readonly array $expected = []) {}
+    public function __construct(private readonly string $pattern, private readonly array $captures = []) {}
 
     /**
      * Returns a string representation of the constraint.
@@ -86,7 +86,7 @@ final class MatchesPattern extends Constraint
             return false;
         }
 
-        $this->attempt = PatternLab::run($this->pattern, $other, $this->expected);
+        $this->attempt = PatternLab::run($this->pattern, $other, $this->captures);
 
         if (null !== $this->attempt->failure || true !== $this->attempt->matched) {
             return false;

@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Support;
 
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
+use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\ExplainFormat;
 use PHPRegex\Toolkit\HighlightFormat;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,6 +42,7 @@ final class PhpStormMetaGatesTest extends TestCase
      */
     private const SET_OWNERS = [
         'regex_option_keys' => self::PARSER_META_FILE,
+        'regex_create_option_keys' => self::META_FILE,
         'explanation_formats' => self::META_FILE,
         'highlight_formats' => self::META_FILE,
         'redos_thresholds' => self::REDOS_META_FILE,
@@ -77,6 +80,24 @@ final class PhpStormMetaGatesTest extends TestCase
     public function test_the_option_keys_the_ide_suggests_are_the_ones_the_parser_reads(): void
     {
         $this->assertStringContainsString("'pcre_version'", $this->argumentsSet('regex_option_keys'));
+        $this->assertStringNotContainsString("'redos_ignored_patterns'", $this->argumentsSet('regex_option_keys'));
+    }
+
+    /**
+     * Regex::create() reads the parser's keys and the patterns its ReDoS
+     * analysis skips.
+     */
+    #[Test]
+    public function test_the_option_keys_the_ide_suggests_for_the_facade_are_the_parsers_and_its_own(): void
+    {
+        $this->assertSame(
+            [...self::quoted($this->argumentsSet('regex_option_keys')), 'redos_ignored_patterns'],
+            self::quoted($this->argumentsSet('regex_create_option_keys')),
+        );
+        $this->assertMatchesRegularExpression(
+            '/expectedArguments\(\s*\\\\PHPRegex\\\\Toolkit\\\\Regex::create\(\),\s*0,\s*argumentsSet\(\'regex_create_option_keys\'\)\s*\)/',
+            (string) \file_get_contents(self::META_FILE),
+        );
     }
 
     /**
@@ -112,8 +133,29 @@ final class PhpStormMetaGatesTest extends TestCase
     {
         $thresholds = $this->argumentsSet('redos_thresholds');
 
-        $this->assertStringContainsString('RedosSeverity::Safe', $thresholds);
-        $this->assertStringNotContainsString('RedosSeverity::SAFE', $thresholds);
+        $this->assertStringContainsString('RedosSeverity::Low', $thresholds);
+        $this->assertStringNotContainsString('RedosSeverity::LOW', $thresholds);
+    }
+
+    /**
+     * A threshold is low, medium, high or critical, as a configuration
+     * names it: safe and unknown are verdicts a pattern gets.
+     */
+    #[Test]
+    public function test_the_thresholds_the_ide_suggests_are_the_ones_a_configuration_names(): void
+    {
+        preg_match_all('/RedosSeverity::(\w+)/', $this->argumentsSet('redos_thresholds'), $matches);
+
+        $this->assertSame(['Low', 'Medium', 'High', 'Critical'], $matches[1]);
+        foreach (RedosSeverity::cases() as $severity) {
+            try {
+                $named = $severity === RedosSeverity::fromConfig($severity->value);
+            } catch (InvalidRegexOptionException) {
+                $named = false;
+            }
+
+            $this->assertSame($named, \in_array($severity->name, $matches[1], true), $severity->name);
+        }
     }
 
     /**

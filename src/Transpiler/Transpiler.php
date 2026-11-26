@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler;
 
+use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
@@ -42,33 +43,35 @@ final class Transpiler
     /**
      * Transpile a PCRE regex into the spelling of a target dialect.
      *
-     * The target resolves through the registry before the pattern is parsed,
-     * so an unknown dialect name is refused before any syntax fault is read.
+     * A dialect given by name resolves before the pattern is parsed, so an
+     * unknown name is refused before any syntax fault is read.
      *
      * @param string                $regex   The regex as written, delimiters and flags included ("/[a-z]+/i")
-     * @param string                $target  A registered target name or alias: "javascript" or "js",
-     *                                       "html-pattern" or "html", "python" or "py"; case and
-     *                                       surrounding space are forgiven
+     * @param Dialect|string        $dialect The dialect, or a name Dialect::fromName() takes: "javascript"
+     *                                       or "js", "html-pattern" or "html", "python" or "py"
      * @param TranspileOptions|null $options What the dialects may do; null reads the defaults
      *
-     * @throws TranspileException when $target names no registered dialect, or the dialect refuses a
-     *                            construct or a flag it cannot carry without changing what matches
-     * @throws ParserException    when $regex does not parse: a delimiter or flag fault, a syntax error,
-     *                            or a parser limit — the thrown subclasses are SyntaxErrorException,
-     *                            RecursionLimitException and ResourceLimitException
-     * @throws LexerException     when $regex does not tokenize, e.g. a /u body that is not valid UTF-8
+     * @throws InvalidRegexOptionException when $dialect is a name no dialect answers to
+     * @throws TranspileException          when the dialect refuses a construct or a flag it cannot carry
+     *                                     without changing what matches
+     * @throws ParserException             when $regex does not parse: a delimiter or flag fault, a syntax
+     *                                     error, or a parser limit — the thrown subclasses are
+     *                                     SyntaxErrorException, RecursionLimitException and
+     *                                     ResourceLimitException
+     * @throws LexerException              when $regex does not tokenize, e.g. a /u body that is not valid UTF-8
      *
      * @return TranspileResult The dialect's pattern, with its literal and constructor spellings
      */
-    public function transpile(string $regex, string $target, ?TranspileOptions $options = null): TranspileResult
+    public function transpile(string $regex, Dialect|string $dialect, ?TranspileOptions $options = null): TranspileResult
     {
         $options ??= new TranspileOptions();
-        $dialect = $this->targets->get($target);
+        $dialect = \is_string($dialect) ? Dialect::fromName($dialect) : $dialect;
+        $target = $this->targets->get($dialect);
         $ast = $this->parser->parse($regex);
 
         // The pattern means what the PCRE2 it is read for makes of it: a
         // bare script name is the script alone before 10.40.
-        $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames), $ast->source, function () use ($regex, $target, $options): ?string {
+        $context = new TranspileContext($regex, $ast->flags, $options, !$this->parser->target()->supports(PcreFeature::LoosePropertyNames), $ast->source, function () use ($regex, $dialect, $options): ?string {
             // Asked only once the engine compiles the pattern with u: the run
             // with u refuses as the target does, and that refusal is the
             // advice. A run the parser cannot make, the pattern one byte past
@@ -76,7 +79,7 @@ final class Transpiler
             // is then PCRE's, and the caller's pattern still transpiles. A
             // run with u never asks again, as no byte is refused under u.
             try {
-                $this->transpile($regex.'u', $target, $options);
+                $this->transpile($regex.'u', $dialect, $options);
 
                 return null;
             } catch (TranspileException $e) {
@@ -85,16 +88,16 @@ final class Transpiler
                 return null;
             }
         });
-        $compiled = $dialect->compile($ast, $context);
-        $flags = $dialect->mapFlags($ast->flags, $context);
+        $compiled = $target->compile($ast, $context);
+        $flags = $target->mapFlags($ast->flags, $context);
 
         return new TranspileResult(
             $regex,
-            $dialect->getName(),
+            $dialect->value,
             $compiled,
             $flags,
-            $dialect->formatLiteral($compiled, $flags, $context),
-            $dialect->formatConstructor($compiled, $flags, $context),
+            $target->formatLiteral($compiled, $flags, $context),
+            $target->formatConstructor($compiled, $flags, $context),
             $context->getWarnings(),
             $context->getNotes(),
         );

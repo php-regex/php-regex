@@ -56,6 +56,23 @@ final class CommandTargetMetaTest extends TestCase
     }
 
     /**
+     * The running PHP named, or a locale named beside it, is a target the
+     * command line names: the banner says so.
+     */
+    #[Test]
+    public function test_the_banner_names_the_running_php_once_something_names_the_target(): void
+    {
+        $named = ProjectTarget::fromSources(['--php-version' => 'runtime'], [], null, []);
+        $this->assertSame(['Target PHP' => $named->label().' (--php-version (running PHP))'], $this->targetMeta($named));
+
+        $locale = ProjectTarget::fromSources([], [], null, [], ['--locale' => 'C']);
+        $this->assertSame(['Target PHP' => $locale->label().' (running PHP; --locale)'], $this->targetMeta($locale));
+
+        $pcre = ProjectTarget::fromSources([], ['--pcre-version' => '10.42'], null, []);
+        $this->assertSame(['Target PHP' => $pcre->label().' (running PHP; --pcre-version)'], $this->targetMeta($pcre));
+    }
+
+    /**
      * @return array<string, string>
      */
     private function targetMeta(ProjectTarget $target): array

@@ -36,6 +36,9 @@ final class PregSplitToExplodeRector extends AbstractRector
 {
     private readonly ProvenLiterals $literals;
 
+    /**
+     * @internal built by Rector's container; the rule takes no configuration
+     */
     public function __construct(private readonly PhpVersionProvider $phpVersionProvider)
     {
         $this->literals = new ProvenLiterals();

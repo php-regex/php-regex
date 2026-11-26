@@ -48,7 +48,9 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\IgnoreList;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -392,8 +394,8 @@ final class AnalysisService
         );
 
         // The heuristic rules guess what the analysis just proved: once it
-        // shows the pattern linear, their warnings go.
-        if ($redos->isProvenSafe()) {
+        // shows one attempt linear, their warnings go.
+        if (RedosProof::Proven === $redos->proof && RedosComplexity::Linear === $redos->complexity) {
             $lintIssues = array_values(array_filter(
                 $lintIssues,
                 static fn (LintIssue $issue): bool => !isset(RedosVerdict::HEURISTIC_ISSUE_IDS[(string) $issue->issueId]),
@@ -413,12 +415,12 @@ final class AnalysisService
     private function validationIssues(PatternOccurrence $occurrence, ValidationResult $validation): array
     {
         if (ValidationErrorCategory::Limit === $validation->category) {
-            return [LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), position: $validation->offset, tip: $validation->hint, validation: $validation)];
+            return [LintIssue::at($occurrence, LintSeverity::Warning, 'Not analyzed: '.($validation->error ?? 'a limit of the analysis was reached.'), offset: $validation->offset, tip: $validation->hint, validation: $validation)];
         }
 
         $message = $validation->error ?? 'Invalid regex.';
 
-        return [LintIssue::at($occurrence, LintSeverity::Error, $message, position: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation)];
+        return [LintIssue::at($occurrence, LintSeverity::Error, $message, offset: $validation->offset, tip: ValidationTips::forError($message, $occurrence->pattern, $validation), validation: $validation)];
     }
 
     /**
@@ -442,7 +444,7 @@ final class AnalysisService
                 $occurrence,
                 LintSeverity::Error,
                 $message,
-                position: $rangeValidation->offset,
+                offset: $rangeValidation->offset,
                 tip: $this->badEscapeTip($occurrence->pattern) ?? ValidationTips::forError($message, $occurrence->pattern, $rangeValidation),
                 validation: $rangeValidation,
                 target: ProjectTarget::describe($refusedBy->target),
@@ -488,12 +490,11 @@ final class AnalysisService
      */
     private function lintIssues(PatternOccurrence $occurrence, RegexNode $ast, bool $skipRiskAnalysis, array &$files): array
     {
-        $linter = PatternLinter::withDfaCache($this->lintRules, $this->dfas(), $this->regex->target());
-        $ast->accept($linter);
+        $linter = PatternLinter::withDfaCache($this->dfas(), $this->regex->target(), $this->lintRules);
 
         $issues = [];
         $spelling = null;
-        foreach ($linter->getIssues() as $issue) {
+        foreach ($linter->analyze($ast) as $issue) {
             if ($skipRiskAnalysis && isset(RedosVerdict::HEURISTIC_ISSUE_IDS[$issue->id])) {
                 continue;
             }
@@ -513,7 +514,7 @@ final class AnalysisService
                 }
             }
 
-            $issues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->hint);
+            $issues[] = LintIssue::at($occurrence, $issue->severity, $issue->message, $issue->id, $issue->offset, $issue->end, $issue->hint);
         }
 
         return $issues;

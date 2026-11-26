@@ -50,7 +50,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     {
         $this->requiresPhpReading($pattern);
 
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
 
         foreach (self::FLAG_SETS as $flags) {
@@ -96,7 +96,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     public function test_the_written_shape_is_the_type_phpstan_prints(string $pattern, int $flags, string $printed): void
     {
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchShape($flags);
+        $written = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern))->matchShape($flags);
 
         self::assertEquivalent($resolver->resolve($printed), $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }
@@ -112,7 +112,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     #[DataProviderExternal(CaptureShapeAnalyzerTest::class, 'provideCaseEngineRows')]
     public function test_the_match_shape_is_the_union_of_the_cases(string $pattern, array $subjects): void
     {
-        $shape = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern));
+        $shape = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern));
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
         $this->assertNotSame([], $shape->cases, \sprintf('%s must split.', $pattern));
 
@@ -146,7 +146,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
             $this->assertTrue($type->isConstantArray()->yes(), \sprintf('PHPStan reads "%s" as %s, not an array shape.', $expected, $type->describe(VerbosityLevel::precise())));
         }
 
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+        $written = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
         self::assertEquivalent($type, $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }
 
@@ -169,7 +169,7 @@ final class CaptureShapePhpStanTypeTest extends PHPStanTestCase
     public function test_a_group_named_mark_yields_its_list_to_the_marks_in_pattern_order(string $pattern, int $flags, string $expected): void
     {
         $resolver = self::getContainer()->getByType(TypeStringResolver::class);
-        $written = (new CaptureShapeAnalyzer())->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
+        $written = CaptureShapeAnalyzer::forEveryRelease()->analyze(RegexParser::create()->parse($pattern))->matchAllShape($flags);
 
         self::assertEquivalent($resolver->resolve($expected), $resolver->resolve($written), \sprintf('%s with flags %d writes %s', $pattern, $flags, $written));
     }

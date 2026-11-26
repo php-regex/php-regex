@@ -25,8 +25,8 @@ use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Json\JsonDocument;
 use PHPRegex\Parser\Text\Ascii;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
-use PHPRegex\Transpiler\Target\TargetRegistry;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileResult;
@@ -93,10 +93,8 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
             $result = $transpiler->transpile($args['pattern'], $args['target'], new TranspileOptions(pythonVersion: $args['pythonVersion']));
 
             if ('json' === $args['format']) {
-                // "target" is the dialect: the PHP versions judged are
-                // "php_target".
                 $points = $range->points($args['pattern']);
-                $output->writeDocument(JsonDocument::encode([...$result->jsonSerialize(), 'php_target' => $range->target->toArray(), 'range' => $points]));
+                $output->writeDocument(JsonDocument::encode([...$result->jsonSerialize(), 'target' => $range->target->toArray(), 'range' => $points]));
 
                 // stdout holds the document alone: what the range finds
                 // goes to stderr, as on the console.
@@ -169,9 +167,9 @@ final class TranspileCommand extends AbstractCommand implements JsonCommandInter
         }
 
         try {
-            (new TargetRegistry())->get($target);
+            Dialect::fromName($target);
             new TranspileOptions(pythonVersion: $pythonVersion);
-        } catch (TranspileException|InvalidRegexOptionException $e) {
+        } catch (InvalidRegexOptionException $e) {
             return ['pattern' => '', 'target' => '', 'format' => '', 'pythonVersion' => null, 'error' => $e->getMessage()];
         }
 

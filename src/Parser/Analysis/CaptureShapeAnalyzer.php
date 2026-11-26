@@ -202,14 +202,34 @@ final class CaptureShapeAnalyzer
     private GroupIndex $groups;
 
     /**
+     * The PCRE2 release the pattern runs on, null when it is read for every
+     * release (forEveryRelease()).
+     */
+    private ?PcreTarget $target;
+
+    /**
      * @param PcreTarget|null $target the PCRE2 release the pattern runs on: a
      *                                "(?(VERSION>=10.4)" condition keeps the
-     *                                arm that release takes; null keeps both
+     *                                arm that release takes; the running
+     *                                engine when null, as the parser reads it
      */
-    public function __construct(private readonly ?PcreTarget $target = null)
+    public function __construct(?PcreTarget $target = null)
     {
+        $this->target = $target ?? PcreTarget::runtime();
         $this->facts = new CaptureFacts();
         $this->groups = GroupIndex::empty();
+    }
+
+    /**
+     * An analyzer that reads the pattern for every PCRE2 release at once:
+     * a "(?(VERSION>=10.4)" condition keeps both arms.
+     */
+    public static function forEveryRelease(): self
+    {
+        $analyzer = new self();
+        $analyzer->target = null;
+
+        return $analyzer;
     }
 
     public function analyze(RegexNode $ast): CaptureShape

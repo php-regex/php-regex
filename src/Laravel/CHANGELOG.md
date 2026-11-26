@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `extractor` names a class, or a binding of the container, implementing
+   `ExtractorInterface`: `regex:lint` reads the patterns of the PHP files
+   with it, as the Symfony bundle's `extractor_service`.
+ * The provider binds `PHPRegex\Toolkit\Regex` and its `php-regex` alias:
+   the services behind the commands are bound under no class name, and
+   `provides()` is gone, the provider not being deferred.
  * `regex:lint` and `regex:routes` read a named group of a route constraint
    as non-capturing too where the installed `symfony/routing` drops its
    name, 6.4.51, 7.4.24 and 8.1.12 on: `->where('locale', '(?<l>en|fr)')`
@@ -44,12 +50,16 @@ CHANGELOG
  * `report_unmatched_ignores`, on by default, makes `regex:lint` report each
    `@regex-ignore` marker, or issue identifier it names, that silences
    nothing, as `regex.ignore.unmatched`.
- * The facade's `create()` and `optimize()` take the `OptionsArray` and
+ * The facade's `create()` and `optimize()` take the `RegexOptionsArray` and
    `OptimizerOptionsArray` shapes of the toolkit, so PHPStan checks the
    options passed through them.
- * `analysis.complexity`, off by default, makes `regex:lint` report the
-   patterns whose complexity score reaches `analysis.warning_threshold`,
-   as `regex lint` does under `checks.complexity`.
+ * `complexity.enabled`, off by default, makes `regex:lint` report the
+   patterns whose complexity score reaches `complexity.threshold`, 1 or
+   more, as `regex lint` does under `checks.complexity`; `analysis` is gone.
+ * `optimizations` is nested as `checks.optimizations` of `regex.json`:
+   `enabled` switches the suggestions of `regex:lint`, `min_savings` is the
+   saving `--min-savings` defaults to, and `options` holds the optimizer
+   switches that sat at its top level.
  * `regex:compare --method intersection|subset|equivalence`, defaulting to
    `intersection` as the CLI and Symfony do; the JSON report names the
    method. `-j` for `regex:lint --jobs`, `-t` for `regex:transpile --target`.
@@ -139,7 +149,8 @@ CHANGELOG
  * The `ValidRegex` rule validates a pattern a user submits, with the
    application's `Regex` service and the library's message; with
    `redos: true` a ReDoS severity from `redosThreshold` (`high`) up is
-   refused too.
+   refused too. A pattern whose search is quadratic, as `/\s*$/`, ranks
+   `medium`.
  * `regex:lint` shows the progress as the workers make it, in three steps
    (`[3/3] Suggesting optimizations`), counts the workers it started under
    `Processes`, and defaults to the logical CPUs the process may use, within a

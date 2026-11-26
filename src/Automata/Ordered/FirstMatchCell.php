@@ -22,19 +22,19 @@ final class FirstMatchCell
 {
     /**
      * @param int                      $index      the candidate's place in the list
-     * @param bool                     $reachable  whether some string reaches it
-     * @param list<string>|null        $witness    the parts of the least shortest string it keeps, null when it keeps none
+     * @param bool|null                $reachable  whether some string reaches it; null when the solver gave up on it
+     * @param list<string>|null        $example    the parts of the least shortest string it keeps, null when it keeps none or the solver gave up
      * @param array<int, list<string>> $takenBy    the earlier candidates that take some of its strings, each with the least shortest one
      * @param list<int>                $unread     the earlier candidates left out, their fields read in another encoding
-     * @param string|null              $refused    why the solver gave up on the candidate: it is then read as reachable
+     * @param string|null              $refused    why the solver gave up on the candidate, which then shadows no later one
      * @param int|null                 $shadowedBy the one earlier candidate that takes all its strings alone, when it keeps none
      *
-     * @internal
+     * @internal built by FirstMatchPartition::partition()
      */
     public function __construct(
         public readonly int $index,
-        public readonly bool $reachable,
-        public readonly ?array $witness,
+        public readonly ?bool $reachable,
+        public readonly ?array $example,
         public readonly array $takenBy = [],
         public readonly array $unread = [],
         public readonly ?string $refused = null,
@@ -47,6 +47,6 @@ final class FirstMatchCell
      */
     public function isShadowedCumulatively(): bool
     {
-        return !$this->reachable && [] !== $this->takenBy && null === $this->shadowedBy;
+        return false === $this->reachable && [] !== $this->takenBy && null === $this->shadowedBy;
     }
 }

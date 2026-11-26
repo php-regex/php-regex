@@ -21,6 +21,10 @@ use PHPUnit\Framework\TestCase;
 final class TranspileResultJsonTest extends TestCase
 {
     /**
+     * The document names the dialect "dialect": "target" is the PHP
+     * versions judged in every document of the CLI. The property keeps its
+     * 1.x name.
+     *
      * @param array<string, mixed> $expected
      */
     #[Test]
@@ -28,6 +32,7 @@ final class TranspileResultJsonTest extends TestCase
     public function test_json_serialize_writes_the_transpile_payload(TranspileResult $result, array $expected): void
     {
         $this->assertSame($expected, $result->jsonSerialize());
+        $this->assertSame($expected['dialect'], $result->target);
     }
 
     /**
@@ -38,7 +43,7 @@ final class TranspileResultJsonTest extends TestCase
         yield 'no warning, no note' => [
             'result' => new TranspileResult('/a+/', 'javascript', 'a+', '', '/a+/', 'new RegExp("a+")'),
             'expected' => [
-                'target' => 'javascript',
+                'dialect' => 'javascript',
                 'source' => '/a+/',
                 'pattern' => 'a+',
                 'flags' => '',
@@ -52,7 +57,7 @@ final class TranspileResultJsonTest extends TestCase
         yield 'warnings and notes, raw bytes kept' => [
             'result' => new TranspileResult("/a\x01/i", 'python', "a\x01", 'IGNORECASE', "r'a\x01'", "re.compile(r'a\x01', re.IGNORECASE)", ['Possessive quantifier dropped'], ['Flag i mapped']),
             'expected' => [
-                'target' => 'python',
+                'dialect' => 'python',
                 'source' => "/a\x01/i",
                 'pattern' => "a\x01",
                 'flags' => 'IGNORECASE',

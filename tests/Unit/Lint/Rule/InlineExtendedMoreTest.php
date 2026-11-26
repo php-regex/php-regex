@@ -187,7 +187,7 @@ final class InlineExtendedMoreTest extends TestCase
     private static function issues(string $pattern): array
     {
         $regex = Regex::create(['cache' => null, 'php_version' => '8.4', 'locale' => 'C']);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 
         return array_map(static fn ($issue): array => [$issue->id, $issue->message], $linter->getIssues());

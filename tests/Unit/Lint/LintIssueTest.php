@@ -40,7 +40,7 @@ final class LintIssueTest extends TestCase
     {
         $occurrence = new PatternOccurrence('/a{1}/', 'src/a.php', 3, 'preg_match()', column: 12, fileOffset: 40);
 
-        $issue = LintIssue::at($occurrence, LintSeverity::Style, 'Quantifier is redundant.', 'regex.lint.quantifier.useless', 1, 'Remove it.');
+        $issue = LintIssue::at($occurrence, LintSeverity::Style, 'Quantifier is redundant.', 'regex.lint.quantifier.useless', 1, 4, 'Remove it.');
 
         $this->assertSame(LintSeverity::Style, $issue->severity);
         $this->assertSame('Quantifier is redundant.', $issue->message);
@@ -48,7 +48,8 @@ final class LintIssueTest extends TestCase
         $this->assertSame(3, $issue->line);
         $this->assertSame(12, $issue->column);
         $this->assertSame(40, $issue->fileOffset);
-        $this->assertSame(1, $issue->position);
+        $this->assertSame(1, $issue->offset);
+        $this->assertSame(4, $issue->end);
         $this->assertSame('regex.lint.quantifier.useless', $issue->issueId);
         $this->assertSame('Remove it.', $issue->hint);
         $this->assertNull($issue->tip);
@@ -69,24 +70,26 @@ final class LintIssueTest extends TestCase
         $this->assertNull($issue->issueId);
         $this->assertSame($validation->errorCode->value, $issue->id());
         $this->assertSame('regex.lint.x', (new LintIssue(LintSeverity::Error, 'X.', 'a.php', 1, issueId: 'regex.lint.x', validation: $validation))->id());
-        $this->assertNull((new LintIssue(LintSeverity::Info, 'X.', 'a.php', 1))->id());
+        // A pattern refused with no error code of its own is reported as
+        // the engine's refusal, as the language server reports it.
+        $this->assertSame('regex.pcre.runtime', (new LintIssue(LintSeverity::Error, 'Refused.', 'a.php', 1, validation: new ValidationResult(false, 'Refused.')))->id());
     }
 
     #[Test]
     public function test_with_file_and_with_target_change_that_alone(): void
     {
-        $issue = new LintIssue(LintSeverity::Warning, 'M.', './a.php', 2, 5, 9, 1, 'regex.lint.x', 'H.', 'T.', 'preg_match()');
+        $issue = new LintIssue(LintSeverity::Warning, 'M.', './a.php', 2, 5, 9, 1, 3, 'regex.lint.x', 'H.', 'T.', 'preg_match()');
 
         $moved = $issue->withFile('a.php');
         $this->assertSame('a.php', $moved->file);
         $this->assertSame('./a.php', $issue->file);
-        $this->assertEquals(new LintIssue(LintSeverity::Warning, 'M.', 'a.php', 2, 5, 9, 1, 'regex.lint.x', 'H.', 'T.', 'preg_match()'), $moved);
+        $this->assertEquals(new LintIssue(LintSeverity::Warning, 'M.', 'a.php', 2, 5, 9, 1, 3, 'regex.lint.x', 'H.', 'T.', 'preg_match()'), $moved);
 
         $target = ['php' => '8.4', 'pcre' => '10.44', 'guard' => '>=8.4'];
         $judged = $issue->withTarget($target);
         $this->assertSame($target, $judged->target);
         $this->assertNull($issue->target);
-        $this->assertEquals(new LintIssue(LintSeverity::Warning, 'M.', './a.php', 2, 5, 9, 1, 'regex.lint.x', 'H.', 'T.', 'preg_match()', target: $target), $judged);
+        $this->assertEquals(new LintIssue(LintSeverity::Warning, 'M.', './a.php', 2, 5, 9, 1, 3, 'regex.lint.x', 'H.', 'T.', 'preg_match()', target: $target), $judged);
     }
 
     /**

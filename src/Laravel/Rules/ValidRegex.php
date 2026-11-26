@@ -69,9 +69,12 @@ final class ValidRegex implements ValidationRule
         }
 
         $analysis = $regex->redos($value);
+        // A quadratic search comes with a linear attempt, safe: its cost
+        // ranks medium.
+        $severity = $analysis->hasQuadraticSearch() ? RedosSeverity::Medium : $analysis->severity;
 
-        if ($analysis->exceedsThreshold($this->redosThreshold)) {
-            $fail(\sprintf('The :attribute field must not be open to catastrophic backtracking (ReDoS risk: %s).', $analysis->severity->value));
+        if ($severity->rank() >= $this->redosThreshold->rank()) {
+            $fail(\sprintf('The :attribute field must not be open to catastrophic backtracking (ReDoS risk: %s).', $severity->value));
         }
     }
 

@@ -22,7 +22,7 @@ namespace PHPRegex\Symfony\Routing;
  *     name: string,
  *     index: int,
  *     path: string,
- *     reachable: bool,
+ *     reachable: bool|null,
  *     example: array{method: string, scheme: string, host: string, path: string}|null,
  *     takenBy: list<array{name: string, index: int, path: string, example: array{method: string, scheme: string, host: string, path: string}}>,
  *     cumulative: bool,
@@ -44,7 +44,7 @@ final class RouteReachabilityReport
      */
     public function unreachable(): array
     {
-        return array_values(array_filter($this->routes, static fn (array $route): bool => !$route['reachable']));
+        return array_values(array_filter($this->routes, static fn (array $route): bool => false === $route['reachable']));
     }
 
     /**

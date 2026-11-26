@@ -57,10 +57,6 @@ use PHPRegex\Parser\PcreTarget;
 final class CaptureShapeAnalyzer
 {
     /**
-     * @var int<1, max>
-     */
-    private int $next = 1;
-    /**
      * Rises in any release that changes an answer: a fact, or either string
      * CaptureShape writes, the matchShape() one or the matchAllShape() one.
      */
@@ -174,6 +170,11 @@ final class CaptureShapeAnalyzer
     private const NEWLINE_VERBS = ['CR', 'LF', 'CRLF', 'ANYCRLF', 'ANY', 'NUL'];
 
     /**
+     * @var int<1, max>
+     */
+    private int $next = 1;
+
+    /**
      * @var array<int<1, max>, list<array{name: ?string, never: bool, after_accept: bool, open_at_accept: bool, min: int, max: int|null, values: list<string>|null, nonFalsy: bool, digitsOnly: bool, decimalInt: bool, lowercase: bool, uppercase: bool, arms: list<Facts>}>>
      */
     private array $occurrences = [];
@@ -262,20 +263,36 @@ final class CaptureShapeAnalyzer
     private CaptureFacts $facts;
 
     private GroupIndex $groups;
+
     /**
+     * The PCRE2 release the pattern runs on, null when it is read for every
+     * release (forEveryRelease()).
      */
-    private ?PcreTarget $target = null;
+    private ?PcreTarget $target;
 
     /**
      * @param PcreTarget|null $target the PCRE2 release the pattern runs on: a
      *                                "(?(VERSION>=10.4)" condition keeps the
-     *                                arm that release takes; null keeps both
+     *                                arm that release takes; the running
+     *                                engine when null, as the parser reads it
      */
     public function __construct(?PcreTarget $target = null)
     {
-        $this->target = $target;
+        $this->target = $target ?? PcreTarget::runtime();
         $this->facts = new CaptureFacts();
         $this->groups = GroupIndex::empty();
+    }
+
+    /**
+     * An analyzer that reads the pattern for every PCRE2 release at once:
+     * a "(?(VERSION>=10.4)" condition keeps both arms.
+     */
+    public static function forEveryRelease(): self
+    {
+        $analyzer = new self();
+        $analyzer->target = null;
+
+        return $analyzer;
     }
 
     public function analyze(RegexNode $ast): CaptureShape
@@ -641,11 +658,11 @@ final class CaptureShapeAnalyzer
      */
     private static function union(array $nodes, NodeInterface $at): ?NodeInterface
     {
-        $matchSubject584 = \count($nodes);
+        $matchSubject598 = \count($nodes);
         switch (true) {
-            case 0 === $matchSubject584:
+            case 0 === $matchSubject598:
                 return null;
-            case 1 === $matchSubject584:
+            case 1 === $matchSubject598:
                 return $nodes[0];
             default:
                 return new AlternationNode($nodes, $at->getStartPosition(), $at->getEndPosition());

@@ -17,6 +17,7 @@ use PHPRegex\Mcp\ToolResult;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
 use PHPRegex\Transpiler\Transpiler;
@@ -30,17 +31,15 @@ use PHPRegex\Transpiler\Transpiler;
  */
 final class TranspileTool extends AbstractTool
 {
-    public const TARGETS = ['js', 'html', 'python'];
-
     public function execute(array $arguments): ToolResult
     {
         $pattern = self::pattern($arguments);
         if ($pattern instanceof ToolResult) {
             return $pattern;
         }
-        $target = $arguments['target'] ?? null;
-        if (!\is_string($target) || !\in_array($target, self::TARGETS, true)) {
-            return ToolResult::failure('The "target" argument is required: js, html or python.', 'usage');
+        $dialect = $arguments['dialect'] ?? null;
+        if (!\is_string($dialect) || !\in_array($dialect, Dialect::names(), true)) {
+            return ToolResult::failure(\sprintf('The "dialect" argument is required: one of %s.', implode(', ', Dialect::names())), 'usage');
         }
         $pythonVersion = $arguments['python_version'] ?? null;
         if (null !== $pythonVersion && !\is_string($pythonVersion)) {
@@ -63,7 +62,7 @@ final class TranspileTool extends AbstractTool
         }
 
         try {
-            $result = (new Transpiler($regex->parser()))->transpile($pattern, $target, $options);
+            $result = (new Transpiler($regex->parser()))->transpile($pattern, $dialect, $options);
         } catch (LexerException|ParserException|TranspileException $e) {
             return ToolResult::failure($e->getMessage(), 'pattern');
         }
@@ -76,8 +75,7 @@ final class TranspileTool extends AbstractTool
             $lines[] = 'Note: '.$note;
         }
 
-        // "target" is the dialect: the PHP versions judged are "php_target".
-        [$text, $range] = self::overRange(implode("\n", $lines), $regex, $phpTarget, $pattern, 'php_target');
+        [$text, $range] = self::overRange(implode("\n", $lines), $regex, $phpTarget, $pattern);
 
         return ToolResult::document($text, [...$result->jsonSerialize(), ...$range]);
     }

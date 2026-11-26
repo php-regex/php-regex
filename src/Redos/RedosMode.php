@@ -24,7 +24,8 @@ enum RedosMode: string
     case Off = 'off';
 
     /**
-     * Structural (static) analysis only.
+     * Analyze without running the pattern: the proof, or the structural
+     * heuristics where it gives up. Nothing is replayed on the engine.
      */
     case Theoretical = 'theoretical';
 

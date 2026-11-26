@@ -410,6 +410,7 @@
             "analysis_version": "1",
             "search_cost": null,
             "upper_bound_degree": 0,
+            "every_match_search_cost": null,
             "replay_error": null,
             "linear": true,
             "attack": null
@@ -419,7 +420,7 @@
     "transpile": {
         "protocol": 3,
         "transpile": {
-            "target": "javascript",
+            "dialect": "javascript",
             "source": "/^(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})$/m",
             "pattern": "(?:^|(?\u003C=\\n)(?!$))(?\u003Cdate\u003E\\d{4})-(\\d{2})-(\\d{2})(?=\\n|$)",
             "flags": "",

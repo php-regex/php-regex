@@ -37,8 +37,9 @@ use PHPRegex\Redos\RedosAnalysis;
  *     line: int,
  *     column: int|null,
  *     file_offset: int|null,
- *     position: int|null,
- *     issue_id: string|null,
+ *     offset: int|null,
+ *     end: int|null,
+ *     issue_id: string,
  *     docs_url: string|null,
  *     message: string,
  *     hint: string|null,
@@ -67,7 +68,7 @@ use PHPRegex\Redos\RedosAnalysis;
 final class JsonFormatter extends AbstractOutputFormatter
 {
     /**
-     * @param array{php: string, pcre: string, locale?: string, source: string, range?: list<TargetDescription>}|null $target the PHP, PCRE2 and locale the patterns were judged for, where that came from, and every PHP and PCRE2 they were validated at
+     * @param array{php: string, pcre: string, locale?: string, source: string, pcre_source?: string|null, locale_source?: string|null, range?: list<TargetDescription>}|null $target the PHP, PCRE2 and locale the patterns were judged for, where each came from, and every PHP and PCRE2 they were validated at
      */
     public function __construct(OutputConfiguration $config = new OutputConfiguration(), private readonly ?array $target = null)
     {
@@ -171,7 +172,10 @@ final class JsonFormatter extends AbstractOutputFormatter
             'line' => $issue->line,
             'column' => $issue->column,
             'file_offset' => $issue->fileOffset,
-            'position' => $issue->position,
+            // Where in the pattern's body the finding lies, its end
+            // exclusive; null where unknown.
+            'offset' => $issue->offset,
+            'end' => $issue->end,
             'issue_id' => $issue->id(),
             // The section of the docs that explains the issue.
             'docs_url' => $issue->docsUrl(),

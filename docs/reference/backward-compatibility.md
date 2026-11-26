@@ -50,14 +50,14 @@ for example `LanguageSolver::equivalent()` for an `EquivalenceResult` or
   `Analysis\GroupNumbering`, `Analysis\LiteralExtractionResult`,
   `Analysis\CaptureShape`, `Analysis\CaptureGroupShape`, `Engine\PcreMatch`,
   `Engine\PcreError`, `Analysis\PatternInfo`, `Validation\PatternCompatibility`,
-  `Validation\TargetVerdict`, `Validation\RangeVerdict`;
+  `Validation\TargetVerdict`, `Validation\RangeVerdict`, `Printer\FormatResult`;
 - `regex-optimizer`: `OptimizationResult`, `RedosRepair`;
 - `regex-automata`: `Solver\EquivalenceResult`, `Solver\IntersectionResult`,
   `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Language`,
   `TrivialMatch`, `Ordered\FirstMatchCell`;
 - `regex-redos`: `RedosAnalysis`, `Finding`, `Hotspot`, `RedosWitness`,
   `RedosSearchCost`, `Confirmation`, `ConfirmationSample`;
-- `regex-transpiler`: `TranspileResult`;
+- `regex-transpiler`: `TranspileResult`, `VModeFinding`;
 - `regex-linter`: `Rule\RuleViolation`;
 - `regex-toolkit`: `AnalysisReport`.
 
@@ -86,10 +86,10 @@ In short, the public surface is:
 | `regex-optimizer` | `Optimizer`, `OptimizerOptions`, `OptimizationResult`, `Modernizer`, `RedosRepairer`, `RedosRepair` |
 | `regex-generator` | `SampleGenerator`, `TestCaseGenerator`, `Exception\SampleGenerationException` |
 | `regex-infection` | `Mutator\RegexQuantifier`, `Mutator\RegexAnchor`, `Mutator\RegexCharClass`, `Mutator\RegexAlternation`, `Mutator\RegexFlag`, `Mutator\RegexEscape` |
-| `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Options\SolverStrategy`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCell` |
-| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
-| `regex-transpiler` | `Transpiler`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `Target\JavaScript\VModeCompatibility` |
-| `regex-linter` | `PatternLinter`, `LintSeverity`, `Exception\LintException`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
+| `regex-automata` | `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`, `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, `Solver\EquivalenceResult`, `Solver\IntersectionResult`, `Solver\SubsetResult`, `Solver\MatchEquivalenceResult`, `Model\Dfa`, `Model\DfaState`, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `Exception\ComplexityException`, `Exception\IncompatibleArgumentException`, `TrivialMatchClassifier`, `TrivialMatch`, `TrivialMatchKind`, `Language`, `Ordered\FirstMatchPartition`, `Ordered\FirstMatchCandidate`, `Ordered\FirstMatchCell` |
+| `regex-redos` | `RedosAnalyzer`, `RedosAnalysis`, `RedosOptions`, `RedosSeverity`, `RedosComplexity`, `RedosProof`, `RedosWitness`, `RedosSearchCost`, `SearchCostCause`, `RedosMode`, `RedosConfidence`, `Finding`, `Hotspot`, `Confirmation`, `ConfirmationSample`, `ConfirmationOptions`, `ConfirmationRunner`, `ConfirmationRunnerInterface`, `IgnoreList` |
+| `regex-transpiler` | `Transpiler`, `Dialect`, `TranspileOptions`, `TranspileResult`, `Exception\TranspileException`, `VModeCompatibility`, `VModeFinding` |
+| `regex-linter` | `PatternLinter`, `LintSeverity`, `Rule\RuleViolation`, `Exception\UnknownLintRuleException`, `Exception\UnsupportedTargetException`, `Extraction\ExtractorInterface`, `PatternOccurrence` |
 | `regex-toolkit` | `Regex`, `AnalysisReport`, `ExplainFormat`, `HighlightFormat` |
 | `regex-phpstan` | `RegexPatternRule`, `RegexPatternArgumentRule` |
 | `regex-phpunit` | `RegexAssertions`, `Constraint\MatchesPattern`, `Constraint\DoesNotMatchPattern`, `Constraint\CompilesPattern`, `Constraint\IsLinearPattern` |
@@ -99,7 +99,7 @@ In short, the public surface is:
 | `regex-laravel` | `PHPRegexServiceProvider`, `Facades\Regex`, `Rules\ValidRegex` |
 | `regex-cli` | no PHP class is public |
 | `regex-language-server` | no PHP class is public |
-| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `ServerInterface`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
+| `regex-mcp` | `Application`, `ToolCatalog`, `ToolDefinition`, `ToolInterface`, `ToolResult`, `Exception\ExceptionInterface`, `Exception\UnknownToolException`, `Exception\TargetException` |
 
 Each path is relative to the package namespace: `Analysis\CaptureShape` in
 `regex-parser` is `PHPRegex\Parser\Analysis\CaptureShape`. `Node\*` is every
@@ -110,6 +110,11 @@ In `regex-parser`, `NodeVisitorInterface`, `AbstractNodeVisitor` and
 and `BsrConvention` are the enums of `Analysis\PatternInfo`. `Analysis\ByteCharSet`,
 `Analysis\CharSetAnalyzer` and `Cache\AstSerializer` are not public, nor is any
 other class of those namespaces left out of the row.
+
+A `PcreFeature` case marked `@internal` says only where or how PCRE2 reports an
+error, for a pattern refused before and after the release that changed it: a
+minor release may merge such a case into another or remove it. Every other
+case names a behaviour a pattern meets, and stays.
 
 In `regex-automata`, `Determinization\DeterminizationAlgorithm` and
 `Minimization\MinimizationAlgorithm` are the two algorithm enums.
@@ -124,33 +129,44 @@ and `byteTransitions()`, are `@internal`: the checks the optimizer and the
 linter ask of a rewrite, the key a DFA is stored under, and the moves the
 minimizers read. They stay on the public classes because the packages that
 ask them may use no internal class of `regex-automata`.
+`Model\Dfa::$alphabet`, typed with the internal `Model\Alphabet`, is
+`@internal` too, and so are `Options\SolverStrategy` and
+`SolverOptions::$strategy`: which product the solver searches is its own
+choice, which a DFA cache already makes the eager one.
 
 In `regex-redos`, the promise covers `RedosAnalyzer::ANALYSIS_VERSION`,
-`RedosAnalysis::isProvenSafe()` and `headline()`, `RedosSeverity::rank()`, and
-`Confirmation::wasSkipped()` and `Confirmation::LIMITS_UNAVAILABLE`.
-`isProvenSafe()` and `headline()` speak of one match attempt: a pattern whose
-unanchored search is quadratic stays `safe (proven)`, and carries that cost in
+`RedosAnalysis::isProvenSafe()`, `hasQuadraticSearch()` and `headline()`,
+`RedosSeverity::rank()`, and `Confirmation::wasSkipped()` and
+`Confirmation::LIMITS_UNAVAILABLE`. `headline()` and the severity speak of one
+match attempt: a pattern whose unanchored search is quadratic stays
+`safe (proven)`, and carries that cost in
 `RedosAnalysis::$searchCost`, a `RedosSearchCost` (`null` when no witness was
 found, never a proof of a linear search). A pattern whose search is quadratic
 only in the functions that look for every match, through PHP's retry after an
 empty match or the attempt that finds each short match
-(`RedosSearchCost::$shortMatch`), carries that cost in
+(`RedosSearchCost::$cause` names which), carries that cost in
 `RedosAnalysis::$everyMatchSearchCost` instead, and `$searchCost` stays
-`null`.
+`null`. `hasQuadraticSearch()` says whether either cost was found;
+`isProvenSafe()` holds for a proven linear attempt without one.
 
 The bridges and tools carry more than their classes:
 
-- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`.
-- `regex-psalm`: the `InvalidRegexPattern`, `RegexRedos` and
-  `RegexRedosSearch` issue names and the plugin's `<phpVersion>`,
-  `<pcreVersion>`, `<redos>` and `<redosThreshold>` options stay for all of
-  2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
+- `regex-phpstan`: the `phpRegex` parameters of `extension.neon`, the
+  `rules.neon` file that turns lint and ReDoS on, and the identifiers of the
+  `@regex-target` markers, `regex.target.invalid` and `regex.target.empty`.
+  PHPStan builds the rules from `extension.neon`: their constructors are
+  `@internal`.
+- `regex-psalm`: the `InvalidRegexPattern`, `InvalidRegexTarget`,
+  `RegexRedos` and `RegexRedosSearch` issue names and the plugin's
+  `<phpVersion>`, `<pcreVersion>`, `<locale>`, `<redos>` and
+  `<redosThreshold>` options stay for all of 2.x. Which patterns `RegexRedos` and `RegexRedosSearch` report follows the
   ReDoS analysis. The
   `$matches` types follow the capture shape: a minor release may type a
   pattern more narrowly than the one before, which may require regenerating
   a Psalm baseline; its CHANGELOG says so.
-- `regex-rector`: the rules keep their names for all of 2.x and take no
-  configuration, and `RegexSetList::STRING_FUNCTIONS`,
+- `regex-rector`: the rules keep their names for all of 2.x; they take no
+  configuration in 2.0, and a minor release may add one (Rector builds them:
+  their constructors are `@internal`). `RegexSetList::STRING_FUNCTIONS`,
   `RegexSetList::PCRE_UPGRADE` and `RegexSetList::UPGRADE_2_0` name the sets
   that register them. Each rewrites only what the automata prove; a minor release
   may prove more calls than the one before, and its CHANGELOG says so.
@@ -160,7 +176,8 @@ The bridges and tools carry more than their classes:
   codes.
 - `regex-laravel`: the `Regex` facade (`Facades\Regex`) — its `@method` lines
   mirror every public method of `Regex`, so a signature that changes in the
-  code changes there in the same release — the `php-regex` configuration, the
+  code changes there in the same release — the `PHPRegex\Toolkit\Regex`
+  binding and its `php-regex` alias, the `php-regex` configuration, the
   commands' names and options, the `regex:routes` and `regex:compare` JSON
   reports ([every key](json-output.md#laravel-routes)), and the `ValidRegex`
   rule's options.
@@ -168,7 +185,10 @@ The bridges and tools carry more than their classes:
   JSON output ([every key](json-output.md)).
 - `regex-language-server`: the protocol it speaks.
 - `regex-mcp`: the tools' names, arguments and the documents they answer
-  ([every key](json-output.md)), and the classes above. The `mcp/sdk`
+  ([every key](json-output.md)), and the classes above.
+  `ToolCatalog::create()` serves the library's tools, and a minor release may
+  add one; `ToolCatalog::with()` and the constructor of `ToolDefinition` are
+  `@internal`, as every tool is announced read-only and idempotent. The `mcp/sdk`
   constraint is not covered: the SDK is experimental, pinned to the minors
   the server is tested with, and a minor release of PHPRegex may add the
   SDK's next minor to the pin or drop the oldest.
@@ -189,8 +209,15 @@ Extending and implementing are covered only where the API is meant for it:
 - **Implement** `Extraction\ExtractorInterface` in `regex-linter` to read the
   patterns of calls the built-in extractors do not know, and build each
   occurrence with `PatternOccurrence::found()`. The constructor of
-  `PatternOccurrence` and its other methods are `@internal`; read an
-  occurrence through `$pattern`, `$file`, `$line`, `$column` and `$source`.
+  `PatternOccurrence`, its other methods and its other properties are
+  `@internal`; read an occurrence through `$pattern`, `$file`, `$line`,
+  `$column` and `$source`. An extractor the Symfony bundle's
+  `extractor_service` names replaces the built-in one: the lint reads
+  patterns with it alone. To read your calls beside the built-in ones,
+  decorate the built-in extractor and call it from yours: the service
+  `php_regex.extractor.instance` in the Symfony bundle, the binding
+  `php-regex.extractor.strategy` in the Laravel integration. Both ids stay
+  for all of 2.x.
 
 Every other public interface (`NodeInterface`, `ConfirmationRunnerInterface`, …)
 is there to type against, not to implement. Lint rules, transpiler targets and
@@ -267,11 +294,17 @@ add one to yet.
   its analysis reads a case it missed, and the CHANGELOG names the rule. A
   patch only removes a false positive.
 - **Which patterns are read**: a minor release may read patterns the lint, the
-  language server, the bridges or the PHPStan extension did not read before: a
+  language server or the other bridges did not read before: a
   new preset, a call kind, a pattern reached through a name. More patterns
   read means more findings on unchanged code; the CHANGELOG says what is read
   that was not. A preset a minor adds is on by default, unless your
   configuration lists its presets: a list means exactly that list.
+- **New PHPStan findings, behind bleeding edge**: a minor release adds what
+  the PHPStan extension reports (a new identifier, a call kind read, a rule
+  that reads wider) behind PHPStan's `%featureToggles.bleedingEdge%`, as
+  PHPStan itself does: a project that includes `bleedingEdge.neon` gets them
+  at once, every other one in 3.0, where they are on by default. What an
+  improved analysis finds under an existing identifier is not held back.
 - **Deprecations**: anything removed in 3.0 is deprecated in a 2.x minor first,
   with the replacement named. A deprecated class, method, option or
   configuration key carries `@deprecated since <package> <version>, use <replacement>`
@@ -292,8 +325,18 @@ add one to yet.
 - The **values of `ErrorCode`** (`regex.group.unclosed`, …) and the
   **identifiers the PHPStan extension reports** (`regex.invalidForTarget`,
   `regex.redos`, `regex.redos.search`, …), with the **lint issue ids**
-  (`regex.lint.redos`, `regex.lint.redos.search`, …): baselines and ignore
-  lists keep working.
+  (`regex.lint.redos`, `regex.lint.redos.search`, …), among them
+  `regex.lint.source.*`, the issues of a file the lint cannot read and of a
+  pattern built at run time, and the ids of the inline markers' own issues,
+  `regex.ignore.unmatched` and `regex.target.*`: baselines and ignore lists
+  keep working.
+- The **inline markers** `@regex-ignore`, `@regex-ignore-next-line`,
+  `@regex-target` and `@regex-target-next-line`, in a PHP comment and in a
+  Twig one (`{# @regex-ignore #}`), with the lines each covers and the
+  [grammar](../guides/cli.md#inline-comments) of the issues a
+  `@regex-ignore` names: a marker that silences an issue, or narrows the
+  versions a pattern is judged for, in 2.0 does the same in every 2.x. A
+  minor release may add a marker.
 - The **text of the PHPStan ReDoS messages**: `Exponential backtracking
   (ReDoS): %s`, `Polynomial backtracking (ReDoS): %s` and `Potential
   backtracking (ReDoS): %s`, and the one of a quadratic unanchored search,
@@ -334,8 +377,8 @@ add one to yet.
   messages show it cut after 50 characters, and that rendering stays: a
   baseline written for 2.0 keeps matching.
 - The **`regex lint` baseline file**: a baseline generated by 2.0 is read by
-  every 2.x, and an issue it records stays matched when its line or its
-  message changes.
+  every 2.x, from any directory, as it names its files from its own, and an
+  issue it records stays matched when its line or its message changes.
 - The **PHP floor**, PHP 8.1, for every package: no 2.x release raises it.
   The Symfony bundle supports Symfony 6.4, 7.4 and 8, the Laravel integration
   Laravel 10.37 to 13; a minor release may drop a framework release its

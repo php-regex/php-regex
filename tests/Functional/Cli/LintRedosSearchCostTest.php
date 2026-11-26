@@ -89,7 +89,8 @@ final class LintRedosSearchCostTest extends TestCase
         $this->assertSame(2, $cost['degree'] ?? null);
         $witness = JsonContract::asArray($cost['witness'] ?? null, $stdout);
         $this->assertSame(['prefix', 'run', 'breaker'], array_keys($witness));
-        $this->assertSame(['degree', 'witness', 'replayed'], array_keys($cost));
+        $this->assertSame(['degree', 'cause', 'witness', 'replayed'], array_keys($cost));
+        $this->assertSame('unanchored_search', $cost['cause']);
         $this->assertNull($cost['replayed']);
         $this->assertArrayNotHasKey('jit_linear', $cost);
     }

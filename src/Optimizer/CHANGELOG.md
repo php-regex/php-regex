@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `Modernizer` takes the `PcreTarget` the pattern runs for, null when its
+   release and locale are unknown, and writes `\s` for `[\t\n\x0B\f\r ]` under
+   a target whose locale is `C` or `POSIX`. `RedosRepairer` takes a parser
+   and a DFA cache, and builds its analyzer and its solver from the parser:
+   the pattern and its rewrites are read for one target. `repair()` returns
+   no repair, and `firstRepair()` null, for a pattern that does not lex or
+   parse.
  * The brackets of a possessive repeat of a group, or of an atomic group,
    that may match nothing stay as written after a repeated character that
    could give back to what follows: PCRE2 makes that character possessive,

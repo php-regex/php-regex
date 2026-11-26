@@ -49,10 +49,10 @@ use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\Node\VersionConditionNode;
+use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\PhpVersionGates;
-use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\InlineFlags;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Ascii;
@@ -313,7 +313,7 @@ final class Validator extends AbstractNodeVisitor
     private LookbehindChecks $lookbehindChecks;
     /**
      */
-    private int $maxLookbehindLength = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH;
+    private int $maxLookbehindLength = ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH;
     /**
      */
     private ?string $pattern = null;
@@ -326,7 +326,7 @@ final class Validator extends AbstractNodeVisitor
      * @param PcreEngine      $engine asks the running engine which property names it knows
      */
     public function __construct(
-        int $maxLookbehindLength = RegexParser::DEFAULT_MAX_LOOKBEHIND_LENGTH,
+        int $maxLookbehindLength = ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH,
         ?string $pattern = null,
         ?PcreTarget $target = null,
         ?PcreEngine $engine = null

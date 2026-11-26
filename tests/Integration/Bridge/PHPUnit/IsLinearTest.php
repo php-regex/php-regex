@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Integration\Bridge\PHPUnit;
 
 use PHPRegex\PHPUnit\Constraint\IsLinearPattern;
 use PHPRegex\PHPUnit\RegexAssertions;
+use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosSearchCost;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\ExpectationFailedException;
@@ -65,6 +67,25 @@ final class IsLinearTest extends TestCase
 
         $this->assertStringStartsWith('proven unsafe:', $failure);
         $this->assertStringContainsString('quadratic unanchored search', $failure);
+    }
+
+    /**
+     * preg_match() stops at the first empty match of /(?:a+\d)?/, at once;
+     * the cost the analyzer holds is the one of the functions that look for
+     * every match, which the assertion leaves out.
+     */
+    #[Test]
+    public function test_is_linear_passes_a_search_quadratic_only_for_every_match(): void
+    {
+        $subject = str_repeat('a', 1000).'!';
+        $this->assertSame(1, preg_match('/(?:a+\d)?/', $subject, $matches, \PREG_OFFSET_CAPTURE));
+        $this->assertSame(['', 0], $matches[0]);
+
+        $analysis = (new RedosAnalyzer())->analyze('/(?:a+\d)?/');
+        $this->assertNull($analysis->searchCost);
+        $this->assertInstanceOf(RedosSearchCost::class, $analysis->everyMatchSearchCost);
+
+        self::assertPatternIsLinear('/(?:a+\d)?/');
     }
 
     #[DataProvider('provideUnprovenPatterns')]

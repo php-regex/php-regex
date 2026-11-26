@@ -23,7 +23,6 @@ use PHPRegex\Linter\Config\TargetSpec;
 use PHPRegex\Linter\Exception\UnsupportedTargetException;
 use PHPRegex\Linter\Extraction\TargetMarker;
 use PHPRegex\Linter\Extraction\TargetMarkers;
-use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Parser\ParserOptions;
 use PHPRegex\Parser\PcreTarget;
@@ -148,9 +147,6 @@ final class TargetScope
         // A {min, max} setting is always a range: namedRange() read it.
         $phpVersionId = null === $named ? self::targetPhp(\is_array($setting) ? null : $setting, $phpVersion, $phpVersionRange, $locale) : null;
         $this->regex = RegexParser::fromOptions(new ParserOptions(
-            ParserOptions::DEFAULT_MAX_PATTERN_LENGTH,
-            ParserOptions::DEFAULT_MAX_LOOKBEHIND_LENGTH,
-            new ArrayCache(),
             target: null === $named ? ParserOptions::resolveTarget($phpVersionId, $this->pinnedPcre, $locale, true) : $named[0]->target(),
         ));
         $target = $this->regex->target();
@@ -370,7 +366,9 @@ final class TargetScope
         try {
             $intervals = \is_array($setting) ? [TargetSpec::minMax($setting['min'], $setting['max'])] : TargetSpec::intervals($setting);
         } catch (InvalidRegexOptionException $e) {
-            throw new InvalidRegexOptionException(str_replace('"php_version"', 'phpRegex.phpVersion', $e->getMessage()), previous: $e);
+            // The reader names the option by its key, "php_version": here
+            // the setting is phpRegex.phpVersion.
+            throw new InvalidRegexOptionException(str_replace('"php_version"', 'phpRegex.phpVersion', $e->getMessage()), 'phpRegex.phpVersion', $e);
         }
 
         if (null === $intervals) {

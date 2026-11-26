@@ -18,7 +18,6 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Automata\Solver\InMemoryDfaCache;
 use PHPRegex\Linter\Rule\LintContext;
-use PHPRegex\Parser\Cache\ArrayCache;
 use PHPRegex\Parser\Cache\StaticCaches;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\Node\CharClassNode;
@@ -339,8 +338,7 @@ final class LanguageQuestions
             StaticCaches::register(self::class, static function (): void {
                 self::$parsers = [];
             });
-            $defaults = ParserOptions::fromArray([]);
-            self::$parsers[$key] = RegexParser::fromOptions(new ParserOptions($defaults->maxPatternLength, $defaults->maxLookbehindLength, new ArrayCache(), target: $target));
+            self::$parsers[$key] = RegexParser::fromOptions(new ParserOptions(target: $target));
         }
 
         return self::$parsers[$key];

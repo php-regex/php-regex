@@ -99,7 +99,7 @@ final class PatternLinterTest extends TestCase
     public function test_i_flag_not_useless_on_unicode_property(): void
     {
         $regex = Regex::create(['pcre_version' => '10.45']);
-        $linter = new PatternLinter([], $regex->target());
+        $linter = new PatternLinter($regex->target());
         $regex->parse('/\\p{Lu}/iu')->accept($linter);
         $warnings = array_map(static fn (RuleViolation $issue): string => $issue->message, $linter->getIssues());
 

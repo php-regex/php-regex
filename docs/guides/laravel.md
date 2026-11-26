@@ -70,24 +70,33 @@ return [
         'threshold' => 'high', // low, medium, high or critical, in any case
         'ignored_patterns' => [],
     ],
-    'analysis' => [
-        'complexity' => false, // regex:lint reports complex patterns
-        'warning_threshold' => 50,
+    // The complexity report, as "checks.complexity" of regex.json.
+    'complexity' => [
+        'enabled' => false, // regex:lint reports complex patterns
+        'threshold' => 50,  // the complexity score reported from, 1 or more
     ],
     'automata' => [
         'minimization_algorithm' => 'hopcroft',          // hopcroft or moore
         'determinization_algorithm' => 'subset-indexed', // subset or subset-indexed
     ],
+    // The suggestions, as "checks.optimizations" of regex.json.
     'optimizations' => [
-        'digits' => true,
-        'word' => true,
-        'ranges' => true,
-        'canonicalize_char_classes' => true,
-        'possessive' => false,
-        'factorize' => false,
-        'min_quantifier_count' => 4,
-        'verify_with_automata' => true, // suggest only the rewrites the automata prove
+        'enabled' => true,
+        'min_savings' => 1, // characters a rewrite saves; --min-savings overrides it
+        'options' => [
+            'digits' => true,
+            'word' => true,
+            'ranges' => true,
+            'canonicalize_char_classes' => true,
+            'possessive' => false,
+            'factorize' => false,
+            'min_quantifier_count' => 4,
+            'verify_with_automata' => true, // suggest only the rewrites the automata prove
+        ],
     ],
+    // A class or binding implementing ExtractorInterface that reads the
+    // patterns of the PHP files instead; "extraction" is then unused.
+    'extractor' => null,
     // The calls regex:lint reads patterns from, as "extraction" of regex.json.
     'extraction' => [
         'interop' => null,   // null: every preset; a list: exactly those; []: no preset
@@ -140,6 +149,28 @@ Warning: Extraction interop entry ignored: expected a string, got bool.
 
 A `functions` spec the lint cannot read, `x#a` or `x#1$` say, is ignored
 with `Malformed pattern function "x#a", ignored.`
+
+`extractor` names an extractor of your own, the counterpart of the Symfony
+bundle's `extractor_service`: a class, or a binding of the container,
+implementing `PHPRegex\Linter\Extraction\ExtractorInterface`, which builds
+each occurrence with `PatternOccurrence::found()`. `regex:lint` reads the
+patterns of the PHP files with it, and `extraction` is unused. A name that is
+neither, or that resolves to no extractor, stops `regex:lint` with exit code 2.
+Binding `ExtractorInterface` in your own provider changes nothing: name the
+class here.
+
+To read the patterns of your own calls beside the ones the package reads,
+extend the built-in extractor, bound as `php-regex.extractor.strategy`, in
+the `register()` method of a service provider. Yours implements
+`PHPRegex\Linter\Extraction\ExtractorInterface`, is handed the built-in one,
+and returns its occurrences with your own, each built with
+`PatternOccurrence::found()`:
+
+```php
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+
+$this->app->extend('php-regex.extractor.strategy', static fn (ExtractorInterface $builtIn): ExtractorInterface => new \App\Regex\RuleExtractor($builtIn));
+```
 
 An unknown `redos.threshold` stops `regex:lint` with an error naming the
 value, and leaves every other artisan command working. `safe` and `unknown`
@@ -201,7 +232,10 @@ The facade mirrors the whole service — `create`, `fromOptions`, `parse`, `pars
 `getCache`, `getCacheStats` and `clearCaches`; [the API reference](../reference/api.md) documents each.
 One of those bypasses the configured singleton: `Regex::create()` returns a fresh instance.
 Type-hinting
-`PHPRegex\Toolkit\Regex` injects the same service — no facade needed.
+`PHPRegex\Toolkit\Regex` injects the same service — no facade needed, and
+`app('php-regex')` resolves it too. These two are the bindings the package
+supports; the services `regex:lint` is built from are internal and bound under
+no class name.
 
 ## Validating a pattern a user submits
 
@@ -227,6 +261,8 @@ $request->validate([
   `redosThreshold`: `low`, `medium`, `high` (the default) or `critical`, as a
   string or a `RedosSeverity`. `/x*x*x*$/` (polynomial, `high`) is refused,
   `/a*a*$/` (`medium`) passes. An invalid pattern is never analysed for ReDoS.
+  A pattern whose [search is quadratic](redos.md#the-cost-of-an-unanchored-search), as
+  `/\s*$/`, ranks `medium`: one attempt is linear, the search is not.
 - Like every rule, it leaves an empty value to `required`.
 
 ## The service and the lint judge for different targets
@@ -279,7 +315,7 @@ header; the JSON report carries it as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "config php-regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
+    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "config php-regex.php_version", "pcre_source": null, "locale_source": null, "range": [{"php": "8.2", "pcre": "10.40"}]},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0, "arguments_constant": 0, "arguments_finite_set": 0, "arguments_quoted_shell": 0, "arguments_raw_shell": 0, "arguments_opaque": 0},
     "results": []
 }

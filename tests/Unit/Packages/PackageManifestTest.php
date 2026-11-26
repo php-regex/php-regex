@@ -151,7 +151,6 @@ final class PackageManifestTest extends TestCase
             'Parser\Exception\Snippet',
             'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\NearMiss', 'Parser\Text\Path',
             'Parser\Syntax\Delimiters', 'Parser\Syntax\PatternParser', 'Redos\Heatmap', 'Redos\InputGenerator',
-            'Transpiler\Target\TargetRegistry',
         ],
         'Explain' => ['Parser\Text\Ascii', 'Parser\Text\Bytes', 'Parser\Printer\DisplayEscaper', 'Parser\Engine\LibraryPcre'],
         // The generator draws a property as the running engine spells what
@@ -193,7 +192,6 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre', 'Parser\Text\Path',
-            'Transpiler\Target\TargetRegistry',
             // A php_version of another type is refused in lint's words,
             // naming the Composer constraint it takes.
             'Linter\Config\TargetSpec',
@@ -230,7 +228,7 @@ final class PackageManifestTest extends TestCase
         // version as the CLI's single-pattern commands do; what the later
         // versions find is said in the text answer in lint's words.
         'Mcp' => [
-            'Linter\Config\ProjectTarget', 'Linter\Config\TargetSpec', 'Linter\RangeFindings', 'Linter\RangePoints',
+            'Linter\Config\ProjectTarget', 'Linter\RangeFindings', 'Linter\RangePoints',
             'Parser\Json\JsonDocument',
         ],
         // The modernizer reads (*UCP) among the opening verbs the parser
@@ -301,7 +299,7 @@ final class PackageManifestTest extends TestCase
             'Linter\Source\PatternSourceCollection', 'Linter\Source\PatternSourceContext',
             'Linter\Source\PatternSourceInterface', 'Linter\Source\PhpFilePatternSource', 'Linter\Source\TwigTemplatePatternSource',
             'Parser\Printer\DisplayEscaper', 'Parser\Json\JsonDocument', 'Parser\Engine\LibraryPcre',
-            'Parser\Text\Path', 'Transpiler\Target\TargetRegistry',
+            'Parser\Text\Path',
             // php_version takes a Composer constraint: the bundle reads it
             // as regex.json's phpVersion is read, refused in lint's words.
             'Linter\Config\TargetSpec',

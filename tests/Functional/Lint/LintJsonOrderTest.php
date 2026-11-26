@@ -161,7 +161,7 @@ final class LintJsonOrderTest extends TestCase
         $checked = 0;
         foreach ($results as $result) {
             $issues = array_map(
-                static fn (array $issue): array => [$issue['position'] ?? null, $issue['issue_id'] ?? null],
+                static fn (array $issue): array => [$issue['offset'] ?? null, $issue['issue_id'] ?? null],
                 self::rows($result['issues'] ?? null),
             );
             $sorted = $issues;
@@ -190,7 +190,7 @@ final class LintJsonOrderTest extends TestCase
         $this->assertCount(1, $results, $stdout);
         $this->assertSame(
             [[null, 'regex.lint.redos'], [0, 'regex.lint.group.quantifiedCapture'], [0, 'regex.lint.quantifier.nested']],
-            array_map(static fn (array $issue): array => [$issue['position'] ?? null, $issue['issue_id'] ?? null], self::rows($results[0]['issues'] ?? null)),
+            array_map(static fn (array $issue): array => [$issue['offset'] ?? null, $issue['issue_id'] ?? null], self::rows($results[0]['issues'] ?? null)),
         );
     }
 
@@ -336,7 +336,7 @@ final class LintJsonOrderTest extends TestCase
         foreach ($results as $result) {
             $order[] = [
                 self::resultKey($result),
-                array_map(static fn (array $issue): array => [$issue['position'] ?? null, $issue['issue_id'] ?? null], self::rows($result['issues'] ?? null)),
+                array_map(static fn (array $issue): array => [$issue['offset'] ?? null, $issue['issue_id'] ?? null], self::rows($result['issues'] ?? null)),
             ];
         }
 

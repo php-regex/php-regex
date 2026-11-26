@@ -21,7 +21,7 @@ use PHPUnit\Framework\Attributes\Test;
 
 /**
  * A pattern passed to a wrapper library's static method is judged as
- * `regex lint` judges it: the presets of the "interop" parameter name the
+ * `regex lint` judges it: the presets of "extraction.interop" name the
  * libraries, every preset unless configured, and the pattern is read at
  * the argument the library takes it.
  *
@@ -47,7 +47,7 @@ final class RegexPatternRuleWrapperCallTest extends RuleTestCase
     #[Test]
     public function test_the_interop_parameter_names_the_libraries_read(): void
     {
-        $this->config = ['interop' => ['nette-utils', 'spatie-regex', 'illuminate-support']];
+        $this->config = ['extraction' => ['interop' => ['nette-utils', 'spatie-regex', 'illuminate-support']]];
 
         $this->assertSame([26, 30, 31, 32, 33, 34, 36], $this->redosLines());
     }
@@ -55,7 +55,7 @@ final class RegexPatternRuleWrapperCallTest extends RuleTestCase
     #[Test]
     public function test_an_empty_interop_reads_the_native_functions_only(): void
     {
-        $this->config = ['interop' => []];
+        $this->config = ['extraction' => ['interop' => []]];
 
         $this->assertSame([26, 36], $this->redosLines());
     }

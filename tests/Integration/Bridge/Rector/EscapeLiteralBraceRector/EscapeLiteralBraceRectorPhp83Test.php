@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Integration\Bridge\Rector\EscapeLiteralBraceRector;
 
+use PHPRegex\Tests\Support\PcreRule;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Rector\Testing\PHPUnit\AbstractRectorTestCase;
@@ -24,10 +25,14 @@ use Rector\Testing\PHPUnit\AbstractRectorTestCase;
  */
 final class EscapeLiteralBraceRectorPhp83Test extends AbstractRectorTestCase
 {
+    use PcreRule;
+
     #[Test]
     #[DataProvider('provideFixtures')]
     public function test_fixture_is_rewritten_or_left_alone(string $filePath): void
     {
+        $this->requiresBundledPcre2Within(80300, 80700, __FUNCTION__);
+
         $this->doTestFile($filePath);
     }
 

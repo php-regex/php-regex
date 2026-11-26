@@ -16,6 +16,8 @@ namespace PHPRegex\Mcp;
 /**
  * A server speaking the protocol over two streams: the one seam between
  * the catalog and whatever implements the protocol.
+ *
+ * @internal Application starts the server; nothing takes or returns one
  */
 interface ServerInterface
 {

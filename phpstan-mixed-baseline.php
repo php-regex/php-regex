@@ -69,8 +69,10 @@ return [
         'PHPRegex\Laravel\Command\LintCommand::normalizeOptimizations()' => ['validator-input', 1],
     ],
     'src/Laravel/PHPRegexServiceProvider.php' => [
+        'PHPRegex\Laravel\PHPRegexServiceProvider::atLeastOne()' => ['validator-input', 1],
+        'PHPRegex\Laravel\PHPRegexServiceProvider::customExtractor()' => ['validator-input', 1],
         'PHPRegex\Laravel\PHPRegexServiceProvider::mergeConfigWithNestedDefaults()' => ['open-options-bag', 1],
-        'PHPRegex\Laravel\PHPRegexServiceProvider::registerAnalysisServices()' => ['host-return', 1],
+        'PHPRegex\Laravel\PHPRegexServiceProvider::registerAnalysisServices()' => ['host-return', 2],
         'PHPRegex\Laravel\PHPRegexServiceProvider::withDefaults()' => ['open-options-bag', 3],
     ],
     'src/Laravel/Rules/ValidRegex.php' => [
@@ -150,7 +152,6 @@ return [
     'src/Parser/ParserOptions.php' => [
         'PHPRegex\Parser\ParserOptions::createCache()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::fromArray()' => ['validator-input', 1],
-        'PHPRegex\Parser\ParserOptions::getIgnoredPatterns()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getLookbehindLength()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getPatternLength()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getPhpVersionId()' => ['validator-input', 1],
@@ -158,7 +159,6 @@ return [
         'PHPRegex\Parser\ParserOptions::getRuntimePcreValidation()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::getTarget()' => ['validator-input', 1],
         'PHPRegex\Parser\ParserOptions::validateOptionKeys()' => ['validator-input', 1],
-        'PHPRegex\Parser\ParserOptions::validatePatternStrings()' => ['validator-input', 1],
     ],
     'src/Parser/Printer/StructuralFingerprint.php' => [
         'PHPRegex\Parser\Printer\StructuralFingerprint::canonical()' => ['reflection-sink', 3],

@@ -18,6 +18,9 @@ namespace PHPRegex\Parser\Printer;
  */
 final class FormatResult
 {
+    /**
+     * @internal built by PatternFormatter
+     */
     public function __construct(
         /**
          * The pattern, delimiters and flags included: laid out, compacted,

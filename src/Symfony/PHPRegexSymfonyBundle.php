@@ -80,7 +80,7 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
                 ->end()
                 ->scalarNode('pcre_version')
                     ->defaultNull()
-                    ->info('The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the release php_version bundles.')
+                    ->info('The PCRE2 release regex:lint judges patterns for ("10.42"). Unset: the one composer.json pins in config.platform.lib-pcre, else the running PCRE2 when the PHP judged is the running PHP\'s minor version, else the one that PHP bundles.')
                     ->validate()
                         ->always($target('pcre_version'))
                     ->end()
@@ -169,17 +169,18 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
                         ->end()
                     ->end()
                 ->end()
-                ->arrayNode('analysis')
+                ->arrayNode('complexity')
                     ->addDefaultsIfNotSet()
+                    ->info('The complexity report of regex:lint, as regex.json\'s "checks.complexity".')
                     ->children()
-                        ->booleanNode('complexity')
+                        ->booleanNode('enabled')
                             ->defaultFalse()
-                            ->info('Whether regex:lint reports the patterns whose complexity score reaches warning_threshold.')
+                            ->info('Whether regex:lint reports the patterns whose complexity score reaches the threshold. Setting the threshold does not switch it on.')
                         ->end()
-                        ->integerNode('warning_threshold')
+                        ->integerNode('threshold')
                             ->defaultValue(50)
-                            ->min(0)
-                            ->info('Complexity score from which regex:lint reports a pattern, once "complexity" is on.')
+                            ->min(1)
+                            ->info('Complexity score from which regex:lint reports a pattern: the complexityScore of Regex::validate().')
                         ->end()
                     ->end()
                 ->end()
@@ -214,40 +215,55 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
                 ->end()
                 ->arrayNode('optimizations')
                     ->addDefaultsIfNotSet()
-                    ->info('Default optimization options for regex:lint.')
+                    ->info('The optimization suggestions of regex:lint, as regex.json\'s "checks.optimizations".')
                     ->children()
-                        ->booleanNode('digits')
+                        ->booleanNode('enabled')
                             ->defaultTrue()
-                            ->info('Optimize digit character classes (e.g., [0-9] -> \\d).')
+                            ->info('Whether regex:lint suggests optimizations. Setting min_savings or options does not switch them on.')
                         ->end()
-                        ->booleanNode('word')
-                            ->defaultTrue()
-                            ->info('Write [A-Za-z0-9_] as \\w where they match alike: never today, as \\w follows the locale without u and Unicode with it.')
+                        ->integerNode('min_savings')
+                            ->defaultValue(1)
+                            ->min(1)
+                            ->info('Characters a rewrite must save to be suggested, unless --min-savings says otherwise.')
                         ->end()
-                        ->booleanNode('ranges')
-                            ->defaultTrue()
-                            ->info('Allow range merging inside character classes.')
-                        ->end()
-                        ->booleanNode('canonicalize_char_classes')
-                            ->defaultTrue()
-                            ->info('Normalize character class order and deduplicate elements.')
-                        ->end()
-                        ->booleanNode('possessive')
-                            ->defaultFalse()
-                            ->info('Enable auto-possessive quantifier optimizations.')
-                        ->end()
-                        ->booleanNode('factorize')
-                            ->defaultFalse()
-                            ->info('Enable alternation factorization optimizations.')
-                        ->end()
-                        ->integerNode('min_quantifier_count')
-                            ->defaultValue(4)
-                            ->min(2)
-                            ->info('Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).')
-                        ->end()
-                        ->booleanNode('verify_with_automata')
-                            ->defaultTrue()
-                            ->info('Suggest only the rewrites the automata prove to match the same subjects.')
+                        ->arrayNode('options')
+                            ->addDefaultsIfNotSet()
+                            ->info('What the optimizer may rewrite.')
+                            ->children()
+                                ->booleanNode('digits')
+                                    ->defaultTrue()
+                                    ->info('Optimize digit character classes (e.g., [0-9] -> \\d).')
+                                ->end()
+                                ->booleanNode('word')
+                                    ->defaultTrue()
+                                    ->info('Write [A-Za-z0-9_] as \\w where they match alike: never today, as \\w follows the locale without u and Unicode with it.')
+                                ->end()
+                                ->booleanNode('ranges')
+                                    ->defaultTrue()
+                                    ->info('Allow range merging inside character classes.')
+                                ->end()
+                                ->booleanNode('canonicalize_char_classes')
+                                    ->defaultTrue()
+                                    ->info('Normalize character class order and deduplicate elements.')
+                                ->end()
+                                ->booleanNode('possessive')
+                                    ->defaultFalse()
+                                    ->info('Enable auto-possessive quantifier optimizations.')
+                                ->end()
+                                ->booleanNode('factorize')
+                                    ->defaultFalse()
+                                    ->info('Enable alternation factorization optimizations.')
+                                ->end()
+                                ->integerNode('min_quantifier_count')
+                                    ->defaultValue(4)
+                                    ->min(2)
+                                    ->info('Minimum repeated quantifier count before collapsing (e.g., aaaa -> a{4}).')
+                                ->end()
+                                ->booleanNode('verify_with_automata')
+                                    ->defaultTrue()
+                                    ->info('Suggest only the rewrites the automata prove to match the same subjects.')
+                                ->end()
+                            ->end()
                         ->end()
                     ->end()
                 ->end()
@@ -295,23 +311,27 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
      *         threshold: string,
      *         ignored_patterns: array<int, string>,
      *     },
-     *     analysis: array{
-     *         complexity: bool,
-     *         warning_threshold: int,
+     *     complexity: array{
+     *         enabled: bool,
+     *         threshold: int,
      *     },
      *     automata: array{
      *         minimization_algorithm: string,
      *         determinization_algorithm: string,
      *     },
      *     optimizations: array{
-     *         digits: bool,
-     *         word: bool,
-     *         ranges: bool,
-     *         canonicalize_char_classes: bool,
-     *         possessive: bool,
-     *         factorize: bool,
-     *         min_quantifier_count: int,
-     *         verify_with_automata: bool,
+     *         enabled: bool,
+     *         min_savings: int,
+     *         options: array{
+     *             digits: bool,
+     *             word: bool,
+     *             ranges: bool,
+     *             canonicalize_char_classes: bool,
+     *             possessive: bool,
+     *             factorize: bool,
+     *             min_quantifier_count: int,
+     *             verify_with_automata: bool,
+     *         },
      *     },
      *     paths: array<int, string>,
      *     exclude: array<int, string>,
@@ -330,23 +350,26 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
         $minimization = $config['automata']['minimization_algorithm'];
         $determinization = $config['automata']['determinization_algorithm'];
         $redosThreshold = $config['redos']['threshold'];
-        // What patterns are read with, as Regex::create() takes it; the lint
-        // judges for the project's target with these settings, but never with
-        // the runtime validation, which only the running PHP can do.
+        // What patterns are read with, as RegexParser::create() takes it; the
+        // lint judges for the project's target with these settings, but never
+        // with the runtime validation, which only the running PHP can do. The
+        // patterns the ReDoS analysis skips go to each analyzer built.
         $readOptions = [
             'max_pattern_length' => $config['max_pattern_length'],
             'max_lookbehind_length' => $config['max_lookbehind_length'],
             'cache' => new Reference('php_regex.cache'),
-            'redos_ignored_patterns' => $ignoredPatterns,
         ];
 
         $builder->setDefinition('php_regex.cache', $this->buildCacheDefinition($config));
 
         $builder->getDefinition('php_regex.regex')
-            ->setArgument('$options', $readOptions + ['runtime_pcre_validation' => $config['runtime_pcre_validation']]);
+            ->setArgument('$options', $readOptions + [
+                'runtime_pcre_validation' => $config['runtime_pcre_validation'],
+                'redos_ignored_patterns' => $ignoredPatterns,
+            ]);
 
         $builder->getDefinition('php_regex.service.regex_analysis')
-            ->setArgument('$warningThreshold', $config['analysis']['warning_threshold'])
+            ->setArgument('$warningThreshold', $config['complexity']['threshold'])
             ->setArgument('$redosThreshold', $redosThreshold)
             ->setArgument('$redosIgnoredPatterns', $ignoredPatterns)
             ->setArgument('$redosEnabled', $config['redos']['enabled']);
@@ -365,16 +388,9 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
         $builder->getDefinition('php_regex.command.lint')
             ->setArgument('$defaultPaths', $config['paths'])
             ->setArgument('$defaultExcludePaths', $config['exclude'])
-            ->setArgument('$defaultOptimizations', [
-                'digits' => $config['optimizations']['digits'],
-                'word' => $config['optimizations']['word'],
-                'ranges' => $config['optimizations']['ranges'],
-                'canonicalize_char_classes' => $config['optimizations']['canonicalize_char_classes'],
-                'possessive' => $config['optimizations']['possessive'],
-                'factorize' => $config['optimizations']['factorize'],
-                'min_quantifier_count' => $config['optimizations']['min_quantifier_count'],
-                'verify_with_automata' => $config['optimizations']['verify_with_automata'],
-            ])
+            ->setArgument('$defaultOptimizations', $config['optimizations']['options'])
+            ->setArgument('$checkOptimizations', $config['optimizations']['enabled'])
+            ->setArgument('$minSavings', $config['optimizations']['min_savings'])
             // Without an ide of its own, EditorLinkPass links to the editor
             // FrameworkBundle links to.
             ->setArgument('$editorUrl', $this->isNotNullOrEmpty($config['ide']) ? $config['ide'] : null)
@@ -385,7 +401,7 @@ final class PHPRegexSymfonyBundle extends AbstractBundle
             // Where regex:lint reads composer.json; never the working directory.
             ->setArgument('$projectDir', $builder->hasParameter('kernel.project_dir') ? '%kernel.project_dir%' : null)
             ->setArgument('$checkRedos', $config['redos']['enabled'])
-            ->setArgument('$checkComplexity', $config['analysis']['complexity'])
+            ->setArgument('$checkComplexity', $config['complexity']['enabled'])
             ->setArgument('$warnings', $warnings)
             ->setArgument('$reportUnmatchedIgnores', $config['report_unmatched_ignores']);
 

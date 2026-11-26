@@ -140,7 +140,7 @@ final class BundleConfigurationTest extends TestCase
 
         $report = $this->lint($container);
 
-        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)], ['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
+        $this->assertSame(['php' => '8.2', 'pcre' => self::judgedPcre(80200), 'locale' => 'C', 'source' => 'composer.json require.php', 'pcre_source' => null, 'locale_source' => null, 'range' => [['php' => '8.2', 'pcre' => self::judgedPcre(80200)], ['php' => '8.3', 'pcre' => self::judgedPcre(80300)], ['php' => '8.4', 'pcre' => self::judgedPcre(80400)], ['php' => '8.4.25', 'pcre' => self::judgedPcre(80425)], ['php' => '8.5', 'pcre' => self::judgedPcre(80500)], ['php' => '8.5.10', 'pcre' => self::judgedPcre(80510)]]], $report['target']);
         $this->assertSame(1, $report['errors']);
     }
 
@@ -172,7 +172,8 @@ final class BundleConfigurationTest extends TestCase
         $report = $this->lint($container);
 
         $this->assertSame('fr_FR.ISO8859-1', $report['target']['locale'] ?? null);
-        $this->assertSame('running PHP; php_regex.locale', $report['target']['source'] ?? null);
+        $this->assertSame('running PHP', $report['target']['source'] ?? null);
+        $this->assertSame('php_regex.locale', $report['target']['locale_source'] ?? null);
         $this->assertSame(PcreTarget::runtime()->locale, $this->regexService($container)->target()->locale);
     }
 
@@ -212,6 +213,43 @@ final class BundleConfigurationTest extends TestCase
         $this->expectException(InvalidConfigurationException::class);
 
         $this->compile(['redos' => ['threshold' => $threshold]]);
+    }
+
+    /**
+     * The complexity and optimization settings are nested as regex.json
+     * nests them: the flat 1.x keys and the analysis node are refused, and
+     * so is a threshold or a saving below 1.
+     *
+     * @return iterable<string, array{config: array<string, mixed>, message: string}>
+     */
+    public static function provideRefusedSettings(): iterable
+    {
+        yield 'the analysis node' => ['config' => ['analysis' => ['complexity' => true]], 'message' => 'Unrecognized option "analysis" under "php_regex"'];
+        yield 'the 1.x complexity threshold' => ['config' => ['analysis' => ['warning_threshold' => 50]], 'message' => 'Unrecognized option "analysis" under "php_regex"'];
+        yield 'a complexity threshold of zero' => ['config' => ['complexity' => ['threshold' => 0]], 'message' => 'php_regex.complexity.threshold'];
+        yield 'a flat optimizer option' => ['config' => ['optimizations' => ['digits' => false]], 'message' => 'Unrecognized option "digits" under "php_regex.optimizations"'];
+        yield 'a saving of zero' => ['config' => ['optimizations' => ['min_savings' => 0]], 'message' => 'php_regex.optimizations.min_savings'];
+    }
+
+    /**
+     * @param array<string, mixed> $config
+     */
+    #[Test]
+    #[DataProvider('provideRefusedSettings')]
+    public function test_the_container_refuses_a_setting_out_of_place(array $config, string $message): void
+    {
+        $this->expectException(InvalidConfigurationException::class);
+        $this->expectExceptionMessageIsOrContains($message);
+
+        $this->compile($config);
+    }
+
+    #[Test]
+    public function test_the_container_takes_a_threshold_and_a_saving_of_one(): void
+    {
+        $container = $this->compile(['complexity' => ['threshold' => 1], 'optimizations' => ['min_savings' => 1]]);
+
+        $this->assertInstanceOf(LintCommand::class, $container->get('php_regex.command.lint'));
     }
 
     #[Test]

@@ -49,11 +49,11 @@ final class PatternLinterReuseTest extends TestCase
     public function test_one_linter_gives_each_pattern_the_findings_of_a_linter_of_its_own(): void
     {
         $rules = array_fill_keys(RuleCatalog::lintRuleIds(), true);
-        $alone = array_map(static fn (string $pattern): array => self::findings(new PatternLinter($rules), $pattern), self::PATTERNS);
+        $alone = array_map(static fn (string $pattern): array => self::findings(new PatternLinter(rules: $rules), $pattern), self::PATTERNS);
         $this->assertNotSame([], array_merge(...$alone));
 
         foreach ([self::PATTERNS, array_reverse(self::PATTERNS, true)] as $order) {
-            $linter = new PatternLinter($rules);
+            $linter = new PatternLinter(rules: $rules);
             foreach ($order as $index => $pattern) {
                 $this->assertSame($alone[$index], self::findings($linter, $pattern), $pattern);
             }
@@ -65,8 +65,6 @@ final class PatternLinterReuseTest extends TestCase
      */
     private static function findings(PatternLinter $linter, string $pattern): array
     {
-        Regex::create(['cache' => null])->parse($pattern)->accept($linter);
-
-        return array_map(static fn (RuleViolation $issue): string => $issue->id.'@'.($issue->offset ?? '-'), $linter->getIssues());
+        return array_map(static fn (RuleViolation $issue): string => $issue->id.'@'.($issue->offset ?? '-'), $linter->analyze(Regex::create(['cache' => null])->parse($pattern)));
     }
 }

@@ -26,7 +26,7 @@ final class ExplainToolTest extends TestCase
     #[Test]
     public function test_the_explanation_is_the_cli_document(): void
     {
-        $result = ToolCatalog::v1()->get('regex_explain')->tool->execute(['pattern' => '/\d{4}-\d{2}/']);
+        $result = ToolCatalog::create()->get('regex_explain')->tool->execute(['pattern' => '/\d{4}-\d{2}/']);
 
         [, $stdout] = $this->runRegex(['explain', '/\d{4}-\d{2}/', '--json']);
 
@@ -40,7 +40,7 @@ final class ExplainToolTest extends TestCase
     #[Test]
     public function test_an_invalid_pattern_is_the_envelope_with_its_validation(): void
     {
-        $result = ToolCatalog::v1()->get('regex_explain')->tool->execute(['pattern' => '/(a/']);
+        $result = ToolCatalog::create()->get('regex_explain')->tool->execute(['pattern' => '/(a/']);
 
         [, $stdout] = $this->runRegex(['explain', '/(a/', '--json']);
 
@@ -53,7 +53,7 @@ final class ExplainToolTest extends TestCase
     #[Test]
     public function test_a_missing_pattern_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_explain')->tool->execute([]);
+        $result = ToolCatalog::create()->get('regex_explain')->tool->execute([]);
 
         $this->assertTrue($result->isError);
         $this->assertSame('usage', $result->structured['stage']);
@@ -62,7 +62,7 @@ final class ExplainToolTest extends TestCase
     #[Test]
     public function test_an_unknown_target_is_a_usage_failure(): void
     {
-        $result = ToolCatalog::v1()->get('regex_explain')->tool->execute(['pattern' => '/a/', 'pcre_version' => 'ten']);
+        $result = ToolCatalog::create()->get('regex_explain')->tool->execute(['pattern' => '/a/', 'pcre_version' => 'ten']);
 
         $this->assertTrue($result->isError);
         $this->assertSame(['error' => 'Invalid option: "pcre_version" must be a PCRE2 release like "10.44", not "ten".', 'stage' => 'usage'], $result->structured);
@@ -73,7 +73,7 @@ final class ExplainToolTest extends TestCase
     {
         // Parses, but PCRE refuses it: an explanation of what it would match
         // would explain a pattern PHP never runs.
-        $result = ToolCatalog::v1()->get('regex_explain')->tool->execute(['pattern' => '/(?<=a+)b/']);
+        $result = ToolCatalog::create()->get('regex_explain')->tool->execute(['pattern' => '/(?<=a+)b/']);
 
         $this->assertTrue($result->isError);
         $this->assertSame('pattern', $result->structured['stage']);

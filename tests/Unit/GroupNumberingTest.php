@@ -14,6 +14,8 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Parser\Analysis\GroupNumbering;
+use PHPRegex\Parser\Analysis\GroupNumberingCollector;
+use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -45,9 +47,26 @@ final class GroupNumberingTest extends TestCase
     }
 
     #[Test]
-    public function test_get_capture_count(): void
+    public function test_get_written_group_count(): void
     {
         $groupNumbering = new GroupNumbering(2, [1, 2], []);
-        $this->assertSame(2, $groupNumbering->getCaptureCount());
+        $this->assertSame(2, $groupNumbering->getWrittenGroupCount());
+    }
+
+    /**
+     * The groups as written, not PCRE2's capture count: a branch reset
+     * writes two groups that share number 1, and preg_match() fills one.
+     */
+    #[Test]
+    public function test_a_branch_reset_counts_each_group_written(): void
+    {
+        $pattern = '/(?|(a)|(b))/';
+        $this->assertSame(1, preg_match($pattern, 'b', $matches));
+        $this->assertCount(2, $matches, 'PCRE2 counts one capture.');
+
+        $numbering = (new GroupNumberingCollector())->collect(RegexParser::create()->parse($pattern));
+
+        $this->assertSame(2, $numbering->getWrittenGroupCount());
+        $this->assertSame(1, $numbering->maxGroupNumber);
     }
 }

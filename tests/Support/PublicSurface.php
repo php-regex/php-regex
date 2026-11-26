@@ -24,14 +24,14 @@ final class PublicSurface
      */
     public const CLASSES = [
         'Automata' => [
-            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode', 'Options/SolverStrategy',
+            'LanguageSolver', 'Options/SolverOptions', 'Options/MatchMode',
             'Determinization/DeterminizationAlgorithm', 'Minimization/MinimizationAlgorithm',
             'Solver/EquivalenceResult', 'Solver/IntersectionResult', 'Solver/SubsetResult', 'Solver/MatchEquivalenceResult',
             'Model/Dfa', 'Model/DfaState', 'Solver/DfaCacheInterface', 'Solver/InMemoryDfaCache',
             'Exception/ComplexityException',
             'Exception/IncompatibleArgumentException',
             'TrivialMatchClassifier', 'TrivialMatch', 'TrivialMatchKind', 'Language',
-            'Ordered/FirstMatchPartition', 'Ordered/FirstMatchCell',
+            'Ordered/FirstMatchPartition', 'Ordered/FirstMatchCandidate', 'Ordered/FirstMatchCell',
         ],
         'Cli' => [],
         'Explain' => [
@@ -42,11 +42,11 @@ final class PublicSurface
         'Infection' => ['Mutator/RegexQuantifier', 'Mutator/RegexAnchor', 'Mutator/RegexCharClass', 'Mutator/RegexAlternation', 'Mutator/RegexFlag', 'Mutator/RegexEscape'],
         'LanguageServer' => [],
         'Mcp' => [
-            'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult', 'ServerInterface',
+            'Application', 'ToolCatalog', 'ToolDefinition', 'ToolInterface', 'ToolResult',
             'Exception/ExceptionInterface', 'Exception/UnknownToolException', 'Exception/TargetException',
         ],
         'Laravel' => ['PHPRegexServiceProvider', 'Facades/Regex', 'Rules/ValidRegex'],
-        'Linter' => ['PatternLinter', 'LintSeverity', 'Exception/LintException', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
+        'Linter' => ['PatternLinter', 'LintSeverity', 'Rule/RuleViolation', 'Exception/UnknownLintRuleException', 'Exception/UnsupportedTargetException', 'Extraction/ExtractorInterface', 'PatternOccurrence'],
         'Optimizer' => ['Optimizer', 'OptimizerOptions', 'OptimizationResult', 'Modernizer', 'RedosRepairer', 'RedosRepair'],
         'Parser' => [
             'RegexParser', 'Attribute/RegexPattern', 'ParserOptions', 'PcreTarget', 'PcreFeature', 'ErrorCode', 'DelimitedPattern',
@@ -79,12 +79,12 @@ final class PublicSurface
             'RedosAnalyzer', 'RedosAnalysis', 'RedosSeverity', 'RedosMode', 'RedosConfidence',
             'Finding', 'Hotspot', 'Confirmation', 'ConfirmationSample', 'ConfirmationOptions',
             'ConfirmationRunner', 'ConfirmationRunnerInterface',
-            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost',
+            'RedosComplexity', 'RedosProof', 'RedosWitness', 'RedosOptions', 'RedosSearchCost', 'SearchCostCause',
             'IgnoreList',
         ],
         'Symfony' => ['PHPRegexSymfonyBundle', 'Validator/Constraints/ValidRegex', 'Validator/Constraints/ValidRegexValidator'],
         'Toolkit' => ['Regex', 'AnalysisReport', 'ExplainFormat', 'HighlightFormat'],
-        'Transpiler' => ['Transpiler', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'Target/JavaScript/VModeCompatibility'],
+        'Transpiler' => ['Transpiler', 'Dialect', 'TranspileOptions', 'TranspileResult', 'Exception/TranspileException', 'VModeCompatibility', 'VModeFinding'],
     ];
 
     /**
@@ -104,10 +104,11 @@ final class PublicSurface
             'Analysis/LiteralExtractionResult', 'Analysis/CaptureShape', 'Analysis/CaptureGroupShape',
             'Engine/PcreMatch', 'Engine/PcreError',
             'Analysis/PatternInfo', 'Validation/PatternCompatibility', 'Validation/TargetVerdict', 'Validation/RangeVerdict',
+            'Printer/FormatResult',
         ],
         'Redos' => ['RedosAnalysis', 'Finding', 'Hotspot', 'RedosWitness', 'RedosSearchCost', 'Confirmation', 'ConfirmationSample'],
         'Linter' => ['Rule/RuleViolation'],
         'Toolkit' => ['AnalysisReport'],
-        'Transpiler' => ['TranspileResult'],
+        'Transpiler' => ['TranspileResult', 'VModeFinding'],
     ];
 }

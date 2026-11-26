@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Artisan;
 use PHPRegex\Laravel\PHPRegexServiceProvider;
 use PHPRegex\Tests\Support\Newlines;
 use PHPRegex\Tests\Support\ResetsShellVerbosity;
-use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\Dialect;
 use PHPUnit\Framework\Attributes\Test;
 
 /**
@@ -92,10 +92,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $description = $command->getDefinition()->getOption('target')->getDescription();
 
         $this->assertSame(1, preg_match('/\(([^)]*)\)/', $description, $matches), $description);
-        $named = explode(', ', $matches[1]);
-        sort($named);
-
-        $this->assertSame((new TargetRegistry())->listTargets(), $named);
+        $this->assertSame(Dialect::names(), explode(', ', $matches[1]));
     }
 
     #[Test]
@@ -114,7 +111,7 @@ final class TranspileCommandOutputTest extends LaravelTestCase
         $output = Newlines::lf(Artisan::output());
 
         $this->assertSame(2, $status);
-        $this->assertStringContainsString("Invalid target 'ruby'. Supported targets: html, html-pattern, javascript, js, py, python", $output);
+        $this->assertStringContainsString("Invalid target 'ruby'. Supported targets: javascript, js, html-pattern, html, python, py", $output);
     }
 
     #[Test]

@@ -202,9 +202,9 @@ final class RedosAnalyzer
     }
 
     /**
-     * What analyze($regex)->isProvenSafe() answers, from the proof alone:
-     * no heuristics, no witness, no cost of the search, and nothing of the
-     * pattern kept in the parser.
+     * Whether analyze($regex) proves one attempt linear, from the proof
+     * alone: no heuristics, no witness, no cost of the search, and nothing
+     * of the pattern kept in the parser.
      *
      * @internal the repair of a pattern asks it of every rewrite it tries
      */

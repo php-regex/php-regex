@@ -79,7 +79,7 @@ final class ConsoleCaretSnippetTest extends TestCase
             'file' => 'test.php',
             'line' => 3,
             'pattern' => $pattern,
-            'issues' => [new LintIssue(LintSeverity::Error, (string) $validation->error, 'test.php', 3, position: $validation->offset, validation: $validation)],
+            'issues' => [new LintIssue(LintSeverity::Error, (string) $validation->error, 'test.php', 3, offset: $validation->offset, validation: $validation)],
             'optimizations' => [],
         ]], ['errors' => 1, 'warnings' => 0, 'optimizations' => 0]);
     }

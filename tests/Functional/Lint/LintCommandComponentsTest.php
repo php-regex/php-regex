@@ -51,7 +51,7 @@ final class LintCommandComponentsTest extends TestCase
             'format' => 'github',
             'ide' => 'phpstorm',
             'checks' => [
-                'validation' => false,
+                'validation' => ['enabled' => false],
                 'redos' => ['enabled' => true, 'mode' => 'confirmed', 'threshold' => 'low'],
                 'optimizations' => ['enabled' => true, 'minSavings' => 2, 'options' => ['digits' => false]],
                 'lint' => ['enabled' => false, 'rules' => ['flag.redundant' => false]],
@@ -92,7 +92,7 @@ final class LintCommandComponentsTest extends TestCase
             'jobs' => 2,
             'format' => 'json',
             'checks' => [
-                'validation' => true,
+                'validation' => ['enabled' => true],
                 'redos' => ['enabled' => false],
                 'optimizations' => ['enabled' => false, 'minSavings' => 3],
             ],
@@ -242,7 +242,7 @@ final class LintCommandComponentsTest extends TestCase
             $this->assertSame(['vendor'], $result->config['exclude'] ?? null);
             $this->assertSame('json', $result->config['format'] ?? null);
             $this->assertSame(2, $result->config['jobs'] ?? null);
-            $this->assertSame(['validation' => true, 'optimizations' => ['enabled' => false]], $result->config['checks'] ?? null);
+            $this->assertSame(['validation' => ['enabled' => true], 'optimizations' => ['enabled' => false]], $result->config['checks'] ?? null);
             $expectedFiles = array_map(realpath(...), [$tempDir.'/regex.dist.json', $tempDir.'/regex.json']);
             $actualFiles = array_map(realpath(...), $result->files);
             $this->assertSame($expectedFiles, $actualFiles);

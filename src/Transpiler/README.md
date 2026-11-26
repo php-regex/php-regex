@@ -26,7 +26,7 @@ Documentation: [php-regex.com](https://php-regex.com) — the [API reference](ht
 Features
 --------
 
-- Three targets, `javascript` (alias `js`), `html-pattern` (alias `html`) and `python` (alias `py`), each producing a paste-ready literal and a constructor call
+- Three dialects, the cases of the `Dialect` enum: `JavaScript` (`javascript`, alias `js`), `HtmlPattern` (`html-pattern`, alias `html`) and `Python` (`python`, alias `py`), each producing a paste-ready literal and a constructor call
 - Dialect rewrites: `(?P<name>)` becomes `(?<name>)` in JavaScript, `\k<name>` becomes `(?P=name)` in Python, `\h` and `\v` become character classes
 - What a target reads otherwise is written out as PCRE reads it: `$`, which also matches before a final newline, `^` and `$` under `m`, the dot, which leaves out `\n` alone, `\s` without `u`, six bytes in PHP where JavaScript's also takes the Unicode spaces, and `\S`, its complement, which takes a byte of `U+00A0` in PHP where JavaScript's leaves that space out, and, under `u`, `\d`, `\w`, `\s` and `\b`, which PHP reads in Unicode
 - Flags are mapped per target: JavaScript keeps `i`, `s`, `u`, gains `u` when Unicode escapes need it, and has `/m`, `/D`, `/x` and `/U` applied while printing; Python keeps `i` and `s`, gains `re.ASCII` without `u`, has `/m`, `/D`, `/x` and `/U` applied while printing, and spells flags inline or as `re` constants; every target drops `/S`, which PHP has ignored since 7.3, with a note
@@ -54,10 +54,11 @@ Configuration
   written, before it, or with `null`, they are refused.
 
 ```php
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Transpiler;
 use PHPRegex\Transpiler\TranspileOptions;
 
-$result = (new Transpiler())->transpile('/\d++(?>px|em)/', 'python', new TranspileOptions(pythonVersion: '3.12'));
+$result = (new Transpiler())->transpile('/\d++(?>px|em)/', Dialect::Python, new TranspileOptions(pythonVersion: '3.12'));
 
 echo $result->literal; // r'(?a)\d++(?>px|em)'
 ```
@@ -72,16 +73,23 @@ Usage
 A PCRE pattern with a named group and a backreference, for a JavaScript codebase:
 
 ```php
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Transpiler;
 
 $transpiler = new Transpiler();
-$result = $transpiler->transpile('/(?P<word>\w+)\k{word}/i', 'javascript');
+$result = $transpiler->transpile('/(?P<word>\w+)\k{word}/i', Dialect::JavaScript);
 
 echo $result->literal;  // /(?<word>\w+)\k<word>/i
 
 // "$" also matches before a newline that ends the subject; JavaScript's does not.
 echo $transpiler->transpile('/^\d+$/', 'javascript')->literal; // /^\d+(?=\n?$)/
 ```
+
+The dialect is a `Dialect` case, or a name `Dialect::fromName()` takes, as the
+examples below write it: `javascript` or `js`, `html-pattern` or `html`,
+`python` or `py`, in any case. `Dialect::names()` lists them all; a name no
+dialect answers to throws `InvalidRegexOptionException` before the pattern is
+read.
 
 Without a parser the transpiler reads with `RegexParser::create()`; pass the
 one your code reads with, as `new Transpiler($parser)`, to read the pattern for

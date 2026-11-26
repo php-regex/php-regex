@@ -234,7 +234,7 @@ final class CaptureFacts
         $this->unicode = $unicode;
         $this->ucp = $ucp;
         $this->groups = $groups;
-        $this->calculator = new LengthRangeCalculator($unicode, \Closure::fromCallable([$this, 'calledBody']));
+        $this->calculator = LengthRangeCalculator::followingCalls($unicode, \Closure::fromCallable([$this, 'calledBody']));
         $this->lengths = new \SplObjectStorage();
         $this->facts = new \SplObjectStorage();
         $this->groupFacts = new \SplObjectStorage();

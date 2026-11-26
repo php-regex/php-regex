@@ -28,6 +28,7 @@ use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\SearchCostCause;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -105,20 +106,24 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
-        $this->assertFalse($confirmed->shortMatch, $pattern.': the retry after an empty match pays the run.');
+        $this->assertSame(SearchCostCause::EmptyMatchRetry, $confirmed->cause, $pattern.': the retry after an empty match pays the run.');
 
         $cost = $analysis->everyMatchSearchCost;
         if (!$exact) {
             $this->assertNull($cost, $pattern.' is reported before the engine replay.');
+            $this->assertFalse($analysis->hasQuadraticSearch(), $pattern);
+            $this->assertTrue($analysis->isProvenSafe(), $pattern);
 
             return;
         }
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertTrue($analysis->hasQuadraticSearch(), $pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
         $this->assertSame(['', $run], [$cost->prefix, $cost->run], $pattern);
         $this->assertNull($cost->replayed, $pattern);
-        $this->assertFalse($cost->shortMatch, $pattern.': the retry after an empty match pays the run.');
+        $this->assertSame(SearchCostCause::EmptyMatchRetry, $cost->cause, $pattern.': the retry after an empty match pays the run.');
         $this->assertGreaterThanOrEqual(50, preg_match_all($interpreted, $cost->build(100)), $pattern.' skips most positions of the witness on 100 run words.');
     }
 
@@ -156,20 +161,24 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->everyMatchSearchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
-        $this->assertTrue($confirmed->shortMatch, $pattern);
+        $this->assertSame(SearchCostCause::ShortMatch, $confirmed->cause, $pattern);
 
         $cost = $analysis->everyMatchSearchCost;
         if (!$exact) {
             $this->assertNull($cost, $pattern.' is reported before the engine replay.');
+            $this->assertFalse($analysis->hasQuadraticSearch(), $pattern);
+            $this->assertTrue($analysis->isProvenSafe(), $pattern);
 
             return;
         }
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertTrue($analysis->hasQuadraticSearch(), $pattern);
+        $this->assertFalse($analysis->isProvenSafe(), $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
         $this->assertSame(['', $run], [$cost->prefix, $cost->run], $pattern);
         $this->assertNull($cost->replayed, $pattern);
-        $this->assertTrue($cost->shortMatch, $pattern);
+        $this->assertSame(SearchCostCause::ShortMatch, $cost->cause, $pattern);
         $witness = $cost->build(100);
         $this->assertGreaterThanOrEqual(25, preg_match_all($interpreted, $witness), $pattern.' skips most of the witness on 100 run words.');
         $this->assertSame(1, preg_match($interpreted, $witness, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: '.$pattern.' finds no match in its witness.');
@@ -557,7 +566,12 @@ final class RedosEveryMatchSearchCostTest extends TestCase
         $this->assertNull($json['search_cost']);
         $this->assertIsArray($json['every_match_search_cost']);
         $this->assertSame(2, $json['every_match_search_cost']['degree']);
+        $this->assertSame('empty_match_retry', $json['every_match_search_cost']['cause']);
         $this->assertSame('a', $json['every_match_search_cost']['witness']['run']);
+
+        $json = $analyzer->analyze('/a*b|a/')->jsonSerialize();
+        $this->assertIsArray($json['every_match_search_cost']);
+        $this->assertSame('short_match', $json['every_match_search_cost']['cause']);
 
         $json = $analyzer->analyze('/\s+$/')->jsonSerialize();
         $this->assertIsArray($json['search_cost']);

@@ -72,10 +72,10 @@ The tools
 | `regex_validate` | `pattern` | whether the target PHP compiles the pattern: the error, its byte offset, a hint. An invalid pattern is the answer, not a failure |
 | `regex_explain` | `pattern` | the pattern in plain language, construct by construct |
 | `regex_format` | `pattern`, `width` (default 80), `compact` | the pattern laid out over lines under `x`, or compacted to one line; the result matches exactly what the pattern given matches |
-| `regex_transpile` | `pattern`, `target` (`js`, `html`, `python`), `python_version` | the pattern in the dialect, with every note on what was rewritten and every warning on what matches differently; a construct the dialect cannot express is refused with its reason |
+| `regex_transpile` | `pattern`, `dialect` (`javascript` or `js`, `html-pattern` or `html`, `python` or `py`), `python_version` | the pattern in the dialect, with every note on what was rewritten and every warning on what matches differently; a construct the dialect cannot express is refused with its reason |
 | `regex_redos` | `pattern`, `mode` (`theoretical`, `confirmed`), `threshold` | severity, complexity, the witness that pumps the backtracking, the hotspots, the recommendations |
 
-Every tool also takes `php_version` and `pcre_version`. The structured answer of each tool is the document the CLI prints: `regex validate --json`, `regex explain --json`, `regex format --json`, `regex transpile --json`, and the `redos` member of `regex analyze --json`, all described in the [JSON output reference](https://php-regex.com/reference/json-output/). Each answer ends with `target`, the PHP versions judged (`php_target` for `regex_transpile`, whose `target` is the dialect), and `range`, the verdict of each of those versions on the pattern, the lowest first.
+Every tool also takes `php_version` and `pcre_version`. The structured answer of each tool is the document the CLI prints: `regex validate --json`, `regex explain --json`, `regex format --json`, `regex transpile --json`, and the `redos` member of `regex analyze --json`, all described in the [JSON output reference](https://php-regex.com/reference/json-output/). Each answer ends with `target`, the PHP versions judged, and `range`, the verdict of each of those versions on the pattern, the lowest first.
 
 A tool call with `/^(a+)+$/` answers, as text:
 
@@ -97,12 +97,14 @@ use PHPRegex\Mcp\Application;
 exit((new Application())->run(['php_version' => '8.2']));
 ```
 
-The tools run without the protocol: `ToolCatalog::v1()` lists them, and each one answers a `ToolResult` from an array of arguments, which is how they are tested.
+`run()` serves the catalog built for the target; `serve()` serves a `ToolCatalog` built beforehand, as `(new Application())->serve(ToolCatalog::create(['php_version' => '8.2']))`. A minor release may add tools to the catalog.
+
+The tools run without the protocol: `ToolCatalog::create()` lists them, and each one answers a `ToolResult` from an array of arguments, which is how they are tested.
 
 ```php
 use PHPRegex\Mcp\ToolCatalog;
 
-$result = ToolCatalog::v1(['php_version' => '8.2'])->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
+$result = ToolCatalog::create(['php_version' => '8.2'])->get('regex_validate')->tool->execute(['pattern' => '/a+/']);
 $result->text;       // "Valid."
 $result->structured; // ['pattern' => '/a+/', 'validation' => [...], 'target' => [...], 'range' => [...]]
 $result->isError;    // false

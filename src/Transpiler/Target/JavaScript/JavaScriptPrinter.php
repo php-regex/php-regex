@@ -61,6 +61,17 @@ use PHPRegex\Transpiler\TranspileContext;
  */
 final class JavaScriptPrinter extends AbstractTargetPrinter
 {
+    /**
+     * What a class escapes under the v flag: the syntax characters, "/",
+     * "-", and the reserved punctuators, every one a legal escape there.
+     */
+    public const CLASS_SET_META = [
+        '\\' => true, ']' => true, '-' => true, '^' => true, '[' => true, '(' => true, ')' => true,
+        '{' => true, '}' => true, '/' => true, '|' => true, '$' => true, '.' => true, '*' => true,
+        '+' => true, '?' => true, '&' => true, '!' => true, '#' => true, '%' => true, ',' => true,
+        ':' => true, ';' => true, '<' => true, '=' => true, '>' => true, '@' => true, '`' => true, '~' => true,
+    ];
+
     private const META_CHARACTERS = [
         '\\' => true, '.' => true, '^' => true, '$' => true,
         '[' => true, ']' => true, '(' => true, ')' => true,
@@ -663,7 +674,7 @@ final class JavaScriptPrinter extends AbstractTargetPrinter
 
     private function escapeString(string $value): string
     {
-        $meta = $this->inCharClass ? ($this->unicodeSets ? VModeCompatibility::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
+        $meta = $this->inCharClass ? ($this->unicodeSets ? self::CLASS_SET_META : self::CHAR_CLASS_META) : self::META_CHARACTERS;
         $needsEscape = false;
 
         $len = \strlen($value);

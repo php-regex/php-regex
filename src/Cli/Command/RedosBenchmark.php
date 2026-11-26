@@ -19,7 +19,7 @@ namespace PHPRegex\Cli\Command;
  *
  * @internal
  *
- * @phpstan-type BenchResult array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, err_msg: string, err_code: int, iterations: int}
+ * @phpstan-type BenchResult array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, error: ?string, error_code: ?int, iterations: int}
  */
 final class RedosBenchmark
 {
@@ -68,22 +68,22 @@ final class RedosBenchmark
      * How the safe pattern compares with the vulnerable one: whether they
      * gave the same result, and how much faster the safe one ran.
      *
-     * @param BenchResult $vuln
+     * @param BenchResult $pattern
      * @param BenchResult $safe
      *
      * @return array{result_parity: string, speedup: ?float, delta_ms: ?float}
      */
-    public static function summary(array $vuln, array $safe): array
+    public static function summary(array $pattern, array $safe): array
     {
         $speedup = null;
         $delta = null;
         if ($safe['avg_ms'] > 0.0) {
-            $speedup = $vuln['avg_ms'] / $safe['avg_ms'];
-            $delta = $vuln['avg_ms'] - $safe['avg_ms'];
+            $speedup = $pattern['avg_ms'] / $safe['avg_ms'];
+            $delta = $pattern['avg_ms'] - $safe['avg_ms'];
         }
 
         return [
-            'result_parity' => $vuln['result'] === $safe['result'] ? 'same' : 'different',
+            'result_parity' => $pattern['result'] === $safe['result'] ? 'same' : 'different',
             'speedup' => $speedup,
             'delta_ms' => $delta,
         ];
@@ -145,9 +145,12 @@ final class RedosBenchmark
             $cpuMs += self::milliseconds($usageEnd, 'ru_stime') - self::milliseconds($usageStart, 'ru_stime');
         }
 
-        $errMsg = '-';
+        // Null without an error: neither key applies.
+        $error = null;
+        $errorCode = null;
         if (\PREG_NO_ERROR !== $errCode) {
-            $errMsg = \function_exists('preg_last_error_msg') ? preg_last_error_msg() : (string) $errCode;
+            $error = preg_last_error_msg();
+            $errorCode = $errCode;
         }
 
         return [
@@ -158,8 +161,8 @@ final class RedosBenchmark
             'cpu_ms' => $cpuMs,
             'mem_bytes' => $memEnd - $memStart,
             'peak_bytes' => $peakEnd - $peakStart,
-            'err_msg' => $errMsg,
-            'err_code' => $errCode,
+            'error' => $error,
+            'error_code' => $errorCode,
             'iterations' => $iterationsRun,
         ];
     }
@@ -171,7 +174,7 @@ final class RedosBenchmark
         }
 
         if (0 === $result) {
-            return 'no';
+            return 'no_match';
         }
 
         return 'error';

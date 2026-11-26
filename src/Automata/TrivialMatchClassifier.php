@@ -16,6 +16,7 @@ namespace PHPRegex\Automata;
 use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Solver\DfaCacheInterface;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
@@ -77,14 +78,22 @@ final class TrivialMatchClassifier
 
     private readonly RegexParser $parser;
 
-    public function __construct(?RegexParser $parser = null, private readonly ?LanguageSolver $solver = null)
+    private readonly LanguageSolver $solver;
+
+    /**
+     * @param RegexParser|null       $parser   reads the patterns, for its PHP and PCRE2 target; a default parser when null
+     * @param DfaCacheInterface|null $dfaCache keeps the DFAs the proofs compile, read for that target; nothing is kept when null
+     */
+    public function __construct(?RegexParser $parser = null, ?DfaCacheInterface $dfaCache = null)
     {
         $this->parser = $parser ?? RegexParser::create();
+        $this->solver = new LanguageSolver($this->parser, $dfaCache);
     }
 
     /**
      * The string function the pattern behaves as under preg_match(), or null
-     * when there is none, or none the automata could prove.
+     * when there is none, or none the automata could prove. A pattern that
+     * does not lex or parse gets null too: nothing is thrown.
      */
     public function classify(string $regex): ?TrivialMatch
     {
@@ -128,7 +137,7 @@ final class TrivialMatchClassifier
      * strings, or one string along two paths the engine backtracks
      * through), an anchor, a lookaround, "\K", a verb, a backreference, a
      * recursion or a conditional is refused before any proof, as are the
-     * patterns classify() refuses.
+     * patterns classify() refuses, those that do not lex or parse included.
      */
     public function matchedLiteral(string $regex): ?string
     {
@@ -143,7 +152,7 @@ final class TrivialMatchClassifier
         }
 
         try {
-            return ($this->solver ?? new LanguageSolver($this->parser))
+            return $this->solver
                 ->equivalent($regex, '/'.self::quote($literal).'/', new SolverOptions(matchMode: MatchMode::Full))
                 ->isEquivalent ? $literal : null;
         } catch (ComplexityException) {
@@ -313,7 +322,7 @@ final class TrivialMatchClassifier
         };
 
         try {
-            return ($this->solver ?? new LanguageSolver($this->parser))
+            return $this->solver
                 ->equivalent($pattern, $canonical, new SolverOptions(matchMode: MatchMode::Partial))
                 ->isEquivalent;
         } catch (ComplexityException) {

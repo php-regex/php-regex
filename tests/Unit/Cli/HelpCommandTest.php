@@ -20,7 +20,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Cli\Output;
 use PHPRegex\Tests\TestUtils\OutputFactory;
-use PHPRegex\Transpiler\Target\TargetRegistry;
+use PHPRegex\Transpiler\Dialect;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -163,8 +163,8 @@ final class HelpCommandTest extends TestCase
 
     /**
      * The lint options that take a value, or have a short alias, are shown
-     * in the spelling LintArgumentParser accepts: --enable-rule and
-     * --disable-rule only after "=", -j in the --jobs row.
+     * in the spelling LintArgumentParser accepts: the value after a space,
+     * as after "=", -j in the --jobs row.
      */
     #[Test]
     #[DataProvider('provideLintOptionSpellings')]
@@ -179,8 +179,8 @@ final class HelpCommandTest extends TestCase
     public static function provideLintOptionSpellings(): iterable
     {
         yield '-j' => ['spelling' => '-j, --jobs <n>'];
-        yield '--enable-rule' => ['spelling' => '--enable-rule=<id>'];
-        yield '--disable-rule' => ['spelling' => '--disable-rule=<id>'];
+        yield '--enable-rule' => ['spelling' => '--enable-rule <id>'];
+        yield '--disable-rule' => ['spelling' => '--disable-rule <id>'];
         yield '--no-redos' => ['spelling' => '--no-redos'];
         yield '--baseline' => ['spelling' => '--baseline <file>'];
         yield '--generate-baseline' => ['spelling' => '--generate-baseline <file>'];
@@ -554,9 +554,8 @@ final class HelpCommandTest extends TestCase
 
         $this->assertSame('Target dialect (js, html, python)', $page);
 
-        $registry = new TargetRegistry();
         foreach (['js', 'html', 'python'] as $target) {
-            $this->assertContains($target, $registry->listTargets());
+            $this->assertContains($target, Dialect::names());
         }
     }
 

@@ -36,7 +36,7 @@ final class LongSequenceLintTimeTest extends TestCase
     public function test_a_long_sequence_is_linted_in_linear_time(string $item, int $issues, int $count = 2000): void
     {
         $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, $count).'/');
-        $linter = new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true));
+        $linter = new PatternLinter(rules: array_fill_keys(RuleCatalog::lintRuleIds(), true));
 
         $seconds = CpuClock::time(static function () use ($tree, $linter): void {
             $tree->accept($linter);
@@ -62,7 +62,7 @@ final class LongSequenceLintTimeTest extends TestCase
         $tree = Regex::create(['cache' => null])->parse('/'.str_repeat($item, 4 * 4000).'/');
 
         $this->assertLinearTime(static function () use ($tree): void {
-            $tree->accept(new PatternLinter(['quantifier.nested' => true, 'dotstar.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+            $tree->accept(new PatternLinter(rules: ['quantifier.nested' => true, 'dotstar.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
         }, 4000, $item.' read by the rules on nesting');
     }
 
@@ -78,7 +78,7 @@ final class LongSequenceLintTimeTest extends TestCase
         $tree = Regex::create(['cache' => null])->parse('/(?:'.str_repeat('(?=b)', 4 * 4000).'b?c+)+$/');
 
         $this->assertLinearTime(static function () use ($tree): void {
-            $tree->accept(new PatternLinter(['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
+            $tree->accept(new PatternLinter(rules: ['quantifier.nested' => true] + array_fill_keys(RuleCatalog::lintRuleIds(), false)));
         }, 4000, 'lookaheads before the loops of a body');
     }
 
@@ -97,7 +97,7 @@ final class LongSequenceLintTimeTest extends TestCase
         $tree = Regex::create(['cache' => null])->parse($pattern);
 
         $this->assertLinearTime(static function () use ($tree): void {
-            $tree->accept(new PatternLinter(array_fill_keys(RuleCatalog::lintRuleIds(), true)));
+            $tree->accept(new PatternLinter(rules: array_fill_keys(RuleCatalog::lintRuleIds(), true)));
         }, 1000, 'every rule on '.substr($pattern, 0, 20).'...');
     }
 

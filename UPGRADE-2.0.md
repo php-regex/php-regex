@@ -55,7 +55,7 @@ A few 1.3 classes map to a 2.0 class marked `@internal`, which the
 [backward compatibility promise](docs/reference/backward-compatibility.md)
 does not cover: `RegexProblem` and `ProblemType` became `Linter\Diagnostic`
 and `Linter\DiagnosticType`, built only by the lint commands. Read lint
-results through `PatternLinter::getIssues()` (`Rule\RuleViolation`) or the
+results through `PatternLinter::analyze()` (`Rule\RuleViolation`) or the
 CLI's JSON output.
 
 A Rector set makes these changes in your code. It ships with the Rector
@@ -482,6 +482,7 @@ one.
 | `RegexLanguageSolver::prepare()` | `LanguageSolver::compile()` |
 | `Regex::clearValidatorCaches()` | `Regex::clearCaches()` |
 | `Regex::new()` | `Regex::create()` |
+| `GroupNumbering::getCaptureCount()` | `GroupNumbering::getWrittenGroupCount()` |
 
 <!-- upgrade-map:end -->
 
@@ -502,6 +503,12 @@ vendor/bin/regex lint src/ --generate-baseline regex-baseline.json
 A baseline file that is missing or is not a baseline is now a usage error
 (exit code 2), where 1.x went on with no baseline. See
 [the CLI guide](docs/guides/cli.md#baseline).
+
+The baseline names each file relative to its own directory, as PHPStan's
+does (`../src/Form.php` for a baseline under `build/`), where 1.x named it
+from the working directory: it serves a run from any directory. A run with
+`--generate-baseline` exits with 0 once the baseline is written, the errors
+it found being the ones the baseline now knows, where 1.x exited with 1.
 
 ### `// @regex-lint-ignore`
 
@@ -573,8 +580,9 @@ its body, `$ast` a parsed tree, `$subject` the text matched against and
 | method | before | after |
 |---|---|---|
 | `Transpiler::__construct()` | `$regex` | `$parser` |
-| `Transpiler::transpile()` | `$pattern` | `$regex` |
-| `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$subject` |
+| `Transpiler::transpile()` | `$pattern`, `$target` | `$regex`, `$dialect` |
+| `Regex::transpile()` | `$target` | `$dialect` |
+| `LanguageSolver::acceptsPrefix()` | `$pattern`, `$input` | `$regex`, `$prefix` |
 | `LanguageSolver::language()`, `compile()` | `$pattern` | `$regex` |
 | `TrivialMatchClassifier::classify()`, `matchedLiteral()` | `$pattern` | `$regex` |
 | `RedosRepairer::repair()` | `$pattern` | `$regex` |
@@ -739,6 +747,20 @@ It compiles with the running PHP, so combining it with a target that is another
 engine now throws `InvalidRegexOptionException` instead of judging with the
 wrong one. Drop one of the two options.
 
+#### `redos_ignored_patterns` is an option of the facade, not of the parser
+
+The patterns the ReDoS analysis skips were an option of `RegexOptions`, which
+the parser never read: `RegexParser::create()` dropped them without a word.
+`ParserOptions` has no such property, and `ParserOptions::fromArray()` and
+`RegexParser::create()` refuse the key with `InvalidRegexOptionException`.
+`Regex::create()` still takes it, its options the closed shape
+`RegexOptionsArray`, and hands the patterns to the analyzer `redos()` and
+`analyze()` use.
+
+| before | after |
+|---|---|
+| `RegexOptions::$redosIgnoredPatterns` | `Regex::create(['redos_ignored_patterns' => [...]])`, or `new RedosAnalyzer($parser, ignoredPatterns: [...])` |
+
 #### The PHPStan extension judges for PHPStan's `phpVersion`
 
 The rule used to judge for the PHP running PHPStan and the PCRE2 it links; it
@@ -780,9 +802,10 @@ The identifiers `regex.syntax.invalid`, `regex.syntax.delimiter` and
 `regex.syntax.empty` are gone (PHPStan reports those patterns as
 `regexp.pattern`), and ReDoS findings are reported as `regex.redos` whatever
 their severity, instead of `regex.redos.critical` and the like. Update
-`ignoreErrors` and baselines accordingly. The rule takes
-`new RegexPatternRule(array $config = [], ?PhpVersion $phpVersion = null)`, and
-its `IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
+`ignoreErrors` and baselines accordingly. PHPStan builds the rules from
+`extension.neon`, and their constructors are `@internal`: configure them
+through `phpRegex`, never with `new RegexPatternRule(...)`. The
+`IDENTIFIER_SYNTAX_*` and `IDENTIFIER_REDOS_<SEVERITY>` constants are gone:
 `IDENTIFIER_INVALID_FOR_TARGET` and `IDENTIFIER_REDOS` name the new ones.
 
 #### ReDoS verdicts are proven, and the PHPStan ReDoS message changed
@@ -902,7 +925,8 @@ Reading and judging a pattern moved from the `Regex` facade into
   - `new AnalysisService(RegexParser $parser, ...)`, whose `getRegex()` is now `getParser()`
 
 Pass `$regex->parser()` where you passed a `Regex`, or build one with
-`RegexParser::create()`, which takes the options `Regex::create()` takes.
+`RegexParser::create()`, which takes the options `Regex::create()` takes but
+[`redos_ignored_patterns`](#redos_ignored_patterns-is-an-option-of-the-facade-not-of-the-parser).
 `CharSet` and `CharSetAnalyzer` moved from `RegexParser\ReDoS` to
 `PHPRegex\Parser\Hir\CharSet` and `PHPRegex\Parser\Analysis\CharSetAnalyzer`.
 
@@ -951,16 +975,6 @@ new kind of node adds a method to the interface.
 return type; like every other node, they now declare none and return what
 the visitor gives, the `@return T` of `NodeInterface::accept()`. Code that
 reads the return type through reflection gets `null` for every node.
-
-#### The PHPStan rules take PHPStan's `phpVersion` as it is
-
-The last constructor parameter of `RegexPatternRule` and
-`RegexPatternArgumentRule`, `$phpVersionRange`, is typed
-`int|array|null`, an `int|array{min: int, max: int}|null` in its
-docblock, where it took `mixed`: PHPStan's `phpVersion` parameter, one
-version id or a `{min, max}` range. A rule built by hand with anything else
-throws `TypeError` from a file that declares `strict_types` (elsewhere PHP's
-own coercion applies), where the value was silently ignored.
 
 #### Sequences and alternations hold lists
 
@@ -1112,11 +1126,11 @@ instead.
 Rector cannot rewrite a method call into a property read, so change these by
 hand (PHPStan reports each remaining call).
 
-`new PatternLinter($rules)` (1.x `LinterNodeVisitor`) checks the keys of
-the map: one naming a rule the linter does not run throws
+`new PatternLinter(rules: $rules)` (1.x `LinterNodeVisitor`, which took no
+argument) checks the keys of the map: one naming a rule the linter does not run throws
 `UnknownLintRuleException`, which names the nearest rule, where a typo turned
 nothing off. Each key is a rule id without `regex.lint.` or in full.
-`new PatternLinter($rules, $target)` asks its rules' questions for that
+`new PatternLinter($target, $rules)` asks its rules' questions for that
 `PcreTarget`; `Regex::lint($regex)` runs the rules for the facade's target.
 
 #### `Regex::highlight()` refuses an unknown format
@@ -1195,7 +1209,7 @@ spellings; 2.0 refuses them with a plain unknown-key error naming the key
 
 | 1.x | 2.0 |
 |---|---|
-| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": true, "optimizations": {"enabled": false}}` |
+| `"rules": {"redos": true, "validation": true, "optimization": false}` | `"checks": {"redos": {"enabled": true}, "validation": {"enabled": true}, "optimizations": {"enabled": false}}` |
 | `"redosMode": "confirmed"` | `"checks": {"redos": {"mode": "confirmed"}}` |
 | `"redosThreshold": "high"` | `"checks": {"redos": {"threshold": "high"}}` |
 | `"redosNoJit": true`, `"checks": {"redos": {"noJit": true}}` | nothing: the confirmation always runs without JIT |
@@ -1276,7 +1290,7 @@ a later 2.x release adds stays off for you:
 `[]` (or `--no-interop`) reads the native calls only. The Laravel package
 takes the same list under `extraction.interop` in `config/php-regex.php`, the
 Symfony bundle under `php_regex.extraction.interop`, the PHPStan extension
-under `phpRegex.interop`. A name that is no preset is a configuration error
+under `phpRegex.extraction.interop`. A name that is no preset is a configuration error
 everywhere, which names the preset it most likely means: `regex lint` and
 `regex debug` exit with code 2, the Symfony bundle throws
 `InvalidConfigurationException` as the container is built, Laravel's
@@ -1300,8 +1314,8 @@ on the line of its literal, not on the call. See
 - Exit code 2 now means the configuration or the command line cannot be used
   (1.x returned 1, as for a pattern error). This covers an invalid
   `regex.json`, an unknown option or `--format`, and the removed options below.
-- `--redos-mode=off` is refused: use `--no-redos`. `--redos-no-jit` is refused:
-  the confirmation always runs without JIT.
+- `--redos-no-jit` is refused: the confirmation always runs without JIT.
+  `--redos-mode=off` skips the analysis, as `--no-redos` does.
 - Errors go to stderr. With `--format=json` they go to stdout as the error
   envelope, `{"error": "...", "stage": "..."}`, and the progress and status
   lines stay out of stdout, so that stdout always holds one JSON document (see
@@ -1359,6 +1373,7 @@ prints one error envelope. The
 | lint result, issue and optimization entry | `fileOffset` | `file_offset` |
 | lint issue | `issueId` | `issue_id` |
 | lint issue | `type` | `severity` |
+| lint issue | `position` | `offset`, with `end` beside it |
 | lint issue `validation` | `isValid` | `is_valid` |
 | lint issue `validation` | `complexityScore` | `complexity_score` |
 | lint issue `validation` | `caretSnippet` | `caret_snippet` |
@@ -1367,6 +1382,7 @@ prints one error envelope. The
 | baseline entry | `type` | `severity` |
 | `runtime.jit` (`analyze`, `debug`, `redos`) | the `pcre.jit` string, as `"1"` | a bool |
 | `confirmation.jit_setting` | a string | a bool |
+| `transpile` | `target`, the dialect | `dialect`; `target` is the PHP versions judged, as in every document |
 | an error | `{"error": "..."}`, or `{"error": "...", "stage": "analyze"}` and `"debug"` | `{"error": "...", "stage": "..."}`, stage `usage`, `config`, `collect`, `analyze`, `pattern` or `internal`; `analyze` now names the step of `lint` that analyses the patterns, a worker that failed or exited, never the `analyze` command |
 
 The rest of the lint `validation` object (`error`, `category`, `offset`,
@@ -1378,23 +1394,26 @@ The same renames hold in PHP. `ValidationResult` implements
 `complexity_score`, `caret_snippet` and `error_code`, where 1.x gave the
 public property names `isValid`, `complexityScore`, `caretSnippet` and
 `errorCode`. `category` and `error_code` are the enum values, as strings. The
-keys of `json_encode()` on an `OptimizationResult` or a `TranspileResult` do
-not change.
+keys of `json_encode()` on an `OptimizationResult` do not change; on a
+`TranspileResult`, `target` is `dialect`, as in the CLI's document, and the
+`$target` property keeps its name.
 
 - Every lint issue carries every key, `null` when it does not apply:
-  `severity, file, line, column, file_offset, position, issue_id, message,
-  hint, tip, source, validation, analysis`. An invalid pattern's `issue_id`
-  is its error code, such as `regex.group.unclosed`. `column` is `null` when
-  unknown, where 1.x printed `1`.
+  `severity, file, line, column, file_offset, offset, end, issue_id, message,
+  hint, tip, source, validation, analysis`. `end` is where the issue ends in
+  the pattern body, exclusive. `issue_id` is always a string: an invalid
+  pattern's is its error code, such as `regex.group.unclosed`. `column` is
+  `null` when unknown, where 1.x printed `1`.
 - The lint report ends with a newline, lists its results sorted by file, line
   and column whatever `--jobs` says, and gives `file` relative to the working
   directory with `/`. `stats` gains `redos_errors`, `infos`, `lint_errors`
   and `parser_fallbacks`; the report gains `target`.
-- `analyze` on an invalid pattern prints its document, with `parse.ok` false,
-  `validation` saying why, and `redos` and `explain` null. `debug` always
-  carries `validation`; on an invalid pattern its `analysis` is null and it
-  exits with 1, where 1.x printed an analysis of severity `unknown` and
-  exited with 0.
+- `analyze` on an invalid pattern prints its document, with `validation`
+  saying why, and `redos` and `explain` null; its `parse` object is gone,
+  `validation.is_valid` says the same. `debug` always carries `validation`,
+  and its ReDoS verdict is `redos`, as in `analyze`, where 1.x wrote
+  `analysis`; on an invalid pattern `redos` is null and it exits with 1,
+  where 1.x printed an analysis of severity `unknown` and exited with 0.
 - `transpile` and `redos` on an invalid pattern print the envelope with stage
   `pattern` and the `validation` object, and exit with 1. `transpile`
   validates the pattern first, so a pattern that parses but PHP refuses, such
@@ -1402,6 +1421,11 @@ not change.
   target cannot express prints the envelope with stage `pattern` and no
   `validation`. `redos --format=json` no longer prints a benchmark of a
   pattern PHP refuses; its console output still measures it.
+- `redos --format=json` names the measurement of the pattern
+  `bench.pattern`, labelled `pattern`, where 1.x wrote `vuln`. A measurement
+  writes `error` and `error_code`, `null` without an error, where 1.x wrote
+  `err_msg` (`-`) and `err_code` (`0`), and its `result` is `no_match` where
+  1.x wrote `no`.
 - Symfony's and Laravel's `regex:transpile` validate the pattern first, and
   in JSON print the CLI's document and envelope. Laravel's
   `{source, target, result, flags, warnings, compatible}` is gone: read
@@ -1554,6 +1578,8 @@ The configuration moves from `regex_parser:` to `php_regex:`, with these keys:
 | `exclude_paths`                         | `exclude`                                                  |
 | `analysis.ignore_patterns`              | `redos.ignored_patterns` (the two lists were merged anyway) |
 | `analysis.redos_threshold`              | removed: it was never read                                 |
+| `analysis.warning_threshold`            | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | —                                       | `php_version`, `pcre_version`: the target of `regex:lint`  |
 
 A 1.x key stops the container compile with Symfony's own unrecognized-option
@@ -1647,6 +1673,8 @@ The keys of `config/regex-parser.php` become, in `config/php-regex.php`:
 | `exclude_paths`                                  | `exclude`                                             |
 | `analysis.ignore_patterns`                       | `redos.ignored_patterns`                              |
 | `analysis.redos_threshold`                       | removed: it was never read                            |
+| `analysis.warning_threshold`                     | `complexity.threshold` (1 or more), reported once `complexity.enabled` is on |
+| `optimizations.digits` and the other optimizer switches | `optimizations.options.digits` and so on, beside `optimizations.enabled` and `optimizations.min_savings` |
 | `REGEX_PARSER_IDE` in `.env`                     | `PHP_REGEX_IDE` (`APP_EDITOR` stays the fallback)     |
 | —                                                | `php_version`, `pcre_version`: the target of `regex:lint` |
 | `automata.*`, never read                         | the defaults of `regex:compare`                       |
@@ -1672,13 +1700,22 @@ the running PHP. The lint and analysis services are resolved when a command
 uses them, so a setting they cannot use stops that command only. See
 [the Laravel guide](docs/guides/laravel.md).
 
+The provider binds `PHPRegex\Toolkit\Regex` and its `php-regex` alias, the
+two bindings an application resolves. The services behind the commands
+(`AnalysisService`, `LintService`, `FormatterRegistry`,
+`PatternSourceCollection`, the pattern sources) are bound under no class name,
+binding `ExtractorInterface` reads nothing, and `provides()` lists nothing: the
+provider is not deferred. Name an extractor of your own in `extractor`, a class
+or a binding implementing `ExtractorInterface`, as Symfony's
+`extractor_service` names one.
+
 #### The language server judges for the workspace's target
 
 1.x judged for the PHP running the server. The server now resolves the target
 at `initialize`, for the first workspace folder (else `rootUri`):
 `initializationOptions.phpVersion` / `pcreVersion`, else `regex.json` there,
 else `composer.json` there, else the running PHP. It logs the target with
-`window/logMessage`. A `Regex` passed to `new Server($regex)` is used as it is.
+`window/logMessage`.
 See [the language server guide](docs/guides/lsp.md#target-php-and-pcre2).
 
 #### The ReDoS confirmation has no JIT switch
@@ -1722,6 +1759,7 @@ which no caller should catch on purpose.
 | what went wrong | before | 2.0 |
 |---|---|---|
 | `Regex::explain()` with an unknown format | `\InvalidArgumentException` | `InvalidRegexOptionException` |
+| `transpile()` with an unknown dialect | `TranspileException` | `InvalidRegexOptionException`, thrown by `Dialect::fromName()` before the pattern is read; `transpile()` takes a `PHPRegex\Transpiler\Dialect` case or its name, and `TranspileException` is left to a pattern the dialect cannot carry |
 | `FormatterRegistry::get()` with an unknown name | `\InvalidArgumentException` | `PHPRegex\Linter\Exception\LintException` |
 | a lint worker that failed, a JSON report that cannot be encoded | `\RuntimeException` | `PHPRegex\Linter\Exception\LintException` |
 | `GraphGenerator::generate()` with an unknown format, a self-update that cannot go on | `\InvalidArgumentException`, `\RuntimeException` | `PHPRegex\Cli\Exception\CliException` |

@@ -20,6 +20,7 @@ use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosProof;
 
 /**
@@ -275,7 +276,7 @@ final class PatternLab
     private static function match(string $pattern, string $subject): array
     {
         self::$engine ??= new PcreEngine();
-        $outcome = self::$engine->match($pattern, $subject, null, 0, \PREG_UNMATCHED_AS_NULL | \PREG_OFFSET_CAPTURE);
+        $outcome = self::$engine->match($pattern, $subject, \PREG_UNMATCHED_AS_NULL | \PREG_OFFSET_CAPTURE);
 
         if (null === $outcome->matched) {
             return ['result' => false, 'groups' => [], 'error' => $outcome->error];
@@ -412,7 +413,7 @@ final class PatternLab
      */
     private static function verdictFailure(RedosAnalysis $verdict): ?string
     {
-        if ($verdict->isProvenSafe() && null === $verdict->searchCost) {
+        if (RedosProof::Proven === $verdict->proof && RedosComplexity::Linear === $verdict->complexity && null === $verdict->searchCost) {
             return null;
         }
 

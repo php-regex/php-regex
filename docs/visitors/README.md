@@ -243,12 +243,12 @@ echo $optimizer->optimize('/a{0,1}/')->optimized;  // '/a?/'
 | `(?:foo)`  | `foo`       | A plain non-capturing group that changes nothing; one around an alternation stays, <code>^(?:a&#124;b)$</code> is not <code>^a&#124;b$</code>, so does one a quantifier repeats unless it holds one item, `(?:a+)?` is not `a+?`, and one that sets an option with no colon: `(?:(?i)a)b` is not `(?i)ab` |
 | `\-`       | `-`         | An escape of a character that needs none  |
 | `\1`       | `\g{1}`     | The braces end the number: no digit after it can join it |
-| `[\t\n\x0B\f\r ]` | `\s` | The same six characters under the `C` locale: only with `new Modernizer('C')` or `'POSIX'`, and kept under `/u` and `(*UCP)`, where `\s` matches more |
+| `[\t\n\x0B\f\r ]` | `\s` | The same six characters under the `C` locale: only with a target whose locale is `C` or `POSIX`, `new Modernizer($parser->target())`, and kept under `/u` and `(*UCP)`, where `\s` matches more |
 
 Without `u`, PHP builds the table of `\s` from `LC_CTYPE` once a program
 calls `setlocale()`, and many locales give it the no-break space, byte `0xA0`:
 more than half of those macOS installs. The Modernizer writes `\s` only
-when told the pattern runs under `C` or `POSIX`, its one constructor argument;
+when its one constructor argument, a `PcreTarget`, names `C` or `POSIX`;
 by default the class stays as written. `\d` is the ten ASCII digits under every
 locale, so `[0-9]` becomes `\d` without it.
 
@@ -314,14 +314,17 @@ use PHPRegex\Toolkit\Regex;
 use PHPRegex\Linter\PatternLinter;
 
 $linter = new PatternLinter();
-Regex::create()->parse('/(a+)+b/')->accept($linter);
 
-foreach ($linter->getIssues() as $issue) {
+foreach ($linter->analyze(Regex::create()->parse('/(a+)+b/')) as $issue) {
     echo $issue->message, "\n";
 }
 // Nested quantifiers in capturing group 1 "(a+)" can cause catastrophic backtracking.
 // Quantified capturing group 1 "(a+)" with "+": only the last iteration's capture is retained.
 ```
+
+`analyze()` takes the root of the tree, the `RegexNode` `parse()` gives: the rules read the groups and the flags of
+the whole pattern, so a node below the root is no pattern to lint. `getIssues()` gives the findings of the last pattern
+read again, and the `visit*()` methods are `@internal`.
 
 The lint rules read the shape of the pattern. The ReDoS verdict comes from `Regex::redos()`, below.
 
@@ -483,7 +486,10 @@ echo $sample;  // e.g., "Word12"
 Visiting the tree draws a sample from the tree alone: an assertion, a condition or a
 backreference can make it one the engine does not match (`/(?!^)a/` draws `a`). `generate()`
 draws again and checks each sample with the running engine, as `Regex::generate()` does, and
-throws `SampleGenerationException` when none matches:
+throws `SampleGenerationException` when none matches. It reads and judges the pattern with the
+parser the generator was built with, the last argument of
+`new SampleGenerator(int $maxRepetition = 3, ?int $seed = null, ?RegexParser $parser = null)`,
+or with one for the running PHP:
 
 ```php
 use PHPRegex\Generator\SampleGenerator;
@@ -499,7 +505,9 @@ echo (new SampleGenerator())->generate('/(?!^)a/');  // "aa"
 checked against the running engine: `preg_match()` gives 1 on each matching case and 0 on each
 non-matching one. A pattern the engine refuses has no case, and one that matches every subject
 (`/a*/`) has no non-matching case. No case is longer than 1,048,576 bytes, the longest sample
-`SampleGenerator` builds: `/^(?:a{65535}){100}$/` has no matching case.
+`SampleGenerator` builds: `/^(?:a{65535}){100}$/` has no matching case. A matching case its
+heuristics miss, as `/^(a)\1$/`, is a sample `SampleGenerator::generate()` draws with the parser
+of `new TestCaseGenerator(?RegexParser $parser = null)`.
 
 ```php
 use PHPRegex\Toolkit\Regex;

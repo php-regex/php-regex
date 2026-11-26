@@ -31,7 +31,7 @@ final class PcreMatch
     public ?string $error = null;
     /**
      */
-    public int $errorCode = \PREG_NO_ERROR;
+    public int $pcreError = \PREG_NO_ERROR;
 
     /**
      * @internal built by PcreEngine::match() and PcreEngine::test()
@@ -39,13 +39,13 @@ final class PcreMatch
      * @param bool|null                                              $matched   true or false as preg_match() answers; null when it gave no answer
      * @param array<int|string, string|array{string|null, int}|null> $groups    the groups as preg_match() fills them under the flags the caller asked: a plain string, [value, byte offset] with a null value for a group that did not participate, or a null value alone; empty without an answer
      * @param string|null                                            $error     why no answer came: the compilation error, or the engine's last error
-     * @param int                                                    $errorCode the engine's last error code, PREG_NO_ERROR with an answer
+     * @param int                                                    $pcreError the preg_last_error() code the engine left, PREG_NO_ERROR with an answer
      */
-    public function __construct(?bool $matched, array $groups = [], ?string $error = null, int $errorCode = \PREG_NO_ERROR)
+    public function __construct(?bool $matched, array $groups = [], ?string $error = null, int $pcreError = \PREG_NO_ERROR)
     {
         $this->matched = $matched;
         $this->groups = $groups;
         $this->error = $error;
-        $this->errorCode = $errorCode;
+        $this->pcreError = $pcreError;
     }
 }

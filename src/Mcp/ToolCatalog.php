@@ -19,6 +19,7 @@ use PHPRegex\Mcp\Tool\FormatTool;
 use PHPRegex\Mcp\Tool\RedosTool;
 use PHPRegex\Mcp\Tool\TranspileTool;
 use PHPRegex\Mcp\Tool\ValidateTool;
+use PHPRegex\Transpiler\Dialect;
 
 /**
  * The tools the server serves, with the schemas a client reads. The
@@ -41,6 +42,8 @@ final class ToolCatalog
             'pcre' => ['type' => 'string'],
             'locale' => ['type' => 'string'],
             'source' => ['type' => 'string'],
+            'pcre_source' => ['type' => ['string', 'null']],
+            'locale_source' => ['type' => ['string', 'null']],
             'range' => [
                 'type' => 'array',
                 'items' => [
@@ -52,7 +55,7 @@ final class ToolCatalog
                 'minItems' => 1,
             ],
         ],
-        'required' => ['php', 'pcre', 'locale', 'source', 'range'],
+        'required' => ['php', 'pcre', 'locale', 'source', 'pcre_source', 'locale_source', 'range'],
         'additionalProperties' => false,
     ];
 
@@ -85,12 +88,13 @@ final class ToolCatalog
     private function __construct(private readonly array $tools) {}
 
     /**
-     * The first catalog: validate, explain, format, transpile and the ReDoS
-     * verdict, each judged for the target given unless a call names its own.
+     * The library's catalog: validate, explain, format, transpile and the
+     * ReDoS verdict, each judged for the target given unless a call names
+     * its own. A minor release may add tools.
      *
      * @param Target $target
      */
-    public static function v1(array $target = []): self
+    public static function create(array $target = []): self
     {
         $regexes = new RegexFactory($target);
         $catalog = new self([]);
@@ -131,13 +135,13 @@ final class ToolCatalog
             ->with(new ToolDefinition(
                 'regex_transpile',
                 'Translate a regex pattern to JavaScript, HTML or Python',
-                'A PCRE pattern written as in PHP source (/…/flags) rewritten for JavaScript (js), an HTML pattern attribute (html) or Python (python), with every note on what was rewritten and every warning on what matches differently. A construct the dialect cannot express is refused with its reason, never approximated.',
+                'A PCRE pattern written as in PHP source (/…/flags) rewritten for JavaScript (javascript or js), an HTML pattern attribute (html-pattern or html) or Python (python or py), with every note on what was rewritten and every warning on what matches differently. A construct the dialect cannot express is refused with its reason, never approximated.',
                 self::input([
-                    'target' => ['type' => 'string', 'enum' => TranspileTool::TARGETS, 'description' => 'The dialect: js, html or python.'],
+                    'dialect' => ['type' => 'string', 'enum' => Dialect::names(), 'description' => 'The dialect: javascript or js, html-pattern or html, python or py.'],
                     'python_version' => ['type' => 'string', 'description' => 'The Python release the pattern runs on, as "3.11", which carries atomic groups.'],
-                ], ['pattern', 'target']),
+                ], ['pattern', 'dialect']),
                 self::output([
-                    'target' => ['type' => 'string'],
+                    'dialect' => ['type' => 'string'],
                     'source' => ['type' => 'string'],
                     'pattern' => ['type' => 'string'],
                     'flags' => ['type' => 'string'],
@@ -145,7 +149,7 @@ final class ToolCatalog
                     'constructor' => ['type' => 'string'],
                     'warnings' => ['type' => 'array', 'items' => ['type' => 'string']],
                     'notes' => ['type' => 'array', 'items' => ['type' => 'string']],
-                ], ['target', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes'], 'php_target'),
+                ], ['dialect', 'source', 'pattern', 'flags', 'literal', 'constructor', 'warnings', 'notes']),
                 new TranspileTool($regexes),
             ))
             ->with(new ToolDefinition(
@@ -184,6 +188,8 @@ final class ToolCatalog
 
     /**
      * This catalog with one more tool, or one replaced by name.
+     *
+     * @internal every tool of the catalog is announced read-only and idempotent: the library's own only
      */
     public function with(ToolDefinition $tool): self
     {
@@ -223,14 +229,13 @@ final class ToolCatalog
      *
      * @param array<string, array<string, mixed>> $properties
      * @param list<string>                        $required
-     * @param string                              $targetKey  the key of the target judged: "php_target" where "target" is the tool's own
      *
      * @return array<string, mixed>
      */
-    private static function output(array $properties, array $required, string $targetKey = 'target'): array
+    private static function output(array $properties, array $required): array
     {
-        $properties = [...$properties, $targetKey => self::TARGET, 'range' => self::RANGE];
-        $required = [...$required, $targetKey, 'range'];
+        $properties = [...$properties, 'target' => self::TARGET, 'range' => self::RANGE];
+        $required = [...$required, 'target', 'range'];
 
         return [
             'type' => 'object',

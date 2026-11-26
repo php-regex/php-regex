@@ -84,13 +84,13 @@ abstract class AbstractTool implements ToolInterface
      * that keeps the tree; then a note per notice. None of them makes the
      * answer a failure of the tool: the floor accepts the pattern. Beside
      * it, the keys every document of a tool ends with: the target judged,
-     * under $key, and the verdict of each version of its range on the
-     * pattern, the floor first. The parsers of the later versions are
+     * and the verdict of each version of its range on the pattern, the
+     * floor first. The parsers of the later versions are
      * built once for both.
      *
-     * @return array{string, array<string, array{php: string, pcre: string, locale: string, source: string, range: list<TargetDescription>}|non-empty-list<RangePoint>>}
+     * @return array{string, array{target: array{php: string, pcre: string, locale: string, source: string, pcre_source: string|null, locale_source: string|null, range: list<TargetDescription>}, range: non-empty-list<RangePoint>}}
      */
-    protected static function overRange(string $text, Regex $regex, ProjectTarget $target, string $pattern, string $key = 'target'): array
+    protected static function overRange(string $text, Regex $regex, ProjectTarget $target, string $pattern): array
     {
         $floor = $regex->parser();
         $later = $target->rangeParsers($floor);
@@ -104,7 +104,7 @@ abstract class AbstractTool implements ToolInterface
             $lines[] = 'Note: '.$notice;
         }
 
-        return [implode("\n", $lines), [$key => $target->toArray(), 'range' => RangePoints::of($floor, $later, $pattern)]];
+        return [implode("\n", $lines), ['target' => $target->toArray(), 'range' => RangePoints::of($floor, $later, $pattern)]];
     }
 
     /**

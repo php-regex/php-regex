@@ -415,10 +415,12 @@ $shape->matchShape();
 
 `(?(VERSION>=10.45)...)` keeps the arm the release the analyzer is given takes:
 `new CaptureShapeAnalyzer($target)` takes a `PcreTarget`, and `Regex::captureShape()`
-passes the facade's own. Before PCRE2 10.47 a one-digit minor reads as tens, so
-`(?(VERSION>=10.5)...)` holds on 10.49 and not on 10.44, where it reads 10.50. A
-release reads the condition the same wherever it runs, so it folds in a pattern that
-calls a group too. Without a target, `new CaptureShapeAnalyzer()`, both arms stay:
+passes the facade's own. Without a target, `new CaptureShapeAnalyzer()` reads the
+pattern for the running engine, as `RegexParser::create()` does. Before PCRE2 10.47 a
+one-digit minor reads as tens, so `(?(VERSION>=10.5)...)` holds on 10.49 and not on
+10.44, where it reads 10.50. A release reads the condition the same wherever it runs,
+so it folds in a pattern that calls a group too. Read for every release,
+`CaptureShapeAnalyzer::forEveryRelease()`, both arms stay:
 
 ```php
 use PHPRegex\Parser\PcreTarget;
@@ -428,7 +430,7 @@ $regex = RegexParser::create(['pcre_version' => '10.44'])->parse('/(?(VERSION>=1
 
 (new CaptureShapeAnalyzer(new PcreTarget(80400, '10.44')))->analyze($regex)->matchShape();
 // array{0: 'b', 1: '', 2: 'b'}
-(new CaptureShapeAnalyzer())->analyze($regex)->matchShape();
+CaptureShapeAnalyzer::forEveryRelease()->analyze($regex)->matchShape();
 // array{0: 'a', 1: 'a'}|array{0: 'b', 1: '', 2: 'b'}
 ```
 
@@ -732,8 +734,9 @@ this.
   the trailing groups that took no part in the match (`preg_match('/(a)|(b)/', 'a', $m)`
   gives the keys `[0, 1]`, where `$maxGroupNumber` is 2).
 - `$captureSequence`: the number of each capturing group, in the order they are written.
-- `getCaptureCount()`: how many capturing groups are written. Inside a branch reset,
-  this can be more than `$maxGroupNumber`.
+- `getWrittenGroupCount()`: how many capturing groups are written, not PCRE2's capture
+  count. Inside a branch reset, this can be more than `$maxGroupNumber`, which is the
+  count PCRE2 gives: `/(?|(a)|(b))/` writes two groups and PCRE2 counts one.
 - `$namedGroups`: each name and the numbers it stands for.
 - `hasNamedGroup()` and `getNamedGroupNumbers()`: one name, looked up. An unknown name
   has no numbers.
@@ -747,7 +750,7 @@ $numbering = (new GroupNumberingCollector())->collect($regex);
 
 $numbering->maxGroupNumber;                 // 3
 $numbering->captureSequence;                // [1, 2, 2, 3]
-$numbering->getCaptureCount();              // 4
+$numbering->getWrittenGroupCount();         // 4
 $numbering->namedGroups;                    // ['year' => [1], 'day' => [3]]
 $numbering->hasNamedGroup('day');           // true
 $numbering->getNamedGroupNumbers('day');    // [3]

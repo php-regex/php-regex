@@ -83,21 +83,26 @@ php_regex:
         enabled: false
         threshold: high    # low, medium, high or critical, in any case
         ignored_patterns: []
-    analysis:
-        complexity: false  # regex:lint reports complex patterns
-        warning_threshold: 50
+    # The complexity report, as "checks.complexity" of regex.json.
+    complexity:
+        enabled: false     # regex:lint reports complex patterns
+        threshold: 50      # the complexity score reported from, 1 or more
     automata:
         minimization_algorithm: hopcroft         # hopcroft or moore
         determinization_algorithm: subset-indexed # subset or subset-indexed
+    # The suggestions, as "checks.optimizations" of regex.json.
     optimizations:
-        digits: true
-        word: true
-        ranges: true
-        canonicalize_char_classes: true
-        possessive: false
-        factorize: false
-        min_quantifier_count: 4
-        verify_with_automata: true  # suggest only the rewrites the automata prove
+        enabled: true
+        min_savings: 1     # characters a rewrite saves; --min-savings overrides it
+        options:
+            digits: true
+            word: true
+            ranges: true
+            canonicalize_char_classes: true
+            possessive: false
+            factorize: false
+            min_quantifier_count: 4
+            verify_with_automata: true  # suggest only the rewrites the automata prove
     paths: [src]       # read from %kernel.project_dir%
     exclude: [vendor]  # a directory of the project, wherever it lies under the paths
     report_unmatched_ignores: true  # report the @regex-ignore markers that silence nothing
@@ -125,7 +130,7 @@ for one of `php_regex.paths`, which the message names.
 A value the bundle cannot read stops the container compile with the key
 named: an unknown ReDoS threshold, a `php_version` that is no version and
 no range `regex lint --php-version` takes, a `pcre_version` that is no
-release. `safe` and `unknown` are not thresholds:
+release, a `complexity.threshold` or an `optimizations.min_savings` below 1. `safe` and `unknown` are not thresholds:
 they are the verdicts a pattern gets.
 
 `redos.ignored_patterns` lists patterns, fragments of patterns or whole
@@ -213,6 +218,45 @@ An occurrence your extractor builds carries no inline marker of its own:
 `regex:lint` reads the markers of the file it names, so a `@regex-ignore` on
 its line silences it as it silences a pattern the built-in extractors find,
 and a marker that silences nothing is reported the same way.
+
+To read your calls beside the native ones and the presets, leave
+`extractor_service` out and decorate the built-in extractor, the service
+`php_regex.extractor.instance`: yours is handed it, and returns its
+occurrences with your own.
+
+```php
+namespace App\Regex;
+
+use PHPRegex\Linter\Extraction\ExtractorInterface;
+use PHPRegex\Linter\PatternOccurrence;
+
+final class RuleExtractor implements ExtractorInterface
+{
+    public function __construct(private readonly ExtractorInterface $inner) {}
+
+    public function extract(array $files): array
+    {
+        $occurrences = $this->inner->extract($files);
+        foreach ($files as $file) {
+            foreach (file($file) ?: [] as $index => $line) {
+                if (1 === preg_match("~Rule::matches\\('([^']*)'~", $line, $match, \PREG_OFFSET_CAPTURE)) {
+                    $occurrences[] = PatternOccurrence::found($match[1][0], $file, $index + 1, $match[1][1], 'Rule::matches()');
+                }
+            }
+        }
+
+        return $occurrences;
+    }
+}
+```
+
+```yaml
+# config/services.yaml
+services:
+    App\Regex\RuleExtractor:
+        decorates: php_regex.extractor.instance
+        arguments: ['@.inner']
+```
 
 `regex:lint` reads the `Regex` constraints of the validator mapping files
 FrameworkBundle hands the validator: `config/validator/*.yaml` and `*.xml`,
@@ -307,6 +351,8 @@ final class SearchFilter
   `/a*a*$/` (`medium`) passes. `redosMessage` takes {% raw %}`{{ value }}`{% endraw %} and
   {% raw %}`{{ severity }}`{% endraw %}; the code is `ValidRegex::REDOS_ERROR`. An invalid pattern
   is never analysed for ReDoS.
+  A pattern whose [search is quadratic](redos.md#the-cost-of-an-unanchored-search), as
+  `/\s*$/`, ranks `medium`: one attempt is linear, the search is not.
 - Null and the empty string are valid, as for every Symfony constraint: add
   `NotBlank` to refuse them.
 - `message` and `redosMessage` are translation keys of the `validators`
@@ -422,7 +468,7 @@ as a top-level `target` object:
 
 ```json
 {
-    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "php_regex.php_version", "range": [{"php": "8.2", "pcre": "10.40"}]},
+    "target": {"php": "8.2", "pcre": "10.40", "locale": "C", "source": "php_regex.php_version", "pcre_source": null, "locale_source": null, "range": [{"php": "8.2", "pcre": "10.40"}]},
     "stats": {"errors": 0, "warnings": 0, "optimizations": 0, "redos_errors": 0, "infos": 0, "lint_errors": 0, "parser_fallbacks": 0, "not_analyzed": 0, "arguments_constant": 0, "arguments_finite_set": 0, "arguments_quoted_shell": 0, "arguments_raw_shell": 0, "arguments_opaque": 0},
     "results": []
 }

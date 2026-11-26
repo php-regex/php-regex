@@ -23,14 +23,15 @@ final class RedosBenchmarkTest extends TestCase
     #[Test]
     public function test_a_run_counts_the_iterations_and_averages_the_wall_time_over_them(): void
     {
-        $result = (new RedosBenchmark())->run('vuln', '/a/', 'a', 2, 3);
+        $result = (new RedosBenchmark())->run('pattern', '/a/', 'a', 2, 3);
 
-        $this->assertSame('vuln', $result['label']);
+        $this->assertSame('pattern', $result['label']);
         $this->assertSame('match', $result['result']);
         $this->assertSame(3, $result['iterations']);
         $this->assertSame($result['wall_ms'] / 3, $result['avg_ms']);
-        $this->assertSame('-', $result['err_msg']);
-        $this->assertSame(\PREG_NO_ERROR, $result['err_code']);
+        // No error: neither key applies.
+        $this->assertNull($result['error']);
+        $this->assertNull($result['error_code']);
         // A few microseconds: a unit off by a thousand is not.
         $this->assertGreaterThanOrEqual(0.0, $result['wall_ms']);
         $this->assertLessThan(1000.0, $result['wall_ms']);
@@ -41,9 +42,9 @@ final class RedosBenchmarkTest extends TestCase
     }
 
     #[Test]
-    public function test_a_subject_the_pattern_does_not_match_is_no(): void
+    public function test_a_subject_the_pattern_does_not_match_is_no_match(): void
     {
-        $this->assertSame('no', (new RedosBenchmark())->run('safe', '/b/', 'a', 0, 1)['result']);
+        $this->assertSame('no_match', (new RedosBenchmark())->run('safe', '/b/', 'a', 0, 1)['result']);
     }
 
     #[Test]
@@ -53,7 +54,7 @@ final class RedosBenchmarkTest extends TestCase
         $jit = ini_set('pcre.jit', '0');
 
         try {
-            $result = (new RedosBenchmark())->run('vuln', '/(a+)+$/', str_repeat('a', 30).'!', 0, 5);
+            $result = (new RedosBenchmark())->run('pattern', '/(a+)+$/', str_repeat('a', 30).'!', 0, 5);
         } finally {
             ini_set('pcre.backtrack_limit', (string) $backtrack);
             ini_set('pcre.jit', (string) $jit);
@@ -62,20 +63,20 @@ final class RedosBenchmarkTest extends TestCase
         $this->assertSame('error', $result['result']);
         $this->assertSame(1, $result['iterations']);
         $this->assertSame($result['wall_ms'], $result['avg_ms']);
-        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $result['err_code']);
-        $this->assertSame('Backtrack limit exhausted', $result['err_msg']);
+        $this->assertSame(\PREG_BACKTRACK_LIMIT_ERROR, $result['error_code']);
+        $this->assertSame('Backtrack limit exhausted', $result['error']);
     }
 
     #[Test]
     public function test_a_pattern_php_refuses_is_an_error_reported_without_a_warning(): void
     {
         error_clear_last();
-        $result = (new RedosBenchmark())->run('vuln', '/a(/', 'a', 1, 3);
+        $result = (new RedosBenchmark())->run('pattern', '/a(/', 'a', 1, 3);
 
         $this->assertSame('error', $result['result']);
         $this->assertSame(1, $result['iterations']);
-        $this->assertSame(\PREG_INTERNAL_ERROR, $result['err_code']);
-        $this->assertSame('Internal error', $result['err_msg']);
+        $this->assertSame(\PREG_INTERNAL_ERROR, $result['error_code']);
+        $this->assertSame('Internal error', $result['error']);
         $this->assertNull(error_get_last());
     }
 
@@ -127,16 +128,16 @@ final class RedosBenchmarkTest extends TestCase
      */
     public static function provideSummaries(): iterable
     {
-        yield 'faster, same result' => ['vulnAvg' => 6.0, 'vulnResult' => 'no', 'safeAvg' => 2.0, 'safeResult' => 'no', 'expected' => ['result_parity' => 'same', 'speedup' => 3.0, 'delta_ms' => 4.0]];
-        yield 'slower, another result' => ['vulnAvg' => 1.0, 'vulnResult' => 'error', 'safeAvg' => 4.0, 'safeResult' => 'no', 'expected' => ['result_parity' => 'different', 'speedup' => 0.25, 'delta_ms' => -3.0]];
+        yield 'faster, same result' => ['vulnAvg' => 6.0, 'vulnResult' => 'no_match', 'safeAvg' => 2.0, 'safeResult' => 'no_match', 'expected' => ['result_parity' => 'same', 'speedup' => 3.0, 'delta_ms' => 4.0]];
+        yield 'slower, another result' => ['vulnAvg' => 1.0, 'vulnResult' => 'error', 'safeAvg' => 4.0, 'safeResult' => 'no_match', 'expected' => ['result_parity' => 'different', 'speedup' => 0.25, 'delta_ms' => -3.0]];
         yield 'a safe run of no time' => ['vulnAvg' => 1.0, 'vulnResult' => 'match', 'safeAvg' => 0.0, 'safeResult' => 'match', 'expected' => ['result_parity' => 'same', 'speedup' => null, 'delta_ms' => null]];
     }
 
     /**
-     * @return array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, err_msg: string, err_code: int, iterations: int}
+     * @return array{label: string, result: string, wall_ms: float, avg_ms: float, cpu_ms: ?float, mem_bytes: int, peak_bytes: int, error: string|null, error_code: int|null, iterations: int}
      */
     private static function benchResult(float $avg, string $result): array
     {
-        return ['label' => 'x', 'result' => $result, 'wall_ms' => $avg, 'avg_ms' => $avg, 'cpu_ms' => null, 'mem_bytes' => 0, 'peak_bytes' => 0, 'err_msg' => '-', 'err_code' => 0, 'iterations' => 1];
+        return ['label' => 'x', 'result' => $result, 'wall_ms' => $avg, 'avg_ms' => $avg, 'cpu_ms' => null, 'mem_bytes' => 0, 'peak_bytes' => 0, 'error' => null, 'error_code' => null, 'iterations' => 1];
     }
 }

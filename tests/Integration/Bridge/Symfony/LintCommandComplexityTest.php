@@ -22,8 +22,8 @@ use Symfony\Component\Console\Tester\CommandTester;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
- * regex:lint reports a pattern at or above "analysis.warning_threshold" once
- * "analysis.complexity" turns the report on, as `regex lint` does under
+ * regex:lint reports a pattern at or above "complexity.threshold" once
+ * "complexity.enabled" turns the report on, as `regex lint` does under
  * "checks.complexity"; off, the threshold alone reports nothing.
  */
 final class LintCommandComplexityTest extends TestCase
@@ -36,7 +36,7 @@ final class LintCommandComplexityTest extends TestCase
     #[Test]
     public function test_lint_with_complexity_on_reports_a_pattern_at_the_threshold(): void
     {
-        $issueIds = $this->lintIssueIds(['complexity' => true, 'warning_threshold' => 15]);
+        $issueIds = $this->lintIssueIds(['enabled' => true, 'threshold' => 15]);
 
         $this->assertContains('regex.lint.complexity', $issueIds);
     }
@@ -44,7 +44,7 @@ final class LintCommandComplexityTest extends TestCase
     #[Test]
     public function test_lint_with_complexity_on_spares_a_pattern_below_the_threshold(): void
     {
-        $issueIds = $this->lintIssueIds(['complexity' => true, 'warning_threshold' => 16]);
+        $issueIds = $this->lintIssueIds(['enabled' => true, 'threshold' => 16]);
 
         $this->assertNotContains('regex.lint.complexity', $issueIds);
     }
@@ -52,16 +52,16 @@ final class LintCommandComplexityTest extends TestCase
     #[Test]
     public function test_lint_with_complexity_off_reports_nothing_whatever_the_threshold(): void
     {
-        $this->assertNotContains('regex.lint.complexity', $this->lintIssueIds(['warning_threshold' => 1]));
-        $this->assertNotContains('regex.lint.complexity', $this->lintIssueIds(['complexity' => false, 'warning_threshold' => 1]));
+        $this->assertNotContains('regex.lint.complexity', $this->lintIssueIds(['threshold' => 1]));
+        $this->assertNotContains('regex.lint.complexity', $this->lintIssueIds(['enabled' => false, 'threshold' => 1]));
     }
 
     /**
-     * @param array<string, mixed> $analysis
+     * @param array<string, mixed> $complexity
      *
      * @return list<string>
      */
-    private function lintIssueIds(array $analysis): array
+    private function lintIssueIds(array $complexity): array
     {
         $project = $this->makeProject(['composer.json' => '{"name": "acme/app"}', 'src/Pattern.php' => self::COMPLEX_FILE]);
 
@@ -69,7 +69,7 @@ final class LintCommandComplexityTest extends TestCase
         $container->setParameter('kernel.debug', true);
         $container->setParameter('kernel.cache_dir', sys_get_temp_dir());
         $extension = BundleContainer::register($container);
-        $container->loadFromExtension($extension->getAlias(), ['analysis' => $analysis]);
+        $container->loadFromExtension($extension->getAlias(), ['complexity' => $complexity]);
         $container->compile();
 
         $command = $container->get('php_regex.command.lint');

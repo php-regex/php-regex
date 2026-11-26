@@ -410,7 +410,7 @@ final class LintParityTest extends TestCase
             $type = $issue->severity->level();
             $line = $issue->line;
             $message = $issue->message;
-            $position = $issue->position;
+            $position = $issue->offset;
             $validation = $issue->validation;
 
             $limit = $validation instanceof ValidationResult && ValidationErrorCategory::Limit === $validation->category;

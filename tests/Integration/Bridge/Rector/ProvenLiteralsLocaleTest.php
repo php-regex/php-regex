@@ -35,6 +35,8 @@ final class ProvenLiteralsLocaleTest extends TestCase
     {
         $this->requiresLocale('fr_FR.ISO8859-1', 'The targets of the Rector rules under a Latin-1 locale');
         $literals = new ProvenLiterals();
+        // PHP 8.4's PCRE2: the running one where the running PHP is 8.4.
+        $php = '80400/'.PregCall::target(80400)->pcreVersion;
 
         setlocale(\LC_CTYPE, 'C');
         $this->assertSame('C', PregCall::targetParser(80400)->target()->locale);
@@ -46,13 +48,13 @@ final class ProvenLiteralsLocaleTest extends TestCase
 
         /** @var array<string, mixed> $targets */
         $targets = (new \ReflectionProperty($literals, 'targets'))->getValue($literals);
-        $this->assertSame(['80400/10.44/C', '80400/10.44/fr_FR.ISO8859-1'], array_keys($targets));
+        $this->assertSame([$php.'/C', $php.'/fr_FR.ISO8859-1'], array_keys($targets));
         /** @var array<string, mixed> $proofs */
         $proofs = (new \ReflectionProperty($literals, 'literals'))->getValue($literals);
-        $this->assertSame(['80400/10.44/C:/abc/', '80400/10.44/fr_FR.ISO8859-1:/abc/'], array_keys($proofs));
+        $this->assertSame([$php.'/C:/abc/', $php.'/fr_FR.ISO8859-1:/abc/'], array_keys($proofs));
         $this->assertNull($literals->match('/a+/', 80400));
         /** @var array<string, mixed> $matches */
         $matches = (new \ReflectionProperty($literals, 'matches'))->getValue($literals);
-        $this->assertSame(['80400/10.44/fr_FR.ISO8859-1:/a+/'], array_keys($matches));
+        $this->assertSame([$php.'/fr_FR.ISO8859-1:/a+/'], array_keys($matches));
     }
 }

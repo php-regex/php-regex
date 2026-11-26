@@ -89,9 +89,9 @@ final class PcreTarget
         ?string $locale = null
     ) {
         [$major, $minor] = self::releaseParts($pcreVersion)
-            ?? throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion));
+            ?? throw new InvalidRegexOptionException(\sprintf('"pcre_version" must be a PCRE2 release like "10.44", not "%s".', $pcreVersion), 'pcre_version');
         if ((int) $major < 10) {
-            throw new InvalidRegexOptionException(\sprintf('"pcre_version" %s names no PCRE2 release: the first is 10.00.', trim($pcreVersion)));
+            throw new InvalidRegexOptionException(\sprintf('"pcre_version" %s names no PCRE2 release: the first is 10.00.', trim($pcreVersion)), 'pcre_version');
         }
         $this->release = (int) $major * 1000 + (int) $minor;
         $this->pcreVersion = (int) $major.'.'.$minor;
@@ -302,6 +302,8 @@ final class PcreTarget
      * that depend on a patch release, such as "\C" under "u" from PHP
      * 8.4.25, belong to the validator, which runs on every call, cached
      * tree or not.
+     *
+     * @internal the parser, the solver and the lint key their caches by it
      */
     public function cacheKey(): string
     {

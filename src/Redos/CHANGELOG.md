@@ -6,6 +6,12 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosAnalysis::isProvenSafe()` holds for a proven linear attempt whose
+   search has no quadratic witness, and `hasQuadraticSearch()` says whether
+   `$searchCost` or `$everyMatchSearchCost` holds one. `/\s*$/`, whose search
+   takes 2 s on 20,000 spaces and `!` with `pcre.jit=0`, keeps the severity
+   and the headline of its linear attempt, `safe (proven)`, and is no longer
+   proven safe.
  * The confirmed mode counts the reads of a possessive or atomic run where
    the pattern's delimiter is `?`, `:` or `)`, or where `\Q` quotes the
    repeated character: the replay moves such a pattern to a delimiter its
@@ -18,7 +24,7 @@ CHANGELOG
    the end of the run, the loop pays the run at each match: `/a(?:a+\d)?/`,
    `/a*b|a/` and `/a\K(?:a+\d)?/` take 63 to 64 ms through `preg_match_all()`
    on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
-   0.01 ms through `preg_match()`. `RedosSearchCost::$shortMatch` says so,
+   0.01 ms through `preg_match()`. `RedosSearchCost::$cause` says so,
    and confirmed mode replays the attempt pinned inside the run.
  * The search cost lets the attempts after the run match: the search tries
    those the breaker starts, and the one at the subject's end, once every

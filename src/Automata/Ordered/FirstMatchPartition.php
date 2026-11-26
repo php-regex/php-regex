@@ -39,8 +39,8 @@ use PHPRegex\Automata\Unicode\CodePointHelper;
  * A candidate is the tuples of patterns it takes, one pattern per field:
  * the fields are joined by a separator past Unicode (NfaComposer), never
  * through the text of the patterns, and the tuples united. A candidate
- * given as null takes nothing for certain (a route with a condition, a
- * rule matched on an IP): it shadows nothing and keeps nothing.
+ * given as null may take nothing (a route with a condition, a rule matched
+ * on an IP): it shadows nothing and gets no cell.
  */
 final class FirstMatchPartition
 {
@@ -51,43 +51,55 @@ final class FirstMatchPartition
      */
     private array $nfas = [];
 
-    public function __construct(private readonly LanguageSolver $solver = new LanguageSolver(), private readonly SolverOptions $options = new SolverOptions()) {}
+    private readonly LanguageSolver $solver;
+
+    private readonly SolverOptions $options;
 
     /**
-     * @param array<int, list<list<string>>|null> $candidates in the order they are tried: the tuples each takes, or null for one that may take nothing
-     * @param array<int, list<int>>|null          $rivals     for each candidate, the earlier ones that may take one of its strings; every earlier one when null
-     * @param array<int, list<list<string>>>      $keeps      for a candidate that takes strings it does not keep, the tuples it keeps: a route takes the paths it redirects for their trailing slash, and keeps only those it matches as is
+     * @param LanguageSolver|null $solver  reads the patterns, for the PHP and PCRE2 target of its parser; a default solver when null
+     * @param SolverOptions|null  $options the limits of the search; the default ones when null
+     */
+    public function __construct(?LanguageSolver $solver = null, ?SolverOptions $options = null)
+    {
+        $this->solver = $solver ?? new LanguageSolver();
+        $this->options = $options ?? new SolverOptions();
+    }
+
+    /**
+     * @param list<FirstMatchCandidate|null> $candidates in the order they are tried; null for one that may take nothing
      *
      * @throws IncompatibleArgumentException When the tuples do not all hold the same number of fields
      *
-     * @return array<int, FirstMatchCell> by the index of each candidate given, null ones left out
+     * @return array<int, FirstMatchCell> by the place of each candidate in the list, null ones left out
      */
-    public function partition(array $candidates, ?array $rivals = null, array $keeps = []): array
+    public function partition(array $candidates): array
     {
         $composer = new NfaComposer();
         $arity = null;
         /** @var array<int, array{Nfa|null, array<int, bool>, string|null}> $built */
         $built = [];
-        foreach ($candidates as $index => $tuples) {
-            if (null !== $tuples) {
-                $built[$index] = $this->build($tuples, $composer, $arity);
+        foreach ($candidates as $index => $candidate) {
+            if (null !== $candidate) {
+                $built[$index] = $this->build($candidate->takes, $composer, $arity);
             }
         }
 
         $cells = [];
         foreach ($built as $index => $taken) {
-            [$candidate, $unicode, $refused] = isset($keeps[$index]) ? $this->build($keeps[$index], $composer, $arity) : $taken;
+            $given = $candidates[$index];
+            \assert(null !== $given);
+            [$kept, $unicode, $refused] = null === $given->keeps ? $taken : $this->build($given->keeps, $composer, $arity);
             if (null !== $refused) {
-                $cells[$index] = new FirstMatchCell($index, true, null, refused: $refused);
-            } elseif (null === $candidate) {
+                $cells[$index] = new FirstMatchCell($index, null, null, refused: $refused);
+            } elseif (null === $kept) {
                 $cells[$index] = new FirstMatchCell($index, false, null);
             } else {
-                $rivalsOf = array_filter($rivals[$index] ?? array_keys($candidates), static fn (int $j): bool => $j < $index && null !== ($built[$j][0] ?? null));
+                $rivals = array_filter($given->rivals ?? array_keys($candidates), static fn (int $j): bool => $j < $index && null !== ($built[$j][0] ?? null));
 
                 try {
-                    $cells[$index] = $this->cell($index, $candidate, $unicode, $rivalsOf, $built, $composer);
+                    $cells[$index] = $this->cell($index, $kept, $unicode, $rivals, $built, $composer);
                 } catch (ComplexityException $exception) {
-                    $cells[$index] = new FirstMatchCell($index, true, null, refused: $exception->getMessage());
+                    $cells[$index] = new FirstMatchCell($index, null, null, refused: $exception->getMessage());
                 }
             }
         }
