@@ -864,16 +864,11 @@ final class LanguageSolver
     }
 
     /**
-     * Whether the target's PCRE2 may look for the character a lookahead
-     * opening one of the patterns asserts in the wrong place, and skip a
-     * start of a match the normal form says nothing of (see
-     * AssertedFirstCharacter).
-     */
-    /**
      * Refuses a pattern whose matches the target's PCRE2 may miss, looking
      * for the character a lookahead opening it asserts in the wrong place:
      * its language holds every match the engine finds, and some it does
-     * not (see AssertedFirstCharacter).
+     * not (see AssertedFirstCharacter). A pattern that spells no positive
+     * lookahead, "(?=", "(?*" or a verb "(*", is not parsed again for it.
      *
      * @throws ParserException
      * @throws ComplexityException
@@ -881,6 +876,10 @@ final class LanguageSolver
     private function refuseWhereMatchesMayBeMissed(string ...$patterns): void
     {
         foreach ($patterns as $pattern) {
+            if (!str_contains($pattern, '(?=') && !str_contains($pattern, '(?*') && !str_contains($pattern, '(*')) {
+                continue;
+            }
+
             $lookahead = AssertedFirstCharacter::lookahead($this->parser->parse($pattern), $this->parser->target());
             if (null !== $lookahead) {
                 throw new ComplexityException(HirToNfaTransformer::ASSERTED_FIRST_CHARACTER_MESSAGE, $lookahead->getStartPosition(), $pattern);
@@ -888,6 +887,12 @@ final class LanguageSolver
         }
     }
 
+    /**
+     * Whether the target's PCRE2 may look for the character a lookahead
+     * opening one of the patterns asserts in the wrong place, and skip a
+     * start of a match the normal form says nothing of (see
+     * AssertedFirstCharacter).
+     */
     private static function holdsLookaheadLookedForAmiss(PcreTarget $target, RegexNode ...$asts): bool
     {
         foreach ($asts as $ast) {

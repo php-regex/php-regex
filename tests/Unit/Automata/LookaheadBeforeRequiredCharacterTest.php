@@ -156,6 +156,10 @@ final class LookaheadBeforeRequiredCharacterTest extends TestCase
         yield 'a class of the character twice' => ['pattern' => '/(?=[aa])b?(?i:A)/', 'witness' => 'a'];
         yield 'a second lookahead that may skip a character' => ['pattern' => '/(?=a)(?=b?a)c?(?i:A)/', 'witness' => 'a'];
         yield 'a dot that may match nothing' => ['pattern' => '/(?=a).?(?i:A)/', 'witness' => 'a'];
+        yield 'a lookahead spelled as a verb' => ['pattern' => '/(*pla:a)b?A/i', 'witness' => 'a'];
+        yield 'a lookahead spelled as a long verb' => ['pattern' => '/(*positive_lookahead:a)b?A/i', 'witness' => 'a'];
+        yield 'a non-atomic lookahead' => ['pattern' => '/(?*a)b?A/i', 'witness' => 'a'];
+        yield 'a non-atomic lookahead spelled as a verb' => ['pattern' => '/(*napla:a)b?A/i', 'witness' => 'a'];
     }
 
     /**
