@@ -28,6 +28,7 @@ use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RegexNode;
 use PHPRegex\Parser\Node\SequenceNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\Syntax\StartOptions;
 
 /**
@@ -89,10 +90,47 @@ final class NewlineSequencePossession
      * "/^(?P<a>\R?)(?P<b>[^\n])$/" finds "\r" where
      * "/^(?P<a>\R?)(?P<b>.)$/" finds nothing. The convention is the larger
      * pattern's, which the pattern does not say.
+     *
+     * A pattern that may match nothing lets PCRE2 read past it, from a
+     * repeat of "\R" before it to a dot after it, past "\d*" and not past
+     * "[0-9]*": "/^(?P<b>\R?)(?P<a>[0-9]*)(?P<c>.)$/" finds "\r", and
+     * "/^(?P<b>\R?)(?P<a>\d*)(?P<c>.)$/" nothing.
+     *
+     * Two patterns that write such an end the same way, up to the first
+     * item from that end that may not match nothing, meet the text around
+     * them alike: "/.[0-9]/" and "/.\d/" both start with a dot, and PCRE2
+     * reads no further. Where either may meet it and their ends are written
+     * apart, they are read apart.
      */
-    public static function meetsWhereSpliced(RegexNode $regex): bool
+    public static function meetApartWhereSpliced(RegexNode $left, RegexNode $right): bool
     {
-        return null !== self::find($regex->pattern, self::LINE | self::SEQUENCE) || 0 !== (self::leads($regex->pattern) & self::LINE);
+        if (0 !== ((self::leads($left->pattern) | self::leads($right->pattern)) & (self::LINE | self::EMPTY)) && self::end($left, true) !== self::end($right, true)) {
+            return true;
+        }
+
+        return (null !== self::find($left->pattern, self::LINE | self::SEQUENCE) || null !== self::find($right->pattern, self::LINE | self::SEQUENCE))
+            && self::end($left, false) !== self::end($right, false);
+    }
+
+    /**
+     * The items at the start of the pattern, or at its end, up to the first
+     * one from there that may not match nothing, each printed as written.
+     *
+     * @return list<string>
+     */
+    private static function end(RegexNode $regex, bool $start): array
+    {
+        $items = $regex->pattern instanceof SequenceNode ? $regex->pattern->children : [$regex->pattern];
+        $printer = PatternPrinter::asWritten();
+        $end = [];
+        foreach ($start ? $items : array_reverse($items) as $item) {
+            $end[] = $item->accept($printer);
+            if (0 === (self::leads($item) & self::EMPTY)) {
+                break;
+            }
+        }
+
+        return $end;
     }
 
     /**

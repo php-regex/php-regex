@@ -643,7 +643,11 @@ Two refinements inside those rules:
   refused, and reads like no other: taking the group off `(?:.)*` there is
   no rewrite. A repeat counted once (`.{2}\R`), one a character follows
   first (`.*a\R`), and any under `(*ANY)`, whose dot takes no newline of
-  `\R`, are read as written.
+  `\R`, are read as written. A part spliced into a larger pattern meets
+  what stands around it: one that may end with such a repeat, start with a
+  dot or match nothing reads alike another only where both write that end
+  the same, as `.[0-9]` and `.\d` do; between `\R?` and a dot, `[0-9]*`
+  finds `"\r"` and `\d*` nothing.
 
   A lookbehind branch that matches more than one length, as `\R` does,
   compiles from PCRE2 10.43 on when its length is bounded, up to a limit PCRE2
