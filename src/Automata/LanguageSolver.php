@@ -43,8 +43,11 @@ use PHPRegex\Automata\Transform\LocaleBoundClasses;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
+use PHPRegex\Parser\DelimitedPattern;
 use PHPRegex\Parser\Engine\LibraryPcre;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Parser\Exception\ParserException;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\AlternationHir;
 use PHPRegex\Parser\Hir\AssertionHir;
 use PHPRegex\Parser\Hir\AssertionKind;
@@ -91,6 +94,10 @@ use PHPRegex\Parser\TraversalAction;
  * in another, an anchor or a boundary inside one, (*napla:...) and the like
  * throw a ComplexityException instead of an answer that would be wrong.
  *
+ * A pattern is judged before it is read, at the target of the solver's
+ * parser: one PCRE2 refuses to compile matches nothing an answer could
+ * describe, and every question throws what validate() says of it.
+ *
  * @phpstan-import-type AlphabetRange from Dfa
  */
 final class LanguageSolver
@@ -131,11 +138,13 @@ final class LanguageSolver
     /**
      * Whether some string matches both patterns, and the shortest such string.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function intersection(string $left, string $right, ?SolverOptions $options = null): IntersectionResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -166,11 +175,13 @@ final class LanguageSolver
      * Whether every string the left pattern matches is matched by the right one,
      * and the shortest string that is not.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function subsetOf(string $left, string $right, ?SolverOptions $options = null): SubsetResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -202,11 +213,13 @@ final class LanguageSolver
      * Whether both patterns match exactly the same strings, and the shortest
      * string only one side matches, for each side.
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the regular subset or a limit is reached
      */
     public function equivalent(string $left, string $right, ?SolverOptions $options = null): EquivalenceResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
         $nfas = $this->lazyNfas($left, $right, $options);
         if (null !== $nfas) {
@@ -258,8 +271,9 @@ final class LanguageSolver
      * read: PCRE2's JIT, which PHP runs by default, misses matches of it
      * that the interpreter finds, "/(a++)c(?1)d/" none in "acacad".
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalent(string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
@@ -273,11 +287,13 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
-     * @throws ParserException     When a pattern does not lex or parse
-     * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
     public function matchEquivalentIn(MatchRun $run, string $left, string $right, ?SolverOptions $options = null): MatchEquivalenceResult
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $options ??= new SolverOptions();
 
         foreach ([$left, $right] as $pattern) {
@@ -333,10 +349,14 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     *
      * @return list<MatchRun>|null
      */
     public function runsOfEveryCall(string $left, string $right): ?array
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $translator = new HirTranslator($this->parser->target());
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
@@ -408,9 +428,13 @@ final class LanguageSolver
      * character (see AutoPossession::meetsLastByteWhereSpliced()).
      *
      * @internal the lint asks it of a rewrite it would splice into a larger pattern
+     *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
      */
     public function readAlike(string $left, string $right): bool
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $translator = new HirTranslator($this->parser->target());
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
@@ -442,10 +466,13 @@ final class LanguageSolver
      *
      * @internal the check of a rewrite asks it where the match solver does not read the pattern
      *
-     * @throws ComplexityException When a part outgrows the limits of the options, or when pairing two long sequences by the parts both keep takes more than 65,536 cells
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     * @throws ComplexityException    When a part outgrows the limits of the options, or when pairing two long sequences by the parts both keep takes more than 65,536 cells
      */
     public function rewritesAlikeInPlace(string $left, string $right, ?SolverOptions $options = null): bool
     {
+        $this->refuseWhatTheEngineRefuses($left, $right);
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
         if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
@@ -496,11 +523,13 @@ final class LanguageSolver
      * UTF mode, a prefix ending in the middle of a character is viable when
      * one way to finish the character is.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function acceptsPrefix(string $regex, string $prefix, ?SolverOptions $options = null): bool
     {
+        $this->refuseWhatTheEngineRefuses($regex);
         $dfa = $this->buildDfa($regex, $options ?? new SolverOptions());
 
         return PrefixReader::begins($dfa, $prefix, $this->parser->parse($regex)->isUnicode());
@@ -511,11 +540,14 @@ final class LanguageSolver
      * options: whether it is finite, how many strings of each length it
      * holds, each of them, and the strings it rejects.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function language(string $regex, ?SolverOptions $options = null): Language
     {
+        $this->refuseWhatTheEngineRefuses($regex);
+
         return new Language($this->buildDfa($regex, $options ?? new SolverOptions()), $this->parser->parse($regex)->isUnicode());
     }
 
@@ -523,11 +555,14 @@ final class LanguageSolver
      * Compiles a pattern to its DFA, and stores it in the cache when there is one,
      * so that later questions about the pattern reuse it.
      *
-     * @throws ParserException     When the pattern does not lex or parse
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function compile(string $regex, ?SolverOptions $options = null): Dfa
     {
+        $this->refuseWhatTheEngineRefuses($regex);
+
         return $this->buildDfa($regex, $options ?? new SolverOptions());
     }
 
@@ -537,10 +572,14 @@ final class LanguageSolver
      *
      * @internal
      *
-     * @throws ComplexityException When the pattern leaves the regular subset or a limit is reached
+     * @throws ParserException        When the pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses the pattern
+     * @throws ComplexityException    When the pattern leaves the regular subset or a limit is reached
      */
     public function nfa(string $pattern, ?SolverOptions $options = null): Nfa
     {
+        $this->refuseWhatTheEngineRefuses($pattern);
+
         return $this->buildNfa($pattern, $this->parser->parse($pattern), $options ?? new SolverOptions());
     }
 
@@ -576,6 +615,26 @@ final class LanguageSolver
         ];
 
         return \hash('sha256', \implode('|', $parts));
+    }
+
+    /**
+     * A pattern PCRE2 refuses has no matches a question could be about: it
+     * is refused with what validate() says of it, as Regex::info() refuses
+     * it. One that does not lex or parse throws what the parser throws.
+     *
+     * @throws ParserException        When a pattern does not lex or parse
+     * @throws SemanticErrorException When the target refuses a pattern
+     */
+    private function refuseWhatTheEngineRefuses(string ...$regexes): void
+    {
+        foreach ($regexes as $regex) {
+            $validation = $this->parser->validate($regex);
+            if (!$validation->isValid) {
+                $this->parser->parse($regex);
+
+                throw new SemanticErrorException($validation->error ?? 'The pattern is invalid.', $validation->errorCode ?? ErrorCode::InternalUnexpectedState, $validation->offset, DelimitedPattern::fromDelimited($regex, $this->parser->target())->pattern, hint: $validation->hint);
+            }
+        }
     }
 
     /**

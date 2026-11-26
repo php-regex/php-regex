@@ -84,8 +84,12 @@ final class SolverOnHirUnchangedTest extends TestCase
     {
         $solver = new LanguageSolver();
 
-        // Oracle: U+10400 DESERET CAPITAL LONG I folds to U+10428.
-        $result = $solver->equivalent('/\u{10400}/iu', '/[\u{10400}\u{10428}]/u', $this->fullMatchOptions());
+        // Oracle: U+10400 DESERET CAPITAL LONG I folds to U+10428, written
+        // "\x{10400}" as PCRE writes a code point.
+        $this->assertSame(1, preg_match('/^\x{10400}$/iu', "\u{10428}"));
+        $this->assertSame(1, preg_match('/^[\x{10400}\x{10428}]$/u', "\u{10428}"));
+
+        $result = $solver->equivalent('/\x{10400}/iu', '/[\x{10400}\x{10428}]/u', $this->fullMatchOptions());
 
         $this->assertTrue($result->isEquivalent);
     }

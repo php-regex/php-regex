@@ -176,6 +176,11 @@ $solver->subsetOf('/\w+/', '/[a-zA-Z0-9]+/')->counterExample; // "_"
 $solver->equivalent('/[0-9]+/', '/\d+/')->isEquivalent; // true
 ```
 
+A pattern the target refuses has no language to compare: every method throws
+what `validate()` refuses, as `info()` does, the exception `parse()` throws or
+a `SemanticErrorException` carrying the validation error. A pattern outside
+the regular subset, or a limit reached, throws a `ComplexityException`.
+
 See [the logic solver reference](logic-solver.md#php-api) for the options, the
 DFA cache and the classes of the namespace that are public.
 

@@ -4,6 +4,19 @@ CHANGELOG
 2.0
 ---
 
+ * `LanguageSolver` refuses a pattern PCRE2 refuses to compile, in every
+   method: the pattern is judged first, for the target of the solver's
+   parser, and one `validate()` refuses throws a `SemanticErrorException`
+   carrying the validation error, its code, its offset and its hint, as
+   `Regex::info()` does. The solver read the tree and answered:
+   `intersection('/a{2,1}/', '/a/')` was empty and
+   `acceptsPrefix('/^a{2,1}$/', 'a')` false, while `preg_match()` returns
+   false for both. A surrogate named under `u`, refused with a
+   `ComplexityException`, is refused with the validation error too.
+   `TrivialMatchClassifier` names no string function for such a pattern,
+   where `/^\N{U+41}/` was `str_starts_with($s, 'A')`, and
+   `FirstMatchPartition` refuses the candidate that holds one, its
+   `FirstMatchCell::$refused` the validation error.
  * Without u, the sets of a pattern are read as the target's PCRE2 reads
    them: under `(*UCP)` a byte read caselessly has the tables' case before
    10.35, `/(*UCP)\xC9/i` matching `\xC9` alone for PHP 7.4 with PCRE2

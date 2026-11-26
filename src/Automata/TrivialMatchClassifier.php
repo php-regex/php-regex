@@ -168,12 +168,14 @@ final class TrivialMatchClassifier
     private function parse(string $pattern): ?RegexNode
     {
         try {
-            $ast = $this->parser->parse($pattern);
+            // A pattern PCRE2 refuses comes with no tree: preg_match()
+            // returns false for it, which no string function does.
+            $ast = $this->parser->validate($pattern)->ast;
         } catch (ExceptionInterface) {
             return null;
         }
 
-        return self::refuses($ast) || (self::isExtended($ast) && !mb_check_encoding($pattern, 'ASCII')) ? null : $ast;
+        return null === $ast || self::refuses($ast) || (self::isExtended($ast) && !mb_check_encoding($pattern, 'ASCII')) ? null : $ast;
     }
 
     /**

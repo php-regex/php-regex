@@ -394,6 +394,22 @@ automata go first, and one larger than that alone is not kept. Any `DfaCacheInte
 A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
 
+A pattern is judged before it is read, for the target of the solver's parser. One PCRE2 refuses to compile
+matches nothing an answer could describe, so every method throws for it what `validate()` says: the exception
+`parse()` throws when the pattern does not parse, else a `SemanticErrorException` carrying the validation
+error, its code, its offset and its hint, as `Regex::info()` does.
+
+```php
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+
+try {
+    (new LanguageSolver())->intersection('/a{2,1}/', '/a/');
+} catch (SemanticErrorException $e) {
+    echo $e->getMessage(); // Invalid quantifier range "{2,1}": min > max.
+}
+```
+
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
 `Solver\`, `Model\Dfa` and the `Model\DfaState` it hands out, `Solver\DfaCacheInterface`, `Solver\InMemoryDfaCache`, `TrivialMatchClassifier` with the `TrivialMatch` and `TrivialMatchKind` it returns, and `Language`. Every other class of the namespace is
@@ -499,7 +515,9 @@ and the [work budget](#safety-limits--work-budget) counts its moves.
 
 ## What the Solver Refuses
 
-One taxonomy, one exception (`ComplexityException`), one message per reason.
+One taxonomy, one exception (`ComplexityException`), one message per reason,
+for a pattern the engine compiles: one it refuses is refused before any of
+these, with [the validation error](#php-api).
 The messages below are the texts the library prints; `getMessage()` returns them
 verbatim:
 
@@ -517,7 +535,6 @@ verbatim:
 | without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
 | without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
-| a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
 | `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
 | a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
@@ -574,15 +591,17 @@ An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:
 this solver answers languages, it does not read anything "as any character".
 Naming a surrogate code point under `/u` — a literal `\x{D800}`, a class
-member, or the endpoint of a range — is the same kind of refusal with its own
-message: PCRE refuses to compile the pattern at all, so there is no language
-to read. A range that straddles the block with both endpoints outside it
-(`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps the two real ends with
-the hole out.
+member, or the endpoint of a range — is refused before the taxonomy: PCRE
+refuses to compile the pattern at all, so there is no language to read, and
+the solver throws the validation error, `Code point "\x{D800}" is a surrogate,
+which is not allowed in Unicode mode.` A range that straddles the block with
+both endpoints outside it (`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps
+the two real ends with the hole out.
 
 On the command line the same refusal is summarized as
 `Comparison not supported: Pattern contains advanced features (e.g., backreferences).`
-and the command exits with code 1.
+and the command exits with code 1. A pattern the engine refuses prints its
+validation error instead, `Comparison failed: Invalid quantifier range "{2,1}": min > max.`
 
 ## How it Works (Under the Hood)
 

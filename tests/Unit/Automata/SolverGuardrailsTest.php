@@ -19,6 +19,7 @@ use PHPRegex\Automata\Model\Nfa;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -51,10 +52,21 @@ final class SolverGuardrailsTest extends TestCase
     {
         $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
+        // The solver refuses what the engine refuses before it reads the
+        // tree, with what validate() says of the pattern.
+        try {
+            (new LanguageSolver())->subsetOf($pattern, '/a/', $this->fullMatchOptions());
+            $this->fail('The solver answers for '.$pattern);
+        } catch (SemanticErrorException $refusal) {
+            $this->assertStringContainsString('is a surrogate, which is not allowed in Unicode mode.', $refusal->getMessage());
+        }
+
+        // The automaton builder, handed the tree all the same, reads none
+        // from it.
         $this->expectException(ComplexityException::class);
         $this->expectExceptionMessageIsOrContains(HirToNfaTransformer::SURROGATE_MESSAGE);
 
-        (new LanguageSolver())->subsetOf($pattern, '/a/', $this->fullMatchOptions());
+        $this->nfaOf($pattern);
     }
 
     /**

@@ -1218,6 +1218,17 @@ refuses, as `info()` and the new `captureShape()` do, where 1.x described or rew
 pattern PCRE refuses to compile (`/\k<x>/`). `explain()`, `format()` and
 `highlight()` render the text of any pattern that parses.
 
+`LanguageSolver` refuses such a pattern too, in every method:
+`intersection('/a{2,1}/', '/a/')` throws the `SemanticErrorException` of the
+validation error, where it answered that the two share no string, and a
+surrogate named under `u` throws it where it threw a `ComplexityException`.
+Code that catches `ComplexityException` around a question, for a pattern the
+solver cannot read, catches `SemanticErrorException` beside it when the
+pattern may be one PCRE refuses, or calls `validate()` first.
+`TrivialMatchClassifier` still throws nothing, and names no function for such
+a pattern; a `FirstMatchPartition` candidate that holds one gets a refused
+cell.
+
 #### Every offset counts from the pattern body
 
 `ValidationResult::$offset` and `RegexException::$offset` count from the

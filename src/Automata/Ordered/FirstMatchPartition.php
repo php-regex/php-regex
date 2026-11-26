@@ -23,6 +23,7 @@ use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Automata\Solver\LazyDfa;
 use PHPRegex\Automata\Solver\ProductSearch;
 use PHPRegex\Automata\Unicode\CodePointHelper;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 
 /**
  * The strings each candidate of an ordered list keeps when the first one
@@ -109,7 +110,9 @@ final class FirstMatchPartition
 
     /**
      * The NFA of the tuples, the fields joined and the tuples united, with
-     * whether each field reads UTF-8, or why the solver gave up on it.
+     * whether each field reads UTF-8, or why the solver gave up on it: a
+     * pattern outside what it reads, or one PCRE2 refuses to compile, which
+     * takes no string.
      *
      * @param list<list<string>> $tuples
      *
@@ -131,7 +134,7 @@ final class FirstMatchPartition
             foreach (array_values($tuple) as $field => $pattern) {
                 try {
                     $nfa = $this->nfa($pattern);
-                } catch (ComplexityException $exception) {
+                } catch (ComplexityException|SemanticErrorException $exception) {
                     return [null, [], $exception->getMessage()];
                 }
 
@@ -204,6 +207,7 @@ final class FirstMatchPartition
 
     /**
      * @throws ComplexityException
+     * @throws SemanticErrorException
      */
     private function nfa(string $pattern): Nfa
     {

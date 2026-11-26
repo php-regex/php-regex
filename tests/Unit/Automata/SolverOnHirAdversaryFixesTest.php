@@ -22,6 +22,7 @@ use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Cli\Graph\MermaidDumper;
 use PHPRegex\Optimizer\Optimizer;
 use PHPRegex\Optimizer\OptimizerOptions;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\Hir\HirTranslator;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
@@ -48,7 +49,8 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
      * Oracle: preg_match('/[a\x{D800}]/u', 'a') is false and the compile
      * fails ("disallowed Unicode code point"): no subject the engine can
      * read ever holds a surrogate, and the pattern that names one never
-     * runs. The solver must refuse it, not answer a language for it.
+     * runs. The solver must refuse it, not answer a language for it: with
+     * what validate() says of the pattern, before any automaton is built.
      */
     #[Test]
     #[DataProvider('provideSurrogateRefusalRows')]
@@ -58,8 +60,8 @@ final class SolverOnHirAdversaryFixesTest extends TestCase
 
         $this->assertFalse(@\preg_match($pattern, 'a'), $pattern.' must not compile.');
 
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessageIsOrContains('PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.');
+        $this->expectException(SemanticErrorException::class);
+        $this->expectExceptionMessageIsOrContains('Code point "\x{D800}" is a surrogate, which is not allowed in Unicode mode.');
 
         $solver->subsetOf($pattern, $other, $this->fullMatchOptions());
     }

@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:routes` leaves out the pairs of a route whose requirement PCRE2
+   refuses to compile, as `\d{2,1}`, and reads the other routes, as it did
+   for a route the solver could not read: the route was compared as if its
+   regex matched nothing. Its reachability says why, the validation error.
  * `regex:routes` reads the trailing slashes of a request as the
    application's `symfony/routing` does: since 6.4.51, 7.4.24 and 8.1.12,
    the router looks a route with no variable up for a request with one
