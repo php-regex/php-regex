@@ -89,8 +89,8 @@ final class Rewriter extends AbstractNodeVisitor
 
     /**
      * Whether a quantifier may be made possessive here: the option is on,
-     * no "U" makes a plain quantifier lazy, and no lookaround is non-atomic,
-     * as PossessiveRewrites::keepsRepeatsGreedy() reads them.
+     * and no "U" makes a plain quantifier lazy, as
+     * PossessiveRewrites::keepsRepeatsGreedy() reads it.
      */
     private bool $possessify = false;
 

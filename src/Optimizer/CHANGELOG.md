@@ -108,8 +108,17 @@ CHANGELOG
    `/(?i)a+b?c/` now becomes `/(?i)a++b?c/`, and `/(?i:a+b?)c/` becomes
    `/(?i:a++b?)c/`, while `/(?i)a+b?A/` stays greedy.
    An option setting that names `U`, under which a plain quantifier is
-   lazy, and a non-atomic lookaround, past whose end the engine reads from
-   where it starts, still keep every quantifier of the pattern as written.
+   lazy, still keeps every quantifier of the pattern as written.
+ * A non-atomic lookaround, `(*napla:...)`, `(*naplb:...)`, `(?*...)` or
+   `(?<*...)`, no longer keeps the possessive rewrite out of the whole
+   pattern: `/(*napla:x)xa+b/` becomes `/(?*x)xa++b/` and
+   `/(*napla:xa+b)x/` becomes `/(?*xa++b)x/`, the lookaround spelled in its
+   short form as every rewrite of such a pattern spells it. A repetition
+   that may end the lookaround stays greedy: past that end the engine reads
+   what follows from where the lookaround stands, and backtracks into its
+   body, so nothing is known of what follows the repetition.
+   `/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, group 1 giving an `a`
+   back to the reference, where `(a++b?)` finds nothing.
  * The possessive rewrite reads what follows a repetition that ends its
    sequence, or stands alone in its group, its branch or the pattern: what
    follows the group at every place it runs, the alternation or the

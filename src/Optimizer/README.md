@@ -94,8 +94,14 @@ group repeated there stays greedy, as the possessive one runs out of the JIT
 stack first deep in the calls. The
 rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
 `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays greedy, and an option setting that
-names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
-written. A repetition that ends its group reads what follows the group, every
+names `U` keeps every quantifier of the pattern as written. Beside a
+non-atomic lookaround, `(*napla:...)` or `(?*...)`, a repetition is read as
+anywhere else, `/(*napla:x)xa+b/` becoming `/(?*x)xa++b/` and
+`/(*napla:xa+b)x/` becoming `/(?*xa++b)x/`, but one that may end the
+lookaround stays greedy: past that end the engine reads what follows from
+where the lookaround stands, and backtracks into its body, so
+`/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, where `(a++b?)` finds
+nothing. A repetition that ends its group reads what follows the group, every
 call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
 `/(a+)a/` stays greedy. A repeated group is made possessive only where every
 run of its body matches one way, characters and literals in a row, and what
@@ -117,8 +123,8 @@ matches of a possessive quantifier there that its interpreter finds.
 repetition outside every group a call runs is read as before: `/a+;(x)(?1)/`
 becomes `/a++;(x)(?1)/`. The rewrite reads the flags in force where each item
 stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays
-greedy, and an option setting that names `U` or a non-atomic lookaround keeps
-every quantifier of the pattern as written. A repetition that ends its group
+greedy, and an option setting that names `U` keeps every quantifier of the
+pattern as written. A repetition that ends its group
 reads what follows the group up to the end of the pattern: `/(a+)c/` becomes
 `/(a++)c/`, and `/(a+)a/` stays greedy.
 
