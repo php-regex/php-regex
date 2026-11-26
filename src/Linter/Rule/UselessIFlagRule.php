@@ -29,12 +29,14 @@ use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ControlCharNode;
 use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
+use PHPRegex\Parser\Node\GroupType;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\PosixClassNode;
 use PHPRegex\Parser\Node\QuantifierNode;
 use PHPRegex\Parser\Node\RangeNode;
 use PHPRegex\Parser\Node\SequenceNode;
+use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\Node\UnicodePropNode;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
@@ -62,6 +64,17 @@ use PHPRegex\Parser\Validation\PcreTables;
 final class UselessIFlagRule extends AbstractLintRule
 {
     public const ID = 'regex.lint.flag.useless.i';
+
+    /**
+     * The groups that match no character of their own: what a lookaround
+     * reads is no part of the text the group around it captures.
+     */
+    private const LOOKAROUNDS = [
+        GroupType::LookaheadPositive,
+        GroupType::LookaheadNegative,
+        GroupType::LookbehindPositive,
+        GroupType::LookbehindNegative,
+    ];
 
     /**
      * Whether the flag decides the case of a node, or the pattern has none.
@@ -255,8 +268,9 @@ final class UselessIFlagRule extends AbstractLintRule
     private function referenceMayMatchCase(BackrefNode $node): bool
     {
         $groups = $this->groups?->groupsReferencedBy($node) ?? [];
+        $called = [];
         foreach ($groups as $group) {
-            if ($this->mayCaptureCase($group)) {
+            if ($this->mayCaptureCase($group, $called)) {
                 return true;
             }
         }
@@ -267,20 +281,32 @@ final class UselessIFlagRule extends AbstractLintRule
     /**
      * Whether the node may match a character with a case: a literal or a
      * class with one, a negated class, any character, a type but the digits
-     * and the white space under PCRE2's own tables, a reference or a call.
-     * An anchor, an assertion or a comment matches no character; a
-     * lookaround is read as a group.
+     * and the white space under PCRE2's own tables, a property but the
+     * decimal digits, a reference. A call matches what the group it runs
+     * matches. An anchor, an assertion or a comment matches no character,
+     * nor does a lookaround, whose text is no part of what the group around
+     * it captures.
+     *
+     * @param array<int, GroupNode> $called the groups a call has run, by object id
      */
-    private function mayCaptureCase(NodeInterface $node): bool
+    private function mayCaptureCase(NodeInterface $node, array &$called): bool
     {
+        if ($node instanceof GroupNode && \in_array($node->type, self::LOOKAROUNDS, true)) {
+            return false;
+        }
+
         if ($node instanceof SequenceNode || $node instanceof AlternationNode || $node instanceof GroupNode || $node instanceof QuantifierNode) {
             foreach ($node->getChildren() as $child) {
-                if ($this->mayCaptureCase($child)) {
+                if ($this->mayCaptureCase($child, $called)) {
                     return true;
                 }
             }
 
             return false;
+        }
+
+        if ($node instanceof SubroutineNode) {
+            return $this->callMayMatchCase($node, $called);
         }
 
         if ($node instanceof CharClassNode) {
@@ -291,11 +317,56 @@ final class UselessIFlagRule extends AbstractLintRule
             return !$this->typeHasNoCase($node);
         }
 
+        if ($node instanceof UnicodePropNode) {
+            return !$this->propertyHasNoCase($node);
+        }
+
         if ($node instanceof LiteralNode || $node instanceof CharLiteralNode) {
             return $this->hasCase($node);
         }
 
         return !$node instanceof AnchorNode && !$node instanceof AssertionNode && !$node instanceof CommentNode;
+    }
+
+    /**
+     * Whether a group the call runs may match a character with a case. A
+     * call no group answers is read as one that does, and so is a call of
+     * the whole pattern, "(?R)", or of a group named as it is. A group a
+     * call has run already adds nothing: one that calls itself, or two
+     * that call each other, are read once.
+     *
+     * @param array<int, GroupNode> $called the groups a call has run, by object id
+     */
+    private function callMayMatchCase(SubroutineNode $node, array &$called): bool
+    {
+        if ('R' === $node->reference) {
+            return true;
+        }
+
+        $groups = $this->groups?->groupsCalledBy($node) ?? [];
+        foreach ($groups as $group) {
+            if (!isset($called[spl_object_id($group)])) {
+                $called[spl_object_id($group)] = $group;
+                if ($this->mayCaptureCase($group, $called)) {
+                    return true;
+                }
+            }
+        }
+
+        return [] === $groups;
+    }
+
+    /**
+     * Whether the property holds no character with a case: the decimal
+     * digits, "\p{Nd}", as the type of the digits is read, under PCRE2's
+     * own tables.
+     */
+    private function propertyHasNoCase(UnicodePropNode $node): bool
+    {
+        return null === $this->tables
+            && !$node->isNegatedSyntax
+            && !str_contains($node->prop, '^')
+            && 'nd' === $this->normalizeUnicodePropName($node->prop);
     }
 
     /**
@@ -310,6 +381,7 @@ final class UselessIFlagRule extends AbstractLintRule
                 $part instanceof LiteralNode, $part instanceof CharLiteralNode, $part instanceof RangeNode => $this->charClassPartHasLetters($part),
                 $part instanceof CharTypeNode => !$this->typeHasNoCase($part),
                 $part instanceof PosixClassNode => null !== $this->tables || !\in_array(Ascii::lower($part->class), ['digit', 'space', 'blank', 'cntrl'], true),
+                $part instanceof UnicodePropNode => !$this->propertyHasNoCase($part),
                 default => true,
             };
             if ($hasCase) {

@@ -318,6 +318,15 @@ CHANGELOG
    s with its capital, so `/\x{DF}/iu` keeps its flag, and from 10.45
    `\x{390}` with `\x{1FD3}`. The simple mappings of mbstring are still
    read: the long s, the Kelvin sign, `İ` and `ı` keep the flag.
+ * `regex.lint.flag.useless.i` reads a backreference to a group that
+   holds a lookaround, a call or the decimal digits. What a lookaround
+   reads is no part of the text the group captures, a call matches what
+   the group it runs matches, and `\p{Nd}` holds no character with a
+   case, as `\d` holds none: `/(\d(?=\w))\1/i`, `/(\d)((?1))\2/i` and
+   `/([\p{Nd}])\1/i` are reported, where they kept the flag.
+   `/(\w)((?1))\2/i`, `/(\P{Nd})\1/i` and a group that calls the whole
+   pattern, `(?R)`, still keep it, as `\p{Nd}` does under another
+   locale's tables.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and
