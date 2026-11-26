@@ -393,7 +393,7 @@ final class Validator extends AbstractNodeVisitor
         try {
             $this->walkPattern($prefix, true);
         } catch (SemanticErrorException $error) {
-            return ($error->position ?? $limit) < $limit ? $error : null;
+            return ($error->offset ?? $limit) < $limit ? $error : null;
         }
 
         return null;
@@ -990,8 +990,8 @@ final class Validator extends AbstractNodeVisitor
             return;
         }
 
-        $first = $this->firstReferences[$this->lookbehindReferenceGroup] ?? $error->position;
-        if ($first !== $error->position) {
+        $first = $this->firstReferences[$this->lookbehindReferenceGroup] ?? $error->offset;
+        if ($first !== $error->offset) {
             $this->lateErrors[0] = new SemanticErrorException($error->getMessage(), $error->errorCode, $first, $this->pattern, null, null, $error->hint);
         }
     }

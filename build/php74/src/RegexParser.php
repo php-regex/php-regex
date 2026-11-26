@@ -103,7 +103,7 @@ final class RegexParser
      * "task cache-version" writes it, "task lint" runs that, and the test
      * suite fails while the constant and the code disagree.
      */
-    public const CACHE_VERSION = 'ast-b2ad1db1fa02f9bef417b4288e822671';
+    public const CACHE_VERSION = 'ast-ea0203789bf020e70a49ffb9a2c7517e';
 
     /**
      * How many validate() results a parser keeps, the latest read first.
@@ -488,7 +488,7 @@ final class RegexParser
     private function firstParseError(string $regex, $error): RegexException
     {
         $cause = $error->getPrevious();
-        $judged = $cause instanceof SemanticErrorException && $cause->position === $error->position ? $cause : $error;
+        $judged = $cause instanceof SemanticErrorException && $cause->offset === $error->offset ? $cause : $error;
 
         return (new FirstErrorLocator($this->maxRecursionDepth, $this->maxLookbehindLength, $this->target))->earlierError($regex, $error) ?? $judged;
     }
@@ -660,13 +660,13 @@ final class RegexParser
     private function buildValidationFailure(ExceptionInterface $exception): ValidationResult
     {
         $errorMessage = $exception->getMessage();
-        $visualSnippet = $exception instanceof VisualContextInterface && $exception instanceof RegexException ? (string) $exception->snippet : '';
+        $visualSnippet = $exception instanceof VisualContextInterface && $exception instanceof RegexException ? (string) $exception->caretSnippet : '';
         $position = null;
         $errorCode = null;
         $hint = null;
 
         if ($exception instanceof RegexException) {
-            $position = $exception->position;
+            $position = $exception->offset;
             $errorCode = $exception->errorCode;
         }
 
@@ -731,7 +731,7 @@ final class RegexParser
     {
         [$pattern, $flags, $delimiter, $length] = $this->safeExtractPattern($regex);
 
-        return $this->buildFallbackAst($pattern, $flags, $delimiter, $length, $exception->position);
+        return $this->buildFallbackAst($pattern, $flags, $delimiter, $length, $exception->offset);
     }
 
     /**

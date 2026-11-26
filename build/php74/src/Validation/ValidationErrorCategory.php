@@ -38,7 +38,7 @@ final class ValidationErrorCategory implements \PHPRegex\Parser\BackedEnum
 
     public static function PcreRuntime(): self
     {
-        return self::$instances['PcreRuntime'] ??= new self('PcreRuntime', 'pcre-runtime');
+        return self::$instances['PcreRuntime'] ??= new self('PcreRuntime', 'pcre_runtime');
     }
 
     public static function Limit(): self
