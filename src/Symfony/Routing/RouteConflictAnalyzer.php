@@ -62,7 +62,16 @@ final class RouteConflictAnalyzer
      */
     private const NO_REQUEST = [''];
 
+    /**
+     * The requirements of a host variable symfony/routing reads as matching
+     * no dot since 6.4.51, 7.4.24 and 8.1.12: word characters, "\d", "\w",
+     * classes of them, groups, alternatives and quantifiers.
+     */
+    private const MATCHES_NO_DOT = '#^(?:[\w|?*+{},:)-]|\((?!\?)|\(\?[:|]|\\\\[dw]|\[(?:\w|\\\\[dw]|(?<=\w)-(?=\w)|(?<=\[)-|-(?=\]))++\])++$#';
+
     private static ?bool $trimsEveryTrailingSlash = null;
+
+    private static ?bool $groupsHostsOnAnyVariable = null;
 
     private readonly LanguageSolver $solver;
 
@@ -173,7 +182,7 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
-                if (self::mayBeTriedFirst($earlier['host'], $later['host'])) {
+                if (self::mayBeTriedFirst($earlier, $later)) {
                     $skippedPairs++;
 
                     continue;
@@ -384,7 +393,7 @@ final class RouteConflictAnalyzer
             $rivals = [];
             for ($j = 0; $j < $i; $j++) {
                 $earlier = $routes[$j];
-                if (null === $requests[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier['host'], $route['host'])) {
+                if (null === $requests[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier, $route)) {
                     continue;
                 }
 
@@ -544,6 +553,7 @@ final class RouteConflictAnalyzer
             'hostPattern' => $hostPattern,
             'hasHostRequirement' => $hasHostRequirement,
             'hostUnsupported' => $hostUnsupported,
+            'looseHostVariables' => self::looseHostVariables($route),
             'hasCondition' => $hasCondition,
             'index' => $index,
         ];
@@ -557,8 +567,46 @@ final class RouteConflictAnalyzer
      * before an earlier one whose literal end parts from its own: no host
      * matches both, unless they part on letter case alone, which the
      * matcher ignores in a host.
+     *
+     * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
+     * dumper also groups the routes on every variable of their host, as if
+     * it were the text of one label: once a route before both names
+     * "app-{sub}.example.com", it tries a later route on that host before
+     * an earlier one on "{sub}.example.com", which takes the same hosts.
+     * It moves a route past another only on the end both hosts share,
+     * variables included, the rest of each read as text that tells them
+     * apart: there, two routes on distinct hosts whose shared end holds a
+     * variable that takes less or more than a label, in either host, may
+     * be tried in either order. Two routes on the same host keep theirs,
+     * as do two routes that share no variable.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
      */
-    private static function mayBeTriedFirst(string $earlierHost, string $laterHost): bool
+    private static function mayBeTriedFirst(array $earlier, array $later): bool
+    {
+        if (self::partOnLetterCaseAlone($earlier['host'], $later['host'])) {
+            return true;
+        }
+
+        $loose = [...$earlier['looseHostVariables'], ...$later['looseHostVariables']];
+        if ([] === $loose || $earlier['host'] === $later['host']) {
+            return false;
+        }
+
+        $shared = 0;
+        $longest = min(\strlen($earlier['host']), \strlen($later['host']));
+        while ($shared < $longest && $earlier['host'][-1 - $shared] === $later['host'][-1 - $shared]) {
+            $shared++;
+        }
+
+        return min($loose) <= $shared && self::groupsHostsOnAnyVariable();
+    }
+
+    /**
+     * Whether the literal ends of the two hosts part on letter case alone.
+     */
+    private static function partOnLetterCaseAlone(string $earlierHost, string $laterHost): bool
     {
         $earlierEnd = self::literalEnd($earlierHost);
         $laterEnd = self::literalEnd($laterHost);
@@ -567,6 +615,55 @@ final class RouteConflictAnalyzer
         }
 
         return str_ends_with(strtolower($earlierEnd), strtolower($laterEnd)) || str_ends_with(strtolower($laterEnd), strtolower($earlierEnd));
+    }
+
+    /**
+     * The variables of the host that take less or more than one label, as
+     * symfony/routing reads them since 6.4.51, 7.4.24 and 8.1.12, where
+     * the dumper no longer groups the routes on them: a variable next to
+     * other characters in its label, "app-{sub}", and one whose
+     * requirement may match a dot. Each is given as the number of
+     * characters from where it starts to the end of the host.
+     *
+     * @return list<int>
+     */
+    private static function looseHostVariables(Route $route): array
+    {
+        $host = $route->getHost();
+        LibraryPcre::matchAll('#\{!?([\w\x80-\xFF]++)\}#', $host, $variables, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE);
+
+        $loose = [];
+        foreach ($variables as $variable) {
+            [$token, $start] = $variable[0] ?? ['', 0];
+            $before = 0 === $start ? '.' : $host[$start - 1];
+            $after = $host[$start + \strlen($token)] ?? '.';
+            $requirement = $route->getRequirement($variable[1][0] ?? '');
+            if ('.' !== $before || '.' !== $after || (null !== $requirement && 1 !== LibraryPcre::match(self::MATCHES_NO_DOT, $requirement))) {
+                $loose[] = \strlen($host) - $start;
+            }
+        }
+
+        return $loose;
+    }
+
+    /**
+     * Whether the dumper groups the routes on any variable of their host,
+     * as symfony/routing does before 6.4.51, 7.4.24 and 8.1.12, and on 8.0.
+     * Read on the dumper installed: whether a route on "a-{x}.b" declared
+     * after one on "{x}.b" answers first, a route before both naming its
+     * host.
+     */
+    private static function groupsHostsOnAnyVariable(): bool
+    {
+        if (null === self::$groupsHostsOnAnyVariable) {
+            $routes = new RouteCollection();
+            $routes->add('first', (new Route('/first'))->setHost('a-{x}.b'));
+            $routes->add('earlier', (new Route('/p'))->setHost('{x}.b'));
+            $routes->add('later', (new Route('/p'))->setHost('a-{x}.b'));
+            self::$groupsHostsOnAnyVariable = 'later' === (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($routes))->getCompiledRoutes(), new RequestContext('', 'GET', 'a-c.b')))->match('/p')['_route'];
+        }
+
+        return self::$groupsHostsOnAnyVariable;
     }
 
     /**

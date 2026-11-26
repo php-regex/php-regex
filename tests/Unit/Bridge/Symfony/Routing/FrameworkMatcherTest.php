@@ -70,4 +70,33 @@ final class FrameworkMatcherTest extends TestCase
         $this->assertSame('foo', FrameworkMatcher::reached($collection, 'GET', '/foo////'));
         $this->assertSame('redirect', FrameworkMatcher::answer($collection, 'GET', '/foo////'));
     }
+
+    /**
+     * symfony/routing groups the routes on a variable of their host only
+     * when it takes a whole label and cannot match a dot since 6.4.51,
+     * 7.4.24 and 8.1.12, never on 8.0: before, it grouped them on any
+     * variable, and tried a route declared after one taking the same host
+     * first. A variable alone in its label, matching no dot, is grouped on
+     * every release: no host reaches both routes.
+     */
+    #[Test]
+    public function test_the_dumper_groups_the_hosts_on_any_variable_before_symfony_routing_6_4_51_7_4_24_and_8_1_12(): void
+    {
+        $groups = !InstalledVersions::satisfies(new VersionParser(), 'symfony/routing', '~6.4.51 || ~7.4.24 || >=8.1.12');
+
+        $this->assertSame($groups, FrameworkMatcher::groupsHostsOnAnyVariable());
+
+        $dot = new RouteCollection();
+        $dot->add('first', (new Route('/first'))->setHost('www.{sub}.example.com'));
+        $dot->add('earlier', (new Route('/p', [], ['sub' => '.+']))->setHost('{sub}.example.com'));
+        $dot->add('later', (new Route('/p'))->setHost('www.{sub}.example.com'));
+        $this->assertSame($groups ? 'later' : 'earlier', FrameworkMatcher::reached($dot, 'GET', '/p', 'http', 'www.x.example.com'));
+
+        $label = new RouteCollection();
+        $label->add('first', (new Route('/first'))->setHost('www.{sub}.example.com'));
+        $label->add('earlier', (new Route('/p'))->setHost('{sub}.example.com'));
+        $label->add('later', (new Route('/p'))->setHost('www.{sub}.example.com'));
+        $this->assertSame('later', FrameworkMatcher::reached($label, 'GET', '/p', 'http', 'www.x.example.com'));
+        $this->assertSame('earlier', FrameworkMatcher::reached($label, 'GET', '/p', 'http', 'x.example.com'));
+    }
 }

@@ -1481,6 +1481,93 @@ final class RouteConflictAnalyzerTest extends TestCase
     }
 
     /**
+     * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
+     * dumper groups the routes on every variable of their host, as if it
+     * were the text of one label: it may try a route before an earlier one
+     * that takes the same host, where a variable shares its label with
+     * other characters, "app-{sub}", or may match a dot. Two routes on
+     * distinct hosts whose shared end holds such a variable are skipped
+     * there, and read in the order they are declared since. A host with no
+     * variable, the same host, variables under names of their own, and
+     * variables that each take a whole label and match no dot are read on
+     * every release.
+     *
+     * @param list<array{0: string, 1: string, 2: string, 3: array<string, string>}> $routes    name, path, host, requirements
+     * @param array{0: string, 1: string, 2: string|null}                            $probe     host, path, and the route a GET request reaches
+     * @param list<string>                                                           $conflicts
+     */
+    #[Test]
+    #[DataProvider('provideHostsTheDumperGroupsOnAVariable')]
+    public function test_two_routes_the_dumper_may_reorder_on_a_host_variable_are_skipped(array $routes, array $probe, array $conflicts, int $skipped): void
+    {
+        $collection = new RouteCollection();
+        foreach ($routes as [$name, $path, $host, $requirements]) {
+            $collection->add($name, (new Route($path, [], $requirements))->setHost($host));
+        }
+
+        $this->assertSame($probe[2], FrameworkMatcher::reached($collection, 'GET', $probe[1], 'http', $probe[0]));
+
+        $report = (new RouteConflictAnalyzer(Regex::create()))->analyze($collection, true);
+
+        $this->assertSame($conflicts, array_map(
+            static fn (array $conflict): string => $conflict['type'].' '.$conflict['route']['name'].' '.$conflict['conflict']['name'],
+            $report->conflicts,
+        ));
+        $this->assertSame($skipped, $report->stats['skipped_pairs']);
+    }
+
+    /**
+     * @return iterable<string, array{routes: list<array{0: string, 1: string, 2: string, 3: array<string, string>}>, probe: array{0: string, 1: string, 2: string|null}, conflicts: list<string>, skipped: int}>
+     */
+    public static function provideHostsTheDumperGroupsOnAVariable(): iterable
+    {
+        $groups = FrameworkMatcher::groupsHostsOnAnyVariable();
+
+        yield 'a variable sharing its label, after a route for every label' => [
+            'routes' => [['first', '/other/{id}', 'app-{sub}.example.com', []], ['sub', '/report/{id}', '{sub}.example.com', []], ['app', '/report/{id}', 'app-{sub}.example.com', []]],
+            'probe' => ['app-x.example.com', '/report/1', $groups ? 'app' : 'sub'],
+            'conflicts' => $groups ? [] : ['shadowed sub app'],
+            'skipped' => $groups ? 1 : 0,
+        ];
+        yield 'a variable sharing its label, after a route for every label, both looked up by their path' => [
+            'routes' => [['first', '/other', 'app-{sub}.example.com', []], ['sub', '/report', '{sub}.example.com', []], ['app', '/report', 'app-{sub}.example.com', []]],
+            'probe' => ['app-x.example.com', '/report', $groups ? 'app' : 'sub'],
+            'conflicts' => $groups ? [] : ['shadowed sub app'],
+            'skipped' => $groups ? 1 : 0,
+        ];
+        yield 'a variable that may match a dot, before a route for one label more' => [
+            'routes' => [['first', '/other/{id}', 'www.{sub}.example.com', []], ['sub', '/report/{id}', '{sub}.example.com', ['sub' => '.+']], ['www', '/report/{id}', 'www.{sub}.example.com', []]],
+            'probe' => ['www.x.example.com', '/report/1', $groups ? 'www' : 'sub'],
+            'conflicts' => $groups ? [] : ['shadowed sub www'],
+            'skipped' => $groups ? 1 : 0,
+        ];
+        yield 'variables that take a whole label and match no dot' => [
+            'routes' => [['first', '/other/{id}', 'www.{sub}.example.com', []], ['sub', '/report/{id}', '{sub}.example.com', ['sub' => '\w+']], ['www', '/report/{id}', 'www.{sub}.example.com', []]],
+            'probe' => ['www.x.example.com', '/report/1', 'www'],
+            'conflicts' => [],
+            'skipped' => 0,
+        ];
+        yield 'the same host, its variable sharing its label' => [
+            'routes' => [['first', '/other/{id}', '{sub}.example.com', []], ['earlier', '/report/{id}', 'app-{sub}.example.com', []], ['later', '/report/{id}', 'app-{sub}.example.com', []]],
+            'probe' => ['app-x.example.com', '/report/1', 'earlier'],
+            'conflicts' => ['shadowed earlier later'],
+            'skipped' => 0,
+        ];
+        yield 'variables sharing their label, under names of their own' => [
+            'routes' => [['first', '/other/{id}', '{name}.example.com', []], ['earlier', '/report/{id}', 'app-{sub}.example.com', []], ['later', '/report/{id}', 'app-{name}.example.com', []]],
+            'probe' => ['app-x.example.com', '/report/1', 'earlier'],
+            'conflicts' => ['shadowed earlier later'],
+            'skipped' => 0,
+        ];
+        yield 'a variable sharing its label, before a host with no variable' => [
+            'routes' => [['first', '/other/{id}', 'app-x.example.com', []], ['earlier', '/report/{id}', 'app-{sub}.example.com', []], ['later', '/report/{id}', 'app-x.example.com', []]],
+            'probe' => ['app-x.example.com', '/report/1', 'earlier'],
+            'conflicts' => ['shadowed earlier later'],
+            'skipped' => 0,
+        ];
+    }
+
+    /**
      * A later route ending on a variable that may end on the slash, with
      * no slash after it, reads a path of its own ending on the slash for
      * the slash, as PCRE captures the value: it redirects a GET or HEAD

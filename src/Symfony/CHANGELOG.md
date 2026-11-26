@@ -28,6 +28,15 @@ CHANGELOG
    `/{p<admin/>}` after `/admin` and `/blog{slash}` (`/?`) after `/blog`.
    `regex:routes --reachability` no longer reports such a route
    unreachable.
+ * `regex:routes` skips two routes the router may try in either order
+   before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, where it
+   sorts the routes on every variable of their host: a route on
+   `app-{sub}.example.com` declared after one on `{sub}.example.com` was
+   reported shadowed, while the router tries it first once an earlier
+   route names its host. Two routes on distinct hosts whose shared end
+   holds a variable next to other characters in its label, or one whose
+   requirement may match a dot, are counted among the pairs skipped on
+   those releases, and read in the order they are declared since.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,

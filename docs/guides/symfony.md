@@ -678,7 +678,17 @@ host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` Two routes whose hosts part on
 letter case alone, `A.COM` and `a.com`, are counted among the pairs
 skipped: the router sorts the routes that name a host by the end of it,
-letter case included, and may try the later one first. A route that names no method or no
+letter case included, and may try the later one first. Before
+`symfony/routing` 6.4.51, 7.4.24 and 8.1.12, and on 8.0, it also sorts them
+on every variable of a host, and may try a route on
+`app-{sub}.example.com` before an earlier one on `{sub}.example.com`,
+which takes the same hosts: on those releases, two routes on distinct
+hosts whose shared end holds a variable next to other characters in its
+label, or one whose requirement may match a dot, `.+`, as the router has
+read it since (word characters, `\d`, `\w` and classes of them match
+none), are counted among the pairs skipped too, and `--reachability`
+reads the earlier one as taking nothing from the later. Since those releases the
+router keeps their order, and the pair is read as declared. A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests

@@ -237,6 +237,30 @@ final class RouteReachabilityTest extends TestCase
         $this->assertSame('other', FrameworkMatcher::reached($routes, 'GET', $other['example']['path'], 'http', $other['example']['host']));
     }
 
+    /**
+     * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
+     * dumper may try "app-{sub}.example.com" before an earlier
+     * "{sub}.example.com": the earlier route takes nothing from it there,
+     * and every request of it since.
+     */
+    #[Test]
+    public function test_a_route_the_dumper_may_try_first_on_a_host_variable_loses_nothing_to_the_earlier_one(): void
+    {
+        $routes = self::collection([
+            'first' => new Route('/other/{id}', host: 'app-{sub}.example.com'),
+            'sub' => new Route('/report/{id}', host: '{sub}.example.com'),
+            'app' => new Route('/report/{id}', host: 'app-{sub}.example.com'),
+        ]);
+        $groups = FrameworkMatcher::groupsHostsOnAnyVariable();
+
+        $this->assertSame($groups ? 'app' : 'sub', FrameworkMatcher::reached($routes, 'GET', '/report/1', 'http', 'app-x.example.com'));
+
+        $app = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'app');
+
+        $this->assertSame($groups, $app['reachable']);
+        $this->assertSame($groups ? [] : ['sub'], array_column($app['takenBy'], 'name'));
+    }
+
     #[Test]
     public function test_a_route_taking_no_method_is_left_out(): void
     {
