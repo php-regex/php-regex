@@ -103,9 +103,11 @@ final class RedosMultilineCaretSoundnessTest extends TestCase
      * Where something follows the newline, or another branch holds at the
      * end, the success is the engine's too: the run stays linear, and no
      * proof may call it worse. A loop whose "^" holds only before one
-     * more character is not proven, as "/\A(?:a|a)+./" is not: the model
-     * does not yet tell the end, where it fails, from the newline the loop
-     * gives back, where the engine succeeds.
+     * more character fails at the end of the subject, but whatever follows
+     * the newline it read, the success is sure: the engine meets the end
+     * only on the last newline, gives it back, and succeeds before it. Two
+     * runs or three in a row are linear for the same reason, each newline
+     * the last run reads with one more after it a success.
      */
     #[Test]
     #[DataProvider('provideReachableSuccesses')]
@@ -131,11 +133,16 @@ final class RedosMultilineCaretSoundnessTest extends TestCase
     {
         yield 'the end without the caret' => ['pattern' => '/\A(?:\n|\n)+(?:\z|[^\n])/m', 'provenSafe' => true];
         yield 'a newline then the end without the caret' => ['pattern' => '/\A(?:\n|\n)+\n(?:\z|[^\n])/m', 'provenSafe' => false];
-        yield 'the caret before the newline given back' => ['pattern' => '/\A(?:\n|\n)+^/m', 'provenSafe' => false];
-        yield 'the caret or a letter' => ['pattern' => '/\A(?:\n|\n)+(?:^|x)/m', 'provenSafe' => false];
+        yield 'the caret before the newline given back' => ['pattern' => '/\A(?:\n|\n)+^/m', 'provenSafe' => true];
+        yield 'the caret or a letter' => ['pattern' => '/\A(?:\n|\n)+(?:^|x)/m', 'provenSafe' => true];
         yield 'the caret before a character, or a dollar' => ['pattern' => '/\A(?:\n|\n)+(?:^.|$)/m', 'provenSafe' => true];
         yield 'the caret before a character, or the end' => ['pattern' => '/\A(?:\n|\n)+(?:^[^\n]|\z)/m', 'provenSafe' => true];
         // D leaves "$" under m alone: it holds before the next newline.
-        yield 'an empty line under D' => ['pattern' => '/\A(?:\n|\n)+(?:^$|[^\n])/mD', 'provenSafe' => false];
+        yield 'an empty line under D' => ['pattern' => '/\A(?:\n|\n)+(?:^$|[^\n])/mD', 'provenSafe' => true];
+        yield 'a lazy loop before the caret' => ['pattern' => '/\A(?:\n|\n)+?^/m', 'provenSafe' => true];
+        yield 'two runs before the caret' => ['pattern' => '/\A\n*\n*^/m', 'provenSafe' => true];
+        yield 'three runs before the caret' => ['pattern' => '/\A\n*\n*\n*^/m', 'provenSafe' => true];
+        yield 'two runs before the caret or a letter' => ['pattern' => '/\A\n*\n*(?:^|x)/m', 'provenSafe' => true];
+        yield 'a run of spaces, then of newlines, before the caret' => ['pattern' => '/\A\s*\n*^/m', 'provenSafe' => true];
     }
 }

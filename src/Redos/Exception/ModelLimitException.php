@@ -29,6 +29,7 @@ final class ModelLimitException extends \RuntimeException implements ExceptionIn
         public readonly bool $budgetExceeded,
         public readonly bool $approximated = false,
         public readonly ?string $abstraction = null,
+        public readonly bool $unwitnessed = false,
     ) {
         parent::__construct($message);
     }
@@ -41,7 +42,7 @@ final class ModelLimitException extends \RuntimeException implements ExceptionIn
     {
         $entry = \sprintf('ambiguity without witness at offset %d', $offset);
 
-        return new self(Ascii::upperFirst($entry), false, true, $entry);
+        return new self(Ascii::upperFirst($entry), false, true, $entry, true);
     }
 
     /**

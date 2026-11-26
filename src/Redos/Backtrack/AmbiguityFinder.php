@@ -63,6 +63,14 @@ final class AmbiguityFinder
     private const MAX_ABANDONED_RUN_SETS = 64;
 
     /**
+     * The most steps the reading of a whole attempt on one input may take
+     * (readWhole()), on a budget of its own, which takes nothing from the
+     * proof: past them the attempt stays as the stretches count it. Sixteen
+     * for each path of the margin; the semver.org pattern takes 375.
+     */
+    private const MAX_WHOLE_READ_STEPS = 16_384;
+
+    /**
      * The slots of what an attempt tries at once, besides the classes: what
      * stands in every class, and what stands at the attempt start, before
      * any character.
@@ -182,7 +190,7 @@ final class AmbiguityFinder
     private bool $beyond = false;
 
     /**
-     * @var array<int, list<int>> the classes each item of a loop reads, once
+     * @var array<int, list<int>> the classes each reading item reads, once
      *                            read
      */
     private array $entries = [];
@@ -538,9 +546,157 @@ final class AmbiguityFinder
             $within = $most <= self::MAX_ACYCLIC_AMBIGUITY;
         } while (!$within && $this->sharpen());
 
-        $this->beyond = !$within;
+        // Past the margin stretch by stretch, the attempt read whole on one
+        // input may stand within it.
+        $whole = $within ? null : $this->readWhole($before);
+        $this->beyond = !$within && null === $whole;
 
-        return $marks;
+        return $whole ?? $marks;
+    }
+
+    /**
+     * Reads every attempt whole on one input, its loops included, where
+     * checkWays() adds up the ways into a loop from every stretch before it,
+     * whether or not one input brings them together: the paths that stand at
+     * once after each character, every route counted, those that die too, a
+     * success the engine stops at left out (tally()). The paths are read in
+     * the order the engine tries them, and nothing after a success it stops
+     * at is tried (after()); the paths of an attempt start are all kept, as
+     * a success that reads nothing may be refused, under
+     * "(*NOTEMPTY_ATSTART)" or when PHP looks for the next match after an
+     * empty one. The classes the same
+     * items read are read together, and each list of paths once: one step
+     * for each of its items, one for each class the item reads, and one for
+     * each item listed after it each time it reads.
+     *
+     * The most paths through each sub-search's mark at once, when no input
+     * gives an attempt more paths at once than the margin allows; null when
+     * one does, or when the reading takes more steps than it may: a loop
+     * that reads one input in two ways holds more paths at each round.
+     *
+     * @param int $before the paths through the mark of the search, when it is a lookaround's body
+     *
+     * @return array<int, int>|null
+     */
+    public function readWhole(int $before = 1): ?array
+    {
+        $automaton = $this->automaton;
+        $budget = new Budget(self::MAX_WHOLE_READ_STEPS, 0);
+        // The routes through each mark at each step read.
+        $passed = [];
+        $queue = [];
+        foreach ($automaton->initials as $index => $start) {
+            $first = [];
+            foreach (self::routes($start['items'], $automaton->initialRoutes[$index] ?? []) as $item => $count) {
+                $first[$item] = $before * $count;
+            }
+
+            if ($before * ($automaton->initialDead[$index] ?? 0) + $this->tally($first, [])[0] > self::MAX_ACYCLIC_AMBIGUITY) {
+                return null;
+            }
+
+            foreach ($automaton->initialMarkRoutes[$index] ?? [] as $mark => $ways) {
+                $passed[$mark][] = $before * $ways;
+            }
+
+            $queue[] = $first;
+        }
+
+        // The lists of paths met, by what they hold.
+        $seen = [];
+
+        try {
+            for ($head = 0; isset($queue[$head]); $head++) {
+                $current = $queue[$head];
+                // The items that read each class, in the order of the paths.
+                $readers = [];
+                foreach ($current as $item => $_) {
+                    if ($automaton->isFinal($item)) {
+                        continue;
+                    }
+
+                    $this->entries[$item] ??= $this->slotsOf($item, false);
+                    $budget->step(1 + \count($this->entries[$item]));
+                    foreach ($this->entries[$item] as $class) {
+                        $readers[$class][] = $item;
+                    }
+                }
+
+                $lists = [];
+                foreach ($readers as $items) {
+                    $lists[implode(',', $items)] = $items;
+                }
+
+                foreach ($lists as $items) {
+                    [$next, $died, $passes] = $this->after($current, $items, $budget);
+                    if ($died + $this->tally($next, [])[0] > self::MAX_ACYCLIC_AMBIGUITY) {
+                        return null;
+                    }
+
+                    foreach ($passes as $mark => $ways) {
+                        $passed[$mark][] = $ways;
+                    }
+
+                    $key = serialize($next);
+                    if (!isset($seen[$key])) {
+                        $seen[$key] = $next;
+                        $queue[] = $next;
+                    }
+                }
+            }
+        } catch (ModelLimitException) {
+            return null;
+        }
+
+        return array_map(max(...), $passed);
+    }
+
+    /**
+     * The paths after the items read one character, in the order the engine
+     * tries them, up to a success it stops at; with the routes that died on
+     * the way and those through each mark. A route reached by more than the
+     * two the automaton lists is counted where the first one stands. Nothing
+     * is cut in a pattern that holds an atomic group or a possessive repeat:
+     * PCRE2 may make a repeat before it possessive, and miss the success the
+     * search reads where that repeat gives a character back
+     * (Pnfa::$holdsPossessive).
+     *
+     * @param array<int, int> $paths  the paths at each item
+     * @param list<int>       $items  the items that read the character, in the order of the paths
+     * @param Budget          $budget the allowance of the reading, which takes one step for each item listed after one that reads
+     *
+     * @throws ModelLimitException
+     *
+     * @return array{array<int, int>, int, array<int, int>}
+     */
+    private function after(array $paths, array $items, Budget $budget): array
+    {
+        $automaton = $this->automaton;
+        $next = [];
+        $died = 0;
+        $passes = [];
+        foreach ($items as $item) {
+            $budget->step(\count($automaton->successors[$item]));
+            $count = $paths[$item];
+            $died += $count * ($automaton->dead[$item] ?? 0);
+            foreach ($automaton->markRoutes[$item] ?? [] as $mark => $ways) {
+                $passes[$mark] = ($passes[$mark] ?? 0) + $count * $ways;
+            }
+
+            $folded = $automaton->routes[$item] ?? [];
+            foreach ($automaton->successors[$item] as $successor) {
+                $next[$successor] = ($next[$successor] ?? 0) + $count * ($folded[$successor] ?? 1);
+                if ($this->succeeds($successor) && !$automaton->pnfa->holdsPossessive) {
+                    return [$next, $died, $passes];
+                }
+
+                if (isset($folded[$successor])) {
+                    $folded[$successor] = 0;
+                }
+            }
+        }
+
+        return [$next, $died, $passes];
     }
 
     /**
@@ -1947,6 +2103,13 @@ final class AmbiguityFinder
      * body kept with every way through it, widens what succeeds:
      * "[^x]{0,20}(?:x|\z)" read as "[^x]*(?:x|\z)" accepts whatever follows,
      * where the engine fails once twenty characters are not enough.
+     *
+     * Without widening, the end of the subject right after the item may
+     * reject (acceptsEveryCharacter()): every round of the ambiguity reads
+     * the item, and the first time the engine reads it with a character
+     * left, it succeeds there. Only the last character may be read by it on
+     * a path that fails: "^" under m after the newline a loop reads last
+     * gives it back and holds before it, "/\A(?:\n|\n)+^/m".
      */
     private function disproved(int $state): bool
     {
@@ -1957,7 +2120,29 @@ final class AmbiguityFinder
         $after = $this->automaton->exactSuccessors($state);
         ksort($after);
 
-        return $this->widens ? $this->acceptsEverythingExactly($after) : null === $this->rejectingSuffix($after);
+        return $this->widens ? $this->acceptsEverythingExactly($after) : $this->acceptsEveryCharacter($after);
+    }
+
+    /**
+     * Whether every continuation of the set that reads one character at
+     * least is accepted: after each class, a success, or a set no
+     * continuation rejects, the end of the subject included.
+     *
+     * @param array<int, true> $items
+     *
+     * @throws ModelLimitException
+     */
+    private function acceptsEveryCharacter(array $items): bool
+    {
+        $automaton = $this->automaton;
+        for ($class = 0; $class < $automaton->classCount(); $class++) {
+            $next = $automaton->stepSet($items, $class);
+            if (null !== $next && null !== $this->rejectingSuffix($next)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
