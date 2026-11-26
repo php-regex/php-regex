@@ -524,6 +524,7 @@ verbatim:
 | a character repeated before an atomic group or a possessive repeat of a group that may match nothing, `a+(?:b)?+a` | `PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.` |
 | without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
 | without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
+| a dot or `\N` repeated some number of times with `\R` right after it, or `\R` repeated with a dot or `\N` right after it, under any newline convention but `(*ANY)`: `.*\R`, `(.+)\R`, `\R?.` | `PCRE2 makes a repeat of the dot or "\N" possessive before "\R", and one of "\R" before a dot or "\N", as if "\R" took no character the dot takes, which the automata solver does not read.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
 | under `(*CRLF)`, a dot without `/s` or `\N` inside a lookaround | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.` |
@@ -564,6 +565,19 @@ Two refinements inside those rules:
   group `(?>\r\n|\v)` to PCRE under the default `(*BSR_UNICODE)`, and
   `(?>\r\n|[\r\n])` under `(*BSR_ANYCRLF)`: either way it holds unless a
   `\n` may follow it.
+
+  PCRE2 also makes a dot or `\N` repeated some number of times possessive
+  before `\R`, and `\R` repeated before a dot or `\N`, as if the two shared
+  no character. Yet the dot leaves out the newline of the convention only,
+  and `\R` takes every newline: `/^.*\R\z/` finds no match in `"a\r"`, where
+  `/^[^\n]*\R\z/` and `/^(?:.)*\R\z/` find it, and `/^\R?.\z/` none in `"\r"`,
+  with the JIT and without. PCRE2 reads what comes right after the repeat,
+  past the end of the groups it stands in and into the groups that follow,
+  so `/^(.*)\R\z/` and `/^.*(\R)\z/` lose the match too. Such a pattern is
+  refused, and reads like no other: taking the group off `(?:.)*` there is
+  no rewrite. A repeat counted once (`.{2}\R`), one a character follows
+  first (`.*a\R`), and any under `(*ANY)`, whose dot takes no newline of
+  `\R`, are read as written.
 
   A lookbehind branch that matches more than one length, as `\R` does,
   compiles from PCRE2 10.43 on when its length is bounded, up to a limit PCRE2

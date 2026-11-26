@@ -136,6 +136,23 @@ CHANGELOG
    `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route host
    compiles, is still read. A target that names its locale is read under
    its tables.
+ * PCRE2 makes a dot or `\N` repeated some number of times possessive
+   before `\R`, and `\R` repeated before a dot or `\N`, lazy ones too, as
+   if `\R` took no character the dot takes, under every newline convention
+   but `(*ANY)`: `/^.*\R\z/` finds nothing in `"a\r"`, `/^(.*)\R\z/` and
+   `/^.*(\R)\z/` neither, and `/^\R?.\z/` nothing in `"\r"`, with and
+   without the JIT, from PCRE2 10.39 to 10.49, where `/^[^\n]*\R\z/`,
+   `/^(?:.)*\R\z/` and `/^(?:\R)?.\z/` find them. `/^.*\R\z/` and
+   `/^[^\n]*\R\z/` were proven to match the same strings, and `/x.*\R/`
+   and `/x[^\n]*\R/` to read alike. `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` now refuse a pattern that holds such a repeat, with the
+   other one right after it, past the end of the groups it stands in, into
+   the groups that follow, or past what may match nothing; `readAlike()`,
+   `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it like no other
+   pattern, and `readAlike()` a pattern that may end with such a repeat, or
+   start with a dot, like no other where it is spliced. A repeat counted
+   once, `.{2}\R`, and one a character follows first, `.*a\R`, are read as
+   before.
  * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
    `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
    as if 0xFF were no word character, whatever the tables say: under

@@ -63,6 +63,13 @@ final class RegularSubsetValidator
             throw new ComplexityException(HirToNfaTransformer::LAST_BYTE_MESSAGE, $lastByte->getStartPosition(), $pattern);
         }
 
+        // So does it a repeat of the dot before "\R", and one of "\R" before
+        // a dot, as if "\R" took no character the dot takes.
+        $besideNewlineSequence = NewlineSequencePossession::repeat($regex);
+        if (null !== $besideNewlineSequence) {
+            throw new ComplexityException(HirToNfaTransformer::NEWLINE_SEQUENCE_MESSAGE, $besideNewlineSequence->getStartPosition(), $pattern);
+        }
+
         $translator = new HirTranslator($target);
         $hir = $translator->translate($regex);
 

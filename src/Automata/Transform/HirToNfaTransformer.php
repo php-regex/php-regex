@@ -77,6 +77,8 @@ final class HirToNfaTransformer
 
     public const LAST_BYTE_MESSAGE = 'Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".';
 
+    public const NEWLINE_SEQUENCE_MESSAGE = 'PCRE2 makes a repeat of the dot or "\N" possessive before "\R", and one of "\R" before a dot or "\N", as if "\R" took no character the dot takes, which the automata solver does not read.';
+
     private const MIN_CODEPOINT = 0;
 
     private const MAX_CODEPOINT = 255;

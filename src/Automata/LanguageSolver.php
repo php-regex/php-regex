@@ -40,6 +40,7 @@ use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\LocaleBoundClasses;
+use PHPRegex\Automata\Transform\NewlineSequencePossession;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
@@ -449,7 +450,8 @@ final class LanguageSolver
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
         if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
-            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)) {
+            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)
+            || null !== NewlineSequencePossession::repeat($leftAst) || null !== NewlineSequencePossession::repeat($rightAst)) {
             return false;
         }
 
@@ -691,7 +693,10 @@ final class LanguageSolver
      * possessive beside the other as if 0xFF were no word character, which
      * the brackets of each decide and the normal form does not say: such a
      * pattern reads like no other. Spliced, a pattern may meet the other
-     * one in the text around it: "[\w]+" and "\w+" read apart there.
+     * one in the text around it: "[\w]+" and "\w+" read apart there. So
+     * does PCRE2 a repeat of the dot before "\R", and one of "\R" before a
+     * dot, as if "\R" took no character the dot takes, which a dot written
+     * in a group or as a class escapes (see NewlineSequencePossession).
      */
     private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced, PcreTarget $target): bool
     {
@@ -699,7 +704,9 @@ final class LanguageSolver
             && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
             && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced)
             && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst)
-            && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)));
+            && null === NewlineSequencePossession::repeat($leftAst) && null === NewlineSequencePossession::repeat($rightAst)
+            && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)
+                && !NewlineSequencePossession::meetsWhereSpliced($leftAst) && !NewlineSequencePossession::meetsWhereSpliced($rightAst)));
     }
 
     /**
