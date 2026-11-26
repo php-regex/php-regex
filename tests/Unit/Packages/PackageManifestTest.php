@@ -106,6 +106,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir',
             'Parser\Hir\Greed', 'Parser\Hir\Hir', 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir',
             'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
+            // The character a lookahead asserts, read as the HIR spells it.
+            'Parser\Hir\Utf8',
             'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
             // Whether a possessive quantifier or an atomic group commits to
