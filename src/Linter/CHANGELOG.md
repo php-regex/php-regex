@@ -30,6 +30,15 @@ CHANGELOG
    `/(?:[^i]+I)+$/iu`, whose class takes `I` there, now is. `k` and `s`,
    which Unicode pairs with the Kelvin sign and the long s, keep both
    cases. Nothing changes under C.
+ * `regex.lint.quantifier.nested` no longer reports a loop counted with
+   every repeat inside it that the engine reads in 2,048 ways at most:
+   one attempt then costs a number of steps the pattern alone bounds,
+   8,187 at most on PCRE2 10.49 for 811 random patterns it leaves out.
+   `/^(a{0,4}){0,4}$/`, `/^(a?){0,10}$/` and the syllable patterns of an
+   Indic shaper that nest `?`, `{0,2}`, `{0,3}` and `{0,4}`, 73 steps at
+   most, are no longer reported; `/^(a?){0,12}$/`, `/^(a{0,6}){0,6}$/`
+   and `/^(a{0,16}){0,16}$/` still are, and so is a small loop that a
+   loop around it runs again where the outer one is read in more ways.
  * The overlap rules read an escape that names one character, `\x41`,
    `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
    literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported

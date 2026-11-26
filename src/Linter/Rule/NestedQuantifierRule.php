@@ -36,6 +36,14 @@ use PHPRegex\Parser\Node\SequenceNode;
  * Detects nested variable quantifiers that can cause catastrophic
  * backtracking.
  *
+ * A loop counted with every repeat inside it, and read in 2,048 ways at
+ * most, is left out: one attempt then costs a number of steps the pattern
+ * alone bounds, under 8,200 on PCRE2 10.49 for every such loop measured,
+ * which no subject grows. The syllable patterns of an Indic shaper, "?",
+ * "{0,2}", "{0,3}" and "{0,4}" nested, take 73 steps at most; "/^(a{0,16}){0,16}$/" runs
+ * past PHP's default pcre.backtrack_limit and is reported. See
+ * LoopShape::isReadInAFewWays().
+ *
  * @internal
  */
 final class NestedQuantifierRule extends AbstractLintRule
@@ -250,10 +258,17 @@ final class NestedQuantifierRule extends AbstractLintRule
     }
 
     /**
+     * The finding, or none for a counted loop the engine reads in a few
+     * ways, whose cost no subject grows: see LoopShape::isReadInAFewWays().
+     *
      * @return list<RuleViolation>
      */
     private function violation(QuantifierNode $node, LintContext $context): array
     {
+        if (LoopShape::isReadInAFewWays($node, $context)) {
+            return [];
+        }
+
         return [new RuleViolation(
             self::ID,
             \sprintf(

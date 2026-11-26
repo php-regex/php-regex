@@ -56,6 +56,12 @@ final class LoopShape
      */
     private const VERTICAL_WHITESPACE = [0x0A, 0x0B, 0x0C, 0x0D, 0x85, 0x2028, 0x2029];
 
+    /**
+     * The ways a counted loop may be read in past which the nested-loop
+     * rule speaks: see isReadInAFewWays().
+     */
+    private const MAX_WAYS = 2048;
+
     private function __construct() {}
 
     /**
@@ -114,6 +120,65 @@ final class LoopShape
             && !str_contains($flags, 'U')
             && !self::patternStartsWithVerb($context)
             && $context->endsThePatternForEveryCall($loop, true);
+    }
+
+    /**
+     * Whether the loop is counted, with every repeat inside it, and the
+     * engine reads it in a few ways, 2,048 at most: however long the
+     * subject, one attempt then tries a number of ways the pattern alone
+     * bounds, and no subject grows it.
+     *
+     * The ways are counted from the pattern. Items in a row multiply
+     * theirs; branches add theirs, or count as the widest of them where no
+     * two can start alike. A repeat the next character tells to go on or
+     * to stop, its body matching no empty text and starting with no byte
+     * that can follow it, is read one way for each way of its body, each
+     * time it runs: "[ZJ]{0,3}M" is read one way. One that may stop where
+     * it could go on is read once for each count it may stop at: "a{0,3}a"
+     * in four ways. What follows the loop is read where the loop is
+     * written, through the sequences around it. A loop that another runs
+     * again, each time it repeats, is read in the ways of the outermost
+     * loop around it: in "(?:(?>(?:c?.?){0,4}a)(?:\d|)){0,12}b" the inner
+     * loop is read in 341 ways each time, and the loop around it in more
+     * than 2,048. A loop a subroutine call runs is not counted.
+     *
+     * The bound is set from PCRE2 10.49, the interpreter with its start
+     * optimizations off, by the smallest pcre.backtrack_limit under which
+     * preg_match() finishes on the costliest subject a search finds: where
+     * every repeat may stop anywhere, the steps follow the ways, and
+     * "/^(a?){0,10}$/", read in 2,047 ways, takes 2,559 steps, its lazy
+     * twin 4,094, and "/^(a{0,4}){0,4}$/", in 781, takes 438. Of 811
+     * random patterns whose loops are read in 2,048 ways or fewer, the
+     * costliest takes 8,187 steps, under a hundredth of PHP's default
+     * pcre.backtrack_limit; past the bound, "/^(a?){0,12}$/", in 8,191
+     * ways, takes 10,239 steps, "/^(a{0,6}){0,6}$/" 56,024, and
+     * "/^(a{0,8}){0,8}b/" and "/^(a{0,16}){0,16}$/" run past the limit on
+     * 17 and 7 "a". The bounds alone tell nothing: "/^(a?a?a?a?a?a?){0,4}$/"
+     * runs past the limit on 8 "a".
+     *
+     * Not counted, and so not read in a few ways: an unbounded repeat, a
+     * reference, a subroutine call, a conditional, a verb, and anything
+     * but a literal, one character of a set or an item that reads none.
+     */
+    public static function isReadInAFewWays(QuantifierNode $loop, LintContext $context): bool
+    {
+        if ($context->isReenteredBySubroutine($loop)) {
+            return false;
+        }
+
+        $parents = $context->parents();
+        $flags = $context->activeFlags();
+        foreach ($parents as $depth => $parent) {
+            if ($parent instanceof QuantifierNode && QuantifierMath::isRepeatable($parent)) {
+                $flags = FlagScope::flagsAt($parent, $parents[0], self::flagsAtTheStart($context)) ?? $flags;
+                $parents = \array_slice($parents, 0, $depth);
+                $loop = $parent;
+
+                break;
+            }
+        }
+
+        return self::ways($loop, $flags, self::bytesAfter($loop, $parents, $context), $context) <= self::MAX_WAYS;
     }
 
     /**
@@ -265,6 +330,158 @@ final class LoopShape
         $unicode = str_contains($context->pattern->flags, 'u') || self::patternStartsWithVerb($context);
 
         return !$unicode && \in_array($node->value, ['D', 'W', 'S'], true);
+    }
+
+    /**
+     * The ways the engine can read the node, one more than MAX_WAYS for
+     * any number past it and for a node that is not counted. $after holds
+     * the bytes that can follow the node, not known where anything can.
+     */
+    private static function ways(NodeInterface $node, string $flags, ByteCharSet $after, LintContext $context): int
+    {
+        if ($node instanceof SequenceNode) {
+            $ways = 1;
+            $flagsAt = FlagScope::flagsAtEachChild($node, $flags);
+            foreach (array_reverse($node->children, true) as $index => $child) {
+                $ways = min(self::MAX_WAYS + 1, $ways * self::ways($child, $flagsAt[$index], $after, $context));
+                $after = self::bytesFrom($child, $flagsAt[$index], $after, $context);
+            }
+
+            return $ways;
+        }
+
+        if ($node instanceof AlternationNode) {
+            // Branches no two of which start alike are told apart by the
+            // next character: the engine reads one of them.
+            $sum = 0;
+            $widest = 0;
+            $starts = ByteCharSet::empty();
+            $apart = true;
+            foreach (FlagScope::flagsAtEachChild($node, $flags) as $index => $flagsAtBranch) {
+                $branch = self::ways($node->alternatives[$index], $flagsAtBranch, $after, $context);
+                $sum = min(self::MAX_WAYS + 1, $sum + $branch);
+                $widest = max($widest, $branch);
+                $start = self::bytesFrom($node->alternatives[$index], $flagsAtBranch, $after, $context);
+                $apart = $apart && !$start->intersects($starts);
+                $starts = $starts->union($start);
+            }
+
+            return $apart ? $widest : $sum;
+        }
+
+        if ($node instanceof GroupNode) {
+            // What follows a lookaround is read from where it started.
+            return self::ways($node->child, FlagScope::flagsInside($node, $flags), NodePredicates::isTransparentGroup($node->type) ? $after : ByteCharSet::unknown(), $context);
+        }
+
+        if ($node instanceof QuantifierNode) {
+            [$min, $max] = QuantifierMath::parseRange($node);
+            if (null === $max) {
+                return self::MAX_WAYS + 1;
+            }
+
+            // After one run of the body comes another, or what follows.
+            $start = self::firstBytesInItsOwnCase($node->node, $flags, $context);
+            $once = self::ways($node->node, $flags, $max > 1 ? $after->union($start) : $after, $context);
+            if (!NodePredicates::canBeEmpty($node->node) && !$start->intersects($after)) {
+                return self::power($once, $max);
+            }
+
+            $ways = 0;
+            for ($count = $min; $count <= $max && $ways <= self::MAX_WAYS; $count++) {
+                $ways += self::power($once, $count);
+            }
+
+            return min(self::MAX_WAYS + 1, $ways);
+        }
+
+        return self::isLiteralOrOneCharacterOfASet($node) || self::takesNoCharacter($node) ? 1 : self::MAX_WAYS + 1;
+    }
+
+    /**
+     * The ways of a body run $count times in a row, one more than MAX_WAYS
+     * past it.
+     */
+    private static function power(int $ways, int $count): int
+    {
+        $power = 1;
+        for ($run = 0; $run < $count && $power <= self::MAX_WAYS && $ways > 1; $run++) {
+            $power *= $ways;
+        }
+
+        return min(self::MAX_WAYS + 1, $power);
+    }
+
+    /**
+     * The bytes that can stand where the node starts: those it starts
+     * with, and those that can follow it where it may match nothing. An
+     * item that reads no character, whose set is not known, leaves what
+     * follows it as it is.
+     */
+    private static function bytesFrom(NodeInterface $node, string $flags, ByteCharSet $after, LintContext $context): ByteCharSet
+    {
+        if (self::takesNoCharacter($node)) {
+            return $after;
+        }
+
+        $start = self::firstBytesInItsOwnCase($node, $flags, $context);
+
+        return NodePredicates::canBeEmpty($node) ? $start->union($after) : $start;
+    }
+
+    /**
+     * The bytes that can follow the loop where it is written: those the
+     * items after it start with, in each sequence around it, up to one that
+     * reads a character. Not known in a lookaround, a conditional or a
+     * script run.
+     *
+     * @param list<NodeInterface> $parents the nodes around the loop, the whole pattern first
+     */
+    private static function bytesAfter(QuantifierNode $loop, array $parents, LintContext $context): ByteCharSet
+    {
+        $root = $parents[0] ?? $loop;
+        $start = self::flagsAtTheStart($context);
+        $bytes = ByteCharSet::empty();
+        $child = $loop;
+        foreach (array_reverse($parents) as $parent) {
+            if ($parent instanceof SequenceNode) {
+                $position = (int) array_search($child, $parent->children, true);
+                foreach (\array_slice($parent->children, $position + 1) as $next) {
+                    $bytes = self::bytesFrom($next, FlagScope::flagsAt($next, $root, $start) ?? $start, ByteCharSet::empty(), $context)->union($bytes);
+                    if (!NodePredicates::canBeEmpty($next)) {
+                        return $bytes;
+                    }
+                }
+            } elseif (!$parent instanceof QuantifierNode && !$parent instanceof AlternationNode && !($parent instanceof GroupNode && NodePredicates::isTransparentGroup($parent->type))) {
+                return ByteCharSet::unknown();
+            }
+
+            $child = $parent;
+        }
+
+        return $bytes;
+    }
+
+    /**
+     * The flags the pattern starts with.
+     */
+    private static function flagsAtTheStart(LintContext $context): string
+    {
+        return $context->charSetAnalyzer->flagsAtTheStart(NodePredicates::modifierFlags($context->pattern->flags));
+    }
+
+    /**
+     * Whether the item reads no character and holds nothing to try again:
+     * an anchor, an assertion, a comment or an empty text. An option
+     * setting is a group, read as one: "(?i)" makes what it starts with
+     * unknown.
+     */
+    private static function takesNoCharacter(NodeInterface $node): bool
+    {
+        return $node instanceof AnchorNode
+            || $node instanceof AssertionNode
+            || $node instanceof CommentNode
+            || ($node instanceof LiteralNode && '' === $node->value);
     }
 
     /**
