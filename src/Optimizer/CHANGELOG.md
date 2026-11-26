@@ -13,6 +13,13 @@ CHANGELOG
    the pattern and its rewrites are read for one target. `repair()` returns
    no repair, and `firstRepair()` null, for a pattern that does not lex or
    parse.
+ * The group of a dot repeated before `\R`, and of `\R` repeated before a
+   dot, stays as written: PCRE2 makes the repeat of a dot possessive before
+   `\R` as if the two shared no character, and leaves the repeat of a group
+   alone. `/x(?:.)*\R/` became `/x.*\R/`, which finds nothing in `"x\r"`
+   where the pattern finds it, and `/x(?:\R)?./` became `/x\R?./`, with and
+   without the JIT. A pattern that holds such a repeat is no longer
+   rewritten where the check of the rewrite reads the two alike.
  * The brackets of a possessive repeat of a group, or of an atomic group,
    that may match nothing stay as written after a repeated character that
    could give back to what follows: PCRE2 makes that character possessive,

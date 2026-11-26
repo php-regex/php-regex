@@ -494,6 +494,135 @@ final class HirTranslatorTest extends TestCase
         $this->assertSame([0xE9], $limited->parts[1]->codePoints);
     }
 
+    /**
+     * Under (*CRLF) the newline is two characters, which no set of one
+     * character says: the dot takes a "\r" and a "\n", each alone, and not
+     * the "\r" a "\n" follows. The form says it with a lookahead.
+     */
+    #[Test]
+    #[DataProvider('provideDotsUnderCrLf')]
+    public function test_a_dot_under_crlf_takes_no_carriage_return_a_line_feed_follows(string $options, string $body, string $flags, bool $stopsAtCrLf): void
+    {
+        // The engine first: one character alone is always taken, and the
+        // "\r" of a "\r\n" only where the dot takes every character.
+        $anchored = '/'.$options.'\A(?:'.$body.')/'.$flags;
+        foreach (["\r", "\n", 'a', "\ra"] as $subject) {
+            $this->assertSame(1, preg_match($anchored, $subject), $anchored.' on '.json_encode($subject));
+        }
+        $this->assertSame($stopsAtCrLf ? 0 : 1, preg_match($anchored, "\r\n"), $anchored);
+        $this->assertSame($stopsAtCrLf ? 0 : 1, preg_match('/(*NO_JIT)'.substr($anchored, 1), "\r\n"), $anchored);
+
+        $hir = $this->translate('/'.$options.$body.'/'.$flags);
+
+        if (!$stopsAtCrLf) {
+            $this->assertInstanceOf(ClassHir::class, $hir);
+            $this->assertTrue($hir->set->contains(0x0D));
+
+            return;
+        }
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $this->assertCount(2, $hir->parts);
+        [$look, $class] = $hir->parts;
+        $this->assertInstanceOf(LookHir::class, $look);
+        $this->assertSame(LookKind::NegativeAhead, $look->kind);
+        $this->assertTrue($look->atomic);
+        $this->assertInstanceOf(LiteralHir::class, $look->body);
+        $this->assertSame([0x0D, 0x0A], $look->body->codePoints);
+        $this->assertInstanceOf(ClassHir::class, $class);
+        $this->assertTrue($class->set->contains(0x0D));
+        $this->assertTrue($class->set->contains(0x0A));
+        $this->assertSame([\strlen('/'.$options) - 1, \strlen('/'.$options.$body) - 1], [$class->startPosition, $class->endPosition]);
+        $this->assertSame([$class->startPosition, $class->endPosition], [$look->startPosition, $look->endPosition]);
+        $this->assertSame(1, $hir->properties->minLength);
+        $this->assertSame(1, $hir->properties->maxLength);
+        $this->assertFalse($hir->properties->regular);
+    }
+
+    /**
+     * @return iterable<string, array{options: string, body: string, flags: string, stopsAtCrLf: bool}>
+     */
+    public static function provideDotsUnderCrLf(): iterable
+    {
+        yield 'a dot' => ['options' => '(*CRLF)', 'body' => '.', 'flags' => '', 'stopsAtCrLf' => true];
+        yield 'no newline' => ['options' => '(*CRLF)', 'body' => '\N', 'flags' => '', 'stopsAtCrLf' => true];
+        yield 'no newline under s' => ['options' => '(*CRLF)', 'body' => '\N', 'flags' => 's', 'stopsAtCrLf' => true];
+        yield 'a dot under s' => ['options' => '(*CRLF)', 'body' => '.', 'flags' => 's', 'stopsAtCrLf' => false];
+        yield 'a dot under m' => ['options' => '(*CRLF)', 'body' => '.', 'flags' => 'm', 'stopsAtCrLf' => true];
+        yield 'a dot after another option' => ['options' => '(*UCP)(*CRLF)', 'body' => '.', 'flags' => '', 'stopsAtCrLf' => true];
+        yield 'the last convention named' => ['options' => '(*LF)(*CRLF)', 'body' => '.', 'flags' => '', 'stopsAtCrLf' => true];
+    }
+
+    /**
+     * An option set inside the pattern decides for the dots after it.
+     */
+    #[Test]
+    public function test_a_dot_under_crlf_follows_the_s_in_force_where_it_stands(): void
+    {
+        $this->assertSame(1, preg_match('/(*CRLF)\A(?s).(?-s)./', "\r\n\ra"));
+        $this->assertSame(0, preg_match('/(*CRLF)\A(?s).(?-s)./', "a\r\n"));
+        $this->assertSame(0, preg_match('/(*NO_JIT)(*CRLF)\A(?s).(?-s)./', "a\r\n"));
+
+        $hir = $this->translate('/(*CRLF)(?s).(?-s)./');
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $this->assertCount(3, $hir->parts);
+        $this->assertInstanceOf(ClassHir::class, $hir->parts[0]);
+        $this->assertInstanceOf(LookHir::class, $hir->parts[1]);
+        $this->assertInstanceOf(ClassHir::class, $hir->parts[2]);
+    }
+
+    /**
+     * Each dot and "\N" of a pattern asks the one lookahead, so the automata
+     * read a pattern of many dots through one promise.
+     */
+    #[Test]
+    public function test_every_dot_under_crlf_shares_one_lookahead_body(): void
+    {
+        $this->assertSame(0, preg_match('/(*CRLF)\A.\N\z/', "a\r\n"));
+        $this->assertSame(1, preg_match('/(*CRLF)\A.\N\z/', "\r\r"));
+
+        $hir = $this->translate('/(*CRLF).\N/');
+
+        $this->assertInstanceOf(ConcatHir::class, $hir);
+        $this->assertCount(4, $hir->parts);
+        $this->assertInstanceOf(LookHir::class, $hir->parts[0]);
+        $this->assertInstanceOf(LookHir::class, $hir->parts[2]);
+        $this->assertSame($hir->parts[0]->body, $hir->parts[2]->body);
+        $this->assertSame([7, 8], [$hir->parts[0]->startPosition, $hir->parts[1]->endPosition]);
+        $this->assertSame([8, 10], [$hir->parts[2]->startPosition, $hir->parts[3]->endPosition]);
+    }
+
+    /**
+     * Under another convention the newline is one character, or several
+     * each of one: the set of the dot says it all.
+     */
+    #[Test]
+    #[DataProvider('provideDotsUnderOtherConventions')]
+    public function test_a_dot_under_another_convention_is_a_set(string $pattern, bool $carriageReturn, bool $lineFeed): void
+    {
+        $this->assertSame($carriageReturn ? 1 : 0, preg_match($pattern, "\r"));
+        $this->assertSame($lineFeed ? 1 : 0, preg_match($pattern, "\n"));
+
+        $hir = $this->translate($pattern);
+
+        $this->assertInstanceOf(ClassHir::class, $hir);
+        $this->assertSame($carriageReturn, $hir->set->contains(0x0D));
+        $this->assertSame($lineFeed, $hir->set->contains(0x0A));
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, carriageReturn: bool, lineFeed: bool}>
+     */
+    public static function provideDotsUnderOtherConventions(): iterable
+    {
+        yield 'no convention' => ['pattern' => '/./', 'carriageReturn' => true, 'lineFeed' => false];
+        yield 'a line feed' => ['pattern' => '/(*LF)./', 'carriageReturn' => true, 'lineFeed' => false];
+        yield 'either or both' => ['pattern' => '/(*ANYCRLF)./', 'carriageReturn' => false, 'lineFeed' => false];
+        yield 'any newline' => ['pattern' => '/(*ANY)\N/', 'carriageReturn' => false, 'lineFeed' => false];
+        yield 'a line feed named after cr and lf' => ['pattern' => '/(*CRLF)(*LF)./', 'carriageReturn' => true, 'lineFeed' => false];
+    }
+
     #[Test]
     public function test_nodes_keep_the_position_of_the_ast_node_they_come_from(): void
     {

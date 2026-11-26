@@ -40,7 +40,9 @@ use PHPRegex\Automata\Support\WorkBudget;
 use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Automata\Transform\HirToNfaTransformer;
 use PHPRegex\Automata\Transform\LocaleBoundClasses;
+use PHPRegex\Automata\Transform\NewlineSequencePossession;
 use PHPRegex\Automata\Transform\RegularSubsetValidator;
+use PHPRegex\Automata\Transform\SearchStarts;
 use PHPRegex\Automata\Unicode\CodePointHelper;
 use PHPRegex\Parser\Analysis\GroupIndex;
 use PHPRegex\Parser\Engine\LibraryPcre;
@@ -462,7 +464,8 @@ final class LanguageSolver
         $leftAst = $this->parser->parse($left);
         $rightAst = $this->parser->parse($right);
         if (!self::sameSettings($leftAst, $rightAst) || AutoPossession::shape($leftAst->pattern, false) !== AutoPossession::shape($rightAst->pattern, false)
-            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)) {
+            || self::holdsRepeatMadePossessiveBesideLastByte($this->parser->target(), $leftAst, $rightAst)
+            || null !== NewlineSequencePossession::repeat($leftAst) || null !== NewlineSequencePossession::repeat($rightAst)) {
             return false;
         }
 
@@ -704,7 +707,10 @@ final class LanguageSolver
      * possessive beside the other as if 0xFF were no word character, which
      * the brackets of each decide and the normal form does not say: such a
      * pattern reads like no other. Spliced, a pattern may meet the other
-     * one in the text around it: "[\w]+" and "\w+" read apart there.
+     * one in the text around it: "[\w]+" and "\w+" read apart there. So
+     * does PCRE2 a repeat of the dot before "\R", and one of "\R" before a
+     * dot, as if "\R" took no character the dot takes, which a dot written
+     * in a group or as a class escapes (see NewlineSequencePossession).
      */
     private static function readsAlike(RegexNode $leftAst, RegexNode $rightAst, Hir $leftHir, Hir $rightHir, bool $spliced, PcreTarget $target): bool
     {
@@ -712,7 +718,9 @@ final class LanguageSolver
             && RewriteSites::shape($leftHir) === RewriteSites::shape($rightHir)
             && AutoPossession::shape($leftAst->pattern, $spliced) === AutoPossession::shape($rightAst->pattern, $spliced)
             && !self::holdsRepeatMadePossessiveBesideLastByte($target, $leftAst, $rightAst)
-            && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)));
+            && null === NewlineSequencePossession::repeat($leftAst) && null === NewlineSequencePossession::repeat($rightAst)
+            && (!$spliced || (!AutoPossession::meetsLastByteWhereSpliced($leftAst, $target) && !AutoPossession::meetsLastByteWhereSpliced($rightAst, $target)
+                && !NewlineSequencePossession::meetsWhereSpliced($leftAst) && !NewlineSequencePossession::meetsWhereSpliced($rightAst)));
     }
 
     /**
@@ -1014,10 +1022,6 @@ final class LanguageSolver
             throw new ComplexityException('Unsupported regex flags for the match solver: '.implode(', ', $unsupported).'.', 0, $pattern);
         }
 
-        if ('CRLF' === StartOptions::newline($ast->source ?? '')) {
-            throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', 0, $pattern);
-        }
-
         RegularSubsetValidator::assertNewlineConvention($ast, $pattern);
         RegularSubsetValidator::assertEmptyMatchesAllowed($ast, $pattern);
 
@@ -1034,11 +1038,20 @@ final class LanguageSolver
         $translator = new HirTranslator($target);
         $form = $translator->translate($ast);
 
+        // Under "(*CRLF)" a dot reads a "\r" alone but not one before a
+        // "\n", through a lookahead, which the match solver does not model.
+        $crLf = $translator->crLfNewline();
+        $dot = null === $crLf ? null : RegularSubsetValidator::crLfDot($form, $crLf, true);
+        if (null !== $dot) {
+            throw new ComplexityException('Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the match solver does not model.', $dot->startPosition, $pattern);
+        }
+
         // The search may skip the start between a "\r" and the "\n" after
         // it, and the JIT not always where the interpreter does: a match
         // that may start there, with a "\n" or empty, moves with what the
-        // pattern writes and with the JIT.
-        if (\in_array(StartOptions::newline($ast->source ?? ''), ['ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form)) {
+        // pattern writes and with the JIT, unless the pattern is one whose
+        // search tries every start.
+        if (\in_array(StartOptions::newline($ast->source ?? ''), ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($form) && !SearchStarts::triesEveryStart($ast)) {
             throw new ComplexityException(self::START_BETWEEN_CR_AND_LF_MESSAGE, 0, $pattern);
         }
 
@@ -1152,8 +1165,10 @@ final class LanguageSolver
         // after its first try where a "^" under /m or a ".*" leads it, which
         // the JIT does not always follow. It skips no other start, so where
         // no match starts there but where another starts too, the subjects
-        // a match is found in are the same whatever the engine skips.
-        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir)) {
+        // a match is found in are the same whatever the engine skips. A
+        // pattern that writes a "\r" or a "\n", and that no "^" nor ".*"
+        // leads, is searched from every start, and read as written.
+        if (MatchMode::Partial === $options->matchMode && \in_array($newline, ['CRLF', 'ANYCRLF', 'ANY'], true) && self::mayStartBetweenCrAndLf($hir) && !SearchStarts::triesEveryStart($ast)) {
             $builder = new DfaBuilder();
             $skipping = $builder->determinize($transformer->transform($hir, $options, true), $options);
             $differ = static fn (bool $left, bool $right): bool => $left !== $right;

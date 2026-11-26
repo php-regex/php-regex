@@ -166,6 +166,23 @@ CHANGELOG
    `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route host
    compiles, is still read. A target that names its locale is read under
    its tables.
+ * PCRE2 makes a dot or `\N` repeated some number of times possessive
+   before `\R`, and `\R` repeated before a dot or `\N`, lazy ones too, as
+   if `\R` took no character the dot takes, under every newline convention
+   but `(*ANY)`: `/^.*\R\z/` finds nothing in `"a\r"`, `/^(.*)\R\z/` and
+   `/^.*(\R)\z/` neither, and `/^\R?.\z/` nothing in `"\r"`, with and
+   without the JIT, from PCRE2 10.39 to 10.49, where `/^[^\n]*\R\z/`,
+   `/^(?:.)*\R\z/` and `/^(?:\R)?.\z/` find them. `/^.*\R\z/` and
+   `/^[^\n]*\R\z/` were proven to match the same strings, and `/x.*\R/`
+   and `/x[^\n]*\R/` to read alike. `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` now refuse a pattern that holds such a repeat, with the
+   other one right after it, past the end of the groups it stands in, into
+   the groups that follow, or past what may match nothing; `readAlike()`,
+   `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it like no other
+   pattern, and `readAlike()` a pattern that may end with such a repeat, or
+   start with a dot, like no other where it is spliced. A repeat counted
+   once, `.{2}\R`, and one a character follows first, `.*a\R`, are read as
+   before.
  * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
    `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
    as if 0xFF were no word character, whatever the tables say: under
@@ -196,12 +213,14 @@ CHANGELOG
    such a rewrite.
  * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
    `compile()` read `^` and `$` under `m`, and `$` and `\Z`, under `(*CR)`,
-   `(*NUL)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they were
-   refused: a line ends at `\r` under the first, at NUL under the second,
-   and under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
+   `(*NUL)`, `(*CRLF)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they
+   were refused: a line ends at `\r` under the first, at NUL under the
+   second, at `\r\n` and at neither character alone under the third, and
+   under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
    at the vertical tab, the form feed and NEL too, and at U+2028 and U+2029
    under `/u`. `^` then holds between a `\r` and a `\n`:
-   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`. `(*CRLF)` stays refused there.
+   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`, where `/(*CRLF)\r^\n/m` matches
+   nothing, and `/(*CRLF)a$/` matches `"a\r\n"` and not `"a\r"`.
  * A search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match
    only from between a `\r` and the `\n` after it is refused: PCRE2 skips
    that start where the pattern writes neither, and after its first try
@@ -211,11 +230,23 @@ CHANGELOG
    `matchEquivalent()` refuses a pattern under `(*ANYCRLF)` or `(*ANY)` that
    may match empty or start with a `\n`: `/(*ANYCRLF)\sa/` was proven to
    write the `$matches` of `/(*ANYCRLF)\sa|[^\s\S]\n/`, where without the
-   JIT the one finds nothing in `"\r\na"` and the other `"\na"`.
- * `equivalent()`, `intersection()` and `subsetOf()` refuse a dot or `\N`
-   under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`:
+   JIT the one finds nothing in `"\r\na"` and the other `"\na"`. A pattern
+   that writes a `\r` or a `\n` as a character of its own, outside a class,
+   and that no `^` nor `.*` leads, is searched from every start, with the
+   JIT and without, and is read as written: `compile()` reads
+   `/(*ANYCRLF)\na/` as finding `"\na"` in `"\r\na"`, and
+   `matchEquivalent()` proves `/(*ANYCRLF)\sa|[^\s\S]\n/` writes the
+   `$matches` of `/\sa/`. `matchEquivalent()` reads a pattern under
+   `(*CRLF)` that holds no dot nor `\N`, where it refused every one.
+ * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` read a dot and `\N` under `(*CRLF)` as PCRE2 does: each
+   takes a `\r` and a `\n` alone, and not the `\r` a `\n` follows.
    `/(*CRLF)a.\n/` was read as matching `"a\r\n"`, where `preg_match()`
-   finds nothing.
+   finds nothing. Such a dot inside a lookaround is refused. A dot there
+   reads like no class of every character, and unlike the dot under `s`:
+   `readAlike()` and the check of a rewrite held `/(*CRLF)a./` and
+   `/(*CRLF)a./s` to run alike, where the first finds nothing in `"a\r\n"`
+   and the second finds `"a\r"`.
  * `matchEquivalent()` refuses a newline convention other than `\n`, such as
    `(*CR)`, where `$` or `\Z` reads it, as `equivalent()` does:
    `/(*CR)a$/` was proven to write the `$matches` of `/a$/`, where

@@ -66,19 +66,23 @@ final class AnchorsAnywhereTest extends TestCase
      * The convention moves what an anchor reads: on the witness, the
      * pattern finds a match, and finds none once the convention is gone
      * and "\n" is the newline again. Under (*CRLF) a line ends at "\r\n"
-     * alone, which the automata do not read.
+     * alone, and the automaton follows the engine both ways.
      */
     #[Test]
     #[DataProvider('provideNewlineConventions')]
-    public function test_a_newline_convention_the_solver_does_not_read_is_refused(string $pattern, string $witness): void
+    public function test_a_newline_convention_moves_what_the_automaton_accepts(string $pattern, string $witness): void
     {
+        $plain = str_replace(['(*CRLF)', '(*CR)', '(*NUL)', '(*ANYCRLF)', '(*ANY)'], '', $pattern);
         $this->assertSame(1, preg_match($pattern, $witness));
-        $this->assertSame(0, preg_match(str_replace(['(*CRLF)', '(*CR)', '(*NUL)', '(*ANYCRLF)', '(*ANY)'], '', $pattern), $witness));
+        $this->assertSame(1, preg_match('/(*NO_JIT)'.substr($pattern, 1), $witness));
+        $this->assertSame(0, preg_match($plain, $witness));
 
-        $this->expectException(ComplexityException::class);
-        $this->expectExceptionMessageIsOrContains('A newline convention other than');
+        $solver = new LanguageSolver();
+        $search = new SolverOptions(matchMode: MatchMode::Partial);
 
-        (new LanguageSolver())->compile($pattern, new SolverOptions(matchMode: MatchMode::Partial));
+        $this->assertTrue(self::accepts($solver->compile($pattern, $search), $witness));
+        $this->assertFalse(self::accepts($solver->compile($plain, $search), $witness));
+        $this->assertFalse($solver->equivalent($pattern, $plain, $search)->isEquivalent);
     }
 
     #[Test]
@@ -120,9 +124,11 @@ final class AnchorsAnywhereTest extends TestCase
         // the newline.
         yield 'a start under (*CR), multiline turned off' => ['pattern' => '/(*CR)(?-m)^a/'];
         yield 'a start under (*CR), multiline turned on and off' => ['pattern' => '/(*CR)(?m-m)^a/'];
-        // Every convention but (*CRLF) moves the anchors as the engine does.
+        // Every convention moves the anchors as the engine does.
         yield 'cr capital Z' => ['pattern' => '/(*CR)a\Z/'];
         yield 'anycrlf multiline' => ['pattern' => '/(*ANYCRLF)^a/m'];
+        yield 'crlf capital Z' => ['pattern' => '/(*CRLF)a\Z/'];
+        yield 'crlf multiline' => ['pattern' => '/(*CRLF)^a$/m'];
         // "(?m)" turns on what "/m" turns on.
         yield 'cr inline multiline' => ['pattern' => '/(*CR)(?m)^a/'];
         yield 'nul inline multiline among other options' => ['pattern' => '/(*NUL)(?im)^a/'];
