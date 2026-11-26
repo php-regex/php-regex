@@ -88,6 +88,22 @@ CHANGELOG
    `/(?:a)+(?:b)?+a/`, `(?:)` in `/a+(?>(?:)|b)a/` and `a?` in
    `/[ab]{2,}a?(?:b){0,2}+a/` were reported, where the pattern without them
    matches otherwise.
+ * `regex.lint.group.redundant` reports again a group PCRE2 does not read
+   to make a repeat possessive: it kept quiet about every group of a
+   pattern that holds, anywhere, a character repeated before an atomic
+   group or a possessive repeat of a group that may match nothing, and
+   `(?:\\)` in `/(?:\\)?define [a-z]++ (?:,x)*+ /` was not reported. PCRE2
+   judges a repeated character against what stands after it, no further
+   than the first item that must take a character, and only the brackets
+   it reads on the way stay: `(?:b)` in `/a+c?(?:b)?+a/` and `(?:a)` in
+   `/(?:a)+c?(?:b)?+a/` stay, `(?:b)` in `/a+x(?:b)?+a/` and `(?:a)` in
+   `/(?:a)+x(?:b)?+a/` are reported, each pattern matching alike with and
+   without them, with and without the JIT, from PCRE2 10.39 to 10.49. A
+   group repeated more than once is compiled once per round, so that the
+   repeat of one round stands before what opens the next: `(?:b)` in
+   `/(?:(?>(?:b)?)a+){2}/`, which finds nothing in `aa` where
+   `/(?:(?>b?)a+){2}/` finds it, was reported and no longer is. A pattern
+   that holds a subroutine call is read whole, as before.
  * Without u, `regex.lint.group.redundant` and `regex.lint.group.empty` no
    longer call a group removable in a pattern that holds a repeat of the
    byte 0xFF before `\w`, or of `\w` before that byte, or would hold one

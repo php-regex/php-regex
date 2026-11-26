@@ -46,7 +46,9 @@ use PHPRegex\Parser\Node\UnicodePropNode;
  * "b" alone, "(?:é)+" without UTF mode the last byte of the letter, and
  * "(?:^)+" is refused. A group whose brackets decide which repeats PCRE2
  * makes possessive stays: "/a+(?:b)?+a/" finds nothing in "aa", where
- * "/a+b?+a/" finds it.
+ * "/a+b?+a/" finds it. The engine reads those brackets on its way from a
+ * repeated character to a group it may skip, no further than the first
+ * character that must be there: "(?:b)" in "/a+x(?:b)?+a/" can go.
  *
  * @internal
  */
@@ -75,7 +77,7 @@ final class RedundantGroupRule extends AbstractLintRule
             || !$this->isRedundantGroup($node->child)
             || EscapeJoin::groupSeparatesAnEscape($node, $context)
             || (self::isQuantified($context) && !self::readsOneCharacter($node->child, $context))
-            || PossessiveBrackets::groupDecides($node, $context)
+            || PossessiveBrackets::groupDecidesBesideARepeat($node, $context)
         ) {
             return [];
         }

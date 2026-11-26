@@ -670,6 +670,13 @@ whose brackets decide which repeats PCRE2 makes possessive stays too: PCRE2 make
 repeated before an atomic group, or a possessive repeat of a group, that may match nothing
 possessive, as if the group could not be skipped, so `/a+(?:b)?+a/` finds nothing in `aa`
 where `/a+b?+a/` finds it, and `/(?:a)+(?:b)?+a/` finds `aa` where `/a+(?:b)?+a/` does not.
+The engine reads those brackets on its way from the repeated character to the group it may
+skip, no further than the first character that must be there: `(?:b)` stays in
+`/a+c?(?:b)?+a/`, and is reported in `/a+x(?:b)?+a/`, as `(?:\\)` is in
+`/(?:\\)?define [a-z]++ (?:,x)*+ /`. A group repeated more than once is read again for each
+round, `(?:b)` in `/(?:(?>(?:b)?)a+){2}/` staying for the `a+` of the round before, and a
+pattern that holds a subroutine call is read whole: there a group stays wherever a repeat
+stands before such a group.
 
 **Example:**
 ```php
