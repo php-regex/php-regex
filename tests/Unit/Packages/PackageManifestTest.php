@@ -171,6 +171,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
             'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
+            // A loop of preg_match() calls is named as the lint names it.
+            'Linter\Extraction\PregFunctions',
             // The constants of the workspace, read as the lint reads them.
             'Linter\Extraction\ProjectConstants', 'Linter\Extraction\ValueExpr',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
