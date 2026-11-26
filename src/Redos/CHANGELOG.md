@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosWitness::$call`, a `WitnessCall` (`WithMatches`, `WithoutMatches`),
+   is the call of `preg_match()` a witness gives up in, `call` in its JSON
+   and in `toArray()`, and `ConfirmationRunner` replays a witness by it.
+   The runner replayed every witness with `$matches`: `/(?:|(?:a|a)*$)/`,
+   which gives up on `"aa" x n . "!"` only without them, was `replayed`
+   true from the analyzer's own replay and false once the same
+   `ConfirmationRunner` was passed to `RedosAnalyzer`.
  * `RedosAnalysis::$target` is the `PcreTarget` the verdict was computed
    for: the PHP version, the PCRE2 release and the locale of the analyzer's
    parser. `$pcreVersion` and `$phpVersion` stay the engine that ran the

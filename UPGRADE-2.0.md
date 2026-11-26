@@ -1465,6 +1465,10 @@ keys of `json_encode()` on an `OptimizationResult` do not change; on a
   `pcre_version` and `php_version` stay the engine that ran it. In PHP it is
   `RedosAnalysis::$target`, a `PcreTarget`, which the four results of
   `LanguageSolver` carry too.
+- The `witness` of a ReDoS analysis gains `call`, `with_matches` or
+  `without_matches`: the call of `preg_match()` the attack gives up in.
+  `RedosWitness::toArray()` gains it too, and `RedosWitness::$call` is a
+  `WitnessCall`.
 - `analyze` on an invalid pattern prints its document, with `validation`
   saying why, and `redos` and `explain` null; its `parse` object is gone,
   `validation.is_valid` says the same. `debug` always carries `validation`,

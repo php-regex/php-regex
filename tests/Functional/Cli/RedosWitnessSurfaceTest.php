@@ -78,7 +78,7 @@ final class RedosWitnessSurfaceTest extends TestCase
         $this->assertIsArray($payload);
         $this->assertIsArray($payload['redos'] ?? null, $buffer);
         $this->assertIsArray($payload['redos']['witness'] ?? null, $buffer);
-        $this->assertSame(['prefix' => '', 'pump' => $pump, 'suffix' => '!'], $payload['redos']['witness']);
+        $this->assertSame(['prefix' => '', 'pump' => $pump, 'suffix' => '!', 'call' => 'with_matches'], $payload['redos']['witness']);
         $this->assertDoesNotMatchRegularExpression('/[\x00-\x1F\x7F]/', json_encode($payload['redos']['witness'], \JSON_THROW_ON_ERROR | \JSON_UNESCAPED_UNICODE));
     }
 

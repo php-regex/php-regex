@@ -147,7 +147,7 @@ final class RedosAnalyzer
             $severity = null === $proof ? $heuristics['severity'] : self::provenSeverity($proof);
             $witness = null === $proof || null === $proof->pump
                 ? null
-                : new RedosWitness((string) $proof->prefix, $proof->pump, (string) $proof->suffix, $proof->unicode);
+                : new RedosWitness((string) $proof->prefix, $proof->pump, (string) $proof->suffix, $proof->unicode, $proof->withoutMatches ? WitnessCall::WithoutMatches : WitnessCall::WithMatches);
 
             // One attempt proven linear: what the retries of the search cost,
             // replayed in confirmed mode when its severity, that of a proven
@@ -348,7 +348,7 @@ final class RedosAnalyzer
         $candidates = [$witness];
         foreach ($proof->otherSuffixes as $suffix) {
             if ($suffix !== $witness->suffix) {
-                $candidates[] = new RedosWitness($witness->prefix, $witness->pump, $suffix, $witness->unicode);
+                $candidates[] = new RedosWitness($witness->prefix, $witness->pump, $suffix, $witness->unicode, $witness->call);
             }
         }
 
@@ -361,7 +361,7 @@ final class RedosAnalyzer
         foreach (self::endingLiterals($this->parser, $regex) as $literal) {
             foreach ($candidates as $candidate) {
                 if (!str_contains($candidate->build(1), $literal)) {
-                    $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode);
+                    $woven[] = new RedosWitness($literal.$candidate->prefix, $candidate->pump, $candidate->suffix, $candidate->unicode, $candidate->call);
                 }
             }
         }

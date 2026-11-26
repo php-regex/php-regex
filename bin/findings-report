@@ -366,7 +366,8 @@ function witness(string $pattern, array $analysis): ?array
     // The text field gets the witness the card spells: rebuilt raw here,
     // and dropped when the two do not say the same string.
     $built = Regex::create()->redos($pattern)->witness;
-    if (null === $built || $built->toArray() !== ['prefix' => $spelled['prefix'] ?? null, 'pump' => $spelled['pump'] ?? null, 'suffix' => $spelled['suffix'] ?? null]) {
+    $parts = null === $built ? null : array_intersect_key($built->toArray(), ['prefix' => true, 'pump' => true, 'suffix' => true]);
+    if (null === $built || $parts !== ['prefix' => $spelled['prefix'] ?? null, 'pump' => $spelled['pump'] ?? null, 'suffix' => $spelled['suffix'] ?? null]) {
         return null;
     }
     $length = null;

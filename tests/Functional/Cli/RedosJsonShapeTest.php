@@ -199,7 +199,7 @@ final class RedosJsonShapeTest extends TestCase
 
         // Vulnerable verdicts: the escaped witness parts, never the input for n pumps.
         $this->assertIsArray($json['witness']);
-        $this->assertSame(['prefix', 'pump', 'suffix'], array_keys($json['witness']));
+        $this->assertSame(['prefix', 'pump', 'suffix', 'call'], array_keys($json['witness']));
         self::assertOnlyStrings($json['witness']);
     }
 

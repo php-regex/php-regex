@@ -424,7 +424,8 @@ vendor/bin/regex analyze '/(a+)+$/' --format=json
     "witness": {
         "prefix": "",
         "pump": "a",
-        "suffix": "!"
+        "suffix": "!",
+        "call": "with_matches"
     },
     "replayed": null,
     "abstractions": [],

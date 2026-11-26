@@ -216,7 +216,11 @@ witness reproduces with `$matches`, and `preg_match() without $matches fails`
 for the patterns that only blow up on PHP's second try — an empty first match
 makes `preg_match()` retry the offset with `NOTEMPTY_ATSTART | ANCHORED` when
 no `$matches` was passed. The analysis models both forms; a verdict is only
-replayed the way it was proven.
+replayed the way it was proven. The witness says which, in
+`RedosWitness::$call` (`WitnessCall::WithMatches` or `WitnessCall::WithoutMatches`,
+`call` in JSON), and `ConfirmationRunner` replays it by that call, whether the
+analyzer runs it or you pass one to `RedosAnalyzer`: `/(?:|(?:a|a)*$)/` gives
+up on `"aa" x n . "!"` only without `$matches`.
 
 When the replay never fails, the verdict stays and its confidence stays `medium`:
 
@@ -532,7 +536,8 @@ The JSON output (`vendor/bin/regex analyze --format=json`, `debug --format=json`
 "witness": {
     "prefix": "",
     "pump": "a",
-    "suffix": "!"
+    "suffix": "!",
+    "call": "with_matches"
 },
 "replayed": true,
 "abstractions": [],

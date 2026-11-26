@@ -70,7 +70,8 @@ final class RedosWitnessRenderingTest extends TestCase
         $witness = $this->witnessOf($pattern);
         $raw = ['prefix' => $witness->prefix, 'pump' => $witness->pump, 'suffix' => $witness->suffix];
 
-        foreach ($witness->toArray() as $part => $literal) {
+        $this->assertSame($witness->toArray()['call'], $witness->call->value);
+        foreach (array_intersect_key($witness->toArray(), $raw) as $part => $literal) {
             $this->assertMatchesRegularExpression('/^[\x20-\x7E]*$/', $literal, $part);
             $this->assertSame($raw[$part], self::readPhpLiteral($literal), $part.' of '.$pattern);
         }
@@ -101,15 +102,15 @@ final class RedosWitnessRenderingTest extends TestCase
         $witness = new RedosWitness('aaa', 'a', '!', false);
 
         $this->assertSame('"aaa" . "a" x n . "!"', $witness->render());
-        $this->assertSame(['prefix' => 'aaa', 'pump' => 'a', 'suffix' => '!'], $witness->toArray());
+        $this->assertSame(['prefix' => 'aaa', 'pump' => 'a', 'suffix' => '!', 'call' => 'with_matches'], $witness->toArray());
         $this->assertSame('aaaaaaa!', $witness->build(4));
     }
 
     /**
      * Empty parts are left out of render(); toArray() keeps every part,
-     * unquoted.
+     * unquoted, and the call.
      *
-     * @param array{prefix: string, pump: string, suffix: string} $parts
+     * @param array{prefix: string, pump: string, suffix: string, call: string} $parts
      */
     #[Test]
     #[DataProvider('provideCanonicalForms')]
@@ -120,17 +121,17 @@ final class RedosWitnessRenderingTest extends TestCase
     }
 
     /**
-     * @return iterable<string, array{RedosWitness, string, array{prefix: string, pump: string, suffix: string}}>
+     * @return iterable<string, array{RedosWitness, string, array{prefix: string, pump: string, suffix: string, call: string}}>
      */
     public static function provideCanonicalForms(): iterable
     {
-        yield 'empty prefix' => [new RedosWitness('', 'a', '!', false), '"a" x n . "!"', ['prefix' => '', 'pump' => 'a', 'suffix' => '!']];
-        yield 'empty suffix' => [new RedosWitness('aaa', 'a', '', false), '"aaa" . "a" x n', ['prefix' => 'aaa', 'pump' => 'a', 'suffix' => '']];
-        yield 'pump only' => [new RedosWitness('', 'a', '', false), '"a" x n', ['prefix' => '', 'pump' => 'a', 'suffix' => '']];
-        yield 'nul byte before a digit' => [new RedosWitness('', "\0", '1', false), '"\x00" x n . "1"', ['prefix' => '', 'pump' => '\x00', 'suffix' => '1']];
-        yield 'code point under u' => [new RedosWitness('', "\u{202E}", '!', true), '"\u{202E}" x n . "!"', ['prefix' => '', 'pump' => '\u{202E}', 'suffix' => '!']];
-        yield 'high byte without u' => [new RedosWitness('', "\xFF", "\n", false), '"\xFF" x n . "\n"', ['prefix' => '', 'pump' => '\xFF', 'suffix' => '\n']];
-        yield 'characters a php literal escapes' => [new RedosWitness('$', '"', '\\', false), '"\$" . "\"" x n . "\\\\"', ['prefix' => '\$', 'pump' => '\"', 'suffix' => '\\\\']];
+        yield 'empty prefix' => [new RedosWitness('', 'a', '!', false), '"a" x n . "!"', ['prefix' => '', 'pump' => 'a', 'suffix' => '!', 'call' => 'with_matches']];
+        yield 'empty suffix' => [new RedosWitness('aaa', 'a', '', false), '"aaa" . "a" x n', ['prefix' => 'aaa', 'pump' => 'a', 'suffix' => '', 'call' => 'with_matches']];
+        yield 'pump only' => [new RedosWitness('', 'a', '', false), '"a" x n', ['prefix' => '', 'pump' => 'a', 'suffix' => '', 'call' => 'with_matches']];
+        yield 'nul byte before a digit' => [new RedosWitness('', "\0", '1', false), '"\x00" x n . "1"', ['prefix' => '', 'pump' => '\x00', 'suffix' => '1', 'call' => 'with_matches']];
+        yield 'code point under u' => [new RedosWitness('', "\u{202E}", '!', true), '"\u{202E}" x n . "!"', ['prefix' => '', 'pump' => '\u{202E}', 'suffix' => '!', 'call' => 'with_matches']];
+        yield 'high byte without u' => [new RedosWitness('', "\xFF", "\n", false), '"\xFF" x n . "\n"', ['prefix' => '', 'pump' => '\xFF', 'suffix' => '\n', 'call' => 'with_matches']];
+        yield 'characters a php literal escapes' => [new RedosWitness('$', '"', '\\', false), '"\$" . "\"" x n . "\\\\"', ['prefix' => '\$', 'pump' => '\"', 'suffix' => '\\\\', 'call' => 'with_matches']];
     }
 
     #[Test]
@@ -157,7 +158,7 @@ final class RedosWitnessRenderingTest extends TestCase
         $decoded = json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
         $this->assertIsArray($decoded);
         $this->assertIsArray($decoded['witness']);
-        $this->assertSame(['prefix', 'pump', 'suffix'], array_keys($decoded['witness']));
+        $this->assertSame(['prefix', 'pump', 'suffix', 'call'], array_keys($decoded['witness']));
         $this->assertIsString($decoded['witness']['pump']);
         $this->assertStringNotContainsString($rawPump, (string) $decoded['witness']['pump']);
         $this->assertStringStartsWith($escapedPump, $decoded['witness']['pump']);

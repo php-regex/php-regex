@@ -1285,6 +1285,7 @@ is written as the body of a PHP double-quoted string, so
 | `prefix` | string | What comes before the repeated part |
 | `pump` | string | The part repeated to grow the attack |
 | `suffix` | string | What comes after, to make the match fail |
+| `call` | string | The call of `preg_match()` the attack gives up in: `with_matches`, or `without_matches` for a pattern only `preg_match($pattern, $subject)` runs into the limit, PHP retrying an empty match there |
 
 ### Search cost: `redos_analysis.search_cost`
 

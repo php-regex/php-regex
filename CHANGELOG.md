@@ -183,6 +183,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `LanguageSolver` reads lookarounds, word boundaries, anchors anywhere, the `m` flag and the `x`, `U`, `n`, `J`, `S`, `X` flags; its character sets come from the running PCRE2.
 - `LanguageSolver::matchEquivalent()`, `language()` and `acceptsPrefix()`. See [the solver reference](docs/reference/logic-solver.md).
 - `ComplexityException::isLimitReached()`, `$phase` and `$limit` tell a budget that ran out from a pattern outside what the automata read.
+- `RedosWitness::$call` (`WitnessCall::WithMatches` or `WithoutMatches`, `call` in JSON) names the call of `preg_match()` a witness gives up in, and `ConfirmationRunner` replays the witness by it, injected or not.
 - A result says what it was computed for: `RedosAnalysis::$target` and the `$target` of the solver's four results are the `PcreTarget` judged, the PHP version, the PCRE2 release and the locale, beside `$pcreVersion`, the engine that ran. `PcreTarget::toArray()` writes it as `{php, pcre, locale}`, and the JSON of a ReDoS analysis carries it as `target`.
 - `TrivialMatchClassifier` (with `matchedLiteral()`) and `RequiredLiteralAnalyzer` find the `preg_*` calls a string function can do or prefilter. See [Prefilters](docs/reference/prefilters.md).
 - `Optimizer\Optimizer`, the optimization `Regex::optimize()` runs, on any `RegexParser`; `OptimizationResult::$changes` names each kind of rewrite made.

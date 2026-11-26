@@ -462,7 +462,7 @@ var_dump($confirmed->replayed);                               // bool(true)
 | `complexity`       | RedosComplexity    | linear, polynomial, exponential, or unknown when nothing was proven |
 | `degree`           | int\|null         | Degree of a polynomial verdict (2 or more) |
 | `proof`            | RedosProof         | proven, heuristic, budget_exceeded or not_analyzed |
-| `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()` |
+| `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()`, and `$call`, the `WitnessCall` of `preg_match()` it gives up in (`WithMatches`, or `WithoutMatches` when only the call without `$matches` does) |
 | `replayed`         | bool\|null        | Whether the witness made the running PCRE fail; `null` when not replayed |
 | `abstractions`     | list<string>      | What the model analysed differently from the pattern |
 | `target`           | PcreTarget        | The PHP version, the PCRE2 release and the locale the verdict was computed for |
@@ -1183,7 +1183,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
 | `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |
 | `Metrics` | `Parser\Analysis\MetricsCollector` | `{counts: array<string, int>, total: int, maxDepth: int}` |
-| `WitnessArray` | `Redos\RedosWitness` | `{prefix, pump, suffix}` strings of the attack |
+| `WitnessArray` | `Redos\RedosWitness` | `{prefix, pump, suffix}` strings of the attack and its `call` |
 | `SearchCostArray` | `Redos\RedosSearchCost` | degree, witness and replay of a search |
 | `AlphabetRange` | `Automata\Model\Dfa` | `{0: int, 1: int}` — code point range, both ends in |
 | `RangeTransition` | `Automata\Model\DfaState` | `{0: int, 1: int, 2: int}` — range start, end, target state |
