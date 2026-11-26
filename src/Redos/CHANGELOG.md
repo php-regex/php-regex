@@ -27,6 +27,17 @@ CHANGELOG
    `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/` keep the heuristics'
    verdict, and so does a pattern whose reading takes more than 16,384 steps.
    An exponential or polynomial verdict stands.
+ * A loop whose success fails only at the end of the subject is set aside
+   when every character that may follow it leads to a sure success: the
+   engine reads the loop's last character at the end only, gives it back
+   and succeeds before it. `/\A(?:\n|\n)+^/m`, `/\A(?:\n|\n)+(?:^|x)/m`,
+   `/\A(?:\n|\n)+(?:^$|[^\n])/mD` and `/\A\n*\n*^/m`, linear on the engine,
+   are safe (proven) where they got the heuristics' verdict since `^` under
+   m holds after a newline only where something follows, and
+   `/\A(?:\n|\n)+(?:^\z|[^\n])/m` stays exponential. A pattern whose
+   exponential ambiguity was left without witness for that reason may now
+   be proven polynomial: `/^\w+[bj]+(?:c|k)+?\w{0,14}[dl]+\w{0,14}[e]+.{0,2}f+\w{0,6}(?:g|g)+./s`,
+   quadratic on the engine, is.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.

@@ -2103,6 +2103,13 @@ final class AmbiguityFinder
      * body kept with every way through it, widens what succeeds:
      * "[^x]{0,20}(?:x|\z)" read as "[^x]*(?:x|\z)" accepts whatever follows,
      * where the engine fails once twenty characters are not enough.
+     *
+     * Without widening, the end of the subject right after the item may
+     * reject (acceptsEveryCharacter()): every round of the ambiguity reads
+     * the item, and the first time the engine reads it with a character
+     * left, it succeeds there. Only the last character may be read by it on
+     * a path that fails: "^" under m after the newline a loop reads last
+     * gives it back and holds before it, "/\A(?:\n|\n)+^/m".
      */
     private function disproved(int $state): bool
     {
@@ -2113,7 +2120,29 @@ final class AmbiguityFinder
         $after = $this->automaton->exactSuccessors($state);
         ksort($after);
 
-        return $this->widens ? $this->acceptsEverythingExactly($after) : null === $this->rejectingSuffix($after);
+        return $this->widens ? $this->acceptsEverythingExactly($after) : $this->acceptsEveryCharacter($after);
+    }
+
+    /**
+     * Whether every continuation of the set that reads one character at
+     * least is accepted: after each class, a success, or a set no
+     * continuation rejects, the end of the subject included.
+     *
+     * @param array<int, true> $items
+     *
+     * @throws ModelLimitException
+     */
+    private function acceptsEveryCharacter(array $items): bool
+    {
+        $automaton = $this->automaton;
+        for ($class = 0; $class < $automaton->classCount(); $class++) {
+            $next = $automaton->stepSet($items, $class);
+            if (null !== $next && null !== $this->rejectingSuffix($next)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
