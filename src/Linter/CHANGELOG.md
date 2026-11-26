@@ -310,6 +310,14 @@ CHANGELOG
    where they kept the flag; `/(?r)[k]/iu`, `/(?r)(?-r)[kK]/iu`, where the
    restriction is lifted, and `/(?r)[\x{C5}\x{E5}]/iu`, whose set holds the
    Angstrom sign and no ASCII letter, still keep it.
+ * Under u, `regex.lint.flag.useless.i` no longer gives a character a case
+   for a full mapping of mbstring, one character to several, which PCRE2
+   does not fold: `/\x{149}/iu`, whose `ŉ` has `ʼN` for capital, and
+   `/\x{FB00}/iu` are reported, as `/[\x{149}]/iu` was. Such a character is
+   read from PCRE2's tables of the target's release, which pair the sharp
+   s with its capital, so `/\x{DF}/iu` keeps its flag, and from 10.45
+   `\x{390}` with `\x{1FD3}`. The simple mappings of mbstring are still
+   read: the long s, the Kelvin sign, `İ` and `ı` keep the flag.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

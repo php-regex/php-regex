@@ -700,11 +700,13 @@ final class UselessIFlagRule extends AbstractLintRule
     }
 
     /**
-     * Whether mbstring maps the character to another case, by a full
-     * mapping too: "ŉ" to "ʼN", which PCRE2 does not fold. It maps the long
-     * s and the Kelvin sign, which PCRE2 folds with "s" and "k" though its
-     * tables give them no other case from 10.43, and "İ" and "ı", which it
-     * folds with "i" and "I" under Turkish rules.
+     * Whether mbstring maps the character to another one, by a simple
+     * mapping: the long s and the Kelvin sign, which PCRE2 folds with "s"
+     * and "k" though its tables give them no other case from 10.43, and
+     * "İ" and "ı", which it folds with "i" and "I" under Turkish rules. A
+     * full mapping, one character to several, "ŉ" to "ʼN", is not read:
+     * PCRE2 folds one character with one, and its tables pair those it
+     * folds, the sharp s with its capital.
      */
     private static function mapsToAnotherCase(int $codePoint): bool
     {
@@ -713,8 +715,8 @@ final class UselessIFlagRule extends AbstractLintRule
             return false;
         }
 
-        return mb_strtoupper($char, 'UTF-8') !== $char
-            || mb_strtolower($char, 'UTF-8') !== $char;
+        return mb_convert_case($char, \MB_CASE_UPPER_SIMPLE, 'UTF-8') !== $char
+            || mb_convert_case($char, \MB_CASE_LOWER_SIMPLE, 'UTF-8') !== $char;
     }
 
     /**

@@ -53,6 +53,17 @@ final class UselessIFlagUnderUtfTest extends TestCase
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
     ];
 
+    /**
+     * The characters the mbstring of PHP 8.4 maps to another case by a full
+     * mapping and by no simple one.
+     */
+    private const FULL_MAPPINGS_ALONE = [
+        0xDF, 0x149, 0x1F0, 0x390, 0x3B0, 0x587, 0x1E96, 0x1E97, 0x1E98, 0x1E99, 0x1E9A, 0x1F50, 0x1F52, 0x1F54, 0x1F56,
+        0x1FB2, 0x1FB4, 0x1FB6, 0x1FB7, 0x1FC2, 0x1FC4, 0x1FC6, 0x1FC7, 0x1FD2, 0x1FD3, 0x1FD6, 0x1FD7, 0x1FE2, 0x1FE3,
+        0x1FE4, 0x1FE6, 0x1FE7, 0x1FF2, 0x1FF4, 0x1FF6, 0x1FF7, 0xFB00, 0xFB01, 0xFB02, 0xFB03, 0xFB04, 0xFB05, 0xFB06,
+        0xFB13, 0xFB14, 0xFB15, 0xFB16, 0xFB17,
+    ];
+
     private static ?string $everyCharacter = null;
 
     /**
@@ -101,13 +112,24 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'an ASCII sign' => ['pattern' => '/"/iu', 'useless' => true, 'reported' => true];
         // Both cases of every character are in the range.
         yield 'every character' => ['pattern' => '/[\x{0}-\x{10FFFF}]/iu', 'useless' => true, 'reported' => true];
-        // mbstring maps "ﬀ" to "FF", "ﬗ" to "ՄԽ" and "ŉ" to "ʼN", which
-        // PCRE2 does not fold, one character being two: in a class, which
-        // PCRE2's tables are read for, the flag is useless; read alone, as
-        // mbstring reads it, it is kept.
+        // mbstring maps "ﬀ" to "FF", "ﬗ" to "ՄԽ" and "ŉ" to "ʼN" by a full
+        // mapping, one character to two, which PCRE2 does not fold: in a
+        // class or alone, the flag is useless. The sharp s, which mbstring
+        // maps to "SS" alone, folds with its capital in PCRE2's tables.
         yield 'a range ending at a ligature' => ['pattern' => '/[\x{FAFF}-\x{FB00}]/iu', 'useless' => true, 'reported' => true];
         yield 'a range starting at a ligature' => ['pattern' => '/[\x{FB17}-\x{FB1C}]/iu', 'useless' => true, 'reported' => true];
-        yield 'a letter whose capital is two characters' => ['pattern' => '/\x{149}/iu', 'useless' => true, 'reported' => false];
+        yield 'a letter whose capital is two characters' => ['pattern' => '/\x{149}/iu', 'useless' => true, 'reported' => true];
+        yield 'that letter written raw' => ['pattern' => '/ŉ/iu', 'useless' => true, 'reported' => true];
+        yield 'a ligature' => ['pattern' => '/\x{FB00}/iu', 'useless' => true, 'reported' => true];
+        yield 'the sharp s' => ['pattern' => '/\x{DF}/iu', 'useless' => false, 'reported' => false];
+        // mbstring maps them to one character, as PCRE2 folds them: the
+        // long s and the Kelvin sign with "s" and "k", which its tables
+        // give no other case from 10.43, and the dotted capital I and the
+        // dotless small i with "i" and "I", under Turkish rules alone.
+        yield 'the long s' => ['pattern' => '/\x{17F}/iu', 'useless' => false, 'reported' => false];
+        yield 'the Kelvin sign' => ['pattern' => '/\x{212A}/iu', 'useless' => false, 'reported' => false];
+        yield 'the dotted capital I' => ['pattern' => '/\x{130}/iu', 'useless' => true, 'reported' => false];
+        yield 'the dotless small i' => ['pattern' => '/\x{131}/iu', 'useless' => true, 'reported' => false];
         // PCRE2 folds the long s with "s" and the Kelvin sign with "k",
         // which its tables give no other case from 10.43.
         yield 'the long s in a class' => ['pattern' => '/[\x{17F}]/iu', 'useless' => false, 'reported' => false];
@@ -244,6 +266,38 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'the verb before the release that restricts' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.42', 'reported' => false];
         yield 'the verb on the release that reads it' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.45', 'reported' => true];
         yield 'the verb on the latest release' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.49', 'reported' => true];
+    }
+
+    /**
+     * The 48 characters mbstring maps to another case by a full mapping
+     * alone, one character to several, are read from PCRE2's tables of the
+     * target's release, which folds one character with one: the sharp s
+     * with its capital on every release, and from 10.45, with Unicode 16,
+     * U+0390 with U+1FD3, U+03B0 with U+1FE3 and U+FB05 with U+FB06.
+     *
+     * Engine, every character matched once, with the JIT and without it:
+     * 47 of them match themselves alone under i on PCRE2 10.35, 10.39,
+     * 10.40, 10.42, 10.43 and 10.44 (php:7.4 to php:8.4), 41 on 10.46 and
+     * 10.49.
+     */
+    #[Test]
+    public function test_a_character_mbstring_maps_by_a_full_mapping_alone_has_the_case_the_engine_gives_it(): void
+    {
+        $folded = [];
+        foreach (self::FULL_MAPPINGS_ALONE as $codePoint) {
+            $pattern = \sprintf('/\x{%X}/iu', $codePoint);
+            // Oracle: of every character, the pattern matches its own alone
+            // where i changes nothing.
+            $useless = 1 === preg_match_all($pattern, self::everyCharacter());
+            if (!$useless) {
+                $folded[] = $codePoint;
+            }
+
+            $this->assertSame($useless, self::reports($pattern), $pattern);
+        }
+
+        $this->assertContains(0xDF, $folded);
+        $this->assertNotContains(0x149, $folded);
     }
 
     /**
