@@ -125,6 +125,12 @@ final class AstFingerprint
         // The HIR and the automata built from it: a persistent DFA cache is
         // keyed on this version too, so a change there must drop it.
         'src/Parser/Hir/*.php',
+        // Read where the solver splits a delimited pattern and prints the
+        // text a call or a spliced end runs.
+        'src/Parser/DelimitedPattern.php',
+        'src/Parser/Printer/PatternPrinter.php',
+        'src/Parser/Printer/PatternLayout.php',
+        'src/Parser/Printer/DelimiterBrackets.php',
         'src/Automata/LanguageSolver.php',
         'src/Automata/Builder/*.php',
         'src/Automata/Determinization/*.php',
