@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Lint;
 
 use PHPRegex\Linter\AnalysisService;
 use PHPRegex\Linter\DiagnosticType;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\RedosVerdict;
@@ -285,6 +286,102 @@ final class AnalysisServiceEveryMatchSearchCostTest extends TestCase
         $this->assertSame(RedosVerdict::everyMatchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);
 
         $this->assertSame([], self::searchIssues(self::service('low'), new PatternOccurrence($pattern, 'file.php', 1, 'preg_match()')));
+    }
+
+    /**
+     * A call that runs the loop itself, through preg_match() from the end
+     * of each match, as nette/utils' lazy Strings::matchAll() does, gets
+     * the cost of that loop, in its own words: each attempt reads the rest
+     * of the run before it settles on the empty match of "(?:a+\d)?".
+     */
+    #[Test]
+    public function test_match_loop_search_cost_is_raised_at_a_call_that_runs_the_loop_itself(): void
+    {
+        $subject = str_repeat('a', 1000).'!';
+        $this->assertSame(1001, self::matchLoop(self::PATTERN, $subject), 'Oracle: the loop stops before the end of the run.');
+        $attempt = PcreAttemptSteps::pinned(self::PATTERN);
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($attempt, $subject, 250) - PcreAttemptSteps::steps($attempt, $subject, 500), 'Oracle: the attempt does not read the run.');
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'Strings::matchAll()', everyMatch: PregFunctions::MATCH_LOOP));
+
+        $this->assertCount(1, $issues);
+        $this->assertSame('warning', $issues[0]->severity->level());
+        $analysis = $issues[0]->analysis;
+        $this->assertInstanceOf(RedosAnalysis::class, $analysis);
+        $cost = $analysis->everyMatchSearchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost);
+        $this->assertSame(SearchCostCause::ShortMatch, $cost->cause);
+        $this->assertSame(RedosVerdict::everyMatchMessage(PregFunctions::MATCH_LOOP, $cost), $issues[0]->message);
+        $this->assertSame("Quadratic search over short matches: one attempt is linear (proven), but the loop that calls preg_match() again where each match ends finds a short or an empty match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: MEDIUM.", $issues[0]->message);
+        $this->assertSame(RedosVerdict::everyMatchEvidence($cost, $analysis->pcreVersion), $issues[0]->hints);
+        $this->assertSame(implode("\n", $issues[0]->hints), $issues[0]->diagnostic()->snippet);
+        $this->assertGreaterThanOrEqual(1000, self::matchLoop(self::PATTERN, $cost->build(1000)), 'The attack stops the loop before the end of the run.');
+
+        // Below the threshold, as the other costs of a search.
+        $this->assertSame([], self::searchIssues(self::service('high'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'Strings::matchAll()', everyMatch: PregFunctions::MATCH_LOOP)));
+    }
+
+    /**
+     * The loop makes no retry after an empty match: "(?:a+\d)??", whose
+     * empty match comes before the run, costs it nothing, where
+     * preg_match_all() pays PHP's retry after each one. A literal both
+     * calls read gets the finding of the function alone.
+     */
+    #[Test]
+    public function test_match_loop_search_cost_is_not_the_cost_of_the_retry_after_an_empty_match(): void
+    {
+        $pattern = '/(?:a+\d)??/';
+        $subject = str_repeat('a', 1000).'!';
+        $attempt = PcreAttemptSteps::pinned($pattern);
+        $this->assertSame(PcreAttemptSteps::steps($attempt, $subject, 250), PcreAttemptSteps::steps($attempt, $subject, 500), 'Oracle: the attempt reads the run.');
+        $retry = PcreAttemptSteps::pinned('/(*NOTEMPTY_ATSTART)(?:a+\d)??/');
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($retry, $subject, 250) - PcreAttemptSteps::steps($retry, $subject, 500), 'Oracle: the retry does not read the run.');
+
+        $service = self::service('medium');
+        $this->assertSame([], self::searchIssues($service, new PatternOccurrence($pattern, 'file.php', 1, 'Strings::matchAll()', everyMatch: PregFunctions::MATCH_LOOP)));
+
+        $issues = self::searchIssues($service, new PatternOccurrence($pattern, 'file.php', 1, 'preg_match_all()', everyMatch: 'preg_match_all', everyMatchElsewhere: [PregFunctions::MATCH_LOOP]));
+        $this->assertCount(1, $issues);
+        $this->assertStringContainsString('but preg_match_all() finds an empty match', (string) $issues[0]->message);
+    }
+
+    /**
+     * A literal both loops read, on a pattern that costs each: one finding
+     * for the function, in the words of its retry, and one for the loop,
+     * in its own, each with the analysis of its loop.
+     */
+    #[Test]
+    public function test_match_loop_search_cost_is_raised_beside_the_cost_of_the_functions_that_look_for_every_match(): void
+    {
+        $this->assertSame(1002, self::matchesMade('preg_match_all', str_repeat('a', 1000).'!'), 'Oracle: preg_match_all() stops before the end of the run.');
+        $this->assertSame(1001, self::matchLoop(self::PATTERN, str_repeat('a', 1000).'!'), 'Oracle: the loop stops before the end of the run.');
+        self::assertRetriesGrow();
+
+        $issues = self::searchIssues(self::service('medium'), new PatternOccurrence(self::PATTERN, 'file.php', 1, 'preg_match_all()', everyMatch: 'preg_match_all', everyMatchElsewhere: [PregFunctions::MATCH_LOOP]));
+
+        $this->assertCount(2, $issues);
+        $this->assertSame([SearchCostCause::EmptyMatchRetry, SearchCostCause::ShortMatch], [$issues[0]->analysis?->everyMatchSearchCost?->cause, $issues[1]->analysis?->everyMatchSearchCost?->cause]);
+        $this->assertStringContainsString('but preg_match_all() finds an empty match', (string) $issues[0]->message);
+        $this->assertStringContainsString('but the loop that calls preg_match() again', (string) $issues[1]->message);
+    }
+
+    /**
+     * How many matches the loop of nette/utils' Strings::matchAll() makes
+     * under lazy, as its generator runs it (nette/utils 4.1,
+     * src/Utils/Strings.php), in PCRE2's interpreter.
+     */
+    private static function matchLoop(string $pattern, string $subject): int
+    {
+        $pattern = PcreInterpreter::pattern($pattern);
+        $offset = 0;
+        $counter = 0;
+        $m = [];
+        while ($offset <= \strlen($subject) - ($counter ? 1 : 0) && preg_match($pattern, $subject, $m, \PREG_OFFSET_CAPTURE, $offset)) {
+            $offset = $m[0][1] + max(1, \strlen($m[0][0]));
+            $counter++;
+        }
+
+        return $counter;
     }
 
     private static function service(string $redosThreshold): AnalysisService

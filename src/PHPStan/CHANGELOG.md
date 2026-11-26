@@ -10,6 +10,11 @@ CHANGELOG
    short matches, as `/a*b|a/` on a run of `a`, whose attempt reads to the
    end of the run before each one; the tip then starts with `Quadratic
    search over short matches`.
+ * `regex.redos.search` is reported at a nette/utils `Strings::matchAll()`
+   whose `lazy` is `true`, by its value or its type, for the cost of the
+   loop it runs itself through `preg_match()`, with no retry after an empty
+   match: `/(?:a+\d)?/` is reported there, `/(?:a+\d)??/` is not. A `lazy`
+   that may be `true` or `false` names neither loop, and stays unreported.
  * `regex.redos.search`, with its message `Quadratic search (ReDoS): %s`,
    also covers the calls of `preg_match_all()`, `preg_replace()`,
    `preg_filter()`, `preg_replace_callback()`, `preg_replace_callback_array()`

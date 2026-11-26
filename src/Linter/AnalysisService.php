@@ -23,6 +23,7 @@ use PHPRegex\Linter\Config\ProjectTarget;
 use PHPRegex\Linter\Config\TargetConstraint;
 use PHPRegex\Linter\Exception\LintException;
 use PHPRegex\Linter\Extraction\LiteralSpelling;
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Linter\Extraction\TokenBasedExtractionStrategy;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\Rule\InvisibleCharacterRule;
@@ -544,11 +545,24 @@ final class AnalysisService
         // The search of preg_match() stops at the first empty match; each
         // call that looks for every match retries after each one, the other
         // calls that read the literal included.
+        $loops = $this->shouldReportSearchCost() ? $occurrence->everyMatchCalls() : [];
         $everyMatchCost = $redos->everyMatchSearchCost;
-        if (null !== $everyMatchCost && $this->shouldReportSearchCost()) {
+        if (null !== $everyMatchCost) {
             $evidence = RedosVerdict::everyMatchEvidence($everyMatchCost, $redos->pcreVersion);
-            foreach ($occurrence->everyMatchCalls() as $function) {
+            foreach (array_diff($loops, [PregFunctions::MATCH_LOOP]) as $function) {
                 $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage($function, $everyMatchCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $redos, hints: $evidence);
+            }
+        }
+
+        // A call that runs the loop itself, through preg_match() from the
+        // end of each match, makes no retry after an empty one: its loop
+        // has a cost of its own, which the analysis of that loop gives.
+        if (\in_array(PregFunctions::MATCH_LOOP, $loops, true)) {
+            $loop = (new RedosAnalyzer($this->regex))->analyzeMatchLoop($occurrence->pattern, new RedosOptions($this->redosMode, $this->redosSeverityThreshold, $this->redosConfirmOptions));
+            $loopCost = $loop->everyMatchSearchCost;
+            if (null !== $loopCost) {
+                $evidence = RedosVerdict::everyMatchEvidence($loopCost, $loop->pcreVersion);
+                $issues[] = LintIssue::at($occurrence, LintSeverity::Warning, RedosVerdict::everyMatchMessage(PregFunctions::MATCH_LOOP, $loopCost), RedosVerdict::SEARCH_ISSUE_ID, hint: implode(' ', $evidence), analysis: $loop, hints: $evidence);
             }
         }
 

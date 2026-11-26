@@ -33,6 +33,34 @@ CHANGELOG
    on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
    0.01 ms through `preg_match()`. `RedosSearchCost::$cause` says so,
    and confirmed mode replays the attempt pinned inside the run.
+ * The cost of short matches reads three more shapes, each measured through
+   `preg_match_all()` on 16,000 `a` with `pcre.jit=0`. A match of up to 64
+   run words, where it stopped at four: `/a{5}(?:a+\d)?/` (12.4 ms). The
+   last success an attempt meets in the order PCRE2 tries its paths, where
+   it took the first and gave up when a path tried before it matched
+   later: `/a(?:a+\d|a{20})?/` settles on twenty-one characters, its
+   `a{20}` tried after `a+\d` and before the group is left out (3.0 ms). A
+   first call whose first attempt fails inside the run, the search going on
+   at the next character: `/\Ba(?:a+\d)?/` (62 ms), not under the `A`
+   modifier nor `\G`, which tie the call to its start. Confirmed mode
+   replays each, a match now short within 64 run words of the pinned
+   attempt. `/(?<=a)a(?:a+\d)?/` stays unreported: the model keeps no
+   lookaround's condition.
+ * The cost of short matches is also read for a loop that looks for every
+   match with `preg_match()` itself, called again where each match ended
+   and one byte on after an empty one, with no retry there, as the
+   generator nette/utils' `Strings::matchAll()` returns under `lazy` does:
+   a call may then end on an empty match, once its attempt has read to the
+   end of the run. `/(?:a+\d)?/` costs that loop 1.2, 3.7 and 13 ms on
+   2,000, 4,000 and 8,000 `a` with `pcre.jit=1`; `/(?:a+\d)??/`, which
+   costs `preg_match_all()` its retries, costs it 0.5, 1.1 and 2.1 ms.
+   Confirmed mode replays the attempt pinned inside the run and the calls
+   the loop makes after it, past one run word: on a run of `ab`,
+   `/b(?:ab)*|(?:(?:ab)+\d)?/` reads the run before each empty match on an
+   `a`, but the call one byte on matches from the `b` to the end of the
+   run. The linter and the PHPStan extension ask for it at the calls that
+   run such a loop; `RedosAnalyzer::analyze()` keeps the cost of the
+   functions that look for every match.
  * The search cost lets the attempts after the run match: the search tries
    those the breaker starts, and the one at the subject's end, once every
    attempt of the run has read to its end and failed. `/\s*$/` (131, 521
@@ -83,6 +111,51 @@ CHANGELOG
    `\xdf` with no breaker, on which the engine tries no attempt; its
    breaker now holds `\xff`, and confirmed mode replays it
    (`replayed: true`).
+ * The search cost reads the first code unit PCRE2's compiler sets as it
+   reads the last one it requires: the interpreter starts an attempt only
+   where the subject holds it, in the one case it looks for, the attempt
+   the `A` modifier pins included. Under `ru_RU.KOI8-R`, `/\xff+!/i` and
+   `/[\xff\xdf]+!/` were reported with a run of `\xdf`, on which
+   `pcre.jit=0` starts no attempt (0.0 ms on 20,000 of them, where the JIT
+   finds a match in `\xdf!` that the interpreter misses), and confirmed
+   mode said `replayed: false`. The run is now `\xff`, which both try (9,
+   34 then 133 ms on 5,000, 10,000 then 20,000 with `pcre.jit=0`), and
+   confirmed mode replays it; so are the short matches of
+   `/\xff(?:\xff+\d)?/i` through `preg_match_all()`. A run word at whose
+   first character no attempt starts is passed over, and `(*NO_START_OPT)`
+   keeps the run as it was.
+ * No search cost is reported through a possessive bounded repeat the
+   proof reads as unbounded, one whose maximum is above the cutoff: the
+   model leaves such a run only before a character it does not read, where
+   the engine also leaves it at its bound, and may match from there.
+   `/a+\d|a{1,300}+aa*/`, `/a+\d|(?>a{1,300})aa*/` and
+   `/(?:a+\d|a{1,17}+aa*)?/` were reported quadratic, the first two
+   replayed on the 256 run words of the replay, though each matches a run
+   of 302 `a` or more at once (0.02 ms on 16,000 through
+   `preg_match_all()`). A witness that holds no character of such a
+   repeat, as the one of `/a+b|c{1,300}+d/`, stays.
+ * In confirmed mode a witness the model does not read exactly, through a
+   lookaround or an atomic body it keeps whole, is replayed only where the
+   pattern counts within the reach of the replay: 64, a quarter of the 256
+   run words it counts on. A repeat that counts past it (`a{200}`, the
+   counts of nested repeats multiplied), a lookaround that must read more
+   than 64 characters and one that goes round a loop of several characters
+   tell the two attempts the replay pins from those of a longer run.
+   `/a+\d|(?=a{300})a+/`, `/(?:a+\d|(?=a{200})a+)?/`,
+   `/a(?:a+\d|(?<=a{200})a*)?/` and `/a(?:a+\d|(?=(?:a{5})*\z)a*)?/` were
+   reported with `replayed: true`, though each function is linear on a
+   longer run: one to 200 matches in 16,000 `a`, in 0.02 to 1.5 ms. They
+   are no longer reported; `/[a-z]+(?=\d{64})/` and `/[a-z]+(?=\d*x)/`
+   still are, and `/[a-z]+(?=\d{65})/`, one count past that reach, is not.
+ * The cost of the retry after an empty match is no longer reported where
+   the loop never reaches the run. Under the `A` modifier, and behind
+   `\G`, a call tries the offset it is given alone, and the loop ends where
+   the first one fails: `/\B(?:a+\d)?/A` and `/\G\B(?:a+\d)?/` were
+   reported with the witness `"0" . "a" x n` (`replayed: true`), in which
+   `preg_match_all()` finds no match, `\B` failing before the `0` that
+   starts the subject. The witness of a pattern tied so must start with an
+   empty match where the subject starts, as the one of `/(?:\Ba+\d)?/A`
+   does; `/\B(?:a+\d)?/`, whose search goes on, keeps its cost.
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a

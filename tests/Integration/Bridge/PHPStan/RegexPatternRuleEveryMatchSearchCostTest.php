@@ -92,8 +92,10 @@ final class RegexPatternRuleEveryMatchSearchCostTest extends RuleTestCase
      * methods run a function looking for every match: matchAll(), split(),
      * replace() and replaceMatches(), each naming the function it calls,
      * preg_replace_callback() for a closure. Nette's lazy matchAll() calls
-     * preg_match() from the end of each match, a lazy flag no type settles
-     * is not known to loop, and a literal limit bounds the loop.
+     * preg_match() from the end of each match, a loop of its own that
+     * makes no retry and pays the attempt before each empty match; a lazy
+     * flag no type settles is not known to loop, and a literal limit
+     * bounds the loop.
      */
     #[Test]
     public function test_every_match_search_cost_is_reported_at_the_wrapper_calls_that_loop(): void
@@ -106,6 +108,10 @@ final class RegexPatternRuleEveryMatchSearchCostTest extends RuleTestCase
         $this->assertIsString(preg_replace_callback($pattern, static fn (array $m): string => '', $subject, -1, $count));
         $this->assertSame(1002, $count, 'Oracle: preg_replace_callback() stops before the end of the run.');
         $this->assertSame(1, preg_match($pattern, $subject, $match, 0, 1), 'Oracle: preg_match() from a later offset goes on.');
+        $attempt = PcreAttemptSteps::pinned('/(?:a+\d)?/');
+        $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($attempt, $subject, 250) - PcreAttemptSteps::steps($attempt, $subject, 500), 'Oracle: the attempt a loop of preg_match() calls makes does not read the run.');
+        $lazy = PcreAttemptSteps::pinned('/(?:a+\d)??/');
+        $this->assertSame(PcreAttemptSteps::steps($lazy, $subject, 250), PcreAttemptSteps::steps($lazy, $subject, 500), 'Oracle: the attempt of the lazy group reads the run.');
         $this->assertCount(2, preg_split($pattern, $subject, 2) ?: [], 'Oracle: the limit does not bound preg_split().');
 
         $errors = $this->errorsWithIdentifier(RegexPatternRule::IDENTIFIER_REDOS_SEARCH, __DIR__.'/Fixtures/EveryMatchWrapperFixture.php');
@@ -121,11 +127,12 @@ final class RegexPatternRuleEveryMatchSearchCostTest extends RuleTestCase
                 [33, 'preg_replace'],
                 [34, 'preg_match_all'],
                 [35, 'preg_replace_callback'],
+                [36, 'the loop that calls preg_match'],
             ],
             array_map(static function (Error $error): array {
-                preg_match('~but (\w+)\(\) finds an empty match~', (string) $error->getTip(), $function);
+                preg_match('~but (\w+)\(\) finds an empty match|but (the loop that calls preg_match)\(\) again where each match ends finds a short or an empty match~', (string) $error->getTip(), $function);
 
-                return [$error->getLine(), $function[1] ?? $error->getMessage()];
+                return [$error->getLine(), $function[2] ?? $function[1] ?? $error->getMessage()];
             }, $errors),
         );
         $this->assertSame(['Quadratic search (ReDoS): /(?:a+\d)?/'], array_values(array_unique(array_map(static fn (Error $error): string => $error->getMessage(), $errors))));
