@@ -19,6 +19,7 @@ use PHPRegex\Linter\LintIssue;
 use PHPRegex\Linter\Parallel\ForkedWorkerPool;
 use PHPRegex\Linter\PatternOccurrence;
 use PHPRegex\Linter\RedosVerdict;
+use PHPRegex\Optimizer\RewriteKind;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
@@ -467,6 +468,7 @@ final class AnalysisServiceTest extends TestCase
 
         $this->assertEquals($sequential, $parallel);
         $this->assertSame(['a.php', 'b.php'], array_column($parallel, 'file'));
+        $this->assertSame([RewriteKind::Digits], $parallel[1]['optimization']->kinds, 'The kinds come back from the worker.');
         $this->assertSame(4, $sequentialProgress->advancedTotal());
         $this->assertSame(4, $parallelProgress->advancedTotal());
         $this->assertSame([], $sequentialProgress->workerCounts());
@@ -695,6 +697,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertContains(ProofResult::class, $allowed);
         $this->assertContains(RedosAnalysis::class, $allowed);
         $this->assertContains(PcreTarget::class, $allowed, 'A ReDoS analysis carries the target it judged.');
+        $this->assertContains(RewriteKind::class, $allowed, 'An optimization carries the kinds of its rewrites.');
         $this->assertNotContains(NodeInterface::class, $allowed);
     }
 

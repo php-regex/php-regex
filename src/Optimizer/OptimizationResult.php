@@ -15,21 +15,35 @@ namespace PHPRegex\Optimizer;
 
 /**
  * A pattern and its rewrite, with the kinds of rewrite that made it: each
- * named once, in the order first made, "Wrote [0-9] as \d." for "/[0-9]+/"
- * into "/\d+/". A pattern left as written has none.
+ * named once, in the order first made, RewriteKind::Digits and its message
+ * "Wrote [0-9] as \d." for "/[0-9]+/" into "/\d+/", and whether the
+ * automata checked the rewrite. A pattern left as written has none.
  */
 final class OptimizationResult implements \JsonSerializable
 {
     /**
+     * The message of each kind of rewrite made, in the order of $kinds.
+     *
+     * @var array<string>
+     */
+    public readonly array $changes;
+
+    /**
      * @internal built by Optimizer::optimize(), Regex::optimize() and Regex::analyze()
      *
-     * @param array<string> $changes
+     * @param array<string>     $changes the messages of the rewrites made, when no kind is given
+     * @param list<RewriteKind> $kinds   the kinds of the rewrites made, each once, in the order first made; $changes holds their messages
+     * @param bool              $proven  whether the automata checked that the rewrite matches what the pattern matches
      */
     public function __construct(
         public readonly string $original,
         public readonly string $optimized,
-        public readonly array $changes = [],
-    ) {}
+        array $changes = [],
+        public readonly array $kinds = [],
+        public readonly bool $proven = false,
+    ) {
+        $this->changes = [] === $kinds ? $changes : array_map(static fn (RewriteKind $kind): string => $kind->message(), $kinds);
+    }
 
     public function isChanged(): bool
     {

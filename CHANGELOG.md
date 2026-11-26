@@ -186,7 +186,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - `RedosWitness::$call` (`WitnessCall::WithMatches` or `WithoutMatches`, `call` in JSON) names the call of `preg_match()` a witness gives up in, and `ConfirmationRunner` replays the witness by it, injected or not.
 - A result says what it was computed for: `RedosAnalysis::$target` and the `$target` of the solver's four results are the `PcreTarget` judged, the PHP version, the PCRE2 release and the locale, beside `$pcreVersion`, the engine that ran. `PcreTarget::toArray()` writes it as `{php, pcre, locale}`, and the JSON of a ReDoS analysis carries it as `target`.
 - `TrivialMatchClassifier` (with `matchedLiteral()`) and `RequiredLiteralAnalyzer` find the `preg_*` calls a string function can do or prefilter. See [Prefilters](docs/reference/prefilters.md).
-- `Optimizer\Optimizer`, the optimization `Regex::optimize()` runs, on any `RegexParser`; `OptimizationResult::$changes` names each kind of rewrite made.
+- `Optimizer\Optimizer`, the optimization `Regex::optimize()` runs, on any `RegexParser`; `OptimizationResult::$changes` names each kind of rewrite made, `$kinds` the `RewriteKind` of each, and `$proven` whether the automata checked the rewrite.
 - `SampleGenerator::generate()` returns a sample the running engine matches.
 - The transpiler's `html-pattern` target (`regex transpile --target=html`), the value of an HTML `pattern` attribute.
 

@@ -944,11 +944,18 @@ foreach ($report->violations as $violation) {
 
 ### OptimizationResult
 
-Returned by `optimize()`. Shows what changed: `$changes` names each kind of
-rewrite once, in the order the optimizer first made it, and is empty when the
-pattern comes back as written.
+Returned by `optimize()`. Shows what changed: `$kinds` lists each kind of
+rewrite once, a `RewriteKind`, in the order the optimizer first made it,
+`$changes` the sentence of each (`RewriteKind::message()`), and both are empty
+when the pattern comes back as written. `$proven` says whether the automata
+checked that the rewrite matches what the pattern matches: true for a rewrite
+`verifyWithAutomata` checked, and for a possessive one, which is checked
+whatever the options; false for a rewrite shipped unchecked and for a pattern
+left as written.
 
 ```php
+use PHPRegex\Optimizer\RewriteKind;
+
 $result = Regex::create()->optimize('/[0-9]+/');
 
 echo $result->original;    // '/[0-9]+/'
@@ -959,6 +966,9 @@ foreach ($result->changes as $change) {
 }
 // Output:
 // - Wrote [0-9] as \d.
+
+var_dump($result->kinds === [RewriteKind::Digits]); // bool(true)
+var_dump($result->proven);                          // bool(true)
 ```
 
 ---

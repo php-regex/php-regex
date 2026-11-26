@@ -545,7 +545,7 @@ final class LintService
                 continue;
             }
 
-            $entry['optimization'] = new OptimizationResult($entry['optimization']->original, $rewritten, $entry['optimization']->changes);
+            $entry['optimization'] = new OptimizationResult($entry['optimization']->original, $rewritten, $entry['optimization']->changes, $entry['optimization']->kinds, $entry['optimization']->proven);
             $entry['savings'] = $savings;
             $kept[] = $entry;
         }
