@@ -44,6 +44,24 @@ final class FrameworkMatcher
     }
 
     /**
+     * Whether the dumper groups the routes on any variable of their host,
+     * as symfony/routing does before 6.4.51, 7.4.24 and 8.1.12, and on 8.0:
+     * it then tries "app-{sub}.example.com" before an earlier
+     * "{sub}.example.com", which takes the same hosts, once a route before
+     * both names that host. Since those releases, it groups them only on a
+     * variable that takes a whole label and cannot match a dot.
+     */
+    public static function groupsHostsOnAnyVariable(): bool
+    {
+        $routes = new RouteCollection();
+        $routes->add('first', (new Route('/first'))->setHost('app-{sub}.example.com'));
+        $routes->add('earlier', (new Route('/p'))->setHost('{sub}.example.com'));
+        $routes->add('later', (new Route('/p'))->setHost('app-{sub}.example.com'));
+
+        return 'later' === self::reached($routes, 'GET', '/p', 'http', 'app-x.example.com');
+    }
+
+    /**
      * The route a request reaches: the route of the redirect when the
      * matcher redirects, null when no route takes the request.
      *

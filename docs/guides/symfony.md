@@ -582,6 +582,14 @@ several earlier routes together**, each with a request it takes. A route
 for `GET` also takes the `GET` and `HEAD` requests whose path differs from
 one of its own by the trailing slash alone, which the matcher redirects;
 a route with a condition, or a host the analysis cannot read, takes none.
+A route ending on a variable whose value may end on the slash, or be
+empty, may keep the path the router's optional slash ends after it:
+`/{p<a/|b/>}` after `/{x<a>}` and `/{x<b>}` keeps `GET /a//`, and is
+reachable. Such a route with no slash after its variable may read a path
+of its own ending on the slash for the slash, and pass on the requests it
+does not redirect: for those methods it is read as taking its paths that
+end on no slash alone, so `/a/` after `/{x<.+?>}` keeps `POST /a/`, and is
+reachable too.
 
 `regex:validator` needs Symfony Validator and its `validator` service:
 `composer require symfony/validator`, which FrameworkBundle enables unless
@@ -672,9 +680,20 @@ host. Two hosts the analysis cannot compare,
 a host it cannot read or one the solver gives up on (a conditional in a
 host requirement, say), leave the paths to decide, and the finding notes
 `Host requirements were not evaluated.` Two routes whose hosts part on
-letter case alone, `A.COM` and `a.com`, are counted among the pairs
+letter case alone, `A.COM` and `a.com`, or `A.{sub}.example.com` and
+`a.{sub}.example.com`, are counted among the pairs
 skipped: the router sorts the routes that name a host by the end of it,
-letter case included, and may try the later one first. A route that names no method or no
+letter case included, and may try the later one first. Before
+`symfony/routing` 6.4.51, 7.4.24 and 8.1.12, and on 8.0, it also sorts them
+on every variable of a host, and may try a route on
+`app-{sub}.example.com` before an earlier one on `{sub}.example.com`,
+which takes the same hosts: on those releases, two routes on distinct
+hosts whose shared end holds a variable next to other characters in its
+label, or one whose requirement may match a dot, `.+`, as the router has
+read it since (word characters, `\d`, `\w` and classes of them match
+none), are counted among the pairs skipped too, and `--reachability`
+reads the earlier one as taking nothing from the later. Since those releases the
+router keeps their order, and the pair is read as declared. A route that names no method or no
 scheme takes any; one given only empty ones, `setMethods([''])` or
 `setSchemes([''])`, takes no request, as Symfony's matchers read it, and
 conflicts with no other route. A route for `GET` takes the `HEAD` requests
@@ -706,7 +725,7 @@ earlier route ends on a variable a value of which may end on the slash or
 be empty, `.+` or `[a-z]*`, the router matches a path ending on the slash
 as is, on that route's schemes, or redirects it, as PCRE captured the
 value: on another scheme such a pair is counted among the pairs skipped, a
-later route it matches only with the slash, `/{y<a//>}` after
+later route it matches only with the slash, `/{y<a/>}/` after
 `/{x<a/?>}`, is shadowed only when the earlier route takes every scheme of
 it, and a later route for other methods than `GET` and `HEAD` keeps those
 on its paths ending on the slash, `/files/{name}/` after
@@ -716,8 +735,19 @@ other. A requirement holding a lookaround, a boundary or an anchor reads
 the route around the variable, `(?<=e)a/` matching after `pre` alone, and
 counts as one that may end on the slash. A later
 route whose paths the earlier one matches in part and redirects for the
-rest, `/blog{slash}` (`/?`) after `/blog`, is shadowed the same way. A
-route that takes no `GET` request redirects none. The router looks a route
+rest, `/{y<a|b>}/` after `/{x<a|b/>}/`, is shadowed the same way. A
+route that takes no `GET` request redirects none. The router writes its
+own optional slash after every route it tries with a regex, and takes as is
+the path that slash ends when the value PCRE captured for the variable the
+route ends on ends on the slash, or is empty: `/{p<admin/>}` takes
+`/admin//` too, `/a{y<b?>}` takes `/a/`, and `/{p<a/>}/` takes `/a/`. A
+later route keeps such a path when the earlier one neither takes nor
+redirects it: `/{p<admin/>}` after `/{x<admin>}` is an overlap, the
+earlier route redirecting `GET /admin/` and the later one keeping
+`GET /admin//`, as are `/{y<a/>}` after `/{x<a>}/`, `/{y<a//>}` after
+`/{x<a/?>}`, and, for the `POST` requests of `/a/`, `/a{y<b?>}` after
+`/{x<a|ab>}`. It is shadowed where the earlier route takes that path too:
+`/{y<a/>}` after `/{x<a|a/>}`. The router looks a route
 with no variable up by its path before it tries any route with a regex,
 unless a route it tries with a regex and sorts before it matches that
 path, the routes sorted by host first when one names a host, as the
@@ -727,7 +757,8 @@ reads on a route it looks up by its path depends on the release, and the
 analysis reads them as the application's `symfony/routing` does. Before
 6.4.51, 7.4.24 and 8.1.12, and on 8.0, it trims every trailing slash off
 the request first: `/admin` redirects `GET /admin//` too, so
-`/{p<admin//>}` after it is shadowed, `/admin/` takes `/admin//` as is,
+`/{p<admin//>}` and `/{p<admin/>}` after it are shadowed, as
+`/blog{slash}` (`/?`) is after `/blog`, `/admin/` takes `/admin//` as is,
 for any method on its own schemes, and `/` answers `GET //` with a 404, as
 does a root route the router tries with a regex. A route with no variable
 therefore takes the requests of a route tried with a regex declared before
@@ -736,12 +767,17 @@ router tries them, noted, and offered distinct paths, which a reorder
 would not give. Since those releases, it looks a route up for a request
 with one trailing slash at most, as it reads a route tried with a regex,
 and tries the routes with a regex on a request with more: `/{p<admin//>}`
-after `/admin` keeps `GET /admin//`, and `/` takes no request but its own,
+after `/admin` keeps `GET /admin//`, as `/{p<admin/>}` and `/blog{slash}`
+(`/?`) keep it for the optional slash the router reads after their value,
+an overlap, and `/` takes no request but its own,
 `GET //` going on to the routes after it. A later route ending on a variable that may end on the
 slash, with no slash after it, `/{y<a|a/|b>}`, reads a path of its own
 ending on the slash for the slash, as PCRE captures the value: it
 redirects `GET /a/` to `/a`, and passes `POST /a/` on to the routes after
-it. A request it passes on is none it loses, nor is one the earlier route
+it. A route that takes no `GET` redirects nothing, and passes the `HEAD`
+request on as well: `/files/{q<a>}/` for `HEAD` after
+`/files/{p<a|a/>}` for `HEAD` keeps `HEAD /files/a/`. A request it passes
+on is none it loses, nor is one the earlier route
 passes on, so a pair whose shortest shared path either route passes on
 for the methods both routes take is counted among the pairs skipped; a
 redirect of an earlier route leading to

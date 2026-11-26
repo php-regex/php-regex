@@ -62,7 +62,16 @@ final class RouteConflictAnalyzer
      */
     private const NO_REQUEST = [''];
 
+    /**
+     * The requirements of a host variable symfony/routing reads as matching
+     * no dot since 6.4.51, 7.4.24 and 8.1.12: word characters, "\d", "\w",
+     * classes of them, groups, alternatives and quantifiers.
+     */
+    private const MATCHES_NO_DOT = '#^(?:[\w|?*+{},:)-]|\((?!\?)|\(\?[:|]|\\\\[dw]|\[(?:\w|\\\\[dw]|(?<=\w)-(?=\w)|(?<=\[)-|-(?=\]))++\])++$#';
+
     private static ?bool $trimsEveryTrailingSlash = null;
+
+    private static ?bool $groupsHostsOnAnyVariable = null;
 
     private readonly LanguageSolver $solver;
 
@@ -173,7 +182,7 @@ final class RouteConflictAnalyzer
                     continue;
                 }
 
-                if (self::mayBeTriedFirst($earlier['host'], $later['host'])) {
+                if (self::mayBeTriedFirst($earlier, $later)) {
                     $skippedPairs++;
 
                     continue;
@@ -216,6 +225,7 @@ final class RouteConflictAnalyzer
                     $equivalence = $this->solver->equivalent($earlier['pathPattern'], $later['pathPattern'], $options);
                     $redirectsTheRest = null !== $equivalence->rightOnlyExample && $this->redirectTakesTheRest($earlier, $later, $options);
                     $passesSomeOn = null === $equivalence->rightOnlyExample && $this->passesOnAPathEndingOnTheSlash($earlier, $later, $options);
+                    $keepsAPath = null === $equivalence->rightOnlyExample && $this->keepsAPathWithOneMoreSlash($earlier, $later, $options);
                     $laterFirstRedirectsEarlier = null !== $equivalence->leftOnlyExample && $this->redirectsEveryPathOf($later, $earlier, $options);
                 } catch (ComplexityException) {
                     $skippedPairs++;
@@ -242,11 +252,14 @@ final class RouteConflictAnalyzer
                 // among the later one's, is declared first on purpose, a
                 // carve-out: both stay reachable. Any other pair sharing a
                 // path overlaps: each route keeps some requests, or may, as
-                // PCRE captures the variable the earlier route ends on.
+                // PCRE captures the variable the earlier route ends on. So
+                // does a later route that keeps a path its regex does not
+                // match, the one the "/?" of the dumper ends.
                 $laterPathInEarlier = null === $equivalence->rightOnlyExample;
                 $earlierPathInLater = null === $equivalence->leftOnlyExample;
                 $laterTakesEarlier = $earlierPathInLater && $this->takesEveryRequestOf($later, $earlier, $options);
-                if ($laterPathInEarlier && !$passesSomeOn && $this->takesEveryRequestOf($earlier, $later, $options)) {
+                $takesEveryRequest = $laterPathInEarlier && !$passesSomeOn && $this->takesEveryRequestOf($earlier, $later, $options);
+                if ($takesEveryRequest && !$keepsAPath) {
                     $shadowed++;
                     $conflictType = 'shadowed';
                     if ($equivalence->isEquivalent) {
@@ -254,7 +267,7 @@ final class RouteConflictAnalyzer
                         $notes[] = 'Equivalent route patterns.';
                     }
                     $notes[] = 'Less specific route declared BEFORE more specific route.';
-                } elseif (($earlierPathInLater && !$laterPathInEarlier) || $laterTakesEarlier) {
+                } elseif (!$takesEveryRequest && (($earlierPathInLater && !$laterPathInEarlier) || $laterTakesEarlier)) {
                     // A carve-out, but the earlier route redirects for the
                     // trailing slash a GET or HEAD request of the later one
                     // it does not match: "/admin" before a catch-all takes
@@ -274,7 +287,7 @@ final class RouteConflictAnalyzer
                     }
 
                     continue;
-                } elseif ($this->passesOnTheExample($earlier, $later, $intersection->example)) {
+                } elseif (!$takesEveryRequest && $this->passesOnTheExample($earlier, $later, $intersection->example)) {
                     $skippedPairs++;
 
                     continue;
@@ -370,7 +383,7 @@ final class RouteConflictAnalyzer
         $candidates = [];
         $pairs = 0;
         foreach ($routes as $i => $route) {
-            $requests[$i] = $this->requestsOf($route);
+            $requests[$i] = $this->requestsOf($route, $options);
             if (null === $requests[$i]) {
                 $candidates[] = null;
 
@@ -380,7 +393,7 @@ final class RouteConflictAnalyzer
             $rivals = [];
             for ($j = 0; $j < $i; $j++) {
                 $earlier = $routes[$j];
-                if (null === $requests[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier['host'], $route['host'])) {
+                if (null === $requests[$j] || $earlier['hasCondition'] || !$this->prefixOverlaps($earlier['staticPrefix'], $route['staticPrefix']) || self::mayBeTriedFirst($earlier, $route)) {
                     continue;
                 }
 
@@ -389,8 +402,9 @@ final class RouteConflictAnalyzer
             }
 
             // A path it redirects for the slash is one no later route gets,
-            // and one it does not serve either.
-            $candidates[] = new FirstMatchCandidate($requests[$i], [$requests[$i][0]], $rivals);
+            // and one it does not serve either; one the "/?" of the dumper
+            // ends after a value ending on the slash is one it may take.
+            $candidates[] = new FirstMatchCandidate($requests[$i], [[...\array_slice($requests[$i][0], 0, 3), $this->pathsItMayTake($route, $options)]], $rivals);
         }
 
         $cells = (new FirstMatchPartition($this->solver, $options))->partition($candidates);
@@ -539,6 +553,7 @@ final class RouteConflictAnalyzer
             'hostPattern' => $hostPattern,
             'hasHostRequirement' => $hasHostRequirement,
             'hostUnsupported' => $hostUnsupported,
+            'looseHostVariables' => self::looseHostVariables($route),
             'hasCondition' => $hasCondition,
             'index' => $index,
         ];
@@ -547,31 +562,92 @@ final class RouteConflictAnalyzer
     /**
      * Whether the matcher may try the later of two routes on overlapping
      * hosts first. When a route names a host, the dumper sorts the routes
-     * by the literal end of their host, letter case included, as
+     * by their host, read as text from its end, letter case included, as
      * StaticPrefixCollection::addRoute() groups them, and may move a route
-     * before an earlier one whose literal end parts from its own: no host
-     * matches both, unless they part on letter case alone, which the
-     * matcher ignores in a host.
+     * before an earlier one whose host parts from its own: no host matches
+     * both, unless they part on letter case alone, which the matcher
+     * ignores in a host, at their end, "A.COM" and "a.com", or before a
+     * variable they share, "A.{sub}.example.com" and "a.{sub}.example.com".
+     *
+     * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
+     * dumper also groups the routes on every variable of their host, as if
+     * it were the text of one label: once a route before both names
+     * "app-{sub}.example.com", it tries a later route on that host before
+     * an earlier one on "{sub}.example.com", which takes the same hosts.
+     * It moves a route past another only on the end both hosts share,
+     * variables included, the rest of each read as text that tells them
+     * apart: there, two routes on distinct hosts whose shared end holds a
+     * variable that takes less or more than a label, in either host, may
+     * be tried in either order. Two routes on the same host keep theirs,
+     * as do two routes that share no variable.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
      */
-    private static function mayBeTriedFirst(string $earlierHost, string $laterHost): bool
+    private static function mayBeTriedFirst(array $earlier, array $later): bool
     {
-        $earlierEnd = self::literalEnd($earlierHost);
-        $laterEnd = self::literalEnd($laterHost);
-        if ('' === $earlierEnd || '' === $laterEnd || str_ends_with($earlierEnd, $laterEnd) || str_ends_with($laterEnd, $earlierEnd)) {
-            return false;
+        $shared = 0;
+        $longest = min(\strlen($earlier['host']), \strlen($later['host']));
+        while ($shared < $longest && $earlier['host'][-1 - $shared] === $later['host'][-1 - $shared]) {
+            $shared++;
         }
 
-        return str_ends_with(strtolower($earlierEnd), strtolower($laterEnd)) || str_ends_with(strtolower($laterEnd), strtolower($earlierEnd));
+        if ($shared < $longest && strtolower($earlier['host'][-1 - $shared]) === strtolower($later['host'][-1 - $shared])) {
+            return true;
+        }
+
+        $loose = [...$earlier['looseHostVariables'], ...$later['looseHostVariables']];
+
+        return [] !== $loose && $earlier['host'] !== $later['host'] && min($loose) <= $shared && self::groupsHostsOnAnyVariable();
     }
 
     /**
-     * The host after its last variable.
+     * The variables of the host that take less or more than one label, as
+     * symfony/routing reads them since 6.4.51, 7.4.24 and 8.1.12, where
+     * the dumper no longer groups the routes on them: a variable next to
+     * other characters in its label, "app-{sub}", and one whose
+     * requirement may match a dot. Each is given as the number of
+     * characters from where it starts to the end of the host.
+     *
+     * @return list<int>
      */
-    private static function literalEnd(string $host): string
+    private static function looseHostVariables(Route $route): array
     {
-        $variableEnd = strrpos($host, '}');
+        $host = $route->getHost();
+        LibraryPcre::matchAll('#\{!?([\w\x80-\xFF]++)\}#', $host, $variables, \PREG_SET_ORDER | \PREG_OFFSET_CAPTURE);
 
-        return false === $variableEnd ? $host : substr($host, $variableEnd + 1);
+        $loose = [];
+        foreach ($variables as $variable) {
+            [$token, $start] = $variable[0] ?? ['', 0];
+            $before = 0 === $start ? '.' : $host[$start - 1];
+            $after = $host[$start + \strlen($token)] ?? '.';
+            $requirement = $route->getRequirement($variable[1][0] ?? '');
+            if ('.' !== $before || '.' !== $after || (null !== $requirement && 1 !== LibraryPcre::match(self::MATCHES_NO_DOT, $requirement))) {
+                $loose[] = \strlen($host) - $start;
+            }
+        }
+
+        return $loose;
+    }
+
+    /**
+     * Whether the dumper groups the routes on any variable of their host,
+     * as symfony/routing does before 6.4.51, 7.4.24 and 8.1.12, and on 8.0.
+     * Read on the dumper installed: whether a route on "a-{x}.b" declared
+     * after one on "{x}.b" answers first, a route before both naming its
+     * host.
+     */
+    private static function groupsHostsOnAnyVariable(): bool
+    {
+        if (null === self::$groupsHostsOnAnyVariable) {
+            $routes = new RouteCollection();
+            $routes->add('first', (new Route('/first'))->setHost('a-{x}.b'));
+            $routes->add('earlier', (new Route('/p'))->setHost('{x}.b'));
+            $routes->add('later', (new Route('/p'))->setHost('a-{x}.b'));
+            self::$groupsHostsOnAnyVariable = 'later' === (new CompiledUrlMatcher((new CompiledUrlMatcherDumper($routes))->getCompiledRoutes(), new RequestContext('', 'GET', 'a-c.b')))->match('/p')['_route'];
+        }
+
+        return self::$groupsHostsOnAnyVariable;
     }
 
     /**
@@ -640,9 +716,12 @@ final class RouteConflictAnalyzer
      * no slash after it, and a requirement that may end on the slash, it
      * takes a path ending on the slash as is when the value captured ends
      * on it, and redirects it otherwise, which it does for GET and HEAD
-     * alone. The later route may then keep a request of another method on
+     * alone, and only when it takes GET: a route for HEAD alone passes the
+     * HEAD request on. The later route may then keep a request of another
+     * method, or any when the earlier route takes no GET, on
      * a path of its own that ends on the slash, "/" aside, which the
-     * matcher never reads for its slash.
+     * matcher never reads for its slash: a path of its regex, or one the
+     * "/?" of the dumper ends.
      *
      * @phpstan-param RouteDescriptor $earlier
      * @phpstan-param RouteDescriptor $later
@@ -653,15 +732,95 @@ final class RouteConflictAnalyzer
     {
         return !str_ends_with($earlier['path'], '/')
             && self::endsOnAVariable($earlier['path'])
-            && !$this->listHolds(['GET', 'HEAD'], $later['methods'])
-            && $this->sharesAString($later['pathPattern'], '^.+/$', $options)
+            && (!$this->listHolds(['GET', 'HEAD'], $later['methods']) || !$this->listHolds($earlier['methods'], ['GET']))
+            && $this->sharesAString($this->pathsTakenAsIs($later, $options), '^.+/$', $options)
             && $this->readsOwnPathsForTheSlash($earlier, $options);
     }
 
     /**
+     * The paths the matcher may take as is for the route once it comes to
+     * it, as a pattern: those of its regex, and, where it ends on a
+     * variable a value of which may end on the slash or be empty, those
+     * the "/?" the dumper writes after every route ends. The matcher takes
+     * such a path as is when the value PCRE captured ends on the slash or
+     * is empty: "/{p<admin/>}" takes "/admin//", "/a{y<b?>}" takes "/a/",
+     * and "/{p<admin/>}/", whose slash the dumper trims off before that
+     * "/?", takes "/admin/". A route with a slash after its variable
+     * redirects a path that ends on none: of the paths that "/?" ends, it
+     * takes those ending on a slash alone. Which of them it takes is
+     * PCRE's ordered choice: the pattern holds them all, and tells what a
+     * route may keep, never what it takes from another. A regex of the
+     * application's own with no "$" is taken as it is.
+     *
+     * @phpstan-param RouteDescriptor $route
+     *
+     * @throws ComplexityException When the solver gives up on the requirement
+     */
+    private function pathsTakenAsIs(array $route, SolverOptions $options): string
+    {
+        if (!self::endsOnAVariable($route['path']) || !$this->lastVariableMayEndOnTheSlash($route, $options)) {
+            return $route['pathPattern'];
+        }
+
+        $end = str_ends_with($route['path'], '/') ? strrpos($route['slashPattern'], '$') : false;
+
+        return false === $end ? $route['slashPattern'] : substr_replace($route['slashPattern'], '(?<=/)', $end, 0);
+    }
+
+    /**
+     * The same paths, those the "/?" of the dumper ends counted in when
+     * the solver gives up on the requirement: a route is said unreachable
+     * only when it keeps none of them.
+     *
+     * @phpstan-param RouteDescriptor $route
+     */
+    private function pathsItMayTake(array $route, SolverOptions $options): string
+    {
+        try {
+            return $this->pathsTakenAsIs($route, $options);
+        } catch (ComplexityException) {
+            return $route['slashPattern'];
+        }
+    }
+
+    /**
+     * Whether the later route, every path of whose regex the earlier one
+     * matches, keeps a request on a path the "/?" of the dumper ends: the
+     * earlier route takes or redirects the GET and HEAD requests of the
+     * paths its own "/?" ends, when it takes GET. For another method it
+     * takes the paths of its regex, with those its "/?" ends on a slash
+     * when it has one after its variable, which it takes as is whatever
+     * PCRE captured. "/{x<a>}/" before "/{y<a/>}" leaves it "/a//", and
+     * "/{x<a|ab>}" before "/a{y<b?>}" the POST requests of "/a/", which it
+     * reads for its slash and passes on.
+     *
+     * @phpstan-param RouteDescriptor $earlier
+     * @phpstan-param RouteDescriptor $later
+     *
+     * @throws ComplexityException When the solver gives up on a path or the requirement
+     */
+    private function keepsAPathWithOneMoreSlash(array $earlier, array $later, SolverOptions $options): bool
+    {
+        $taken = $this->pathsTakenAsIs($later, $options);
+        if ($taken === $later['pathPattern']) {
+            return false;
+        }
+
+        if ($this->redirects($earlier, $later) && $this->listHolds(['GET', 'HEAD'], $later['methods'])) {
+            $stopped = $earlier['slashPattern'];
+        } else {
+            $stopped = str_ends_with($earlier['path'], '/') ? $this->pathsTakenAsIs($earlier, $options) : $earlier['pathPattern'];
+        }
+
+        return !$this->solver->subsetOf($taken, $stopped, $options)->isSubset;
+    }
+
+    /**
      * Whether one of the two routes passes on to the routes after it every
-     * request of the shared path, for the methods both routes take: none
-     * is GET or HEAD, and it reads the path for the slash. The earlier
+     * request of the shared path, for the methods both routes take: it
+     * reads the path for the slash, and none is GET or HEAD, which it
+     * redirects when it takes GET. A route that takes no GET redirects
+     * nothing, and passes the HEAD request on too. The earlier
      * route then takes none of them, or the later route would not have:
      * the path tells no request the later route loses. Another shared path
      * may, which the pair is left out rather than judged on.
@@ -672,11 +831,14 @@ final class RouteConflictAnalyzer
     private function passesOnTheExample(array $earlier, array $later, ?string $path): bool
     {
         $methods = $this->intersectMethods($earlier['methods'], $later['methods']);
+        if (null === $path || [] === $methods) {
+            return false;
+        }
 
-        return null !== $path
-            && [] !== $methods
-            && [] === array_intersect($methods, ['GET', 'HEAD'])
-            && (self::capturesWithoutTheSlash($earlier, $path) || self::capturesWithoutTheSlash($later, $path));
+        $redirected = [] !== array_intersect($methods, ['GET', 'HEAD']);
+
+        return (self::capturesWithoutTheSlash($earlier, $path) && !($redirected && $this->listHolds($earlier['methods'], ['GET'])))
+            || (self::capturesWithoutTheSlash($later, $path) && !($redirected && $this->listHolds($later['methods'], ['GET'])));
     }
 
     /**
@@ -843,7 +1005,10 @@ final class RouteConflictAnalyzer
      * the scheme, and tries no later one. Null when the earlier route takes
      * no GET request, the later one no GET or HEAD request, or none of its
      * paths is redirected. The later route is shadowed when it takes only
-     * GET and HEAD requests, on hosts the earlier one holds. An earlier
+     * GET and HEAD requests, on hosts the earlier one holds, and none on a
+     * path the earlier one neither takes nor redirects: after "/{x<admin>}",
+     * "/{p<admin/>}" keeps "/admin//", which the "/?" of the dumper ends
+     * after a value ending on the slash. An earlier
      * route ending on a variable that may end on the slash matches such a
      * path as is, or redirects it, as PCRE captures the value: matched as
      * is, the path keeps to the earlier route's schemes, which must then
@@ -869,7 +1034,7 @@ final class RouteConflictAnalyzer
             return null;
         }
 
-        $everyPath = $this->solver->subsetOf($later['pathPattern'], $earlier['slashPattern'], $options)->isSubset;
+        $everyPath = $this->solver->subsetOf($this->pathsTakenAsIs($later, $options), $earlier['slashPattern'], $options)->isSubset;
         $schemes = $everyPath && self::endsOnAVariable($earlier['path']) && $this->lastVariableMayEndOnTheSlash($earlier, $options) ? $earlier['schemes'] : [];
         $shadowed = $everyPath && $this->takesEveryRequestOf(['methods' => ['GET', 'HEAD'], 'schemes' => $schemes] + $earlier, $later, $options);
 
@@ -985,9 +1150,10 @@ final class RouteConflictAnalyzer
      * Whether the earlier route takes every request of a later one whose
      * paths it matches only in part, redirecting the rest: the later route
      * takes only GET and HEAD requests, on schemes and hosts the earlier
-     * route takes, and each of its paths is a path of the earlier route or
-     * differs from one by a trailing slash alone. A redirect the solver
-     * gives up on leaves the pair to the paths both match.
+     * route takes, and each path it may take, those the "/?" of the dumper
+     * ends included, is a path of the earlier route or differs from one by
+     * a trailing slash alone. A redirect the solver gives up on leaves the
+     * pair to the paths both match.
      *
      * @phpstan-param RouteDescriptor $earlier
      * @phpstan-param RouteDescriptor $later
@@ -999,7 +1165,7 @@ final class RouteConflictAnalyzer
         }
 
         try {
-            return $this->solver->subsetOf($later['pathPattern'], $earlier['slashPattern'], $options)->isSubset;
+            return $this->solver->subsetOf($this->pathsTakenAsIs($later, $options), $earlier['slashPattern'], $options)->isSubset;
         } catch (ComplexityException) {
             return false;
         }
@@ -1104,11 +1270,20 @@ final class RouteConflictAnalyzer
      * scheme, a host and a path. Null when it takes none for certain (no
      * method or no scheme it accepts) or when its host cannot be read.
      *
+     * A route ending on a variable that may end on the slash, with no
+     * slash after it, reads a path of its own ending on the slash for the
+     * slash when PCRE captured the value without it, "/" aside: it then
+     * redirects a GET or HEAD request, when it takes GET, and passes any
+     * other on. Which path it reads so is PCRE's ordered choice: for the
+     * methods it does not redirect, such a route is read as taking its
+     * paths that end on no slash alone, as it is when the solver gives up
+     * on its requirement.
+     *
      * @phpstan-param RouteDescriptor $route
      *
      * @return list<list<string>>|null
      */
-    private function requestsOf(array $route): ?array
+    private function requestsOf(array $route, SolverOptions $options): ?array
     {
         if (self::NO_REQUEST === $route['methods'] || self::NO_REQUEST === $route['schemes'] || $route['hostUnsupported']) {
             return null;
@@ -1116,9 +1291,22 @@ final class RouteConflictAnalyzer
 
         $unicode = str_contains(DelimitedPattern::fromDelimited($route['pathPattern'])->flags, 'u');
         $host = $route['hasHostRequirement'] ? $route['hostPattern'] : '{^.*$}s'.($unicode ? 'u' : '');
-        $methods = \in_array('GET', $route['methods'], true) ? [...$route['methods'], 'HEAD'] : $route['methods'];
-        $requests = [[self::listOf($methods, '[A-Z]+'), self::listOf($route['schemes'], '[a-z][a-z0-9+.\-]*'), $host, $route['pathPattern']]];
-        if ($this->listHolds($route['methods'], ['GET'])) {
+        $methods = self::listOf(\in_array('GET', $route['methods'], true) ? [...$route['methods'], 'HEAD'] : $route['methods'], '[A-Z]+');
+        $schemes = self::listOf($route['schemes'], '[a-z][a-z0-9+.\-]*');
+        $redirects = $this->listHolds($route['methods'], ['GET']);
+
+        try {
+            $end = $this->readsOwnPathsForTheSlash($route, $options) ? strrpos($route['pathPattern'], '$') : false;
+        } catch (ComplexityException) {
+            $end = strrpos($route['pathPattern'], '$');
+        }
+
+        $requests = [[$methods, $schemes, $host, false === $end ? $route['pathPattern'] : substr_replace($route['pathPattern'], '(?<!./)', $end, 0)]];
+        if ($redirects && false !== $end) {
+            $requests[] = [self::listOf(['GET', 'HEAD'], ''), $schemes, $host, $route['pathPattern']];
+        }
+
+        if ($redirects) {
             $requests[] = [self::listOf(['GET', 'HEAD'], ''), self::listOf([], '[a-z][a-z0-9+.\-]*'), $host, $route['redirectPattern']];
         }
 

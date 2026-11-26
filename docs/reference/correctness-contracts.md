@@ -219,9 +219,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## Symfony Bridge Analyzers
 
 **Routes (`regex:routes`)**
-- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only. The trailing slashes of a request are read as the application's `symfony/routing` reads them: a route with no variable takes its path with any number of them before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one at most since.
+- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only. The trailing slashes of a request are read as the application's `symfony/routing` reads them: a route with no variable takes its path with any number of them before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one at most since, and a route tried with a regex takes the path the router's optional slash ends when the value of the variable it ends on ends on the slash or is empty.
 - **Guarantee:** Sound for supported regex subset and route conditions considered in analysis.
-- **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown.
+- **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown. Two routes the router may try in either order are skipped: hosts that part on letter case alone, and, before `symfony/routing` 6.4.51, 7.4.24 and 8.1.12 and on 8.0, distinct hosts whose shared end holds a variable next to other characters in its label or one that may match a dot.
 
 **Security Access Control (`regex:security`)**
 - **Semantics:** Models access_control as search semantics (`Σ* L Σ*`) to match `preg_match` behavior, a path and a host as written, the host under `i` and the path under `s` where the application's `symfony/http-foundation` compiles it so (6.4.46, 7.4.19 and 8.1.7 on, never 8.0), as Symfony matches them (`{...}s` or `{...}`, `{...}i`).
