@@ -249,7 +249,9 @@ final class SearchCostProver
      * the loop stops at starts a call of its own: "\G" and the A modifier
      * hold at each, and so does a leading ".*", which PCRE2 tries at the
      * offset it is given; "^" without m and "\A" hold at the subject's
-     * start alone. The retry runs in PCRE2's interpreter whatever
+     * start alone. A call tied so tries that offset alone, and the loop
+     * ends where the first one fails: its witness starts with an empty
+     * match where the subject starts. The retry runs in PCRE2's interpreter whatever
      * pcre.jit, as the JIT takes no PCRE2_ANCHORED at match time. Under
      * "(*NOTEMPTY)" no match is empty, and PHP never retries.
      *
@@ -308,6 +310,11 @@ final class SearchCostProver
         }
 
         $lineStart = $start[1];
+        // A call of the loop of every match tries the offset it is given
+        // alone under the A modifier, and where a search would be tied to
+        // its start, as behind "\G": the loop ends where one fails.
+        $tied = $everyMatch && (str_contains($regex->flags, 'A')
+            || false !== (self::start($regex->pattern, $sets, str_contains($regex->flags, 'm'), $unicode, $caseless, false, $anchorsDotStar, $startsAtLines ? $lineEnds : null)[0] ?? null));
         $jumps = [];
         self::jumps($regex->pattern, $sets, $unicode, $caseless, $jumps);
         // "(*NOTEMPTY)" refuses an empty match at every attempt,
@@ -341,11 +348,17 @@ final class SearchCostProver
                 $found = null;
             }
 
+            // The loop reaches the run only when its first call, tied to
+            // the subject's start, ends there on an empty match too.
+            if ($tied && null !== $found && !self::matchesEmptyBefore($automaton, $automaton->initials[0]['items'], [...$found['prefix'], ...$found['run']][0])) {
+                $found = null;
+            }
+
             // Or preg_match() stops at a short match, which the attempt
             // finds after it read the run, and the loop starts a call where
             // that match ends.
             if ($everyMatch && null === $found) {
-                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts, !str_contains($regex->flags, 'A'));
+                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts, !$tied);
                 $cause = SearchCostCause::ShortMatch;
                 $exact = $exact && null !== $found && $found['exact'];
             }
@@ -1136,7 +1149,7 @@ final class SearchCostProver
      * @param array<int, int>|null $starts       the character of each class an attempt starts at; null
      *                                           when one starts anywhere
      * @param bool                 $searches     whether a call goes on to the next character when its
-     *                                           attempt fails: not under the A modifier
+     *                                           attempt fails: not where it is tied to its start
      *
      * @throws ModelLimitException
      *
@@ -2007,11 +2020,26 @@ final class SearchCostProver
     {
         foreach ($run as $index => $character) {
             $before = $run[(0 === $index ? \count($run) : $index) - 1];
-            $class = $automaton->classOf($character);
-            foreach ($automaton->searchStart(self::contextOf($automaton, $before)) as $item) {
-                if ($automaton->isFinal($item) && $automaton->accepts($item, $class)) {
-                    return true;
-                }
+            if (self::matchesEmptyBefore($automaton, $automaton->searchStart(self::contextOf($automaton, $before)), $character)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether an attempt started with the items may succeed on the empty
+     * string before the character.
+     *
+     * @param list<int> $items
+     */
+    private static function matchesEmptyBefore(ItemAutomaton $automaton, array $items, int $character): bool
+    {
+        $class = $automaton->classOf($character);
+        foreach ($items as $item) {
+            if ($automaton->isFinal($item) && $automaton->accepts($item, $class)) {
+                return true;
             }
         }
 

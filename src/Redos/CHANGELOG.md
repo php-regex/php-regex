@@ -132,6 +132,15 @@ CHANGELOG
    longer run: one to 200 matches in 16,000 `a`, in 0.02 to 1.5 ms. They
    are no longer reported; `/[a-z]+(?=\d{64})/` and `/[a-z]+(?=\d*x)/`
    still are, and `/[a-z]+(?=\d{65})/`, one count past that reach, is not.
+ * The cost of the retry after an empty match is no longer reported where
+   the loop never reaches the run. Under the `A` modifier, and behind
+   `\G`, a call tries the offset it is given alone, and the loop ends where
+   the first one fails: `/\B(?:a+\d)?/A` and `/\G\B(?:a+\d)?/` were
+   reported with the witness `"0" . "a" x n` (`replayed: true`), in which
+   `preg_match_all()` finds no match, `\B` failing before the `0` that
+   starts the subject. The witness of a pattern tied so must start with an
+   empty match where the subject starts, as the one of `/(?:\Ba+\d)?/A`
+   does; `/\B(?:a+\d)?/`, whose search goes on, keeps its cost.
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a

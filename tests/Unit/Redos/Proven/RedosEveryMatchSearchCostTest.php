@@ -642,6 +642,73 @@ final class RedosEveryMatchSearchCostTest extends TestCase
     }
 
     /**
+     * Under the A modifier, and behind "\G", a call of the loop tries the
+     * offset it is given alone: where the first one fails, at the
+     * subject's start, the loop ends before it reaches the run, whatever
+     * comes before the run. "\B" fails before a letter that starts the
+     * subject, and after a character that is none: preg_match_all() finds
+     * one match at most, in no time.
+     */
+    #[Test]
+    #[DataProvider('provideLoopsTheFirstCallEnds')]
+    public function test_every_match_search_cost_is_not_reported_when_the_first_call_ends_the_loop(string $pattern): void
+    {
+        foreach (['', '0', '!'] as $prefix) {
+            $this->assertLessThanOrEqual(1, preg_match_all(PcreInterpreter::pattern($pattern), $prefix.str_repeat('a', 4 * self::QUARTER)), \sprintf('Oracle: the loop of %s goes on after "%s".', $pattern, $prefix));
+        }
+
+        $analyzer = new RedosAnalyzer();
+        foreach ([$analyzer->analyze($pattern), $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))] as $analysis) {
+            $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
+            $this->assertNull($analysis->searchCost, $pattern.' in '.$analysis->mode->value.' mode');
+            $this->assertNull($analysis->everyMatchSearchCost, $pattern.' in '.$analysis->mode->value.' mode');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideLoopsTheFirstCallEnds(): iterable
+    {
+        yield 'A modifier' => ['pattern' => '/\B(?:a+\d)?/A'];
+        yield '\G' => ['pattern' => '/\G\B(?:a+\d)?/'];
+        yield 'A modifier, through an atomic group' => ['pattern' => '/\B(?:(?>a+\d))*(?:a+\d)?/A'];
+        // No call ends on an empty match inside the run either.
+        yield '\G before a pattern that matches no empty string' => ['pattern' => '/\Ga+\d/'];
+    }
+
+    /**
+     * The same patterns keep their cost where the loop reaches the run: a
+     * search that goes on after the first attempt, or a first call that
+     * ends on an empty match where the subject starts.
+     */
+    #[Test]
+    #[DataProvider('provideLoopsThatReachTheRun')]
+    public function test_every_match_search_cost_is_reported_when_the_loop_reaches_the_run_past_a_prefix(string $pattern, string $prefix): void
+    {
+        $this->assertGreaterThanOrEqual(4 * self::QUARTER - 1, preg_match_all(PcreInterpreter::pattern($pattern), $prefix.str_repeat('a', 4 * self::QUARTER)), 'Oracle: the loop of '.$pattern.' ends before the run.');
+        $retry = PcreAttemptSteps::pinned(self::retried($pattern));
+        $subject = $prefix.str_repeat('a', 4 * self::QUARTER).'!';
+        $far = PcreAttemptSteps::steps($retry, $subject, \strlen($prefix) + self::QUARTER);
+        $near = PcreAttemptSteps::steps($retry, $subject, \strlen($prefix) + 2 * self::QUARTER);
+        $this->assertGreaterThanOrEqual(self::QUARTER, $far - $near, \sprintf('Oracle: the retries of %s take %d then %d steps.', $pattern, $far, $near));
+
+        $cost = (new RedosAnalyzer())->analyze($pattern)->everyMatchSearchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame([SearchCostCause::EmptyMatchRetry, $prefix, 'a'], [$cost->cause, $cost->prefix, $cost->run], $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, prefix: string}>
+     */
+    public static function provideLoopsThatReachTheRun(): iterable
+    {
+        yield 'a search that goes on' => ['pattern' => '/\B(?:a+\d)?/', 'prefix' => '0'];
+        yield 'A modifier, an empty match where the subject starts' => ['pattern' => '/(?:\Ba+\d)?/A', 'prefix' => '0'];
+        yield '\G, an empty match where the subject starts' => ['pattern' => '/\G(?:\Ba+\d)?/', 'prefix' => '0'];
+    }
+
+    /**
      * Under (*NOTEMPTY) no match is empty, so PHP never retries: the
      * search of every match is the search of preg_match(). Tied to the
      * search start by \G, neither costs a run here.

@@ -313,7 +313,7 @@ The JIT does not avoid it. PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, 
 
 When the search of `preg_match()` has no witness, the analysis looks for this one. It is `RedosAnalysis::$everyMatchSearchCost`, a `RedosSearchCost`, and `every_match_search_cost` in the JSON output. The analysis reads the pattern as each retry runs it: every attempt refuses an empty match at its own start. The pattern must also match the empty string inside the run, so that `preg_match()` stops there.
 
-Each search of the loop starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing there. `/\G(?:a+\d)?/` and `/(?:a+\d)?/A` are quadratic in `preg_match_all()`: 2.5, 9.5, 37, 144 ms and 2.3, 8.8, 35, 136 ms. `^` without `m` and `\A` hold at the subject's start alone, and protect.
+Each search of the loop starts where the last match ended, so `\G`, the `A` modifier and a leading `.*` tie nothing there. `/\G(?:a+\d)?/` and `/(?:a+\d)?/A` are quadratic in `preg_match_all()`: 2.5, 9.5, 37, 144 ms and 2.3, 8.8, 35, 136 ms. They do tie each call to the offset it is given: where the first call fails, the loop ends before it reaches the run. `/\B(?:a+\d)?/A` and `/\G\B(?:a+\d)?/`, whose `\B` fails before a letter that starts the subject, find no match and are not reported, where `/\B(?:a+\d)?/`, whose search goes on, is. `^` without `m` and `\A` hold at the subject's start alone, and protect.
 
 The patterns that stay linear are those whose retry does one of these:
 
