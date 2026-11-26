@@ -212,7 +212,8 @@ CHANGELOG
    `preg_match_all()`). A witness that holds no character of such a
    repeat, as the one of `/a+b|c{1,300}+d/`, stays.
  * In confirmed mode a witness the model does not read exactly, through a
-   lookaround or an atomic body it keeps whole, is replayed only where the
+   lookaround or an atomic body it keeps whole and that reads one of the
+   witness's characters, is replayed only where the
    pattern counts within the reach of the replay: 64, a quarter of the 256
    run words it counts on. A repeat that counts past it (`a{200}`, the
    counts of nested repeats multiplied), a lookaround that must read more

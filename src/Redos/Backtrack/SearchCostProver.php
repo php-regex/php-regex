@@ -364,7 +364,7 @@ final class SearchCostProver
         // start under either option.
         $emptyRefused = \in_array('NOTEMPTY', $startOptions, true) || \in_array('NOTEMPTY_ATSTART', $startOptions, true);
         $cause = $everyMatch ? SearchCostCause::EmptyMatchRetry : SearchCostCause::UnanchoredSearch;
-        $exact = [] === $pnfa->marks && [] === $pnfa->approximated;
+        $exact = [] === $pnfa->marks;
         // The interpreter starts an attempt only where the subject holds
         // the first code unit the compiler set, unless the pattern turns
         // the start-up optimizations off.
@@ -413,6 +413,20 @@ final class SearchCostProver
         ));
         if ([] === $found['breakers']) {
             return null;
+        }
+
+        // An atomic body kept with every way through it is read as the
+        // engine reads it on a witness none of whose characters it reads:
+        // its states never take one. A witness one of them reads is not
+        // read exactly.
+        $untouched = array_values(array_filter(
+            $found['breakers'],
+            static fn (array $breaker): bool => !self::readsAnApproximatedState($pnfa, [...$characters, ...$breaker]),
+        ));
+        if ([] === $untouched) {
+            $exact = false;
+        } else {
+            $found['breakers'] = $untouched;
         }
 
         $prefix = Utf8::encode($found['prefix'], $unicode);
@@ -582,6 +596,25 @@ final class SearchCostProver
         }
 
         return true;
+    }
+
+    /**
+     * Whether a state of an atomic body kept with every way through it
+     * reads one of the characters.
+     *
+     * @param list<int> $characters those of the prefix, the run and a breaker
+     */
+    private static function readsAnApproximatedState(Pnfa $pnfa, array $characters): bool
+    {
+        foreach ($pnfa->approximated as $state => $_) {
+            foreach ($characters as $character) {
+                if ($pnfa->sets[$state]->contains($character)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
