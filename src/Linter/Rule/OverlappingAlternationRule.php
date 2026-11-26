@@ -219,7 +219,7 @@ final class OverlappingAlternationRule extends AbstractLintRule
             $folded = match (true) {
                 !$caseless => $charSet,
                 $everyByte => ByteCharSet::unknown(),
-                default => self::foldCharSet($charSet),
+                default => $context->foldedAsReadAlone(self::foldCharSet($charSet), $charSet),
             };
             // Under u a byte past ASCII is the lead or a continuation byte
             // of a character: two characters sharing a lead byte meet there.
@@ -546,6 +546,14 @@ final class OverlappingAlternationRule extends AbstractLintRule
             // An atom is read under the options in force where it stands:
             // those a group opening the branch sets included.
             $atomSet = static function (NodeInterface $leaf) use ($alternative, $flagsAt, $index, $root, $startVerbs, $unicodeFlag, $context): ?CharSet {
+                // A letter written alone that the target's tables give no
+                // other case under UTF: the probe, which reads a character
+                // under u by PCRE2's own tables, would pair it.
+                $alone = $context->letterWrittenAlone($leaf);
+                if (null !== $alone) {
+                    return $alone[1] ? CharSet::universe(true)->subtract(CharSet::single($alone[0])) : CharSet::single($alone[0]);
+                }
+
                 $flags = $context->flagsAt($leaf, $alternative, $flagsAt[$index] ?? $context->activeFlags());
                 $modifiers = self::probeModifiers($flags, self::asciiOptions($flags, $leaf, $root));
                 $read = self::asciiCharacter($leaf, $modifiers);
@@ -1053,7 +1061,9 @@ final class OverlappingAlternationRule extends AbstractLintRule
 
     /**
      * The text with its letters in one case, as PCRE folds them: every
-     * letter under u; without it the ASCII ones under PCRE2's own tables,
+     * letter under u, but an ASCII one the tables of the target's locale
+     * give no other case, which PCRE2 compares by those tables when it is
+     * written alone; without u the ASCII ones under PCRE2's own tables,
      * and under another locale's each byte those tables pair with another
      * both ways, as the target's release reads them and the JIT compares
      * them: "\xC9" with "\xE9" under fr_FR.ISO8859-1. A byte paired one way
@@ -1064,9 +1074,20 @@ final class OverlappingAlternationRule extends AbstractLintRule
     private static function fold(string $text, LintContext $context): string
     {
         // The simple case folding, as PCRE compares caselessly: a final
-        // sigma folds to the sigma, "ß" stays itself.
+        // sigma folds to the sigma, "ß" stays itself. A letter of ASCII the
+        // target's tables give no other case stays itself too.
         if ($context->pattern->unicodeMode) {
-            return mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            $alone = $context->lettersOfOneCase();
+            if (null === $alone) {
+                return mb_convert_case($text, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            }
+
+            $folded = '';
+            foreach (mb_str_split($text, 1, 'UTF-8') as $character) {
+                $folded .= $alone->intersects(ByteCharSet::fromChar($character)) ? $character : mb_convert_case($character, \MB_CASE_FOLD_SIMPLE, 'UTF-8');
+            }
+
+            return $folded;
         }
 
         if (CharacterTables::BUILT_IN === $context->target->locale) {

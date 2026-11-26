@@ -564,7 +564,9 @@ final class NestedQuantifierRule extends AbstractLintRule
      * Where the rules read every byte, each set is read under the flags of
      * its own item, a case as the tables of the target's locale give it,
      * and folds no further: those tables may pair "i" with another byte
-     * than "I", as glibc's tr_TR.ISO-8859-9 pairs it with 0xDD.
+     * than "I", as glibc's tr_TR.ISO-8859-9 pairs it with 0xDD. Under UTF,
+     * a letter those tables give no other case, read alone, is given none
+     * here: see LintContext::lettersOfOneCase().
      */
     private function fold(ByteCharSet $set, bool $caseless, LintContext $context): ByteCharSet
     {
@@ -587,7 +589,7 @@ final class NestedQuantifierRule extends AbstractLintRule
             }
         }
 
-        return $folded;
+        return $context->foldedAsReadAlone($folded, $set);
     }
 
     /**

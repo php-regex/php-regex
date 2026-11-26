@@ -18,6 +18,18 @@ CHANGELOG
    `/(?:é|é|)+/u` and `/(?:É|É|)+/iu` were missed, past ASCII beside a
    branch that may match nothing, though `/^(?:é|é|)+$/u` exhausts the
    backtrack limit on 20 `é` then `!`.
+ * Under u, `regex.lint.alternation.overlap`, `regex.lint.overlap.charset`,
+   `regex.lint.quantifier.nested` and `regex.lint.quantifier.concatenation`
+   read an ASCII letter written alone, `i`, `\x69`, `[i]` or `[^i]`, with
+   the case the tables of the target's locale give it, as PCRE2 compares
+   it, where they read Unicode's: a class of several characters and a
+   backreference still read Unicode's cases. Under glibc's tr_TR.UTF-8,
+   whose tables give `i` and `I` no other case and where `/^I$/iu` does not
+   match `i`, `/(?:i|I)+$/iu`, `/(?:i+I)+$/iu` and `/i+I+$/iu` are no
+   longer reported, while `/(?:[ij]|I)+$/iu` still is and
+   `/(?:[^i]+I)+$/iu`, whose class takes `I` there, now is. `k` and `s`,
+   which Unicode pairs with the Kelvin sign and the long s, keep both
+   cases. Nothing changes under C.
  * The overlap rules read an escape that names one character, `\x41`,
    `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
    literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported
