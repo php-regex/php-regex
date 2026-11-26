@@ -8,12 +8,12 @@
   the possession beside 0xFF already reads such a target as running under
   any tables, and the mutation judge reads plain classes the C way. The
   reading 2.0.0 ships is the contract.
-- The branch `api-last-names` settles the last names of the public API: one
-  catch for a malformed pattern (`LexerException` extends
+- Pull request #481 (`api-last-names`) settles the last names of the public
+  API: one catch for a malformed pattern (`LexerException` extends
   `ParserException`), `$offset` and `$caretSnippet` on the exceptions,
   `RedosOptions` as the one argument of the ReDoS analysis,
-  `AnalysisReport::$validation`, `TranspileResult::$dialect`. Three commits,
-  not pushed: push it, open its pull request, read its checks, merge it.
+  `AnalysisReport::$validation`, `TranspileResult::$dialect`. Read its
+  checks, merge it.
 - Names and shapes left as they are, each to settle before the tag or to
   keep for all of 2.x:
   - `OptimizerOptions::$word` rewrites nothing today, as its docblock says:
