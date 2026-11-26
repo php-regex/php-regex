@@ -38,6 +38,15 @@ CHANGELOG
    exponential ambiguity was left without witness for that reason may now
    be proven polynomial: `/^\w+[bj]+(?:c|k)+?\w{0,14}[dl]+\w{0,14}[e]+.{0,2}f+\w{0,6}(?:g|g)+./s`,
    quadratic on the engine, is.
+ * An atomic group, or a bounded possessive repeat of a group, whose body
+   may match nothing is kept with every way through it where a repeat of
+   one character may stand right before it, unless the body is one repeat
+   of one character: PCRE2 makes that repeat possessive as if the group
+   could not be skipped, and it never gives back what the pattern after the
+   group needs. `/^(?:\n|\n)+\n*(?:y)?+[\s\S]/` and
+   `/^(?:\n|\n)+\n*(?>(?:y|z)*)[\s\S]/` were safe (proven), while PHP
+   exhausts its backtrack limit on 26 newlines, which both match without
+   auto-possession.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.
