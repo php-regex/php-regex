@@ -83,6 +83,7 @@ use PHPRegex\Parser\Node\SubroutineNode;
 use PHPRegex\Parser\NodeWalker;
 use PHPRegex\Parser\PcreFeature;
 use PHPRegex\Parser\PcreTarget;
+use PHPRegex\Parser\Printer\PatternPrinter;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Parser\Syntax\StartOptions;
 use PHPRegex\Parser\Text\Bytes;
@@ -125,6 +126,8 @@ final class LanguageSolver
      * quantifier inside a group a call runs: PCRE2's JIT, which PHP runs by
      * default, misses matches of it that the interpreter finds.
      */
+    private const REPEAT_MESSAGE = 'A rewrite of what a pattern repeats some number of times where a call runs is not proven: PCRE2 makes such a repeat possessive by how the pattern writes it, and its JIT then misses matches its interpreter finds, /(a+b)c(?1)d/ none in "abcabcabd" where /((?:a)+b)c(?1)d/ finds "abcabd".';
+
     private const JIT_MESSAGE = 'A possessive quantifier inside a group a call runs, or in a pattern that calls itself whole, makes PCRE2\'s JIT miss matches its interpreter finds, and the match solver reads the interpreter: /(a++)c(?1)d/ finds no match in "acacad" with the JIT.';
 
     /**
@@ -318,12 +321,17 @@ final class LanguageSolver
         } catch (ComplexityException $refusal) {
             // A call that runs its own group again leaves one proof, the
             // same in every run: the patterns differ only in possessive
-            // quantifiers that give nothing back, however deep the calls run.
-            if (PriorityNfaBuilder::CALL_MESSAGE === $refusal->getMessage() && $this->possessivesGiveNothingBack($left, $right, $options)) {
+            // quantifiers that give nothing back, however deep the calls run,
+            // and write alike every part a call runs that repeats.
+            if (PriorityNfaBuilder::CALL_MESSAGE === $refusal->getMessage() && !$this->writeApartWhereACallRunsARepeat($left, $right) && $this->possessivesGiveNothingBack($left, $right, $options)) {
                 return new MatchEquivalenceResult(true, target: $this->parser->target());
             }
 
             throw $refusal;
+        }
+
+        if ($this->writeApartWhereACallRunsARepeat($left, $right)) {
+            throw new ComplexityException(self::REPEAT_MESSAGE, 0, $left);
         }
 
         if ($leftNfa->unicode !== $rightNfa->unicode) {
@@ -378,7 +386,8 @@ final class LanguageSolver
         $hirs[] = $translator->translate($rightAst);
         $defined[] = $translator->defined();
 
-        if (self::possessiveWhereACallRuns($left, $this->parser) || self::possessiveWhereACallRuns($right, $this->parser)) {
+        if (self::possessiveWhereACallRuns($left, $this->parser) || self::possessiveWhereACallRuns($right, $this->parser)
+            || self::repeatsApartWhereACallRuns($leftAst, $rightAst)) {
             return null;
         }
 
@@ -1042,8 +1051,8 @@ final class LanguageSolver
     private static function possessiveWhereACallRuns(string $pattern, RegexParser $parser): bool
     {
         // A pattern whose text holds no call, most of them, is not read
-        // again: "(?1)", "(?-1)", "(?+1)", "(?R)", "(?&n)", "(?P>n)", "\g<n>".
-        if (1 !== LibraryPcre::match('/\(\?(?:[R0-9+&-]|P>)|\\\\g[<\']/', $pattern)) {
+        // again.
+        if (!self::holdsACall($pattern)) {
             return false;
         }
 
@@ -1056,6 +1065,58 @@ final class LanguageSolver
         }
 
         return false;
+    }
+
+    /**
+     * Whether the text may hold a call: "(?1)", "(?-1)", "(?+1)", "(?R)",
+     * "(?&n)", "(?P>n)", "\g<n>". Read wider than a call: "(?-i)" and "\(?1"
+     * count too.
+     */
+    private static function holdsACall(string $text): bool
+    {
+        return 1 === LibraryPcre::match('/\(\?(?:[R0-9+&-]|P>)|\\\\g[<\']/', $text);
+    }
+
+    /**
+     * Whether the two patterns write apart a part a call runs that repeats
+     * something some number of times (see
+     * AutoPossession::repeatingPartsACallRuns()): PCRE2 makes such a repeat
+     * possessive by how the pattern writes it and what stands around it,
+     * which the match solver does not read, and its JIT then misses matches
+     * its interpreter finds. "/(a+b)c(?1)d/" finds nothing in "abcabcabd"
+     * with the JIT, where "/((?:a)+b)c(?1)d/" finds "abcabd". Each part is
+     * compared as the library spells it, under the flags of its pattern: a
+     * call spelled "\g'1'" or "\g<1>" reads alike, and so does whatever
+     * stands outside the parts.
+     */
+    private static function repeatsApartWhereACallRuns(RegexNode $leftAst, RegexNode $rightAst): bool
+    {
+        return self::spelledParts($leftAst) !== self::spelledParts($rightAst);
+    }
+
+    /**
+     * repeatsApartWhereACallRuns() read from the text of the patterns: two
+     * that hold no call are not parsed again.
+     */
+    private function writeApartWhereACallRunsARepeat(string $left, string $right): bool
+    {
+        return (self::holdsACall($left) || self::holdsACall($right)) && self::repeatsApartWhereACallRuns($this->parser->parse($left), $this->parser->parse($right));
+    }
+
+    /**
+     * The parts a call runs that repeat, each spelled as a pattern of its
+     * own under the flags and the delimiter of the pattern.
+     *
+     * @return list<string>
+     */
+    private static function spelledParts(RegexNode $ast): array
+    {
+        $spelled = [];
+        foreach (AutoPossession::repeatingPartsACallRuns($ast->pattern) as $part) {
+            $spelled[] = (new RegexNode($part, $ast->flags, $ast->delimiter, $part->getStartPosition(), $part->getEndPosition()))->accept(PatternPrinter::normalized());
+        }
+
+        return $spelled;
     }
 
     private static function holdsPossessive(NodeInterface $node): bool
