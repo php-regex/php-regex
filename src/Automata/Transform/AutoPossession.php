@@ -294,6 +294,50 @@ final class AutoPossession
     }
 
     /**
+     * The first repeat PCRE2 may make possessive where the pattern lets it
+     * give back, with the group it is read against, or null: a repeat of
+     * one character, not written possessive, that stands beside (see
+     * beside()) an atomic group or a possessive repeat of a group that may
+     * match nothing. An engine that runs the pattern as written finds "aa"
+     * with "/a+(?:b)?+a/", as PCRE2 does under "(*NO_AUTO_POSSESS)"; PCRE2
+     * finds nothing. It leaves a repeat that runs lazy as written,
+     * "/a+?(?:b)?+a/" finding "aa", from PCRE2 10.39 to 10.49: only the
+     * repeats written as the caller says the greedy ones are count, "a+?"
+     * under "U".
+     *
+     * @param list<QuantifierType> $greedy how a repeat that runs greedy may be written
+     *
+     * @return array{QuantifierNode, NodeInterface}|null the repeat, then the group
+     */
+    public static function repeatBesideSkippableGroup(NodeInterface $pattern, array $greedy): ?array
+    {
+        $ancestors = null;
+        $repeats = [];
+        $skippable = [];
+        foreach (self::nodes($pattern) as $node) {
+            if ($node instanceof QuantifierNode && !self::groupLike($node->node) && self::repeatsSomeNumberOfTimes($node) && \in_array($node->type, $greedy, true)) {
+                $repeats[] = $node;
+            }
+
+            if (self::skippable($node)) {
+                $skippable[] = $node;
+            }
+        }
+
+        foreach ($repeats as $repeat) {
+            foreach ($skippable as $skipped) {
+                // Read once a repeat and a group are both there, as few
+                // patterns hold the two.
+                if (self::beside($repeat, $skipped, $ancestors ??= self::ancestors($pattern))) {
+                    return [$repeat, $skipped];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Without "u", where the tables of the locale may hold 0xFF in "\w":
      * those of one that names no locale but C may.
      */

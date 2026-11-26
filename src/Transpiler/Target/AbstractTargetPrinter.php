@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Transpiler\Target;
 
+use PHPRegex\Automata\Transform\AutoPossession;
 use PHPRegex\Parser\AbstractNodeVisitor;
 use PHPRegex\Parser\Engine\LibraryPcre;
 use PHPRegex\Parser\Engine\PcreEngine;
@@ -199,6 +200,7 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
         $this->bodyIsUtf8 = mb_check_encoding($node->source ?? $this->context->sourcePattern, 'UTF-8');
         $body = $this->body = $node->source ?? '';
         $this->asciiUnderU = $node->delimiter.(LibraryPcre::replace('/[\x80-\xFF]/', 'x', $body) ?? $body).Delimiters::closing($node->delimiter).$node->flags.'u';
+        $this->warnOfARepeatMadePossessive($node);
     }
 
     /**
@@ -454,6 +456,57 @@ abstract class AbstractTargetPrinter extends AbstractNodeVisitor
 
         foreach ($node->getChildren() as $child) {
             if (self::holdsCapture($child)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Warn of a repeat PCRE2 makes possessive where the target runs it as
+     * written. PCRE2 makes a character repeated before an atomic group, or
+     * a possessive repeat of a group, that may match nothing possessive,
+     * as if the group could not be skipped: "/a+(?:b)?+a/" finds nothing
+     * in "aa", where JavaScript finds it with "a+(?:b)?a" and Python with
+     * "a+(?:b)?+a". Such a pattern is not refused, most subjects leaving
+     * the repeat nothing to give back: the first such repeat is named,
+     * once per pattern. PCRE2 leaves a repeat that runs lazy as written:
+     * under "U" the repeats written lazy are the greedy ones, and where an
+     * inline option names "U" either may be.
+     */
+    private function warnOfARepeatMadePossessive(RegexNode $node): void
+    {
+        $greedy = self::namesUngreedy($node->pattern)
+            ? [QuantifierType::Greedy, QuantifierType::Lazy]
+            : [$this->ungreedy ? QuantifierType::Lazy : QuantifierType::Greedy];
+        $read = AutoPossession::repeatBesideSkippableGroup($node->pattern, $greedy);
+        if (null === $read) {
+            return;
+        }
+
+        [$repeat, $group] = $read;
+        $this->context->addLastWarning(\sprintf(
+            'PCRE2 makes "%s" at offset %d possessive before "%s" at offset %d, as if that group could not be skipped, and this target does not: the two differ on a subject where the repeat must give back to what follows the group.',
+            substr($this->body, $repeat->getStartPosition(), $repeat->getEndPosition() - $repeat->getStartPosition()),
+            $repeat->getStartPosition(),
+            substr($this->body, $group->getStartPosition(), $group->getEndPosition() - $group->getStartPosition()),
+            $group->getStartPosition(),
+        ));
+    }
+
+    /**
+     * Whether an inline option names "U" anywhere under the node, setting
+     * it or unsetting it.
+     */
+    private static function namesUngreedy(NodeInterface $node): bool
+    {
+        if ($node instanceof GroupNode && str_contains((string) $node->flags, 'U')) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::namesUngreedy($child)) {
                 return true;
             }
         }

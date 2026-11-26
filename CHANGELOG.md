@@ -204,6 +204,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - The optimizer keeps a rewrite only when it writes the same `$matches`, checked by `LanguageSolver::matchEquivalent()`; a rewrite that adds a possessive quantifier or an atomic group is always proven. A rewrite of a pattern under `x` keeps its layout and comments.
 - A rewrite the optimizer's check refuses whole still loses the `s` or the `m` nothing in the pattern reads: `/a+(?:b)?+a/m` becomes `/a+(?:b)?+a/`, and `/(\[(?:[^\]\[]+|(?R))*+\])/m` loses its `m`.
 - `regex.lint.group.redundant` reports a group again where PCRE2 does not read its brackets to make a repeat possessive, as `(?:\\)` in `/(?:\\)?define [a-z]++ (?:,x)*+ /`, and keeps `(?:b)` in `/(?:(?>(?:b)?)a+){2}/`, which the `a+` of the round before is read against.
+- The transpiler warns of a repeat PCRE2 makes possessive where JavaScript and Python run it as written: `/a+(?:b)?+a/`, which finds nothing in `aa`, is written `a+(?:b)?a` for JavaScript, which finds it. `php-regex/regex-transpiler` requires `php-regex/regex-automata`.
 - `max_lookbehind_length` limits only variable-length lookbehinds, as PCRE2's `max_varlookbehind` does.
 - `Regex::generate()` throws `SampleGenerationException` when no sample matches. See [generate()](UPGRADE-2.0.md#generate-throws-when-it-finds-no-matching-sample).
 - A character type, POSIX class or property can no longer end a class range (`[\w-_]` is refused, as PCRE refuses it).
