@@ -24,8 +24,10 @@ use PHPRegex\Parser\Node\BackrefNode;
 use PHPRegex\Parser\Node\CharClassNode;
 use PHPRegex\Parser\Node\CharLiteralNode;
 use PHPRegex\Parser\Node\CharTypeNode;
+use PHPRegex\Parser\Node\ClassSetOperationNode;
 use PHPRegex\Parser\Node\CommentNode;
 use PHPRegex\Parser\Node\ControlCharNode;
+use PHPRegex\Parser\Node\ExtendedCharClassNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\LiteralNode;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -137,6 +139,7 @@ final class UselessIFlagRule extends AbstractLintRule
             CharLiteralNode::class,
             UnicodePropNode::class,
             BackrefNode::class,
+            ExtendedCharClassNode::class,
         ];
     }
 
@@ -206,7 +209,35 @@ final class UselessIFlagRule extends AbstractLintRule
             return $this->unicodePropIsCaseSensitive($node->prop);
         }
 
+        if ($node instanceof ExtendedCharClassNode) {
+            return $this->holdsAPosixOperandWithCase($node->expression);
+        }
+
         return $node instanceof BackrefNode && $this->referenceMayMatchCase($node);
+    }
+
+    /**
+     * Whether a POSIX class i widens stands on its own among the operands
+     * of an extended class, "(?[ [:upper:] - [A] ])": the classes, the
+     * characters and the properties among them are read as the nodes they
+     * are, each matching the same with i where it holds no case, and so
+     * does any set built from them.
+     */
+    private function holdsAPosixOperandWithCase(NodeInterface $operand): bool
+    {
+        if ($operand instanceof PosixClassNode) {
+            return $this->posixClassHasCaseSensitiveLetters($operand->class);
+        }
+
+        if ($operand instanceof ClassSetOperationNode) {
+            foreach ($operand->getChildren() as $child) {
+                if ($this->holdsAPosixOperandWithCase($child)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

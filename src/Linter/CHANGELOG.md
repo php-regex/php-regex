@@ -296,6 +296,11 @@ CHANGELOG
    letters: `/[aA[:upper:]]/i` and `/(*UTF)[[:upper:]]/i` keep it, as does
    a pattern that sets an ASCII option, `(?aP)` or `(?a)`, which gives the
    POSIX classes back to the tables.
+ * `regex.lint.flag.useless.i` reads `[:upper:]` and `[:lower:]` where they
+   stand on their own among the operands of an extended class, from PCRE2
+   10.45: `/(?[ [:upper:] ])/i`, which matches the 52 letters with i and
+   the 26 capitals without, and `/(?[ [:alpha:] - [:lower:] ])/i`, which
+   matches nothing with i, were reported and are no more.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

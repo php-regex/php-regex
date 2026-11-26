@@ -41,12 +41,12 @@ final class UselessIFlagUnderUtfTest extends TestCase
 
     /**
      * The rows verified against a newer release than the floor: the casing
-     * verbs come with 10.45, the restriction and the ASCII options with
-     * 10.43, and Unicode 17, which pairs U+A7CE with U+A7CF and U+16EA0
-     * with U+16EBB, with 10.48.
+     * verbs and the extended classes come with 10.45, the restriction and
+     * the ASCII options with 10.43, and Unicode 17, which pairs U+A7CE with
+     * U+A7CF and U+16EA0 with U+16EBB, with 10.48.
      */
     private const RELEASES = [
-        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu'],
+        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu', '/(?[ [:upper:] ])/iu', '/(?[ [:alpha:] - [:lower:] ])/iu', '/(?aP)(?[ [:upper:] ])/iu', '/(*UTF)(?[ ![:lower:] ])/i'],
         '10.43' => ['/(?r)[kK]/iu', '/(?aP)[[:upper:]]/iu', '/(?a)[[:lower:]]/iu', '/(?aP:[[:upper:]])/iu', '/(?aD)[[:upper:]]/iu', '/(?aP)(?-aP)[[:upper:]]/iu', '/(?aP:)[[:upper:]]/iu'],
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
     ];
@@ -175,6 +175,13 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'the capitals under the ASCII option of the digits' => ['pattern' => '/(?aD)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
         yield 'the capitals after the ASCII option of the POSIX classes turned off' => ['pattern' => '/(?aP)(?-aP)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
         yield 'the capitals after a group under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP:)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // A POSIX class stands on its own among the operands of an
+        // extended class, where the ASCII option gives it back to the
+        // tables as it does in a class.
+        yield 'the capitals as the operand of an extended class' => ['pattern' => '/(?[ [:upper:] ])/iu', 'useless' => true, 'reported' => true];
+        yield 'the letters less the small letters in an extended class' => ['pattern' => '/(?[ [:alpha:] - [:lower:] ])/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals as the operand of an extended class under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP)(?[ [:upper:] ])/iu', 'useless' => false, 'reported' => false];
+        yield 'the complement of the small letters in an extended class under the UTF verb alone' => ['pattern' => '/(*UTF)(?[ ![:lower:] ])/i', 'useless' => false, 'reported' => false];
         // A group named "a", or options without that letter, set none.
         yield 'the capitals in a group named a' => ['pattern' => '/(?<a>[[:upper:]])/iu', 'useless' => true, 'reported' => true];
         yield 'the capitals in a group setting other options' => ['pattern' => '/(?s-m:[[:upper:]])/iu', 'useless' => true, 'reported' => true];
