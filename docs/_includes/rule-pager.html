@@ -1,0 +1,36 @@
+{% comment %}
+  The rule before and the rule after, in the order the reference lists
+  the rules of a section: a reader who walks one section walks it whole,
+  without going back to the list. The pages of a section are read from
+  the rule_category and rule_order each names in its front matter; a page
+  that names no section gets no pager here, and pager.html goes on.
+{% endcomment %}
+{% if page.rule_category %}
+  {% assign rule_siblings = site.pages | where: 'rule_category', page.rule_category | sort: 'rule_order' %}
+  {% assign rule_previous = nil %}
+  {% assign rule_next = nil %}
+  {% assign rule_passed = false %}
+  {% for rule_page in rule_siblings %}
+    {% if rule_page.url == page.url %}
+      {% assign rule_passed = true %}
+    {% elsif rule_passed %}
+      {% if rule_next == nil %}{% assign rule_next = rule_page %}{% endif %}
+    {% else %}
+      {% assign rule_previous = rule_page %}
+    {% endif %}
+  {% endfor %}
+  {% if rule_previous or rule_next %}
+  <nav class="pager" aria-label="Pagination">
+    {% if rule_previous %}
+      <a class="pager-prev" rel="prev" href="{{ rule_previous.url }}"><span class="pager-label"><svg class="icon" data-icon="chevron-left" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>Previous</span><span class="pager-title">{{ rule_previous.title }}</span></a>
+    {% else %}
+      <span class="pager-prev" aria-hidden="true"></span>
+    {% endif %}
+    {% if rule_next %}
+      <a class="pager-next" rel="next" href="{{ rule_next.url }}"><span class="pager-label">Next<svg class="icon" data-icon="chevron-right" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg></span><span class="pager-title">{{ rule_next.title }}</span></a>
+    {% else %}
+      <span class="pager-next" aria-hidden="true"></span>
+    {% endif %}
+  </nav>
+  {% endif %}
+{% endif %}

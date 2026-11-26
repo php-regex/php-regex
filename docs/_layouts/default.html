@@ -10,6 +10,7 @@
       <main id="main" tabindex="-1">
         {% include breadcrumb.html %}
         {{ content }}
+        {% include rule-pager.html %}
         {% include pager.html %}
         {% unless page.sponsor == false %}{% include sponsor.html %}{% endunless %}
       </main>

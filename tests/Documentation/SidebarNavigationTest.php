@@ -41,4 +41,21 @@ final class SidebarNavigationTest extends TestCase
         $this->assertStringContainsString('{% if child.url == page.url %}{% assign open_group = true %}{% endif %}', $sidebar);
         $this->assertStringContainsString('{% if open_group %} open{% endif %}', $sidebar);
     }
+
+    /**
+     * The page of one rule or of one error message is not listed: on it,
+     * the group of the page it hangs under opens, as it does on a listed
+     * child. The link keeps its place in the group: only the page itself
+     * would be the current one, and it is not in the list.
+     */
+    #[Test]
+    public function test_the_group_of_the_page_an_unlisted_page_hangs_under_opens(): void
+    {
+        $sidebar = (string) file_get_contents(self::SIDEBAR);
+
+        $this->assertStringContainsString('{% if page.parent and page.parent == item.url %}{% assign open_group = true %}{% endif %}', $sidebar, 'The page hangs under the item of a group.');
+        $this->assertStringContainsString('{% if page.parent and page.parent == child.url %}{% assign open_group = true %}{% endif %}', $sidebar, 'The page hangs under a child of a group.');
+        $opens = (string) preg_replace('/\{% if page\.parent and page\.parent == (?:item|child)\.url %\}\{% assign open_group = true %\}\{% endif %\}/', '', $sidebar);
+        $this->assertStringNotContainsString('page.parent', $opens, 'The parent opens the group, and nothing else in the list reads it: no link stands as the page.');
+    }
 }

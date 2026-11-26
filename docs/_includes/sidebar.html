@@ -15,6 +15,13 @@
         {% for child in item.pages %}
         {% if child.url == page.url %}{% assign open_group = true %}{% endif %}
         {% endfor %}
+        {% comment %}The page of one rule or of one error message is in no
+          list: on it, the group of the page it hangs under opens, as it
+          does on a child of the list.{% endcomment %}
+        {% if page.parent and page.parent == item.url %}{% assign open_group = true %}{% endif %}
+        {% for child in item.pages %}
+        {% if page.parent and page.parent == child.url %}{% assign open_group = true %}{% endif %}
+        {% endfor %}
         <details class="nav-group"{% if open_group %} open{% endif %}>
           <summary class="nav-group-toggle" aria-label='Toggle {{ item.title }} submenu'>
             <span class="nav-group-marker" aria-hidden="true"></span>

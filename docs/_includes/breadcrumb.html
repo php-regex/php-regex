@@ -7,6 +7,11 @@
   stays plain text. The documentation map itself carries no breadcrumb:
   it would read "Documentation / Learn / Documentation". Liquid has no
   variable indexing, so the flat arrays are walked with matching captures.
+
+  A page the navigation does not list — the page of one rule, of one
+  error message — names in its front matter, under `parent`, the page it
+  hangs under: its trail is that page's, the parent linked before the
+  page itself, and only the page itself is the current one.
 {% endcomment %}
 {% assign nav_source = include.nav | default: site.data.nav %}
 {% assign flat_urls = '' %}
@@ -32,6 +37,13 @@
 {% for u in urls %}
   {% if u == page.url %}{% assign idx = forloop.index0 %}{% endif %}
 {% endfor %}
+{% assign trail = page.url %}
+{% if idx < 0 and page.parent %}{% assign trail = page.parent %}{% endif %}
+{% if idx < 0 %}
+  {% for u in urls %}
+    {% if u == trail %}{% assign idx = forloop.index0 %}{% endif %}
+  {% endfor %}
+{% endif %}
 {% if idx >= 0 and page.url != '/docs/' %}
   {% assign sec = '' %}
   {% assign sec_url = '' %}
@@ -41,6 +53,7 @@
   {% for su in section_urls %}
     {% if forloop.index0 == idx %}{% assign sec_url = su %}{% endif %}
   {% endfor %}
+  {% if trail != page.url %}{% assign parent_page = site.pages | where: 'url', trail | first %}{% endif %}
   <nav class="breadcrumbs" aria-label="Breadcrumb">
     <ol>
       <li><a href="/docs/">Documentation</a></li>
@@ -49,10 +62,11 @@
       {% else %}
         <li>{{ sec }}</li>
       {% endif %}
+      {% if parent_page %}<li><a href="{{ trail }}">{{ parent_page.title }}</a></li>{% endif %}
       <li aria-current="page">{{ page.title }}</li>
     </ol>
   </nav>
   <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":{{ '/docs/' | absolute_url | jsonify }}},{% if sec_url != '' %}{"@type":"ListItem","position":2,"name":{{ sec | jsonify }},"item":{{ sec_url | absolute_url | jsonify }}},{% else %}{"@type":"ListItem","position":2,"name":{{ sec | jsonify }}},{% endif %}{"@type":"ListItem","position":3,"name":{{ page.title | strip_html | jsonify }}}]}
+  {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Documentation","item":{{ '/docs/' | absolute_url | jsonify }}},{% if sec_url != '' %}{"@type":"ListItem","position":2,"name":{{ sec | jsonify }},"item":{{ sec_url | absolute_url | jsonify }}},{% else %}{"@type":"ListItem","position":2,"name":{{ sec | jsonify }}},{% endif %}{% if parent_page %}{"@type":"ListItem","position":3,"name":{{ parent_page.title | strip_html | jsonify }},"item":{{ trail | absolute_url | jsonify }}},{% endif %}{"@type":"ListItem","position":{% if parent_page %}4{% else %}3{% endif %},"name":{{ page.title | strip_html | jsonify }}}]}
   </script>
 {% endif %}

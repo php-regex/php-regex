@@ -689,11 +689,11 @@ group the call runs.
 
 **Example:**
 ```php
-// WARNING: Unnecessary group
-preg_match('/(?:foo)/', $input);
+// WARNING: the group wraps one token, `a`
+preg_match('/x(?:a)y/', $input);
 
 // PREFERRED: Remove the group
-preg_match('/foo/', $input);
+preg_match('/xay/', $input);
 ```
 
 **Fix:** Remove the unnecessary group.
