@@ -117,11 +117,17 @@ use PHPRegex\Redos\SearchCostCause;
  *
  * The witness of short matches reads each call's first attempt in the
  * order PCRE2 tries its paths, on the items of the automaton, which list
- * them in that order: each item where it comes first, the first success
- * met ends the attempt, the items after it are never tried. A path through
- * a further round of a bounded repeat read as unbounded, or through an
- * atomic body kept whole, may not be one the engine takes: such a witness
- * is reported only when the engine replay confirms it.
+ * them in that order: each item where it comes first. A success ends the
+ * items after it, which are never tried, and the items before it go on:
+ * the match is the last success met, once they all fail or go round, as
+ * the twenty-one characters of "a(?:a+\d|a{20})?", whose "a{20}" is tried
+ * before the group is left out. The first call starts the subject, where
+ * its attempt may fail inside the run though every later one matches, as
+ * "\Ba(?:a+\d)?" does: its search goes on at the next character, unless
+ * the A modifier ties it to its start. A path through a further round of
+ * a bounded repeat read as unbounded, or through an atomic body kept
+ * whole, may not be one the engine takes: such a witness is reported only
+ * when the engine replay confirms it.
  *
  * @internal
  */
@@ -153,9 +159,9 @@ final class SearchCostProver
 
     /**
      * The most run words a short match reads, as the engine replay bounds
-     * it.
+     * it: a quarter of the run words it counts on.
      */
-    private const MAX_MATCH_WORDS = 4;
+    private const MAX_MATCH_WORDS = 64;
 
     /**
      * The most a pattern may count for the engine replay to stand for a
@@ -248,10 +254,11 @@ final class SearchCostProver
      * "(*NOTEMPTY)" no match is empty, and PHP never retries.
      *
      * Without such a retry, the witness of short matches: preg_match()
-     * stops at a short match inside the run, which the attempt finds after
-     * the paths it tries first read to the end of the run and fail, as in
-     * "a(?:a+\d)?" or "a*b|a", and each call of the loop starts where the
-     * last match ended. Its RedosSearchCost names SearchCostCause::ShortMatch.
+     * stops at a short match inside the run, of 64 run words at most, which
+     * the attempt finds after the paths it tries first read to the end of
+     * the run and fail, as in "a(?:a+\d)?", "a*b|a" or "a{5}(?:a+\d)?", and
+     * each call of the loop starts where the last match ended. Its
+     * RedosSearchCost names SearchCostCause::ShortMatch.
      *
      * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for; the
      *                                running engine's when null
@@ -338,7 +345,7 @@ final class SearchCostProver
             // finds after it read the run, and the loop starts a call where
             // that match ends.
             if ($everyMatch && null === $found) {
-                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts);
+                $found = $this->shortMatches($automaton, $budget, $jumps, $pnfa->readsFinalNewline, $emptyRefused, $starts, !str_contains($regex->flags, 'A'));
                 $cause = SearchCostCause::ShortMatch;
                 $exact = $exact && null !== $found && $found['exact'];
             }
@@ -1115,7 +1122,7 @@ final class SearchCostProver
      *
      * The first call starts the subject, each other one where the match
      * before it ended, inside the run. Its first attempt tries its paths in
-     * the order PCRE2 does, and ends on the first success it meets, after
+     * the order PCRE2 does, and ends on the last success it meets, after
      * at least one character and within MAX_MATCH_WORDS run words: the
      * paths it tries before that success all fail, and one of them reads
      * to the end of the run. A match that "\K" leaves empty makes PHP retry
@@ -1128,16 +1135,18 @@ final class SearchCostProver
      * @param bool                 $emptyRefused whether each call refuses an empty match at its start
      * @param array<int, int>|null $starts       the character of each class an attempt starts at; null
      *                                           when one starts anywhere
+     * @param bool                 $searches     whether a call goes on to the next character when its
+     *                                           attempt fails: not under the A modifier
      *
      * @throws ModelLimitException
      *
      * @return array{prefix: list<int>, run: list<int>, breakers: non-empty-list<list<int>>, exact: bool}|null
      */
-    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused, ?array $starts): ?array
+    private function shortMatches(ItemAutomaton $automaton, Budget $budget, array $jumps, bool $finalNewline, bool $emptyRefused, ?array $starts, bool $searches): ?array
     {
         foreach ($this->runWords($automaton, $budget, $jumps) as $word) {
             $exact = true;
-            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $starts, $exact);
+            $after = $this->callsEnd($automaton, $budget, $word, $jumps, $emptyRefused, $starts, $searches, $exact);
             if (null === $after) {
                 continue;
             }
@@ -1163,12 +1172,22 @@ final class SearchCostProver
      * short, or when those paths succeed or fail before the run's end. The
      * calls start at the phases of the run word their matches end at.
      *
+     * The first call starts the subject: where its attempt fails inside
+     * the run, or is not started, its search goes on with an attempt at
+     * the next character, which starts no call, once for each character of
+     * the run word at most. Every other call must match where it starts,
+     * and one of them where a run word starts, as the attempts the engine
+     * replay pins do: "\Bba(?:(?:ba)+\d)?" is read on a run of "ba", not
+     * of "ab", whose calls all start on the "b".
+     *
      * @param non-empty-list<int>  $word
      * @param array<int, true>     $jumps
-     * @param array<int, int>|null $starts the character of each class an attempt starts at; null when
-     *                                     one starts anywhere
-     * @param bool                 $exact  whether every path the calls went through is one the model reads
-     *                                     as the engine does
+     * @param array<int, int>|null $starts   the character of each class an attempt starts at; null when
+     *                                       one starts anywhere
+     * @param bool                 $searches whether a call goes on to the next character when its attempt
+     *                                       fails
+     * @param bool                 $exact    whether every path the calls went through is one the model
+     *                                       reads as the engine does
      *
      * @param-out bool $exact
      *
@@ -1176,7 +1195,7 @@ final class SearchCostProver
      *
      * @return array<int, true>|null
      */
-    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, ?array $starts, bool &$exact): ?array
+    private function callsEnd(ItemAutomaton $automaton, Budget $budget, array $word, array $jumps, bool $emptyRefused, ?array $starts, bool $searches, bool &$exact): ?array
     {
         $length = \count($word);
         $calls = [[0, $automaton->initials[0]['items']]];
@@ -1184,26 +1203,37 @@ final class SearchCostProver
         $after = [];
         for ($index = 0; $index < \count($calls); $index++) {
             [$phase, $items] = $calls[$index];
-            // The call starts no attempt where the character holds no
-            // first code unit.
-            $match = null !== $starts && !isset($starts[$word[$phase]]) ? null : self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $exact);
-            if (null === $match) {
+            $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $exact);
+            for ($moved = 0; 0 === $index && $searches && false === $match && $moved < $length; $moved++) {
+                $items = $automaton->laterStart(self::contextOf($automaton, $automaton->representatives[$word[$phase]]));
+                $phase = ($phase + 1) % $length;
+                $match = self::attemptMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $starts, $exact);
+                $started[0] = false;
+            }
+
+            if (!\is_array($match)) {
                 return null;
             }
 
             // The paths tried before the match read the character after it.
-            [$end, $tried] = $match;
-            $runEnd = $this->readsToTheEnd($automaton, $budget, $tried, $word, ($end + 1) % $length, $jumps);
+            $end = ($phase + $match[0]) % $length;
+            $runEnd = $this->readsToTheEnd($automaton, $budget, $match[1], $word, ($end + 1) % $length, $jumps);
             if (null === $runEnd) {
                 return null;
             }
 
             $after += $runEnd;
-            if (!isset($started[$end])) {
+            if (true !== ($started[$end] ?? false)) {
                 $started[$end] = true;
                 $before = $automaton->representatives[$word[($end + $length - 1) % $length]];
                 $calls[] = [$end, $automaton->searchStart(self::contextOf($automaton, $before))];
             }
+        }
+
+        // No call matched where a run word starts: the first one went on
+        // from there, and no match ended there.
+        if (false === ($started[0] ?? true)) {
+            return null;
         }
 
         ksort($after);
@@ -1212,12 +1242,36 @@ final class SearchCostProver
     }
 
     /**
-     * Where the first attempt of a call ends its match, as a phase of the
-     * run word, and the items of the paths it tries before that match once
-     * they read the character after it; null when it fails, matches empty,
-     * or reads more than MAX_MATCH_WORDS run words first. The items are
-     * kept in the order PCRE2 tries them, each where it comes first: the
-     * first success met ends the attempt once every path before it failed.
+     * The match of the attempt started with the items at the phase of the
+     * run word, as shortMatch() gives it; false where the engine starts no
+     * attempt, the character holding no first code unit.
+     *
+     * @param list<int>            $items
+     * @param non-empty-list<int>  $word
+     * @param array<int, int>|null $starts
+     *
+     * @param-out bool $exact
+     *
+     * @throws ModelLimitException
+     *
+     * @return array{int, array<int, true>}|false|null
+     */
+    private static function attemptMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, ?array $starts, bool &$exact): array|false|null
+    {
+        return null !== $starts && !isset($starts[$word[$phase]]) ? false : self::shortMatch($automaton, $budget, $items, $word, $phase, $emptyRefused, $exact);
+    }
+
+    /**
+     * How many characters the match of an attempt reads, and the items of
+     * the paths the attempt tries before that match once they read the
+     * character after it. False when the attempt fails inside the run;
+     * null when it reads on with no match, matches empty, or reads more
+     * than MAX_MATCH_WORDS run words. The items are kept in the order PCRE2
+     * tries them, each where it comes first: a success ends the items
+     * after it, which are never tried, and those before it go on. The
+     * match is the last success met once they all fail, or come back to
+     * where they were; when they come back to a success, the match reads
+     * the run, and the paths before it succeed inside the run.
      *
      * @param list<int>           $items the attempt's items at its start, in that order
      * @param non-empty-list<int> $word
@@ -1226,9 +1280,9 @@ final class SearchCostProver
      *
      * @throws ModelLimitException
      *
-     * @return array{int, array<int, true>}|null
+     * @return array{int, array<int, true>}|false|null
      */
-    private static function shortMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, bool &$exact): ?array
+    private static function shortMatch(ItemAutomaton $automaton, Budget $budget, array $items, array $word, int $phase, bool $emptyRefused, bool &$exact): array|false|null
     {
         $length = \count($word);
         $current = [];
@@ -1238,20 +1292,35 @@ final class SearchCostProver
             }
         }
 
-        for ($read = 0; $read <= self::MAX_MATCH_WORDS * $length; $read++) {
-            $class = $word[($phase + $read) % $length];
+        $match = null;
+        // Whether a path met so far, or one the match ends, may not be one
+        // the engine takes.
+        $widened = false;
+        $matchWidened = false;
+        $seen = [];
+        for ($read = 0; [] !== $current; $read++) {
+            $at = ($phase + $read) % $length;
+            $key = $at.':'.implode(',', array_keys($current));
+            if (isset($seen[$key])) {
+                break;
+            }
+
+            $seen[$key] = true;
             $next = [];
             foreach ($current as $item => $_) {
                 $budget->step();
                 if ($automaton->isFinal($item)) {
-                    if (!$automaton->accepts($item, $class)) {
+                    if (!$automaton->accepts($item, $word[$at])) {
                         continue;
                     }
 
-                    return 0 === $read ? null : [($phase + $read) % $length, $next];
+                    $match = [$read, $next];
+                    $matchWidened = $widened;
+
+                    break;
                 }
 
-                if (!$automaton->reads($item, $class)) {
+                if (!$automaton->reads($item, $word[$at])) {
                     continue;
                 }
 
@@ -1260,21 +1329,27 @@ final class SearchCostProver
                     // or a way through an atomic body kept whole, may not be
                     // one the engine takes.
                     if (0 !== ($automaton->edges[$item][$index] & (ItemAutomaton::EDGE_ABSTRACTED | ItemAutomaton::EDGE_WIDENED))) {
-                        $exact = false;
+                        $widened = true;
                     }
 
                     $next[$successor] ??= true;
                 }
             }
 
-            if ([] === $next) {
-                return null;
-            }
-
             $current = $next;
         }
 
-        return null;
+        if (null === $match) {
+            return [] === $current ? false : null;
+        }
+
+        if (0 === $match[0] || $match[0] > self::MAX_MATCH_WORDS * $length) {
+            return null;
+        }
+
+        $exact = $exact && !$matchWidened;
+
+        return $match;
     }
 
     /**

@@ -33,6 +33,19 @@ CHANGELOG
    on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
    0.01 ms through `preg_match()`. `RedosSearchCost::$cause` says so,
    and confirmed mode replays the attempt pinned inside the run.
+ * The cost of short matches reads three more shapes, each measured through
+   `preg_match_all()` on 16,000 `a` with `pcre.jit=0`. A match of up to 64
+   run words, where it stopped at four: `/a{5}(?:a+\d)?/` (12.4 ms). The
+   last success an attempt meets in the order PCRE2 tries its paths, where
+   it took the first and gave up when a path tried before it matched
+   later: `/a(?:a+\d|a{20})?/` settles on twenty-one characters, its
+   `a{20}` tried after `a+\d` and before the group is left out (3.0 ms). A
+   first call whose first attempt fails inside the run, the search going on
+   at the next character: `/\Ba(?:a+\d)?/` (62 ms), not under the `A`
+   modifier nor `\G`, which tie the call to its start. Confirmed mode
+   replays each, a match now short within 64 run words of the pinned
+   attempt. `/(?<=a)a(?:a+\d)?/` stays unreported: the model keeps no
+   lookaround's condition.
  * The search cost lets the attempts after the run match: the search tries
    those the breaker starts, and the one at the subject's end, once every
    attempt of the run has read to its end and failed. `/\s*$/` (131, 521

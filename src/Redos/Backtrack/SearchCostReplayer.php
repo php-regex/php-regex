@@ -58,9 +58,10 @@ final class SearchCostReplayer implements SearchCostReplayerInterface
 
     /**
      * The most run words a short match reads, as the search-cost proof
-     * bounds it.
+     * bounds it: a quarter of the run, so that the match of the attempt
+     * pinned half-way through ends inside it.
      */
-    private const MAX_MATCH_WORDS = 4;
+    private const MAX_MATCH_WORDS = 64;
 
     private const NO_AUTO_POSSESS = '(*NO_AUTO_POSSESS)';
 
