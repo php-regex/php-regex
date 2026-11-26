@@ -28,36 +28,36 @@ trait PatternContextTrait
     /**
      * @internal the library throws its exceptions; catch them, read them
      *
-     * @param int|null $snippetPosition where the caret stands in $pattern when that is not
-     *                                  $position: a fault counted from the body is shown in
-     *                                  the whole pattern
+     * @param int|null $caretOffset where the caret stands in $pattern when that is not
+     *                              $offset: a fault counted from the body is shown in
+     *                              the whole pattern
      */
     public function __construct(
         string $message,
         ErrorCode $errorCode,
-        ?int $position = null,
+        ?int $offset = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
-        ?int $snippetPosition = null,
+        ?int $caretOffset = null,
     ) {
-        $snippet = $this->initializeContext($snippetPosition ?? $position, $pattern);
+        $caretSnippet = $this->initializeContext($caretOffset ?? $offset, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $snippet, $previous);
+        parent::__construct($message, $errorCode, $offset, $caretSnippet, $previous);
     }
 
     /**
      * @internal the library throws its exceptions; catch them, read them
      *
-     * @param int|null $snippetPosition where the caret stands in $pattern when that is not $position
+     * @param int|null $caretOffset where the caret stands in $pattern when that is not $offset
      */
     public static function withContext(
         string $message,
         ErrorCode $errorCode,
-        int $position,
+        int $offset,
         string $pattern,
         ?\Throwable $previous = null,
-        ?int $snippetPosition = null,
+        ?int $caretOffset = null,
     ): static {
-        return new static($message, $errorCode, $position, $pattern, $previous, $snippetPosition);
+        return new static($message, $errorCode, $offset, $pattern, $previous, $caretOffset);
     }
 }

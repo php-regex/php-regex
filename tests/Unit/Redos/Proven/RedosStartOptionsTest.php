@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
@@ -208,7 +209,7 @@ final class RedosStartOptionsTest extends TestCase
         $message = \sprintf('%s is "%s", the engine says %s', $pattern, $analysis->headline(), $complexity->value);
         $this->assertSame([RedosProof::Proven, $complexity], [$analysis->proof, $analysis->complexity], $message);
         if (RedosComplexity::Linear !== $complexity) {
-            $this->assertTrue($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->replayed, $pattern.': the engine does not replay the witness.');
+            $this->assertTrue($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->replayed, $pattern.': the engine does not replay the witness.');
         }
 
         $bareAnalysis = $analyzer->analyze($bare);

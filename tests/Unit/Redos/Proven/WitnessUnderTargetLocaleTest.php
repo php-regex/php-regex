@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
@@ -69,7 +70,7 @@ final class WitnessUnderTargetLocaleTest extends TestCase
     {
         $this->requiresLocale(self::LATIN1, $pattern);
 
-        $analysis = Regex::create(['cache' => null, 'locale' => self::LATIN1])->redos($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = Regex::create(['cache' => null, 'locale' => self::LATIN1])->redos($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $analysis->headline());
         $this->assertSame(RedosProof::Proven, $analysis->proof, $analysis->headline());

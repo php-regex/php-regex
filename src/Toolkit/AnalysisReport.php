@@ -15,26 +15,31 @@ namespace PHPRegex\Toolkit;
 
 use PHPRegex\Linter\Rule\RuleViolation;
 use PHPRegex\Optimizer\OptimizationResult;
+use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\RedosAnalysis;
 
 /**
- * Analysis report for a regex pattern.
+ * What Regex::analyze() says of one pattern: each part as the method of
+ * the facade that gives it alone returns it, validate(), lint(), redos()
+ * and optimize().
  */
 final class AnalysisReport
 {
     /**
      * @internal built by Regex::analyze()
      *
-     * @param list<string>        $errors     messages explaining why analysis failed or degraded
-     * @param list<RuleViolation> $lintIssues what the pattern linter reported
+     * @param ValidationResult    $validation   whether the target accepts the pattern, and why not
+     * @param list<RuleViolation> $violations   what the lint rules report; none for a pattern the target refuses
+     * @param RedosAnalysis       $redos        the ReDoS verdict
+     * @param OptimizationResult  $optimization the rewrite offered; the pattern as written for one the target refuses
+     * @param list<string>        $errors       what kept the lint or the optimizer from finishing on a valid pattern,
+     *                                          as a limit of the library; none when both finished
      */
     public function __construct(
-        public readonly bool $isValid,
-        public readonly array $errors,
-        public readonly array $lintIssues,
+        public readonly ValidationResult $validation,
+        public readonly array $violations,
         public readonly RedosAnalysis $redos,
         public readonly OptimizationResult $optimization,
-        public readonly string $explanation,
-        public readonly string $highlighted,
+        public readonly array $errors = [],
     ) {}
 }

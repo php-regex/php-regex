@@ -17,6 +17,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Tests\Support\PcreInterpreter;
@@ -58,7 +59,7 @@ final class RedosEmptySuffixReplayTest extends TestCase
     #[Test]
     public function test_confirmed_replay_of_an_empty_suffix_witness_reproduces(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze(self::PATTERN, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze(self::PATTERN, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertTrue($analysis->replayed);

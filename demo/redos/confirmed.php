@@ -15,6 +15,7 @@ require_once __DIR__.'/../../vendor/autoload.php';
 
 use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Toolkit\Regex;
 
@@ -24,12 +25,11 @@ echo "=== Confirmed ReDoS Analysis ===\n";
 echo "Pattern: {$risky}\n\n";
 
 $regex = Regex::create();
-$result = $regex->redos(
-    $risky,
-    RedosSeverity::Medium,
+$result = $regex->redos($risky, new RedosOptions(
     RedosMode::Confirmed,
+    RedosSeverity::Medium,
     new ConfirmationOptions(maxInputLength: 1000),
-);
+));
 
 echo 'Severity:   '.$result->severity->value."\n";
 echo 'Confirmed:  '.($result->isConfirmed() ? 'yes' : 'no')."\n";

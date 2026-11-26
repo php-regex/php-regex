@@ -150,8 +150,8 @@ PHPRegex exposes a stable exception surface for precise error handling:
 Exception hierarchy (simplified):
 - `Throwable`
   - `RegexException`
-    - `LexerException`
     - `ParserException`
+      - `LexerException`
       - `SyntaxErrorException`
     - `LimitException`
       - `RecursionLimitException`
@@ -165,8 +165,8 @@ Catch-all:
 - `ExceptionInterface`
 
 Specific catches:
-- `LexerException`
-- `ParserException`
+- `ParserException`, for every malformed pattern: `LexerException` and
+  `SyntaxErrorException` are its subclasses
 
 Note that `SemanticErrorException` sits beside `ParserException`, directly
 under `RegexException`: a `catch (ParserException)` block does not intercept it.
@@ -177,7 +177,6 @@ grammar error, and `validate()` reports it with the `limit` category.
 
 ```php
 use PHPRegex\Toolkit\Regex;
-use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
@@ -187,12 +186,9 @@ try {
 } catch (InvalidRegexOptionException $e) {
     // Configuration error - check your options
     echo "Invalid configuration: " . $e->getMessage();
-} catch (LexerException $e) {
-    // Tokenization failed - malformed pattern
-    echo "Tokenization error at position {$e->position}: {$e->getMessage()}";
 } catch (ParserException $e) {
-    // Grammar failed - invalid structure
-    echo "Parse error: {$e->getMessage()}";
+    // A malformed pattern, whichever stage of the parser met the fault
+    echo "Parse error at offset {$e->offset}: {$e->getMessage()}";
 } catch (ExceptionInterface $e) {
     // Any other parser/lexer error
     echo "PHPRegex error: {$e->getMessage()}";

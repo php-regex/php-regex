@@ -18,6 +18,7 @@ use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\LastCodeUnit;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\InstalledLocales;
@@ -175,7 +176,7 @@ final class LastCodeUnitLastByteTest extends TestCase
         $read[] = JitInAFreshProcess::matched(self::withoutStartOptimizations($pattern), $subject, 0, self::KOI8_R);
         $this->assertSame([0, 1, 0, 1], $read->getArrayCopy(), \sprintf('%s on %s', $pattern, bin2hex($subject)));
 
-        $analysis = Regex::create(['cache' => null, 'locale' => self::KOI8_R])->redos($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = Regex::create(['cache' => null, 'locale' => self::KOI8_R])->redos($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
         $cost = $analysis->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $analysis->headline());

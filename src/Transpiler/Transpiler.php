@@ -14,7 +14,7 @@ declare(strict_types=1);
 namespace PHPRegex\Transpiler;
 
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Exception\LexerException;
+use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\RegexException;
 use PHPRegex\Parser\PcreFeature;
@@ -54,11 +54,9 @@ final class Transpiler
      * @throws InvalidRegexOptionException when $dialect is a name no dialect answers to
      * @throws TranspileException          when the dialect refuses a construct or a flag it cannot carry
      *                                     without changing what matches
-     * @throws ParserException             when $regex does not parse: a delimiter or flag fault, a syntax
-     *                                     error, or a parser limit — the thrown subclasses are
-     *                                     SyntaxErrorException, RecursionLimitException and
-     *                                     ResourceLimitException
-     * @throws LexerException              when $regex does not tokenize, e.g. a /u body that is not valid UTF-8
+     * @throws ParserException             when $regex is malformed: a delimiter or flag fault, or a
+     *                                     syntax error
+     * @throws LimitException              when $regex passes a limit of the parser
      *
      * @return TranspileResult The dialect's pattern, with its literal and constructor spellings
      */
@@ -93,7 +91,7 @@ final class Transpiler
 
         return new TranspileResult(
             $regex,
-            $dialect->value,
+            $dialect,
             $compiled,
             $flags,
             $target->formatLiteral($compiled, $flags, $context),

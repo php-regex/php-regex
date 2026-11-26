@@ -31,13 +31,13 @@ final class TranspileException extends RegexException implements ExceptionInterf
      */
     public function __construct(
         string $message,
-        ?int $position = null,
+        ?int $offset = null,
         ?string $pattern = null,
         ?\Throwable $previous = null,
         ErrorCode $errorCode = ErrorCode::TranspileUnsupported,
     ) {
-        $snippet = $this->initializeContext($position, $pattern);
+        $caretSnippet = $this->initializeContext($offset, $pattern);
 
-        parent::__construct($message, $errorCode, $position, $snippet, $previous);
+        parent::__construct($message, $errorCode, $offset, $caretSnippet, $previous);
     }
 }

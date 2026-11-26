@@ -20,6 +20,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosWitness;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -109,7 +110,7 @@ final class RedosVerdictConsoleTest extends TestCase
         // "length N" counts the bytes of the replayed input: the shortest build of the
         // published witness that fails with the JIT off at the replay's backtrack limit
         // (17 bytes, a…a!, at the default 100,000 on 10.49; 20 bytes at PHP's 1,000,000).
-        $witness = (new RedosAnalyzer())->analyze('/(a+)+$/', null, RedosMode::Confirmed)->witness;
+        $witness = (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed))->witness;
         $this->assertInstanceOf(RedosWitness::class, $witness);
         $this->assertSame((int) $line[1], self::firstFailingLength('/(*NO_JIT)(a+)+$/', $witness, $line[2]));
     }

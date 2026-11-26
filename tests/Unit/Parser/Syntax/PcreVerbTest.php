@@ -366,7 +366,7 @@ final class PcreVerbTest extends TestCase
     {
         $error = PcreVerb::unclosedNameError('(*'.$name, 0, new PcreTarget(80400, $release));
 
-        $this->assertSame([$code, $offset], [$error?->errorCode, $error?->position]);
+        $this->assertSame([$code, $offset], [$error?->errorCode, $error?->offset]);
     }
 
     /**
@@ -401,7 +401,7 @@ final class PcreVerbTest extends TestCase
         $error = PcreVerb::doubleStarError('(**)', 2);
 
         $this->assertSame(ErrorCode::VerbInvalid, $error->errorCode);
-        $this->assertSame(2, $error->position);
+        $this->assertSame(2, $error->offset);
         $this->assertSame('Unknown verb at position 2: "(**" opens no verb, PCRE wants a name after "(*".', $error->getMessage());
     }
 

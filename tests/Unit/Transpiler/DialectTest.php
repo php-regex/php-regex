@@ -103,7 +103,7 @@ final class DialectTest extends TestCase
         foreach ([$dialect, $dialect->value, ...$dialect->aliases()] as $argument) {
             $result = $transpiler->transpile('/^a+$/', $argument);
 
-            $this->assertSame($dialect->value, $result->target);
+            $this->assertSame($dialect, $result->dialect);
             $this->assertSame($literal, $result->literal);
         }
     }

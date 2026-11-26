@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
+   `$threshold` (the severity a verdict is replayed from in confirmed mode),
+   `$confirmation` (the limits of the replay) and the budget of the proof.
+   `RedosAnalyzer::analyze($regex, ?RedosOptions $options = null)` takes it
+   where it took a threshold, a mode and the confirmation options; the
+   constructor of the analyzer takes no threshold, and its `$options` are
+   those of every call that names none.
  * `RedosAnalysis::isProvenSafe()` holds for a proven linear attempt whose
    search has no quadratic witness, and `hasQuadraticSearch()` says whether
    `$searchCost` or `$everyMatchSearchCost` holds one. `/\s*$/`, whose search

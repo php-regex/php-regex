@@ -39,7 +39,6 @@ use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Parser\Exception\FormattingException;
 use PHPRegex\Parser\Exception\InternalFailureException;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
-use PHPRegex\Parser\Exception\LexerException;
 use PHPRegex\Parser\Exception\LimitException;
 use PHPRegex\Parser\Exception\ParserException;
 use PHPRegex\Parser\Exception\SemanticErrorException;
@@ -54,11 +53,9 @@ use PHPRegex\Parser\TolerantParseResult;
 use PHPRegex\Parser\Validation\CompatibilityChecker;
 use PHPRegex\Parser\Validation\PatternCompatibility;
 use PHPRegex\Parser\Validation\ValidationResult;
-use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Redos\RedosMode;
-use PHPRegex\Redos\RedosSeverity;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\Exception\TranspileException;
 use PHPRegex\Transpiler\TranspileOptions;
@@ -217,82 +214,43 @@ final class Regex
     }
 
     /**
-     * Perform comprehensive analysis of a regex pattern.
+     * What the library says of a pattern in one call: whether the target
+     * accepts it, what the lint rules report, its ReDoS verdict and the
+     * rewrite the optimizer offers. A pattern the target refuses gets its
+     * validation and its ReDoS verdict alone.
      *
      * The ReDoS part takes the options redos() takes, and gives what
      * redos() gives with them.
      *
-     * @param string             $regex     The regular expression to analyze
-     * @param RedosSeverity|null $threshold Minimum severity level to report
-     *
-     * @return AnalysisReport Complete analysis report
+     * @param string            $regex   The regular expression to analyze
+     * @param RedosOptions|null $options How the ReDoS analysis reads the pattern; null reads the defaults
      */
-    public function analyze(
-        string $regex,
-        ?RedosSeverity $threshold = null,
-        RedosMode $mode = RedosMode::Theoretical,
-        ?ConfirmationOptions $confirmOptions = null,
-    ): AnalysisReport {
-        $errors = [];
-        $isValid = true;
-
+    public function analyze(string $regex, ?RedosOptions $options = null): AnalysisReport
+    {
         $validation = $this->validate($regex);
-        if (!$validation->isValid) {
-            $isValid = false;
-            if (null !== $validation->error && '' !== $validation->error) {
-                $errors[] = $validation->error;
-            }
-        }
+        $redos = $this->redos($regex, $options);
+        $violations = [];
+        $optimization = new OptimizationResult($regex, $regex, []);
+        $errors = [];
 
-        $lintIssues = [];
-        $highlighted = '';
-        $explain = '';
-        $optimizations = new OptimizationResult($regex, $regex, []);
-
-        $redos = $this->redos($regex, $threshold, $mode, $confirmOptions);
-
-        if ($isValid) {
+        if ($validation->isValid) {
             // Only what the pattern itself can cause is reported as an error:
             // a failure of any other kind is a bug in the library, and a
-            // report saying "invalid pattern" would bury it.
+            // report naming the pattern would bury it.
             try {
-                $lintIssues = $this->lint($regex);
+                $violations = $this->lint($regex);
             } catch (ExceptionInterface $e) {
                 $errors[] = self::patternError($e);
-                $isValid = false;
             }
 
             try {
-                $optimizations = $this->optimize($regex);
+                $optimization = $this->optimize($regex);
             } catch (ExceptionInterface $e) {
                 $errors[] = self::patternError($e);
-                $isValid = false;
-            }
-
-            try {
-                $explain = $this->explain($regex);
-            } catch (ExceptionInterface $e) {
-                $errors[] = self::patternError($e);
-                $isValid = false;
-            }
-
-            try {
-                $highlighted = $this->highlight($regex);
-            } catch (ExceptionInterface $e) {
-                $errors[] = self::patternError($e);
-                $isValid = false;
             }
         }
 
-        return new AnalysisReport(
-            $isValid,
-            $errors,
-            $lintIssues,
-            $redos,
-            $optimizations,
-            $explain,
-            $highlighted,
-        );
+        return new AnalysisReport($validation, $violations, $redos, $optimization, $errors);
     }
 
     /**
@@ -304,7 +262,6 @@ final class Regex
      * @param string $regex The regular expression to lint
      *
      * @throws ParserException when the pattern does not parse, as parse() throws
-     * @throws LexerException  when the pattern does not tokenize
      *
      * @return list<RuleViolation> The violations, in the order the rules report them
      */
@@ -314,22 +271,20 @@ final class Regex
     }
 
     /**
-     * Analyze a regular expression for potential ReDoS (Regular Expression Denial of Service) vulnerabilities.
+     * The ReDoS (Regular Expression Denial of Service) verdict of a pattern:
+     * how the cost of a match attempt grows with the subject, proven where
+     * the model reads the pattern, with the attack that shows it.
      *
-     * @param string             $regex     The regular expression to analyze
-     * @param RedosSeverity|null $threshold Minimum severity level to report
-     *
-     * @return RedosAnalysis Detailed ReDoS analysis results
+     * @param string            $regex   The regular expression to analyze
+     * @param RedosOptions|null $options Whether the verdict is replayed on the running engine, from which severity
+     *                                   and under which limits, and the budget of the proof; null reads the defaults:
+     *                                   the pattern is read, never run
      */
-    public function redos(
-        string $regex,
-        ?RedosSeverity $threshold = null,
-        RedosMode $mode = RedosMode::Theoretical,
-        ?ConfirmationOptions $confirmOptions = null,
-    ): RedosAnalysis {
+    public function redos(string $regex, ?RedosOptions $options = null): RedosAnalysis
+    {
         $this->redosAnalyzer ??= new RedosAnalyzer($this->parser, $this->redosIgnoredPatterns);
 
-        return $this->redosAnalyzer->analyze($regex, $threshold, $mode, $confirmOptions);
+        return $this->redosAnalyzer->analyze($regex, $options);
     }
 
     /**
@@ -357,7 +312,6 @@ final class Regex
      * unless it holds a raw line break, which is respelled as an escape.
      *
      * @throws InvalidRegexOptionException when the width is below 1
-     * @throws LexerException              when the pattern does not tokenize
      * @throws ParserException             when the pattern does not parse
      * @throws LimitException              when the pattern passes a limit of the library
      * @throws FormattingException         when the result would not read back as the same pattern
@@ -372,7 +326,6 @@ final class Regex
     /**
      * Write a pattern on one line, without x, layout or comments.
      *
-     * @throws LexerException      when the pattern does not tokenize
      * @throws ParserException     when the pattern does not parse
      * @throws LimitException      when the pattern passes a limit of the library
      * @throws FormattingException when the result would not read back as the same pattern
@@ -388,7 +341,6 @@ final class Regex
      * @param Dialect|string $dialect The dialect, or a name Dialect::fromName() takes ("js", "html", "python"...)
      *
      * @throws InvalidRegexOptionException when $dialect is a name no dialect answers to
-     * @throws LexerException              when the pattern does not tokenize
      * @throws ParserException             when the pattern does not parse
      * @throws SemanticErrorException      when the engine refuses the pattern
      * @throws TranspileException          when the dialect cannot carry the pattern without changing what matches
@@ -525,7 +477,6 @@ final class Regex
      * @param string $regex The regular expression to generate a sample for
      *
      * @throws ParserException           when the pattern does not parse (a delimiter, flag or syntax fault)
-     * @throws LexerException            when the pattern does not tokenize
      * @throws SampleGenerationException when the pattern parses but is invalid, as a call to a group that does not
      *                                   exist, or no sample the running engine matches was found
      *

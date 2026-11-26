@@ -17,6 +17,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -103,7 +104,7 @@ final class RedosWitnessReplayTest extends TestCase
     #[DataProvider('provideExponentialPatterns')]
     public function test_confirmed_mode_replays_every_exponential_witness(string $pattern): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
@@ -129,7 +130,7 @@ final class RedosWitnessReplayTest extends TestCase
     #[Test]
     public function test_confirmed_replay_appends_a_rejecting_character_then_the_required_literal(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+b/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertTrue($analysis->replayed);
         $this->assertInstanceOf(RedosWitness::class, $analysis->witness);
@@ -189,7 +190,7 @@ final class RedosWitnessReplayTest extends TestCase
     #[Test]
     public function test_witness_the_engine_defuses_proves_nothing(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(?=b)(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze('/(?=b)(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Unknown, $analysis->complexity);
         $this->assertNull($analysis->replayed);
@@ -218,7 +219,7 @@ final class RedosWitnessReplayTest extends TestCase
     #[DataProvider('providePolynomialPatterns')]
     public function test_confirmed_mode_does_not_replay_a_polynomial_verdict(string $pattern, int $degree, RedosSeverity $severity): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertSame(RedosComplexity::Polynomial, $analysis->complexity);

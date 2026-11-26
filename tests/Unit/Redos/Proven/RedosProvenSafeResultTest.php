@@ -18,6 +18,7 @@ use PHPRegex\Redos\Hotspot;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
@@ -73,7 +74,7 @@ final class RedosProvenSafeResultTest extends TestCase
     #[DataProvider('provideProvenSafePatterns')]
     public function test_a_proven_safe_result_carries_no_heuristic_finding(string $pattern, RedosMode $mode): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Safe, $mode);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode, RedosSeverity::Safe));
 
         $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity]);
         $this->assertSame('safe (proven)', $analysis->headline());
@@ -92,7 +93,7 @@ final class RedosProvenSafeResultTest extends TestCase
     #[DataProvider('provideProvenSafePatterns')]
     public function test_the_json_of_a_proven_safe_result_carries_no_heuristic_finding(string $pattern, RedosMode $mode): void
     {
-        $json = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Safe, $mode)->jsonSerialize();
+        $json = (new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode, RedosSeverity::Safe))->jsonSerialize();
 
         $this->assertSame('safe', $json['severity']);
         $this->assertSame('proven', $json['proof']);

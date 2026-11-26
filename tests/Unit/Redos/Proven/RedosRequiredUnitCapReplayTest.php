@@ -19,6 +19,7 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -70,7 +71,7 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
     #[Test]
     public function test_confirmed_replay_goes_past_the_required_code_unit_cap(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze(self::PATTERN, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze(self::PATTERN, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
@@ -94,7 +95,7 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
         $this->assertSame(0, @preg_match(PcreInterpreter::pattern($pattern), str_repeat('"', 64)));
         $this->assertFalse(@preg_match(PcreInterpreter::pattern($pattern), '!'.str_repeat('a', 20)));
 
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertTrue($analysis->replayed);
@@ -109,12 +110,7 @@ final class RedosRequiredUnitCapReplayTest extends TestCase
     #[Test]
     public function test_replay_out_of_work_stops_before_the_cap(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze(
-            '/^(-?[a-z]+){1,7}\.json$/i',
-            RedosSeverity::Low,
-            RedosMode::Confirmed,
-            new ConfirmationOptions(backtrackLimit: 50_000_000),
-        );
+        $analysis = (new RedosAnalyzer())->analyze('/^(-?[a-z]+){1,7}\.json$/i', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(backtrackLimit: 50_000_000)));
 
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertFalse($analysis->replayed);

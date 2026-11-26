@@ -77,7 +77,7 @@ final class RegexLintTest extends TestCase
         $regex = Regex::create(['cache' => null, 'pcre_version' => $pcreVersion]);
 
         $this->assertSame($ids, self::ids($regex->lint(self::TARGET_DEPENDENT)));
-        $this->assertSame($ids, self::ids($regex->analyze(self::TARGET_DEPENDENT)->lintIssues), 'analyze() lints as lint() does.');
+        $this->assertSame($ids, self::ids($regex->analyze(self::TARGET_DEPENDENT)->violations), 'analyze() lints as lint() does.');
     }
 
     /**

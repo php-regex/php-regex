@@ -254,7 +254,7 @@ final class ConditionParserTest extends TestCase
             };
             $this->fail('No error for '.$pattern);
         } catch (ParserException $error) {
-            $this->assertSame([$code, $pcre['offset']], [$error->errorCode, $error->position], 'Oracle: '.$pattern);
+            $this->assertSame([$code, $pcre['offset']], [$error->errorCode, $error->offset], 'Oracle: '.$pattern);
         }
     }
 
@@ -302,7 +302,7 @@ final class ConditionParserTest extends TestCase
             $this->conditional('(?(+2)a)', 65534);
             $this->fail('No error.');
         } catch (ParserException $error) {
-            $this->assertSame([ErrorCode::GroupNumberTooBig, 5], [$error->errorCode, $error->position]);
+            $this->assertSame([ErrorCode::GroupNumberTooBig, 5], [$error->errorCode, $error->offset]);
         }
     }
 

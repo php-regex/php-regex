@@ -17,6 +17,7 @@ use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreGates;
@@ -529,7 +530,7 @@ final class RedosSoundnessFuzzTest extends TestCase
                 continue;
             }
 
-            $analysis = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+            $analysis = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
             if (true !== $analysis->replayed || null === $analysis->witness) {
                 continue;
             }

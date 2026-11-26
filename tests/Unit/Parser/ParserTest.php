@@ -711,7 +711,7 @@ final class ParserTest extends TestCase
         }
         $this->assertInstanceOf(ParserException::class, $refusal);
         $this->assertSame(ErrorCode::GroupNameUnterminated, $refusal->errorCode);
-        $this->assertSame(4, $refusal->position);
+        $this->assertSame(4, $refusal->offset);
     }
 
     /**
@@ -956,11 +956,11 @@ final class ParserTest extends TestCase
     {
         $report = $this->regex->analyze('/foo/');
 
-        $this->assertTrue($report->isValid);
+        $this->assertTrue($report->validation->isValid);
         $this->assertIsArray($report->errors);
-        $this->assertIsArray($report->lintIssues);
-        $this->assertIsString($report->explanation);
-        $this->assertIsString($report->highlighted);
+        $this->assertIsArray($report->violations);
+        $this->assertTrue($report->redos->isSafe());
+        $this->assertFalse($report->optimization->isChanged());
     }
 
     #[Test]

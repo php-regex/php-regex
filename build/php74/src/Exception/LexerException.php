@@ -14,11 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Parser\Exception;
 
 /**
- * Represents an error that occurred during the lexical analysis phase.
+ * A malformed pattern met while reading its tokens: a class left open, a
+ * property or an escape cut short. It is a ParserException, so one catch
+ * holds every pattern parse() refuses as malformed, whichever part of the
+ * parser met the fault.
  *
  * @see \PHPRegex\Parser\Lexer
  */
-final class LexerException extends RegexException implements ExceptionInterface, VisualContextInterface
+final class LexerException extends ParserException
 {
-    use PatternContextTrait;
 }

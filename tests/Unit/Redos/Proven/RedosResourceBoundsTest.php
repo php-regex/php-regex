@@ -94,7 +94,7 @@ final class RedosResourceBoundsTest extends TestCase
         $result = self::runIsolated(<<<'PHP_WRAP'
             $analyzer = new \PHPRegex\Redos\RedosAnalyzer();
             $start = hrtime(true);
-            $analysis = $analyzer->analyze($pattern, \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);
+            $analysis = $analyzer->analyze($pattern, new \PHPRegex\Redos\RedosOptions(\PHPRegex\Redos\RedosMode::Confirmed, \PHPRegex\Redos\RedosSeverity::Low));
             $result = ['replayed' => $analysis->replayed, 'seconds' => (hrtime(true) - $start) / 1e9];
             PHP_WRAP, $pattern, 15.0);
 
@@ -157,7 +157,7 @@ final class RedosResourceBoundsTest extends TestCase
         $result = self::runIsolated(<<<'PHP_WRAP'
             $analyzer = new \PHPRegex\Redos\RedosAnalyzer();
             $start = hrtime(true);
-            $analysis = $analyzer->analyze($pattern, \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);
+            $analysis = $analyzer->analyze($pattern, new \PHPRegex\Redos\RedosOptions(\PHPRegex\Redos\RedosMode::Confirmed, \PHPRegex\Redos\RedosSeverity::Low));
             $result = ['replayed' => $analysis->replayed, 'seconds' => (hrtime(true) - $start) / 1e9];
             PHP_WRAP, $pattern, 12.0);
 

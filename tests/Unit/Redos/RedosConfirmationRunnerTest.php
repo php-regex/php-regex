@@ -17,6 +17,7 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\ConfirmationRunner;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreInterpreter;
@@ -109,7 +110,7 @@ final class RedosConfirmationRunnerTest extends TestCase
         $this->assertTrue($confirmation->confirmed);
         $this->assertSame('backtrack_limit', $confirmation->evidence);
 
-        $analysis = Regex::create(['cache' => null])->redos($pattern, mode: RedosMode::Confirmed);
+        $analysis = Regex::create(['cache' => null])->redos($pattern, new RedosOptions(RedosMode::Confirmed));
 
         $this->assertSame(RedosProof::Heuristic, $analysis->proof);
         $this->assertTrue($analysis->isConfirmed());

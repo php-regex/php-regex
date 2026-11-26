@@ -29,7 +29,7 @@ final class RealWorldCasesTest extends TestCase
         $report = Regex::create()->analyze($pattern);
 
         $issueMessages = [];
-        foreach ($report->lintIssues as $issue) {
+        foreach ($report->violations as $issue) {
             $this->assertInstanceOf(RuleViolation::class, $issue);
             $issueMessages[] = $issue->message;
         }
@@ -130,7 +130,7 @@ final class RealWorldCasesTest extends TestCase
         $this->assertLessThanOrEqual(3, $long / $short, \sprintf('The engine went superlinear: %d -> %d steps.', $short, $long));
 
         $messages = [];
-        foreach (Regex::create()->analyze($pattern)->lintIssues as $issue) {
+        foreach (Regex::create()->analyze($pattern)->violations as $issue) {
             $this->assertInstanceOf(RuleViolation::class, $issue);
             $messages[] = $issue->message;
         }
@@ -160,7 +160,7 @@ final class RealWorldCasesTest extends TestCase
 
         $messages = array_map(
             static fn (RuleViolation $issue): string => $issue->message,
-            array_filter(Regex::create()->analyze($pattern)->lintIssues, static fn (mixed $issue): bool => $issue instanceof RuleViolation),
+            array_filter(Regex::create()->analyze($pattern)->violations, static fn (mixed $issue): bool => $issue instanceof RuleViolation),
         );
 
         $this->assertNotContains(self::nestedMessage($pattern), $messages);

@@ -408,7 +408,7 @@ final class LastBytePossessionTest extends TestCase
                 $this->fail(\sprintf('The %s of %s were read.', $read, $pattern));
             } catch (ComplexityException $refusal) {
                 $this->assertStringContainsString(self::LAST_BYTE, $refusal->getMessage());
-                $this->assertSame($position, $refusal->position, \sprintf('The %s of %s.', $read, $pattern));
+                $this->assertSame($position, $refusal->offset, \sprintf('The %s of %s.', $read, $pattern));
             }
         }
     }

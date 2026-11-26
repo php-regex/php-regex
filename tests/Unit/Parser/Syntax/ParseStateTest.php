@@ -183,7 +183,7 @@ final class ParseStateTest extends TestCase
     {
         $error = self::state('abc')->error('Bad at position 1.', ErrorCode::TokenUnexpected, 1);
 
-        $this->assertSame(['Bad at position 1.', ErrorCode::TokenUnexpected, 1], [$error->getMessage(), $error->errorCode, $error->position]);
+        $this->assertSame(['Bad at position 1.', ErrorCode::TokenUnexpected, 1], [$error->getMessage(), $error->errorCode, $error->offset]);
         $this->assertInstanceOf(SyntaxErrorException::class, $error);
     }
 

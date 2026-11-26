@@ -21,6 +21,7 @@ use PHPRegex\Redos\Backtrack\PnfaBuilder;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -97,8 +98,8 @@ final class StepBoundTest extends TestCase
     #[Test]
     public function test_the_ceiling_survives_a_confirmed_analysis(): void
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
-        $theoretical = (new RedosAnalyzer(RegexParser::create()))->analyze('/a*a*$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer(RegexParser::create()))->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
+        $theoretical = (new RedosAnalyzer(RegexParser::create()))->analyze('/a*a*$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertNull($analysis->upperBoundDegree);
         $this->assertSame(2, $theoretical->upperBoundDegree);

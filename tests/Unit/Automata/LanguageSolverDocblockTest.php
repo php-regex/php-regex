@@ -47,7 +47,7 @@ final class LanguageSolverDocblockTest extends TestCase
     #[DataProvider('providePatternReaders')]
     public function test_a_pattern_reader_says_it_throws_what_the_parser_throws(string $method, \Closure $call): void
     {
-        $this->assertMatchesRegularExpression('~@throws\s+LexerException\|ParserException\s~', (string) (new \ReflectionMethod(LanguageSolver::class, $method))->getDocComment());
+        $this->assertMatchesRegularExpression('~@throws\s+ParserException\s~', (string) (new \ReflectionMethod(LanguageSolver::class, $method))->getDocComment());
 
         foreach (self::invalidPatterns() as $regex => $exception) {
             $this->assertFalse(@preg_match($regex, ''), 'Oracle: PCRE refuses '.$regex);

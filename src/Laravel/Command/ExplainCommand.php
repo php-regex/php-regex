@@ -109,7 +109,7 @@ final class ExplainCommand extends Command
         // Show analysis info
         $analysis = $this->regex->analyze($pattern);
 
-        if ($analysis->isValid) {
+        if ($analysis->validation->isValid) {
             // Show optimizations if available
             if ($analysis->optimization->original !== $analysis->optimization->optimized) {
                 $this->line('<fg=white;options=bold>Optimization Suggestion:</>');
@@ -139,9 +139,9 @@ final class ExplainCommand extends Command
             }
 
             // Show lint issues
-            if (!empty($analysis->lintIssues)) {
+            if ([] !== $analysis->violations) {
                 $this->line('<fg=white;options=bold>Lint Issues:</>');
-                foreach ($analysis->lintIssues as $issue) {
+                foreach ($analysis->violations as $issue) {
                     $this->line('  - '.$escape($issue->message));
                 }
                 $this->newLine();

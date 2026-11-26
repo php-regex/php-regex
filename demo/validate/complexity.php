@@ -34,9 +34,9 @@ echo "=== Analysis Report (one call, every angle) ===\n\n";
 
 $report = $regex->analyze($patterns['risky slug']);
 
-echo 'Valid:      '.($report->isValid ? 'yes' : 'no')."\n";
+echo 'Valid:      '.($report->validation->isValid ? 'yes' : 'no')."\n";
 echo 'Errors:     '.\count($report->errors)."\n";
-echo 'Lint issues: '.\count($report->lintIssues)."\n";
+echo 'Lint issues: '.\count($report->violations)."\n";
 echo 'ReDoS:      '.$report->redos->severity->value."\n";
 
 if ($report->optimization->isChanged()) {

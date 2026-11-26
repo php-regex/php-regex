@@ -70,12 +70,14 @@ final class RedosAnalyzer
     private readonly RedosOptions $options;
 
     /**
-     * @param array<string> $ignoredPatterns
+     * @param RegexParser|null                 $parser             reads and judges the patterns; one for the running engine when null
+     * @param array<string>                    $ignoredPatterns    the patterns analyze() skips, as IgnoreList reads them
+     * @param ConfirmationRunnerInterface|null $confirmationRunner replays a heuristic verdict in confirmed mode; the library's when null
+     * @param RedosOptions|null                $options            the options of a call that names none; the defaults when null
      */
     public function __construct(
         ?RegexParser $parser = null,
         array $ignoredPatterns = [],
-        private readonly RedosSeverity $threshold = RedosSeverity::High,
         private readonly ?ConfirmationRunnerInterface $confirmationRunner = null,
         ?RedosOptions $options = null,
     ) {
@@ -84,13 +86,16 @@ final class RedosAnalyzer
         $this->options = $options ?? new RedosOptions();
     }
 
-    public function analyze(
-        string $regex,
-        ?RedosSeverity $threshold = null,
-        RedosMode $mode = RedosMode::Theoretical,
-        ?ConfirmationOptions $confirmOptions = null,
-    ): RedosAnalysis {
-        $threshold ??= $this->threshold;
+    /**
+     * The verdict of a pattern, read as the options say: those of the call,
+     * whole, or the analyzer's own when the call names none.
+     */
+    public function analyze(string $regex, ?RedosOptions $options = null): RedosAnalysis
+    {
+        $options ??= $this->options;
+        $mode = $options->mode;
+        $threshold = $options->threshold;
+        $confirmOptions = $options->confirmation;
 
         if (RedosMode::Off === $mode || $this->shouldIgnore($regex)) {
             return RedosAnalysis::skipped($mode);
@@ -107,7 +112,7 @@ final class RedosAnalyzer
                 return RedosAnalysis::failed($mode, $validation->error ?? 'The pattern is invalid.');
             }
 
-            $outcome = $this->prover()->prove($ast, $regex, $parser->target());
+            $outcome = $this->prover($options)->prove($ast, $regex, $parser->target());
             $proof = $outcome->result;
             $limit = $outcome->limit;
             $proofKind = match (true) {
@@ -133,7 +138,7 @@ final class RedosAnalyzer
                 // proof alone.
                 $profiler = new RedosProfiler(
                     CharSetAnalyzer::forRegex($ast, true, $parser->target()->locale, $parser->target()->supports(PcreFeature::UcpFoldsPastAsciiWithoutUtf)),
-                    null === $proof ? $this->provenLinearAlone($ast, $parser) : null,
+                    null === $proof ? $this->provenLinearAlone($ast, $parser, $options) : null,
                 );
                 $ast->accept($profiler);
                 $heuristics = $profiler->getResult();
@@ -224,7 +229,7 @@ final class RedosAnalyzer
             }
 
             // The outcome holds a result only where the model met no limit.
-            return RedosComplexity::Linear === $this->prover()->prove($ast, $regex, $parser->target())->result?->complexity;
+            return RedosComplexity::Linear === $this->prover($this->options)->prove($ast, $regex, $parser->target())->result?->complexity;
         } catch (ExceptionInterface) {
             return false;
         }
@@ -240,9 +245,11 @@ final class RedosAnalyzer
      * share one budget of steps, the one the proof of the whole pattern
      * has: past it, a loop is not proven, whatever the number of loops.
      *
+     * @param RedosOptions $budget the options of the analysis, for the budget of its proofs
+     *
      * @return \Closure(QuantifierNode): bool
      */
-    private function provenLinearAlone(RegexNode $ast, RegexParser $parser): \Closure
+    private function provenLinearAlone(RegexNode $ast, RegexParser $parser, RedosOptions $budget): \Closure
     {
         $source = $ast->source ?? '';
         $options = StartOptions::of($source);
@@ -250,7 +257,7 @@ final class RedosAnalyzer
         $reader = null;
         $pool = null;
 
-        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, &$proven, &$reader, &$pool): bool {
+        return function (QuantifierNode $loop) use ($ast, $parser, $source, $options, $budget, &$proven, &$reader, &$pool): bool {
             $text = substr($source, $loop->startPosition, $loop->endPosition - $loop->startPosition);
             if (\array_key_exists($text, $proven)) {
                 return $proven[$text];
@@ -278,8 +285,8 @@ final class RedosAnalyzer
                 return $proven[$text] = false;
             }
 
-            $pool ??= new Budget($this->options->maxSteps, $this->options->maxStates);
-            $outcome = $this->prover($pool)->prove($tree, $alone, $reader->target());
+            $pool ??= new Budget($budget->maxSteps, $budget->maxStates);
+            $outcome = $this->prover($budget, $pool)->prove($tree, $alone, $reader->target());
 
             return $proven[$text] = null === $outcome->limit && RedosComplexity::Linear === $outcome->result?->complexity;
         };
@@ -288,12 +295,12 @@ final class RedosAnalyzer
     /**
      * @param Budget|null $pool the budget the proofs draw their steps from too, when they share one
      */
-    private function prover(?Budget $pool = null): BacktrackProver
+    private function prover(RedosOptions $options, ?Budget $pool = null): BacktrackProver
     {
         return new BacktrackProver(
-            $this->options->maxStates,
-            $this->options->maxSteps,
-            $this->options->boundedRepeatCutoff,
+            $options->maxStates,
+            $options->maxSteps,
+            $options->boundedRepeatCutoff,
             $pool,
         );
     }

@@ -26,8 +26,8 @@ class RegexException extends \Exception implements ExceptionInterface
     public function __construct(
         string $message,
         public readonly ErrorCode $errorCode,
-        public readonly ?int $position = null,
-        public readonly ?string $snippet = null,
+        public readonly ?int $offset = null,
+        public readonly ?string $caretSnippet = null,
         ?\Throwable $previous = null,
     ) {
         parent::__construct($message, 0, $previous);

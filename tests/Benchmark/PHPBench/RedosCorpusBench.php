@@ -22,7 +22,6 @@ use PhpBench\Attributes\Revs;
 use PhpBench\Attributes\Warmup;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
-use PHPRegex\Redos\RedosMode;
 use PHPRegex\Tests\Benchmark\Support\BenchCases;
 use PHPRegex\Tests\Benchmark\Support\PeakMemory;
 
@@ -72,7 +71,7 @@ final class RedosCorpusBench
     #[ParamProviders('provideCorpusPatterns')]
     public function benchTheoreticalVerdictWarm(array $params): void
     {
-        $this->analyzer->analyze($this->pattern, null, RedosMode::Theoretical);
+        $this->analyzer->analyze($this->pattern);
     }
 
     /**
@@ -90,7 +89,7 @@ final class RedosCorpusBench
     {
         BenchCases::realistic();
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
-        $this->analyzer->analyze('/a/', null, RedosMode::Theoretical);
+        $this->analyzer->analyze('/a/');
         $this->analyzer = new RedosAnalyzer(RegexParser::create());
         PeakMemory::reset();
     }

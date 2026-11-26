@@ -156,7 +156,7 @@ final class ExtendedClassParser
             $tree->accept(new Validator(pattern: $this->pattern, target: $this->target));
         } catch (RegexException $error) {
             // A parse error, which keeps the judgement it wraps.
-            return ParserException::withContext($error->getMessage(), $error->errorCode, $error->position ?? $start, $this->pattern, $error);
+            return ParserException::withContext($error->getMessage(), $error->errorCode, $error->offset ?? $start, $this->pattern, $error);
         }
 
         return null;
@@ -180,7 +180,7 @@ final class ExtendedClassParser
             // reversed range: an item refused on the way, or a range ending
             // there, comes first, each in its turn.
             $leftOpen = \in_array($moved->errorCode, [ErrorCode::CharclassUnclosed, ErrorCode::RangeReversed], true);
-            $position = $leftOpen ? \strlen($this->pattern) + 1 : $moved->position ?? $at;
+            $position = $leftOpen ? \strlen($this->pattern) + 1 : $moved->offset ?? $at;
             [$tokens, $position] = $this->readUpToAPropertyLeftOpen($this->movedTokens($lexer->tokensRead(), $at), $position, $lexer->literalEscapesRead(), $at);
 
             throw $this->firstMemberErrorBefore($tokens, $position) ?? $moved;
@@ -198,7 +198,7 @@ final class ExtendedClassParser
             }
 
             if ($class) {
-                [$read, $position] = $this->readUpToAPropertyLeftOpen($tokens, $error->position ?? $at, $lexer->literalEscapesRead(), $at);
+                [$read, $position] = $this->readUpToAPropertyLeftOpen($tokens, $error->offset ?? $at, $lexer->literalEscapesRead(), $at);
                 $member = $this->firstMemberErrorBefore($read, $position);
                 $error = null === $member || self::refusedBeforeItsName($member, $error) ? $error : $member;
             }
@@ -280,7 +280,7 @@ final class ExtendedClassParser
         // one, holds no range.
         $range = TokenType::CharClassOpen === ($tokens[0] ?? null)?->type ? $this->firstRangeErrorBefore($tokens, $position) : null;
 
-        return null === $range || (null !== $member && ($member->position ?? $position) <= ($range->position ?? $position) && !self::refusedBeforeItsName($member, $range)) ? $member : $range;
+        return null === $range || (null !== $member && ($member->offset ?? $position) <= ($range->offset ?? $position) && !self::refusedBeforeItsName($member, $range)) ? $member : $range;
     }
 
     /**
@@ -290,7 +290,7 @@ final class ExtendedClassParser
      */
     private static function refusedBeforeItsName(ParserException $member, ParserException $range): bool
     {
-        return ErrorCode::PosixInvalid === $member->errorCode && ErrorCode::RangeInvalidBounds === $range->errorCode && $member->position === $range->position;
+        return ErrorCode::PosixInvalid === $member->errorCode && ErrorCode::RangeInvalidBounds === $range->errorCode && $member->offset === $range->offset;
     }
 
     /**
@@ -336,11 +336,11 @@ final class ExtendedClassParser
         }
 
         $error = null === $class ? null : $this->firstOperandError([$class], $read[0]->position);
-        if (null === $error || (null !== $refused && ($refused->position ?? $position) < ($error->position ?? $position))) {
+        if (null === $error || (null !== $refused && ($refused->offset ?? $position) < ($error->offset ?? $position))) {
             $error = $refused;
         }
 
-        return null !== $error && ($error->position ?? $position) < $position ? $error : null;
+        return null !== $error && ($error->offset ?? $position) < $position ? $error : null;
     }
 
     /**
@@ -355,7 +355,7 @@ final class ExtendedClassParser
      */
     private function refusalAsRead(ParserException $refusal, array $read, int $position): ?ParserException
     {
-        $at = $refusal->position ?? $position;
+        $at = $refusal->offset ?? $position;
         $hyphen = null;
         foreach ($read as $index => $token) {
             if (TokenType::Range === $token->type && $token->position < $at) {
@@ -419,7 +419,7 @@ final class ExtendedClassParser
 
             // A member refused where the fault is was read first.
             $error = $this->firstOperandError([$class], $token->position);
-            if (null !== $error && ($error->position ?? $position) <= $position) {
+            if (null !== $error && ($error->offset ?? $position) <= $position) {
                 return $error;
             }
         }

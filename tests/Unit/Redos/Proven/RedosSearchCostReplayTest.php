@@ -18,6 +18,7 @@ use PHPRegex\Redos\ConfirmationOptions;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -59,8 +60,8 @@ final class RedosSearchCostReplayTest extends TestCase
 
         $before = [ini_get('pcre.backtrack_limit'), ini_get('pcre.recursion_limit')];
         $analyzer = new RedosAnalyzer();
-        $control = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
-        $cost = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, $options)->searchCost;
+        $control = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
+        $cost = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, $options))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $control);
         $this->assertTrue($control->replayed);
@@ -89,7 +90,7 @@ final class RedosSearchCostReplayTest extends TestCase
     #[DataProvider('provideWitnessesTheReplayCounts')]
     public function test_confirmed_mode_replays_the_witness(string $pattern): void
     {
-        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertTrue($cost->replayed, $pattern);
@@ -150,7 +151,7 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertSame($growth[0] - $growth[1], $growth[1] - $growth[2], 'Oracle: the attempts of '.$counted.' are not linear in the rest of the run.');
 
         $analyzer = new RedosAnalyzer();
-        $cost = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame([2, $run, true], [$cost->degree, $cost->run, $cost->replayed], $pattern);
         $this->assertSame($exact, $analyzer->analyze($pattern)->searchCost instanceof RedosSearchCost, $pattern.' before the replay');
@@ -196,7 +197,7 @@ final class RedosSearchCostReplayTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost, $pattern.' in confirmed mode');
     }
 
     /**
@@ -212,7 +213,7 @@ final class RedosSearchCostReplayTest extends TestCase
     #[DataProvider('provideWitnessesTheReplayCannotCount')]
     public function test_search_cost_stays_reported_when_the_replay_cannot_count_it(string $pattern): void
     {
-        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame(2, $cost->degree, $pattern);
@@ -258,7 +259,7 @@ final class RedosSearchCostReplayTest extends TestCase
         $pinned = PcreAttemptSteps::pinned('/(?:a)++b/');
         $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempts of /(?:a)++b/ do not grow with the rest of the run.');
 
-        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame([2, 'a', true], [$cost->degree, $cost->run, $cost->replayed], $pattern);
     }
@@ -299,7 +300,7 @@ final class RedosSearchCostReplayTest extends TestCase
         $pinned = PcreAttemptSteps::pinned($counted);
         $this->assertGreaterThanOrEqual(250, PcreAttemptSteps::steps($pinned, $subject, 250) - PcreAttemptSteps::steps($pinned, $subject, 500), 'Oracle: the attempts of '.$counted.' do not grow with the rest of the run.');
 
-        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         $this->assertSame([$run, true], [$cost->run, $cost->replayed], $pattern);
     }
@@ -411,7 +412,7 @@ final class RedosSearchCostReplayTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost);
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost);
     }
 
     /**
@@ -440,7 +441,7 @@ final class RedosSearchCostReplayTest extends TestCase
     {
         $analyzer = new RedosAnalyzer();
         $found = $analyzer->analyze('/[é]+$/u')->searchCost;
-        $replayed = $analyzer->analyze('/[é]+$/u', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $replayed = $analyzer->analyze('/[é]+$/u', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $found);
         $this->assertInstanceOf(RedosSearchCost::class, $replayed);
@@ -474,7 +475,7 @@ final class RedosSearchCostReplayTest extends TestCase
         ini_set('pcre.jit', '0');
 
         try {
-            $cost = (new RedosAnalyzer())->analyze('/\s+$/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+            $cost = (new RedosAnalyzer())->analyze('/\s+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         } finally {
             ini_set('pcre.jit', false === $previous ? '1' : $previous);
         }
@@ -498,7 +499,7 @@ final class RedosSearchCostReplayTest extends TestCase
         ini_set('pcre.jit', '1');
 
         try {
-            $cost = (new RedosAnalyzer())->analyze('/(a|b)+c/', RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+            $cost = (new RedosAnalyzer())->analyze('/(a|b)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         } finally {
             ini_set('pcre.jit', false === $previous ? '1' : $previous);
         }
@@ -529,8 +530,8 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertSame([false, \PREG_BACKTRACK_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.backtrack_limit', '257'));
 
         $analyzer = new RedosAnalyzer();
-        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 258))->searchCost;
-        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 257))->searchCost;
+        $enough = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(backtrackLimit: 258)))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(backtrackLimit: 257)))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $enough);
         $this->assertTrue($enough->replayed);
@@ -552,8 +553,8 @@ final class RedosSearchCostReplayTest extends TestCase
         $this->assertSame([false, \PREG_RECURSION_LIMIT_ERROR], self::engine($counted, $subject, 'pcre.recursion_limit', '257'));
 
         $analyzer = new RedosAnalyzer();
-        $enough = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 258))->searchCost;
-        $short = $analyzer->analyze('/(?:ab)+c/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(recursionLimit: 257))->searchCost;
+        $enough = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(recursionLimit: 258)))->searchCost;
+        $short = $analyzer->analyze('/(?:ab)+c/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(recursionLimit: 257)))->searchCost;
 
         $this->assertInstanceOf(RedosSearchCost::class, $enough);
         $this->assertTrue($enough->replayed);
@@ -570,7 +571,7 @@ final class RedosSearchCostReplayTest extends TestCase
     public function test_the_replay_is_not_made_where_ini_set_is_disabled(): void
     {
         $script = 'require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
-            .'$cost = (new \PHPRegex\Redos\RedosAnalyzer())->analyze("/(?:ab)+c/", \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed)->searchCost;'
+            .'$cost = (new \PHPRegex\Redos\RedosAnalyzer())->analyze("/(?:ab)+c/", new \PHPRegex\Redos\RedosOptions(\PHPRegex\Redos\RedosMode::Confirmed, \PHPRegex\Redos\RedosSeverity::Low))->searchCost;'
             .'echo json_encode(["ini_set" => function_exists("ini_set"), "cost" => $cost?->toArray()]);';
         $process = proc_open(
             [\PHP_BINARY, '-d', 'xdebug.mode=off', '-d', 'auto_prepend_file=', '-d', 'disable_functions=ini_set', '-r', $script],

@@ -444,7 +444,7 @@ final class AlphaAssertionBodyTest extends TestCase
 
         $this->assertInstanceOf(LexerException::class, $caught, \sprintf('%s leaves a class open but was read.', $pattern));
         $this->assertStringContainsString('Unclosed character class', $caught->getMessage());
-        $this->assertSame($offset, $caught->position, $pattern);
+        $this->assertSame($offset, $caught->offset, $pattern);
     }
 
     /**
@@ -485,7 +485,7 @@ final class AlphaAssertionBodyTest extends TestCase
         }
 
         $this->assertInstanceOf(LexerException::class, $caught, \sprintf('%s ends on a backslash but was read.', $pattern));
-        $this->assertSame($offset, $caught->position, $pattern);
+        $this->assertSame($offset, $caught->offset, $pattern);
         $this->assertSame(ErrorCode::EscapeTrailingBackslash, $caught->errorCode, \sprintf('%s: %s', $pattern, $caught->getMessage()));
     }
 
@@ -957,7 +957,7 @@ final class AlphaAssertionBodyTest extends TestCase
         }
 
         $this->assertInstanceOf(LexerException::class, $caught, $pattern.' was read as closed.');
-        $this->assertSame([ErrorCode::GroupUnclosed, \strlen($pattern)], [$caught->errorCode, $caught->position], $caught->getMessage());
+        $this->assertSame([ErrorCode::GroupUnclosed, \strlen($pattern)], [$caught->errorCode, $caught->offset], $caught->getMessage());
         $this->assertSame($tokens, array_map(static fn ($token): array => [$token->type, $token->value, $token->position, $token->end()], $lexer->tokensRead()), $pattern);
 
         $result = Regex::create(['cache' => null])->validate('/'.$pattern.'/'.$flags);
@@ -1108,7 +1108,7 @@ final class AlphaAssertionBodyTest extends TestCase
         }
 
         $this->assertInstanceOf(LexerException::class, $caught, 'The class is read as closed.');
-        $this->assertSame([ErrorCode::CharclassUnclosed, 16], [$caught->errorCode, $caught->position]);
+        $this->assertSame([ErrorCode::CharclassUnclosed, 16], [$caught->errorCode, $caught->offset]);
     }
 
     /**
@@ -1292,7 +1292,7 @@ final class AlphaAssertionBodyTest extends TestCase
         }
 
         $this->assertInstanceOf(LexerException::class, $caught, $pattern.' was read whole.');
-        $this->assertSame([$code, $offset], [$caught->errorCode, $caught->position], $caught->getMessage());
+        $this->assertSame([$code, $offset], [$caught->errorCode, $caught->offset], $caught->getMessage());
         $this->assertSame($tokens, array_map(static fn ($token): array => [$token->type, $token->value, $token->position, $token->end()], $lexer->tokensRead()), $pattern);
     }
 

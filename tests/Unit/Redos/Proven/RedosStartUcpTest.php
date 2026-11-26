@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreInterpreter;
@@ -94,7 +95,7 @@ final class RedosStartUcpTest extends TestCase
     #[Test]
     public function test_the_witness_under_ucp_replays(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(*UCP)(?:\w|\xC9)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze('/(*UCP)(?:\w|\xC9)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $analysis->headline());
         $this->assertTrue($analysis->replayed, $analysis->headline());

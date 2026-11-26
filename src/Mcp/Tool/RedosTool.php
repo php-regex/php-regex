@@ -16,6 +16,7 @@ namespace PHPRegex\Mcp\Tool;
 use PHPRegex\Mcp\ToolResult;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -60,7 +61,7 @@ final class RedosTool extends AbstractTool
             return $refusal;
         }
 
-        $analysis = $regex->redos($pattern, $threshold, RedosMode::from($mode));
+        $analysis = $regex->redos($pattern, new RedosOptions(RedosMode::from($mode), $threshold ?? RedosSeverity::High));
 
         [$text, $range] = self::overRange(implode("\n", [$analysis->headline(), ...$analysis->recommendations]), $regex, $target, $pattern);
 

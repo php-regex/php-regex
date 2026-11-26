@@ -401,7 +401,7 @@ final class PatternLab
      */
     private static function libraryFailure(RegexException $e): string
     {
-        $snippet = $e->snippet ?? '';
+        $snippet = $e->caretSnippet ?? '';
 
         return '' === $snippet ? $e->getMessage() : $e->getMessage()."\n".$snippet;
     }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Unit\Transpiler;
 
+use PHPRegex\Transpiler\Dialect;
 use PHPRegex\Transpiler\TranspileResult;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -22,8 +23,8 @@ final class TranspileResultJsonTest extends TestCase
 {
     /**
      * The document names the dialect "dialect": "target" is the PHP
-     * versions judged in every document of the CLI. The property keeps its
-     * 1.x name.
+     * versions judged in every document of the CLI. The property is
+     * $dialect, the Dialect itself.
      *
      * @param array<string, mixed> $expected
      */
@@ -32,7 +33,7 @@ final class TranspileResultJsonTest extends TestCase
     public function test_json_serialize_writes_the_transpile_payload(TranspileResult $result, array $expected): void
     {
         $this->assertSame($expected, $result->jsonSerialize());
-        $this->assertSame($expected['dialect'], $result->target);
+        $this->assertSame($expected['dialect'], $result->dialect->value);
     }
 
     /**
@@ -41,7 +42,7 @@ final class TranspileResultJsonTest extends TestCase
     public static function provideResults(): iterable
     {
         yield 'no warning, no note' => [
-            'result' => new TranspileResult('/a+/', 'javascript', 'a+', '', '/a+/', 'new RegExp("a+")'),
+            'result' => new TranspileResult('/a+/', Dialect::JavaScript, 'a+', '', '/a+/', 'new RegExp("a+")'),
             'expected' => [
                 'dialect' => 'javascript',
                 'source' => '/a+/',
@@ -55,7 +56,7 @@ final class TranspileResultJsonTest extends TestCase
         ];
 
         yield 'warnings and notes, raw bytes kept' => [
-            'result' => new TranspileResult("/a\x01/i", 'python', "a\x01", 'IGNORECASE', "r'a\x01'", "re.compile(r'a\x01', re.IGNORECASE)", ['Possessive quantifier dropped'], ['Flag i mapped']),
+            'result' => new TranspileResult("/a\x01/i", Dialect::Python, "a\x01", 'IGNORECASE', "r'a\x01'", "re.compile(r'a\x01', re.IGNORECASE)", ['Possessive quantifier dropped'], ['Flag i mapped']),
             'expected' => [
                 'dialect' => 'python',
                 'source' => "/a\x01/i",

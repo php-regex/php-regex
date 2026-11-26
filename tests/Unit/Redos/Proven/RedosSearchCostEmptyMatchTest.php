@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
@@ -101,7 +102,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         $this->assertSame(RedosProof::Proven, $analysis->proof, $pattern);
         $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertTrue($confirmed->replayed, $pattern);
 
@@ -199,7 +200,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
         $analysis = $analyzer->analyze($pattern);
         $this->assertSame([RedosProof::Proven, RedosComplexity::Linear], [$analysis->proof, $analysis->complexity], $pattern);
 
-        $confirmed = $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost;
+        $confirmed = $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $confirmed, $pattern.' in confirmed mode');
         $this->assertSame([2, $run, true], [$confirmed->degree, $confirmed->run, $confirmed->replayed], $pattern);
 
@@ -257,7 +258,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost, $pattern.' in confirmed mode');
     }
 
     /**
@@ -293,7 +294,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost, $pattern.' in confirmed mode');
         $this->assertNull($analyzer->analyze($possessive)->searchCost, $possessive);
     }
 
@@ -326,7 +327,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost, $pattern.' in confirmed mode');
     }
 
     /**
@@ -360,7 +361,7 @@ final class RedosSearchCostEmptyMatchTest extends TestCase
 
         $analyzer = new RedosAnalyzer();
         $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
-        $this->assertNull($analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed)->searchCost, $pattern.' in confirmed mode');
+        $this->assertNull($analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))->searchCost, $pattern.' in confirmed mode');
     }
 
     /**

@@ -25,10 +25,10 @@ class RegexException extends \Exception implements ExceptionInterface
     public ErrorCode $errorCode;
     /**
      */
-    public ?int $position = null;
+    public ?int $offset = null;
     /**
      */
-    public ?string $snippet = null;
+    public ?string $caretSnippet = null;
 
     /**
      * @internal the library throws its exceptions; catch them, read them
@@ -36,13 +36,13 @@ class RegexException extends \Exception implements ExceptionInterface
     public function __construct(
         string $message,
         ErrorCode $errorCode,
-        ?int $position = null,
-        ?string $snippet = null,
+        ?int $offset = null,
+        ?string $caretSnippet = null,
         ?\Throwable $previous = null
     ) {
         $this->errorCode = $errorCode;
-        $this->position = $position;
-        $this->snippet = $snippet;
+        $this->offset = $offset;
+        $this->caretSnippet = $caretSnippet;
         parent::__construct($message, 0, $previous);
     }
 }

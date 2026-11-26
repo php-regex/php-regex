@@ -18,6 +18,7 @@ use PHPRegex\Cli\GlobalOptions;
 use PHPRegex\Cli\Input;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Tests\Support\StringListAssertions;
 use PHPRegex\Tests\TestUtils\OutputFactory;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -53,7 +54,7 @@ final class RedosJsonShapeTest extends TestCase
     #[DataProvider('provideResults')]
     public function test_redos_json_keys_and_verdict_values(string $pattern, RedosMode $mode, array $expected): void
     {
-        $json = self::decode(json_encode((new RedosAnalyzer())->analyze($pattern, null, $mode), \JSON_THROW_ON_ERROR));
+        $json = self::decode(json_encode((new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode)), \JSON_THROW_ON_ERROR));
 
         $this->assertJsonShape($json, $expected);
     }

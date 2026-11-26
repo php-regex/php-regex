@@ -297,7 +297,7 @@ final class PcreDivergenceTest extends TestCase
         $first = $tolerant->errors[0];
         $this->assertInstanceOf(RegexException::class, $first);
         $this->assertSame($code, $first->errorCode, \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
-        $this->assertSame($offset, $first->position, \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
+        $this->assertSame($offset, $first->offset, \sprintf('%s on %s: %s', $pattern, $release, $first->getMessage()));
     }
 
     /**

@@ -46,12 +46,6 @@ expectedArguments(
 );
 
 expectedArguments(
-    \PHPRegex\Toolkit\Regex::redos(),
-    1,
-    argumentsSet('redos_thresholds')
-);
-
-expectedArguments(
     \PHPRegex\Toolkit\Regex::parsePattern(),
     1,
     argumentsSet('regex_flags')

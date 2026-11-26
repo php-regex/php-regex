@@ -19,6 +19,7 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -68,7 +69,7 @@ final class LintIssueFixtures
      */
     public static function redos(LintSeverity $severity, string $message, ?string $code = RedosVerdict::ISSUE_ID): LintIssue
     {
-        $analysis = (new RedosAnalyzer(RegexParser::create(['cache' => null])))->analyze(self::REDOS_PATTERN, RedosSeverity::Low, RedosMode::Theoretical);
+        $analysis = (new RedosAnalyzer(RegexParser::create(['cache' => null])))->analyze(self::REDOS_PATTERN, new RedosOptions(RedosMode::Theoretical, RedosSeverity::Low));
 
         return new LintIssue($severity, $message, 'test.php', 1, issueId: $code, analysis: $analysis);
     }

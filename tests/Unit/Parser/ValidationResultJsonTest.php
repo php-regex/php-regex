@@ -71,7 +71,7 @@ final class ValidationResultJsonTest extends TestCase
                 'is_valid' => false,
                 'error' => "bad \xff byte",
                 'complexity_score' => 0,
-                'category' => 'pcre-runtime',
+                'category' => 'pcre_runtime',
                 'offset' => 0,
                 'caret_snippet' => null,
                 'hint' => null,

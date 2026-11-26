@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -350,7 +351,7 @@ final class RedosSoundnessRegressionTest extends TestCase
     #[DataProvider('provideMultilineCaretWithBlowUp')]
     public function test_caret_under_multiline_proven_witness_reproduces(string $pattern): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertFalse($analysis->isProvenSafe(), $pattern.' is proven safe, but "\n" x 20 . "!" exhausts the limit');
         if (RedosProof::Proven !== $analysis->proof || [] !== $analysis->abstractions) {

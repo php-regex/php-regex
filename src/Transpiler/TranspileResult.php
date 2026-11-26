@@ -21,13 +21,14 @@ final class TranspileResult implements \JsonSerializable
     /**
      * @internal built by Transpiler::transpile() and Regex::transpile()
      *
-     * @param string             $target   the dialect, by its Dialect value: "javascript", "html-pattern" or "python"
+     * @param string             $source   the pattern transpiled, as it was given
+     * @param Dialect            $dialect  the dialect $pattern is written for
      * @param array<int, string> $warnings
      * @param array<int, string> $notes
      */
     public function __construct(
         public readonly string $source,
-        public readonly string $target,
+        public readonly Dialect $dialect,
         public readonly string $pattern,
         public readonly string $flags,
         public readonly string $literal,
@@ -47,15 +48,15 @@ final class TranspileResult implements \JsonSerializable
     }
 
     /**
-     * The transpile document of the CLI: the dialect under "dialect", as
-     * "target" names the PHP versions judged in every document.
+     * The transpile document of the CLI: the dialect under "dialect", by
+     * its name; "target" names the PHP versions judged in every document.
      *
      * @return array{dialect: string, source: string, pattern: string, flags: string, literal: string, constructor: string, warnings: array<int, string>, notes: array<int, string>}
      */
     public function jsonSerialize(): array
     {
         return [
-            'dialect' => $this->target,
+            'dialect' => $this->dialect->value,
             'source' => $this->source,
             'pattern' => $this->pattern,
             'flags' => $this->flags,

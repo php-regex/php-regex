@@ -730,16 +730,53 @@ same version strings. A Rector target below PHP 7.0 is judged from PHP 7.0.
 `maxPatternLength` or a `maxRecursionDepth` below 1 and a
 `maxLookbehindLength` below 0, which `fromArray()` already refused.
 
-#### The snippet of an exception is `$snippet`
+#### The snippet of an exception is `$caretSnippet`
 
 `VisualContextInterface::getVisualSnippet()` is gone: it returned what
-`RegexException::$snippet` holds. Read the property; the interface still marks
+`RegexException::$caretSnippet` holds. Read the property; the interface still marks
 the exceptions that carry one, and declares `getPattern()`.
 
 ```diff
 -$text = $e->getVisualSnippet();
-+$text = (string) $e->snippet;
++$text = (string) $e->caretSnippet;
 ```
+
+An exception names where the fault is as `ValidationResult` does: `$offset`
+and `$caretSnippet`, where 1.x had `getPosition()` and `getSnippet()`.
+
+#### The ReDoS options are one object
+
+`Regex::redos()`, `Regex::analyze()` and `RedosAnalyzer::analyze()` took the
+threshold, the mode and the confirmation options one by one. They take one
+`PHPRegex\Redos\RedosOptions`, which holds them beside the budget of the proof,
+as `optimize()` takes an `OptimizerOptions`:
+
+```diff
+-$analysis = $regex->redos($pattern, ReDoSSeverity::HIGH, ReDoSMode::CONFIRMED, $confirmOptions);
++$analysis = $regex->redos($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::High, $confirmOptions));
+```
+
+The threshold is the severity a verdict is replayed from in confirmed mode; it
+filters nothing out of the analysis, and theoretical mode reads none. The
+constructor of `RedosAnalyzer` takes no threshold: its `$options` are those of
+every call that names none.
+
+#### A lexer error is a `ParserException`
+
+`LexerException` extends `ParserException`: one `catch (ParserException)`
+holds every pattern `parse()` refuses as malformed, whichever stage of the
+parser met the fault. A `catch (LexerException|ParserException)` keeps
+working. Where a `catch (ParserException)` stands before a
+`catch (LexerException)`, the first one now takes both: put the lexer's first,
+or drop it.
+
+```diff
+-} catch (LexerException|ParserException $e) {
++} catch (ParserException $e) {
+```
+
+`LimitException` and `SemanticErrorException` stay beside it: a limit of the
+library and a pattern the engine refuses are no malformed pattern.
 
 #### `runtime_pcre_validation` needs the running engine as target
 
@@ -1038,12 +1075,12 @@ argument:
 
 | before | after |
 |---|---|
-| `new RegexException($message, $position, $snippet, ?string $errorCode, $previous)` | `new RegexException($message, ErrorCode $errorCode, $position, $snippet, $previous)` |
-| `new ParserException($message, $position, $pattern)` | `new ParserException($message, ErrorCode $errorCode, $position, $pattern)` |
-| `new LexerException($message, $position, $pattern)` | `new LexerException($message, ErrorCode $errorCode, $position, $pattern)` |
-| `ParserException::withContext($message, $position, $pattern)` | `ParserException::withContext($message, ErrorCode $errorCode, $position, $pattern)` |
-| `LexerException::withContext($message, $position, $pattern)` | `LexerException::withContext($message, ErrorCode $errorCode, $position, $pattern)` |
-| `new SemanticErrorException($message, $position, $pattern, $previous, $errorCode, $hint)` | `new SemanticErrorException($message, ErrorCode $errorCode, $position, $pattern, $previous, $hint)` |
+| `new RegexException($message, $position, $snippet, ?string $errorCode, $previous)` | `new RegexException($message, ErrorCode $errorCode, $offset, $caretSnippet, $previous)` |
+| `new ParserException($message, $position, $pattern)` | `new ParserException($message, ErrorCode $errorCode, $offset, $pattern)` |
+| `new LexerException($message, $position, $pattern)` | `new LexerException($message, ErrorCode $errorCode, $offset, $pattern)` |
+| `ParserException::withContext($message, $position, $pattern)` | `ParserException::withContext($message, ErrorCode $errorCode, $offset, $pattern)` |
+| `LexerException::withContext($message, $position, $pattern)` | `LexerException::withContext($message, ErrorCode $errorCode, $offset, $pattern)` |
+| `new SemanticErrorException($message, $position, $pattern, $previous, $errorCode, $hint)` | `new SemanticErrorException($message, ErrorCode $errorCode, $offset, $pattern, $previous, $hint)` |
 | `TokenStream::consume($type, $message)`, `consumeLiteral($value, $message)` | take an `ErrorCode $code` as third argument |
 
 `SyntaxErrorException`, `RecursionLimitException` and `ResourceLimitException`
@@ -1113,10 +1150,13 @@ instead.
 | `ValidationResult::getCaretSnippet()` | `$caretSnippet` |
 | `ValidationResult::getHint()` | `$hint` |
 | `ValidationResult::getErrorCode()` | `$errorCode` |
-| `AnalysisReport::errors()`, `lintIssues()`, `redos()`, `highlighted()` | the property of the same name |
-| `AnalysisReport::optimizations()`, `explain()` | `$optimization` (one result), `$explanation` |
+| `AnalysisReport::$isValid`, `errors()` | `$validation`, the `ValidationResult` of `validate()`: `$validation->isValid`, `$validation->error` |
+| `AnalysisReport::lintIssues()` | `$violations` |
+| `AnalysisReport::redos()`, `optimizations()` | `$redos`, `$optimization` (one result) |
+| `AnalysisReport::explain()`, `highlighted()` | `Regex::explain($regex)`, `Regex::highlight($regex)` |
+| `TranspileResult::$target` (the name of the dialect) | `$dialect` (the `Dialect`; its name is `$dialect->value`) |
 | `RegexPattern::fromRaw($pattern, $flags, $delimiter)`, `toString()` | `new DelimitedPattern($pattern, $flags, $delimiter)`, `(string) $pattern` |
-| `RegexException::getErrorCode()`, `getPosition()`, `getSnippet()` | `$errorCode`, `$position`, `$snippet` |
+| `RegexException::getErrorCode()`, `getPosition()`, `getSnippet()` | `$errorCode`, `$offset`, `$caretSnippet` |
 | `SemanticErrorException::getHint()` | `$hint` |
 | `LinterNodeVisitor::getWarnings()`, `getFullPattern()` | `PatternLinter::getIssues()`, each issue's `$message`; the pattern you linted |
 | `ReDoSAnalysis::confidenceLevel()` | `RedosAnalysis::$confidence`, never null (`Low` when nothing raised it) |
@@ -1180,7 +1220,7 @@ pattern PCRE refuses to compile (`/\k<x>/`). `explain()`, `format()` and
 
 #### Every offset counts from the pattern body
 
-`ValidationResult::$offset` and `RegexException::$position` count from the
+`ValidationResult::$offset` and `RegexException::$offset` count from the
 first character of the pattern body, the coordinate PCRE2 uses, for every
 error. In 1.x a modifier error and a pattern past `max_pattern_length` counted
 from the start of the whole string, delimiter included, and a modifier error

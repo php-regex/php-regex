@@ -94,7 +94,7 @@ final class SubroutineParserTest extends TestCase
         } catch (ParserException $e) {
             $this->assertSame($code, $e->errorCode, \sprintf('%s on PCRE2 %s: %s', $pattern, $release, $e->getMessage()));
             $this->assertStringContainsString($message, $e->getMessage(), \sprintf('%s on PCRE2 %s', $pattern, $release));
-            $this->assertSame($offset, $e->position, \sprintf('%s on PCRE2 %s', $pattern, $release));
+            $this->assertSame($offset, $e->offset, \sprintf('%s on PCRE2 %s', $pattern, $release));
         }
     }
 

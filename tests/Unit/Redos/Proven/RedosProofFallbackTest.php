@@ -138,7 +138,7 @@ final class RedosProofFallbackTest extends TestCase
     #[Test]
     public function test_mode_off_is_not_analyzed(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', null, RedosMode::Off);
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(RedosMode::Off));
 
         $this->assertNotAnalyzed($analysis);
         $this->assertSame(RedosSeverity::Safe, $analysis->severity);

@@ -17,6 +17,7 @@ use PHPRegex\Parser\Engine\CharacterTables;
 use PHPRegex\Parser\Exception\InvalidRegexOptionException;
 use PHPRegex\Redos\ConfirmationRunner;
 use PHPRegex\Redos\RedosAnalyzer;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -31,7 +32,7 @@ final class ConfirmationRunnerLocaleTest extends TestCase
     #[Test]
     public function test_the_runner_runs_under_the_locale_it_is_given(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(\w+)+!/', RedosSeverity::Low);
+        $analysis = (new RedosAnalyzer())->analyze('/(\w+)+!/', new RedosOptions(threshold: RedosSeverity::Low));
         $before = CharacterTables::current();
 
         $underC = (new ConfirmationRunner(locale: 'C'))->confirm('/(\w+)+!/', $analysis);
@@ -44,7 +45,7 @@ final class ConfirmationRunnerLocaleTest extends TestCase
     #[Test]
     public function test_a_locale_the_machine_cannot_set_is_refused(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(\w+)+!/', RedosSeverity::Low);
+        $analysis = (new RedosAnalyzer())->analyze('/(\w+)+!/', new RedosOptions(threshold: RedosSeverity::Low));
 
         $this->expectException(InvalidRegexOptionException::class);
 

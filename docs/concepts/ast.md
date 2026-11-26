@@ -108,15 +108,15 @@ use PHPRegex\Toolkit\Regex;
 try {
     $ast = Regex::create()->parse('/[unclosed/');
 } catch (RegexException $e) {
-    echo "Error at position: " . $e->position . "\n";
-    echo "Snippet: " . $e->snippet . "\n";
+    echo "Error at offset: " . $e->offset . "\n";
+    echo "Snippet: " . $e->caretSnippet . "\n";
 }
 ```
 
-Catch `RegexException`, the shared parent of every parse failure: an unclosed character class is reported by the lexer (`LexerException`), a missing closing delimiter by the parser (`ParserException`) - catching only one of the two lets the other escape. Both expose the same two public properties, `->position` (a nullable `int`, the offset of the failure in the pattern) and `->snippet` (a nullable `string`, the offending text with a caret under it); each may be `null` when the failure carries no single location. The sample above reads them and prints:
+Catch `RegexException`, the shared parent of every parse failure. A malformed pattern is a `ParserException`, whichever stage met the fault: an unclosed character class is reported while the tokens are read (`LexerException`, a `ParserException`), a missing closing delimiter by the parser itself. Every `RegexException` exposes the same two public properties, `->offset` (a nullable `int`, the offset of the failure in the pattern body) and `->caretSnippet` (a nullable `string`, the offending text with a caret under it), named as `ValidationResult` names them; each may be `null` when the failure carries no single location. The sample above reads them and prints:
 
 ```
-Error at position: 9
+Error at offset: 9
 Snippet: Line 1: [unclosed
                  ^
 ```

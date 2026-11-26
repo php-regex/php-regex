@@ -229,7 +229,7 @@ final class RegexTest extends TestCase
     public function test_analyze_method(): void
     {
         $report = $this->regexService->analyze('/a+/');
-        $this->assertIsBool($report->isValid);
+        $this->assertIsBool($report->validation->isValid);
         $this->assertIsArray($report->errors);
     }
 
@@ -237,8 +237,8 @@ final class RegexTest extends TestCase
     public function test_analyze_method_with_invalid_regex(): void
     {
         $report = $this->regexService->analyze('/a(/');
-        $this->assertFalse($report->isValid);
-        $this->assertNotEmpty($report->errors);
+        $this->assertFalse($report->validation->isValid);
+        $this->assertNotNull($report->validation->error);
     }
 
     #[Test]
@@ -250,10 +250,10 @@ final class RegexTest extends TestCase
 
         $report = $regex->analyze($nestedRegex);
 
-        // Should have parsing error in the catch block
-        $this->assertFalse($report->isValid);
-        $this->assertNotEmpty($report->errors);
-        $this->assertStringContainsString('Recursion limit', $report->errors[0]);
+        // The limit is the verdict of the validation, which the report holds whole
+        $this->assertFalse($report->validation->isValid);
+        $this->assertTrue($report->validation->isLimit());
+        $this->assertStringContainsString('Recursion limit', (string) $report->validation->error);
     }
 
     #[Test]

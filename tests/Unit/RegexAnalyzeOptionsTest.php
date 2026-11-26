@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit;
 
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -50,7 +51,7 @@ final class RegexAnalyzeOptionsTest extends TestCase
 
         $this->assertNull($regex->analyze('/(a+)+$/')->redos->confirmation, 'Theoretical by default.');
 
-        $confirmed = $regex->analyze('/(a+)+$/', mode: RedosMode::Confirmed)->redos;
+        $confirmed = $regex->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed))->redos;
         $this->assertSame(RedosMode::Confirmed, $confirmed->mode);
         $this->assertInstanceOf(Confirmation::class, $confirmed->confirmation, 'A confirmed analysis runs the pattern.');
     }

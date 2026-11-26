@@ -95,8 +95,9 @@ Check a pattern for ReDoS, theoretically by default, or with the attack replayed
 
 ```php
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 
-$analysis = $regex->redos('/(a+)+$/', mode: RedosMode::Confirmed);
+$analysis = $regex->redos('/(a+)+$/', new RedosOptions(RedosMode::Confirmed));
 echo $analysis->severity->value, "\n";
 echo $analysis->headline(), "\n";
 echo $analysis->witness->render(), "\n";
@@ -126,7 +127,7 @@ Or run every check at once — `analyze()` validates, lints, and reports ReDoS a
 
 ```php
 $report = $regex->analyze('/(a+)+b/');
-foreach ($report->lintIssues as $issue) {
+foreach ($report->violations as $issue) {
     echo $issue->id, ': ', $issue->message, "\n";
 }
 ```

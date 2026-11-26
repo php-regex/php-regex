@@ -23,6 +23,7 @@ use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosComplexity;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -74,7 +75,7 @@ final class RedosReplayCandidatesTest extends TestCase
     #[DataProvider('provideReplayCandidates')]
     public function test_confirmed_replay_publishes_the_candidate_that_reproduced(string $pattern, string $input): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $witness = $analysis->witness;
@@ -163,7 +164,7 @@ final class RedosReplayCandidatesTest extends TestCase
     #[DataProvider('provideEmptySuccessRefusedWitnesses')]
     public function test_empty_match_retry_verdict_is_replayed_without_matches(string $pattern, string $input): void
     {
-        $analysis = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer())->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity, $pattern);
         $witness = $analysis->witness;
@@ -207,12 +208,7 @@ final class RedosReplayCandidatesTest extends TestCase
     #[Test]
     public function test_recursion_limit_is_no_replay_evidence(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze(
-            '/(a+)+$/',
-            RedosSeverity::Low,
-            RedosMode::Confirmed,
-            new ConfirmationOptions(recursionLimit: 1),
-        );
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(recursionLimit: 1)));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertFalse($analysis->replayed, 'replayed on the evidence of '.($analysis->confirmation->evidence ?? 'nothing'));
@@ -257,7 +253,7 @@ final class RedosReplayCandidatesTest extends TestCase
             }
         };
 
-        $analysis = (new RedosAnalyzer(confirmationRunner: $runner))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer(confirmationRunner: $runner))->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertNotTrue($analysis->replayed);
@@ -292,7 +288,7 @@ final class RedosReplayCandidatesTest extends TestCase
             }
         };
 
-        $analysis = (new RedosAnalyzer(confirmationRunner: $runner))->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer(confirmationRunner: $runner))->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertTrue($analysis->replayed);
@@ -308,7 +304,7 @@ final class RedosReplayCandidatesTest extends TestCase
     #[Test]
     public function test_a_replay_over_its_work_budget_is_not_reproduced(): void
     {
-        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', RedosSeverity::Low, RedosMode::Confirmed, new ConfirmationOptions(backtrackLimit: 2_000_000_000));
+        $analysis = (new RedosAnalyzer())->analyze('/(a+)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low, new ConfirmationOptions(backtrackLimit: 2_000_000_000)));
 
         $this->assertSame(RedosComplexity::Exponential, $analysis->complexity);
         $this->assertFalse($analysis->replayed);

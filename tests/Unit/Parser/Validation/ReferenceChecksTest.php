@@ -152,7 +152,7 @@ final class ReferenceChecksTest extends TestCase
             $tree->accept(new Validator(pattern: '/\\1(*pla:(?<=\\1))/', target: new PcreTarget(80400, '10.49')));
             $this->fail('A reference to a missing group is refused.');
         } catch (SemanticErrorException $error) {
-            $this->assertSame([ErrorCode::BackrefMissingGroup, 2], [$error->errorCode, $error->position]);
+            $this->assertSame([ErrorCode::BackrefMissingGroup, 2], [$error->errorCode, $error->offset]);
         }
     }
 

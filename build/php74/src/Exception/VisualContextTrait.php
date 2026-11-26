@@ -32,12 +32,12 @@ trait VisualContextTrait
 
     /**
      * Keeps the pattern, and draws the snippet the exception carries as
-     * RegexException::$snippet.
+     * RegexException::$caretSnippet.
      */
-    private function initializeContext(?int $position, ?string $pattern): string
+    private function initializeContext(?int $offset, ?string $pattern): string
     {
         $this->pattern = $pattern;
 
-        return Snippet::render($pattern, $position);
+        return Snippet::render($pattern, $offset);
     }
 }

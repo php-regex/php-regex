@@ -22,6 +22,7 @@ use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosConfidence;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosProof;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\RedosWitness;
@@ -176,7 +177,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
         $this->expectException($class);
         $this->expectExceptionMessageIsOrContains($thrown->getMessage());
 
-        $analyzer->analyze($pattern, RedosSeverity::Low, RedosMode::Confirmed);
+        $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
     }
 
     /**
@@ -199,7 +200,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     {
         $analyzer = new RedosAnalyzer(confirmationRunner: self::throwingRunner(new InvalidRegexOptionException('runner refused its options')));
 
-        $analysis = $analyzer->analyze('/(a|a)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = $analyzer->analyze('/(a|a)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosProof::NotAnalyzed, $analysis->proof);
         $this->assertSame(RedosSeverity::Unknown, $analysis->severity);
@@ -217,7 +218,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     #[DataProvider('provideRunnerAnswers')]
     public function test_a_runner_answer_that_does_not_reproduce_keeps_the_proof(Confirmation $answer, ?bool $replayed): void
     {
-        $analysis = (new RedosAnalyzer(confirmationRunner: self::answeringRunner($answer)))->analyze('/(a|a)+$/', RedosSeverity::Low, RedosMode::Confirmed);
+        $analysis = (new RedosAnalyzer(confirmationRunner: self::answeringRunner($answer)))->analyze('/(a|a)+$/', new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low));
 
         $this->assertSame(RedosProof::Proven, $analysis->proof);
         $this->assertSame(RedosSeverity::Critical, $analysis->severity);
@@ -313,7 +314,7 @@ final class RedosConfirmedReplayUnavailableTest extends TestCase
     {
         $oracle = null === $subject ? 'null' : '(static function () { \\ini_set("pcre.jit", "0"); if (false === \\ini_set("pcre.backtrack_limit", "100000")) { return "backtrack limit not set"; } return [@\\preg_match('.var_export($pattern, true).', '.var_export($subject, true).'), \\preg_last_error()]; })()';
         $script = $prelude.' namespace { require '.var_export(\dirname(__DIR__, 4).'/vendor/autoload.php', true).';'
-            .'$analysis = (new \PHPRegex\Redos\RedosAnalyzer())->analyze('.var_export($pattern, true).', \PHPRegex\Redos\RedosSeverity::Low, \PHPRegex\Redos\RedosMode::Confirmed);'
+            .'$analysis = (new \PHPRegex\Redos\RedosAnalyzer())->analyze('.var_export($pattern, true).', new \PHPRegex\Redos\RedosOptions(\PHPRegex\Redos\RedosMode::Confirmed, \PHPRegex\Redos\RedosSeverity::Low));'
             .'echo json_encode(['
             .'"ini_set" => function_exists("ini_set"),'
             .'"error" => $analysis->error,'

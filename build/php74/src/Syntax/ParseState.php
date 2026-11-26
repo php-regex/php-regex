@@ -345,7 +345,7 @@ final class ParseState
      */
     public function movedError($error, int $offset)
     {
-        return $error::withContext($error->getMessage(), $error->errorCode, (int) $error->position + $offset, $this->pattern, $error);
+        return $error::withContext($error->getMessage(), $error->errorCode, (int) $error->offset + $offset, $this->pattern, $error);
     }
 
     /**

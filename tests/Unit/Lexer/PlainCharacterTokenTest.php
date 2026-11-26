@@ -104,7 +104,7 @@ final class PlainCharacterTokenTest extends TestCase
             $this->fail('Expected the pattern to be refused.');
         } catch (LexerException $e) {
             $this->assertSame(ErrorCode::EncodingInvalidUtf8, $e->errorCode);
-            $this->assertSame(2, $e->position);
+            $this->assertSame(2, $e->offset);
         }
     }
 }

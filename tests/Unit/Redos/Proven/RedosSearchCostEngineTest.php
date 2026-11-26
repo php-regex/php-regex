@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Redos\Proven;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosAnalyzer;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSearchCost;
 use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
@@ -46,7 +47,7 @@ final class RedosSearchCostEngineTest extends TestCase
     #[DataProvider('provideWitnesses')]
     public function test_witness_attempt_steps_grow_linearly_with_the_rest_of_the_run(string $pattern, RedosMode $mode): void
     {
-        $cost = (new RedosAnalyzer())->analyze($pattern, RedosSeverity::Low, $mode)->searchCost;
+        $cost = (new RedosAnalyzer())->analyze($pattern, new RedosOptions($mode, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
 
         $subject = $cost->build(4 * self::QUARTER);
@@ -89,7 +90,7 @@ final class RedosSearchCostEngineTest extends TestCase
     public function test_witness_attempts_past_the_subject_start_grow_linearly(string $pattern, RedosMode $mode): void
     {
         $analyzer = new RedosAnalyzer();
-        $cost = $analyzer->analyze($pattern, RedosSeverity::Low, $mode)->searchCost;
+        $cost = $analyzer->analyze($pattern, new RedosOptions($mode, RedosSeverity::Low))->searchCost;
         $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
         if (RedosMode::Confirmed === $mode) {
             $this->assertTrue($cost->replayed, $pattern);

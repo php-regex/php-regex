@@ -37,6 +37,7 @@ use PHPRegex\Parser\Validation\ValidationResult;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
 use PHPRegex\Redos\RedosMode;
+use PHPRegex\Redos\RedosOptions;
 use PHPRegex\Redos\RedosSeverity;
 
 /**
@@ -139,7 +140,7 @@ final class AnalyzeCommand extends AbstractCommand implements JsonCommandInterfa
             }
 
             $ast = $regex->parse($pattern);
-            $analysis = $regex->redos($pattern, $redosThreshold, $redosMode);
+            $analysis = $regex->redos($pattern, new RedosOptions($redosMode, $redosThreshold ?? RedosSeverity::High));
             $explain = $regex->explain($pattern);
 
             // A control, a hidden character or an invalid byte is spelled out

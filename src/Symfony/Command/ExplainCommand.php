@@ -125,9 +125,9 @@ final class ExplainCommand extends Command
             $io->newLine();
         }
 
-        if ([] !== $analysis->lintIssues) {
+        if ([] !== $analysis->violations) {
             $io->writeln('<fg=white;options=bold>Lint Issues:</>');
-            foreach ($analysis->lintIssues as $issue) {
+            foreach ($analysis->violations as $issue) {
                 $io->writeln('  - '.OutputFormatter::escape($issue->message));
             }
             $io->newLine();

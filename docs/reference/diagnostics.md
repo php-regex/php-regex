@@ -512,7 +512,7 @@ For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-c
 |----------------|--------------------------------------------|------------------------------------------|
 | `syntax`       | The pattern cannot be read                 | Unclosed class, missing delimiter        |
 | `semantic`     | The pattern reads, but PCRE refuses it     | Unbounded lookbehind, missing group      |
-| `pcre-runtime` | PCRE itself failed on the pattern          | Compilation error the checks do not know |
+| `pcre_runtime` | PCRE itself failed on the pattern          | Compilation error the checks do not know |
 | `limit`        | The library stopped at one of its own limits: no verdict | A pattern past `max_pattern_length`, nesting past `max_recursion_depth` |
 
 A `limit` result is not a judgement on the pattern: PCRE may compile it. The
