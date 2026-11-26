@@ -53,6 +53,15 @@ CHANGELOG
    `/x.{0,20}+\b(?:a|a)+$/` and `/x(?>.{0,20})\b(?:a|a)+$/` were safe
    (proven), while PHP exhausts its backtrack limit on an `x`, twenty `!`,
    thirty `a` and a `!`; they are exponential.
+ * An atomic group whose first alternative is a repeat allowed no round is
+   read as that alternative: it always matches, and the group never tries
+   the others. `(?>[^x]*|y)` is read as `(?>[^x]*)`, where the body was kept
+   with every way through it and no success was taken as sure after it:
+   `/^(?:a|a)+(?>[^x]*|y)(?:x|\z)/` is safe (proven) and
+   `/^(?:a+)+(?>.*|y)\b/` exponential, where both got the heuristics'
+   verdict. Patterns proven exponential or polynomial only through the
+   other alternatives may be proven linear or of a lower degree, as the
+   engine runs them: `/^(?>.*|x)(?:a|a)*?$/i` is linear.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.

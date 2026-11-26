@@ -744,6 +744,15 @@ final class PnfaBuilder
                 }
 
                 $child = $this->unwrap($node->child);
+                // A first alternative allowed no round at all always matches:
+                // the group commits to it, and never tries the others.
+                if ($child instanceof AlternationNode) {
+                    $first = $this->unwrap($child->alternatives[0]);
+                    if ($first instanceof QuantifierNode && 0 === ($first->bounds->min ?? 1)) {
+                        $child = $first;
+                    }
+                }
+
                 if ($child instanceof QuantifierNode && null !== ($this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags) ?? $this->nestedRun($child, $flags))) {
                     if (!$this->isLazy($child, $flags)) {
                         return $this->quantifier($child, $next, $flags, $pnfa, $search, true);
