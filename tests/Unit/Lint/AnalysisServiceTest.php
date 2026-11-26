@@ -22,6 +22,7 @@ use PHPRegex\Linter\RedosVerdict;
 use PHPRegex\Parser\Cache\CacheInterface;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Redos\Backtrack\ProofResult;
 use PHPRegex\Redos\RedosAnalysis;
@@ -658,6 +659,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertSame($serial[0]->severity, $read->severity);
         $this->assertCount(\count($serial[0]->findings), $read->findings);
         $this->assertStringNotContainsString('__PHP_Incomplete_Class', serialize($read));
+        $this->assertSame($serial[0]->target->key(), $read->target->key(), 'The target judged comes back with the verdict.');
         $this->assertCount(1, $redos);
         $this->assertInstanceOf(NodeInterface::class, $redos[0]->analysis?->culpritNode);
     }
@@ -692,6 +694,7 @@ final class AnalysisServiceTest extends TestCase
         $this->assertIsArray($allowed);
         $this->assertContains(ProofResult::class, $allowed);
         $this->assertContains(RedosAnalysis::class, $allowed);
+        $this->assertContains(PcreTarget::class, $allowed, 'A ReDoS analysis carries the target it judged.');
         $this->assertNotContains(NodeInterface::class, $allowed);
     }
 

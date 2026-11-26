@@ -822,6 +822,8 @@ final class AnalysisService
             ValidationErrorCategory::class,
             OptimizationResult::class,
             RedosAnalysis::class,
+            // The target a ReDoS analysis was computed for.
+            PcreTarget::class,
         ];
 
         // Every class of the AST and of the ReDoS result, found next to a class
