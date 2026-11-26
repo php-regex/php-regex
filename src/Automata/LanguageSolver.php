@@ -258,6 +258,11 @@ final class LanguageSolver
      * read: PCRE2's JIT, which PHP runs by default, misses matches of it
      * that the interpreter finds, "/(a++)c(?1)d/" none in "acacad".
      *
+     * A lookaround is read and never run: two patterns that hold one are
+     * equivalent where one automaton is built for both, each possessive
+     * quantifier that gives nothing back read as the greedy one,
+     * "/(?=x)xa+b/" and "/(?=x)xa++b/", and are refused otherwise.
+     *
      * @throws ParserException     When a pattern does not lex or parse
      * @throws ComplexityException When a pattern leaves the fragment the match solver reads, or a limit is reached
      */
@@ -329,7 +334,10 @@ final class LanguageSolver
      * needs the search past the start.
      *
      * Two patterns that read alike (see readAlike()) run alike everywhere:
-     * no run is needed.
+     * no run is needed. Nor is one for two patterns that hold a lookbehind
+     * when the match solver builds one automaton for both, each possessive
+     * quantifier that gives nothing back read as the greedy one: "/(?<=x)a+b/"
+     * and "/(?<=x)a++b/".
      *
      * @internal the check of a rewrite and the judge of a mutant ask it for each call a pattern may go to
      *
@@ -355,14 +363,13 @@ final class LanguageSolver
 
         $startAnchored = false;
         $empty = false;
+        $lookbehind = false;
         foreach ($hirs as $side => $hir) {
             $empty = $empty || false !== $hir->properties->nullable;
             // What a DEFINE holds runs where a call runs it.
             $pending = [$hir, ...$defined[$side]];
             while (null !== $node = array_pop($pending)) {
-                if ($node instanceof LookHir && \in_array($node->kind, [LookKind::Behind, LookKind::NegativeBehind], true)) {
-                    return null;
-                }
+                $lookbehind = $lookbehind || ($node instanceof LookHir && \in_array($node->kind, [LookKind::Behind, LookKind::NegativeBehind], true));
 
                 if ($node instanceof AssertionHir) {
                     if (\in_array($node->kind, [AssertionKind::LineStart, AssertionKind::WordBoundary, AssertionKind::NotWordBoundary, AssertionKind::ResetMatchStart], true)) {
@@ -380,6 +387,12 @@ final class LanguageSolver
 
                 array_push($pending, ...$node->children());
             }
+        }
+
+        // No run shows what a lookbehind reads before a search: one
+        // automaton for both patterns runs alike wherever a search starts.
+        if ($lookbehind) {
+            return $this->buildsOneAutomaton($left, $right) ? [] : null;
         }
 
         $runs = [MatchRun::Search];
@@ -1041,6 +1054,23 @@ final class LanguageSolver
         );
 
         return $builder->build($form, $ast->isUnicode(), $ast->pattern, $translator->defined(), $throughCalls);
+    }
+
+    /**
+     * Whether the match solver builds one automaton for both patterns, each
+     * possessive quantifier that gives nothing back read as the greedy one:
+     * such patterns run alike wherever a search starts, whatever stands
+     * before it.
+     */
+    private function buildsOneAutomaton(string $left, string $right): bool
+    {
+        $options = new SolverOptions();
+
+        try {
+            return $this->priorityNfa($left, $options)->fingerprint() === $this->priorityNfa($right, $options)->fingerprint();
+        } catch (ComplexityException) {
+            return false;
+        }
     }
 
     /**

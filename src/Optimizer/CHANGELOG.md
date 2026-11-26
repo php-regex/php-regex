@@ -90,10 +90,16 @@ CHANGELOG
    refused it.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
-   rewrites ship: the solver proves no possessive in a pattern that holds a
-   lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
-   now lose their useless `s`, as they do without the option. The second
-   rewrite runs only on such a refusal.
+   rewrites ship: the solver proves no possessive in a pattern that holds
+   `\b` or a reference, and `/\d+y\b/s` now loses its useless `s`, as it
+   does without the option. The second rewrite runs only on such a refusal.
+ * Under the possessive option, a quantifier is made possessive in a
+   pattern that holds a lookaround, which the check of the result now
+   reads: `/(?=x)xa+b/` becomes `/(?=x)xa++b/`, `/\d+x(?!y)/s` becomes
+   `/\d++x(?!y)/`, `/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/` and
+   `/(?!x[0-9]+)x/` becomes `/(?!x\d++)x/`; all four were left greedy. A
+   repetition right before a lookaround stays greedy, as `/a+(?!b)/` finds
+   `a` in `aab` where `/a++(?!b)/` finds nothing.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.

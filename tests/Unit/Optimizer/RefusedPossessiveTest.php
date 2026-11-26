@@ -25,8 +25,10 @@ use PHPUnit\Framework\TestCase;
  * Under the possessive option, a rewrite whose possessive quantifier the
  * check of the result cannot prove is written again without the
  * possessive step: the solver refuses every possessive in a pattern that
- * holds a lookaround or "\b", and the other rewrites, the "s" nothing reads
- * dropped or "[0-9]" written "\d", ship on their own.
+ * holds "\b", a reference or an atomic group, and the other rewrites, the
+ * "s" nothing reads dropped or "[0-9]" written "\d", ship on their own.
+ * Beside a lookaround, a possessive that gives nothing back is proven, and
+ * ships with them.
  */
 final class RefusedPossessiveTest extends TestCase
 {
@@ -52,15 +54,53 @@ final class RefusedPossessiveTest extends TestCase
      */
     public static function provideRefusedPossessives(): iterable
     {
-        yield 'a lookahead after the repetition' => ['pattern' => '/\d+x(?!y)/s', 'optimized' => '/\d+x(?!y)/'];
-        yield 'a lookahead before the repetition' => ['pattern' => '/(?=x)\d+y/s', 'optimized' => '/(?=x)\d+y/'];
-        yield 'a lookbehind before the repetition' => ['pattern' => '/(?<=a)[0-9]+x/s', 'optimized' => '/(?<=a)\d+x/'];
         yield 'a word boundary' => ['pattern' => '/\d+y\b/s', 'optimized' => '/\d+y\b/'];
         yield 'no word boundary' => ['pattern' => '/[0-9]+x\B/', 'optimized' => '/\d+x\B/'];
-        yield 'a class written as a shorthand' => ['pattern' => '/[0-9]+x(?!y)/', 'optimized' => '/\d+x(?!y)/'];
-        yield 'two repetitions, both left greedy' => ['pattern' => '/[0-9]+x[0-9]+(?!y)/', 'optimized' => '/\d+x\d+(?!y)/'];
-        yield 'a caseless pattern' => ['pattern' => '/\d+x(?!y)/is', 'optimized' => '/\d+x(?!y)/i'];
-        yield 'an extended pattern, laid out as written' => ['pattern' => '/\d+ x (?!y) /xs', 'optimized' => '/\d+ x (?!y) /x'];
+        yield 'a reference' => ['pattern' => '/(y)[0-9]+x\1/s', 'optimized' => '/(y)\d+x\1/'];
+        yield 'an atomic group' => ['pattern' => '/(?>y)[0-9]+x/s', 'optimized' => '/(?>y)\d+x/'];
+        yield 'a word boundary beside a lookahead' => ['pattern' => '/\b[0-9]+x(?!y)/', 'optimized' => '/\b\d+x(?!y)/'];
+        yield 'a reference beside a lookahead' => ['pattern' => '/(?=(x))\d+y\1?/s', 'optimized' => '/(?=(x))\d+y\1?/'];
+        yield 'two repetitions, both left greedy' => ['pattern' => '/[0-9]+x[0-9]+\b/', 'optimized' => '/\d+x\d+\b/'];
+        yield 'a caseless pattern' => ['pattern' => '/\d+x\b/is', 'optimized' => '/\d+x\b/i'];
+        yield 'an extended pattern, laid out as written' => ['pattern' => '/\d+ x \b /xs', 'optimized' => '/\d+ x \b /x'];
+    }
+
+    /**
+     * Beside a lookaround, the check reads what the lookaround may read
+     * where the quantifier would give back: a possessive it proves ships
+     * with the other rewrites, the rewrite made once.
+     *
+     * @param list<string> $changes
+     */
+    #[Test]
+    #[DataProvider('providePossessivesProvenBesideALookaround')]
+    public function test_a_possessive_proven_beside_a_lookaround_ships_with_the_other_rewrites(string $pattern, string $optimized, array $changes): void
+    {
+        foreach (self::SUBJECTS as $subject) {
+            $this->assertSame(self::matched($pattern, $subject), self::matched($optimized, $subject), \sprintf('Oracle: %s and %s differ on "%s".', $pattern, $optimized, $subject));
+        }
+
+        $result = (new Optimizer(RegexParser::create(['cache' => null])))->optimize($pattern, new OptimizerOptions(possessive: true));
+
+        $this->assertSame($optimized, $result->optimized);
+        $this->assertSame($changes, $result->changes);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, optimized: string, changes: list<string>}>
+     */
+    public static function providePossessivesProvenBesideALookaround(): iterable
+    {
+        yield 'a lookahead after the repetition' => ['pattern' => '/\d+x(?!y)/s', 'optimized' => '/\d++x(?!y)/', 'changes' => [Rewriter::POSSESSIVE, Rewriter::UNUSED_FLAG]];
+        yield 'a lookahead before the repetition' => ['pattern' => '/(?=x)\d+y/s', 'optimized' => '/(?=x)\d++y/', 'changes' => [Rewriter::POSSESSIVE, Rewriter::UNUSED_FLAG]];
+        yield 'a lookbehind before the repetition' => ['pattern' => '/(?<=a)[0-9]+x/s', 'optimized' => '/(?<=a)\d++x/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE, Rewriter::UNUSED_FLAG]];
+        yield 'a negative lookbehind before the repetition' => ['pattern' => '/(?<!a)[0-9]+x/', 'optimized' => '/(?<!a)\d++x/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
+        yield 'a class written as a shorthand' => ['pattern' => '/[0-9]+x(?!y)/', 'optimized' => '/\d++x(?!y)/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
+        yield 'two repetitions, the one before the lookahead left greedy' => ['pattern' => '/[0-9]+x[0-9]+(?!y)/', 'optimized' => '/\d++x\d+(?!y)/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
+        yield 'a caseless pattern' => ['pattern' => '/\d+x(?!y)/is', 'optimized' => '/\d++x(?!y)/i', 'changes' => [Rewriter::POSSESSIVE, Rewriter::UNUSED_FLAG]];
+        yield 'an extended pattern, laid out as written' => ['pattern' => '/\d+ x (?!y) /xs', 'optimized' => '/\d++ x (?!y) /x', 'changes' => [Rewriter::POSSESSIVE, Rewriter::UNUSED_FLAG]];
+        yield 'a repetition in a lookahead' => ['pattern' => '/(?=[0-9]+x)1/', 'optimized' => '/(?=\d++x)1/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
+        yield 'a repetition ending a negative lookahead' => ['pattern' => '/(?!x[0-9]+)x/', 'optimized' => '/(?!x\d++)x/', 'changes' => [Rewriter::DIGITS, Rewriter::POSSESSIVE]];
     }
 
     /**
@@ -98,7 +138,7 @@ final class RefusedPossessiveTest extends TestCase
 
         // Past the alignment the in-place proof may fill, the rewrite
         // without the possessive is not proven either.
-        $pattern = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'[0-9]+x/';
+        $pattern = '/\b'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'[0-9]+x/';
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
         $this->assertNotSame($pattern, $optimizer->optimize($pattern, new OptimizerOptions(verifyWithAutomata: false))->optimized, 'Unchecked, the rewrite is made.');
 

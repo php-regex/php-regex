@@ -31,6 +31,7 @@ use PHPRegex\Parser\Hir\Greed;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\LiteralHir;
 use PHPRegex\Parser\Hir\LookHir;
+use PHPRegex\Parser\Hir\LookKind;
 use PHPRegex\Parser\Hir\OpaqueHir;
 use PHPRegex\Parser\Hir\RepetitionHir;
 use PHPRegex\Parser\Node\NodeInterface;
@@ -39,10 +40,14 @@ use PHPRegex\Parser\Node\SubroutineNode;
 /**
  * Builds the priority NFA of a pattern, for the fragment where trying the
  * paths in priority order, all at once, picks the match PCRE's backtracking
- * picks: no backreference, lookaround or atomic group, no possessive
- * quantifier that could have to give anything back, no loop over a body
- * that can match empty, anchors only where they test the edges of the
- * subject.
+ * picks: no backreference or atomic group, no possessive quantifier that
+ * could have to give anything back, no loop over a body that can match
+ * empty, anchors only where they test the edges of the subject.
+ *
+ * A lookaround is read and never run: its body is built apart, between a
+ * state that leads to what follows the lookaround and a state that ends the
+ * body. Two automata that hold one are compared as built, and a possessive
+ * quantifier is checked against what a lookaround beside it may read.
  *
  * A call of a group runs the body of the group where the call stands: from
  * PCRE2 10.30 the engine backtracks into it, the groups inside it are given
@@ -66,7 +71,7 @@ final class PriorityNfaBuilder
 
     public const CALL_MESSAGE = 'A call that may run its own group again, that returns groups, or whose group the match solver does not read is not one it runs where it stands.';
 
-    public const LOOKAROUND_MESSAGE = 'Lookarounds look past the match, which the match solver does not read.';
+    public const LOOKAROUND_MESSAGE = 'Lookarounds look past the match, which the match solver does not run: it compares two patterns that hold one only where it builds the same automaton for both.';
 
     public const ATOMIC_MESSAGE = 'Atomic groups and possessive quantifiers cut the paths PCRE would try, which the match solver does not read.';
 
@@ -276,7 +281,7 @@ final class PriorityNfaBuilder
             $hir instanceof RepetitionHir => $this->repetition($hir, $next),
             $hir instanceof CaptureHir => $this->capture($hir, $next),
             $hir instanceof AssertionHir => $this->assertion($hir, $next),
-            $hir instanceof LookHir => throw new ComplexityException(self::LOOKAROUND_MESSAGE, $hir->startPosition, $this->pattern),
+            $hir instanceof LookHir => $this->look($hir, $next),
             $hir instanceof AtomicHir => throw new ComplexityException(self::ATOMIC_MESSAGE, $hir->startPosition, $this->pattern),
             $hir instanceof OpaqueHir && $hir->node instanceof SubroutineNode => $this->call($hir->node, $next),
             default => throw new ComplexityException(self::BACKREFERENCE_MESSAGE, $hir->startPosition, $this->pattern),
@@ -593,6 +598,33 @@ final class PriorityNfaBuilder
         }
     }
 
+    /**
+     * The lookaround, which leads to what follows it, and its body, which
+     * ends at a state of its own: nothing is read past it there.
+     *
+     * @throws ComplexityException
+     */
+    private function look(LookHir $hir, int $next): int
+    {
+        $this->nfa->lookaround = [$hir->startPosition, $this->pattern];
+        $look = match ($hir->kind) {
+            LookKind::Ahead => 0,
+            LookKind::NegativeAhead => PriorityNfa::NEGATIVE,
+            LookKind::Behind => PriorityNfa::BEHIND,
+            LookKind::NegativeBehind => PriorityNfa::BEHIND | PriorityNfa::NEGATIVE,
+        } | ($hir->atomic ? 0 : PriorityNfa::NOT_ATOMIC);
+
+        $end = $this->add(PriorityNfa::LOOK_END);
+        $this->nfa->looks[$end] = $look;
+        $body = $this->state($hir->body, $end);
+        $state = $this->add(PriorityNfa::LOOK);
+        $this->nfa->looks[$state] = $look;
+        $this->nfa->next[$state] = $next;
+        $this->nfa->targets[$state] = [$body];
+
+        return $state;
+    }
+
     private function tag(int $slot, int $next): int
     {
         $state = $this->add(PriorityNfa::TAG);
@@ -729,14 +761,40 @@ final class PriorityNfaBuilder
      * there, so it never gives back, and the possessive one writes what it
      * writes.
      *
+     * A lookahead on the way holds where its body matches, which reads the
+     * character an iteration started with, or nothing: the states its body
+     * reads first count as well, once the way itself is read. A negative
+     * lookahead or a lookbehind may hold there and not after the last
+     * iteration: once past one, the way must read a character before it
+     * ends. The way ends with the pattern, or with the lookaround the
+     * quantifier stands in, which nothing backtracks into, but a lookbehind,
+     * whose body must end where it stands, and a non-atomic lookaround,
+     * past which the engine reads from where it stands and backtracks into
+     * its body: of what follows either, nothing is known.
+     *
      * @return list<int>|null
      */
     private function readFirst(CharSet $first, int $state): ?array
     {
         $read = [];
         $pending = [$state];
+        $bodies = [];
+        $onTheWay = true;
+        $ends = false;
+        $moves = false;
         $seen = [];
-        while (null !== $state = array_pop($pending)) {
+        while (true) {
+            $state = array_pop($pending);
+            if (null === $state) {
+                if ([] === $bodies) {
+                    break;
+                }
+
+                [$pending, $bodies, $onTheWay] = [$bodies, [], false];
+
+                continue;
+            }
+
             if (isset($seen[$state])) {
                 continue;
             }
@@ -744,6 +802,24 @@ final class PriorityNfaBuilder
 
             switch ($this->nfa->kinds[$state]) {
                 case PriorityNfa::MATCH:
+                case PriorityNfa::LOOK_END:
+                    if ($onTheWay) {
+                        if (0 !== (($this->nfa->looks[$state] ?? 0) & (PriorityNfa::BEHIND | PriorityNfa::NOT_ATOMIC))) {
+                            return null;
+                        }
+
+                        $ends = true;
+                    }
+
+                    break;
+                case PriorityNfa::LOOK:
+                    if (0 === ($this->nfa->looks[$state] & (PriorityNfa::BEHIND | PriorityNfa::NEGATIVE))) {
+                        $bodies[] = $this->nfa->targets[$state][0];
+                    } else {
+                        $moves = true;
+                    }
+                    $pending[] = $this->nfa->next[$state];
+
                     break;
                 case PriorityNfa::SPLIT:
                     array_push($pending, ...$this->nfa->targets[$state]);
@@ -772,7 +848,7 @@ final class PriorityNfaBuilder
             }
         }
 
-        return $read;
+        return $ends && $moves ? null : $read;
     }
 
     private function readsMore(int $state): bool
@@ -792,6 +868,7 @@ final class PriorityNfaBuilder
                 case PriorityNfa::START:
                     return true;
                 case PriorityNfa::MATCH:
+                case PriorityNfa::LOOK_END:
                     break;
                 case PriorityNfa::SPLIT:
                     array_push($pending, ...$this->nfa->targets[$state]);

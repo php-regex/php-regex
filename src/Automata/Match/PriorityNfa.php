@@ -23,6 +23,10 @@ use PHPRegex\Parser\Hir\CharSet;
  * Slot 2k opens group k and slot 2k+1 closes it; slots 0 and 1 hold the
  * whole match, set by whoever runs the automaton.
  *
+ * A lookaround is a state that leads to what follows it and holds its body
+ * apart, which ends at a state of its own. An automaton that holds one is
+ * read, never run.
+ *
  * @internal
  */
 final class PriorityNfa
@@ -51,6 +55,27 @@ final class PriorityNfa
     public const END_OR_FINAL_NEWLINE = 6;
 
     /**
+     * A lookaround: its only target is where its body starts.
+     */
+    public const LOOK = 7;
+
+    /**
+     * The end of the body of a lookaround.
+     */
+    public const LOOK_END = 8;
+
+    /**
+     * What a lookaround is, for the state that opens it and the state that
+     * ends its body: it looks behind, it holds where its body does not
+     * match, what follows it backtracks into its body.
+     */
+    public const BEHIND = 1;
+
+    public const NEGATIVE = 2;
+
+    public const NOT_ATOMIC = 4;
+
+    /**
      * @var list<int>
      */
     public array $kinds = [];
@@ -74,6 +99,22 @@ final class PriorityNfa
      * @var array<int, int>
      */
     public array $slots = [];
+
+    /**
+     * What the lookaround each LOOK and LOOK_END state stands for is: BEHIND,
+     * NEGATIVE and NOT_ATOMIC, added up.
+     *
+     * @var array<int, int>
+     */
+    public array $looks = [];
+
+    /**
+     * Where the first lookaround stands, and the pattern that holds it, for
+     * whoever is asked to run the automaton; null when it holds none.
+     *
+     * @var array{int, string}|null
+     */
+    public ?array $lookaround = null;
 
     public int $start = 0;
 
@@ -106,7 +147,7 @@ final class PriorityNfa
         ksort($this->targets);
         ksort($this->slots);
 
-        return serialize([$this->unicode, $this->groupCount, $this->names, $this->start, $this->kinds, $this->next, $this->targets, $this->slots, $sets]);
+        return serialize([$this->unicode, $this->groupCount, $this->names, $this->start, $this->kinds, $this->next, $this->targets, $this->slots, $sets, $this->looks]);
     }
 
     /**

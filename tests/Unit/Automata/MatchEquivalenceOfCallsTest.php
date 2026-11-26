@@ -110,6 +110,9 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a group a DEFINE holds, under the extended option of the group around it' => ['left' => '/(?x:(?(DEFINE)(?<n>a b)))(?&n)/', 'right' => '/(?x:(?(DEFINE)(?<n>a b)))ab/', 'letters' => 'ab '];
         yield 'a class a DEFINE holds, under the option of the group around it that skips spaces' => ['left' => '/(?xx:(?(DEFINE)(?<n>[a b])))(?&n)/', 'right' => '/(?xx:(?(DEFINE)(?<n>[a b])))[ab]/', 'letters' => 'ab '];
         yield 'a dot a DEFINE holds, under the dotall option of the group around it' => ['left' => '/(?s:(?(DEFINE)(?<n>.)))(?&n)/', 'right' => '/(?s:(?(DEFINE)(?<n>.)))[\s\S]/', 'letters' => "a\n"];
+        // A lookaround is read, never run: both sides build the same automaton.
+        yield 'a call of a group a lookahead holds' => ['left' => '/(?=(a))a(?1)/', 'right' => '/(?=(a))aa/', 'letters' => 'ab'];
+        yield 'a call of a group that holds a lookahead' => ['left' => '/(a(?=b))b(?1)b/', 'right' => '/(a(?=b))ba(?=b)b/', 'letters' => 'ab'];
     }
 
     #[Test]
@@ -245,7 +248,8 @@ final class MatchEquivalenceOfCallsTest extends TestCase
         yield 'a loop over a back reference' => ['left' => '/(a)\1+b/', 'right' => '/(a)a+b/', 'reason' => 'A repeated body that can match empty'];
         // A group a call runs is read where it stands too.
         yield 'a group holding a backreference' => ['left' => '/(a)(b\1)(?2)/', 'right' => '/(a)(b\1)ba/', 'reason' => 'Backreferences, subroutines, conditionals, callouts and control verbs'];
-        yield 'a group inside a lookahead' => ['left' => '/(?=(a))a(?1)/', 'right' => '/(?=(a))aa/', 'reason' => 'Lookarounds'];
+        // A lookaround is read, never run: the two sides build other automata.
+        yield 'a group inside a lookahead' => ['left' => '/(?=(a|b))a(?1)/', 'right' => '/(?=(a|b))a[ab]/', 'reason' => 'Lookarounds'];
         // The condition of a conditional stays as written, its groups unread.
         yield 'a group the condition of a conditional holds' => ['left' => '/(?(?=(?<n>a))a|b)(?&n)/', 'right' => '/(?(?=(?<n>a))a|b)a/', 'reason' => $call];
     }

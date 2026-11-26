@@ -29,6 +29,9 @@ use PHPRegex\Parser\Hir\CharSet;
  * renumbered in order of appearance, so the configurations are finitely
  * many and the search ends.
  *
+ * An automaton that holds a lookaround is not run: two of them are the
+ * same automaton, which runs alike everywhere, or are refused.
+ *
  * @internal
  *
  * @phpstan-type Thread array{0: int, 1: array<int, int>, 2: int|null}
@@ -76,6 +79,13 @@ final class MatchExplorer
         // The same automaton runs alike everywhere: [0-9] and \d read alike.
         if ($this->left->fingerprint() === $this->right->fingerprint()) {
             return null;
+        }
+
+        // A lookaround is read to compare two automata as built, never run.
+        foreach ([$this->left, $this->right] as $nfa) {
+            if (null !== $nfa->lookaround) {
+                throw new ComplexityException(PriorityNfaBuilder::LOOKAROUND_MESSAGE, ...$nfa->lookaround);
+            }
         }
 
         $sameShape = $this->left->hasTheShapeOf($this->right);

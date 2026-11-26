@@ -77,10 +77,10 @@ final class Optimizer
         $result = $this->rewrite($regex, $ast, $optimizer, $options, $options->possessive);
 
         // The check proves a possessive quantifier less often than the
-        // other rewrites, none in a pattern that holds a lookaround or
-        // "\b": a rewrite it refuses with one is made again without the
-        // possessive step, and the others ship on their own, "/\d+x(?!y)/s"
-        // losing its "s".
+        // other rewrites, none in a pattern that holds "\b" or a
+        // reference: a rewrite it refuses with one is made again without
+        // the possessive step, and the others ship on their own,
+        // "/\d+y\b/s" losing its "s".
         if (null === $result && \in_array(Rewriter::POSSESSIVE, $optimizer->changes(), true)) {
             $result = $this->rewrite($regex, $ast, self::rewriter($options, false), $options, false);
         }

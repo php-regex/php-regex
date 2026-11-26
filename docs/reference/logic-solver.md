@@ -113,7 +113,8 @@ subject on which the two differ is the shortest.
 It reads the fragment where that run picks the match PCRE's backtracking picks. It refuses,
 each with its reason: backreferences, conditionals and control verbs; a call that may run
 its own group again (`(?R)`, `/(a(?1)?b)/`), and a call that returns groups (`(?1(2))`);
-lookarounds; atomic groups, and a possessive quantifier that could have to give back what
+two patterns that hold a lookaround and are not built alike (see below);
+atomic groups, and a possessive quantifier that could have to give back what
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
@@ -164,6 +165,38 @@ anywhere after it, and such a pattern never reads alike with another, unless the
 names a locale whose tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does. A target that
 names no locale but C may run under any, and is refused too. `u` reads `\w` from the
 Unicode properties, and is read.
+
+A lookaround is read, and never run. Two patterns that hold one write the same `$matches`
+when the solver builds one automaton for both, the lookaround and its body included:
+`/(?=x)[0-9]/` and `/(?=x)\d/`, or `/(?<=x)a{2}/` and `/(?<=x)aa/`. Two patterns it builds
+other automata for are not compared, `/(?=a|b)a/` and `/(?=[ab])a/` no more than `/(?=a)b/`
+and `/(?!a)b/`: `Lookarounds look past the match, which the match solver does not run: it
+compares two patterns that hold one only where it builds the same automaton for both.`
+
+A possessive quantifier beside a lookaround is read as the greedy one where it gives
+nothing back, as anywhere else: `/(?=x)xa+b/` and `/(?=x)xa++b/` write the same `$matches`,
+and so do `/(?<!x)a+b/` and `/(?<!x)a++b/`, `/a+(?=b)/` and `/a++(?=b)/`, `/(?=xa+)x/` and
+`/(?=xa++)x/`. Where the greedy quantifier would give back, a character it repeats comes
+next, and what follows is read against it:
+
+- a lookahead holds where its body matches, so what its body may start with counts as what
+  follows the quantifier does: `/a++(?=a)/` is refused, as `/a+(?=a)/` finds `a` in `aa` and
+  `/a++(?=a)/` nothing;
+- a negative lookahead or a lookbehind may hold there and not after the last repetition, so
+  past one the pattern must read another character before it ends: `/a++(?!c)b/` is read,
+  `/a++(?!b)/` is refused, as `/a+(?!b)/` finds `a` in `aab` and `/a++(?!b)/` nothing;
+- the end of a lookahead ends what follows, as nothing after an atomic lookaround backtracks
+  into it, but the end of a lookbehind and the end of a non-atomic lookaround do not. The
+  body of a lookbehind must end where the lookbehind stands, which PCRE2's interpreter
+  and its JIT read apart for a possessive quantifier that ends it: `/(?<=xa{1,3}+)a/` finds
+  the `a` at offset 4 of `xaaaa` without the JIT and the one at offset 2 with it, as
+  `/(?<=xa{1,3})a/` does either way. Past the end of a non-atomic lookaround,
+  `(*napla:...)`, `(*naplb:...)`, `(?*...)` or `(?<*...)`, the engine reads what follows from
+  where the lookaround stands, and backtracks into its body:
+  `/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, where group 1 gives an `a` back to the
+  reference, and `/^(*napla:x(a++b?))x[ab-]*\1$/` does not. The solver knows nothing of what
+  follows such an end, and refuses a possessive quantifier that may reach it,
+  `/(*napla:xa++)x/`, while `/(*napla:xa++b)x/` is read.
 
 Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
 body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
@@ -253,7 +286,9 @@ which alone models them. A pattern that reads the text before where the search s
 lookbehind, `\b`, `\B`, `^` under `m`) or that moves the start of its match (`\K`) is
 proven by no such check, and its rewrite is offered only when it reads as the pattern
 does (the same normal form, as `[0-9]` and `\d`, or a flag dropped that changes nothing),
-or when each part it changed is proven alone.
+when each part it changed is proven alone, or, beside a lookbehind, when the match solver
+builds one automaton for both, which then run alike wherever a search starts: `/(?<=x)a+b/`
+becomes `/(?<=x)a++b/`.
 The same holds for a route requirement, which the router splices into a larger pattern:
 `a|ab` and `ab|a` write the same `$matches` anchored at both ends, yet before a `b?` they
 capture other text.

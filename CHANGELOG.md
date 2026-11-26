@@ -202,6 +202,7 @@ Each package keeps its own changelog, with the details this page leaves out: [re
 - PHP 8.1 is supported by every package; the Symfony bundle runs on Symfony 6.4, 7.4 and 8, the Laravel bridge on Laravel 10.37 to 13.
 - ReDoS severities follow the proven class: exponential is `critical`, polynomial of degree 3 or more `high`, of degree 2 `medium`, linear `safe`; a pattern proven linear carries none of the heuristics' findings. `RedosAnalyzer::ANALYSIS_VERSION` is `'1'`.
 - The optimizer keeps a rewrite only when it writes the same `$matches`, checked by `LanguageSolver::matchEquivalent()`; a rewrite that adds a possessive quantifier or an atomic group is always proven. A rewrite of a pattern under `x` keeps its layout and comments.
+- `matchEquivalent()` reads a lookaround without running it, and proves a possessive quantifier beside one where it gives nothing back: under `possessive`, the optimizer turns `/(?=x)xa+b/` into `/(?=x)xa++b/` and `/(?<=a)[0-9]+x/` into `/(?<=a)\d++x/`, and leaves `/a+(?!b)/` greedy.
 - `max_lookbehind_length` limits only variable-length lookbehinds, as PCRE2's `max_varlookbehind` does.
 - `Regex::generate()` throws `SampleGenerationException` when no sample matches. See [generate()](UPGRADE-2.0.md#generate-throws-when-it-finds-no-matching-sample).
 - A character type, POSIX class or property can no longer end a class range (`[\w-_]` is refused, as PCRE refuses it).

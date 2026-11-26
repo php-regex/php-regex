@@ -79,9 +79,12 @@ withdrew none of the rewrites. Turned off, the rewrites ship as the rewriter
 writes them, but one that adds a possessive quantifier or an atomic group,
 which is proven whatever the option says. A rewrite whose possessive
 quantifiers are not proven is made again without them, and the other rewrites
-ship: the proof reads no possessive quantifier in a pattern that holds a
-lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
-`/\d+x(?!y)/`. A call of a group is read as the body of the group run where
+ship: the proof reads no possessive quantifier in a pattern that holds `\b`
+or a reference, and under `possessive` `/\d+y\b/s` still becomes `/\d+y\b/`.
+A lookaround is read: `/(?=x)xa+b/` becomes `/(?=x)xa++b/`, `/\d+x(?!y)/s`
+becomes `/\d++x(?!y)/` and `/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/`, while a
+repetition right before a lookaround stays greedy, as `/a+(?!b)/` finds `a`
+in `aab` where `/a++(?!b)/` finds nothing. A call of a group is read as the body of the group run where
 the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
 DEFINE holds is read there under the options in force where the DEFINE stands:
 `/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
@@ -104,8 +107,7 @@ pattern sets on what PCRE2 spends on a match, `(*LIMIT_MATCH=n)`,
 possessive one may spend more of it without the JIT:
 `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
 `/(*LIMIT_MATCH=4)c(?:ab)++e/` gives up. A repeated character or class spends
-no more, and is still made possessive there.
-`/\d+x(?!y)/`. Every repetition inside a group a call runs, a group a DEFINE
+no more, and is still made possessive there. Every repetition inside a group a call runs, a group a DEFINE
 holds included, and everywhere in a pattern that calls itself whole, stays
 greedy, whatever follows it: PCRE2's JIT, which PHP runs by default, misses
 matches of a possessive quantifier there that its interpreter finds.
