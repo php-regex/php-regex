@@ -39,7 +39,7 @@ final class HeadMetaEscapingTest extends TestCase
 
         $checked = [];
         foreach ($tags as [$tag, $name, $content]) {
-            if (!str_contains($content, 'page.description') && !str_contains($content, 'page.title')) {
+            if (!str_contains($content, 'page.description') && !str_contains($content, 'head_title')) {
                 continue;
             }
 
@@ -58,19 +58,39 @@ final class HeadMetaEscapingTest extends TestCase
     }
 
     /**
+     * A page whose heading is a label — "Psalm", "Quick Start" — names in
+     * `head_title` the words a reader searches. The title tag and the cards
+     * of a link print that one; a page that names none keeps its heading,
+     * and the card of a shared link is described as the page shows itself.
+     */
+    #[Test]
+    public function test_the_head_prints_the_title_a_page_names_before_its_heading(): void
+    {
+        $head = (string) file_get_contents(self::HEAD);
+
+        $this->assertStringContainsString('{% assign head_title = page.head_title | default: page.title %}', $head, 'A page that names no title keeps its heading.');
+        $this->assertSame(1, preg_match('/^\s*<title>(.*)<\/title>\s*$/m', $head, $title), 'The head carries one title tag.');
+        $this->assertSame('{% if head_title %}{{ head_title | strip_html }} — {% endif %}PHPRegex', $title[1]);
+
+        $titles = (string) preg_replace('/\{% capture head_image_alt %}.*?\{% endcapture %\}/s', '', $head);
+        $titles = (string) preg_replace('/\{% assign head_title = [^%]*%}/', '', $titles);
+        $this->assertStringNotContainsString('page.title', $titles, 'Every title outside the card alt reads the one the page names.');
+    }
+
+    /**
      * The attribute as Liquid renders it for a page whose title and
      * description are both DESCRIPTION: each output tag's filters applied
-     * in order, the "if page.title" around the title taken.
+     * in order, the "if head_title" around the title taken.
      */
     private function render(string $content): string
     {
-        $content = (string) preg_replace('/\{% if page\.title %\}(.*?)\{% endif %\}/s', '$1', $content);
+        $content = (string) preg_replace('/\{% if head_title %\}(.*?)\{% endif %\}/s', '$1', $content);
         $this->assertStringNotContainsString('{%', $content, 'A tag this test does not render.');
 
         return (string) preg_replace_callback('/\{\{\s*(.*?)\s*\}\}/', static function (array $output): string {
             $filters = array_map(trim(...), explode('|', $output[1]));
             $value = match (array_shift($filters)) {
-                'page.description', 'page.title' => self::DESCRIPTION,
+                'page.description', 'head_title' => self::DESCRIPTION,
                 default => self::fail('An output this test does not render: '.$output[1]),
             };
 
