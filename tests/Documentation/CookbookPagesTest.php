@@ -212,7 +212,7 @@ final class CookbookPagesTest extends TestCase
             $hrefs[] = (string) $row['href'];
         }
 
-        $this->assertSame(array_map([self::class, 'href'], self::SLUGS), $hrefs, 'The rows lead to the pages of the recipes, one row each.');
+        $this->assertSame(array_map(self::href(...), self::SLUGS), $hrefs, 'The rows lead to the pages of the recipes, one row each.');
 
         $pages = array_map(static fn (string $page): string => basename($page, '.md'), glob(self::DOCS.'cookbook/*.md') ?: []);
         sort($pages);
