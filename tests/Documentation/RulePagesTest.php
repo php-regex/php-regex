@@ -227,6 +227,32 @@ final class RulePagesTest extends TestCase
     }
 
     /**
+     * A link of a page names the file it goes to, or an address: the site
+     * resolves a link to a file into the address of its page. The source
+     * of a page is a file beside the pages it links to, and its address a
+     * directory of its own: a link written with that address leads one
+     * directory off.
+     */
+    #[Test]
+    public function test_every_link_of_a_page_names_a_file_or_an_address(): void
+    {
+        foreach (glob(self::PAGES.'*.md') ?: [] as $path) {
+            $slug = basename($path, '.md');
+            preg_match_all('/\]\(([^)\s]+)\)/', (string) file_get_contents($path), $links);
+            $this->assertIsList($links[1]);
+            foreach ($links[1] as $href) {
+                $this->assertIsString($href);
+                if (str_starts_with($href, '/') || 1 === preg_match('~^(?:https?://|mailto:|#)~', $href)) {
+                    continue;
+                }
+                $file = (string) preg_replace('/#.*$/', '', $href);
+                $this->assertMatchesRegularExpression('~\.md$~', $file, $slug.': "'.$href.'" names a file the site resolves, not the address of a page.');
+                $this->assertFileExists(self::PAGES.$file, $slug.': "'.$href.'" goes to a page that exists.');
+            }
+        }
+    }
+
+    /**
      * The reference is an index: it lists the pages by section, it keeps
      * no section of a rule (the page holds it), and each entry carries the
      * anchor of the heading the catalogue linked to before the rules had

@@ -15,7 +15,7 @@ rule_ids:
 
 **When it triggers:** An unbounded quantifier wraps a dot-star, which can cause extreme backtracking.
 
-Without `/s` (or an inline `(?s)`), a dot cannot cross a newline, so `/(?:.*\n)+x/` is not reported: each iteration ends at the next newline and the input splits one way. With `/s` or `(?s)`, the same pattern is reported. Unlike nested quantifiers, a loop at the very end of the pattern is still reported, as `/(?:.*)+/` in the example below. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, inline options such as `(?s)` or `(?s:…)` included (see [Nested Quantifiers](nested-quantifiers-redos-risk/)).
+Without `/s` (or an inline `(?s)`), a dot cannot cross a newline, so `/(?:.*\n)+x/` is not reported: each iteration ends at the next newline and the input splits one way. With `/s` or `(?s)`, the same pattern is reported. Unlike nested quantifiers, a loop at the very end of the pattern is still reported, as `/(?:.*)+/` in the example below. With the ReDoS analysis on, a pattern the analysis proves linear drops the issue, inline options such as `(?s)` or `(?s:…)` included (see [Nested Quantifiers](nested-quantifiers-redos-risk.md)).
 
 **Example:**
 ```php
