@@ -42,7 +42,7 @@ It is a simplified form of the address RFC 5322 defines. A quoted local part (`"
 
 - The local part starts with a letter or a digit and allows dots, underscores, percent signs, plus signs and hyphens in the middle — so Gmail-style `user+tag` addresses pass.
 - The domain starts with a letter or a digit and allows hyphenated parts.
-- At least one dot-separated label follows the first label of the domain.
+- At least one dot-separated label follows the first label of the domain: the TLD.
 - The repeats nest, and the linter says so: `regex.lint.quantifier.nested` on the third group. The nesting is harmless here: every label of the domain starts after a dot and ends on a letter or a digit, so the engine reads a label one way and never re-reads a long input in many ways. The analyzer's verdict is `safe (proven)`.
 
 ## How to validate an email in PHP

@@ -35,7 +35,7 @@ This pattern accepts an IPv4 address written as four octets from `0` to `255`, s
 
 ## Why it is safe
 
-Each octet is one of five alternatives — `25` followed by `0` to `5`, `2` followed by `24` or less, `1` followed by two digits, a digit from `1` to `9` followed by one more, a single digit — and each of them takes a text the others cannot: an octet reads one way only. That is what lets the analyzer prove the whole pattern linear, and its verdict is `safe (proven)`.
+Each octet is one of five alternatives — `25` followed by `0` to `5`, `2` followed by `24` or less, `1` followed by two digits, a digit from `1` to `9` followed by one more, a single digit — and each alternative is deterministic: it takes a text the others cannot, so an octet reads one way only. That is what lets the analyzer prove the whole pattern linear, and its verdict is `safe (proven)`.
 
 ## How to validate an IPv4 address in PHP
 

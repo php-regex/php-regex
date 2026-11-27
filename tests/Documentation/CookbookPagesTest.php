@@ -413,7 +413,7 @@ final class CookbookPagesTest extends TestCase
 
         $closing = ['(' => ')', '[' => ']', '{' => '}', '<' => '>'][$opening] ?? $opening;
         $escaped = false;
-        for ($i = 1, $length = \strlen($code); $i < $length; ++$i) {
+        for ($i = 1, $length = \strlen($code); $i < $length; $i++) {
             if ($escaped) {
                 $escaped = false;
             } elseif ('\\' === $code[$i]) {

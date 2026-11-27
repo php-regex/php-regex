@@ -38,7 +38,7 @@ It refuses everything else: braces, a hyphen gone, any length but 36 characters,
 
 ## Why it is safe
 
-- Five groups of hexadecimal digits, each under an exact count.
+- Five fixed-length hex groups with exact bounds.
 - The version and the variant positions are constrained to one digit each.
 - No quantifier is open, none nests, and no two ways of reading the same text exist: the analyzer's verdict is `safe (proven)`.
 
