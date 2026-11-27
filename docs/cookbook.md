@@ -20,7 +20,7 @@ This cookbook collects patterns for common validation and parsing tasks, one pag
 
 {% include install.html package="php-regex/regex-toolkit" %}
 
-Requires PHP 8.1 or later and the `mbstring` extension. The PHP examples use the `Regex` facade installed above; the [Quick Start](quick-start.md) walks through a first analysis.
+Requires PHP 8.1 or later and the `mbstring` extension. The PHP examples that call PHPRegex use the `Regex` facade installed above; the [Quick Start](quick-start.md) walks through a first analysis.
 
 ## Quick Reference
 

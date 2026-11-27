@@ -48,7 +48,7 @@ var_dump(preg_match($pattern, '123user')); // int(0)
 
 ## How other systems spell their usernames
 
-The pattern above is one choice. Other systems have rules of their own; three of them follow, each with the pattern that follows its rule. Each pattern is `safe (proven)`.
+The pattern above is one choice. Other systems have rules of their own. Three follow, each with a pattern written after its rule; each pattern is `safe (proven)`.
 
 **Linux.** The [`useradd` manual](https://www.man7.org/linux/man-pages/man8/useradd.8.html) allows lower and upper case letters, digits, underscores and dashes in a user name, with no dash first and an optional dollar sign last. The pattern leaves out the dollar sign and asks for a letter or an underscore first. The `i` flag lets capitals through.
 

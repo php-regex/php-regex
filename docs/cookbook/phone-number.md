@@ -6,7 +6,7 @@ pattern: "/^\\+[1-9]\\d{6,14}$/"
 ---
 # PHP regex for phone numbers
 
-Two patterns, both for digits without any separator. The E.164 pattern accepts the international form: a plus sign, then 7 to 15 digits, the first of which is not `0`. The North American pattern accepts ten digits, or eleven with a leading `1` — a plus sign may stand before it — with the area code and the exchange both starting from `2` to `9`. Both refuse separators: strip them before matching.
+Two patterns, both for digits without any separator. The E.164 pattern accepts the international form: a plus sign, then 7 to 15 digits, the first of which is not `0`. The North American pattern accepts ten digits, or eleven with a leading `1` — a plus sign may stand before it — with the area code and the exchange both starting from `2` to `9`. Both refuse separators.
 
 The first pattern is E.164:
 
@@ -26,7 +26,6 @@ The first pattern is E.164:
 ## What it rejects
 
 ```
-✗ 415555267  (too short)
 ✗ +04155552671  (country code can't start with 0)
 ✗ 415-555-2671  (separators not allowed)
 ✗ 4155552671  (no leading plus sign)

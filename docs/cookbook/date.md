@@ -6,7 +6,7 @@ pattern: "/^\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12][0-9]|3[01])$/"
 ---
 # PHP regex for dates
 
-Three patterns, one for each way a date is written. Each takes a four-digit year, a month from `01` to `12` and a day from `01` to `31`, in the order its format puts them and with its own separators. They check the shape of a date, not the calendar: `2023-02-29` passes although 2023 is not a leap year.
+Three patterns, one for each way a date is written. Each takes a four-digit year, a month from `01` to `12` and a day from `01` to `31`, in the order its format puts them and with its own separators. They check the shape of a date, not the calendar: `2023-02-29` passes.
 
 The first pattern is the ISO 8601 format, `YYYY-MM-DD`:
 
