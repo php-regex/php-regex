@@ -1,0 +1,1433 @@
+{
+    "regex.delimiter.invalid": {
+        "findings": 4,
+        "projects": 3,
+        "docs": "/reference/diagnostics/delimiter-must-not-be-alphanumeric/",
+        "examples": [
+            {
+                "repo": "laravel/framework",
+                "id": "f-6defd6a5f6",
+                "file": "types/Support/Str.php",
+                "line": 101,
+                "pattern": "Taylor"
+            }
+        ]
+    },
+    "regex.delimiter.unclosed": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/diagnostics/no-ending-delimiter/",
+        "examples": [
+            {
+                "repo": "salesagility/SuiteCRM",
+                "id": "f-40f797679e",
+                "file": "install/install_utils.php",
+                "line": 341,
+                "pattern": "#.*\\.zip\\$"
+            }
+        ]
+    },
+    "regex.delimiter.unescaped": {
+        "findings": 6,
+        "projects": 1,
+        "docs": "/reference/diagnostics/unknown-modifier/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-9d798babb3",
+                "file": "public/lib/adodb/drivers/adodb-sybase.inc.php",
+                "line": 406,
+                "pattern": "/([A-Za-z]{3})[-/\\. ]+([0-9]{1,2})[-/\\. ]+([0-9]{4})/"
+            },
+            {
+                "repo": "moodle/moodle",
+                "id": "f-1aa8f2d20c",
+                "file": "public/lib/wiki_to_markdown.php",
+                "line": 268,
+                "pattern": "/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])\\(([^)]+)\\)/i"
+            },
+            {
+                "repo": "moodle/moodle",
+                "id": "f-9df2386d4c",
+                "file": "public/lib/wiki_to_markdown.php",
+                "line": 270,
+                "pattern": "/([[:space:]])www\\.([^[:space:]]*)([[:alnum:]#?/&=])\\(([^)]+)\\)/i"
+            },
+            {
+                "repo": "moodle/moodle",
+                "id": "f-5620d43759",
+                "file": "public/lib/wiki_to_markdown.php",
+                "line": 274,
+                "pattern": "/([[:space:]]|^)([[:alnum:]]+)://([^[:space:]]*)([[:alnum:]#?/&=])/i"
+            },
+            {
+                "repo": "moodle/moodle",
+                "id": "f-0d3561b789",
+                "file": "public/lib/wiki_to_markdown.php",
+                "line": 276,
+                "pattern": "/([[:space:]])www\\.([^[:space:]]*)([[:alnum:]#?/&=])/i"
+            }
+        ]
+    },
+    "regex.flag.removed_e": {
+        "findings": 3,
+        "projects": 2,
+        "docs": "/reference/diagnostics/unknown-modifier/",
+        "examples": [
+            {
+                "repo": "php/doc-base",
+                "id": "f-d531302ce3",
+                "file": "chm/common.php",
+                "line": 14,
+                "pattern": "/<([a-zA-Z1-9]+)(>|[^a-zA-Z1-9][^>]*>)/Ue"
+            }
+        ]
+    },
+    "regex.lint.alternation.dotNewline": {
+        "findings": 13,
+        "projects": 7,
+        "docs": "/reference/rules/dot-or-newline-alternation/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-e1bc38a1aa",
+                "file": "public/question/type/ordering/question.php",
+                "line": 255,
+                "pattern": "/^(.|\\n)*/u"
+            },
+            {
+                "repo": "codeigniter4/CodeIgniter4",
+                "id": "f-4073f59e93",
+                "file": "system/Database/OCI8/Connection.php",
+                "line": 260,
+                "pattern": "/\\/\\*(.|\\n)*?\\*\\//m"
+            },
+            {
+                "repo": "yiisoft/yii",
+                "id": "f-609abac182",
+                "file": "build/commands/markdown/MarkdownHtml2Tex.php",
+                "line": 256,
+                "pattern": "/<blockquote class=\"([^\"]+)\">((.|\\n)*?)<\\/blockquote>/"
+            },
+            {
+                "repo": "google/google-cloud-php",
+                "id": "f-bc5317268a",
+                "file": "dev/src/Command/ComponentUpdateReadmeSampleCommand.php",
+                "line": 88,
+                "pattern": "/### Sample\\n\\n(```(.|\\n)*```)/"
+            },
+            {
+                "repo": "nextcloud/server",
+                "id": "f-84c09be516",
+                "file": "lib/private/Preview/MarkDown.php",
+                "line": 51,
+                "pattern": "/\\!?\\[((.|\\n)*)\\]\\((.*)\\)/mU"
+            }
+        ]
+    },
+    "regex.lint.alternation.duplicateDisjunction": {
+        "findings": 11,
+        "projects": 6,
+        "docs": "/reference/rules/duplicate-alternation-branches/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-159fab42b6",
+                "file": "public/lib/tcpdf/tcpdf.php",
+                "line": 16618,
+                "pattern": "/<\\/(table|tr|td|th|blockquote|dd|dt|dl|div|dt|h1|h2|h3|h4|h5|h6|hr|li|ol|ul|p)>[\\s]+</"
+            },
+            {
+                "repo": "joomla/joomla-cms",
+                "id": "f-2cabff3123",
+                "file": "libraries/src/Installer/Adapter/FileAdapter.php",
+                "line": 507,
+                "pattern": "#/|\\/#"
+            },
+            {
+                "repo": "woocommerce/woocommerce",
+                "id": "f-f5e1505231",
+                "file": "plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php",
+                "line": 110,
+                "pattern": "/^(94|93|92|95|96|94|94|94|94)\\d{18,22}$/"
+            }
+        ]
+    },
+    "regex.lint.alternation.empty": {
+        "findings": 263,
+        "projects": 35,
+        "docs": "/reference/rules/empty-alternatives/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-1807b7c6a4",
+                "file": "public/lib/phpmailer/src/PHPMailer.php",
+                "line": 4690,
+                "pattern": "#^(.*?)[\\\\/]*(([^/\\\\]*?)(\\.([^.\\\\/]+?)|))[\\\\/.]*$#m"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-a1762bae1e",
+                "file": "includes/JobQueue/JobRunner.php",
+                "line": 603,
+                "pattern": "!^(\\d+)(k|m|g|)$!i"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-dbbb6bb8d5",
+                "file": "projects/packages/google-analytics/src/class-ga-manager.php",
+                "line": 26,
+                "pattern": "/^(|UA-\\d+-\\d+|G-[A-Z0-9]+)$/i"
+            },
+            {
+                "repo": "DataDog/dd-trace-php",
+                "id": "f-7814457b27",
+                "file": "dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php",
+                "line": 3674,
+                "pattern": "%^(.*?)[\\\\/]*(([^/\\\\]*?)(\\.([^\\.\\\\/]+?)|))[\\\\/\\.]*$%im"
+            },
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-aaf95acee5",
+                "file": "overrides/symfony/console/Application.php",
+                "line": 563,
+                "pattern": "{([^:]+|)}"
+            }
+        ]
+    },
+    "regex.lint.alternation.overlap": {
+        "findings": 7,
+        "projects": 6,
+        "docs": "/reference/rules/overlapping-alternation-branches/",
+        "examples": [
+            {
+                "repo": "magento/magento2",
+                "id": "f-9a4fae5e23",
+                "file": "app/code/Magento/Catalog/Model/ResourceModel/Product/Collection.php",
+                "line": 2338,
+                "pattern": "/^%s( (<|>|=|<=|>=|<>) %s)*$/"
+            },
+            {
+                "repo": "phpmyadmin/phpmyadmin",
+                "id": "f-ebd3c357d8",
+                "file": "src/Html/Generator.php",
+                "line": 789,
+                "pattern": "@((\\x0D\n)|(\\x0D)|(\n)){3,}@"
+            },
+            {
+                "repo": "symfony/ai",
+                "id": "f-8559c9e3be",
+                "file": "src/platform/src/Bridge/OpenAi/Gpt/ResultConverter.php",
+                "line": 78,
+                "pattern": "/^(?:\\d+(?:\\.\\d+)?(?:ms|h|m|s))+$/"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-9a2b5251bc",
+                "file": "lib/internal/Magento/Framework/View/Element/Html/Link/Current.php",
+                "line": 30,
+                "pattern": "/(\\/index|(\\/))+($|\\/$)/"
+            }
+        ]
+    },
+    "regex.lint.anchor.alternationPrecedence": {
+        "findings": 67,
+        "projects": 37,
+        "docs": "/reference/rules/anchor-precedence-in-alternation/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-c4199b8740",
+                "file": "public/admin/tool/brickfield/classes/local/htmlchecker/common/checks/img_alt_is_different.php",
+                "line": 43,
+                "pattern": "/.jpg|.JPG|.png|.PNG|.gif|.GIF|.jpeg|.JPEG$/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-d8dda67f5a",
+                "file": "includes/Language/Language.php",
+                "line": 3063,
+                "pattern": "/^([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)| ([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)/"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-71dcd412d1",
+                "file": "src/wp-includes/html-api/class-wp-html-tag-processor.php",
+                "line": 4008,
+                "pattern": "/^-?>|--!?>/"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-69ce789ec6",
+                "file": "projects/packages/codesniffer/Jetpack/Sniffs/PHPUnit/AttributesSniff/CoverageHandler.php",
+                "line": 135,
+                "pattern": "/ .*|[\\s()]+$/"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-79bca86075",
+                "file": "lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php",
+                "line": 204,
+                "pattern": "/\\+|\\-\\d{4}$/"
+            }
+        ]
+    },
+    "regex.lint.anchor.impossible.end": {
+        "findings": 2,
+        "projects": 2,
+        "docs": "/reference/rules/anchor-conflicts/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-658f1b2ee8",
+                "file": "public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php",
+                "line": 1766,
+                "pattern": "/$((([^\\s,!&%^\\/\\*\\+<>=-]*)|('(?:[^']|'[^!])+?')|(\\\"(?:[^\\\"]|\\\"[^!])+?\\\"))!)?([_\\p{L}][_\\p{L}\\p{N}\\.]*)^/mui"
+            }
+        ]
+    },
+    "regex.lint.anchor.impossible.start": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/rules/anchor-conflicts/",
+        "examples": [
+            {
+                "repo": "consolidation/robo",
+                "id": "f-6841671687",
+                "file": "src/TaskInfo.php",
+                "line": 30,
+                "pattern": "~Stack^~"
+            }
+        ]
+    },
+    "regex.lint.charclass.backrefAsOctal": {
+        "findings": 10,
+        "projects": 7,
+        "docs": "/reference/rules/backreference-written-inside-a-character-class/",
+        "examples": [
+            {
+                "repo": "magento/magento2",
+                "id": "f-a17216564e",
+                "file": "app/code/Magento/Email/Model/Template/Filter.php",
+                "line": 64,
+                "pattern": "/^\\s*(['\"])([^\\1]*?)(?<!\\\\)\\1(\\s.*)?$/si"
+            },
+            {
+                "repo": "bcit-ci/CodeIgniter",
+                "id": "f-5bc6ceb90e",
+                "file": "system/core/Security.php",
+                "line": 785,
+                "pattern": "#<img[\\s/]+.*?src\\s*=\\s*([\"'])([^\\1]+?)\\1.*?\\>#i"
+            },
+            {
+                "repo": "getgrav/grav",
+                "id": "f-c93d394b5b",
+                "file": "system/src/Grav/Installer/YamlUpdater.php",
+                "line": 368,
+                "pattern": "/((['\"])[^\\2]*\\2)/"
+            },
+            {
+                "repo": "phpmyadmin/phpmyadmin",
+                "id": "f-aa2bf41a4c",
+                "file": "src/Server/Status/Monitor.php",
+                "line": 332,
+                "pattern": "/^INSERT INTO (`|'|\"|)([^\\s\\1]+)\\1/i"
+            },
+            {
+                "repo": "voku/anti-xss",
+                "id": "f-e63a6f544c",
+                "file": "src/voku/helper/AntiXSS.php",
+                "line": 1794,
+                "pattern": "#\\s*[\\p{L}\\d_\\-\\[\\]]+\\s*=\\s*(?:([\"'])(?:[^\\1]*?)\\1|\\\\\"(?:[^\"]*?)\\\\\")#u"
+            }
+        ]
+    },
+    "regex.lint.charclass.duplicateChars": {
+        "findings": 292,
+        "projects": 69,
+        "docs": "/reference/rules/duplicate-character-class-elements/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-98db6ef565",
+                "file": "public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php",
+                "line": 2591,
+                "pattern": "/\\n[\\t\\s]*/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-3b17c688d3",
+                "file": "includes/Rest/Router.php",
+                "line": 37,
+                "pattern": "!^/([-_.\\w]+(?:/v[-_.\\w]+)?)(/.*)$!"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-d6c9cd38e9",
+                "file": "src/wp-includes/interactivity-api/class-wp-interactivity-api.php",
+                "line": 1009,
+                "pattern": "/^([\\w\\-_\\/]+)::./"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-69a1f4ed05",
+                "file": "projects/packages/jetpack-mu-wpcom/src/features/custom-css/csstidy/class.csstidy-ctype.php",
+                "line": 37,
+                "pattern": "/[^\\s\\x0D\n\t\\x0C]/"
+            },
+            {
+                "repo": "DataDog/dd-trace-php",
+                "id": "f-e83ae03422",
+                "file": "appsec/run-tests-internal.php",
+                "line": 3762,
+                "pattern": "/valgrind-(\\d+)\\.(\\d+)\\.(\\d+)([.\\w_-]+)?(\\s+)/"
+            }
+        ]
+    },
+    "regex.lint.charclass.literalMetachar": {
+        "findings": 31,
+        "projects": 18,
+        "docs": "/reference/rules/literal-metacharacter-in-a-character-class/",
+        "examples": [
+            {
+                "repo": "magento/magento2",
+                "id": "f-6a9e51c4b8",
+                "file": "setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php",
+                "line": 50,
+                "pattern": "~[\\s+`]+~"
+            },
+            {
+                "repo": "PrestaShop/PrestaShop",
+                "id": "f-d1e8ad2bac",
+                "file": "classes/Tools.php",
+                "line": 1415,
+                "pattern": "/(<\\/?([\\w+]+)[^>]*>)?([^<>]*)/"
+            },
+            {
+                "repo": "composer/composer",
+                "id": "f-7e20a067c4",
+                "file": "src/Composer/Repository/Vcs/HgDriver.php",
+                "line": 202,
+                "pattern": "(^(?:[\\s*]*)([^\\s]+)\\s+\\d+:(.*)$)"
+            },
+            {
+                "repo": "craftcms/cms",
+                "id": "f-fa07087d3b",
+                "file": "src/helpers/Html.php",
+                "line": 901,
+                "pattern": "/([,\\s+]+)/"
+            },
+            {
+                "repo": "facebook/facebook-for-woocommerce",
+                "id": "f-1b4dcf5c80",
+                "file": "includes/Events/Normalizer.php",
+                "line": 197,
+                "pattern": "/[\\-\\s+]/"
+            }
+        ]
+    },
+    "regex.lint.charclass.redundant": {
+        "findings": 257,
+        "projects": 57,
+        "docs": "/reference/rules/redundant-character-class-elements/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-35159634c8",
+                "file": "public/admin/tool/messageinbound/roundcube/rcube_imap_generic.php",
+                "line": 1290,
+                "pattern": "/^\\* VANISHED [()EARLIER]*/i"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-9a7a02ceb9",
+                "file": "includes/Search/SearchHighlighter.php",
+                "line": 406,
+                "pattern": "/[ ,.!?~!@#$%^&*\\(\\)+=\\-\\\\|\\[\\]\"'<>]/"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-d0e74851a5",
+                "file": "src/wp-admin/includes/ajax-actions.php",
+                "line": 4313,
+                "pattern": "/[^A-z0-9_\\-]/"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-59006cb2dd",
+                "file": "projects/packages/forms/src/contact-form/class-contact-form-field.php",
+                "line": 339,
+                "pattern": "/[^a-zA-Z0-9.-_:]/"
+            },
+            {
+                "repo": "drupal/drupal",
+                "id": "f-1b5a491fb7",
+                "file": "core/modules/file/src/EventSubscriber/FileEventSubscriber.php",
+                "line": 117,
+                "pattern": "/(_|\\.|\\-)[(_|\\.|\\-)]+/u"
+            }
+        ]
+    },
+    "regex.lint.charclass.suspiciousPipe": {
+        "findings": 5,
+        "projects": 4,
+        "docs": "/reference/rules/alternation-like-character-classes/",
+        "examples": [
+            {
+                "repo": "salesagility/SuiteCRM",
+                "id": "f-b44eda351e",
+                "file": "include/export_utils.php",
+                "line": 296,
+                "pattern": "/([pm|PM|am|AM]+)/"
+            },
+            {
+                "repo": "bcit-ci/CodeIgniter",
+                "id": "f-696ea06873",
+                "file": "system/helpers/inflector_helper.php",
+                "line": 77,
+                "pattern": "/([octop|vir])i$/"
+            },
+            {
+                "repo": "espocrm/espocrm",
+                "id": "f-f125a6aed9",
+                "file": "application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php",
+                "line": 89,
+                "pattern": "/permanent[ ]*[error|failure]/"
+            }
+        ]
+    },
+    "regex.lint.charclass.suspiciousRange": {
+        "findings": 36,
+        "projects": 15,
+        "docs": "/reference/rules/suspicious-ascii-ranges/",
+        "examples": [
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-d0e74851a5",
+                "file": "src/wp-admin/includes/ajax-actions.php",
+                "line": 4313,
+                "pattern": "/[^A-z0-9_\\-]/"
+            },
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-49855989e3",
+                "file": "overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php",
+                "line": 90,
+                "pattern": "@([A-z]+?://([-\\w\\.]+[-\\w])+(:\\d+)?(/([\\w/_\\.#-]*(\\?\\S+)?[^\\.\\s])?)?)@"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-6a92124dee",
+                "file": "lib/internal/Magento/Framework/View/Template/Html/Minifier.php",
+                "line": 122,
+                "pattern": "/<<<([A-z]+).*?\\1;/ims"
+            },
+            {
+                "repo": "salesagility/SuiteCRM",
+                "id": "f-1b91b7c2ba",
+                "file": "include/utils.php",
+                "line": 4995,
+                "pattern": "/^[A-z]:/i"
+            },
+            {
+                "repo": "matomo-org/matomo",
+                "id": "f-38a1754955",
+                "file": "plugins/LanguagesManager/Commands/Update.php",
+                "line": 165,
+                "pattern": "/plugins\\/([a-zA-z]+) /"
+            }
+        ]
+    },
+    "regex.lint.compat.meaningChanges": {
+        "findings": 5,
+        "projects": 3,
+        "docs": "/reference/rules/meaning-that-changes-across-php-versions/",
+        "examples": [
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-797b404b84",
+                "file": "src/wp-includes/link-template.php",
+                "line": 4623,
+                "pattern": "/\\p{Han}|\\p{Hiragana}|\\p{Katakana}|\\p{Hangul}/u"
+            },
+            {
+                "repo": "FakerPHP/Faker",
+                "id": "f-99e2492766",
+                "file": "src/Provider/ar_EG/Text.php",
+                "line": 9,
+                "pattern": "/^\\p{Arabic}/u"
+            },
+            {
+                "repo": "giggsey/libphonenumber-for-php",
+                "id": "f-1f5cfbf903",
+                "file": "src/PhoneNumberMatcher.php",
+                "line": 332,
+                "pattern": "/\\p{Latin}/u"
+            }
+        ]
+    },
+    "regex.lint.dotstar.nested": {
+        "findings": 56,
+        "projects": 28,
+        "docs": "/reference/rules/dot-star-in-quantifier/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-9a56653abe",
+                "file": "public/lib/phpmailer/src/PHPMailer.php",
+                "line": 2412,
+                "pattern": "/^\\$PHPMAILER_LANG\\['([a-z\\d_]+)'\\]\\s*=\\s*([\"'])(.+)*?\\2;/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-a7e94acc90",
+                "file": "includes/Parser/BlockLevelPass.php",
+                "line": 372,
+                "pattern": "/^(?:<style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s*)+$/iS"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-7706b6df51",
+                "file": "app/code/Magento/Cms/Setup/ContentConverter.php",
+                "line": 66,
+                "pattern": "/(.*?{{widget.*?}})*(?<ending>.*?)$/si"
+            },
+            {
+                "repo": "PrestaShop/PrestaShop",
+                "id": "f-0af77b417c",
+                "file": ".ai/bin/check-conventions.php",
+                "line": 358,
+                "pattern": "#^paths:\\s*\\n((?:\\s+-\\s+.*\\n?)+)#m"
+            },
+            {
+                "repo": "bcit-ci/CodeIgniter",
+                "id": "f-f11fac67b3",
+                "file": "system/database/drivers/oci8/oci8_driver.php",
+                "line": 150,
+                "pattern": "/^\\(DESCRIPTION=(\\(.+\\)){2,}\\)$/"
+            }
+        ]
+    },
+    "regex.lint.flag.override": {
+        "findings": 71,
+        "projects": 2,
+        "docs": "/reference/rules/inline-flag-override/",
+        "examples": []
+    },
+    "regex.lint.flag.redundant": {
+        "findings": 19,
+        "projects": 4,
+        "docs": "/reference/rules/inline-flag-redundant/",
+        "examples": [
+            {
+                "repo": "symfony/symfony",
+                "id": "f-9676c0b4f4",
+                "file": "src/Symfony/Component/Routing/RouteCompiler.php",
+                "line": 212,
+                "pattern": "/[\\x80-\\xFF]|(?<!\\\\)\\\\(?:\\\\\\\\)*+(?-i:X|[pP][\\{CLMNPSZ]|x\\{[A-Fa-f0-9]{3})/"
+            },
+            {
+                "repo": "WhichBrowser/Parser",
+                "id": "f-dea3ea7de9",
+                "file": "src/Analyser/Header/Useragent/Os.php",
+                "line": 274,
+                "pattern": "/^(?U)([^\\/]+)(?U)(?:(?:_CMCC_TD|_CMCC|_TD|_TDLTE|_LTE)?\\/[^\\/]*)? Release\\/[0-9.]+/u"
+            }
+        ]
+    },
+    "regex.lint.flag.useless.D": {
+        "findings": 19,
+        "projects": 11,
+        "docs": "/reference/rules/useless-flag-d-dollar-end-only/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-6d1b8bbb5b",
+                "file": "public/lib/guzzlehttp/psr7/src/Uri.php",
+                "line": 118,
+                "pattern": "%[^:/@?&=#]+%usD"
+            },
+            {
+                "repo": "elementor/elementor",
+                "id": "f-db2be8e6d1",
+                "file": "modules/mcp/media/media-mime-validator.php",
+                "line": 44,
+                "pattern": "/^<svg[\\s>]/iD"
+            },
+            {
+                "repo": "phpbb/phpbb",
+                "id": "f-dd63cc381d",
+                "file": "phpBB/phpbb/db/driver/mssqlnative.php",
+                "line": 210,
+                "pattern": "/SELECT(\\s*DISTINCT)?/Dsi"
+            },
+            {
+                "repo": "shopware/shopware",
+                "id": "f-130eeae23b",
+                "file": "src/Storefront/Theme/Validator/SCSSValidator.php",
+                "line": 199,
+                "pattern": "/.*?(\\$(?![0-9])(?:[a-zA-Z0-9-_]|(?:\\\\[!\"#$%&'()*+,.\\/:;<=>?@\\[\\]^{|}~]))+)/D"
+            },
+            {
+                "repo": "guzzle/psr7",
+                "id": "f-a0e8e364be",
+                "file": "src/Rfc9112.php",
+                "line": 101,
+                "pattern": "/^[A-Za-z][A-Za-z0-9+.-]*:\\/\\//D"
+            }
+        ]
+    },
+    "regex.lint.flag.useless.i": {
+        "findings": 548,
+        "projects": 86,
+        "docs": "/reference/rules/useless-flag-i-caseless/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-72ab0a1979",
+                "file": "public/admin/tool/brickfield/classes/local/htmlchecker/common/brickfield_accessibility_css.php",
+                "line": 324,
+                "pattern": "/\\/\\*(.*)?\\*\\//Usi"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-207881ea24",
+                "file": "includes/EditPage/EditPage.php",
+                "line": 2542,
+                "pattern": "/^(=+)(.+)\\1\\s*(\n|$)/i"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-8c59e524cd",
+                "file": "src/wp-includes/ID3/module.audio-video.quicktime.php",
+                "line": 1701,
+                "pattern": "#([\\+\\-][0-9\\.]+)([\\+\\-][0-9\\.]+)([\\+\\-][0-9\\.]+)?/$#i"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-d0d6c65113",
+                "file": "projects/packages/agents-manager/src/class-agents-manager.php",
+                "line": 438,
+                "pattern": "/([-_].*)$/i"
+            },
+            {
+                "repo": "drupal/drupal",
+                "id": "f-ab6bf6f306",
+                "file": "core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php",
+                "line": 49,
+                "pattern": "/^[+-]?((\\d+(\\.\\d*)?)|(\\.\\d+))$/i"
+            }
+        ]
+    },
+    "regex.lint.flag.useless.m": {
+        "findings": 469,
+        "projects": 79,
+        "docs": "/reference/rules/useless-flag-m-multiline/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-8721a18f20",
+                "file": "public/admin/tool/brickfield/classes/local/htmlchecker/reporters/report_demo.php",
+                "line": 148,
+                "pattern": "#\\/(\\w*?)\\/\\.\\.\\/(.*?)>#ims"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-e50c2e5334",
+                "file": "includes/Upload/UploadVerification.php",
+                "line": 364,
+                "pattern": "!type\\s*=\\s*['\"]?\\s*(?:\\w*/)?(?:ecma|java)!im"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-1026174fb9",
+                "file": "src/wp-admin/includes/upgrade.php",
+                "line": 3065,
+                "pattern": "|\\((.*)\\)|ms"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-5feaa737e3",
+                "file": "projects/packages/forms/src/contact-form/class-contact-form-plugin.php",
+                "line": 3777,
+                "pattern": "/.*Array\\s\\( (.*)\\)/msx"
+            },
+            {
+                "repo": "DataDog/dd-trace-php",
+                "id": "f-a2951599ee",
+                "file": "dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php",
+                "line": 740,
+                "pattern": "/\\r\\n?/ms"
+            }
+        ]
+    },
+    "regex.lint.flag.useless.s": {
+        "findings": 697,
+        "projects": 88,
+        "docs": "/reference/rules/useless-flag-s-dotall/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-9445ec48a4",
+                "file": "public/admin/phpinfo.php",
+                "line": 25,
+                "pattern": "/<\\/body><\\/html>/is"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-1c74f0c4d2",
+                "file": "src/wp-admin/includes/class-wp-debug-data.php",
+                "line": 553,
+                "pattern": "/\\# BEGIN WordPress[\\s\\S]+?# END WordPress/si"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-259aff7cdb",
+                "file": "projects/packages/seo/src/class-dashboard-data.php",
+                "line": 755,
+                "pattern": "/content=[\"']?([^\"' ]*)[\"' ]/is"
+            },
+            {
+                "repo": "drupal/drupal",
+                "id": "f-9b74913196",
+                "file": "core/modules/locale/src/LocaleJs.php",
+                "line": 455,
+                "pattern": "~(?<!\\\\)['\"]\\s*\\+\\s*['\"]~s"
+            },
+            {
+                "repo": "DataDog/dd-trace-php",
+                "id": "f-a2951599ee",
+                "file": "dockerfiles/testing-environment/Wordpress5/app/wp-includes/class-phpmailer.php",
+                "line": 740,
+                "pattern": "/\\r\\n?/ms"
+            }
+        ]
+    },
+    "regex.lint.flag.useless.x": {
+        "findings": 50,
+        "projects": 19,
+        "docs": "/reference/rules/useless-flag-x-extended/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-a51d294a64",
+                "file": "public/lib/aws-sdk/src/EndpointV2/Ruleset/RulesetStandardLibrary.php",
+                "line": 27,
+                "pattern": "#\\{((?>[^\\{\\}]+)|(?R))*\\}#x"
+            },
+            {
+                "repo": "symfony/symfony",
+                "id": "f-25db9422f9",
+                "file": "src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php",
+                "line": 131,
+                "pattern": "/^(contactListName=)*(?<ContactListName>[^;]+)(;\\s?topicName=(?<TopicName>.+))?$/ix"
+            },
+            {
+                "repo": "hyperf/hyperf",
+                "id": "f-ef5334ce66",
+                "file": "src/view-engine/src/Compiler/BladeCompiler.php",
+                "line": 379,
+                "pattern": "/^\\w+(?:::\\w+)?$/x"
+            },
+            {
+                "repo": "joomla/joomla-cms",
+                "id": "f-a8c433a019",
+                "file": "libraries/loader.php",
+                "line": 616,
+                "pattern": "/(?<=[a-z0-9])(?=[A-Z])/x"
+            },
+            {
+                "repo": "elementor/elementor",
+                "id": "f-4c51a3650c",
+                "file": "core/utils/svg/svg-sanitizer.php",
+                "line": 233,
+                "pattern": "~^url\\(\\s*['\"]\\s*(.*)\\s*['\"]\\s*\\)$~xi"
+            }
+        ]
+    },
+    "regex.lint.group.alwaysEmptyCapture": {
+        "findings": 4,
+        "projects": 4,
+        "docs": "/reference/rules/capture-that-never-captures-text/",
+        "examples": [
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-d6d18b0d06",
+                "file": "app/Thread.php",
+                "line": 392,
+                "pattern": "/target=['\"]?(.*?)['\"]?/i"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-9e2d7bc086",
+                "file": "lib/internal/Magento/Framework/DB/Helper.php",
+                "line": 198,
+                "pattern": "/(^|[^a-zA-Z_])^(SELECT)?(SUM|MIN|MAX|AVG|COUNT)\\s*\\(/i"
+            },
+            {
+                "repo": "Respect/Validation",
+                "id": "f-4f0e0d789e",
+                "file": "src-dev/Spdx/ContributorExtractor/HeaderContributorExtractor.php",
+                "line": 41,
+                "pattern": "/^(.+)( <(.+)>)?$/"
+            }
+        ]
+    },
+    "regex.lint.group.quantifiedCapture": {
+        "findings": 9,
+        "projects": 7,
+        "docs": "/reference/rules/quantified-capturing-group/",
+        "examples": [
+            {
+                "repo": "salesagility/SuiteCRM",
+                "id": "f-e1eaa6b46f",
+                "file": "include/database/DBManager.php",
+                "line": 2580,
+                "pattern": "#(?P<type>\\w+)\\s*(?P<arg>\\((?P<len>\\w+)\\s*(,\\s*(?P<scale>\\d+))*\\))*#"
+            },
+            {
+                "repo": "janephp/janephp",
+                "id": "f-f7ef257433",
+                "file": "src/Component/OpenApiCommon/Naming/OperationUrlNaming.php",
+                "line": 56,
+                "pattern": "/(?<separator>[^a-zA-Z0-9_{}])+(?<part>[a-zA-Z0-9_{}]*)/"
+            },
+            {
+                "repo": "rectorphp/rector-src",
+                "id": "f-332414155a",
+                "file": "src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php",
+                "line": 32,
+                "pattern": "#(?<new_line>\\r\\n|\\n){2,}#"
+            },
+            {
+                "repo": "twigstan/twigstan",
+                "id": "f-1a9e37ee39",
+                "file": "src/Processing/Compilation/PhpVisitor/AppendFilePathToLineCommentVisitor.php",
+                "line": 29,
+                "pattern": "#// line (?<line_number>\\d+)+#"
+            }
+        ]
+    },
+    "regex.lint.group.redundant": {
+        "findings": 156,
+        "projects": 35,
+        "docs": "/reference/rules/redundant-non-capturing-group/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-c1a135b268",
+                "file": "public/lib/phpspreadsheet/phpspreadsheet/src/PhpSpreadsheet/Calculation/Calculation.php",
+                "line": 1341,
+                "pattern": "/^([\\p{L}_\\\\][\\p{L}\\p{N}\\._]+)?(\\[(?:[^\\d\\]+-])?)$/miu"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-1b7b39cc2f",
+                "file": "src/wp-includes/Requests/src/IdnaEncoder.php",
+                "line": 144,
+                "pattern": "/(?:[^\\x00-\\x7F])/"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-a43358d301",
+                "file": "projects/plugins/jetpack/modules/shortcodes/medium.php",
+                "line": 104,
+                "pattern": "/^\\/(?:s)\\/(.+)$/"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-d134e333e6",
+                "file": "app/code/Magento/Customer/Model/Validator/Name.php",
+                "line": 18,
+                "pattern": "/(?:[\\p{L}\\p{M}\\,\\-\\_\\.'’`&\\s\\d]){1,255}+/u"
+            },
+            {
+                "repo": "composer/composer",
+                "id": "f-0fb1ae7988",
+                "file": "src/Composer/Command/GlobalCommand.php",
+                "line": 157,
+                "pattern": "{\\bg(?:l(?:o(?:b(?:a(?:l)?)?)?)?)?\\b}"
+            }
+        ]
+    },
+    "regex.lint.literal.invisible": {
+        "findings": 19,
+        "projects": 3,
+        "docs": "/reference/rules/invisible-character-written-raw/",
+        "examples": [
+            {
+                "repo": "google/google-cloud-php",
+                "id": "f-c298421b3a",
+                "file": "dev/src/ComponentPackage.php",
+                "line": 30,
+                "pattern": "#\\* GENERATED CODE WARNING\n \\* Generated by gapic-generator-php from the file\n \\* https:\\/\\/github.com\\/googleapis\\/googleapis\\/blob\\/master\\/(.*.proto)\n \\* Updates to the above are reflected here through a refresh process#"
+            }
+        ]
+    },
+    "regex.lint.lookaround.impossible": {
+        "findings": 3,
+        "projects": 1,
+        "docs": "/reference/rules/impossible-lookaround/",
+        "examples": []
+    },
+    "regex.lint.overlap.charset": {
+        "findings": 132,
+        "projects": 30,
+        "docs": "/reference/rules/overlapping-character-sets/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-9762b10976",
+                "file": "public/lib/adodb/drivers/adodb-mssqlnative.inc.php",
+                "line": 627,
+                "pattern": "/^\\W*insert[\\s\\w()[\\]\",.]+values\\s*\\((?:[^;']|''|(?:(?:'')*'[^']+'(?:'')*))*;?$/i"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-e55fbcbb7a",
+                "file": "includes/libs/Rdbms/Database/DatabasePostgres.php",
+                "line": 619,
+                "pattern": "/(\\{?\"([^\"\\\\]|\\\\.)*\"|[^,{}]+)+([,}]+)/"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-2b5b67d4db",
+                "file": "projects/packages/changelogger/lib/KeepAChangelogParser.php",
+                "line": 76,
+                "pattern": "/^\\[([^]]+)\\]: *(\\S+(?: +(?:\"(?:[^\"]|\\\\.)*\"|'(?:[^']|\\\\.)*'|\\((?:[^()]|\\\\.)*\\)))?)\\s*\\Z/m"
+            },
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-7a259bf246",
+                "file": "app/Misc/Helper.php",
+                "line": 2035,
+                "pattern": "/<!--(.|\\s)*?-->/"
+            },
+            {
+                "repo": "PrestaShop/PrestaShop",
+                "id": "f-0d4ec2b1f7",
+                "file": "src/Adapter/Meta/ShopUrlDataConfiguration.php",
+                "line": 119,
+                "pattern": "#^(?:[~\\-_\\/&\\.\\+]|\\w|%\\d+|\\s)+$#"
+            }
+        ]
+    },
+    "regex.lint.quantifier.assertion": {
+        "findings": 2,
+        "projects": 2,
+        "docs": "/reference/rules/quantified-assertion/",
+        "examples": [
+            {
+                "repo": "codeigniter4/CodeIgniter4",
+                "id": "f-1829295c94",
+                "file": "preload.php",
+                "line": 92,
+                "pattern": "/.+((?<!Test)+\\.php$)/i"
+            }
+        ]
+    },
+    "regex.lint.quantifier.concatenation": {
+        "findings": 255,
+        "projects": 76,
+        "docs": "/reference/rules/optimal-quantifier-concatenation/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-f2a3f30c68",
+                "file": "public/admin/classes/setting/setting/emoticons.php",
+                "line": 195,
+                "pattern": "/^[a-zA-Z]+[a-zA-Z0-9]*$/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-fa36fc4c95",
+                "file": "includes/Search/SearchHighlighter.php",
+                "line": 490,
+                "pattern": "/<\\/?[^>]+>/"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-054b69e7ff",
+                "file": "src/wp-admin/includes/class-ftp-pure.php",
+                "line": 109,
+                "pattern": "/^.+ \\(?([0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]{1,3},[0-9]+,[0-9]+)\\)?.*$/s"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-fd5d62029a",
+                "file": "projects/packages/changelogger/lib/KeepAChangelogParser.php",
+                "line": 172,
+                "pattern": "/^## +(\\[?[^] ]+\\]?) - (.+?) *$/"
+            },
+            {
+                "repo": "drupal/drupal",
+                "id": "f-13d8849943",
+                "file": "core/lib/Drupal/Core/Template/Loader/ComponentLoader.php",
+                "line": 31,
+                "pattern": "/^[a-zA-Z][a-zA-Z0-9:_-]*[a-zA-Z0-9]?$/"
+            }
+        ]
+    },
+    "regex.lint.quantifier.emptyRepeat": {
+        "findings": 25,
+        "projects": 9,
+        "docs": "/reference/rules/repeat-that-can-match-empty/",
+        "examples": [
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-1242807bf0",
+                "file": "projects/plugins/jetpack/modules/shortcodes/recipe.php",
+                "line": 508,
+                "pattern": "/(?:^|\\n|\\<p\\>)+(?:[\\-–—]+|\\&#8211;|\\&#8212;|\\*)+\\h+(.*)/mi"
+            },
+            {
+                "repo": "symfony/symfony",
+                "id": "f-885858256b",
+                "file": "src/Symfony/Component/Dotenv/Dotenv.php",
+                "line": 521,
+                "pattern": "/(?:\\s*+(?:#[^\\n]*+)?+)++/A"
+            },
+            {
+                "repo": "api-platform/core",
+                "id": "f-985c15fda9",
+                "file": "src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php",
+                "line": 56,
+                "pattern": "/(^|_|\\.)+(.)/"
+            },
+            {
+                "repo": "bobthecow/psysh",
+                "id": "f-eacb82280e",
+                "file": "src/Formatter/ManualFormatter.php",
+                "line": 499,
+                "pattern": "#<(?:[a-z](?:[^\\\\<>]*+ | \\\\.)*|/(?:[a-z][^<>]*+)?)>#ix"
+            },
+            {
+                "repo": "nette/latte",
+                "id": "f-e0da99428f",
+                "file": "src/Latte/Compiler/PrintContext.php",
+                "line": 59,
+                "pattern": "#% (\\d+) \\. (escape|modify(?:Content)?) ( \\( ([^()]*+|(?-2))+ \\) )#xi"
+            }
+        ]
+    },
+    "regex.lint.quantifier.lazyEnd": {
+        "findings": 59,
+        "projects": 31,
+        "docs": "/reference/rules/lazy-quantifier-at-the-end/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-8df0b11c04",
+                "file": "public/lib/pear/HTML/QuickForm/Renderer/Default.php",
+                "line": 247,
+                "pattern": "/([ \t\n\\x0D]*)?<!-- BEGIN required -->(\\s|\\S)*<!-- END required -->([ \t\n\\x0D]*)?/iU"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-ae71f8e124",
+                "file": "includes/Language/Converters/MniConverter.php",
+                "line": 84,
+                "pattern": "/[\\s꯫\\p{P}<>=\\-\\|$+^~]+?/u"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-76c571100e",
+                "file": "src/wp-includes/canonical.php",
+                "line": 585,
+                "pattern": "#^\\??&*?#"
+            },
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-d6d18b0d06",
+                "file": "app/Thread.php",
+                "line": 392,
+                "pattern": "/target=['\"]?(.*?)['\"]?/i"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-91b9d88162",
+                "file": "app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php",
+                "line": 90,
+                "pattern": "/(?<group>(?<section>.*?)\\/.*?)\\/.*?/"
+            }
+        ]
+    },
+    "regex.lint.quantifier.nested": {
+        "findings": 694,
+        "projects": 93,
+        "docs": "/reference/rules/nested-quantifiers-redos-risk/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-4df810fccb",
+                "file": "public/admin/tool/messageinbound/roundcube/rcube_mime.php",
+                "line": 351,
+                "pattern": "/(.*)<(([^\\s:]+|(\"\\s*(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)+\"))@\\S+)$/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-a7e94acc90",
+                "file": "includes/Parser/BlockLevelPass.php",
+                "line": 372,
+                "pattern": "/^(?:<style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s*)+$/iS"
+            },
+            {
+                "repo": "flarum/framework",
+                "id": "f-71320324b8",
+                "file": "extensions/package-manager/src/Api/Controller/CompatController.php",
+                "line": 59,
+                "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-4061339c3f",
+                "file": "src/wp-includes/ID3/module.tag.id3v2.php",
+                "line": 2083,
+                "pattern": "#^([^\\x00]+)*\\x00(.)([^\\x00]+)*\\x00(.+)$#s"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-9abf2b8b56",
+                "file": "projects/plugins/jetpack/_inc/lib/markdown/gfm.php",
+                "line": 250,
+                "pattern": "#(?<!<)(?:https?|ftp)://([^\\s<>\"'\\[\\]()]+|\\[(?1)*+\\]|\\((?1)*+\\))+(?<![_*.?])#i"
+            }
+        ]
+    },
+    "regex.lint.quantifier.possessiveImpossible": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/rules/impossible-possessive-quantifier/",
+        "examples": [
+            {
+                "repo": "composer/composer",
+                "id": "f-5e6efaceb3",
+                "file": "src/Composer/Util/ProcessExecutor.php",
+                "line": 131,
+                "pattern": "{^([^:/\\\\]++) }"
+            }
+        ]
+    },
+    "regex.lint.quantifier.useless": {
+        "findings": 124,
+        "projects": 42,
+        "docs": "/reference/rules/useless-quantifier/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-c839dd1ad5",
+                "file": "public/grade/report/singleview/classes/local/screen/screen.php",
+                "line": 302,
+                "pattern": "/^old[oe]{1}/"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-e85563bc53",
+                "file": "src/wp-admin/includes/class-wp-filesystem-base.php",
+                "line": 246,
+                "pattern": "|^([a-z]{1}):|i"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-d141959ac5",
+                "file": "projects/packages/image-cdn/src/class-image-cdn.php",
+                "line": 694,
+                "pattern": "#^http(s)?://i[\\d]{1}.wp.com#"
+            },
+            {
+                "repo": "freescout-help-desk/freescout",
+                "id": "f-2b8c048982",
+                "file": "overrides/league/flysystem/src/Util.php",
+                "line": 347,
+                "pattern": "#^[a-zA-Z]{1}:[^\\\\/]#"
+            },
+            {
+                "repo": "magento/magento2",
+                "id": "f-fa5eaffbd7",
+                "file": "app/code/Magento/Catalog/Model/Product/ReservedAttributeList.php",
+                "line": 29,
+                "pattern": "/^get([A-Z]{1}.+)/"
+            }
+        ]
+    },
+    "regex.lint.quantifier.zero": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/rules/zero-quantifier/",
+        "examples": [
+            {
+                "repo": "voku/anti-xss",
+                "id": "f-d285b49809",
+                "file": "src/voku/helper/AntiXSS.php",
+                "line": 1685,
+                "pattern": "/(?<html_entity>&[A-Za-z]{2,};{0})/"
+            }
+        ]
+    },
+    "regex.lint.range.useless": {
+        "findings": 2,
+        "projects": 1,
+        "docs": "/reference/rules/useless-character-range/",
+        "examples": [
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-e46c69949b",
+                "file": "projects/packages/password-checker/src/class-password-checker.php",
+                "line": 511,
+                "pattern": "#[`|~|-|_|=|+|\\[|{|\\]|}|\\|\\|;:'\",<\\.>/\\?]#"
+            }
+        ]
+    },
+    "regex.lint.redos": {
+        "findings": 132,
+        "projects": 68,
+        "docs": "/reference/rules/catastrophic-backtracking/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-4df810fccb",
+                "file": "public/admin/tool/messageinbound/roundcube/rcube_mime.php",
+                "line": 351,
+                "pattern": "/(.*)<(([^\\s:]+|(\"\\s*(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)+\"))@\\S+)$/"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-a7e94acc90",
+                "file": "includes/Parser/BlockLevelPass.php",
+                "line": 372,
+                "pattern": "/^(?:<style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s*)+$/iS"
+            },
+            {
+                "repo": "flarum/framework",
+                "id": "f-71320324b8",
+                "file": "extensions/package-manager/src/Api/Controller/CompatController.php",
+                "line": 59,
+                "pattern": "#^[a-z0-9]([_.-]?[a-z0-9]+)*/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$#"
+            },
+            {
+                "repo": "WordPress/wordpress-develop",
+                "id": "f-4061339c3f",
+                "file": "src/wp-includes/ID3/module.tag.id3v2.php",
+                "line": 2083,
+                "pattern": "#^([^\\x00]+)*\\x00(.)([^\\x00]+)*\\x00(.+)$#s"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-2b5b67d4db",
+                "file": "projects/packages/changelogger/lib/KeepAChangelogParser.php",
+                "line": 76,
+                "pattern": "/^\\[([^]]+)\\]: *(\\S+(?: +(?:\"(?:[^\"]|\\\\.)*\"|'(?:[^']|\\\\.)*'|\\((?:[^()]|\\\\.)*\\)))?)\\s*\\Z/m"
+            }
+        ]
+    },
+    "regex.lint.unicode.multibyteInClassWithoutU": {
+        "findings": 28,
+        "projects": 12,
+        "docs": "/reference/rules/multibyte-character-in-a-class/",
+        "examples": [
+            {
+                "repo": "moodle/moodle",
+                "id": "f-a54c1e5c47",
+                "file": "public/lib/tcpdf/include/tcpdf_static.php",
+                "line": 1069,
+                "pattern": "/@media[\\s]+([^\\§]*)§([^§]*)§/i"
+            },
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-57892a1eb2",
+                "file": "includes/Languages/LanguageFi.php",
+                "line": 33,
+                "pattern": "/[aou][^äöy]*$/i"
+            },
+            {
+                "repo": "flarum/framework",
+                "id": "f-7c3e6be877",
+                "file": "extensions/mentions/src/ConfigureMentions.php",
+                "line": 28,
+                "pattern": "/\\B@[\"“](?<displayname>((?!\"#[a-z]{0,3}[0-9]+).)+)[\"”]#(?<id>[0-9]+)\\b/"
+            },
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-1242807bf0",
+                "file": "projects/plugins/jetpack/modules/shortcodes/recipe.php",
+                "line": 508,
+                "pattern": "/(?:^|\\n|\\<p\\>)+(?:[\\-–—]+|\\&#8211;|\\&#8212;|\\*)+\\h+(.*)/mi"
+            },
+            {
+                "repo": "PrestaShop/PrestaShop",
+                "id": "f-0083bc0417",
+                "file": "src/Core/Localization/Currency/PatternTransformer.php",
+                "line": 82,
+                "pattern": "/^¤[  ]+.+/"
+            }
+        ]
+    },
+    "regex.lint.unicode.propertyWithoutU": {
+        "findings": 18,
+        "projects": 5,
+        "docs": "/reference/rules/unicode-property-without-u/",
+        "examples": [
+            {
+                "repo": "wikimedia/mediawiki",
+                "id": "f-b3a58d1255",
+                "file": "includes/Parser/CoreParserFunctions.php",
+                "line": 2073,
+                "pattern": "/(?:\\t|&nbsp;|&\\#0*160;|&\\#[Xx]0*[Aa]0;|\\p{Zs})/"
+            },
+            {
+                "repo": "grokability/snipe-it",
+                "id": "f-5a91670690",
+                "file": "app/Providers/ValidationServiceProvider.php",
+                "line": 454,
+                "pattern": "/\\p{Z}|\\p{S}|\\p{P}/"
+            },
+            {
+                "repo": "nelmio/alice",
+                "id": "f-943d00785d",
+                "file": "src/FixtureBuilder/ExpressionLanguage/Lexer/FunctionTreeTokenizer.php",
+                "line": 47,
+                "pattern": "/(.*?)<((?:.*?:)?(?:\\p{L}|_|[0-9])+?)\\((.*?)/"
+            },
+            {
+                "repo": "invoiceninja/invoiceninja",
+                "id": "f-44d7153cab",
+                "file": "app/Utils/Ninja.php",
+                "line": 227,
+                "pattern": "/((?![[:graph:]])(?!\\s)(?!\\p{L}))./"
+            },
+            {
+                "repo": "phpbb/phpbb",
+                "id": "f-635a2b139a",
+                "file": "phpBB/phpbb/search/backend/fulltext_sphinx.php",
+                "line": 765,
+                "pattern": "#((?:\\p{L}|\\p{N})+)-((?:\\p{L}|\\p{N})+)(?:-((?:\\p{L}|\\p{N})+))?(?:-((?:\\p{L}|\\p{N})+))?#i"
+            }
+        ]
+    },
+    "regex.lint.unicode.quantifiedMultibyteWithoutU": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/rules/quantifier-after-a-multibyte-character/",
+        "examples": []
+    },
+    "regex.quantifier.nothing_to_repeat": {
+        "findings": 1,
+        "projects": 1,
+        "docs": "/reference/diagnostics/quantifier-does-not-follow-a-repeatable-item/",
+        "examples": [
+            {
+                "repo": "Automattic/jetpack",
+                "id": "f-259007627b",
+                "file": "projects/packages/waf/src/class-waf-transforms.php",
+                "line": 257,
+                "pattern": "~/*|*/|--|#|//~"
+            }
+        ]
+    },
+    "regex.unicode.surrogate": {
+        "findings": 1,
+        "projects": 1,
+        "docs": null,
+        "examples": []
+    }
+}

@@ -177,7 +177,7 @@ final class PlaygroundDefaultTest extends TestCase
 
         // The caret that says the pattern is editable: shown while the
         // field is untouched, gone at the first focus or keystroke.
-        $this->assertStringContainsString('pg-editor pg-editor-pattern is-untouched', $include);
+        $this->assertStringContainsString('<div class="pg-editor pg-editor-pattern {% unless include.pattern %}is-untouched{% endunless %}">', $include, 'Untouched as long as no page hands the field a pattern.');
         $this->assertStringContainsString('.pg-editor-pattern.is-untouched .pg-caret', $stylesheet);
         $this->assertStringContainsString("classList.remove('is-untouched')", $script);
 

@@ -3,7 +3,10 @@
   reports on its regular expressions, judged for the PHP its own
   composer.json requires, then the playground opened on those findings.
   The page is rewritten every day by bin/findings-report; its findings
-  are fetched from /assets/findings/repos/.
+  are fetched from /assets/findings/repos/. The finding the tool opens on
+  travels in the front matter twice: its pattern for the field, and the
+  card the report draws as the script draws it, so both stand on the page
+  at the first paint.
 {% endcomment %}
 <div class="hero hero-playground hero-finding">
   <div class="hero-inner">
@@ -18,6 +21,9 @@
         <span>code as of {{ page.findings_committed }}</span>
       </p>
     </header>
-    {% include playground.html findings_repo=page.findings_repo %}
+    {% include playground.html findings_repo=page.findings_repo pattern=page.finding_pattern card=page.finding_card %}
   </div>
 </div>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":{{ '/' | absolute_url | jsonify }}},{"@type":"ListItem","position":2,"name":"Projects","item":{{ '/findings/' | absolute_url | jsonify }}},{"@type":"ListItem","position":3,"name":{{ page.findings_repo | jsonify }}}]}
+</script>

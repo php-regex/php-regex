@@ -62,9 +62,15 @@
   <div class="pg-patternbar">
     <div class="pg-field">
       <label class="visually-hidden" for="pg-pattern">Pattern</label>
-      <div class="pg-editor pg-editor-pattern is-untouched">
-        <pre class="pg-mirror" aria-hidden="true"></pre>
-        <textarea id="pg-pattern" class="pg-input" rows="1" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-pattern-count" placeholder="/pattern/flags"></textarea>
+      {%- comment -%}A repository's page passes the pattern of the finding it
+        opens on: the field and the mirror under it hold it from the first
+        paint, so the field stands at the height of its text before the
+        script runs, and the page does not move when it does. Without one
+        the field is untouched: the home's sample arrives with the
+        script.{% endcomment %}
+      <div class="pg-editor pg-editor-pattern {% unless include.pattern %}is-untouched{% endunless %}">
+        <pre class="pg-mirror" aria-hidden="true">{% if include.pattern %}{{ include.pattern | escape }}{% endif %}</pre>
+        <textarea id="pg-pattern" class="pg-input" rows="1" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" aria-describedby="pg-pattern-count" placeholder="/pattern/flags">{% if include.pattern %}{{ include.pattern | escape }}{% endif %}</textarea>
         <span class="pg-field-count" id="pg-pattern-count"></span>
       </div>
       <span class="visually-hidden" id="pg-pattern-error"></span>
@@ -144,7 +150,7 @@
   </div>
   <div class="pg-body">
     <div class="pg-main">
-      <div class="pg-field pg-field-text">
+      <div class="pg-field pg-field-text"{% if include.card %} hidden{% endif %}>
         <label class="pg-label" for="pg-subject">Text</label>
         <span class="pg-match-summary" id="pg-match-summary"></span>
         <span class="pg-count" id="pg-subject-count"></span>
@@ -156,9 +162,17 @@
           <summary>Match details</summary>
           <ol class="pg-subject-matches" aria-labelledby="pg-match-summary"></ol>
         </details>
-      </div>
-      <div class="pg-finding-card" hidden>
+      </div>{%- comment -%}A repository's page brings the card of the
+        finding it opens on, drawn by the report as the script draws it:
+        the drawn card stands in the place of the empty boxes the script
+        fills, from the first paint; the text field and the share buttons
+        are hidden as the script hides them, and nothing under the tool
+        moves when it runs.{% endcomment %}
+      <div class="pg-finding-card"{% unless include.card %} hidden{% endunless %}>
         <p class="pg-finding-notice" role="status" hidden></p>
+        {%- if include.card -%}
+        {{ include.card }}
+        {%- else %}
         <div class="pg-finding-head">
           <a class="pg-finding-avatar" href=""></a>
           <span class="pg-finding-repo"></span>
@@ -174,10 +188,11 @@
         </div>
         <p class="pg-witness" hidden></p>
         <p class="pg-finding-outcome" hidden></p>
+        {%- endif %}
         <div class="pg-finding-actions">
           <button type="button" class="pg-finding-copy">Edit a copy</button>
           <button type="button" class="pg-share-copy">Copy link</button>
-          <button type="button" class="pg-share-native" hidden>Share</button>
+          <button type="button" class="pg-share-native"{% unless include.card %} hidden{% endunless %}>Share</button>
         </div>
       </div>
       <p class="pg-finding-left" hidden><span class="pg-finding-left-text"></span> <button type="button" class="pg-finding-back">Back to the finding</button></p>
@@ -233,7 +248,7 @@
       screen, and the PHP that runs it. The finding card keeps its own
       cluster — this one is the sandbox's, hidden while a finding is
       shown.{% endcomment -%}
-    <div class="pg-share-actions">
+    <div class="pg-share-actions"{% if include.card %} hidden{% endif %}>
       <button type="button" class="pg-link-copy"><svg class="icon" data-icon="link" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>Copy link</button>
       <button type="button" class="pg-php-copy"><svg class="icon" data-icon="code" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m16 18 6-6-6-6" /><path d="m8 6-6 6 6 6" /></svg>Copy as PHP</button>
       <button type="button" class="pg-link-native" hidden>Share</button>

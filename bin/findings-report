@@ -26,7 +26,12 @@ declare(strict_types=1);
  *                                          links, the optimizer's rewrite, the
  *                                          ReDoS witness, the code around it
  *   docs/_findings/<slug>.md               one page per repository, at
- *                                          /findings/<vendor>/<repo>/
+ *                                          /findings/<vendor>/<repo>/: the
+ *                                          tool opens on the first finding,
+ *                                          and the page lists them all
+ *   docs/_data/finding_rules.json          what each rule met, for the page
+ *                                          of the rule: its findings, its
+ *                                          projects, a few findings to open
  *   docs/assets/findings/avatars/          the owners' avatars, served by the
  *                                          site itself
  *
@@ -64,6 +69,10 @@ const SOCIAL = '/assets/img/findings-social.png';
 const SOCIAL_ALT = 'PHPRegex findings: what the linter reports on real open-source PHP.';
 const AVATAR = 48; // pixels: twice the size the list draws
 const LEVELS = ['error' => 'fail', 'warning' => 'warn'];
+const LIST_FOLD = 40; // findings standing open on a page; the end of a longer list folds
+const LIST_PATTERN = 240; // bytes of a pattern shown in the list: the tool holds the whole
+const EXAMPLES = 5; // findings the page of a rule opens on
+const EXAMPLE_LENGTH = 90; // bytes of a pattern taken in at a glance
 
 $options = getopt('', ['offline', 'parts:', 'corpus:', 'out:']);
 $partsDir = \is_string($options['parts'] ?? null) ? $options['parts'] : ROOT.'/var/log/corpus-parts';
@@ -154,6 +163,7 @@ foreach ($judged as $slug => [$part, $repo]) {
     $owners[$owner] = owner($owner, $out, $offline);
 }
 ksort($owners, \SORT_STRING);
+$rulePages = rulePages($out);
 // FAIL count first, then the name: the playground's list and /findings/
 // read in this order.
 usort($repos, static fn (array $a, array $b): int => [$b['fail'], strtolower($a['repo'])] <=> [$a['fail'], strtolower($b['repo'])]);
@@ -182,8 +192,10 @@ foreach ($files as $slug => $file) {
     write($out.'/assets/findings/repos/'.$slug.'.json', encode($file));
 }
 foreach ($repos as $rank => $repo) {
-    write($out.'/_findings/'.$repo['slug'].'.md', page($repo, $rank + 1));
+    write($out.'/_findings/'.$repo['slug'].'.md', page($repo, $rank + 1, $files[$repo['slug']]['findings'], $rulePages, $owners[$repo['owner']]));
 }
+directory($out.'/_data');
+write($out.'/_data/finding_rules.json', encode(ruleFindings($repos, $files, $rulePages)));
 // Yesterday's files of repositories, and avatars of owners, that have no
 // finding today; each directory read with its own extension, so a
 // repository named notes.md keeps its file.
@@ -648,9 +660,15 @@ function owner(string $login, string $out, bool $offline): array
 }
 
 /**
- * @param array<string, mixed> $repo
+ * The page of a repository: its front matter, the tool opening on the
+ * first finding, and the list of the findings under it.
+ *
+ * @param array<string, mixed>      $repo
+ * @param list<array<string, mixed>> $findings
+ * @param array<string, string>     $rulePages
+ * @param array{avatar: string, profile: string} $owner
  */
-function page(array $repo, int $rank): string
+function page(array $repo, int $rank, array $findings, array $rulePages, array $owner): string
 {
     $quote = static fn (string $text): string => '"'.addcslashes($text, '"\\').'"';
     [$vendor, $name] = explode('/', (string) $repo['repo'], 2);
@@ -672,7 +690,301 @@ function page(array $repo, int $rank): string
         .'findings_rank: '.$rank."\n"
         .'image: '.SOCIAL."\n"
         .'image_alt: '.$quote(SOCIAL_ALT)."\n"
-        ."---\n\n{% include finding.html %}\n";
+        // JSON is a YAML string: a brace, a tab or a byte past ASCII in a
+        // pattern come back as the engine reads them.
+        .'finding_pattern: '.\json_encode(carried((string) $findings[0]['pattern']), \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE)."\n"
+        .'finding_card: '.\json_encode(card($repo, $owner, $findings[0]), \JSON_UNESCAPED_SLASHES | \JSON_UNESCAPED_UNICODE | \JSON_INVALID_UTF8_SUBSTITUTE)."\n"
+        ."---\n\n{% include finding.html %}\n\n".findingsList($findings, $rulePages);
+}
+
+/**
+ * The card of the finding the page opens on, as the script of the tool
+ * draws it once the findings have travelled: where the pattern lives, the
+ * line of the finding in the colors of the field, the linter's words with
+ * the link of each rule, the optimizer's rewrite when one was measured,
+ * and what breaks the pattern when something does. Drawn here, the card
+ * is on the page at the first paint, and the list under it stays where it
+ * is when the script runs. The markup stands on one line, without
+ * whitespace: the script writes none between two boxes, and a space
+ * between two inline boxes is a space on the page.
+ *
+ * @param array<string, mixed>             $repo
+ * @param array{avatar: string, profile: string} $owner
+ * @param array<string, mixed>             $finding
+ */
+function card(array $repo, array $owner, array $finding): string
+{
+    $target = $repo['target'];
+    // The source of the PHP version says itself only when it is one: a
+    // fallback notice is the pipeline's business, not the visitor's.
+    $source = isset($target['source']) && !str_starts_with((string) $target['source'], 'fallback') ? $target['source'].' · ' : '';
+
+    $snippet = '';
+    foreach ($finding['snippet'] as $line) {
+        $snippet .= '<span class="pg-snippet-line'.($line['focus'] ? ' is-focus' : '').'"><span class="pg-snippet-number">'.(int) $line['number'].'</span>';
+        foreach ($line['runs'] as [$text, $class]) {
+            $snippet .= '' === $text ? '' : ('' === $class ? shown((string) $text) : '<span class="'.shown((string) $class).'">'.shown((string) $text).'</span>');
+        }
+        $snippet .= '</span>';
+    }
+
+    $issues = '';
+    foreach ($finding['issues'] as $issue) {
+        $issues .= '<li class="pg-finding-issue-row is-'.shown((string) $issue['level']).'"><span class="pg-finding-level">'.('fail' === $issue['level'] ? 'FAIL' : 'WARN').'</span><span class="pg-finding-message">'.shown((string) $issue['message']).'</span>'
+            .(null !== $issue['hint'] && '' !== $issue['hint'] ? '<span class="pg-finding-hint">'.shown((string) $issue['hint']).'</span>' : '');
+        if (null !== $issue['docs']) {
+            $issues .= '<a class="pg-finding-rule" href="'.shown((string) $issue['docs']).'">'.shown((string) $issue['rule']).'</a>';
+        }
+        $issues .= '</li>';
+    }
+
+    $rewrite = '<div class="pg-rewrite"'.(null === $finding['rewrite'] ? ' hidden' : '').'><p class="pg-rewrite-title">Suggested rewrite, by the optimizer</p><pre class="pg-rewrite-diff">';
+    if (null !== $finding['rewrite']) {
+        $lines = ['<span class="pg-fix-del">- '.shown(carried((string) $finding['pattern'])).'</span>', '<span class="pg-fix-add">+ '.shown((string) $finding['rewrite']['optimized']).'</span>'];
+        foreach ($finding['rewrite']['changes'] as $change) {
+            $lines[] = '<span class="pg-rewrite-change">'.shown((string) $change).'</span>';
+        }
+        $rewrite .= implode("\n", $lines);
+    }
+    $rewrite .= '</pre></div>';
+
+    // A proven ReDoS: the string that breaks the pattern, the repeated part
+    // marked; then where the corpus run's replay gave up.
+    $witness = $finding['witness'];
+    $broken = null !== $witness;
+    $replayed = $broken && $witness['length'];
+    $theWitness = '<p class="pg-witness"'.($broken ? '' : ' hidden').'>';
+    if ($broken) {
+        $theWitness .= '<span class="pg-witness-label">Witness: </span>';
+        if ($witness['prefix']) {
+            $theWitness .= '<code>"'.shown((string) $witness['prefix']).'"</code> + ';
+        }
+        $theWitness .= '<code class="pg-witness-pump">"'.shown((string) $witness['pump']).'"</code> × '.(int) $witness['n'];
+        if ($witness['suffix']) {
+            $theWitness .= ' + <code>"'.shown((string) $witness['suffix']).'"</code>';
+        }
+    }
+    $theWitness .= '</p>';
+    $outcome = '<p class="pg-finding-outcome"'.($replayed ? '' : ' hidden').'>';
+    if ($replayed) {
+        $outcome .= 'Replayed on PCRE2 '.shown((string) $witness['pcre']).' (JIT off, backtrack limit '.(int) $witness['limit'].'): preg_match() gives up from length '.(int) $witness['length'].'.';
+    }
+    $outcome .= '</p>';
+
+    return '<div class="pg-finding-head"><a class="pg-finding-avatar" href="'.shown($owner['profile']).'"><img src="'.shown($owner['avatar']).'" alt="'.shown($repo['owner'].' on GitHub').'" width="24" height="24"></a><span class="pg-finding-repo">'.shown($repo['repo']).'</span><a class="pg-snippet-permalink" href="'.shown((string) $finding['permalink']).'">View on GitHub at '.shown(substr((string) $repo['sha'], 0, 7)).'</a></div>'
+        .'<p class="pg-finding-target"><span class="visually-hidden">Judged for </span><span class="pg-finding-engine">PHP '.shown((string) $target['php']).'</span><span class="pg-finding-engine">PCRE2 '.shown((string) $target['pcre']).'</span><span class="pg-finding-asof">'.shown($source.'code as of '.$repo['committed']).'</span></p>'
+        .'<p class="pg-snippet-file">'.shown($finding['file'].':'.$finding['line'].($finding['source'] ? ' · '.$finding['source'] : '').($finding['location'] ? ' · '.$finding['location'] : '')).'</p>'
+        .'<pre class="pg-snippet" aria-label="The code at the clone\'s commit">'.$snippet.'</pre>'
+        .'<ul class="pg-finding-issues">'.$issues.'</ul>'
+        .$rewrite.$theWitness.$outcome;
+}
+
+/**
+ * The findings of a repository as its page lists them, under the tool:
+ * where each stands, its pattern, what the linter says of it with the
+ * page of each rule, and the link that replays it in the tool above. The
+ * list is what a reader without the script reads, and what a search
+ * engine finds on the page. Past LIST_FOLD findings, the end folds.
+ *
+ * @param list<array<string, mixed>> $findings
+ * @param array<string, string>      $rulePages
+ */
+function findingsList(array $findings, array $rulePages): string
+{
+    $count = \count($findings);
+    $open = '';
+    $folded = '';
+    foreach ($findings as $index => $finding) {
+        $row = findingRow($finding, $rulePages);
+        if ($index < LIST_FOLD) {
+            $open .= $row;
+        } else {
+            $folded .= $row;
+        }
+    }
+    $html = '<section class="findings-list" aria-labelledby="findings-list-title">'
+        .'<h2 id="findings-list-title">'.$count.' finding'.(1 === $count ? '' : 's').'</h2>'
+        .'<p class="findings-list-lead">What the linter reports on the code at the commit named above. A finding opens in the tool.</p>'
+        .'<ol class="findings-rows">'.$open.'</ol>';
+    if ('' !== $folded) {
+        $more = $count - LIST_FOLD;
+        $html .= '<details class="findings-more"><summary>'.$more.' more finding'.(1 === $more ? '' : 's').'</summary><ol class="findings-rows">'.$folded.'</ol></details>';
+    }
+
+    return $html."</section>\n";
+}
+
+/**
+ * One finding of the list. The id of the row is not the id of the
+ * finding: an address that names a finding (#f-...) opens it in the tool,
+ * and the page must not scroll from there to a row of the same id.
+ *
+ * @param array<string, mixed> $finding
+ * @param array<string, string> $rulePages
+ */
+function findingRow(array $finding, array $rulePages): string
+{
+    $pattern = \strlen($finding['pattern']) > LIST_PATTERN ? mb_strcut($finding['pattern'], 0, LIST_PATTERN).'…' : $finding['pattern'];
+    $issues = '';
+    foreach ($finding['issues'] as $issue) {
+        $rule = $issue['rule'];
+        $path = docsPath($issue['docs'], $rule, $rulePages);
+        $link = null === $path
+            ? '<code class="finding-row-rule">'.shown($rule).'</code>'
+            : '<a class="finding-row-rule" href="'.shown($path).'">'.shown($rule).'</a>';
+        $issues .= '<li>'.$link.' <span class="finding-row-message">'.shown($issue['message']).'</span></li>';
+    }
+
+    return '<li class="finding-row is-'.$finding['level'].'" id="finding-'.$finding['id'].'">'
+        .'<p class="finding-row-head"><span class="finding-row-level">'.('fail' === $finding['level'] ? 'FAIL' : 'WARN').'</span>'
+        .'<code class="finding-row-place">'.shown($finding['file'].':'.$finding['line']).'</code>'
+        .'<a class="finding-row-replay" href="#'.$finding['id'].'">Replay</a></p>'
+        .'<code class="finding-row-pattern">'.shown(carried($pattern)).'</code>'
+        .('' === $issues ? '' : '<ul class="finding-row-issues">'.$issues.'</ul>')
+        .'</li>';
+}
+
+/**
+ * A pattern as a page can carry it. A control character the page cannot
+ * hold — everything below the space but the tab and the line feed, which
+ * travel as they are: the site's converter drops a carriage return, and
+ * no page holds a NUL byte — is written as the escape PCRE2 gives it,
+ * "\x0D": the same pattern, read the same by the engine.
+ */
+function carried(string $pattern): string
+{
+    // Everything below the space but the tab (0x09) and the line feed (0x0A).
+    return (string) preg_replace_callback('/[\x00-\x08\x0B\x0C\x0D\x0E-\x1F\x7F]/', static fn (array $byte): string => \sprintf('\\x%02X', \ord($byte[0])), $pattern);
+}
+
+/**
+ * A text of the page as HTML: its entities, and a brace as an entity
+ * too, so the template engine that builds the site reads none of it.
+ */
+function shown(string $text): string
+{
+    return str_replace(['{', '}'], ['&#123;', '&#125;'], htmlspecialchars($text, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
+}
+
+/**
+ * The path on the site of the page of a rule: from the link the linter
+ * gives (an anchor of the rule reference before the rules had pages of
+ * their own, a page since), else from the pages of the messages.
+ */
+function docsPath(?string $docs, string $rule, array $rulePages): ?string
+{
+    // An anchor of the rule reference, as the reports linked before the
+    // rules had pages of their own, and a page since.
+    if (null !== $docs && 1 === preg_match('~^https://php-regex\.com(/reference/rules/)#?([a-z0-9-]+)/?$~', $docs, $parts)) {
+        return $parts[1].$parts[2].'/';
+    }
+
+    return $rulePages[$rule] ?? null;
+}
+
+/**
+ * The path on the site of the page that explains each diagnostic the
+ * pages of the messages name under `codes`: a lint rule has its link in
+ * every report, the code of an invalid pattern has none.
+ *
+ * @return array<string, string>
+ */
+function rulePages(string $out): array
+{
+    $pages = [];
+    foreach (glob($out.'/reference/diagnostics/*.md') ?: [] as $page) {
+        if (preg_match_all('~^  - (regex\.[a-z_.]+)$~m', (string) file_get_contents($page), $codes)) {
+            foreach ($codes[1] as $code) {
+                $pages[$code] = '/reference/diagnostics/'.basename($page, '.md').'/';
+            }
+        }
+    }
+
+    return $pages;
+}
+
+/**
+ * What each rule met in the corpus, by identifier in the order of a
+ * dictionary: its findings, the projects they stand in, the path of its
+ * page, and up to EXAMPLES findings to open — distinct patterns a reader
+ * takes in at a glance, one project after the other, in the order the
+ * index lists them. A rule that finds no short pattern takes the shortest
+ * of the longer ones, up to what the list of a page shows; a rule whose
+ * every finding is longer still has its figures and nothing to open.
+ *
+ * @param list<array<string, mixed>>           $repos
+ * @param array<string, array<string, mixed>> $files
+ * @param array<string, string>               $rulePages
+ *
+ * @return array<string, array{findings: int, projects: int, docs: string|null, examples: list<array{repo: string, id: string, file: string, line: int, pattern: string}>}>
+ */
+function ruleFindings(array $repos, array $files, array $rulePages): array
+{
+    $rules = [];
+    foreach ($repos as $repo) {
+        foreach ($files[$repo['slug']]['findings'] as $finding) {
+            foreach ($finding['issues'] as $issue) {
+                $rule = $issue['rule'];
+                $rules[$rule] ??= ['findings' => 0, 'projects' => [], 'docs' => docsPath($issue['docs'], $rule, $rulePages), 'short' => [], 'longer' => [], 'shown' => []];
+                ++$rules[$rule]['findings'];
+                $rules[$rule]['projects'][$repo['repo']] = true;
+                if (isset($rules[$rule]['shown'][$finding['pattern']])) {
+                    continue;
+                }
+                $carried = carried($finding['pattern']);
+                $length = \strlen($carried);
+                $example = ['repo' => $repo['repo'], 'id' => $finding['id'], 'file' => $finding['file'], 'line' => $finding['line'], 'pattern' => $carried];
+                if ($length >= 6 && $length <= EXAMPLE_LENGTH) {
+                    $rules[$rule]['short'][$repo['slug']][] = $example;
+                    $rules[$rule]['shown'][$finding['pattern']] = true;
+                } elseif ($length > EXAMPLE_LENGTH && $length <= LIST_PATTERN) {
+                    // Kept apart by length: a rule left without a short pattern takes the shortest.
+                    $rules[$rule]['longer'][$length][] = $example;
+                    $rules[$rule]['shown'][$finding['pattern']] = true;
+                }
+            }
+        }
+    }
+    ksort($rules, \SORT_STRING);
+    foreach ($rules as $rule => $met) {
+        $examples = [];
+        // One finding of a project, then one of the next: the page shows how
+        // far a rule reaches before it shows twice from the same place.
+        $next = array_fill_keys(array_keys($met['short']), 0);
+        while ([] !== $next && \count($examples) < EXAMPLES) {
+            $taken = false;
+            foreach ($next as $project => $position) {
+                if (!isset($met['short'][$project][$position])) {
+                    unset($next[$project]);
+
+                    continue;
+                }
+                $examples[] = $met['short'][$project][$position];
+                $next[$project] = $position + 1;
+                $taken = true;
+                if (\count($examples) >= EXAMPLES) {
+                    break;
+                }
+            }
+            if (!$taken) {
+                break;
+            }
+        }
+        if ([] === $examples) {
+            ksort($met['longer'], \SORT_NUMERIC);
+            foreach ($met['longer'] as $byLength) {
+                foreach ($byLength as $example) {
+                    if (\count($examples) >= EXAMPLES) {
+                        break 2;
+                    }
+                    $examples[] = $example;
+                }
+            }
+        }
+        $rules[$rule] = ['findings' => $met['findings'], 'projects' => \count($met['projects']), 'docs' => $met['docs'], 'examples' => $examples];
+    }
+
+    return $rules;
 }
 
 function git(string $dir, string ...$arguments): string

@@ -1,0 +1,32 @@
+{% comment %}
+  What a rule, or the code of a message, met in the corpus of open-source
+  projects: how many findings, in how many projects, and a few to open —
+  each on the page of its project, in the tool, on the code it lives in.
+  The corpus run writes the figures, to _data/finding_rules.json. A rule
+  nothing met, or a page that names no rule, shows nothing here.
+  The identifiers are a list the page already names, its `rule_ids` or the
+  `codes` of its message: it is walked as it stands, since a filter applied
+  to a list would first turn it into one string.
+{% endcomment %}
+{%- if page.rule_ids -%}
+{%- assign seen_ids = page.rule_ids -%}
+{%- else -%}
+{%- assign seen_ids = page.codes -%}
+{%- endif -%}
+{%- for seen_id in seen_ids -%}
+{%- assign seen = site.data.finding_rules[seen_id] -%}
+{%- if seen -%}
+<aside class="seen-in" aria-labelledby="seen-in-title">
+  <p class="seen-in-title" id="seen-in-title">In the open-source corpus</p>
+  <p class="seen-in-lead">{{ seen.findings }} finding{% if seen.findings != 1 %}s{% endif %}, in {{ seen.projects }} project{% if seen.projects != 1 %}s{% endif %} the linter runs on.{% if seen.examples.size > 0 %} A few, each opened on the code it lives in:{% endif %}</p>
+  {%- if seen.examples.size > 0 %}
+  <ul class="seen-in-list">
+    {%- for example in seen.examples -%}
+    <li><a href="/findings/{{ example.repo }}/#{{ example.id }}">{{ example.repo }}</a> — <code>{{ example.file | escape }}:{{ example.line }}</code><br><code class="seen-in-pattern">{{ example.pattern | escape }}</code></li>
+    {%- endfor -%}
+  </ul>
+  {%- endif %}
+</aside>
+{%- break -%}
+{%- endif -%}
+{%- endfor -%}

@@ -5067,6 +5067,11 @@
   // A repository's own page: its finding from the address, else its
   // first. The link was the gesture, as a link carrying a pattern is.
   function openRepoPage(name) {
+    // The card of a finding stands on the page from the first paint, the
+    // button of the system's share with it: the row of its actions keeps
+    // its lines on a phone, whose browser shares. A browser whose hand
+    // cannot share drops the button now, before the findings travel.
+    el.shareNative.hidden = typeof navigator.share !== 'function';
     // The finding the link names, read before anything can rewrite the
     // address; and a gesture made while the data travels wins over it.
     var wanted = window.location.hash.replace(/^#/, '');
@@ -5272,6 +5277,18 @@
     }
   });
   el.findingsTree.addEventListener('keydown', onTreeKey);
+
+  // A finding named under the tool, in the list its page holds, replays in
+  // the tool: the address takes the id of the finding, and the tool comes
+  // back into view. The row of the list stands under another id, so the
+  // address alone would leave the reader down the page.
+  document.querySelectorAll('.finding-row-replay').forEach(function (link) {
+    link.addEventListener('click', function (event) {
+      event.preventDefault();
+      openFindingKey(pageRepo + '#' + link.getAttribute('href').slice(1));
+      root.scrollIntoView({ block: 'start' });
+    });
+  });
   el.findingsFilter.addEventListener('input', function () {
     window.clearTimeout(filterTimer);
     filterTimer = window.setTimeout(filterTree, 120);

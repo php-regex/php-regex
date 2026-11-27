@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Documentation;
 
 use PHPRegex\Linter\Rule\RuleCatalog;
 use PHPRegex\Linter\Rule\RuleViolation;
+use PHPRegex\Parser\ErrorCode;
 use PHPRegex\Toolkit\Regex;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
@@ -137,6 +138,65 @@ final class RulePagesTest extends TestCase
     }
 
     /**
+     * A page of a rule, or of a message, shows what its rule met in the
+     * corpus of open-source projects: the figures the corpus run wrote,
+     * and a few findings to open, each on the page of its project. Every
+     * link lands: the page of the rule, the page of the project, the row
+     * of the finding.
+     */
+    #[Test]
+    public function test_a_page_opens_on_what_its_rule_met_in_the_corpus(): void
+    {
+        $layout = (string) file_get_contents(self::DOCS.'_layouts/default.html');
+        $this->assertMatchesRegularExpression('/\{\{ content \}\}\s*\{% include seen-in\.html %\}\s*\{% include rule-pager\.html %\}/', $layout, 'What the rule met comes after the page, before the rules around it.');
+
+        $seen = (string) file_get_contents(self::DOCS.'_includes/seen-in.html');
+        $this->assertStringContainsString('site.data.finding_rules[seen_id]', $seen, 'The figures are read by the identifiers the page names.');
+        $this->assertStringContainsString('href="/findings/{{ example.repo }}/#{{ example.id }}"', $seen, 'A finding opens on the page of its project.');
+        $this->assertStringContainsString('{%- if page.rule_ids -%}', $seen, 'The identifiers of a rule page are its rule_ids; a message page names codes.');
+        $this->assertStringNotContainsString('split', $seen, 'The identifiers are a list already: a filter on the list would make one string of it, and no identifier would be found.');
+
+        $met = file_get_contents(self::DOCS.'_data/finding_rules.json');
+        $this->assertIsString($met);
+        $rules = json_decode($met, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($rules);
+        $this->assertNotEmpty($rules);
+        $known = [...array_keys(RuleCatalog::docsUrls()), ...array_map(static fn (ErrorCode $case): string => $case->value, ErrorCode::cases())];
+        foreach ($rules as $id => $figures) {
+            $this->assertIsString($id);
+            $this->assertContains($id, $known, $id.' is an identifier the library gives.');
+            $this->assertIsArray($figures);
+            $this->assertIsInt($figures['findings'] ?? null, $id.' counts its findings.');
+            $this->assertIsInt($figures['projects'] ?? null, $id.' counts its projects.');
+            $this->assertGreaterThanOrEqual(1, (int) $figures['projects']);
+            $this->assertGreaterThanOrEqual((int) $figures['projects'], (int) $figures['findings']);
+            if (null !== $figures['docs']) {
+                $this->assertIsString($figures['docs']);
+                $this->assertFileExists(self::DOCS.rtrim($figures['docs'], '/').'.md', $id.' names the page that explains it.');
+            }
+            $examples = $figures['examples'] ?? null;
+            $this->assertIsList($examples);
+            $this->assertLessThanOrEqual(5, \count($examples), $id.' names a few findings to open.');
+            $patterns = [];
+            foreach ($examples as $example) {
+                $this->assertIsArray($example);
+                $this->assertIsString($example['pattern'] ?? null);
+                $this->assertLessThanOrEqual(240, \strlen($example['pattern']), $id.' opens on a pattern its page shows whole.');
+                $patterns[] = $example['pattern'];
+                $repo = $example['repo'] ?? null;
+                $finding = $example['id'] ?? null;
+                $this->assertIsString($repo);
+                $this->assertIsString($finding);
+                [$vendor, $name] = explode('/', $repo, 2);
+                $page = self::DOCS.'_findings/'.$vendor.'__'.str_replace('.', '~', $name).'.md';
+                $this->assertFileExists($page, $id.' opens a finding of a project the site holds a page of.');
+                $this->assertStringContainsString('id="finding-'.$finding.'"', (string) file_get_contents($page), $id.' names a finding that stands on the page of its project.');
+            }
+            $this->assertCount(\count($patterns), array_unique($patterns), $id.' opens distinct patterns.');
+        }
+    }
+
+    /**
      * A page that promises the finding shows it: the rule of the page,
      * on by default, speaks on the pattern the link opens. A pattern the
      * rule stays silent on would open on a tab with nothing to see.
@@ -158,7 +218,7 @@ final class RulePagesTest extends TestCase
     public function test_a_rule_page_offers_the_rules_around_it_in_its_section(): void
     {
         $layout = (string) file_get_contents(self::DOCS.'_layouts/default.html');
-        $this->assertMatchesRegularExpression('/\{\{ content \}\}\s*\{% include rule-pager\.html %\}\s*\{% include pager\.html %\}/', $layout, 'The rules around the page come before the page meta.');
+        $this->assertMatchesRegularExpression('/\{\{ content \}\}\s*\{% include seen-in\.html %\}\s*\{% include rule-pager\.html %\}\s*\{% include pager\.html %\}/', $layout, 'What the rule met in the corpus, then the rules around the page, come before the page meta.');
 
         $pager = (string) file_get_contents(self::DOCS.'_includes/rule-pager.html');
         $this->assertStringContainsString("{% assign rule_siblings = site.pages | where: 'rule_category', page.rule_category | sort: 'rule_order' %}", $pager, 'The pager reads the section and the place each page names.');

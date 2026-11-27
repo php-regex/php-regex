@@ -2998,6 +2998,160 @@ a:focus-visible .article-nav-arrow {
   transform: translateX(.25em);
 }
 
+/* ---- What a rule met in the corpus ------------------------------------------
+ * On the page of a rule, or of a message: the figures of the corpus run,
+ * and a few findings to open, each on the page of its project. A quiet
+ * block under the page: the figures in the page's voice, the findings as
+ * a list of places and patterns.
+   -------------------------------------------------------------------------- */
+
+.seen-in {
+  margin: 2.25rem 0 0;
+  padding: 1.15rem 1.25rem 1.25rem;
+  background: var(--panel);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius-m);
+}
+
+.seen-in-title {
+  margin: 0 0 .3rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.seen-in-lead {
+  margin: 0 0 .75rem;
+  font-size: .9rem;
+  color: var(--ink-soft);
+}
+
+.seen-in-list {
+  margin: 0;
+  padding: 0 0 0 1.1rem;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+.seen-in-list li + li {
+  margin-top: .5rem;
+}
+
+.seen-in-pattern {
+  overflow-wrap: anywhere;
+}
+
+/* ---- The findings of a repository, under its tool ---------------------------
+ * One finding per row: where it stands, the linter's badge in the state
+ * colors, the pattern in the code font, then what the linter says, with
+ * the page of its rule. The link replays the finding in the tool above.
+ * Rows breathe, a hairline apart; past forty, the end folds.
+   -------------------------------------------------------------------------- */
+
+.findings-list {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 2.75rem var(--gutter) 3.5rem;
+}
+
+.findings-list-title {
+  margin: 0 0 .4rem;
+  font-size: 1.4rem;
+}
+
+.findings-list-lead {
+  margin: 0 0 1.4rem;
+  font-size: .92rem;
+  color: var(--ink-soft);
+}
+
+.findings-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.finding-row {
+  padding: 1rem 0 1.1rem;
+  border-top: 1px solid var(--line-soft);
+}
+
+.finding-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: .3rem .75rem;
+  margin: 0 0 .45rem;
+  font-family: var(--font-mono);
+  font-size: .78rem;
+}
+
+.finding-row-level {
+  font-weight: 600;
+  color: var(--amber-deep);
+}
+
+.finding-row.is-fail .finding-row-level {
+  color: var(--danger);
+}
+
+.finding-row-place {
+  overflow-wrap: anywhere;
+  color: var(--ink-soft);
+}
+
+.finding-row-replay {
+  margin-left: auto;
+}
+
+.finding-row-pattern {
+  display: block;
+  padding: .5rem .7rem;
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  line-height: 1.55;
+  color: var(--code-ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  background: var(--code-bg);
+  border-radius: var(--radius-s);
+}
+
+.finding-row-issues {
+  margin: .55rem 0 0;
+  padding: 0 0 0 1.15rem;
+  font-size: .9rem;
+  line-height: 1.6;
+}
+
+.finding-row-issues li + li {
+  margin-top: .3rem;
+}
+
+.finding-row-rule {
+  font-family: var(--font-mono);
+  font-size: .8em;
+}
+
+.findings-more {
+  border-top: 1px solid var(--line-soft);
+}
+
+.findings-more > summary {
+  padding: .85rem 0;
+  font-size: .92rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.findings-more > summary:focus-visible {
+  outline: 2px solid var(--amber);
+  outline-offset: 2px;
+}
+
+.findings-more[open] > summary {
+  margin-bottom: .2rem;
+}
+
 /* ---- The indexes of the reference ------------------------------------------
  * One page per row, in the rule reference, in the index of the messages
  * the engine prints, and in the cheat sheet: its page, what the engine
@@ -5751,6 +5905,22 @@ body.search-open {
   grid-column: 1 / -1;
   min-width: 0;
 }
+/* The pattern field is a row of one cell, shared by the field and the
+ * mirror under it. On a page that opens on a finding the mirror holds the
+ * pattern from the first paint, so the row has the height of that text
+ * before any script measures the field — and keeps it when the script
+ * does. The mirror of the text field overlays it, as here no mirror must:
+ * that field keeps the height the stylesheet gives it. The mirror's own
+ * rule stands after the rule of the mirrors that overlay, further down. */
+.pg-editor-pattern {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.pg-editor-pattern > .pg-input,
+.pg-editor-pattern > .pg-mirror {
+  grid-area: 1 / 1;
+}
 .pg-editor .pg-mirror,
 .pg-editor .pg-input {
   display: block;
@@ -5777,6 +5947,13 @@ body.search-open {
   background: var(--code-bg);
   border-color: transparent;
   pointer-events: none;
+}
+/* The mirror of the pattern field stands in the row instead: it is the
+   one that gives the row the height of the text, a wrapped line at a
+   time. Heavier than the rule above, and written after it. */
+.pg-editor.pg-editor-pattern > .pg-mirror {
+  position: relative;
+  inset: auto;
 }
 .pg-editor .pg-input {
   position: relative;
@@ -6553,6 +6730,68 @@ body.search-open {
 .pg-chip.is-engine .pg-chip-value {
   color: var(--amber-deep);
   font-weight: 600;
+}
+
+/* ---- A project's page keeps the room of the answer -------------------------
+ * The list of the findings stands right under the tool, and the engine
+ * answers the finding the page opens on after the first paint: what the
+ * answer adds would push the list down under the reader's thumb. On these
+ * pages only, the room is kept from the first paint. The results keep one
+ * height where the layout gives the body none, and scroll inside it (the
+ * side-by-side layout gives them theirs already). The facts of the engine
+ * hold one line that scrolls, as the examples do, and stand empty until
+ * they come. The note on the JIT keeps its lines before it is written: as
+ * many as it takes at that width.
+   -------------------------------------------------------------------------- */
+@media (max-width: 1023px) {
+  .hero-finding .pg-body > .pg-results {
+    height: 22rem;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--line) transparent;
+  }
+}
+.hero-finding .pg-facts {
+  flex: 1 1 100%;
+  flex-wrap: nowrap;
+  min-width: 0;
+  padding: 0 .1rem .25rem 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.hero-finding .pg-facts:empty {
+  display: flex;
+  /* The height of the line: a chip, its padding under it kept for the scrollbar. */
+  min-height: calc(.78rem * 1.5 + .3rem + 2px + .25rem);
+}
+.hero-finding .pg-facts li {
+  flex: none;
+  margin: 0;
+}
+.hero-finding .pg-caption {
+  display: block;
+  min-height: 4.56rem;
+}
+@media (max-width: 359px) {
+  .hero-finding .pg-caption {
+    min-height: 5.7rem;
+  }
+}
+@media (min-width: 440px) {
+  .hero-finding .pg-caption {
+    min-height: 3.42rem;
+  }
+}
+@media (min-width: 620px) {
+  .hero-finding .pg-caption {
+    min-height: 2.28rem;
+  }
+}
+@media (min-width: 1240px) {
+  .hero-finding .pg-caption {
+    min-height: 1.14rem;
+  }
 }
 
 /* A phone gives the pattern field a line of its own; between a phone and

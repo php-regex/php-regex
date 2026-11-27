@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Tests\Documentation;
 
+use PHPRegex\Tests\Support\FrontMatter;
 use PHPRegex\Tests\Support\PlaygroundDriver;
 use PHPRegex\Tests\Support\ProcessPipes;
 use PHPRegex\Tests\TestUtils\TemporaryDirectory;
@@ -644,6 +645,323 @@ final class FindingsReportTest extends TestCase
     }
 
     /**
+     * A page opens on the finding the playground opens on: the field of
+     * the tool holds that pattern from the first paint. Under the tool it
+     * lists every finding, for a reader without the script and for a
+     * search engine: where it stands, its pattern, what the linter says,
+     * the page of each rule, and the link that replays it.
+     */
+    #[Test]
+    public function test_a_page_opens_on_its_first_finding_and_lists_them_all(): void
+    {
+        $this->report();
+
+        $page = (string) file_get_contents($this->dir.'/out/_findings/acme__tool.md');
+        $first = $this->finding('/^(a+)+$/');
+        $second = $this->finding('#^v\d+#is');
+        $this->assertStringContainsString('finding_pattern: '.json_encode($first['pattern'], \JSON_UNESCAPED_SLASHES)."\n", $page, 'The field of the tool opens on the first finding.');
+        $this->assertLessThan((int) strpos($page, 'id="finding-'.$second['id'].'"'), (int) strpos($page, 'id="finding-'.$first['id'].'"'), 'The list follows the order of the tool.');
+
+        foreach ([$first, $second] as $finding) {
+            $row = $this->between($page, '<li class="finding-row is-'.$finding['level'].'" id="finding-'.$finding['id'].'">', '</ul></li>');
+            $this->assertStringContainsString('<a class="finding-row-replay" href="#'.$finding['id'].'">', $row, 'A finding replays in the tool above.');
+            $this->assertStringContainsString('<code class="finding-row-place">'.$this->shown($finding['file'].':'.$finding['line']).'</code>', $row);
+            $this->assertStringContainsString('<code class="finding-row-pattern">'.$this->shown($finding['pattern']).'</code>', $row);
+            foreach ($finding['issues'] as $issue) {
+                $this->assertStringContainsString('<a class="finding-row-rule" href="'.$this->docs($issue['docs']).'">'.$this->shown($issue['rule']).'</a>', $row, 'An issue links to the page of its rule.');
+                $this->assertStringContainsString('<span class="finding-row-message">'.$this->shown($issue['message']).'</span>', $row, "The linter's own words.");
+            }
+        }
+        $this->assertSame(2, substr_count($page, '<li class="finding-row '), 'Every finding, once.');
+        $this->assertStringNotContainsString('<details', $page, 'A short list does not fold.');
+    }
+
+    /**
+     * The page opens on the card of its first finding, drawn by the report
+     * as the script draws it once the findings have travelled: the page
+     * shows it at the first paint, and nothing under it moves when the
+     * script runs. The finding here is a proven ReDoS: its witness and the
+     * outcome of its replay stand on the card, and no rewrite does.
+     */
+    #[Test]
+    public function test_a_page_opens_on_the_card_of_its_first_finding(): void
+    {
+        $this->report();
+
+        $front = FrontMatter::of($this->dir.'/out/_findings/acme__tool.md');
+        $card = $front['finding_card'] ?? null;
+        $this->assertIsString($card);
+        $this->assertStringNotContainsString("\n", (string) $card, 'No whitespace the script does not write: a space between two inline boxes is a space on the page.');
+
+        $sha = $this->head('acme/tool');
+        $this->assertStringContainsString('<div class="pg-finding-head"><a class="pg-finding-avatar" href="https://github.com/acme"><img src="/assets/findings/avatars/acme.png" alt="acme on GitHub" width="24" height="24"></a><span class="pg-finding-repo">acme/tool</span><a class="pg-snippet-permalink" href="https://github.com/acme/tool/blob/'.$sha.'/src/Check.php#L3-L9">View on GitHub at '.substr($sha, 0, 7).'</a></div>', (string) $card);
+        $this->assertStringContainsString('<p class="pg-finding-target"><span class="visually-hidden">Judged for </span><span class="pg-finding-engine">PHP 8.1</span><span class="pg-finding-engine">PCRE2 10.39</span><span class="pg-finding-asof">code as of '.date('Y-m-d').'</span></p>', (string) $card, 'A fallback of the PHP version is the pipeline\'s business, not the visitor\'s.');
+        $this->assertStringContainsString('<p class="pg-snippet-file">src/Check.php:6 · preg_match()</p>', (string) $card);
+        $this->assertStringContainsString('<pre class="pg-snippet" aria-label="The code at the clone\'s commit"><span class="pg-snippet-line"><span class="pg-snippet-number">3</span>// Größe: a comment with multibyte letters, kept as it is.</span>', (string) $card, 'A line of the code, its number, in the page\'s own words for the commit.');
+        $this->assertStringContainsString('<span class="pg-snippet-line is-focus"><span class="pg-snippet-number">6</span>    return 1 === preg_match(<span class="pg-snippet-pattern pg-snippet-quote">&#039;</span><span class="pg-snippet-pattern pg-tok-meta">/</span>', (string) $card, 'The line of the finding, its literal in the colors of the field.');
+        $this->assertStringContainsString('<li class="pg-finding-issue-row is-warn"><span class="pg-finding-level">WARN</span><span class="pg-finding-message">Nested quantifiers in capturing group 1 &quot;(a+)&quot; can cause catastrophic backtracking.</span><span class="pg-finding-hint">Consider atomic groups (?&gt;...) or possessive quantifiers — verify the rewrite still matches everything you need.</span><a class="pg-finding-rule" href="https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/">regex.lint.quantifier.nested</a></li>', (string) $card, 'The linter\'s words, its hint, the link of its rule as the linter gives it.');
+        $this->assertStringContainsString('<div class="pg-rewrite" hidden><p class="pg-rewrite-title">Suggested rewrite, by the optimizer</p><pre class="pg-rewrite-diff"></pre></div>', (string) $card, 'No rewrite was measured for this one: its block stands hidden, as the script leaves it.');
+        $this->assertStringContainsString('<p class="pg-witness"><span class="pg-witness-label">Witness: </span><code class="pg-witness-pump">"a"</code> × 64 + <code>"!"</code></p>', (string) $card, 'A proven ReDoS: the string that breaks the pattern, the repeated part marked.');
+        $this->assertMatchesRegularExpression('~<p class="pg-finding-outcome">Replayed on PCRE2 10\.\d+ \(JIT off, backtrack limit 100000\): preg_match\(\) gives up from length 17\.</p>$~', $card, 'Where the corpus run\'s replay gave up, in the log\'s own sentence.');
+    }
+
+    /**
+     * A lint finding the optimizer rewrites shows the rewrite on its card;
+     * nothing breaks it, so the witness and the outcome stay hidden.
+     */
+    #[Test]
+    public function test_the_card_of_a_finding_the_optimizer_rewrites_shows_the_rewrite(): void
+    {
+        $this->repository('acme/fix', ['src/Fix.php' => "<?php\n\npreg_match('#^v\\d+#is', \$tag);\n"]);
+        $this->lint('acme/fix');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $front = FrontMatter::of($this->dir.'/out/_findings/acme__fix.md');
+        $card = $front['finding_card'] ?? null;
+        $this->assertIsString($card);
+        $this->assertStringContainsString('<li class="pg-finding-issue-row is-warn"><span class="pg-finding-level">WARN</span><span class="pg-finding-message">Flag &#039;s&#039; is useless: the pattern contains no unescaped dot outside a character class.</span><a class="pg-finding-rule" href="https://php-regex.com/reference/rules/useless-flag-s-dotall/">regex.lint.flag.useless.s</a></li>', (string) $card, 'No hint: no line for one.');
+        $this->assertStringContainsString("<div class=\"pg-rewrite\"><p class=\"pg-rewrite-title\">Suggested rewrite, by the optimizer</p><pre class=\"pg-rewrite-diff\"><span class=\"pg-fix-del\">- #^v\d+#is</span>\n<span class=\"pg-fix-add\">+ #^v\d+#i</span>\n<span class=\"pg-rewrite-change\">Removed a flag nothing in the pattern reads.</span></pre></div>", (string) $card);
+        $this->assertStringEndsWith('<p class="pg-witness" hidden></p><p class="pg-finding-outcome" hidden></p>', $card, 'Nothing breaks a lint finding.');
+    }
+
+    /**
+     * A repository with hundreds of findings lists them all: the end of
+     * the list folds, and stays on the page.
+     */
+    #[Test]
+    public function test_the_end_of_a_long_list_folds(): void
+    {
+        $lines = '';
+        for ($i = 0; 45 > $i; $i++) {
+            $lines .= 'function tag'.$i."(string \$tag): bool { return 1 === preg_match('#^v\\\\d+#is', \$tag); }\n";
+        }
+        $this->repository('acme/many', ['src/Many.php' => "<?php\n\n".$lines]);
+        $this->lint('acme/many');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $page = (string) file_get_contents($this->dir.'/out/_findings/acme__many.md');
+        $this->assertSame(45, substr_count($page, '<li class="finding-row '), 'Every finding is on the page.');
+        $fold = (int) strpos($page, '<details class="findings-more"><summary>5 more findings</summary>');
+        $this->assertGreaterThan(0, $fold, 'The end of the list folds.');
+        $this->assertSame(40, substr_count(substr($page, 0, $fold), '<li class="finding-row '), 'Forty stand open.');
+    }
+
+    /**
+     * What each rule met in the corpus, for the page of the rule: how
+     * many findings, in how many projects, and a few to open.
+     */
+    #[Test]
+    public function test_the_findings_of_each_rule_are_counted_for_the_page_of_the_rule(): void
+    {
+        $this->report();
+
+        $this->assertFileExists($this->dir.'/out/_data/finding_rules.json');
+        $rules = json_decode((string) file_get_contents($this->dir.'/out/_data/finding_rules.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($rules);
+        $second = $this->finding('#^v\d+#is');
+        $this->assertSame(['findings' => 1, 'projects' => 1, 'docs' => '/reference/rules/useless-flag-s-dotall/', 'examples' => [['repo' => 'acme/tool', 'id' => $second['id'], 'file' => 'src/Check.php', 'line' => 11, 'pattern' => '#^v\d+#is']]], $rules['regex.lint.flag.useless.s'] ?? null);
+        $redos = $rules['regex.lint.redos'] ?? null;
+        $this->assertIsArray($redos);
+        $this->assertSame('/reference/rules/catastrophic-backtracking/', $redos['docs'] ?? null);
+        $this->assertArrayNotHasKey('regex.lint.quantifier.useless', $rules, 'A rule nothing met is not listed.');
+        $names = array_keys($rules);
+        sort($names, \SORT_STRING);
+        $this->assertSame($names, array_keys($rules), 'The rules stand in the order of their identifiers: a day without change gives the same bytes.');
+    }
+
+    /**
+     * A pattern or a message with two braces in a row is text on the page:
+     * the template engine that builds the site reads none of it.
+     */
+    #[Test]
+    public function test_braces_the_template_engine_would_read_are_written_as_entities(): void
+    {
+        $this->repository('acme/braces', ['src/Braces.php' => "<?php\n\nfunction braces(\$x)\n{\n    return 1 === preg_match('/{{2}.*/i', \$x);\n}\n"]);
+        $this->lint('acme/braces');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $page = (string) file_get_contents($this->dir.'/out/_findings/acme__braces.md');
+        $this->assertStringContainsString("finding_pattern: \"/{{2}.*/i\"\n", $page, 'The front matter is JSON: there the braces are text.');
+        $list = $this->between($page, '<section class="findings-list"', '</section>');
+        $this->assertStringContainsString('<code class="finding-row-pattern">/&#123;&#123;2&#125;.*/i</code>', $list);
+        $this->assertSame(0, preg_match('~\{[%{]~', $list), 'Nothing in the list opens a tag of the template engine.');
+    }
+
+    /**
+     * A pattern that holds a control character the page cannot carry — a
+     * carriage return, which the site's converter drops, a NUL byte, which
+     * no page holds — is written as the escape PCRE2 gives it: the same
+     * pattern, read the same by the engine. The tab and the line feed
+     * travel as they are.
+     */
+    #[Test]
+    public function test_a_control_character_a_page_cannot_carry_is_written_as_its_escape(): void
+    {
+        $this->repository('acme/control', ['src/Control.php' => "<?php\n\npreg_match(\"/[\\r\\n\\x00]+\\t/\", \$text);\n"]);
+        $this->lint('acme/control');
+
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $file = json_decode((string) file_get_contents($this->dir.'/out/assets/findings/repos/acme__control.json'), true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($file);
+        $findings = $file['findings'] ?? null;
+        $this->assertIsList($findings);
+        $first = $findings[0] ?? null;
+        $this->assertIsArray($first);
+        $this->assertSame("/[\r\n\x00]+\t/", $first['pattern'] ?? null, 'The report keeps the pattern as the engine reads it.');
+        $page = (string) file_get_contents($this->dir.'/out/_findings/acme__control.md');
+        $this->assertStringContainsString("finding_pattern: \"/[\\\\x0D\\n\\\\x00]+\\t/\"\n", $page, 'The field of the tool opens on it, a control character as its escape: the front matter is JSON, where the line feed is an escape too.');
+        $list = $this->between($page, '<section class="findings-list"', '</section>');
+        $this->assertStringContainsString("<code class=\"finding-row-pattern\">/[\\x0D\n\\x00]+\t/</code>", $list, 'And so does its row, the line feed and the tab as they are.');
+        $this->assertSame(0, preg_match('/[\x00\r]/', $page), 'Nothing of them stands raw on the page.');
+    }
+
+    /**
+     * The page of a rule opens on findings a reader takes in at a glance:
+     * short patterns. A rule that meets none takes the shortest of the
+     * longer ones, up to what the list of a page shows; one whose every
+     * finding is longer still has its figures and nothing to open.
+     */
+    #[Test]
+    public function test_a_rule_opens_on_short_patterns_then_on_the_shortest_long_ones(): void
+    {
+        // 99 bytes, 300, 7, 99: digits only, so that the flag is what is useless.
+        $this->repository('acme/long', ['src/Long.php' => "<?php\n\n"
+            ."function long(\$x)\n{\n"
+            ."    return 1 === preg_match('/".str_repeat('1', 96)."1/i', \$x)\n"
+            ."        || 1 === preg_match('/".str_repeat('1', 297)."1/m', \$x)\n"
+            ."        || 1 === preg_match('/(123)/i', \$x)\n"
+            ."        || 1 === preg_match('/".str_repeat('1', 96)."1/x', \$x);\n}\n"]);
+        $this->lint('acme/long');
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $short = $this->rulesMet('regex.lint.flag.useless.i')['examples'];
+        $this->assertIsList($short);
+        $this->assertCount(1, $short, 'A rule opens on a short pattern, though a longer one came first.');
+        $this->assertSame(['repo' => 'acme/long', 'file' => 'src/Long.php', 'line' => 7, 'pattern' => '/(123)/i'], self::withoutId($short[0]));
+
+        $longer = $this->rulesMet('regex.lint.flag.useless.x')['examples'];
+        $this->assertIsList($longer);
+        $this->assertCount(1, $longer, 'A rule with no short pattern takes the shortest of the longer ones.');
+        $this->assertSame(['repo' => 'acme/long', 'file' => 'src/Long.php', 'line' => 8, 'pattern' => '/'.str_repeat('1', 96).'1/x'], self::withoutId($longer[0]));
+
+        $this->assertSame(
+            ['findings' => 1, 'projects' => 1, 'docs' => '/reference/rules/useless-flag-m-multiline/', 'examples' => []],
+            $this->rulesMet('regex.lint.flag.useless.m'),
+            'A rule whose every finding is longer than the list shows has its figures and nothing to open.',
+        );
+    }
+
+    /**
+     * A rule met in several projects opens on one finding of each, in the
+     * order the index lists the projects, before a second of the same one:
+     * the page shows how far the rule reaches.
+     */
+    #[Test]
+    public function test_a_rule_opens_on_a_finding_of_each_project_before_a_second_of_one(): void
+    {
+        // A project the index lists before the two others: it holds a finding that fails.
+        $this->repository('acme/first', ['src/First.php' => "<?php\n\n"
+            ."function first(\$x)\n{\n"
+            ."    return 1 === preg_match('/^(a+)+\$/', \$x)\n"
+            ."        || 1 === preg_match('/abc/s', \$x)\n"
+            ."        || 1 === preg_match('/def/s', \$x);\n}\n"]);
+        $this->repository('acme/long', ['src/Long.php' => "<?php\n\n"
+            ."function long(\$x)\n{\n"
+            ."    return 1 === preg_match('/ghi/s', \$x)\n"
+            ."        || 1 === preg_match('/jkl/s', \$x);\n}\n"]);
+        $this->lint('acme/first');
+        $this->lint('acme/long');
+        [$exit, $output] = $this->report();
+
+        $this->assertSame(0, $exit, $output);
+        $index = $this->index();
+        $this->assertSame(['acme/first', 'acme/tool', 'acme/long'], array_column($index['repos'], 'repo'), 'The index lists the projects the figures follow.');
+        $met = $this->rulesMet('regex.lint.flag.useless.s');
+
+        $this->assertSame(3, $met['projects']);
+        $this->assertSame(['/abc/s', '#^v\d+#is', '/ghi/s', '/def/s', '/jkl/s'], array_column($met['examples'], 'pattern'), 'One finding of each project, then the next of each.');
+        $this->assertSame(['acme/first', 'acme/tool', 'acme/long', 'acme/first', 'acme/long'], array_column($met['examples'], 'repo'));
+    }
+
+    /**
+     * What a rule met in the corpus, as the report writes it for the site.
+     *
+     * @return array{findings: int, projects: int, docs: string|null, examples: list<mixed>}
+     */
+    private function rulesMet(string $id): array
+    {
+        $json = (string) file_get_contents($this->dir.'/out/_data/finding_rules.json');
+        $rules = json_decode($json, true, 512, \JSON_THROW_ON_ERROR);
+        $this->assertIsArray($rules);
+        $met = $rules[$id] ?? null;
+        $this->assertIsArray($met, $id.' met something in the corpus.');
+        $findings = $met['findings'] ?? null;
+        $projects = $met['projects'] ?? null;
+        $docs = $met['docs'] ?? null;
+        $examples = $met['examples'] ?? null;
+        $this->assertIsInt($findings);
+        $this->assertIsInt($projects);
+        if (null !== $docs) {
+            $this->assertIsString($docs);
+        }
+        $this->assertIsList($examples);
+
+        return ['findings' => $findings, 'projects' => $projects, 'docs' => $docs, 'examples' => $examples];
+    }
+
+    /**
+     * A finding to open, as the page reads it: all but the identifier, which
+     * the hash of the finding decides.
+     *
+     * @return array<int|string, mixed>
+     */
+    private static function withoutId(mixed $finding): array
+    {
+        self::assertIsArray($finding);
+        self::assertIsString($finding['id'] ?? null, 'The finding keeps the identifier its page anchors.');
+
+        return array_diff_key($finding, ['id' => true]);
+    }
+
+    /**
+     * A text of a finding as the page writes it: its HTML entities, and
+     * a brace as an entity too.
+     */
+    private function shown(string $text): string
+    {
+        return str_replace(['{', '}'], ['&#123;', '&#125;'], htmlspecialchars($text, \ENT_QUOTES | \ENT_SUBSTITUTE, 'UTF-8'));
+    }
+
+    /**
+     * The link of an issue as the page writes it: a path of the site.
+     */
+    private function docs(?string $url): string
+    {
+        $this->assertNotNull($url);
+
+        return (string) preg_replace('~^https://php-regex\.com~', '', (string) $url);
+    }
+
+    private static function between(string $haystack, string $from, string $to): string
+    {
+        $start = strpos($haystack, $from);
+        self::assertNotFalse($start, $from);
+        $end = strpos($haystack, $to, $start + \strlen($from));
+        self::assertNotFalse($end, $to);
+
+        return substr($haystack, $start, $end - $start);
+    }
+
+    /**
      * @param array<string, string> $files
      */
     private function repository(string $name, array $files, bool $init = true): void
@@ -758,7 +1076,7 @@ final class FindingsReportTest extends TestCase
     private function snapshot(): array
     {
         $files = [];
-        foreach (['assets/findings/index.json', 'assets/findings/repos/acme__tool.json', '_findings/acme__tool.md'] as $path) {
+        foreach (['assets/findings/index.json', 'assets/findings/repos/acme__tool.json', '_findings/acme__tool.md', '_data/finding_rules.json'] as $path) {
             $files[$path] = (string) file_get_contents($this->dir.'/out/'.$path);
         }
 
