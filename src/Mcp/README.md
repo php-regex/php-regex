@@ -84,7 +84,7 @@ Exponential backtracking (proven)
 Unbounded quantifier detected. May cause backtracking on non-matching input. …
 ```
 
-and, as structured content, the ReDoS analysis object: `severity`, `complexity`, `witness` (`prefix`, `pump`, `suffix`), `hotspots` and the rest.
+and, as structured content, the ReDoS analysis object: `severity`, `complexity`, `witness` (`prefix`, `pump`, `suffix`, `call`), `hotspots` and the rest.
 
 Integration
 -----------

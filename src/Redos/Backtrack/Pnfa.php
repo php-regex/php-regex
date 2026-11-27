@@ -195,6 +195,15 @@ final class Pnfa
     public bool $looksBehindStart = false;
 
     /**
+     * Whether the pattern holds an atomic group or a possessive repeat.
+     * PCRE2 makes a character repeated before a group one of them holds,
+     * which the engine may skip, possessive as if the group could not be
+     * skipped: "/a+(?:b)?+a/" finds nothing in "aa". A success the search
+     * reads where such a repeat gives a character back is not the engine's.
+     */
+    public bool $holdsPossessive = false;
+
+    /**
      * Whether the search holds "$" (without /m nor /D) or "\Z": the model
      * reads the final newline it may stand before into the anchor, where
      * an item after it may read that newline instead. A subject that does

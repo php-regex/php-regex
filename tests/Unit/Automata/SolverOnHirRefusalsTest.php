@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Parser\Exception\SemanticErrorException;
 use PHPRegex\Parser\RegexParser;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
@@ -39,9 +40,11 @@ final class SolverOnHirRefusalsTest extends TestCase
     /**
      * The merged message list. One message per Hir reason: an opaque
      * construct, a conditional, a lookaround, an atomic group, a refused
-     * assertion kind, an engine-refused surrogate atom, an unsupported
-     * flag. The atomic message and the flags message are today's, kept
-     * word for word; the others replace the validator's generic ones.
+     * assertion kind, an unsupported flag. The atomic message and the
+     * flags message are today's, kept word for word; the others replace
+     * the validator's generic ones. A pattern the engine refuses to
+     * compile never reaches the ladder: the solver refuses it first, with
+     * the validation error.
      *
      * A row may name what the engine reads apart: on the subject, the
      * first pattern finds another match than the second.
@@ -56,7 +59,6 @@ final class SolverOnHirRefusalsTest extends TestCase
         $anchored = 'An anchor inside a lookaround is beyond what the automata solver reads.';
         $atomic = 'Atomic groups commit to their first match and never retry, which is ordered behaviour the solver cannot read as a pure language.';
         $assertion = '\K and \G read where a match starts or stood before, which the automata solver cannot read as a pure language.';
-        $surrogate = 'PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.';
 
         // "\g{1}" is the unambiguous spelling of the backreference: the
         // parser reads a plain "\1" as the octal escape \x{01}, and PCRE
@@ -66,7 +68,8 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'callout' => ['pattern' => '/(?C)a/', 'expected' => $opaque];
         yield 'verb in the middle' => ['pattern' => '/a(*COMMIT)b/', 'expected' => $opaque];
 
-        yield 'conditional group' => ['pattern' => '/(?(1)a|b)/', 'expected' => $conditional];
+        // Oracle: preg_match('/(a)?(?(1)a|b)/', 'b') is 1, the group unset.
+        yield 'conditional group' => ['pattern' => '/(a)?(?(1)a|b)/', 'expected' => $conditional];
 
         yield 'lookahead inside a lookahead' => ['pattern' => '/(?=a(?=b))a/', 'expected' => $nested];
         yield 'anchor inside a negative lookbehind' => ['pattern' => '/(?<!^a)b/', 'expected' => $anchored];
@@ -92,21 +95,14 @@ final class SolverOnHirRefusalsTest extends TestCase
         yield 'keep at the start' => ['pattern' => '/\Ka/', 'expected' => $assertion];
         yield 'match start' => ['pattern' => '/\Gab/', 'expected' => $assertion];
 
-        // Oracle: PCRE refuses to COMPILE a /u pattern that names a surrogate
-        // code point — as a literal, a class member or a range endpoint
-        // (preg_match('/[a\x{D800}]/u', 'a') is false, "Compilation failed:
-        // disallowed Unicode code point (>= 0xd800 && <= 0xdfff)"); only a
-        // range straddling the block with both endpoints outside compiles.
-        // The engine-refused atom is refused, never approximated.
-        yield 'surrogate literal' => ['pattern' => '/\x{D800}/u', 'expected' => $surrogate];
-        yield 'surrogate in a class' => ['pattern' => '/[a\x{D800}]/u', 'expected' => $surrogate];
-        yield 'surrogate as a range endpoint' => ['pattern' => '/[\x{D800}-\x{E000}]/u', 'expected' => $surrogate];
-
         // Oracle: preg_match('/a/A', 'ba') is 0, the anchored flag pins a
         // search to the subject's start. It is not read, so the flag check
         // refuses it word for word.
         yield 'A flag' => ['pattern' => '/a/A', 'expected' => 'Unsupported regex flags for automata: A.'];
-        yield 'newline convention under m' => ['pattern' => '/(*CRLF)ab/m', 'expected' => 'A newline convention other than "\n" moves where'];
+        // Oracle: under (*CRLF) the dot takes a "\r" unless a "\n" follows it,
+        // so in "a\r\n" no "a" stands before a ".\n", where one does once the
+        // dot takes all. The dot looks ahead for it, here inside a lookahead.
+        yield 'a dot in a lookahead under (*CRLF)' => ['pattern' => '/(*CRLF)a(?=.\n)/m', 'expected' => 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.', 'engine' => ['/(*CRLF)a(?=.\n)/s', '/(*CRLF)a(?=.\n)/m', "a\r\n"]];
         // Without the JIT the option refuses the empty match "/a?/" finds
         // at 0; the JIT ignores it: test_the_jit_decides_what_an_empty_match_option_refuses().
         yield 'not empty' => ['pattern' => '/(*NOTEMPTY)a?/', 'expected' => '(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse', 'engine' => ['/(*NO_JIT)(*NOTEMPTY)a?/', '/a?/', 'b']];
@@ -134,6 +130,39 @@ final class SolverOnHirRefusalsTest extends TestCase
         $this->expectExceptionMessageIsOrContains($expected);
 
         $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+    }
+
+    /**
+     * Oracle: PCRE refuses to COMPILE a /u pattern that names a surrogate
+     * code point, as a literal, a class member or a range endpoint
+     * (preg_match('/[a\x{D800}]/u', 'a') is false, "Compilation failed:
+     * disallowed Unicode code point (>= 0xd800 && <= 0xdfff)"); only a
+     * range straddling the block with both endpoints outside compiles. The
+     * engine-refused atom is refused, never approximated: before the
+     * ladder reads it, with what validate() says of the pattern.
+     */
+    #[Test]
+    #[DataProvider('provideSurrogateRows')]
+    public function test_a_surrogate_the_engine_refuses_is_refused_with_the_validation_error(string $pattern): void
+    {
+        $this->assertFalse(@preg_match($pattern, 'a'), $pattern.' must not compile.');
+
+        $solver = new LanguageSolver(RegexParser::create(['php_version' => '8.4', 'pcre_version' => '10.44']));
+
+        $this->expectException(SemanticErrorException::class);
+        $this->expectExceptionMessageIsOrContains('Code point "\x{D800}" is a surrogate, which is not allowed in Unicode mode.');
+
+        $solver->intersection($pattern, '/a/', $this->fullMatchOptions());
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideSurrogateRows(): iterable
+    {
+        yield 'surrogate literal' => ['pattern' => '/\x{D800}/u'];
+        yield 'surrogate in a class' => ['pattern' => '/[a\x{D800}]/u'];
+        yield 'surrogate as a range endpoint' => ['pattern' => '/[\x{D800}-\x{E000}]/u'];
     }
 
     /**

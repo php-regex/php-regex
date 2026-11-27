@@ -19,22 +19,27 @@ use PHPRegex\Redos\Backtrack\WitnessRenderer;
  * The input that drives a match attempt into its worst case: the prefix,
  * the pump repeated n times, then the suffix. The parts hold raw bytes;
  * render() and toArray() give them as PHP double-quoted literals, with
- * every character outside printable ASCII escaped.
+ * every character outside printable ASCII escaped. $call is the call of
+ * preg_match() the input gives up in: some witnesses need the call without
+ * $matches.
  *
  * @api
  *
- * @phpstan-type WitnessArray array{prefix: string, pump: string, suffix: string}
+ * @phpstan-type WitnessArray array{prefix: string, pump: string, suffix: string, call: value-of<WitnessCall>}
  */
 final class RedosWitness
 {
     /**
      * @internal built by RedosAnalyzer::analyze(), for RedosAnalysis::$witness
+     *
+     * @param WitnessCall $call the call of preg_match() the input gives up in, the one with $matches unless it needs the other
      */
     public function __construct(
         public readonly string $prefix,
         public readonly string $pump,
         public readonly string $suffix,
         public readonly bool $unicode,
+        public readonly WitnessCall $call = WitnessCall::WithMatches,
     ) {}
 
     /**
@@ -65,7 +70,8 @@ final class RedosWitness
     }
 
     /**
-     * Each part as the inside of a PHP double-quoted literal.
+     * Each part as the inside of a PHP double-quoted literal, and the call
+     * the input gives up in.
      *
      * @return WitnessArray
      */
@@ -75,6 +81,7 @@ final class RedosWitness
             'prefix' => WitnessRenderer::literal($this->prefix, $this->unicode),
             'pump' => WitnessRenderer::literal($this->pump, $this->unicode),
             'suffix' => WitnessRenderer::literal($this->suffix, $this->unicode),
+            'call' => $this->call->value,
         ];
     }
 }

@@ -188,6 +188,9 @@ final class QuantifierConcatenationRule extends AbstractLintRule
      * locale, each set holds every byte its run takes, a case as those
      * tables give it, which may pair "i" with another byte than "I": under
      * glibc's tr_TR.ISO-8859-9 a caseless "i" takes 0xDD, and no "I".
+     * Under UTF, a letter those tables give no other case, written alone,
+     * is given none by the fold of either run: under glibc's tr_TR.UTF-8 a
+     * caseless "i" takes no "I", which "[ij]" takes.
      */
     private function isKnownSubset(NodeInterface $run, ByteCharSet $set, NodeInterface $other, ByteCharSet $otherSet, LintContext $context, string $flags): bool
     {
@@ -210,7 +213,7 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return CharClassSets::isSubset($set, $otherSet);
         }
 
-        $runSet = $runCaseless ? self::foldByteSet($set) : $set;
+        $runSet = $runCaseless ? $context->foldedAsReadAlone(self::foldByteSet($set), $set) : $set;
         if ($runSet->isUnknown()) {
             return false;
         }
@@ -309,7 +312,9 @@ final class QuantifierConcatenationRule extends AbstractLintRule
             return ByteCharSet::unknown();
         }
 
-        return self::foldByteSet($otherSet);
+        // The other run must take every character the set holds: a letter
+        // the target's tables give no other case, read alone, takes itself.
+        return $context->foldedAsReadAlone(self::foldByteSet($otherSet), $otherSet);
     }
 
     /**

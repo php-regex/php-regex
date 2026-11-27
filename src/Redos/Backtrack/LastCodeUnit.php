@@ -73,6 +73,9 @@ use PHPRegex\Parser\Text\Bytes;
  * start-up study finds the same one first: kept here, the witness then
  * carries a character the search did not need.
  *
+ * The first code unit of the whole pattern is read the same way, first():
+ * the one the interpreter looks for before it starts an attempt.
+ *
  * @internal
  */
 final class LastCodeUnit
@@ -191,6 +194,43 @@ final class LastCodeUnit
      */
     public static function required(RegexNode $regex, ?PcreTarget $target = null): ?array
     {
+        return self::firstAndRequired($regex, $target)[1];
+    }
+
+    /**
+     * A character that holds the first code unit PCRE2's compiler sets for
+     * the pattern (pcre2test's "First code unit"), and the other case PCRE2
+     * also takes for it when it looks for either, read as required() reads
+     * the last one; null when the compiler sets none. The interpreter
+     * starts an attempt only where the subject holds that code unit, the
+     * attempt the A modifier pins included: under ru_RU.KOI8-R it looks for
+     * the "\xFF" of "/\xff+!/i" alone, and starts none on "\xDF", which
+     * the repeat reads all the same. An accepting verb keeps it.
+     *
+     * Where the compiler sets none, the start-up study may still find the
+     * one or two code units a match starts with, as for "/a|A/i", and a
+     * lookahead may assert one, as in "(?=a)\w": those are not read here.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
+     *                                the running engine's when null
+     *
+     * @return array{int, ?int}|null
+     */
+    public static function first(RegexNode $regex, ?PcreTarget $target = null): ?array
+    {
+        return self::firstAndRequired($regex, $target)[0];
+    }
+
+    /**
+     * What first() and required() give, read in one pass.
+     *
+     * @param PcreTarget|null $target the PCRE2 and the locale the pattern is read for;
+     *                                the running engine's when null
+     *
+     * @return array{array{int, ?int}|null, array{int, ?int}|null}
+     */
+    public static function firstAndRequired(RegexNode $regex, ?PcreTarget $target = null): array
+    {
         $target ??= PcreTarget::runtime();
         $unicode = $regex->isUnicode();
         $source = $regex->source ?? '';
@@ -207,15 +247,9 @@ final class LastCodeUnit
             }
         }
 
-        [, $required] = $reader->group(self::alternatives($regex->pattern), $options);
-        if ($reader->accepts || $required[0] < 0) {
-            return null;
-        }
+        [$first, $required] = $reader->group(self::alternatives($regex->pattern), $options);
 
-        $caseless = 0 !== ($required[0] & self::CASELESS) && (null === $reader->tables || $required[1] < 0xFF);
-        $other = $caseless ? $reader->otherCase($required[2]) : $required[2];
-
-        return [$required[2], $other === $required[2] ? null : $other];
+        return [$reader->lookedFor($first), $reader->accepts ? null : $reader->lookedFor($required)];
     }
 
     /**
@@ -230,6 +264,27 @@ final class LastCodeUnit
         $characters = $node instanceof LiteralNode ? Utf8::decode($node->value, $unicode) : null;
 
         return null !== $characters && 1 === \count($characters) ? $characters[0] : null;
+    }
+
+    /**
+     * The character a code unit was read from, and its other case when
+     * PCRE2 looks for either; null when the unit is not set. Where the
+     * tables give the case, PCRE2 keeps the caseless flag below 255 only.
+     *
+     * @param array{int, int, int} $unit
+     *
+     * @return array{int, ?int}|null
+     */
+    private function lookedFor(array $unit): ?array
+    {
+        if ($unit[0] < 0) {
+            return null;
+        }
+
+        $caseless = 0 !== ($unit[0] & self::CASELESS) && (null === $this->tables || $unit[1] < 0xFF);
+        $other = $caseless ? $this->otherCase($unit[2]) : $unit[2];
+
+        return [$unit[2], $other === $unit[2] ? null : $other];
     }
 
     /**

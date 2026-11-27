@@ -140,7 +140,8 @@ final class PossessiveBeforeLookaroundTest extends TestCase
         yield 'a negative lookbehind' => ['pattern' => '/[a-z.-]*(?<!b)/', 'optimized' => '/[\-.a-z]*(?<!b)/'];
         yield 'a lookahead in a group' => ['pattern' => '/[a-z.-]*(?:(?!b))/', 'optimized' => '/[\-.a-z]*(?:(?!b))/'];
         yield 'a lookahead that left the other rewrites undone' => ['pattern' => '/x\s+(?!y)/s', 'optimized' => '/x\s+(?!y)/'];
-        yield 'a lookahead at the end of a loop body' => ['pattern' => '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/', 'optimized' => '/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]+$/'];
+        // The repeat that ends the pattern, which no lookaround follows, is made possessive.
+        yield 'a lookahead at the end of a loop body' => ['pattern' => '/^[a-z](?:[a-z0-9_](?!__))*[a-z0-9]+$/', 'optimized' => '/^[a-z](?:[0-9_a-z](?!__))*[0-9a-z]++$/'];
         yield 'a lookahead past the group the repetition ends' => ['pattern' => '/(a+b?)(?!c)/s', 'optimized' => '/(a+b?)(?!c)/'];
         yield 'a lookahead past a scan substring' => ['pattern' => '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)[0-9]/', 'optimized' => '/^(aac)(*scs:(1)(a+b?))(?=\\2ac)\\d/'];
     }

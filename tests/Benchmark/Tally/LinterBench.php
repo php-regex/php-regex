@@ -72,7 +72,7 @@ final class LinterBench
         }
     }
 
-    #[Expected(instructions: '454.1M', cycles: '567.8M', memory: '1.814MiB')]
+    #[Expected(instructions: '497.4M', cycles: '625.1M', memory: '2.148MiB')]
     public function benchLintRealistic(): void
     {
         $patterns = $this->meter->exclude(static fn (): array => \array_slice(array_values(BenchCases::realistic()), 0, 100));
@@ -96,9 +96,9 @@ final class LinterBench
 
     #[DataProvider('optimizerCases')]
     #[ExpectedFor('common-prefix-words', instructions: '593.2M', cycles: '669.2M', memory: '2.223MiB')]
-    #[ExpectedFor('email-like', instructions: '21.27M', cycles: '28.30M', memory: '170.5KiB')]
-    #[ExpectedFor('quantified-groups', instructions: '17.50M', cycles: '23.24M', memory: '182.6KiB')]
-    #[ExpectedFor('redundant-classes', instructions: '1.697B', cycles: '2.285B', memory: '8.853MiB')]
+    #[ExpectedFor('email-like', instructions: '22.07M', cycles: '29.22M', memory: '170.2KiB')]
+    #[ExpectedFor('quantified-groups', instructions: '18.65M', cycles: '24.49M', memory: '182.4KiB')]
+    #[ExpectedFor('redundant-classes', instructions: '1.787B', cycles: '2.379B', memory: '8.834MiB')]
     #[ExpectedFor('single-char-alternation', instructions: '46.67M', cycles: '54.25M', memory: '183.4KiB')]
     public function benchOptimize(string $pattern): void
     {

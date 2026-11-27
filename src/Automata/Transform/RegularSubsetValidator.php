@@ -17,10 +17,10 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\Options\SolverOptions;
 use PHPRegex\Parser\Hir\Hir;
 use PHPRegex\Parser\Hir\HirTranslator;
+use PHPRegex\Parser\Hir\LiteralHir;
+use PHPRegex\Parser\Hir\LookHir;
 use PHPRegex\Parser\Node\AnchorNode;
 use PHPRegex\Parser\Node\AssertionNode;
-use PHPRegex\Parser\Node\CharTypeNode;
-use PHPRegex\Parser\Node\DotNode;
 use PHPRegex\Parser\Node\GroupNode;
 use PHPRegex\Parser\Node\NodeInterface;
 use PHPRegex\Parser\Node\RegexNode;
@@ -38,7 +38,7 @@ use PHPRegex\Parser\Text\Bytes;
  */
 final class RegularSubsetValidator
 {
-    public const CRLF_DOT_MESSAGE = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.';
+    public const CRLF_DOT_MESSAGE = 'Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.';
 
     /**
      * Whether the solver can answer for the pattern, and the normalized
@@ -52,7 +52,6 @@ final class RegularSubsetValidator
     public function assertSupported(RegexNode $regex, string $pattern, SolverOptions $options, ?PcreTarget $target = null): Hir
     {
         $this->assertSupportedFlags($regex->flags);
-        self::assertCrLfRead($regex, $pattern);
         self::assertEmptyMatchesAllowed($regex, $pattern);
 
         // The language reads a repeat as written, where PCRE2 makes one of
@@ -64,7 +63,26 @@ final class RegularSubsetValidator
             throw new ComplexityException(HirToNfaTransformer::LAST_BYTE_MESSAGE, $lastByte->getStartPosition(), $pattern);
         }
 
-        $hir = (new HirTranslator($target))->translate($regex);
+        // So does it a repeat of the dot before "\R", and one of "\R" before
+        // a dot, as if "\R" took no character the dot takes.
+        $besideNewlineSequence = NewlineSequencePossession::repeat($regex);
+        if (null !== $besideNewlineSequence) {
+            throw new ComplexityException(HirToNfaTransformer::NEWLINE_SEQUENCE_MESSAGE, $besideNewlineSequence->getStartPosition(), $pattern);
+        }
+
+        $translator = new HirTranslator($target);
+        $hir = $translator->translate($regex);
+
+        // Under "(*CRLF)" a dot is read through a lookahead, for the "\n"
+        // of the newline it stops before: inside a lookaround it would be
+        // a lookahead inside another, and a lookbehind's would read past
+        // where the lookbehind stands.
+        $newline = $translator->crLfNewline();
+        $dot = null === $newline ? null : self::crLfDot($hir, $newline, false);
+        if (null !== $dot) {
+            throw new ComplexityException(self::CRLF_DOT_MESSAGE, $dot->startPosition, $pattern);
+        }
+
         // A target that names no locale but C may run under any: without
         // "u" the tables a class is read under past ASCII are not known.
         $committed = (new HirToNfaTransformer($pattern, HirTranslator::unicodeOf($regex), LocaleBoundClasses::of($regex, $tables)))
@@ -83,8 +101,8 @@ final class RegularSubsetValidator
     /**
      * "$", "\Z" and the multiline anchors read where lines end, which a start
      * option such as "(*CR)" moves: the match solver reads the newline "\n"
-     * only, the automata every convention but "(*CRLF)". The last convention
-     * the options name holds.
+     * only, the automata every convention. The last convention the options
+     * name holds.
      *
      * @internal the match solver asks it
      *
@@ -120,40 +138,29 @@ final class RegularSubsetValidator
     }
 
     /**
-     * The automata read the lines of every convention but "(*CRLF)", under
-     * which a line ends at "\r\n" alone, and the dot and "\N" read a "\r"
-     * alone but not one before a "\n": "/(*CRLF)a.\n/" finds no match in
-     * "a\r\n". The last convention the options name holds.
+     * The first dot or "\N" the form reads under "(*CRLF)" inside a
+     * lookaround, as the lookahead that stands for it: the one whose body
+     * is the newline the translator gave every such dot (see
+     * HirTranslator::crLfNewline()). A dot that takes every character,
+     * under s, is a set like any other, and is not one. Asked as if from
+     * inside a lookaround, it gives the first such dot wherever it stands.
      *
-     * @throws ComplexityException
+     * @internal the match solver asks it for every such dot
      */
-    private static function assertCrLfRead(RegexNode $regex, string $pattern): void
+    public static function crLfDot(Hir $hir, LiteralHir $newline, bool $inALookaround): ?LookHir
     {
-        if ('CRLF' !== StartOptions::newline($regex->source ?? '')) {
-            return;
+        if ($hir instanceof LookHir) {
+            if ($newline === $hir->body) {
+                return $inALookaround ? $hir : null;
+            }
+
+            $inALookaround = true;
         }
 
-        $dot = self::dotOrNotNewline($regex->pattern);
-        if (null !== $dot) {
-            throw new ComplexityException(self::CRLF_DOT_MESSAGE, $dot->getStartPosition(), $pattern);
-        }
-
-        self::assertNewlineConvention($regex, $pattern);
-    }
-
-    /**
-     * The first dot or "\N" under the node.
-     */
-    private static function dotOrNotNewline(NodeInterface $node): ?NodeInterface
-    {
-        if ($node instanceof DotNode || ($node instanceof CharTypeNode && 'N' === $node->value)) {
-            return $node;
-        }
-
-        foreach ($node->getChildren() as $child) {
-            $found = self::dotOrNotNewline($child);
-            if (null !== $found) {
-                return $found;
+        foreach ($hir->children() as $child) {
+            $dot = self::crLfDot($child, $newline, $inALookaround);
+            if (null !== $dot) {
+                return $dot;
             }
         }
 

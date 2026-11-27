@@ -158,7 +158,10 @@ final class AlternationOverlapPastAsciiTest extends TestCase
         yield 'the digit option of a set before the alternation, beside the pattern\'s /D' => ['pattern' => '/(?aD)(?:\wx|éy)+z/uD', 'oracle' => [['(?aD)\wx', 'éx', 1], ['éy', 'éy', 1]], 'findings' => 1];
         yield 'a caseless character under the options of a' => ['pattern' => '/(?:(?ai:öa)|Ö\w)+x/u', 'oracle' => [['(?ai:öa)', 'Öa', 1], ['Ö\w', 'Öa', 1]], 'findings' => 1];
         yield 'a caseless character under the options of a, then texts told apart' => ['pattern' => '/(?:(?ai:öa)|Öb)+x/u', 'oracle' => [['(?ai:öa)', 'ÖA', 1], ['(?ai:öa)', 'Öb', 0], ['Öb', 'Öa', 0]], 'findings' => 0];
-        yield 'a script run, meeting the other branch' => ['pattern' => '/(?:(*sr:öa)|öb)+x/u', 'oracle' => [['(*sr:öa)', 'öa', 1], ['öb', 'öb', 1]], 'findings' => 1];
+        yield 'a script run, meeting the other branch' => ['pattern' => '/(?:(*sr:öa)|ö\w)+x/u', 'oracle' => [['(*sr:öa)', 'öa', 1], ['ö\w', 'öa', 1]], 'findings' => 1];
+        // The text of a script run is the text of its body: "a" and "b"
+        // tell the branches apart.
+        yield 'a script run, then texts told apart' => ['pattern' => '/(?:(*sr:öa)|öb)+x/u', 'oracle' => [['(*sr:öa)', 'öa', 1], ['(*sr:öa)', 'öb', 0], ['öb', 'öb', 1], ['öb', 'öa', 0]], 'findings' => 0];
         yield 'a script run of a class, apart' => ['pattern' => '/(?:(*sr:[öü]a)|èb)+x/u', 'oracle' => [['(*sr:[öü]a)', 'üa', 1], ['(*sr:[öü]a)', 'èa', 0], ['èb', 'öb', 0]], 'findings' => 0];
     }
 

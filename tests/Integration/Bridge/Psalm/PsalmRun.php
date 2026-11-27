@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Integration\Bridge\Psalm;
 
 use Composer\InstalledVersions;
 use Composer\Semver\VersionParser;
+use PHPRegex\Parser\Exception\ExceptionInterface;
 use PHPRegex\Psalm\Plugin;
 use PHPUnit\Framework\Assert;
 use Psalm\Config;
@@ -53,14 +54,15 @@ final class PsalmRun
      * @param array<string, string>|null        $pluginOptions    the child elements of the plugin's <pluginClass>, or null to run Psalm without the plugin
      * @param array<string, string>             $attributes       attributes of <psalm>, maxShapedArraySize for one
      * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource where Psalm read its PHP version
+     * @param list<string>                      $stubs            the stub files Psalm reads the classes of a library from, relative to the base directory
      *
      * @return list<IssueData>
      */
-    public static function issues(array $files, string $phpVersion = '8.4', ?array $pluginOptions = [], array $attributes = [], bool $taint = false, string $baseDir = self::FIXTURES, string $phpVersionSource = 'tests'): array
+    public static function issues(array $files, string $phpVersion = '8.4', ?array $pluginOptions = [], array $attributes = [], bool $taint = false, string $baseDir = self::FIXTURES, string $phpVersionSource = 'tests', array $stubs = []): array
     {
-        $key = serialize([$files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource]);
+        $key = serialize([$files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource, $stubs]);
 
-        return self::$runs[$key] ??= self::run($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource);
+        return self::$runs[$key] ??= self::run($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource, $stubs);
     }
 
     /**
@@ -281,10 +283,11 @@ final class PsalmRun
      * @param array<string, string>|null        $pluginOptions
      * @param array<string, string>             $attributes
      * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource
+     * @param list<string>                      $stubs
      *
      * @return list<IssueData>
      */
-    private static function run(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource): array
+    private static function run(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource, array $stubs): array
     {
         // Psalm reads the global $argv as the paths of a CLI run: PHPUnit's
         // arguments would become files to analyse, or a path it cannot find
@@ -293,7 +296,17 @@ final class PsalmRun
         $GLOBALS['argv'] = [];
 
         try {
-            return self::analyse($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource);
+            return self::analyse($files, $phpVersion, $pluginOptions, $attributes, $taint, $baseDir, $phpVersionSource, $stubs);
+        } catch (\RuntimeException $e) {
+            // From Psalm 7.22 an exception the plugin throws while a file is
+            // analysed reaches the caller inside a TaskCrashedException that
+            // names the file; the tests assert the plugin's own.
+            $previous = $e->getPrevious();
+            if ('Psalm\Internal\Fork\TaskCrashedException' === $e::class && $previous instanceof ExceptionInterface) {
+                throw $previous;
+            }
+
+            throw $e;
         } finally {
             $GLOBALS['argv'] = $argv;
         }
@@ -304,12 +317,13 @@ final class PsalmRun
      * @param array<string, string>|null        $pluginOptions
      * @param array<string, string>             $attributes
      * @param 'cli'|'config'|'composer'|'tests' $phpVersionSource
+     * @param list<string>                      $stubs
      *
      * @return list<IssueData>
      */
-    private static function analyse(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource): array
+    private static function analyse(array $files, string $phpVersion, ?array $pluginOptions, array $attributes, bool $taint, string $baseDir, string $phpVersionSource, array $stubs): array
     {
-        $config = Config::loadFromXML($baseDir, self::xml($files, $pluginOptions, $attributes), $baseDir);
+        $config = Config::loadFromXML($baseDir, self::xml($files, $pluginOptions, $attributes, $stubs), $baseDir);
         $config->cache_directory = null;
         $config->setIncludeCollector(new IncludeCollector());
 
@@ -338,10 +352,11 @@ final class PsalmRun
      * @param list<string>               $files
      * @param array<string, string>|null $pluginOptions
      * @param array<string, string>      $attributes
+     * @param list<string>               $stubs
      *
      * @return non-empty-string
      */
-    private static function xml(array $files, ?array $pluginOptions, array $attributes): string
+    private static function xml(array $files, ?array $pluginOptions, array $attributes, array $stubs): string
     {
         $attributes += [
             'errorLevel' => '1',
@@ -358,6 +373,14 @@ final class PsalmRun
             $xml .= \sprintf("        <file name=\"%s\"/>\n", htmlspecialchars($file, \ENT_XML1 | \ENT_QUOTES));
         }
         $xml .= "    </projectFiles>\n";
+
+        if ([] !== $stubs) {
+            $xml .= "    <stubs>\n";
+            foreach ($stubs as $stub) {
+                $xml .= \sprintf("        <file name=\"%s\"/>\n", htmlspecialchars($stub, \ENT_XML1 | \ENT_QUOTES));
+            }
+            $xml .= "    </stubs>\n";
+        }
 
         if (null !== $pluginOptions) {
             $xml .= \sprintf('    <plugins><pluginClass class="%s">', self::PLUGIN);

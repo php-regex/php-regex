@@ -235,7 +235,7 @@ does not require, or requires one it does not import:
 | generator | sample and test-case generation | core |
 | automata | the solver: equivalence, intersection, subset | core |
 | ReDoS | ReDoS analysis | core |
-| transpiler | JavaScript, HTML `pattern` attribute and Python output | core |
+| transpiler | JavaScript, HTML `pattern` attribute and Python output | core, automata |
 | optimizer | `Optimizer`, the optimizing visitors and the ReDoS repair | core, automata, ReDoS |
 | linter | lint rules, pattern extraction, reports | core, explain, optimizer, automata, ReDoS |
 | toolkit | the `Regex` facade | every library above but automata |

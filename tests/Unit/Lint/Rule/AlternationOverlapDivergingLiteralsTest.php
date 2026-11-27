@@ -25,8 +25,8 @@ use PHPUnit\Framework\TestCase;
  * branches share at their start ("associative-array" and "array" both
  * start with "a") never lets one branch take the other's input, and no
  * character-set overlap is reported. The overlap stays reported when the
- * texts are prefixes of each other, or when a branch starts with
- * something that is no literal.
+ * texts are prefixes of each other and the shorter one can go on as the
+ * longer does, or when a branch starts with something that is no literal.
  */
 final class AlternationOverlapDivergingLiteralsTest extends TestCase
 {
@@ -48,6 +48,10 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
         yield 'a name and a wider word that only share a letter' => ['pattern' => '/(?:ab|AC)+/i'];
         yield 'texts above ASCII' => ['pattern' => '/(?:été|école)+/u'];
         yield 'texts beside a byte class above ASCII, read through PCRE' => ['pattern' => '/(?:[\xC0-\xFF]a|ab|ac)+/'];
+        // What follows the shorter text is no character the longer one has
+        // there: "b" is no digit, and no input starts both branches.
+        yield 'a text that prefixes the other, then a digit' => ['pattern' => '/(?:a\d|ab)+/'];
+        yield 'a text that prefixes the other, then a digit, beside a byte class above ASCII' => ['pattern' => '/(?:[\xC0-\xFF]a|ab|a\d)+/'];
     }
 
     #[Test]
@@ -62,7 +66,7 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
      */
     public static function provideOverlappingBranches(): iterable
     {
-        yield 'a text that prefixes the other, then a digit' => ['pattern' => '/(?:a\d|ab)+/'];
+        yield 'a text that prefixes the other, then a word character' => ['pattern' => '/(?:a\w|ab)+/'];
         yield 'a class before the text' => ['pattern' => '/(?:[ab]x|ay)+/'];
         yield 'a quantified first character' => ['pattern' => '/(?:a+b|ac)+/'];
         yield 'texts that fold to a prefix under /i' => ['pattern' => '/(?:A\d|ab)+/i'];
@@ -81,7 +85,7 @@ final class AlternationOverlapDivergingLiteralsTest extends TestCase
         yield 'a bare caseless flag in the first branch, reaching the second' => ['pattern' => '/(?:Ab(?i)\d|ab)+/'];
         yield 'texts that fold to a prefix with a final sigma' => ['pattern' => '/(?:σa\d|ςab)+/iu'];
         yield 'a text above ASCII that prefixes the other' => ['pattern' => '/(?:é\d|ét)+/u'];
-        yield 'a text that prefixes the other, beside a byte class above ASCII' => ['pattern' => '/(?:[\xC0-\xFF]a|ab|a\d)+/'];
+        yield 'a text that prefixes the other, beside a byte class above ASCII' => ['pattern' => '/(?:[\xC0-\xFF]a|ab|a\w)+/'];
     }
 
     #[Test]

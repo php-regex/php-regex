@@ -14,9 +14,13 @@ declare(strict_types=1);
 namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Automata\Options\SolverStrategy;
 use PHPRegex\Automata\Solver\EquivalenceResult;
 use PHPRegex\Automata\Solver\IntersectionResult;
+use PHPRegex\Automata\Solver\MatchEquivalenceResult;
 use PHPRegex\Automata\Solver\SubsetResult;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\RegexParser;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -88,6 +92,97 @@ final class SolverEngineStampTest extends TestCase
         yield 'subset result' => ['question' => 'subset'];
         yield 'equivalence result' => ['question' => 'equivalence'];
         yield 'match equivalence result' => ['question' => 'match equivalence'];
+    }
+
+    /**
+     * The engine that ran is one fact, the target judged another: each
+     * result carries the target of the solver's parser, which decides what
+     * the patterns mean. "a{,2}" repeats from PCRE2 10.43 and is text for
+     * PHP 8.3, whose PCRE2 10.42 the running engine may not be.
+     */
+    #[Test]
+    #[DataProvider('provideQuestionsAndStrategies')]
+    public function test_every_result_carries_the_target_judged(string $question, SolverStrategy $strategy): void
+    {
+        $this->assertSame(1, preg_match('/^a\{,2\}$/', 'a{,2}'));
+
+        $parser = RegexParser::create(['php_version' => '8.3']);
+        $solver = new LanguageSolver($parser);
+        $options = new SolverOptions(strategy: $strategy);
+
+        $result = match ($question) {
+            'intersection' => $solver->intersection('/a{,2}/', '/a\{,2\}/', $options),
+            'subset' => $solver->subsetOf('/a{,2}/', '/a\{,2\}/', $options),
+            'equivalence' => $solver->equivalent('/a{,2}/', '/a\{,2\}/', $options),
+            'match equivalence' => $solver->matchEquivalent('/a{,2}/', '/a\{,2\}/', $options),
+            default => $this->fail($question.' is not a solver question.'),
+        };
+
+        $this->assertSame($parser->target(), $result->target, $question);
+        $this->assertSame(['php' => '8.3', 'pcre' => '10.42', 'locale' => $parser->target()->locale], $result->target->toArray());
+        $this->assertSame(explode(' ', \PCRE_VERSION)[0], $result->pcreVersion, 'The engine that ran stays the running one.');
+
+        // The answer is the target's: for PHP 8.3 the braces are text.
+        $this->assertSame('a{,2}', match (true) {
+            $result instanceof IntersectionResult => $result->example,
+            $result instanceof SubsetResult => $result->isSubset ? 'a{,2}' : null,
+            default => $result->isEquivalent ? 'a{,2}' : null,
+        });
+    }
+
+    /**
+     * @return iterable<string, array{question: string, strategy: SolverStrategy}>
+     */
+    public static function provideQuestionsAndStrategies(): iterable
+    {
+        foreach (SolverStrategy::cases() as $strategy) {
+            foreach (['intersection', 'subset', 'equivalence', 'match equivalence'] as $question) {
+                yield $question.', '.$strategy->value => ['question' => $question, 'strategy' => $strategy];
+            }
+        }
+    }
+
+    /**
+     * A call that runs its own group again leaves one proof of the same
+     * matches, the possessive giving nothing back, which builds its result
+     * apart: it carries the target too.
+     */
+    #[Test]
+    public function test_the_result_of_a_proof_through_calls_carries_the_target_judged(): void
+    {
+        $parser = RegexParser::create(['php_version' => '8.3']);
+        foreach (['aabxy', 'aabxxyy', 'abx', 'b'] as $subject) {
+            $this->assertSame(preg_match('/a+b(x(?1)?y)/', $subject, $greedy), preg_match('/a++b(x(?1)?y)/', $subject, $possessive), $subject);
+            $this->assertSame($greedy, $possessive, $subject);
+        }
+
+        $result = (new LanguageSolver($parser))->matchEquivalent('/a+b(x(?1)?y)/', '/a++b(x(?1)?y)/');
+
+        $this->assertTrue($result->isEquivalent);
+        $this->assertSame($parser->target(), $result->target);
+    }
+
+    /**
+     * Built without a target, a result is one of the running engine; built
+     * with one, it keeps it.
+     */
+    #[Test]
+    public function test_a_result_built_without_a_target_carries_the_running_one(): void
+    {
+        $target = new PcreTarget(80200, '10.40', 'C');
+        $running = PcreTarget::runtime()->key();
+
+        $this->assertNotSame($running, $target->key());
+
+        $this->assertSame($running, (new IntersectionResult(false, 'ab'))->target->key());
+        $this->assertSame($running, (new SubsetResult(false, 'ab'))->target->key());
+        $this->assertSame($running, (new EquivalenceResult(false, 'ab'))->target->key());
+        $this->assertSame($running, (new MatchEquivalenceResult(false, 'ab'))->target->key());
+
+        $this->assertSame($target, (new IntersectionResult(false, 'ab', target: $target))->target);
+        $this->assertSame($target, (new SubsetResult(false, 'ab', target: $target))->target);
+        $this->assertSame($target, (new EquivalenceResult(false, 'ab', target: $target))->target);
+        $this->assertSame($target, (new MatchEquivalenceResult(false, 'ab', target: $target))->target);
     }
 
     #[Test]

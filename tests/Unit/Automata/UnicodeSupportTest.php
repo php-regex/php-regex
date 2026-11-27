@@ -117,8 +117,15 @@ final class UnicodeSupportTest extends TestCase
         $solver = new LanguageSolver();
         $options = $this->fullMatchOptions();
 
-        // U+10400 DESERET CAPITAL LONG I folds to U+10428.
-        $result = $solver->equivalent('/\u{10400}/iu', '/[\u{10400}\u{10428}]/u', $options);
+        // U+10400 DESERET CAPITAL LONG I folds to U+10428: the engine
+        // matches each with the other under /iu, and PCRE writes the code
+        // point "\x{10400}": "\u" is no PCRE escape, and the solver refuses
+        // the pattern that holds one, as the engine does.
+        $this->assertSame(1, preg_match('/^\x{10400}$/iu', "\u{10428}"));
+        $this->assertSame(1, preg_match('/^[\x{10400}\x{10428}]$/u', "\u{10400}"));
+        $this->assertSame(0, preg_match('/^\x{10400}$/u', "\u{10428}"));
+
+        $result = $solver->equivalent('/\x{10400}/iu', '/[\x{10400}\x{10428}]/u', $options);
 
         $this->assertTrue($result->isEquivalent);
     }

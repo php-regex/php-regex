@@ -66,6 +66,12 @@ Features
   `RegexRedosSearch` for a search whose cost is quadratic, the loop of
   `preg_match_all()`, `preg_replace()` or `preg_split()` after an empty match
   included.
+* The static methods of the wrapper libraries are read as the `preg_*`
+  function they run: composer/pcre's `Preg::match()`, nette/utils'
+  `Strings::replace()`, spatie/regex's `Regex::matchAll()`, Laravel's
+  `Str::isMatch()` and the assertion libraries, the presets `regex lint` and
+  the PHPStan extension read. Their patterns are validated and, with
+  `<redos>true</redos>`, checked for ReDoS, in the same words.
 * Patterns are judged for the PHP version Psalm analyses for, with the PCRE2
   release that PHP bundles: a pattern your PHP 8.4 accepts but PHP 8.2 refuses
   is reported on a project that targets 8.2.
@@ -343,7 +349,7 @@ patterns.
 ### Compared with the PHPStan extension
 
 The plugin reads the same facts of a pattern as the PHPStan extension, and
-says less in three places:
+says less in two places:
 
 * A group of digits is never a `numeric-string`. For
   `/^(\d+)-(?<y>\d+)?$/`, PHPStan types `$matches` as
@@ -358,9 +364,39 @@ says less in three places:
   the pattern does not have is not reported. `preg_replace('/(a)/', '[$2]', 'xay')`
   returns `'x[]y'`: PHP replaces `$2` with nothing. The PHPStan extension
   reports it as `regex.replacement.undefinedGroup`.
-* The plugin reads the `preg_*` calls only: the static methods of the wrapper
-  libraries the extension reads, composer/pcre's `Preg::match()` for
-  instance, are neither validated nor checked for ReDoS.
+
+### Wrapper libraries
+
+A pattern passed to a static method of a wrapper library is validated, and
+checked for ReDoS under `<redos>true</redos>`, as one passed to the `preg_*`
+function the method runs, at the argument the library takes it:
+`Preg::match()` of composer/pcre, `Strings::match()` of nette/utils (the
+pattern second), `Regex::match()` of spatie/regex, `Str::isMatch()` of
+Laravel, `Assert::regex()` of webmozart/assert, `Assertion::regex()` of
+beberlei/assert and PHPUnit's assertions called as
+`PHPUnit\Framework\Assert::assertMatchesRegularExpression()`: every preset
+`regex lint` and the PHPStan extension read. The issues and their messages
+are those of a `preg_*` call.
+
+* A method that looks for every match is priced as the function it runs:
+  `Preg::matchAll()` as `preg_match_all()`, `Strings::split()` as
+  `preg_split()`, `Str::replaceMatches()` as `preg_replace()`, or as
+  `preg_replace_callback()` when its replacement is a closure. A limit the
+  call gives, as its type says, bounds the loop.
+* nette/utils appends `u` to its patterns under `utf8: true`: the pattern is
+  judged with it. A `utf8` argument whose type is neither `true` nor `false`
+  leaves the pattern unknown, and nothing is reported.
+* `Strings::replace()` takes its patterns from the keys of an array whose
+  first key is a string, when the replacement is a string or left out, and
+  from its values when the replacement is a closure, an object or an array;
+  a replacement that may be either leaves the array unread.
+* Nothing is typed, and the subject is not told apart: a constant subject
+  does not quiet a ReDoS finding as it does in `preg_match()`.
+* Static calls only: `$this->assertMatchesRegularExpression()`,
+  `new Regex(...)` and `#[Assert\Regex(...)]` of the `symfony-validator`
+  preset, `new RegexIterator()` and `filter_var()` are read by `regex lint`,
+  not by the plugin. A class Psalm does not know is not read either: Psalm
+  analyses no argument of such a call, and reports `UndefinedClass` there.
 
 Configuration
 -------------

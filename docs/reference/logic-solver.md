@@ -113,16 +113,18 @@ subject on which the two differ is the shortest.
 It reads the fragment where that run picks the match PCRE's backtracking picks. It refuses,
 each with its reason: backreferences, conditionals and control verbs; a call that may run
 its own group again (`(?R)`, `/(a(?1)?b)/`), and a call that returns groups (`(?1(2))`);
-lookarounds; atomic groups, and a possessive quantifier that could have to give back what
+two patterns that hold a lookaround and are not built alike (see below);
+atomic groups, and a possessive quantifier that could have to give back what
 it matched (one whose body may match more than one way, or that something after it may
 start like it does: `/a++a/`, `/(?:ab?)++b/`, `\s++$`); a loop over a body that can match
 empty, which PCRE stops after an empty iteration; word boundaries, multiline anchors, `\G`
-and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and `(*CRLF)`
-anywhere, under which the dot reads a `\r` alone but not one before a `\n`; under
-`(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`, as a search
+and `\K`; a newline convention other than `\n` where `$` or `\Z` reads it, and a dot or
+`\N` under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`; under
+`(*CRLF)`, `(*ANYCRLF)` and `(*ANY)`, a pattern that may match empty or start with a `\n`
+and that writes neither a `\r` nor a `\n`, or that a `^` or a `.*` leads, as a search
 may skip the start between a `\r` and the `\n` after it (without the JIT,
 `/(*ANYCRLF)\sa/` finds no match in `"\r\na"`, and `/(*ANYCRLF)\sa|[^\s\S]\n/`, whose
-dead branch writes a `\n`, finds `"\na"`); `(*NOTEMPTY)` and
+dead branch writes a `\n`, finds `"\na"`: the second is read); `(*NOTEMPTY)` and
 `(*NOTEMPTY_ATSTART)`, as `equivalent()` refuses them; an end anchor
 followed by more of the pattern, another turn of the loop it stands
 in included (`/(?:a$)*\n/`, `/(?:a$)*/`); an anchor, an assertion or a lookaround in a group
@@ -141,7 +143,10 @@ over a group included: `/a+(?:b)?+c/` is read, `/a+(?:b)?+a/` and `/a+(?:b)*+a/`
 refused. A repeat written as a group, `/(?:a)+(?:b)?+a/`, and a letter repeated
 possessively, `/a+b?+a/`, are not made possessive, and two patterns whose brackets tell
 such a group apart never read alike. `equivalent()`, `intersection()` and `subsetOf()`
-refuse a character repeated before such a group. For a target before PCRE2 10.44, a
+refuse a character repeated before such a group. A counted group is compiled once per
+round, so the repeat that ends a round stands before the group that opens the next:
+`/(?:(?>(?:b)?)a+){2}/` finds nothing in `aa` and is refused, where `/(?:(?>(?:b)?)a+)+/`,
+compiled once, is read. For a target before PCRE2 10.44, a
 possessive repeat of a group that holds a capturing group is refused: the JIT of 10.39 to
 10.42 leaves the group set from an earlier start of the match, and `/a(a)*+b/` writes `a` to
 group 1 on `aacab`, where `/a(a)*b/` leaves it unset. Without `u`, PHP hands
@@ -164,6 +169,65 @@ anywhere after it, and such a pattern never reads alike with another, unless the
 names a locale whose tables leave 0xFF out of `\w`, as el_GR.ISO8859-7 does. A target that
 names no locale but C may run under any, and is refused too. `u` reads `\w` from the
 Unicode properties, and is read.
+
+Where a pattern sets no first character of its own, PCRE2 may take the one a lookahead
+it opens on asserts: the compiler takes `a` from `(?=a)`, and the start-up study the one
+every match starts with, from `(?=a?a)` too. It then tries a match only where that character
+stands, and looks for the character the pattern requires from past it. Where the two are
+one character, a match that holds it once is missed, with and without the JIT: before
+PCRE2 10.45, the releases PHP 7.3 to 8.5 bundle, `/(?=a)b?a/` finds nothing in `a` and
+`/(?=b)^b/m` nothing in `"a\nb"`. PCRE2 10.45 leaves the asserted character out where the
+required one is the same, but not where it is the same letter in the other case:
+`/(?=a)b?A/i` and `/(?=a?a)b?(?i:A)/` find nothing in `a` up to 10.49. The engine then finds
+fewer matches than the pattern says, never more, so the solvers answer what no missed match
+changes: two patterns with no string in common, a pattern whose strings another holds all.
+They refuse the rest, the first kind for a target before 10.45, the second for any:
+`equivalent()`, a string in common, a string the pattern alone matches, a pattern that holds
+it, `language()`, `compile()`, `acceptsPrefix()` and `matchEquivalent()`. Such a pattern
+reads like no other there: `/(?:)(?=a)b?a/`, whose empty group keeps the compiler from
+looking for the `a`, finds the match. PCRE2 also gives the character the case of the first
+alternative of the lookahead that starts with it, in every release: `/(?=A|[Aa])/` finds
+nothing in `a`, and is refused for any target. They find the lookahead wider than PCRE2
+does: where a match may start past what may match nothing, any of its first characters, a
+class counting only where it holds one character or a letter and its other case. The
+character required is any one every match holds as a literal, outside what may match
+nothing and in every alternative of a group: `/(?=a)[ab]/`, `/(?=a)b?a?c/` and
+`/(?=a)b?(?:a|b)/` are read. A pattern of one alternative that reads a character first,
+past `^` (but under `m`), `$`, lookarounds and groups of nothing else, as `/(?=A)a/i` or
+`/^(?=(?>a+)-)a+-$/`, sets that one, and is read. `(*NO_START_OPT)` turns the search off,
+and the pattern is read.
+
+A lookaround is read, and never run. Two patterns that hold one write the same `$matches`
+when the solver builds one automaton for both, the lookaround and its body included:
+`/(?=x)[0-9]/` and `/(?=x)\d/`, or `/(?<=x)a{2}/` and `/(?<=x)aa/`. Two patterns it builds
+other automata for are not compared, `/(?=a|b)a/` and `/(?=[ab])a/` no more than `/(?=a)b/`
+and `/(?!a)b/`: `Lookarounds look past the match, which the match solver does not run: it
+compares two patterns that hold one only where it builds the same automaton for both.`
+
+A possessive quantifier beside a lookaround is read as the greedy one where it gives
+nothing back, as anywhere else: `/(?=x)xa+b/` and `/(?=x)xa++b/` write the same `$matches`,
+and so do `/(?<!x)a+b/` and `/(?<!x)a++b/`, `/a+(?=b)/` and `/a++(?=b)/`, `/(?=xa+)x/` and
+`/(?=xa++)x/`. Where the greedy quantifier would give back, a character it repeats comes
+next, and what follows is read against it:
+
+- a lookahead holds where its body matches, so what its body may start with counts as what
+  follows the quantifier does: `/a++(?=a)/` is refused, as `/a+(?=a)/` finds `a` in `aa` and
+  `/a++(?=a)/` nothing;
+- a negative lookahead or a lookbehind may hold there and not after the last repetition, so
+  past one the pattern must read another character before it ends: `/a++(?!c)b/` is read,
+  `/a++(?!b)/` is refused, as `/a+(?!b)/` finds `a` in `aab` and `/a++(?!b)/` nothing;
+- the end of a lookahead ends what follows, as nothing after an atomic lookaround backtracks
+  into it, but the end of a lookbehind and the end of a non-atomic lookaround do not. The
+  body of a lookbehind must end where the lookbehind stands, which PCRE2's interpreter
+  and its JIT read apart for a possessive quantifier that ends it: `/(?<=xa{1,3}+)a/` finds
+  the `a` at offset 4 of `xaaaa` without the JIT and the one at offset 2 with it, as
+  `/(?<=xa{1,3})a/` does either way. Past the end of a non-atomic lookaround,
+  `(*napla:...)`, `(*naplb:...)`, `(?*...)` or `(?<*...)`, the engine reads what follows from
+  where the lookaround stands, and backtracks into its body:
+  `/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, where group 1 gives an `a` back to the
+  reference, and `/^(*napla:x(a++b?))x[ab-]*\1$/` does not. The solver knows nothing of what
+  follows such an end, and refuses a possessive quantifier that may reach it,
+  `/(*napla:xa++)x/`, while `/(*napla:xa++b)x/` is read.
 
 Any other call of a group, `(?1)`, `(?-1)`, `(?+1)`, `(?&n)`, `(?P>n)` or `\g<n>`, runs the
 body of the group where the call stands, as PCRE2 runs it from 10.30 on, older than any
@@ -253,7 +317,9 @@ which alone models them. A pattern that reads the text before where the search s
 lookbehind, `\b`, `\B`, `^` under `m`) or that moves the start of its match (`\K`) is
 proven by no such check, and its rewrite is offered only when it reads as the pattern
 does (the same normal form, as `[0-9]` and `\d`, or a flag dropped that changes nothing),
-or when each part it changed is proven alone.
+when each part it changed is proven alone, or, beside a lookbehind, when the match solver
+builds one automaton for both, which then run alike wherever a search starts: `/(?<=x)a+b/`
+becomes `/(?<=x)a++b/`.
 The same holds for a route requirement, which the router splices into a larger pattern:
 `a|ab` and `ab|a` write the same `$matches` anchored at both ends, yet before a `b?` they
 capture other text.
@@ -374,10 +440,14 @@ $dfa = $solver->compile('/[a-z]+/'); // the pattern's DFA (PHPRegex\Automata\Mod
 Each of the four result objects also carries `pcreVersion`, the PCRE2 release
 that ran the solver (`"10.49"` on the engine this page's examples ran
 on). Two results with different stamps describe two engines' languages; compare
-them only knowing that.
+them only knowing that. Each carries `target` too, the `PcreTarget` the
+patterns were read for: the PHP version, the PCRE2 release and the locale of
+the solver's parser, which decide what a pattern means (`a{,2}` repeats from
+PCRE2 10.43 and is text before) and which the running engine need not be.
 
 The constructor takes the parser that reads the patterns, so they are read for its PHP and PCRE2 target, and a DFA cache
-that keeps compiled patterns between questions:
+that keeps compiled patterns between questions: the DFAs `compile()`, `language()`, `acceptsPrefix()` and the eager
+search build, and beside them the NFAs the lazy search reads (see [Search Strategies](#search-strategies)):
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -393,6 +463,22 @@ automata go first, and one larger than that alone is not kept. Any `DfaCacheInte
 
 A pattern outside the regular subset (backreferences, recursion, ...) throws a `ComplexityException`
 instead of returning an answer that would be wrong. The next section lists every reason.
+
+A pattern is judged before it is read, for the target of the solver's parser. One PCRE2 refuses to compile
+matches nothing an answer could describe, so every method throws for it what `validate()` says: the exception
+`parse()` throws when the pattern does not parse, else a `SemanticErrorException` carrying the validation
+error, its code, its offset and its hint, as `Regex::info()` does.
+
+```php
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Parser\Exception\SemanticErrorException;
+
+try {
+    (new LanguageSolver())->intersection('/a{2,1}/', '/a/');
+} catch (SemanticErrorException $e) {
+    echo $e->getMessage(); // Invalid quantifier range "{2,1}": min > max.
+}
+```
 
 The public classes of `PHPRegex\Automata` are `LanguageSolver`, `Options\SolverOptions`, `Options\MatchMode`,
 `Determinization\DeterminizationAlgorithm`, `Minimization\MinimizationAlgorithm`, the four result classes in
@@ -477,7 +563,10 @@ among many. Anchors at the edges, `\A` leading every alternative of a search or 
 closing it, still cost nothing.
 
 The newline is the one the pattern's options set, the last of them holding: `\r` under
-`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*ANYCRLF)` a `\r` and a `\n`
+`(*CR)`, NUL under `(*NUL)`, and `\n` by default. Under `(*CRLF)` a line ends at `\r\n`
+and at neither character alone: `^` holds after the two, `$` before them, and `\Z` before a
+final `"\r\n"`, so `/(*CRLF)a$/` matches `"a\r\n"` and neither `"a\r"` nor `"a\n"`, and
+`/(*CRLF)\r^\n/m` matches nothing. Under `(*ANYCRLF)` a `\r` and a `\n`
 each end a line, and `\r\n` ends one too; under `(*ANY)` so do the vertical tab, the form
 feed and NEL (`\x85`, U+0085 under `/u`), and under `/u` the line and paragraph separators
 U+2028 and U+2029. So under the last two `^` holds between a `\r` and a `\n`, and `$`
@@ -488,10 +577,20 @@ its first try where a `^` under `/m` or a `.*` leads it, which the JIT does not 
 It skips no other start, so the solver reads the search both ways, every start and every
 start but those, and answers where both read alike: `/(*ANYCRLF)\r^\n/m` and
 `/(*ANYCRLF)b?$/m` are read, while `/(*ANYCRLF)^$/m` is refused: the only empty line of
-`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A match
-of the whole string starts at its start, and is read whatever the pattern. `(*CRLF)`,
-under which a line ends at `\r\n` alone and the dot reads a `\r` alone but not one before
-a `\n`, stays out where an anchor or a dot reads it.
+`"x\r\n"` stands between its `\r` and its `\n`, where the engine finds no match. A pattern
+that writes a `\r` or a `\n` as a character of its own (`\n`, `\x0a`, `\cJ`, outside a
+class), in a branch no subject takes too, is searched from every start, with the JIT and
+without, unless each of its alternatives starts with `^` or `.*`: it is read as written.
+`/(*ANYCRLF)\na/` finds `"\na"` in `"\r\na"`, and so does `/(*ANYCRLF)\sa|[^\s\S]\n/`,
+where `/(*ANYCRLF)\sa/` finds nothing without the JIT. A match of the whole string starts
+at its start, and is read whatever the pattern.
+
+Under `(*CRLF)` the newline is two characters, which no set of one character says: the dot
+and `\N` take a `\r` and a `\n`, each alone, and not the `\r` a `\n` follows. The solver
+reads each as the set with a lookahead before it, `(?!\r\n)`: `/(*CRLF)a.\n/` matches
+`"a\n\n"` and finds nothing in `"a\r\n"`. So a dot there reads like no class, and unlike
+the dot under `/s`, which takes every character.
+Inside a lookaround such a dot would be a lookahead inside another, and is refused.
 
 A lookaround inside a lookaround, an anchor or word boundary inside one, and the non-atomic
 `(*napla:...)` are refused. The product can grow large; the usual NFA and DFA budgets bound it,
@@ -499,7 +598,9 @@ and the [work budget](#safety-limits--work-budget) counts its moves.
 
 ## What the Solver Refuses
 
-One taxonomy, one exception (`ComplexityException`), one message per reason.
+One taxonomy, one exception (`ComplexityException`), one message per reason,
+for a pattern the engine compiles: one it refuses is refused before any of
+these, with [the validation error](#php-api).
 The messages below are the texts the library prints; `getMessage()` returns them
 verbatim:
 
@@ -516,11 +617,12 @@ verbatim:
 | a character repeated before an atomic group or a possessive repeat of a group that may match nothing, `a+(?:b)?+a` | `PCRE2 makes a character repeated before a possessive or atomic group that may match nothing possessive, as if the group could not be skipped, which the automata solver does not read.` |
 | without `u`, under a target that names no locale but C, a commitment proven on a byte past ASCII against `\w`, `\s`, a POSIX class or a class under `i` that folds apart | `Without "u", PHP hands PCRE2 the character tables of the locale a program sets: a possessive quantifier or an atomic group proven on a byte past ASCII beside a class holds under the tables of C alone, and the target names no other locale.` |
 | without `u`, unless the target names a locale whose tables leave 0xFF out of `\w`, a repeat of the byte 0xFF with `\w` after it, or of `\w` with that byte after it, `\xFF+\w` | `Without "u", PCRE2 makes a repeat of the byte 0xFF possessive before "\w", and one of "\w" before that byte, as if 0xFF were no word character, which the tables of a locale may make it: the automata solver does not read that, and the target names no locale whose tables leave 0xFF out of "\w".` |
+| a dot or `\N` repeated some number of times with `\R` right after it, or `\R` repeated with a dot or `\N` right after it, under any newline convention but `(*ANY)`: `.*\R`, `(.+)\R`, `\R?.` | `PCRE2 makes a repeat of the dot or "\N" possessive before "\R", and one of "\R" before a dot or "\N", as if "\R" took no character the dot takes, which the automata solver does not read.` |
 | an anchor, an assertion or a lookaround in a group repeated no time, <code>(?:x&#124;(?=a)){0}</code> | `An anchor, an assertion or a lookaround in a group repeated no time still moves where PCRE2 tries a match, which the automata solver does not read.` |
 | a surrogate code point the pattern names under `/u` | `PCRE refuses any pattern that names a surrogate code point, which the automata solver cannot read as a pure language.` |
-| `(*CRLF)` with `$`, `\Z`, `/m` or `(?m)` | `A newline convention other than "\n" moves where "$", "\Z" and the multiline anchors stand, which the automata solver does not read.` |
-| `(*CRLF)` with a dot or `\N` | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read.` |
+| under `(*CRLF)`, a dot without `/s` or `\N` inside a lookaround | `Under (*CRLF) the dot reads a "\r" alone but not one before a "\n", which the automata solver does not read inside a lookaround.` |
 | a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n` | `A search under (*CRLF), (*ANYCRLF) or (*ANY) may skip a match that starts between "\r" and "\n", which the solvers do not read.` |
+| a lookahead opening the pattern on a character the pattern requires again, for a target before PCRE2 10.45, or in the other case, for any target: `(?=a)b?a`, `(?=a)b?A` under `i`; an empty intersection, and a subset of which it is the left side, are still answered | `PCRE2 looks for the character a lookahead opening the pattern asserts, then for the one the pattern requires past it, and misses a match where the two are one character: the same before PCRE2 10.45, "/(?=a)b?a/" finding nothing in "a", or one in the other case, "/(?=a)b?A/i" nothing in "a"; and it takes the case of the first alternative of the lookahead that starts with the character, "/(?=A|[Aa])/" finding nothing in "a", which the automata solver does not read.` |
 | `(*NOTEMPTY)` or `(*NOTEMPTY_ATSTART)`, which PHP's JIT ignores | `(*NOTEMPTY) and (*NOTEMPTY_ATSTART) refuse an empty match without the JIT and are ignored with it, which the automata solver does not read.` |
 | the flag `A`                               | `Unsupported regex flags for automata: A.` (the pattern's own flags, in order) |
 
@@ -558,6 +660,24 @@ Two refinements inside those rules:
   `(?>\r\n|[\r\n])` under `(*BSR_ANYCRLF)`: either way it holds unless a
   `\n` may follow it.
 
+  PCRE2 also makes a dot or `\N` repeated some number of times possessive
+  before `\R`, and `\R` repeated before a dot or `\N`, as if the two shared
+  no character. Yet the dot leaves out the newline of the convention only,
+  and `\R` takes every newline: `/^.*\R\z/` finds no match in `"a\r"`, where
+  `/^[^\n]*\R\z/` and `/^(?:.)*\R\z/` find it, and `/^\R?.\z/` none in `"\r"`,
+  with the JIT and without. PCRE2 reads what comes right after the repeat,
+  past the end of the groups it stands in and into the groups that follow,
+  so `/^(.*)\R\z/` and `/^.*(\R)\z/` lose the match too. Such a pattern is
+  refused, and reads like no other: taking the group off `(?:.)*` there is
+  no rewrite. A repeat counted once (`.{2}\R`), one a character follows
+  first (`.*a\R`), and any under `(*ANY)`, whose dot takes no newline of
+  `\R`, are read as written. A part spliced into a larger pattern meets
+  what stands around it: one that may end with such a repeat, start with a
+  dot or match nothing reads alike another only where both write that end
+  the same, as `.[0-9]` and `.\d` do, or `(?:a?)` and `a?`, a group that
+  does not repeat reading as its body; between `\R?` and a dot, `[0-9]*`
+  finds `"\r"` and `\d*` nothing.
+
   A lookbehind branch that matches more than one length, as `\R` does,
   compiles from PCRE2 10.43 on when its length is bounded, up to a limit PCRE2
   sets when it is built, 255 characters by default: there, `/(?<=a{1,255})x/`
@@ -574,15 +694,17 @@ An atom the engine itself refuses to define (the character-set query PCRE
 rejects) is a refusal too, under the first message — never an approximation:
 this solver answers languages, it does not read anything "as any character".
 Naming a surrogate code point under `/u` — a literal `\x{D800}`, a class
-member, or the endpoint of a range — is the same kind of refusal with its own
-message: PCRE refuses to compile the pattern at all, so there is no language
-to read. A range that straddles the block with both endpoints outside it
-(`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps the two real ends with
-the hole out.
+member, or the endpoint of a range — is refused before the taxonomy: PCRE
+refuses to compile the pattern at all, so there is no language to read, and
+the solver throws the validation error, `Code point "\x{D800}" is a surrogate,
+which is not allowed in Unicode mode.` A range that straddles the block with
+both endpoints outside it (`[\x{D7FF}-\x{E000}]`) is legal, and its set keeps
+the two real ends with the hole out.
 
 On the command line the same refusal is summarized as
 `Comparison not supported: Pattern contains advanced features (e.g., backreferences).`
-and the command exits with code 1.
+and the command exits with code 1. A pattern the engine refuses prints its
+validation error instead, `Comparison failed: Invalid quantifier range "{2,1}": min > max.`
 
 ## How it Works (Under the Hood)
 
@@ -617,8 +739,14 @@ The lazy search keeps its pairs under `maxDfaStates`, each counted as it is
 reached, and charges each move to `maxTransitionsProcessed`; past either
 limit it gives up and leaves the answer to the eager search, which reads the
 patterns under its own limits: the answer is the eager one's, and so is a
-refusal. With a DFA cache, whose compiled DFAs it reuses, or for a pattern
-read as UTF-8 beside one read as bytes, the search is the eager one.
+refusal. For a pattern read as UTF-8 beside one read as bytes, the search is
+the eager one.
+
+A DFA cache does not choose the search: the lazy one runs first with a cache
+as without one, and the eager one, when it runs, reads its DFAs from the cache
+and compiles into it. Beside the cache, the solver keeps the NFA of each
+pattern the lazy search read, bounded as the DFAs are and emptied with them,
+so that a route compared with every other route is built once.
 
 The strategy is the solver's own choice: `Options\SolverStrategy` and
 `SolverOptions::$strategy` are `@internal`, and a minor release may change them.
@@ -769,10 +897,29 @@ When the budget is exceeded, a `ComplexityException` is thrown with a diagnostic
 - `limit`: configured budget
 
 A state cap reached (`maxNfaStates`, `maxDfaStates`, the match solver's
-configurations) carries a `phase` and the `limit` too. A construct the
-automata do not read (a backreference, a lookaround the solver refuses)
-carries no `limit`: the diagnostic tells "too costly to answer" from "outside
-what the solver reads".
+configurations) carries a `phase` and the `limit` too, and so do the budgets
+of a `Language` (`product`, 100,000 pairs of states; `enumeration`, the
+50,000 lengths and states `strings()` and `nonMembers()` remember and the
+million steps they take between two strings). A construct the automata do not
+read (a backreference, a lookaround the solver refuses) carries no `limit`:
+the diagnostic tells "too costly to answer" from "outside what the solver
+reads". The exception says it typed: `isLimitReached()` is true when a budget
+ran out, and `$phase` (`?string`) and `$limit` (`?int`) are the diagnostic's
+`phase` and `limit`, null when it names none.
+
+```php
+use PHPRegex\Automata\Exception\ComplexityException;
+use PHPRegex\Automata\LanguageSolver;
+use PHPRegex\Automata\Options\SolverOptions;
+
+try {
+    (new LanguageSolver())->equivalent('/^(a|b)*a(a|b){6}$/', '/^[ab]*a[ab]{6}$/', new SolverOptions(maxDfaStates: 20));
+} catch (ComplexityException $exception) {
+    var_dump($exception->isLimitReached()); // bool(true)
+    var_dump($exception->phase);            // string(15) "determinization"
+    var_dump($exception->limit);            // int(20)
+}
+```
 
 The bodies of a pattern's lookarounds are compiled to automata of their own,
 and they share one allowance between them rather than one each: a single
@@ -807,11 +954,10 @@ Use this to surface safe failure messages in CI or tooling.
   rule cannot prove inert. Every refusal names its reason; see
   [What the Solver Refuses](#what-the-solver-refuses).
 - The pattern flags `i`, `s`, `u`, `D`, `m` and `r` are read; `x`, `U`, `n`, `J`, `S` and `X`
-  change nothing a language says. `A` is refused, and so is `(*CRLF)` where `$`, `\Z`,
-  `/m`, `(?m)`, a dot or `\N` would read it, and a search under `(*CRLF)`, `(*ANYCRLF)` or
-  `(*ANY)` that may find a match only from between a `\r` and a `\n`, and so are
-  `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. The other conventions move the anchors as the
-  engine does.
+  change nothing a language says. `A` is refused, and so is a dot or `\N` under `(*CRLF)`
+  inside a lookaround, and a search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match only from
+  between a `\r` and a `\n`, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`. Every
+  newline convention moves the anchors as the engine does.
 - In partial match mode, a search, `$` and `\Z` also match before a newline that ends
   the subject, as PCRE's do without `/D`: `/^ab$/` matches `"ab\n"`, `/^ab\z/` does not.
   A full match covers the whole subject, so there `$` is the end of the subject.

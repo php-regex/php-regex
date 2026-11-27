@@ -64,7 +64,9 @@ final class AlternationOverlapAsciiStartTest extends TestCase
     {
         yield 'two ASCII characters' => ['pattern' => '/(?:a[0]|b[1])+/u', 'scanned' => false, 'reported' => false];
         yield 'ASCII texts before types' => ['pattern' => '/(?:foo\d|bar\d|baz\w)+/u', 'scanned' => false, 'reported' => false];
-        yield 'one ASCII character twice' => ['pattern' => '/(?:a[0]|a[1])+/u', 'scanned' => false, 'reported' => true];
+        yield 'one ASCII character twice, going on alike' => ['pattern' => '/(?:a[01]|a[1])+/u', 'scanned' => false, 'reported' => true];
+        // "a0" starts one branch and "a1" the other: no input starts both.
+        yield 'one ASCII character twice, going on apart' => ['pattern' => '/(?:a[0]|a[1])+/u', 'scanned' => false, 'reported' => false];
         // A character past ASCII is scanned, which shows the store counts.
         yield 'a character past ASCII' => ['pattern' => '/(?:é[0]|b[1])+/u', 'scanned' => true, 'reported' => false];
     }

@@ -199,6 +199,9 @@ final class EmptyGroupRuleTest extends TestCase
         yield 'a first branch of an atomic group' => ['pattern' => '/a+(?>(?:)|b)a/', 'without' => '/a+(?>|b)a/'];
         yield 'a first branch of a possessive group' => ['pattern' => '/a+(?:(?:)|b)?+a/', 'without' => '/a+(?:|b)?+a/'];
         yield 'an empty atomic group before an optional one' => ['pattern' => '/a+(?>)(?:b)?+a/', 'without' => '/a+(?:b)?+a/'];
+        // A counted group is compiled once per round: the repeat that ends
+        // one round is read against the atomic group that opens the next.
+        yield 'a first branch of the atomic group of the next round' => ['pattern' => '/(?:(?>(?:)|b)a+){2}/', 'without' => '/(?:(?>|b)a+){2}/'];
     }
 
     /**

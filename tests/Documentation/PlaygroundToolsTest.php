@@ -230,7 +230,7 @@ final class PlaygroundToolsTest extends TestCase
         $this->assertSame('theoretical', $redos['mode']);
         $this->assertFalse($redos['confirmed']);
         $this->assertSame([[1, 6, 'medium', '(a+)+'], [2, 4, 'critical', 'a+']], array_map(static fn (array $h): array => [$h['start'], $h['end'], $h['severity'], $h['pattern']], $redos['hotspots']));
-        $this->assertSame(['prefix' => '', 'pump' => 'a', 'suffix' => '!'], $redos['witness']);
+        $this->assertSame(['prefix' => '', 'pump' => 'a', 'suffix' => '!', 'call' => 'with_matches'], $redos['witness']);
         $this->assertFalse($redos['linear']);
         $this->assertSame(str_repeat('a', 30).'!', $redos['attack'], 'The attack string is the witness built raw, never re-assembled from the escaped spelling.');
     }

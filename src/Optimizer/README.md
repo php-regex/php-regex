@@ -79,9 +79,15 @@ withdrew none of the rewrites. Turned off, the rewrites ship as the rewriter
 writes them, but one that adds a possessive quantifier or an atomic group,
 which is proven whatever the option says. A rewrite whose possessive
 quantifiers are not proven is made again without them, and the other rewrites
-ship: the proof reads no possessive quantifier in a pattern that holds a
-lookaround or `\b`, and under `possessive` `/\d+x(?!y)/s` still becomes
-`/\d+x(?!y)/`. A call of a group is read as the body of the group run where
+ship: the proof reads no possessive quantifier in a pattern that holds `\b`
+or a reference, and under `possessive` `/\d+y\b/s` still becomes `/\d+y\b/`.
+A lookaround is read: `/(?=x)xa+b/` becomes `/(?=x)xa++b/`, `/\d+x(?!y)/s`
+becomes `/\d++x(?!y)/` and `/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/`, while a
+repetition right before a lookaround stays greedy, as `/a+(?!b)/` finds `a`
+in `aab` where `/a++(?!b)/` finds nothing. A rewrite refused whole still loses the `s` or the `m` nothing in the pattern
+reads, which moves no bracket and no repeat and needs no proof: `/a+(?:b)?+a/m`
+becomes `/a+(?:b)?+a/`, the group PCRE2 reads to make `a+` possessive kept.
+A call of a group is read as the body of the group run where
 the call stands, so `/(a+b?)c(?1)d/` becomes `/(a++b?)c(?1)d/`, and a group a
 DEFINE holds is read there under the options in force where the DEFINE stands:
 `/(?&n)c(?(DEFINE)(?<n>a+b?))/` becomes `/(?&n)c(?(DEFINE)(?<n>a++b?))/`. A
@@ -91,8 +97,14 @@ group repeated there stays greedy, as the possessive one runs out of the JIT
 stack first deep in the calls. The
 rewrite reads the flags in force where each item stands: `/(?i)a+b?c/` becomes
 `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays greedy, and an option setting that
-names `U` or a non-atomic lookaround keeps every quantifier of the pattern as
-written. A repetition that ends its group reads what follows the group, every
+names `U` keeps every quantifier of the pattern as written. Beside a
+non-atomic lookaround, `(*napla:...)` or `(?*...)`, a repetition is read as
+anywhere else, `/(*napla:x)xa+b/` becoming `/(?*x)xa++b/` and
+`/(*napla:xa+b)x/` becoming `/(?*xa++b)x/`, but one that may end the
+lookaround stays greedy: past that end the engine reads what follows from
+where the lookaround stands, and backtracks into its body, so
+`/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, where `(a++b?)` finds
+nothing. A repetition that ends its group reads what follows the group, every
 call of it and the end of the pattern: `/(a+)c/` becomes `/(a++)c/`, and
 `/(a+)a/` stays greedy. A repeated group is made possessive only where every
 run of its body matches one way, characters and literals in a row, and what
@@ -104,8 +116,7 @@ pattern sets on what PCRE2 spends on a match, `(*LIMIT_MATCH=n)`,
 possessive one may spend more of it without the JIT:
 `/(*LIMIT_MATCH=4)c(?:ab)+e/` matches `cababe`, on which
 `/(*LIMIT_MATCH=4)c(?:ab)++e/` gives up. A repeated character or class spends
-no more, and is still made possessive there.
-`/\d+x(?!y)/`. Every repetition inside a group a call runs, a group a DEFINE
+no more, and is still made possessive there. Every repetition inside a group a call runs, a group a DEFINE
 holds included, and everywhere in a pattern that calls itself whole, stays
 greedy, whatever follows it: PCRE2's JIT, which PHP runs by default, misses
 matches of a possessive quantifier there that its interpreter finds.
@@ -115,8 +126,8 @@ matches of a possessive quantifier there that its interpreter finds.
 repetition outside every group a call runs is read as before: `/a+;(x)(?1)/`
 becomes `/a++;(x)(?1)/`. The rewrite reads the flags in force where each item
 stands: `/(?i)a+b?c/` becomes `/(?i)a++b?c/`, while `/(?i)a+b?A/` stays
-greedy, and an option setting that names `U` or a non-atomic lookaround keeps
-every quantifier of the pattern as written. A repetition that ends its group
+greedy, and an option setting that names `U` keeps every quantifier of the
+pattern as written. A repetition that ends its group
 reads what follows the group up to the end of the pattern: `/(a+)c/` becomes
 `/(a++)c/`, and `/(a+)a/` stays greedy.
 
@@ -159,6 +170,8 @@ $result = $optimizer->optimize('/[0-9][0-9][0-9][0-9]/');
 
 echo $result->optimized;   // '/\d{4}/'
 echo $result->changes[0];  // 'Wrote [0-9] as \d.'
+echo $result->kinds[0]->value; // 'digits', a RewriteKind
+var_dump($result->proven);     // bool(true): the automata checked the rewrite
 ```
 
 Each rewrite is opt-out: turn off the ones you do not want, keep the rest.

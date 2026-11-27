@@ -16,6 +16,7 @@ namespace PHPRegex\Tests\Unit\Bridge\Symfony\Routing;
 use PHPRegex\Symfony\Routing\RouteConflictAnalyzer;
 use PHPRegex\Symfony\Routing\RouteReachabilityReport;
 use PHPRegex\Toolkit\Regex;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Routing\Route;
@@ -114,6 +115,147 @@ final class RouteReachabilityTest extends TestCase
         }
     }
 
+    /**
+     * A route ending on a variable whose value may end on the slash takes
+     * its path with one more slash too, the "/?" the dumper writes after
+     * it: "/{p<admin/>}" keeps "/admin//" after a route that takes "/admin"
+     * and redirects "/admin/".
+     */
+    #[Test]
+    public function test_a_route_keeps_the_path_the_matcher_takes_with_one_more_slash(): void
+    {
+        $routes = self::collection([
+            'admin' => new Route('/{x}', requirements: ['x' => 'admin'], methods: ['GET']),
+            'slash' => new Route('/{p}', requirements: ['p' => 'admin/'], methods: ['GET']),
+        ]);
+
+        $this->assertSame('admin', FrameworkMatcher::reached($routes, 'GET', '/admin/'));
+        $this->assertSame('slash', FrameworkMatcher::reached($routes, 'GET', '/admin//'));
+
+        $report = self::analyzer()->analyzeReachability($routes);
+        $slash = self::route($report->routes, 'slash');
+
+        $this->assertTrue($slash['reachable']);
+        $this->assertSame('/admin//', $slash['example']['path'] ?? null);
+        $this->assertSame(['admin'], array_column($slash['takenBy'], 'name'));
+        $this->assertSame([], $report->unreachable());
+    }
+
+    /**
+     * Two routes that take the paths of a third together still leave it the
+     * path the matcher takes with one more slash.
+     */
+    #[Test]
+    public function test_two_routes_leave_a_third_the_path_the_matcher_takes_with_one_more_slash(): void
+    {
+        $routes = self::collection([
+            'a' => new Route('/{x}', requirements: ['x' => 'a'], methods: ['GET']),
+            'b' => new Route('/{x}', requirements: ['x' => 'b'], methods: ['GET']),
+            'either' => new Route('/{p}', requirements: ['p' => 'a/|b/'], methods: ['GET']),
+        ]);
+
+        foreach (['/a/' => 'a', '/b/' => 'b', '/a//' => 'either', '/b//' => 'either'] as $path => $winner) {
+            $this->assertSame($winner, FrameworkMatcher::reached($routes, 'GET', $path), $path);
+        }
+
+        $report = self::analyzer()->analyzeReachability($routes);
+        $either = self::route($report->routes, 'either');
+
+        $this->assertTrue($either['reachable']);
+        $this->assertFalse($either['cumulative']);
+        $this->assertSame('/a//', $either['example']['path'] ?? null);
+        $this->assertSame(0, $report->stats['cumulative']);
+    }
+
+    /**
+     * An earlier route that takes the path with one more slash too leaves
+     * the later one nothing.
+     */
+    #[Test]
+    public function test_a_route_loses_the_path_with_one_more_slash_to_a_route_that_takes_it(): void
+    {
+        $routes = self::collection([
+            'both' => new Route('/{x}', requirements: ['x' => 'a|a/'], methods: ['GET']),
+            'slash' => new Route('/{y}', requirements: ['y' => 'a/'], methods: ['GET']),
+        ]);
+
+        foreach (['/a', '/a/', '/a//'] as $path) {
+            $this->assertSame('both', FrameworkMatcher::reached($routes, 'GET', $path), $path);
+        }
+
+        $slash = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'slash');
+
+        $this->assertFalse($slash['reachable']);
+        $this->assertSame(['both'], array_column($slash['takenBy'], 'name'));
+    }
+
+    /**
+     * A route ending on a variable that may end on the slash reads a path
+     * of its own ending on the slash for the slash when PCRE captured the
+     * value without it: it redirects a GET or HEAD request, when it takes
+     * GET, and passes any other on to the routes after it. A later route
+     * keeps the requests it may pass on.
+     *
+     * @param array{0: string, 1: list<string>}                 $earlier path, methods
+     * @param array{0: string, 1: list<string>}                 $later   path, methods
+     * @param list<array{0: string, 1: string, 2: string|null}> $probes  method, path, and the route the request reaches
+     */
+    #[Test]
+    #[DataProvider('provideRoutesReadingAPathForTheSlash')]
+    public function test_a_route_keeps_the_requests_an_earlier_one_may_pass_on_for_the_slash(array $earlier, array $later, array $probes, bool $reachable): void
+    {
+        $routes = self::collection([
+            'earlier' => new Route($earlier[0], methods: $earlier[1]),
+            'later' => new Route($later[0], methods: $later[1]),
+        ]);
+
+        $reached = [];
+        foreach ($probes as [$method, $path, $winner]) {
+            $reached[] = FrameworkMatcher::reached($routes, $method, $path);
+            $this->assertSame($winner, end($reached), $method.' '.$path);
+        }
+        $this->assertSame($reachable, \in_array('later', $reached, true));
+
+        $route = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'later');
+
+        $this->assertSame($reachable, $route['reachable']);
+        if ($reachable) {
+            $this->assertNotNull($route['example']);
+            $this->assertSame('later', FrameworkMatcher::reached($routes, $route['example']['method'], $route['example']['path']), 'later takes '.json_encode($route['example']));
+        }
+    }
+
+    /**
+     * @return iterable<string, array{earlier: array{0: string, 1: list<string>}, later: array{0: string, 1: list<string>}, probes: list<array{0: string, 1: string, 2: string|null}>, reachable: bool}>
+     */
+    public static function provideRoutesReadingAPathForTheSlash(): iterable
+    {
+        yield 'a lazy catch-all for any method before a route for any method ending on a slash' => [
+            'earlier' => ['/{x<.+?>}', []],
+            'later' => ['/a/', []],
+            'probes' => [['GET', '/a/', 'earlier'], ['HEAD', '/a/', 'earlier'], ['POST', '/a/', 'later']],
+            'reachable' => true,
+        ];
+        yield 'a route for HEAD alone before a route for HEAD ending on a slash' => [
+            'earlier' => ['/files/{p<a|a/>}', ['HEAD']],
+            'later' => ['/files/{q<a>}/', ['HEAD']],
+            'probes' => [['HEAD', '/files/a', 'earlier'], ['HEAD', '/files/a/', 'later']],
+            'reachable' => true,
+        ];
+        yield 'a lazy catch-all for GET before a route for GET ending on a slash' => [
+            'earlier' => ['/{x<.+?>}', ['GET']],
+            'later' => ['/a/', ['GET']],
+            'probes' => [['GET', '/a/', 'earlier'], ['HEAD', '/a/', 'earlier'], ['GET', '/a', 'earlier']],
+            'reachable' => false,
+        ];
+        yield 'a route whose values end on no slash, for any method, before the same paths' => [
+            'earlier' => ['/n/{x<\\d+>}', []],
+            'later' => ['/n/{y<\\d+>}', []],
+            'probes' => [['GET', '/n/1', 'earlier'], ['POST', '/n/1', 'earlier'], ['GET', '/n/1/', 'earlier'], ['POST', '/n/1/', null]],
+            'reachable' => false,
+        ];
+    }
+
     #[Test]
     public function test_a_route_with_a_condition_shadows_nothing(): void
     {
@@ -161,6 +303,52 @@ final class RouteReachabilityTest extends TestCase
         $this->assertTrue($other['reachable']);
         $this->assertNotNull($other['example']);
         $this->assertSame('other', FrameworkMatcher::reached($routes, 'GET', $other['example']['path'], 'http', $other['example']['host']));
+    }
+
+    /**
+     * Before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, the
+     * dumper may try "app-{sub}.example.com" before an earlier
+     * "{sub}.example.com": the earlier route takes nothing from it there,
+     * and every request of it since.
+     */
+    #[Test]
+    public function test_a_route_the_dumper_may_try_first_on_a_host_variable_loses_nothing_to_the_earlier_one(): void
+    {
+        $routes = self::collection([
+            'first' => new Route('/other/{id}', host: 'app-{sub}.example.com'),
+            'sub' => new Route('/report/{id}', host: '{sub}.example.com'),
+            'app' => new Route('/report/{id}', host: 'app-{sub}.example.com'),
+        ]);
+        $groups = FrameworkMatcher::groupsHostsOnAnyVariable();
+
+        $this->assertSame($groups ? 'app' : 'sub', FrameworkMatcher::reached($routes, 'GET', '/report/1', 'http', 'app-x.example.com'));
+
+        $app = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'app');
+
+        $this->assertSame($groups, $app['reachable']);
+        $this->assertSame($groups ? [] : ['sub'], array_column($app['takenBy'], 'name'));
+    }
+
+    /**
+     * Two hosts that part on letter case alone before a variable they
+     * share take the same names, and the dumper may try the later route
+     * first: the earlier one takes nothing from it.
+     */
+    #[Test]
+    public function test_a_route_on_a_host_parting_on_letter_case_before_a_variable_loses_nothing_to_the_earlier_one(): void
+    {
+        $routes = self::collection([
+            'first' => new Route('/other', host: 'a.{sub}.example.com'),
+            'upper' => new Route('/p', host: 'A.{sub}.example.com'),
+            'lower' => new Route('/p', host: 'a.{sub}.example.com'),
+        ]);
+
+        $this->assertSame('lower', FrameworkMatcher::reached($routes, 'GET', '/p', 'http', 'a.x.example.com'));
+
+        $lower = self::route(self::analyzer()->analyzeReachability($routes)->routes, 'lower');
+
+        $this->assertTrue($lower['reachable']);
+        $this->assertSame([], $lower['takenBy']);
     }
 
     #[Test]

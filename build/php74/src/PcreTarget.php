@@ -33,6 +33,8 @@ use PHPRegex\Parser\Text\Ascii;
  * than 10.39 are judged with the 10.39 rules, but for the few older changes
  * the library names (judgedWith()); newer ones than the library knows with
  * the newest rules it has.
+ *
+ * @phpstan-type TargetArray array{php: string, pcre: string, locale: string}
  */
 final class PcreTarget
 {
@@ -348,6 +350,24 @@ final class PcreTarget
     public function key(): string
     {
         return $this->phpVersionId.'/'.$this->pcreVersion.'/'.$this->locale;
+    }
+
+    /**
+     * The target as a JSON document names it: the PHP version as
+     * major.minor, with its patch when that is not 0, the PCRE2 release and
+     * the locale, as {"php": "8.4", "pcre": "10.44", "locale": "C"}.
+     *
+     * @return TargetArray
+     */
+    public function toArray(): array
+    {
+        $php = intdiv($this->phpVersionId, 10000).'.'.(intdiv($this->phpVersionId, 100) % 100);
+
+        return [
+            'php' => 0 === $this->phpVersionId % 100 ? $php : $php.'.'.($this->phpVersionId % 100),
+            'pcre' => $this->pcreVersion,
+            'locale' => $this->locale,
+        ];
     }
 
     /**

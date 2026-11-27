@@ -118,6 +118,29 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
             // With i, [:upper:] matches the small letters too, and \p{Lu}.
             'a letter and its capital with the capitals' => ['/[aA[:upper:]]/i', false],
             'a letter and its capital with the capital property' => ['/[aA\p{Lu}]/i', false],
+            // Under (*UCP) they read as \p{Lu} and \p{Ll}, which i leaves as
+            // written in a class.
+            'a letter and its capital with the capitals under (*UCP)' => ['/(*UCP)[aA[:upper:]]/i', true],
+            'a letter and its capital with the small letters under (*UCP)' => ['/(*UCP)[aA[:lower:]]/i', true],
+            'the small letters under (*UCP)' => ['/(*UCP)[[:lower:]]/i', true],
+            'every byte but the capitals under (*UCP)' => ['/(*UCP)[[:^upper:]]/i', true],
+            'a Latin-1 letter and its capital with the capitals under (*UCP)' => ['/(*UCP)[\xC9\xE9[:upper:]]/i', true],
+            'a letter with the small letters under (*UCP)' => ['/(*UCP)[a[:lower:]]/i', false],
+            'the small letters' => ['/[[:lower:]]/i', false],
+            'a letter and its capital with the capitals under (*UCP) and the ASCII option of the POSIX classes' => ['/(*UCP)(?aP)[aA[:upper:]]/i', false],
+            // A POSIX class stands on its own among the operands of an
+            // extended class, from 10.45, and i widens it there too.
+            'the capitals as the operand of an extended class' => ['/(?[ [:upper:] ])/i', false],
+            'every byte but the small letters as the operand of an extended class' => ['/(?[ [:^lower:] ])/i', false],
+            'the complement of the capitals in an extended class' => ['/(?[ ![:upper:] ])/i', false],
+            'the letters less the small letters in an extended class' => ['/(?[ [:alpha:] - [:lower:] ])/i', false],
+            'the digits or the capitals in an extended class' => ['/(?[ \d + [:upper:] ])/i', false],
+            'the capitals or a digit, less the small letters, in an extended class' => ['/(?[ ( [:upper:] + [1] ) - [:lower:] ])/i', false],
+            'the capitals in a class of an extended class' => ['/(?[ [[:upper:]] ])/i', false],
+            'the digits as the operand of an extended class' => ['/(?[ [:digit:] ])/i', true],
+            'the complement of the digits or a letter and its capital in an extended class' => ['/(?[ ![:digit:] + [aA] ])/i', true],
+            'the capitals as the operand of an extended class under (*UCP)' => ['/(*UCP)(?[ [:upper:] ])/i', true],
+            'the letters less the small letters in an extended class under (*UCP)' => ['/(*UCP)(?[ [:alpha:] - [:lower:] ])/i', true],
             'a letter and its capital with the last byte' => ['/[aA\xFF]/i', true],
             'a letter and its capital with a Latin-1 letter' => ['/[aA\xE9]/i', true],
             'every byte' => ['/[\x00-\xFF]/i', true],
@@ -160,25 +183,39 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         yield 'both runs of Latin-1 letters under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[\xC0-\xDE\xE0-\xFE]/i', 'locale' => self::LATIN1, 'useless' => true];
         yield 'a Latin-1 letter and its capital with a letter under (*UCP) and Latin-1' => ['pattern' => '/(*UCP)[\xC9\xE9a]/i', 'locale' => self::LATIN1, 'useless' => false];
         yield 'the Y with acute and its small letter under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[\xDD\xFD]/i', 'locale' => self::TURKISH, 'useless' => true];
+        // A class of several bytes that holds the other case the tables
+        // give each, whatever the interpreter reads of "I", "i" or 0xDD
+        // matched alone.
+        yield 'both cases of "i" and the Turkish letters under Turkish' => ['pattern' => '/[Ii\xDD\xFD]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'both cases of "i" under Turkish' => ['pattern' => '/[Ii]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'both cases of "i" and the dotted capital under Turkish' => ['pattern' => '/[Ii\xDD]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'both cases of "i" under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[iI]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'both cases of "i" and the Turkish letters under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[iI\xDD\xFD]/i', 'locale' => self::TURKISH, 'useless' => true];
+        yield 'the Turkish letters without "i" under Turkish' => ['pattern' => '/[\xDD\xFD]/i', 'locale' => self::TURKISH, 'useless' => false];
         yield 'the Y with acute and "i" under (*UCP) and Turkish' => ['pattern' => '/(*UCP)[i\xDD]/i', 'locale' => self::TURKISH, 'useless' => false];
     }
 
     /**
-     * A byte whose other case the engine's paths or releases read
-     * otherwise keeps the flag, whatever the class holds: macOS's
-     * tr_TR.ISO8859-9 pairs "I" with "i" but 0xDD with "i" and 0xFD with
-     * "I", and the interpreter reads "I", "i" and 0xDD apart from a class
-     * of them. The engine finds the flag useless there; the rule, which
-     * cannot tell which reading a class gets, keeps it. The tables are
-     * given as macOS reads them, which a Linux runner does not.
+     * A class of two bytes or more is compiled from the pairs of the tables
+     * alone, with i and without it: to the bytes it holds and their other
+     * cases, or, where it holds one byte and its other case, to that byte
+     * matched caselessly either way. Where it holds the other case of each
+     * of its bytes the flag changes nothing, whatever the interpreter reads
+     * of a byte matched alone: macOS's tr_TR.ISO8859-9 pairs "I" with "i"
+     * but 0xDD with "i" and 0xFD with "I", and its interpreter takes 0xDD
+     * for "I" or "i" alone. A class of one byte is compiled as that byte,
+     * and keeps the flag there. The tables are given as macOS reads them,
+     * which a Linux runner does not.
      *
      * Engine: PHP 8.4.28 / PCRE2 10.49 on macOS, under tr_TR.ISO8859-9,
-     * with the JIT and without it: of the 256 bytes, each row matches the
-     * same with i and without.
+     * with the JIT and without it: of the 256 bytes, each row reported
+     * matches the same with i and without. "/[\xDDi]/i" does too, compiled
+     * to 0xDD matched caselessly either way from 10.34, where "/[i\xDD]/i"
+     * matches "I" with i alone: the rule keeps both.
      */
     #[Test]
     #[DataProvider('provideClassesOfUnsettledBytes')]
-    public function test_flag_i_is_kept_where_the_tables_leave_a_byte_of_the_class_unsettled(string $pattern): void
+    public function test_flag_i_is_called_useless_where_a_class_of_several_bytes_holds_the_pairs_of_bytes_left_unsettled(string $pattern, bool $reported): void
     {
         $others = [0xDD => 0x69, 0xFD => 0x49];
         $cases = '';
@@ -187,17 +224,26 @@ final class UselessIFlagOfClassesAndInlineOptionsTest extends TestCase
         }
         CharacterTables::useTables(self::UNSETTLED, $cases, [0x49, 0x69, 0xDD]);
 
-        $this->assertFalse(self::reports($pattern, self::UNSETTLED), addcslashes($pattern, "\200..\377"));
+        $this->assertSame($reported, self::reports($pattern, self::UNSETTLED), addcslashes($pattern, "\200..\377"));
     }
 
     /**
-     * @return iterable<string, array{pattern: string}>
+     * @return iterable<string, array{pattern: string, reported: bool}>
      */
     public static function provideClassesOfUnsettledBytes(): iterable
     {
-        yield 'both cases of "i" and the Turkish letters' => ['pattern' => '/[Ii\xDD\xFD]/i'];
-        yield 'both cases of "i" under (*UCP)' => ['pattern' => '/(*UCP)[iI]/i'];
-        yield 'both cases of "i" and the Turkish letters under (*UCP)' => ['pattern' => '/(*UCP)[iI\xDD\xFD]/i'];
+        yield 'both cases of "i" and the Turkish letters' => ['pattern' => '/[Ii\xDD\xFD]/i', 'reported' => true];
+        yield 'both cases of "i"' => ['pattern' => '/[Ii]/i', 'reported' => true];
+        yield 'both cases of "i" and the dotted capital' => ['pattern' => '/[Ii\xDD]/i', 'reported' => true];
+        yield 'a negated class of both cases of "i"' => ['pattern' => '/[^Ii]/i', 'reported' => true];
+        yield 'both cases of "i" under (*UCP)' => ['pattern' => '/(*UCP)[iI]/i', 'reported' => true];
+        yield 'both cases of "i" and the Turkish letters under (*UCP)' => ['pattern' => '/(*UCP)[iI\xDD\xFD]/i', 'reported' => true];
+        yield 'the capital alone' => ['pattern' => '/[I]/i', 'reported' => false];
+        yield 'the dotted capital alone' => ['pattern' => '/[\xDD]/i', 'reported' => false];
+        yield 'the dotted capital and the small letter it pairs with' => ['pattern' => '/[\xDDi]/i', 'reported' => false];
+        yield 'the small letter and the dotted capital' => ['pattern' => '/[i\xDD]/i', 'reported' => false];
+        yield 'the Turkish letters without "i"' => ['pattern' => '/[\xDD\xFD]/i', 'reported' => false];
+        yield 'the small letter and the dotted capital under (*UCP)' => ['pattern' => '/(*UCP)[i\xDD]/i', 'reported' => false];
     }
 
     /**

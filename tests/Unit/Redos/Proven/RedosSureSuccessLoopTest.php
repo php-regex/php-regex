@@ -176,9 +176,11 @@ final class RedosSureSuccessLoopTest extends TestCase
         // it fails: no way out of the loop succeeds. Its branches both start
         // with "a": the model keeps it with every way through it.
         yield 'an atomic group kept with every way through it' => ['pattern' => '/^(?:a|a)+(?>a+|ab)a/', 'tail' => '!', 'complexity' => RedosComplexity::Exponential];
-        // Twenty characters at most before the end, where the "b" run is
-        // thirty long: no way out of the loop succeeds.
-        yield 'a bounded repeat read as unbounded' => ['pattern' => '/^(?:a|a)+a[^x]{0,20}(?:x|\z)/', 'tail' => str_repeat('b', 30), 'complexity' => RedosComplexity::Exponential];
+        // Sixty-five characters at most before the end, where the "b" run
+        // is seventy long: no way out of the loop succeeds. A bound of 64 or
+        // less is written out as its copies, which witness it
+        // (RedosWrittenBoundTest).
+        yield 'a bounded repeat read as unbounded' => ['pattern' => '/^(?:a|a)+a[^x]{0,65}(?:x|\z)/', 'tail' => str_repeat('b', 70), 'complexity' => RedosComplexity::Exponential];
         // The dots succeed only twenty characters before the end: the run
         // abandoned inside the loop is bounded, but read in more ways than
         // the margin allows, and PHP exhausts its backtrack limit on 60 "a"

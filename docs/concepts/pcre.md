@@ -523,6 +523,7 @@ after: that case is `@internal`, and a minor release may merge or remove it.
 | `ClassesCompiledFromMergedRanges` | 10.45 | A class compiles from its ranges sorted and merged: the other cases a caseless class adds past the map are added once, "[\p{Any}]" or a class of every byte compiles to a match of any character and "\P{Any}" to a class of none, where each member added its own. |
 | `CaselessReferenceHoldsItsCaseRules` | 10.45 | A caseless back reference compiles to one unit more, which holds its case rules. |
 | `CaselessCasePropertiesMatchCasedLetters` | 10.45 | Under i, "\p{Lu}", "\p{Ll}" and "\p{Lt}" match every cased letter, as "\p{Lc}" does, where they matched as written. |
+| `AssertedFirstCharacterCheckedAgainstRequired` | 10.45 | The character a lookahead opening the pattern asserts is not looked for first where the pattern requires a character of the same value: "/(?=a)b?a/" finds "a" in "a", where 10.32 to 10.44 found nothing. |
 | `VersionConditionWholeNumbers` | 10.47 | The minor of "(?(VERSION>=10.xx)" is read whole, not as two digits. |
 | `CallsReturnCaptureGroups` | 10.47 | A call may return capture groups, as "(?1(2,<name>))". |
 | `GroupListErrors` | 10.47 | A list of groups that opens no "(", or holds an item that is no number or name, is refused as such, where it was a missing ")" at the end of the pattern and a reference to no group elsewhere. *(internal)* |

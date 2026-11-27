@@ -52,9 +52,6 @@ final class RegexPatternRuleRedosMessageRenderingTest extends RuleTestCase
         $this->assertStringEndsWith('...', $shown);
         $head = substr($shown, 0, -3);
         $this->assertGreaterThanOrEqual(49, \strlen($head), 'The cut drops no more than the character it falls in.');
-        if ('' === $head) {
-            $this->fail('The message quotes nothing of the pattern.');
-        }
         $this->assertStringStartsWith($head, $pattern, $head);
     }
 

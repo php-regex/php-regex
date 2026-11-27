@@ -407,6 +407,11 @@
             "witness": null,
             "replayed": null,
             "abstractions": [],
+            "target": {
+                "php": "8.4.1",
+                "pcre": "10.44",
+                "locale": "C"
+            },
             "analysis_version": "1",
             "search_cost": null,
             "upper_bound_degree": 0,

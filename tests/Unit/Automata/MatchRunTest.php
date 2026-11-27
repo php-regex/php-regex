@@ -15,6 +15,7 @@ namespace PHPRegex\Tests\Unit\Automata;
 
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Match\MatchRun;
+use PHPRegex\Tests\Support\PcreGates;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -30,6 +31,8 @@ use PHPUnit\Framework\TestCase;
  */
 final class MatchRunTest extends TestCase
 {
+    use PcreGates;
+
     private const FLAGS = \PREG_OFFSET_CAPTURE | \PREG_UNMATCHED_AS_NULL;
 
     #[Test]
@@ -80,6 +83,11 @@ final class MatchRunTest extends TestCase
     #[DataProvider('provideRunsOfEveryCall')]
     public function test_the_runs_every_call_needs_follow_from_the_patterns(string $left, string $right, ?array $runs): void
     {
+        // The solver refuses a pattern the running PCRE2 refuses: a
+        // lookbehind of more than one length needs 10.43.
+        $this->requiresCompile($left);
+        $this->requiresCompile($right);
+
         $this->assertSame($runs, (new LanguageSolver())->runsOfEveryCall($left, $right));
     }
 

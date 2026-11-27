@@ -41,7 +41,7 @@ use PHPUnit\Framework\TestCase;
  * 8 "a" and 30 "b": 1 113 -> 18 873 steps for "^(?:a|a)+[^x]{0,17}(?:x|\z)",
  * 933 -> 15 813 for "^(?:a|a)+(?:[^x]|[^x]){0,3}(?:x|\z)", 631 -> 1 891
  * (3 823 on 12) for "^a*a*[^x]{0,20}(?:x|\z)"; on 4 then 8 "a" and a "!",
- * 54 -> 894 for "^(?:a+)+(?>.*|y)\b", 84 -> 1 404 for "^(?:a+)+(?:.*|y)?+\b", 13 -> 21
+ * 46 -> 766 for "^(?:a+)+(?>.+|y)\b", 84 -> 1 404 for "^(?:a+)+(?:.*|y)?+\b", 13 -> 21
  * for "^(?:a|a)+[^x]*(?:x|\z)".
  */
 final class RedosWidenedSuccessTest extends TestCase
@@ -74,7 +74,8 @@ final class RedosWidenedSuccessTest extends TestCase
         yield 'a bounded repeat in a group' => ['pattern' => '/^(?:a|a)+(?:[^x]{0,20})(?:x|\z)/', 'tail' => $run, 'short' => 4, 'long' => 8];
         yield 'a bounded repeat of bounded repeats' => ['pattern' => '/^(?:a|a)+(?:[^x]{1,5}){1,5}(?:x|\z)/', 'tail' => $run, 'short' => 4, 'long' => 6];
         yield 'copies that read the same input in two ways' => ['pattern' => '/^(?:a|a)+(?:[^x]|[^x]){0,3}(?:x|\z)/', 'tail' => $run, 'short' => 4, 'long' => 8];
-        yield 'an atomic body kept with every way through it' => ['pattern' => '/^(?:a+)+(?>.*|y)\b/', 'tail' => '!', 'short' => 4, 'long' => 8];
+        // A first alternative that may fail: the group may try "y".
+        yield 'an atomic body kept with every way through it' => ['pattern' => '/^(?:a+)+(?>.+|y)\b/', 'tail' => '!', 'short' => 4, 'long' => 8];
         // The possessive repeat commits to ".*", after which no word
         // boundary holds before the "!".
         yield 'a possessive repeat kept with every way through it' => ['pattern' => '/^(?:a+)+(?:.*|y)?+\b/', 'tail' => '!', 'short' => 4, 'long' => 8];

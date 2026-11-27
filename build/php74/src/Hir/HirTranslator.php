@@ -122,6 +122,13 @@ final class HirTranslator
     private string $source = '';
 
     /**
+     * The newline of "(*CRLF)", the two characters every dot and "\N" of
+     * the pattern stop before; null under another convention, whose
+     * newlines are one character each and stand in the sets.
+     */
+    private ?LiteralHir $crLfNewline = null;
+
+    /**
      * @var array<int, int> the number of each capturing group, by object id
      */
     private array $groupNumbers = [];
@@ -168,6 +175,7 @@ final class HirTranslator
         $this->localeTables = !$this->unicode && CharacterTables::BUILT_IN !== ($this->locale ?? CharacterTables::current());
         $this->unicodeFlag = false !== strpos($regex->flags, 'u');
         $this->dollarEndOnly = false !== strpos($regex->flags, 'D');
+        $this->crLfNewline = 'CRLF' === StartOptions::newline($this->source) ? new LiteralHir([0x0D, 0x0A]) : null;
         $this->groupNumbers = $this->numberGroups($regex);
         $this->defined = [];
 
@@ -193,6 +201,18 @@ final class HirTranslator
     public function defined(): array
     {
         return $this->defined;
+    }
+
+    /**
+     * Under "(*CRLF)", the "\r\n" each dot without s and each "\N" of the
+     * pattern translate() last read is kept from reading the "\r" of, as
+     * the body of the lookahead that stands before it: the one object for
+     * them all, which tells such a lookahead from a written one. Null
+     * under another convention.
+     */
+    public function crLfNewline(): ?LiteralHir
+    {
+        return $this->crLfNewline;
     }
 
     /**
@@ -222,8 +242,9 @@ final class HirTranslator
                 return $this->character($node->codePoint, $node, $flags);
             case true === $node instanceof CharTypeNode:
                 return $this->charType($node, $flags);
-            case true === $node instanceof CharClassNode:
             case true === $node instanceof DotNode:
+                return 0 === ($flags & self::DOT_ALL) ? $this->notAtCrLf($this->characterClass($node, $flags)) : $this->characterClass($node, $flags);
+            case true === $node instanceof CharClassNode:
             case true === $node instanceof UnicodePropNode:
             case true === $node instanceof PosixClassNode:
             case true === $node instanceof ExtendedCharClassNode:
@@ -420,9 +441,30 @@ final class HirTranslator
                 return $this->unicode
                     ? $this->opaque($node, new Properties(1, null, false, null, null, null, [], [], 0, false, false))
                     : new ClassHir(CharSet::universe(false), $start, $end);
+            case 'N' === $node->value:
+                return $this->notAtCrLf($this->classOf('\\N', $node, $flags));
             default:
                 return $this->classOf('\\'.$node->value, $node, $flags);
         }
+    }
+
+    /**
+     * A dot without s, or "\N": the set the engine gives it, which holds
+     * no newline of one character. Under "(*CRLF)" the newline is two, and
+     * no set says it: the dot takes a "\r" and a "\n", each alone, and not
+     * the "\r" a "\n" follows, "/(*CRLF)a.\n/" finding no match in
+     * "a\r\n". There a lookahead says it before the set, over one body
+     * for every dot of the pattern.
+     */
+    private function notAtCrLf(Hir $character): Hir
+    {
+        if (null === $this->crLfNewline) {
+            return $character;
+        }
+
+        $look = new LookHir($this->crLfNewline, LookKind::NegativeAhead(), true, $character->startPosition, $character->endPosition);
+
+        return new ConcatHir([$look, $character], $character->startPosition, $character->endPosition);
     }
 
     private function characterClass(NodeInterface $node, int $flags): Hir
@@ -595,12 +637,12 @@ final class HirTranslator
         if ([] !== $codePoints) {
             $flat[] = new LiteralHir($codePoints, $literalStart, $literalEnd);
         }
-        $matchSubject602 = \count($flat);
+        $matchSubject644 = \count($flat);
 
         switch (true) {
-            case 0 === $matchSubject602:
+            case 0 === $matchSubject644:
                 return new EmptyHir($start, $end);
-            case 1 === $matchSubject602:
+            case 1 === $matchSubject644:
                 return $flat[0];
             default:
                 return new ConcatHir($flat, $start, $end);

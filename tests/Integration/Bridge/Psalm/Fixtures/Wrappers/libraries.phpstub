@@ -1,0 +1,142 @@
+<?php
+
+/*
+ * This file is part of the PHPRegex package.
+ *
+ * (c) Younes ENNAJI <younes.ennaji.pro@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
+// The wrapper libraries, as stubs: Psalm analyses no argument of a call on a
+// class it does not know, and none of the libraries need be installed where
+// the fixtures are read. Each class holds the methods the fixtures call, with
+// the parameters of the release the preset was read from (composer/pcre 3.3,
+// nette/utils 4.1, spatie/regex 3.1, laravel/framework 13, webmozart/assert
+// 1.11), in their order and under their names.
+
+namespace Composer\Pcre {
+    final class Preg
+    {
+        /**
+         * @param array<array-key, string|null>|null $matches
+         */
+        public static function match(string $pattern, string $subject, ?array &$matches = null, int $flags = 0, int $offset = 0): int {}
+
+        /**
+         * @param array<array-key, list<string|null>>|null $matches
+         */
+        public static function matchAll(string $pattern, string $subject, ?array &$matches = null, int $flags = 0, int $offset = 0): int {}
+
+        /**
+         * @param array<array-key, list<string|null>>|null $matches
+         */
+        public static function isMatchAll(string $pattern, string $subject, ?array &$matches = null, int $flags = 0, int $offset = 0): bool {}
+
+        /**
+         * @param string|list<string> $pattern
+         * @param string|list<string> $replacement
+         */
+        public static function replace(string|array $pattern, string|array $replacement, string $subject, int $limit = -1, ?int &$count = null): string {}
+
+        /**
+         * @param string|list<string>                             $pattern
+         * @param callable(array<array-key, string|null>): string $replacement
+         */
+        public static function replaceCallback(string|array $pattern, callable $replacement, string $subject, int $limit = -1, ?int &$count = null, int $flags = 0): string {}
+
+        /**
+         * @param array<string, callable(array<array-key, string|null>): string> $pattern
+         */
+        public static function replaceCallbackArray(array $pattern, string $subject, int $limit = -1, ?int &$count = null, int $flags = 0): string {}
+
+        /**
+         * @return list<string>
+         */
+        public static function split(string $pattern, string $subject, int $limit = -1, int $flags = 0): array {}
+    }
+
+    final class Regex
+    {
+        public static function isMatch(string $pattern, string $subject, int $offset = 0): bool {}
+    }
+}
+
+namespace Nette\Utils {
+    class Strings
+    {
+        /**
+         * @return list<string>|null
+         */
+        public static function match(string $subject, string $pattern, bool|int $captureOffset = false, int $offset = 0, bool $unmatchedAsNull = false, bool $utf8 = false): ?array {}
+
+        /**
+         * @return list<list<string>>
+         */
+        public static function matchAll(string $subject, string $pattern, bool|int $captureOffset = false, int $offset = 0, bool $unmatchedAsNull = false, bool $patternOrder = false, bool $utf8 = false, bool $lazy = false): array {}
+
+        /**
+         * @return list<string>
+         */
+        public static function split(string $subject, string $pattern, bool|int $captureOffset = false, bool $skipEmpty = false, int $limit = -1, bool $utf8 = false): array {}
+
+        /**
+         * @param string|array<array-key, string>                        $pattern
+         * @param string|callable(array<array-key, string|null>): string $replacement
+         */
+        public static function replace(string $subject, string|array $pattern, string|callable $replacement = '', int $limit = -1, bool $captureOffset = false, bool $unmatchedAsNull = false, bool $utf8 = false): string {}
+    }
+}
+
+namespace Spatie\Regex {
+    final class Regex
+    {
+        public static function match(string $pattern, string $subject): bool {}
+
+        public static function matchAll(string $pattern, string $subject): bool {}
+
+        /**
+         * @param string|list<string>                                    $pattern
+         * @param string|callable(array<array-key, string|null>): string $replacement
+         */
+        public static function replace(string|array $pattern, string|callable $replacement, string $subject, int $limit = -1): string {}
+    }
+}
+
+namespace Illuminate\Support {
+    class Str
+    {
+        public static function match(string $pattern, string $subject): string {}
+
+        public static function isMatch(string $pattern, string $value): bool {}
+
+        /**
+         * @return list<string>
+         */
+        public static function matchAll(string $pattern, string $subject): array {}
+
+        /**
+         * @param string|\Closure(array<array-key, string|null>): string $replace
+         */
+        public static function replaceMatches(string $pattern, \Closure|string $replace, string $subject, int $limit = -1): string {}
+    }
+}
+
+namespace Webmozart\Assert {
+    final class Assert
+    {
+        public static function regex(string $value, string $pattern, string $message = ''): void {}
+    }
+}
+
+// PHPUnit's Assert is a class of the PHPUnit running the tests, loaded in
+// Psalm's process: Psalm would otherwise read it from the file of that
+// release, through the storage it keeps from one run of the process to the
+// next. Read from here, it is the same class whatever PHPUnit runs.
+namespace PHPUnit\Framework {
+    abstract class Assert
+    {
+        final public static function assertMatchesRegularExpression(string $pattern, string $string, string $message = ''): void {}
+    }
+}

@@ -90,6 +90,7 @@ use PhpParser\Node\Stmt\Unset_;
 use PhpParser\Node\Stmt\While_;
 use PhpParser\NodeFinder;
 use PhpParser\NodeVisitorAbstract;
+use PHPRegex\Parser\Text\Ascii;
 
 /**
  * Reads, from a syntax tree whose names are resolved, what the file proves
@@ -899,7 +900,7 @@ final class AstValueCollector extends NodeVisitorAbstract
 
         $statements = $node->stmts ?? [];
         $last = $statements[\count($statements) - 1] ?? null;
-        $brace = null === $last ? null : $this->significantAt($last->getEndFilePos() + 1, '');
+        $brace = null === $last ? null : $this->afterStatements($last->getEndFilePos() + 1);
         if (null === $brace || '}' !== ($this->content[$brace] ?? '')) {
             return;
         }
@@ -930,6 +931,29 @@ final class AstValueCollector extends NodeVisitorAbstract
     }
 
     /**
+     * Where the first character from $from stands, after the last
+     * statement of a block, that is none of what the parser reads as no
+     * statement there: white space, an empty statement, the tag that
+     * leaves PHP and the one that enters it again, the text between them
+     * being a statement of its own. Null at the end of the text.
+     */
+    private function afterStatements(int $from): ?int
+    {
+        $at = $this->significantAt($from, ';');
+        while (null !== $at) {
+            $text = substr($this->content, $at, 5);
+            $tag = str_starts_with($text, '?>') ? '?>' : ('<?php' === Ascii::lower($text) ? $text : null);
+            if (null === $tag) {
+                break;
+            }
+
+            $at = $this->significantAt($at + \strlen($tag), ';');
+        }
+
+        return $at;
+    }
+
+    /**
      * Where the first character from $from stands that is no white space,
      * no comment and none of $skipped; null at the end of the text.
      */
@@ -948,8 +972,9 @@ final class AstValueCollector extends NodeVisitorAbstract
                 $close = strpos($content, '*/', $at + 2);
                 $at = false === $close ? $length : $close + 1;
             } elseif (('/' === $character && '/' === $next) || ('#' === $character && '[' !== $next)) {
-                $newline = strpos($content, "\n", $at);
-                $at = false === $newline ? $length : $newline;
+                // A comment of one line ends at a newline or at a
+                // carriage return.
+                $at += strcspn($content, "\r\n", $at);
             } else {
                 return $at;
             }

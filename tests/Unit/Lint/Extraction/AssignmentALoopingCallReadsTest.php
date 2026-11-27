@@ -128,6 +128,225 @@ final class AssignmentALoopingCallReadsTest extends TestCase
             'code' => "function f(\$s) { \$p = '/p/'; preg_match_all(\$p, \$s); preg_match_all(\$p, \$s, \$m); preg_split(\$p, \$s); }",
             'expected' => [['/p/', 'preg_match_all', ['preg_split']]],
         ];
+        // What PHP reads as no statement before the brace that closes a
+        // block leaves the block where it ends: an empty statement, a
+        // closing tag, the opening tag after it and the text between them.
+        yield 'text out of PHP before the brace that closes the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?>html<?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a brace out of PHP before the brace that closes the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?>}<?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a closing tag that ends the last statement of the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s) ?><?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a closing tag after the last statement of the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?><?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a closing tag, its newline and an opening tag in capitals' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?>\n<?PHP\n} }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a comment a closing tag ends before the brace' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); // c ?><?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an echo tag before the brace that closes the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?><?= \$s ?><?php } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an empty statement before the brace that closes the block' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s);; } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'an empty statement after an opening tag before the brace' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); ?><?php ; } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'text out of PHP before the brace of an else, of a loop and of a try' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { } else { \$p = '/p/'; preg_match_all(\$p, \$s); ?>a<?php }\n"
+                ."while (\$c) { \$q = '/q/'; preg_split(\$q, \$s); ?>b<?php }\n"
+                ."do { \$r = '/r/'; preg_match_all(\$r, \$s); ?>c<?php } while (\$c);\n"
+                ."try { \$t = '/t/'; preg_split(\$t, \$s); ?>d<?php } finally { } }",
+            'expected' => [['/p/', 'preg_match_all', []], ['/q/', 'preg_split', []], ['/r/', 'preg_match_all', []], ['/t/', 'preg_split', []]],
+        ];
+        // The call after the block is not in it: text out of PHP does not
+        // move the brace.
+        yield 'a call after a block that text out of PHP ends' => [
+            'code' => "function f(\$s, \$c) { \$p = '/q/'; if (\$c) { \$p = '/p/'; ?>html<?php } preg_match_all(\$p, \$s); }",
+            'expected' => [['/q/', null, []], ['/p/', null, []]],
+        ];
+        yield 'a block of the alternative syntax that text out of PHP ends' => [
+            'code' => "function f(\$s, \$c) { if (\$c): \$p = '/p/'; preg_match_all(\$p, \$s); ?>html<?php endif; }",
+            'expected' => [['/p/', null, []]],
+        ];
+        // A branch without braces is no block: the statements after it,
+        // empty or not, are not its own.
+        yield 'an empty statement after a branch without braces' => [
+            'code' => "function f(\$s, \$c) { if (\$c) \$p = '/p/';; preg_match_all(\$p, \$s); }",
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a branch without braces the file ends in' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$p = '/p/'; preg_match_all(\$p, \$s); } }\nif (\$s) \$s = 'y';",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        // A carriage return alone ends a comment, as a newline does.
+        yield 'a comment a newline ends between the head and the brace' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) // : c\n{ \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a comment a carriage return ends between the head and the brace' => [
+            'code' => "function f(\$s, \$l) { foreach (\$l as \$x) // : c\r{ \$p = '/p/'; preg_match_all(\$p, \$s); } }",
+            'expected' => [['/p/', 'preg_match_all', []]],
+        ];
+        yield 'a comment a newline ends before the colon of the alternative syntax' => [
+            'code' => "function f(\$s, \$c, \$l) { if (\$c) // c\n: foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); } endif; }",
+            'expected' => [['/p/', null, []]],
+        ];
+        yield 'a comment a carriage return ends before the colon of the alternative syntax' => [
+            'code' => "function f(\$s, \$c, \$l) { if (\$c) # c\r: foreach (\$l as \$x) { \$p = '/p/'; preg_match_all(\$p, \$s); } endif; }",
+            'expected' => [['/p/', null, []]],
+        ];
+    }
+
+    /**
+     * A list of patterns a variable holds is read by the calls PHP gives
+     * a list of patterns to, each item one pattern: such a call runs in
+     * its loop the items of the list it reads where it stands, as it runs
+     * those of a list written at the call. A list whose items read a
+     * variable, one written otherwise than by its assignment and one the
+     * code does not settle name no loop.
+     *
+     * The oracle runs each function named on a list holding the probe,
+     * and reads the items of a list as PHP does: each value a pattern,
+     * whatever its key, the last one of a key written twice.
+     *
+     * @param list<array{string, string|null, list<string>}> $expected the pattern, the loop of its call and those of
+     *                                                                 the other calls that read it
+     */
+    #[Test]
+    #[DataProvider('provideListsOfPatterns')]
+    public function test_extraction_names_the_loop_of_a_list_of_patterns_a_variable_holds(string $code, array $expected): void
+    {
+        foreach ($expected as [, $everyMatch, $elsewhere]) {
+            foreach (null === $everyMatch ? $elsewhere : [$everyMatch, ...$elsewhere] as $function) {
+                $this->assertGreaterThan(self::matchesMade($function, str_repeat('a', 1000)), self::matchesMade($function, str_repeat('a', 2000)), 'Oracle: '.$function.' stops early.');
+            }
+        }
+
+        $list = ['/p/', '/q/'];
+        $this->assertSame('', preg_replace($list, '', 'pq'), 'Oracle: preg_replace() reads each item of a list.');
+        $this->assertSame('', preg_replace(['k' => '/p/', 7 => '/q/'], '', 'pq'), 'Oracle: preg_replace() reads the items whatever their keys.');
+        $this->assertSame(['/b/'], eval("return [0 => '/a/', 0 => '/b/'];"), 'Oracle: a key written twice holds its last value.');
+
+        $this->assertSame($expected, $this->readByBoth(['subject.php' => "<?php\n\$s = 'x';\n".$code."\n"], PatternFunctionRegistry::native()));
+    }
+
+    /**
+     * @return iterable<string, array{code: string, expected: list<array{string, string|null, list<string>}>}>
+     */
+    public static function provideListsOfPatterns(): iterable
+    {
+        yield 'a list a statement of the body assigns' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list of two patterns' => [
+            'code' => "function f(\$s) { \$l = ['/p/', '/q/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/p/', 'preg_replace', []], ['/q/', 'preg_replace', []]],
+        ];
+        yield 'a list written the long way, passed by name' => [
+            'code' => "function f(\$s) { \$l = array('/p/'); preg_replace(pattern: \$l, replacement: '', subject: \$s); }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list given to preg_filter' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_filter(\$l, '', \$s); }",
+            'expected' => [['/p/', 'preg_filter', []]],
+        ];
+        yield 'a list given to preg_replace_callback' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_replace_callback(\$l, static fn (\$m) => '', \$s); }",
+            'expected' => [['/p/', 'preg_replace_callback', []]],
+        ];
+        yield 'a list of the file level' => [
+            'code' => "\$l = ['/p/']; preg_replace(\$l, '', \$s);",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list a block of braces assigns before the call' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$l = ['/p/']; preg_replace(\$l, '', \$s); } }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list read in a loop that does not write it' => [
+            'code' => "function f(\$s, \$c) { \$l = ['/p/']; while (\$c) { preg_replace(\$l, '', \$s); } }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list read through a copy' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; \$m = \$l; preg_replace(\$m, '', \$s); }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list under keys' => [
+            'code' => "function f(\$s) { \$l = ['k' => '/p/', 7 => '/q/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/p/', 'preg_replace', []], ['/q/', 'preg_replace', []]],
+        ];
+        yield 'a list with a key written twice' => [
+            'code' => "function f(\$s) { \$l = [0 => '/a/', 0 => '/b/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/b/', 'preg_replace', []]],
+        ];
+        yield 'a list with an item that chooses between two literals' => [
+            'code' => "function f(\$s, \$c) { \$l = [\$c ? '/a/' : '/b/', '/c/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/a/', 'preg_replace', []], ['/b/', 'preg_replace', []], ['/c/', 'preg_replace', []]],
+        ];
+        yield 'a list two calls read' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_replace(\$l, '', \$s); preg_filter(\$l, '', \$s); }",
+            'expected' => [['/p/', 'preg_replace', ['preg_filter']]],
+        ];
+        yield 'a list an item of which a call that stops at the first match reads first' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_match(\$l[0], \$s); preg_replace(\$l, '', \$s); }",
+            'expected' => [['/p/', null, ['preg_replace']]],
+        ];
+        // A limit bounds the loop of the call, whatever it reads.
+        yield 'a list given with a limit' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_replace(\$l, '', \$s, 1); }",
+            'expected' => [['/p/', null, []]],
+        ];
+        // The list is built where it is assigned: what a variable held
+        // there is not told.
+        yield 'a list with an item that reads a variable' => [
+            'code' => "function f(\$s) { \$a = '/a/'; \$l = [\$a, '/b/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [['/a/', null, []], ['/b/', null, []]],
+        ];
+        yield 'a list assigned in a branch before the call' => [
+            'code' => "function f(\$s, \$c) { if (\$c) { \$l = ['/p/']; } preg_replace(\$l, '', \$s); }",
+            'expected' => [['/p/', null, []]],
+        ];
+        // A list assigned again is never read as the list it held before.
+        yield 'a list assigned again after the call' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; preg_replace(\$l, '', \$s); \$l = ['/q/']; }",
+            'expected' => [['/p/', 'preg_replace', []]],
+        ];
+        yield 'a list assigned again before the call' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; \$l = ['/q/']; preg_replace(\$l, '', \$s); }",
+            'expected' => [],
+        ];
+        yield 'a list a branch may assign again before the call' => [
+            'code' => "function f(\$s, \$c) { \$l = ['/p/']; if (\$c) { \$l = ['/q/']; } preg_replace(\$l, '', \$s); }",
+            'expected' => [],
+        ];
+        yield 'a list the loop of the call assigns again after it' => [
+            'code' => "function f(\$s, \$x) { \$l = ['/p/']; foreach (\$x as \$y) { preg_replace(\$l, '', \$s); \$l = ['/q/']; } }",
+            'expected' => [],
+        ];
+        yield 'a list an item is appended to' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; \$l[] = '/q/'; preg_replace(\$l, '', \$s); }",
+            'expected' => [],
+        ];
+        yield 'a list passed to a call before' => [
+            'code' => "function f(\$s) { \$l = ['/p/']; foo(\$l); preg_replace(\$l, '', \$s); }",
+            'expected' => [],
+        ];
     }
 
     /**
@@ -288,14 +507,19 @@ final class AssignmentALoopingCallReadsTest extends TestCase
 
     /**
      * How many matches the function makes with the probe on the subject:
-     * the oracle of its loop.
+     * the oracle of its loop. A function PHP gives a list of patterns to
+     * is given the probe in a list, and counts its replacements.
      */
     private static function matchesMade(string $function, string $subject): int
     {
+        $count = 0;
         $made = match ($function) {
             'preg_match_all' => preg_match_all(self::PROBE, $subject),
             // The pieces of preg_split() are one more than its matches.
             'preg_split' => \count(preg_split(self::PROBE, $subject) ?: []) - 1,
+            'preg_replace' => null === preg_replace([self::PROBE], '', $subject, -1, $count) ? false : $count,
+            'preg_filter' => null === preg_filter([self::PROBE], '', $subject, -1, $count) ? false : $count,
+            'preg_replace_callback' => null === preg_replace_callback([self::PROBE], static fn (array $match): string => '', $subject, -1, $count) ? false : $count,
             default => false,
         };
         self::assertIsInt($made, 'Oracle: '.$function.' failed.');

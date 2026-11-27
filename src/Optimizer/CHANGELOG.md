@@ -6,6 +6,13 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RewriteKind` names each kind of rewrite, its `message()` the sentence
+   `OptimizationResult::$changes` holds for it. `OptimizationResult::$kinds`
+   lists the kinds of the rewrites made, in the order first made, and
+   `$changes` is the message of each; `$proven` says whether the automata
+   checked the rewrite, true under `verifyWithAutomata` and for a possessive
+   rewrite, false for one shipped unchecked or a pattern left as written.
+   The JSON of a result keeps its keys.
  * `Modernizer` takes the `PcreTarget` the pattern runs for, null when its
    release and locale are unknown, and writes `\s` for `[\t\n\x0B\f\r ]` under
    a target whose locale is `C` or `POSIX`. `RedosRepairer` takes a parser
@@ -13,6 +20,13 @@ CHANGELOG
    the pattern and its rewrites are read for one target. `repair()` returns
    no repair, and `firstRepair()` null, for a pattern that does not lex or
    parse.
+ * The group of a dot repeated before `\R`, and of `\R` repeated before a
+   dot, stays as written: PCRE2 makes the repeat of a dot possessive before
+   `\R` as if the two shared no character, and leaves the repeat of a group
+   alone. `/x(?:.)*\R/` became `/x.*\R/`, which finds nothing in `"x\r"`
+   where the pattern finds it, and `/x(?:\R)?./` became `/x\R?./`, with and
+   without the JIT. A pattern that holds such a repeat is no longer
+   rewritten where the check of the rewrite reads the two alike.
  * The brackets of a possessive repeat of a group, or of an atomic group,
    that may match nothing stay as written after a repeated character that
    could give back to what follows: PCRE2 makes that character possessive,
@@ -24,6 +38,13 @@ CHANGELOG
    Such a rewrite is checked by the automata whatever `verifyWithAutomata`
    says, and the `Modernizer` keeps the group: it wrote `/a+(?:b)?+a/` as
    `/a+b?+a/`.
+ * The same brackets stay where they open a counted group, which PCRE2
+   compiles once per round: the repeat that ends one round is read against
+   the group that opens the next, and `/(?:(?:b)?+a+){2}/` finds nothing in
+   `aa`, where `/(?:b?+a+){2}/`, which the check proved alike and the
+   optimizer wrote, finds it. The pattern now ships as written;
+   `/(?:(?:b)?+a+c){2}/`, where a letter that must be there parts the
+   rounds, still becomes `/(?:b?+a+c){2}/`.
  * The group around a repeat of the byte 0xFF before `\w`, or of `\w`
    before that byte, stays as written without `u`: PCRE2 makes the repeat
    possessive once the group is out, as if 0xFF were no word character,
@@ -78,6 +99,19 @@ CHANGELOG
    `/(?(DEFINE)(?<n>a++b?))a/`. A repetition outside every group a call
    runs reads what follows it as before: `/a+;(x)(?1)/` becomes
    `/a++;(x)(?1)/`.
+ * A group a call runs that repeats something some number of times, and
+   a pattern that calls itself whole, are no longer rewritten: PCRE2 makes
+   such a repeat possessive by the brackets and the classes written around
+   it, and its JIT then misses matches. `/((?:a)+b)c(?1)d/` became
+   `/(a+b)c(?1)d/`, which finds nothing in `abcabcabd` with the JIT where
+   the pattern finds `abcabd`, from PCRE2 10.39 to 10.49; `/(a+(?:b))c(?1)d/`,
+   `/(a+(?:b|c))x(?1)d/` and `/([0-9]+b)c(?1)d/` lost a group, an
+   alternation or a class the same way, and `/x(?R)a|(?:a)*/` became
+   `/x(?R)a|a*/`, which finds the empty string in `xaa` where the pattern
+   finds `xaa`, with and without the JIT from PCRE2 10.44. What stands
+   outside every such group is rewritten as before: `/(?:a)+b(?1)(c)/`
+   still becomes `/a+b(?1)(c)/`. The check of the result refuses such a
+   rewrite whether `verifyWithAutomata` is on or off.
  * The check of the result runs the body of a group where each call of it
    stands, a group a DEFINE holds included, under the options in force
    where the DEFINE stands: `/(?(DEFINE)(?<n>a|b))x(?&n)/` becomes
@@ -90,10 +124,26 @@ CHANGELOG
    refused it.
  * Under the possessive option, a rewrite whose possessive quantifiers the
    check of the result refuses is made again without them, and the other
-   rewrites ship: the solver proves no possessive in a pattern that holds a
-   lookaround or `\b`, and `/\d+x(?!y)/s`, `/(?=x)\d+y/s` and `/\d+y\b/s`
-   now lose their useless `s`, as they do without the option. The second
-   rewrite runs only on such a refusal.
+   rewrites ship: the solver proves no possessive in a pattern that holds
+   `\b` or a reference, and `/\d+y\b/s` now loses its useless `s`, as it
+   does without the option. The second rewrite runs only on such a refusal.
+ * A rewrite the check refuses whole no longer keeps the `s` or the `m`
+   nothing in the pattern reads: the flag goes on its own, the rest of the
+   pattern as written. `/(\[(?:[^\]\[]+|(?R))*+\])/m`, where the check
+   proves no rewrite of a pattern that holds a possessive quantifier a call
+   runs, and `/a+(?:b)?+a/m`, whose rewrite takes out a group PCRE2 reads
+   to make `a+` possessive, lose their `m` and nothing else; they came back
+   as written. So does `/(?<=abc|abde)[0-9]+x/s` its `s` for a PCRE2 that
+   refuses the lookbehind factorized. Dropping such a flag moves no bracket
+   and no repeat, and PCRE compiles the pattern alike without it: it is not
+   sent to the check, whatever `verifyWithAutomata` says.
+ * Under the possessive option, a quantifier is made possessive in a
+   pattern that holds a lookaround, which the check of the result now
+   reads: `/(?=x)xa+b/` becomes `/(?=x)xa++b/`, `/\d+x(?!y)/s` becomes
+   `/\d++x(?!y)/`, `/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/` and
+   `/(?!x[0-9]+)x/` becomes `/(?!x\d++)x/`; all four were left greedy. A
+   repetition right before a lookaround stays greedy, as `/a+(?!b)/` finds
+   `a` in `aab` where `/a++(?!b)/` finds nothing.
  * The possessive rewrite reads an escape that names an ASCII character as
    that character: `/^[\x30-\x39]+x$/` becomes `/^[\x30-\x39]++x$/`, as
    `/^[0-9]+x$/` becomes `/^\d++x$/`; it was left greedy.
@@ -102,8 +152,17 @@ CHANGELOG
    `/(?i)a+b?c/` now becomes `/(?i)a++b?c/`, and `/(?i:a+b?)c/` becomes
    `/(?i:a++b?)c/`, while `/(?i)a+b?A/` stays greedy.
    An option setting that names `U`, under which a plain quantifier is
-   lazy, and a non-atomic lookaround, past whose end the engine reads from
-   where it starts, still keep every quantifier of the pattern as written.
+   lazy, still keeps every quantifier of the pattern as written.
+ * A non-atomic lookaround, `(*napla:...)`, `(*naplb:...)`, `(?*...)` or
+   `(?<*...)`, no longer keeps the possessive rewrite out of the whole
+   pattern: `/(*napla:x)xa+b/` becomes `/(?*x)xa++b/` and
+   `/(*napla:xa+b)x/` becomes `/(?*xa++b)x/`, the lookaround spelled in its
+   short form as every rewrite of such a pattern spells it. A repetition
+   that may end the lookaround stays greedy: past that end the engine reads
+   what follows from where the lookaround stands, and backtracks into its
+   body, so nothing is known of what follows the repetition.
+   `/^(*napla:x(a+b?))x[ab-]*\1$/` matches `xaaba`, group 1 giving an `a`
+   back to the reference, where `(a++b?)` finds nothing.
  * The possessive rewrite reads what follows a repetition that ends its
    sequence, or stands alone in its group, its branch or the pattern: what
    follows the group at every place it runs, the alternation or the

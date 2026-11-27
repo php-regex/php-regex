@@ -37,7 +37,7 @@ final class RedosToolTest extends TestCase
         $redos = JsonContract::asArray($result->structured['redos']);
         $this->assertSame('critical', $redos['severity']);
         $this->assertSame('exponential', $redos['complexity']);
-        $this->assertSame(['prefix' => '', 'pump' => 'a', 'suffix' => '!'], $redos['witness']);
+        $this->assertSame(['prefix' => '', 'pump' => 'a', 'suffix' => '!', 'call' => 'with_matches'], $redos['witness']);
     }
 
     #[Test]

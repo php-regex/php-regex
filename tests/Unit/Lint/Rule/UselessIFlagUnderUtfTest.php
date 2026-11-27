@@ -15,6 +15,8 @@ namespace PHPRegex\Tests\Unit\Lint\Rule;
 
 use PHPRegex\Linter\PatternLinter;
 use PHPRegex\Parser\Cache\StaticCaches;
+use PHPRegex\Parser\PcreFeature;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Validation\OtherCases;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Toolkit\Regex;
@@ -41,13 +43,25 @@ final class UselessIFlagUnderUtfTest extends TestCase
 
     /**
      * The rows verified against a newer release than the floor: the casing
-     * verbs come with 10.45, and Unicode 17, which pairs U+A7CE with U+A7CF
-     * and U+16EA0 with U+16EBB, with 10.48.
+     * verbs and the extended classes come with 10.45, the restriction and
+     * the ASCII options with 10.43, and Unicode 17, which pairs U+A7CE with
+     * U+A7CF and U+16EA0 with U+16EBB, with 10.48.
      */
     private const RELEASES = [
-        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu'],
-        '10.43' => ['/(?r)[kK]/iu'],
+        '10.45' => ['/(*TURKISH_CASING)[\x{130}-\x{131}]/iu', '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', '/(*TURKISH_CASING)[iI]/iu', '/(*CASELESS_RESTRICT)[kK]/iu', '/(?[ [:upper:] ])/iu', '/(?[ [:alpha:] - [:lower:] ])/iu', '/(?aP)(?[ [:upper:] ])/iu', '/(*UTF)(?[ ![:lower:] ])/i'],
+        '10.43' => ['/(?r)[kK]/iu', '/(?r)[sS]/iu', '/(?r)[a-zA-Z]/iu', '/(?r)[^kK]/iu', '/(?r)[\x{212A}]/iu', '/(?r)[\x{17F}]/iu', '/(?r)[k]/iu', '/(?r)[\x{C5}\x{E5}]/iu', '/(?r)[\x{C5}\x{E5}\x{212B}]/iu', '/(?r:[kK])/iu', '/(?r)(?-r)[kK]/iu', '/(?r:1)|[kK]/iu', '/(?aP)[[:upper:]]/iu', '/(?a)[[:lower:]]/iu', '/(?aP:[[:upper:]])/iu', '/(?aD)[[:upper:]]/iu', '/(?aP)(?-aP)[[:upper:]]/iu', '/(?aP:)[[:upper:]]/iu'],
         '10.48' => ['/\x{A7CE}/iu', '/[\x{A7CE}]/iu', '/[\x{16E9B}-\x{16EA0}]/iu'],
+    ];
+
+    /**
+     * The characters the mbstring of PHP 8.4 maps to another case by a full
+     * mapping and by no simple one.
+     */
+    private const FULL_MAPPINGS_ALONE = [
+        0xDF, 0x149, 0x1F0, 0x390, 0x3B0, 0x587, 0x1E96, 0x1E97, 0x1E98, 0x1E99, 0x1E9A, 0x1F50, 0x1F52, 0x1F54, 0x1F56,
+        0x1FB2, 0x1FB4, 0x1FB6, 0x1FB7, 0x1FC2, 0x1FC4, 0x1FC6, 0x1FC7, 0x1FD2, 0x1FD3, 0x1FD6, 0x1FD7, 0x1FE2, 0x1FE3,
+        0x1FE4, 0x1FE6, 0x1FE7, 0x1FF2, 0x1FF4, 0x1FF6, 0x1FF7, 0xFB00, 0xFB01, 0xFB02, 0xFB03, 0xFB04, 0xFB05, 0xFB06,
+        0xFB13, 0xFB14, 0xFB15, 0xFB16, 0xFB17,
     ];
 
     private static ?string $everyCharacter = null;
@@ -98,13 +112,24 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'an ASCII sign' => ['pattern' => '/"/iu', 'useless' => true, 'reported' => true];
         // Both cases of every character are in the range.
         yield 'every character' => ['pattern' => '/[\x{0}-\x{10FFFF}]/iu', 'useless' => true, 'reported' => true];
-        // mbstring maps "ﬀ" to "FF", "ﬗ" to "ՄԽ" and "ŉ" to "ʼN", which
-        // PCRE2 does not fold, one character being two: in a class, which
-        // PCRE2's tables are read for, the flag is useless; read alone, as
-        // mbstring reads it, it is kept.
+        // mbstring maps "ﬀ" to "FF", "ﬗ" to "ՄԽ" and "ŉ" to "ʼN" by a full
+        // mapping, one character to two, which PCRE2 does not fold: in a
+        // class or alone, the flag is useless. The sharp s, which mbstring
+        // maps to "SS" alone, folds with its capital in PCRE2's tables.
         yield 'a range ending at a ligature' => ['pattern' => '/[\x{FAFF}-\x{FB00}]/iu', 'useless' => true, 'reported' => true];
         yield 'a range starting at a ligature' => ['pattern' => '/[\x{FB17}-\x{FB1C}]/iu', 'useless' => true, 'reported' => true];
-        yield 'a letter whose capital is two characters' => ['pattern' => '/\x{149}/iu', 'useless' => true, 'reported' => false];
+        yield 'a letter whose capital is two characters' => ['pattern' => '/\x{149}/iu', 'useless' => true, 'reported' => true];
+        yield 'that letter written raw' => ['pattern' => '/ŉ/iu', 'useless' => true, 'reported' => true];
+        yield 'a ligature' => ['pattern' => '/\x{FB00}/iu', 'useless' => true, 'reported' => true];
+        yield 'the sharp s' => ['pattern' => '/\x{DF}/iu', 'useless' => false, 'reported' => false];
+        // mbstring maps them to one character, as PCRE2 folds them: the
+        // long s and the Kelvin sign with "s" and "k", which its tables
+        // give no other case from 10.43, and the dotted capital I and the
+        // dotless small i with "i" and "I", under Turkish rules alone.
+        yield 'the long s' => ['pattern' => '/\x{17F}/iu', 'useless' => false, 'reported' => false];
+        yield 'the Kelvin sign' => ['pattern' => '/\x{212A}/iu', 'useless' => false, 'reported' => false];
+        yield 'the dotted capital I' => ['pattern' => '/\x{130}/iu', 'useless' => true, 'reported' => false];
+        yield 'the dotless small i' => ['pattern' => '/\x{131}/iu', 'useless' => true, 'reported' => false];
         // PCRE2 folds the long s with "s" and the Kelvin sign with "k",
         // which its tables give no other case from 10.43.
         yield 'the long s in a class' => ['pattern' => '/[\x{17F}]/iu', 'useless' => false, 'reported' => false];
@@ -146,23 +171,133 @@ final class UselessIFlagUnderUtfTest extends TestCase
         yield 'the Latin Extended-A letters with the long s' => ['pattern' => '/[\x{100}-\x{17F}]/iu', 'useless' => false, 'reported' => false];
         yield 'a small letter and its capital with a script' => ['pattern' => '/[aA\p{Greek}]/iu', 'useless' => true, 'reported' => true];
         yield 'a small letter and its capital with the word characters' => ['pattern' => '/[aA\w]/iu', 'useless' => true, 'reported' => true];
-        // Under u, [:upper:] reads as \p{Lu}, which i leaves as written in
-        // a class: the rule, which reads it as the capitals i widens without
-        // u, keeps the flag.
-        yield 'a small letter and its capital with the capitals' => ['pattern' => '/[aA[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // Under u, which sets UCP, [:upper:] and [:lower:] read as \p{Lu}
+        // and \p{Ll}, which i leaves as written in a class on every
+        // release: i widens them to the letters without UCP alone, as under
+        // (*UTF) or the ASCII option of the POSIX classes.
+        yield 'a small letter and its capital with the capitals' => ['pattern' => '/[aA[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital with the small letters' => ['pattern' => '/[aA[:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals' => ['pattern' => '/[[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the small letters' => ['pattern' => '/[[:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a negated class of the capitals' => ['pattern' => '/[^[:upper:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'every character but the small letters' => ['pattern' => '/[[:^lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals and the small letters' => ['pattern' => '/[[:upper:][:lower:]]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter with the small letters' => ['pattern' => '/[a[:lower:]]/iu', 'useless' => false, 'reported' => false];
+        // The capital i adds is among the capitals: the rule, which reads
+        // the letters written apart from the POSIX class, keeps the flag.
+        yield 'a small letter with the capitals' => ['pattern' => '/[a[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals under the UTF and UCP verbs' => ['pattern' => '/(*UTF)(*UCP)[[:upper:]]/i', 'useless' => true, 'reported' => true];
+        yield 'the capitals under the UTF verb alone' => ['pattern' => '/(*UTF)[[:upper:]]/i', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital with the capitals under the UTF verb alone' => ['pattern' => '/(*UTF)[aA[:upper:]]/i', 'useless' => false, 'reported' => false];
+        yield 'the capitals under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP)[[:upper:]]/iu', 'useless' => false, 'reported' => false];
+        yield 'the small letters under every ASCII option' => ['pattern' => '/(?a)[[:lower:]]/iu', 'useless' => false, 'reported' => false];
+        yield 'the capitals in a group under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP:[[:upper:]])/iu', 'useless' => false, 'reported' => false];
+        // An ASCII option of another kind, or one turned off or ended by
+        // its group, leaves the POSIX classes to UCP: the rule, which looks
+        // for the letter of the option anywhere in the pattern, keeps the
+        // flag.
+        yield 'the capitals under the ASCII option of the digits' => ['pattern' => '/(?aD)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals after the ASCII option of the POSIX classes turned off' => ['pattern' => '/(?aP)(?-aP)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        yield 'the capitals after a group under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP:)[[:upper:]]/iu', 'useless' => true, 'reported' => false];
+        // A POSIX class stands on its own among the operands of an
+        // extended class, where the ASCII option gives it back to the
+        // tables as it does in a class.
+        yield 'the capitals as the operand of an extended class' => ['pattern' => '/(?[ [:upper:] ])/iu', 'useless' => true, 'reported' => true];
+        yield 'the letters less the small letters in an extended class' => ['pattern' => '/(?[ [:alpha:] - [:lower:] ])/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals as the operand of an extended class under the ASCII option of the POSIX classes' => ['pattern' => '/(?aP)(?[ [:upper:] ])/iu', 'useless' => false, 'reported' => false];
+        yield 'the complement of the small letters in an extended class under the UTF verb alone' => ['pattern' => '/(*UTF)(?[ ![:lower:] ])/i', 'useless' => false, 'reported' => false];
+        // A group named "a", or options without that letter, set none.
+        yield 'the capitals in a group named a' => ['pattern' => '/(?<a>[[:upper:]])/iu', 'useless' => true, 'reported' => true];
+        yield 'the capitals in a group setting other options' => ['pattern' => '/(?s-m:[[:upper:]])/iu', 'useless' => true, 'reported' => true];
         // PCRE2 folds neither the dotted capital I nor the dotless small i
         // with another character but under Turkish rules, which pair them
         // with "i" and "I": the class is read under neither.
         yield 'both cases of "i" and the Turkish ones' => ['pattern' => '/[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => true];
         yield 'both cases of "i" and the Turkish ones under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[\x{130}\x{131}iI]/iu', 'useless' => true, 'reported' => false];
         yield 'both cases of "i" under Turkish rules' => ['pattern' => '/(*TURKISH_CASING)[iI]/iu', 'useless' => false, 'reported' => false];
-        // The rule reads the caseless sets whole, as a caseless class holds
-        // them where nothing restricts it: restricted to ASCII, the Kelvin
-        // sign folds with neither "k" nor "K", and the flag is kept.
-        yield 'a small letter and its capital whose caseless set holds the Kelvin sign, restricted' => ['pattern' => '/(?r)[kK]/iu', 'useless' => true, 'reported' => false];
+        // Restricted, a caseless set that starts with an ASCII letter is
+        // not read: "k" and "K" fold with each other alone, as "s" and "S"
+        // do, and the Kelvin sign and the long s with nothing. The other
+        // sets are read as they are without the restriction.
+        yield 'a small letter and its capital whose caseless set holds the Kelvin sign, restricted' => ['pattern' => '/(?r)[kK]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital whose caseless set holds the long s, restricted' => ['pattern' => '/(?r)[sS]/iu', 'useless' => true, 'reported' => true];
+        yield 'the ASCII letters, restricted' => ['pattern' => '/(?r)[a-zA-Z]/iu', 'useless' => true, 'reported' => true];
+        yield 'a negated class of a small letter and its capital, restricted' => ['pattern' => '/(?r)[^kK]/iu', 'useless' => true, 'reported' => true];
+        yield 'the Kelvin sign in a class, restricted' => ['pattern' => '/(?r)[\x{212A}]/iu', 'useless' => true, 'reported' => true];
+        yield 'the long s in a class, restricted' => ['pattern' => '/(?r)[\x{17F}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter without its capital, restricted' => ['pattern' => '/(?r)[k]/iu', 'useless' => false, 'reported' => false];
+        yield 'the A with ring above and its capital without the Angstrom sign, restricted' => ['pattern' => '/(?r)[\x{C5}\x{E5}]/iu', 'useless' => false, 'reported' => false];
+        yield 'the A with ring above, its capital and the Angstrom sign, restricted' => ['pattern' => '/(?r)[\x{C5}\x{E5}\x{212B}]/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital in a group that restricts' => ['pattern' => '/(?r:[kK])/iu', 'useless' => true, 'reported' => true];
+        yield 'a small letter and its capital after the restriction is lifted' => ['pattern' => '/(?r)(?-r)[kK]/iu', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital beside a group that restricts' => ['pattern' => '/(?r:1)|[kK]/iu', 'useless' => false, 'reported' => false];
+        yield 'a small letter and its capital under the verb that restricts' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'useless' => true, 'reported' => true];
         // An inline option decides the case of what follows it either way.
         yield 'a Latin-1 letter after i turned off' => ['pattern' => '/(?-i)\x{E9}/iu', 'useless' => true, 'reported' => true];
         yield 'a Latin-1 letter after i turned on again' => ['pattern' => '/(?i)\x{E9}/iu', 'useless' => true, 'reported' => true];
+    }
+
+    /**
+     * The restriction is read from the release that has it, PCRE2 10.43:
+     * before it "(?r)" and the r modifier are refused, and the verb, which
+     * no release before 10.45 reads, restricts nothing the rule reads.
+     */
+    #[Test]
+    #[DataProvider('provideRestrictedClassesByRelease')]
+    public function test_a_class_is_read_restricted_from_the_release_that_restricts(string $pattern, string $pcre, bool $reported): void
+    {
+        // Oracle: an engine that reads the verb matches the same characters
+        // with i and without; one that does not refuses the pattern.
+        if (PcreTarget::runtime()->supports(PcreFeature::CasingSettingVerbs)) {
+            $without = (string) preg_replace('/i([a-z]*)$/', '$1', $pattern);
+            $this->assertSame(preg_match_all($without, self::everyCharacter()), preg_match_all($pattern, self::everyCharacter()), 'Oracle: '.$pattern);
+        } else {
+            $this->assertFalse(@preg_match($pattern, ''), 'Oracle: PCRE2 refuses '.$pattern);
+        }
+
+        $this->assertSame($reported, self::reports($pattern, $pcre), $pattern.' on PCRE2 '.$pcre);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, pcre: string, reported: bool}>
+     */
+    public static function provideRestrictedClassesByRelease(): iterable
+    {
+        yield 'the verb before the release that restricts' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.42', 'reported' => false];
+        yield 'the verb on the release that reads it' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.45', 'reported' => true];
+        yield 'the verb on the latest release' => ['pattern' => '/(*CASELESS_RESTRICT)[kK]/iu', 'pcre' => '10.49', 'reported' => true];
+    }
+
+    /**
+     * The 48 characters mbstring maps to another case by a full mapping
+     * alone, one character to several, are read from PCRE2's tables of the
+     * target's release, which folds one character with one: the sharp s
+     * with its capital on every release, and from 10.45, with Unicode 16,
+     * U+0390 with U+1FD3, U+03B0 with U+1FE3 and U+FB05 with U+FB06.
+     *
+     * Engine, every character matched once, with the JIT and without it:
+     * 47 of them match themselves alone under i on PCRE2 10.35, 10.39,
+     * 10.40, 10.42, 10.43 and 10.44 (php:7.4 to php:8.4), 41 on 10.46 and
+     * 10.49.
+     */
+    #[Test]
+    public function test_a_character_mbstring_maps_by_a_full_mapping_alone_has_the_case_the_engine_gives_it(): void
+    {
+        $folded = [];
+        foreach (self::FULL_MAPPINGS_ALONE as $codePoint) {
+            $pattern = \sprintf('/\x{%X}/iu', $codePoint);
+            // Oracle: of every character, the pattern matches its own alone
+            // where i changes nothing.
+            $useless = 1 === preg_match_all($pattern, self::everyCharacter());
+            if (!$useless) {
+                $folded[] = $codePoint;
+            }
+
+            $this->assertSame($useless, self::reports($pattern), $pattern);
+        }
+
+        $this->assertContains(0xDF, $folded);
+        $this->assertNotContains(0x149, $folded);
     }
 
     /**
@@ -212,9 +347,9 @@ final class UselessIFlagUnderUtfTest extends TestCase
         return self::$everyCharacter;
     }
 
-    private static function reports(string $pattern): bool
+    private static function reports(string $pattern, ?string $pcre = null): bool
     {
-        $regex = Regex::create(['cache' => null]);
+        $regex = Regex::create(['cache' => null] + (null === $pcre ? [] : ['pcre_version' => $pcre]));
         $linter = new PatternLinter($regex->target());
         $regex->parse($pattern)->accept($linter);
 

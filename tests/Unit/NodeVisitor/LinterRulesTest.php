@@ -465,13 +465,12 @@ final class LinterRulesTest extends TestCase
     }
 
     /**
-     * Corpus shapes reported on purpose: a loop bounded at four iterations
-     * over items that are themselves bounded, from the start of the subject.
-     * The engine cannot blow up here (every quantifier is bounded and "^"
-     * fixes the start: 4 to 59 steps per attempt, whatever the length of
-     * the subject), so the report is a conservative one. The rule exempts
-     * only the measured-linear "(a+){1,2}$" shape of a bounded outer loop
-     * and keeps the others; this pins that choice.
+     * Corpus shapes left out: a loop bounded at four iterations over items
+     * that are themselves bounded, from the start of the subject. The
+     * engine cannot blow up here (every quantifier is bounded and "^" fixes
+     * the start: 4 to 59 steps per attempt, whatever the length of the
+     * subject), and the rule counts the ways the engine can read the loop,
+     * few enough to leave it out.
      *
      * @return iterable<string, array{pattern: string, units: list<string>}>
      */
@@ -492,14 +491,14 @@ final class LinterRulesTest extends TestCase
      */
     #[Test]
     #[DataProvider('provideBoundedCorpusShapes')]
-    public function test_bounded_corpus_shape_is_reported_on_purpose(string $pattern, array $units): void
+    public function test_bounded_corpus_shape_is_not_reported(string $pattern, array $units): void
     {
         foreach ($units as $unit) {
             $long = self::steps($pattern, substr(str_repeat($unit, 64), 0, 64).'!');
             $this->assertLessThan(100, $long, \sprintf('Oracle: unit %s takes %d steps.', $unit, $long));
         }
 
-        $this->assertContains('regex.lint.quantifier.nested', $this->lint($pattern));
+        $this->assertNotContains('regex.lint.quantifier.nested', $this->lint($pattern));
     }
 
     /**

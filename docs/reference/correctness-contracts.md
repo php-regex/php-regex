@@ -128,8 +128,8 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   8,000 / 16,000: `preg_match_all()` 2.3 / 8.6 / 34 / 131 ms with `pcre.jit=0`, 1.8 / 6.8 / 27 / 106 ms with
   `pcre.jit=1`; `preg_match()` 0.01 ms.
 - **Semantics, short matches:** Or a witness on which the first attempt of each call of the loop, read in the order
-  PCRE2 tries its paths, first tries paths that read to the end of the run and fail there, then succeeds after one
-  character at least and four run words at most: the search of `preg_match()` stops at that short match, and each
+  PCRE2 tries its paths, first tries paths that read to the end of the run and fail there, then settles on a match of
+  one character at least and 64 run words at most, the last success it meets in that order: the search of `preg_match()` stops at that short match, and each
   call of the loop starts where the last match ended, inside the run. `RedosSearchCost::$cause` is `ShortMatch`, and the
   lint message starts with `Quadratic search over short matches`. A match `\K` leaves empty makes PHP retry where it
   ends, refusing an empty match at its start only: that retry ends on the next short match the same way. Measured with
@@ -138,26 +138,35 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   / 17 / 64 ms; with `pcre.jit=1` 0.7 / 2.8 / 11 / 43 ms, 0.7 / 2.8 / 11 / 43 ms and 1.1 / 4.2 / 16 / 65 ms.
 - **Guarantee:** None in the other direction, as for `search_cost`. Confirmed mode replays the retry pinned at two
   offsets, `(*NOTEMPTY_ATSTART)` with the `A` modifier, without the JIT (`replayed`); for short matches, the attempt
-  pinned at two offsets, which must match within four run words.
+  pinned at two offsets, which must match within 64 run words; for the loop of a lazy `Strings::matchAll()`, also
+  the calls that loop makes next, past one run word, each of which must match within 64 run words of where it
+  starts.
 - **Limits:**
   - **The JIT** does not avoid the cost of the retry: PCRE2's JIT takes no `PCRE2_ANCHORED` at match time, so the
     retry always runs in the interpreter. It may avoid the cost of short matches for some patterns.
-  - **Short matches** are looked for with no prefix: the first call, at the subject's start, must end on a short
-    match too. A call whose first attempt fails, and whose later attempt matches, is not read, nor is a match past
-    four run words.
+  - **Short matches** are looked for with no prefix. The first call, at the subject's start, may fail there inside
+    the run and match at a later character, as `/\Ba(?:a+\d)?/` does; any other call must match where it starts. A
+    match past 64 run words is not read, nor one a bounded repeat above 16 ends, as in `/a(?:a+\d|a{1,20})?/`, nor
+    one that stands behind a lookaround, as in `/(?<=a)a(?:a+\d)?/`: the model keeps no lookaround's condition, and
+    counts no success behind one.
   - **A call whose loop an argument decides** is reported only when the call spells out a value that makes it loop:
     a `RegexIterator` mode in a variable, or changed later with `setMode()`, is not read. A lazy `Strings::matchAll()`
-    of nette/utils loops through `preg_match()` from the end of each match, with no retry: that loop is not priced,
-    though `/(?:a+\d)?/` costs it n² too (1.2 / 3.6 / 12.5 ms on n = 2,000 / 4,000 / 8,000, PHP 8.4.28, PCRE2
-    10.49).
+    of nette/utils loops through `preg_match()` from the end of each match, one byte on after an empty one, with no
+    retry: a loop of its own, priced as the cost of short matches where each of its attempts reads to the end of
+    the run before it settles on a match, short or empty (`/(?:a+\d)?/`: 1.2 / 3.7 / 13 ms on n = 2,000 / 4,000 /
+    8,000, PHP 8.4.28, PCRE2 10.49, `pcre.jit=1`), and never as the cost of PHP's retry, which it does not make
+    (`/(?:a+\d)??/`). A pattern holding `\K` is not read for that loop, nor a run on which it would stop inside a
+    character under `u`; the language server leaves the call unreported.
   - **A pattern several calls read**, through a constant or a variable, is reported once, where its literal is
     written, with one finding for each function of those calls that looks for every match. Through a variable, a call
     runs in its loop the value of the latest assignment before it when that one runs first on every path to the call:
     a statement of the body, or of the block of braces the call stands in, that no later assignment reaches through a
     loop the block holds. `$p = '/a/'; preg_match_all($p, $s); $p = '/b/';` is no finding for `/b/`. The head of a
     `foreach` over literals gives each of them to a call in its body the body does not write it in first, and a
-    composition joins what each variable holds where it is read. Where an assignment in a branch or a loop of its own
-    may stand between, in a `switch` or in a block of the alternative syntax, the call names no loop.
+    composition joins what each variable holds where it is read. A list of patterns a variable is assigned gives each
+    of its items to the `preg_replace()`, `preg_replace_callback()` or `preg_filter()` that reads it, unless an item
+    reads a variable. Where an assignment in a branch or a loop of its own may stand between, in a `switch` or in a
+    block of the alternative syntax, the call names no loop.
   - The other limits of the search cost hold, but for `\G`, which the pinned replay of the retry confirms, as each
     call of the loop starts at that offset.
 
@@ -181,11 +190,15 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
   matches the Kelvin sign U+212A, `s` the long s U+017F and `å` the angstrom sign U+212B, while the Turkish dotless
   `i` stays apart, as in PCRE. Folds that produce several code points (the Turkish `İ`, the `DŽ` digraph) are not
   modeled. The flags `i`, `s`, `u`, `D`, `m` and `r` are read, and `x`, `U`, `n`, `J`, `S` and `X` change nothing a
-  language says. `A` is refused, and so is a newline convention other than `\n`, such as `(*CR)`, when `$`, `\Z`,
-  `/m` or `(?m)` would read the newline it sets, and so are `(*NOTEMPTY)` and `(*NOTEMPTY_ATSTART)`, which refuse an
-  empty match without the JIT and which PHP's JIT ignores. `matchEquivalent()` reads the same flags except `m`, which
-  it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and refuses
-  `(*CRLF)` in any pattern: under it the dot reads a `\r` alone but not one before a `\n`.
+  language says. Every newline convention, `(*CR)` or `(*CRLF)` among them, moves `$`, `\Z` and the anchors under
+  `/m` as the engine does. `A` is refused, and so are a dot or `\N` under `(*CRLF)` inside a lookaround, a search under `(*CRLF)`,
+  `(*ANYCRLF)` or `(*ANY)` that may find a match only from between a `\r` and a `\n`, and `(*NOTEMPTY)` and
+  `(*NOTEMPTY_ATSTART)`, which refuse an empty match without the JIT and which PHP's JIT ignores.
+  `matchEquivalent()` reads the same flags except `m`, which
+  it refuses, refuses the same start options, the newline conventions where `$` or `\Z` reads them, and a dot or
+  `\N` under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`. A search that writes a `\r` or a `\n`
+  as a character of its own, and that no `^` nor `.*` leads, tries every start, the one between a `\r` and a `\n`
+  too, with the JIT and without: the solvers read it as written.
 - **Lookarounds and anchors:** Lookaheads and lookbehinds, positive and negative, are read, and so are `\b` and `\B`,
   as the lookarounds they stand for. `^`, `$`, `\A`, `\z` and `\Z` are read wherever they stand, under `/m` too:
   `/(?:^|,)a/` and `/^\d+$/m` are answered. A lookaround inside a lookaround, an anchor or word boundary inside a
@@ -219,9 +232,9 @@ are **sound** (no false negatives), **complete** (no false positives), or **best
 ## Symfony Bridge Analyzers
 
 **Routes (`regex:routes`)**
-- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only. The trailing slashes of a request are read as the application's `symfony/routing` reads them: a route with no variable takes its path with any number of them before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one at most since.
+- **Semantics:** Analyzes compiled Symfony route regexes with automata comparisons, pairing the routes in declaration order as the router's first match does: shadowed when an earlier route covers a later one, an overlap when they share some paths only. The trailing slashes of a request are read as the application's `symfony/routing` reads them: a route with no variable takes its path with any number of them before 6.4.51, 7.4.24 and 8.1.12, and on 8.0, and with one at most since, and a route tried with a regex takes the path the router's optional slash ends when the value of the variable it ends on ends on the slash or is empty.
 - **Guarantee:** Sound for supported regex subset and route conditions considered in analysis.
-- **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown.
+- **Fallbacks:** Unsupported flags or host requirements are reported and skipped; route conditions are treated as unknown. Two routes the router may try in either order are skipped: hosts that part on letter case alone, and, before `symfony/routing` 6.4.51, 7.4.24 and 8.1.12 and on 8.0, distinct hosts whose shared end holds a variable next to other characters in its label or one that may match a dot.
 
 **Security Access Control (`regex:security`)**
 - **Semantics:** Models access_control as search semantics (`Σ* L Σ*`) to match `preg_match` behavior, a path and a host as written, the host under `i` and the path under `s` where the application's `symfony/http-foundation` compiles it so (6.4.46, 7.4.19 and 8.1.7 on, never 8.0), as Symfony matches them (`{...}s` or `{...}`, `{...}i`).

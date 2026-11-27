@@ -4,6 +4,41 @@ CHANGELOG
 2.0
 ---
 
+ * `ComplexityException::isLimitReached()` tells a budget that ran out from a
+   pattern outside what the automata read, and `$phase` (`?string`) and
+   `$limit` (`?int`) are the `phase` and `limit` of `getDiagnostic()`, typed.
+   The budgets of a `Language` name theirs: `enumeration`, 50,000 for the
+   memory of `strings()` and `nonMembers()` and 1,000,000 for their steps
+   between two strings, where they named none; so does the alignment of
+   `rewritesAlikeInPlace()`, `rewrite alignment`, 65,536 cells.
+ * `IntersectionResult`, `SubsetResult`, `EquivalenceResult` and
+   `MatchEquivalenceResult` carry `$target`, the `PcreTarget` the patterns
+   were read for: the PHP version, the PCRE2 release and the locale of the
+   solver's parser. `$pcreVersion` stays the engine that ran the solver,
+   which the target need not be.
+ * A DFA cache no longer forces the eager search: `intersection()`,
+   `subsetOf()` and `equivalent()` run the lazy search first with a cache as
+   without one, and fall back to the eager one past its limits, which reads
+   and fills the cache. `intersection('/^(a|b)*a(a|b){15}$/', '/^b+$/')`
+   is empty at once either way, where a solver given a cache ran the DFA of
+   the left pattern past the 10,000-state limit and threw a
+   `ComplexityException`. Beside the cache, the solver keeps the NFA of
+   each pattern the lazy search read, 50,000 states in all at most, emptied
+   by `clearCaches()` with the DFAs: two hundred routes compared with one
+   another take about half the work they took.
+ * `LanguageSolver` refuses a pattern PCRE2 refuses to compile, in every
+   method: the pattern is judged first, for the target of the solver's
+   parser, and one `validate()` refuses throws a `SemanticErrorException`
+   carrying the validation error, its code, its offset and its hint, as
+   `Regex::info()` does. The solver read the tree and answered:
+   `intersection('/a{2,1}/', '/a/')` was empty and
+   `acceptsPrefix('/^a{2,1}$/', 'a')` false, while `preg_match()` returns
+   false for both. A surrogate named under `u`, refused with a
+   `ComplexityException`, is refused with the validation error too.
+   `TrivialMatchClassifier` names no string function for such a pattern,
+   where `/^\N{U+41}/` was `str_starts_with($s, 'A')`, and
+   `FirstMatchPartition` refuses the candidate that holds one, its
+   `FirstMatchCell::$refused` the validation error.
  * Without u, the sets of a pattern are read as the target's PCRE2 reads
    them: under `(*UCP)` a byte read caselessly has the tables' case before
    10.35, `/(*UCP)\xC9/i` matching `\xC9` alone for PHP 7.4 with PCRE2
@@ -40,8 +75,8 @@ CHANGELOG
    search stops at the depth of the shortest witness, keeps its pairs under
    `maxDfaStates` as it reaches them, and past either limit leaves the answer
    to the eager search: 2,000 branches `a|a|…`, four million pairs of NFA
-   states, are answered from their three-state DFA. With a DFA cache, or a
-   pattern read as UTF-8 beside one read as bytes, the search stays eager.
+   states, are answered from their three-state DFA. For a pattern read as
+   UTF-8 beside one read as bytes, the search stays eager.
    `SolverStrategy` and `SolverOptions::$strategy` are `@internal`.
  * A determinized state holds one target per class of its automaton's
    alphabet, the ranges held once by an alphabet every state shares:
@@ -86,6 +121,18 @@ CHANGELOG
    `acacad` from PCRE2 10.34 to 10.49, where `/(a+)c(?1)d/` and the
    interpreter match `acad`. `/(a+b?)c(?1)d/` and `/(a++b?)c(?1)d/` are
    refused too, though no subject was found on which they differ.
+ * `matchEquivalent()` refuses two patterns that write apart a group a
+   call runs that repeats something some number of times, or a pattern
+   that calls itself whole, and `runsOfEveryCall()` names no run for them:
+   PCRE2 makes such a repeat possessive by the brackets and the classes
+   written around it, and its JIT then misses matches. `/((?:a)+b)c(?1)d/`
+   and `/(a+b)c(?1)d/` were proven alike, yet with the JIT the second finds
+   nothing in `abcabcabd` where the first finds `abcabd`, from PCRE2 10.39
+   to 10.49; so were `/([0-9]+b)c(?1)d/` and `/(\d+b)c(?1)d/`, and
+   `/x(?R)a|(?:a)*/` and `/x(?R)a|a*/`, which the interpreter too reads
+   apart from PCRE2 10.44. The same parts, spelled alike, are read as
+   before, whatever stands outside them: `/(?:a)+b(?1)(c)/` and
+   `/a+b(?1)(c)/` are proven alike.
  * `matchEquivalent()` runs a group a `(?(DEFINE)...)` holds where a call
    of it stands, under the options in force where the DEFINE stands, not
    where the call does: `/(?&n)c(?(DEFINE)(?<n>a|ab))/` and
@@ -107,6 +154,26 @@ CHANGELOG
    over a group, capturing or not, keeps a frame of the JIT for each run of
    the call around it, and `/x(?R)?(?:ab)++c/` runs out of the JIT stack
    some 3,000 calls deep where `/x(?R)?(?:ab)+c/` matches.
+ * `matchEquivalent()` reads a lookaround, without running it: two patterns
+   that hold one write the same `$matches` where one automaton is built for
+   both, the body of the lookaround included, and are refused otherwise,
+   with a message that says so. A possessive quantifier beside a lookaround
+   is read as the greedy one where it gives nothing back: `/(?=x)xa+b/` and
+   `/(?=x)xa++b/`, `/a+(?=b)/` and `/a++(?=b)/`, `/(?=xa+)x/` and
+   `/(?=xa++)x/` are proven. Where the quantifier would give back, a
+   lookahead reads the character it gave back (`/a++(?=a)/` is refused); a
+   negative lookahead or a lookbehind may hold there and not after the last
+   repetition, so the pattern must read another character before it ends
+   (`/a++(?!c)b/` is read, `/a++(?!b)/` refused, as `/a+(?!b)/` finds `a`
+   in `aab`); and nothing is known past the end of a lookbehind, whose body
+   must end where it stands (`/(?<=xa{1,3}+)a/` finds the `a` at offset 4
+   of `xaaaa` without the JIT and the one at offset 2 with it), or of a
+   non-atomic lookaround, `(*napla:...)`, past which the engine reads from
+   where the lookaround stands and backtracks into its body: a possessive
+   quantifier that may reach either end is refused. `runsOfEveryCall()`
+   asks for no run of two patterns that hold a lookbehind when one
+   automaton is built for both, which run alike wherever a search starts:
+   `/(?<=x)a+b/` and `/(?<=x)a++b/`.
  * PCRE2 makes a character repeated before an atomic group, or a
    possessive repeat of a group, that may match nothing possessive, as if
    the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`,
@@ -120,12 +187,50 @@ CHANGELOG
    `/(?:a)+(?:b)?+a/` and `/a+b?+a/` match `aa`, where `/a+(?:b)?+a/` does
    not. The optimizer no longer rewrites `/a+(?:b|c)?+a/` into
    `/a+[bc]?+a/`, which matches `aa`.
+ * PCRE2 compiles a counted group once per round, so that the repeat that
+   ends one round is read against the atomic group that opens the next:
+   `/(?:(?>(?:b)?)a+){2}/` finds nothing in `aa`, where `/(?:(?>b?)a+){2}/`
+   finds it, with and without the JIT, from PCRE2 10.39 to 10.49.
+   `equivalent()` called the two equivalent; it now refuses a counted group
+   that holds a repeated character and such a group, in whatever order, as
+   `intersection()` and `subsetOf()` do, and `matchEquivalent()` reads the
+   repeat as written only where its possessive spelling gives nothing
+   back. A group repeated with `+`, `*` or `{1,}` is compiled once, and
+   read as before.
  * `matchEquivalent()` refuses a possessive repeat of a group that holds a
    capturing group for a target before PCRE2 10.44: the JIT of 10.39 to
    10.42 leaves the group set from an earlier start of the match, and
    `/a(a)*+b/` writes `a` to group 1 on `aacab`, where `/a(a)*b/` leaves it
    unset. The target answers it as
    `PcreFeature::PossessiveRepeatGroupsClearedEachStart`.
+ * Where a pattern sets no first character of its own, PCRE2 may take the
+   one a lookahead it opens on asserts, then looks for the character the
+   pattern requires from past it, and misses a match that holds the two as
+   one, with and without the JIT: before PCRE2 10.45, `/(?=a)b?a/` finds
+   nothing in `a` and `/(?=b)^b/m` nothing in `"a\nb"`, and in every release
+   up to 10.49 `/(?=a)b?A/i` and `/(?=a?a)b?(?i:A)/` find nothing in `a`.
+   The solvers read every start and said they match. The engine finds
+   fewer matches than such a pattern says, never more: `intersection()`
+   still answers that two patterns have no string in common, and
+   `subsetOf()` that the pattern's strings are all another's; they refuse
+   any other answer, as `equivalent()`, `language()`, `compile()`,
+   `acceptsPrefix()`, `nfa()` and `matchEquivalent()` refuse the pattern,
+   the first kind for a target before 10.45, the second for any.
+   `readAlike()`, `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it
+   like no other pattern: `/(?:)(?=a)b?a/`, whose empty group keeps the
+   compiler from looking for the `a`, finds the match before 10.45. In
+   every release PCRE2 also gives the character the case of the first
+   alternative of the lookahead that starts with it: `/(?=A|[Aa])/` finds
+   nothing in `a`, and is refused for any target. The lookahead is found
+   wider than PCRE2 finds it, a class counting only where it holds one
+   character or a letter and its other case; the character required is
+   any one every match holds as a literal, outside what may match nothing
+   and in every alternative of a group, so `/(?=a)[ab]/` and
+   `/(?=a)b?(?:a|b)/` are read; and a pattern that reads a character
+   first, past `^` but under `m` and groups of nothing else, as
+   `/(?=A)a/i` or `/^(?=(?>a+)-)a+-$/`, is read as before. The target
+   answers it as
+   `PcreFeature::AssertedFirstCharacterCheckedAgainstRequired`.
  * Without `u`, under a target that names no locale but C,
    `matchEquivalent()`, `equivalent()`, `intersection()` and `subsetOf()`
    refuse a possessive quantifier, or an atomic group, proven on a byte past
@@ -136,6 +241,26 @@ CHANGELOG
    `/c\xE9+b?\w/` finds it whole. `[^.]++\.` under `i`, as a route host
    compiles, is still read. A target that names its locale is read under
    its tables.
+ * PCRE2 makes a dot or `\N` repeated some number of times possessive
+   before `\R`, and `\R` repeated before a dot or `\N`, lazy ones too, as
+   if `\R` took no character the dot takes, under every newline convention
+   but `(*ANY)`: `/^.*\R\z/` finds nothing in `"a\r"`, `/^(.*)\R\z/` and
+   `/^.*(\R)\z/` neither, and `/^\R?.\z/` nothing in `"\r"`, with and
+   without the JIT, from PCRE2 10.39 to 10.49, where `/^[^\n]*\R\z/`,
+   `/^(?:.)*\R\z/` and `/^(?:\R)?.\z/` find them. `/^.*\R\z/` and
+   `/^[^\n]*\R\z/` were proven to match the same strings, and `/x.*\R/`
+   and `/x[^\n]*\R/` to read alike. `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` now refuse a pattern that holds such a repeat, with the
+   other one right after it, past the end of the groups it stands in, into
+   the groups that follow, or past what may match nothing; `readAlike()`,
+   `rewritesAlikeInPlace()` and `runsOfEveryCall()` read it like no other
+   pattern. `readAlike()` reads two patterns apart where one may end with
+   such a repeat, start with a dot or match nothing, and they write that
+   end apart: spliced between `\R?` and a dot, `[0-9]*` finds `"\r"` and
+   `\d*` nothing, as PCRE2 reads past the second alone. `/.[0-9]/` and
+   `/.\d/` still read alike, and so do `(?:a?)` and `a?`: a group that
+   does not repeat reads as its body there. A repeat counted once, `.{2}\R`, and one a
+   character follows first, `.*a\R`, are read as before.
  * Without `u`, PCRE2 makes a repeat of the byte 0xFF possessive before
    `\w`, and a repeat of `\w` possessive before that byte, lazy ones too,
    as if 0xFF were no word character, whatever the tables say: under
@@ -166,12 +291,14 @@ CHANGELOG
    such a rewrite.
  * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
    `compile()` read `^` and `$` under `m`, and `$` and `\Z`, under `(*CR)`,
-   `(*NUL)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they were
-   refused: a line ends at `\r` under the first, at NUL under the second,
-   and under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
+   `(*NUL)`, `(*CRLF)`, `(*ANYCRLF)` and `(*ANY)` as PCRE2 does, where they
+   were refused: a line ends at `\r` under the first, at NUL under the
+   second, at `\r\n` and at neither character alone under the third, and
+   under the last two at a `\r`, a `\n` or both together, under `(*ANY)`
    at the vertical tab, the form feed and NEL too, and at U+2028 and U+2029
    under `/u`. `^` then holds between a `\r` and a `\n`:
-   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`. `(*CRLF)` stays refused there.
+   `/(*ANYCRLF)\r^\n/m` matches `"\r\n"`, where `/(*CRLF)\r^\n/m` matches
+   nothing, and `/(*CRLF)a$/` matches `"a\r\n"` and not `"a\r"`.
  * A search under `(*CRLF)`, `(*ANYCRLF)` or `(*ANY)` that may find a match
    only from between a `\r` and the `\n` after it is refused: PCRE2 skips
    that start where the pattern writes neither, and after its first try
@@ -181,11 +308,23 @@ CHANGELOG
    `matchEquivalent()` refuses a pattern under `(*ANYCRLF)` or `(*ANY)` that
    may match empty or start with a `\n`: `/(*ANYCRLF)\sa/` was proven to
    write the `$matches` of `/(*ANYCRLF)\sa|[^\s\S]\n/`, where without the
-   JIT the one finds nothing in `"\r\na"` and the other `"\na"`.
- * `equivalent()`, `intersection()` and `subsetOf()` refuse a dot or `\N`
-   under `(*CRLF)`, which reads a `\r` alone but not one before a `\n`:
+   JIT the one finds nothing in `"\r\na"` and the other `"\na"`. A pattern
+   that writes a `\r` or a `\n` as a character of its own, outside a class,
+   and that no `^` nor `.*` leads, is searched from every start, with the
+   JIT and without, and is read as written: `compile()` reads
+   `/(*ANYCRLF)\na/` as finding `"\na"` in `"\r\na"`, and
+   `matchEquivalent()` proves `/(*ANYCRLF)\sa|[^\s\S]\n/` writes the
+   `$matches` of `/\sa/`. `matchEquivalent()` reads a pattern under
+   `(*CRLF)` that holds no dot nor `\N`, where it refused every one.
+ * `equivalent()`, `intersection()`, `subsetOf()`, `language()` and
+   `compile()` read a dot and `\N` under `(*CRLF)` as PCRE2 does: each
+   takes a `\r` and a `\n` alone, and not the `\r` a `\n` follows.
    `/(*CRLF)a.\n/` was read as matching `"a\r\n"`, where `preg_match()`
-   finds nothing.
+   finds nothing. Such a dot inside a lookaround is refused. A dot there
+   reads like no class of every character, and unlike the dot under `s`:
+   `readAlike()` and the check of a rewrite held `/(*CRLF)a./` and
+   `/(*CRLF)a./s` to run alike, where the first finds nothing in `"a\r\n"`
+   and the second finds `"a\r"`.
  * `matchEquivalent()` refuses a newline convention other than `\n`, such as
    `(*CR)`, where `$` or `\Z` reads it, as `equivalent()` does:
    `/(*CR)a$/` was proven to write the `$matches` of `/a$/`, where

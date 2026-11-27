@@ -35,7 +35,8 @@ use PHPRegex\Redos\Backtrack\WitnessReplayer;
  * the JIT, a pattern holding "(*SKIP:NAME)" aside, which runs under the JIT,
  * under the limits of the options, the ini left as it was found.
  *
- * An exponential verdict with a witness is replayed: the witness is built
+ * An exponential verdict with a witness is replayed, in the call of
+ * preg_match() the witness names (RedosWitness::$call): the witness is built
  * with one pump, then two, and so on up to 64, until preg_match() gives up
  * at the backtrack limit of the options, within a fixed budget of work. The
  * failing sample is the shortest build that gives up there: the same input
@@ -186,11 +187,12 @@ final class ConfirmationRunner implements ConfirmationRunnerInterface
 
     /**
      * The shortest build of the witness that makes the engine give up, or
-     * the longest one tried when none does.
+     * the longest one tried when none does, in the call of preg_match() the
+     * witness names.
      */
     private function replay(string $regex, RedosWitness $witness, ConfirmationOptions $options): Confirmation
     {
-        return (new WitnessReplayer($this->engine))->replay($regex, [$witness], $options, false)[0];
+        return (new WitnessReplayer($this->engine))->replay($regex, [$witness], $options, WitnessCall::WithoutMatches === $witness->call)[0];
     }
 
     /**

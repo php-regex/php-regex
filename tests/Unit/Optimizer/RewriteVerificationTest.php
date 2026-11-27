@@ -38,23 +38,24 @@ final class RewriteVerificationTest extends TestCase
     use PcreGates;
 
     /**
-     * The lookbehind sends the check to the in-place proof, whose aligned
-     * pass pairs some twelve hundred parts on each side: past the 65,536
-     * cells the alignment may fill, the rewrite stays unproven and the
-     * pattern is kept. Under the limits the optimizer gives the solver,
-     * 1,000 DFA states and 200,000 units of work, the alignment is what
-     * gives up: with no cap on it, the same rewrite is proven.
+     * The word boundary, which the match solver does not read, sends the
+     * check to the in-place proof, whose aligned pass pairs some twelve
+     * hundred parts on each side: past the 65,536 cells the alignment may
+     * fill, the rewrite stays unproven and the pattern is kept. Under the
+     * limits the optimizer gives the solver, 1,000 DFA states and 200,000
+     * units of work, the alignment is what gives up: with no cap on it, the
+     * same rewrite is proven.
      */
     #[Test]
     public function test_a_large_alignment_leaves_the_rewrite_unproven(): void
     {
-        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'/';
+        $original = '/\b'.str_repeat('\\d', 4).str_repeat('b?c?', 600).str_repeat('[e-g]', 4).'/';
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
         $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
         $this->assertNotSame($original, $rewrite);
         $this->assertSame(1, preg_match($original, '1234bceeee'));
         $this->assertSame(1, preg_match($rewrite, '1234bceeee'));
-        // The lookbehind holds in both: no match right after an "x".
+        // The boundary holds in both: no match right after an "x".
         $this->assertSame(0, preg_match($original, 'x1234eeee'));
         $this->assertSame(0, preg_match($rewrite, 'x1234eeee'));
 
@@ -77,7 +78,7 @@ final class RewriteVerificationTest extends TestCase
     #[Test]
     public function test_the_same_rewrite_is_proven_when_its_alignment_fits(): void
     {
-        $original = '/(?<!x)'.str_repeat('\\d', 4).str_repeat('b?c?', 60).str_repeat('[e-g]', 4).'/';
+        $original = '/\b'.str_repeat('\\d', 4).str_repeat('b?c?', 60).str_repeat('[e-g]', 4).'/';
         $optimizer = new Optimizer(RegexParser::create(['cache' => null]));
         $rewrite = $optimizer->optimize($original, new OptimizerOptions(verifyWithAutomata: false))->optimized;
         $this->assertNotSame($original, $rewrite);

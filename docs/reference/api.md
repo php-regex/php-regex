@@ -163,8 +163,10 @@ most code does, and takes no offset: `preg_match()` takes one only after
 the regular subset: `intersection()`, `subsetOf()` and `equivalent()` each
 return a result carrying the shortest string that proves the answer, and
 `compile()` returns a pattern's DFA. Every character set is asked from the
-running PCRE2, so the three results also carry the release that answered, in
-`pcreVersion`.
+running PCRE2, so each result carries the release that answered, in
+`pcreVersion`, beside the target the patterns were read for, in `target`
+(a `PcreTarget`): the target of the solver's parser, which the running engine
+need not be.
 
 ```php
 use PHPRegex\Automata\LanguageSolver;
@@ -175,6 +177,13 @@ $solver->intersection('/[a-c]+/', '/[b-d]+/')->example; // "b"
 $solver->subsetOf('/\w+/', '/[a-zA-Z0-9]+/')->counterExample; // "_"
 $solver->equivalent('/[0-9]+/', '/\d+/')->isEquivalent; // true
 ```
+
+A pattern the target refuses has no language to compare: every method throws
+what `validate()` refuses, as `info()` does, the exception `parse()` throws or
+a `SemanticErrorException` carrying the validation error. A pattern outside
+the regular subset, or a limit reached, throws a `ComplexityException`, whose
+`isLimitReached()` tells the two apart: a limit reached names its `$phase` and
+its `$limit`, and a larger budget in `SolverOptions` may answer.
 
 See [the logic solver reference](logic-solver.md#php-api) for the options, the
 DFA cache and the classes of the namespace that are public.
@@ -224,7 +233,10 @@ is the running engine, `PcreTarget::bundledWith(80400)` a PHP version with its
 bundled PCRE2, and `new PcreTarget(80400, '10.42', 'tr_TR.UTF-8')` any of them,
 under the runtime's locale when the third is left out. `withLocale()` gives the
 same PHP and PCRE2 under another locale, and `key()` tells two targets apart,
-as `'80400/10.42/tr_TR.UTF-8'`. `RegexParser` judges for one too (its
+as `'80400/10.42/tr_TR.UTF-8'`; `toArray()` writes it as the JSON documents
+do, `['php' => '8.4', 'pcre' => '10.42', 'locale' => 'tr_TR.UTF-8']`, and a
+ReDoS analysis and the solver's results carry the one they were computed for
+in `$target`. `RegexParser` judges for one too (its
 `target()`), and `ParserOptions` carries the one the `php_version`,
 `pcre_version` and `locale` options name. `withTarget()`, on `Regex` and on
 `RegexParser`, gives an instance judging for another target with every other
@@ -450,10 +462,11 @@ var_dump($confirmed->replayed);                               // bool(true)
 | `complexity`       | RedosComplexity    | linear, polynomial, exponential, or unknown when nothing was proven |
 | `degree`           | int\|null         | Degree of a polynomial verdict (2 or more) |
 | `proof`            | RedosProof         | proven, heuristic, budget_exceeded or not_analyzed |
-| `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()` |
+| `witness`          | RedosWitness\|null | Attack input of a proven vulnerable verdict: `render()`, `build($n)`, `toArray()`, and `$call`, the `WitnessCall` of `preg_match()` it gives up in (`WithMatches`, or `WithoutMatches` when only the call without `$matches` does) |
 | `replayed`         | bool\|null        | Whether the witness made the running PCRE fail; `null` when not replayed |
 | `abstractions`     | list<string>      | What the model analysed differently from the pattern |
-| `pcreVersion`      | string            | PCRE2 release the verdict was computed with |
+| `target`           | PcreTarget        | The PHP version, the PCRE2 release and the locale the verdict was computed for |
+| `pcreVersion`      | string            | PCRE2 release that ran the analysis: the running engine, which `target` need not be |
 | `analysisVersion`  | string            | `RedosAnalyzer::ANALYSIS_VERSION`         |
 | `confidence`       | RedosConfidence       | Analysis confidence, `Low` when nothing raised it |
 | `confirmation`     | Confirmation\|null | Bounded evidence details              |
@@ -587,7 +600,11 @@ too: a pattern with `^` or `\A`, or that may match empty, is checked in those ru
 text before where the search starts (a lookbehind, `\b`, `\B`, `^` under `m`, `\K`) keeps only a rewrite that reads
 as it does or whose changed parts are each proven alone (see [the logic solver](logic-solver.md)). Under `possessive`, a
 rewrite refused for its possessive quantifiers is made again without them, and the other rewrites ship:
-`/\d+x(?!y)/s` becomes `/\d+x(?!y)/`, the lookahead keeping the solver from proving `\d++`.
+`/\d+y\b/s` becomes `/\d+y\b/`, the word boundary keeping the solver from proving `\d++`. Beside a lookaround, a
+possessive quantifier that gives nothing back is proven: `/\d+x(?!y)/s` becomes `/\d++x(?!y)/`, and
+`/(?<=a)[0-9]+x/` becomes `/(?<=a)\d++x/`. A rewrite refused whole
+still loses the `s` or the `m` nothing in the pattern reads: the flag moves no bracket and no repeat, and goes
+without a proof. `/a+(?:b)?+a/m` becomes `/a+(?:b)?+a/`, the group kept, which PCRE2 reads to make `a+` possessive.
 
 ---
 
@@ -710,6 +727,14 @@ Notes:
   inline `(?xx)` in force, which Python carries: `[^\S]`, six ASCII bytes, gets no warning, and `[ ^a]`, which is
   `[^a]` under `(?xx)`, gets one there. Under `u` there is none, and a set the target refuses (`\H`, `\V`, `\N`, `\C`,
   `\R`, `\X`, a POSIX class) is refused as before.
+- PCRE2 makes a character repeated before an atomic group, or a possessive repeat of a group, that may match nothing
+  possessive, as if the group could not be skipped: `/a+(?:b)?+a/` finds nothing in `aa`, where JavaScript finds it
+  with `a+(?:b)?a` and Python, from 3.11.5, with `a+(?:b)?+a`. Such a pattern is written, and `$result->warnings`
+  names the first such repeat and the group PCRE2 reads it against, once per pattern: `PCRE2 makes "a+" at offset 0
+  possessive before "(?:b)?+" at offset 2, as if that group could not be skipped, and this target does not: the two
+  differ on a subject where the repeat must give back to what follows the group.` PCRE2 reads the repeat against what
+  stands after it, no further than the first character that must be there, and leaves a lazy repeat as written:
+  `/a+x(?:b)?+a/` and `/a+?(?:b)?+a/` get no warning, and under `U` the repeat written lazy is the one named.
 - A script property takes the name JavaScript reads: PCRE2 reads `\p{Han}` as the script's extensions, so it is
   `\p{Script_Extensions=Han}`, and `\p{sc:Han}` is `\p{Script=Han}`; a Bidi_Class (`\p{bc:L}`) is refused. For a
   target before PCRE2 10.40 (PHP 8.1), which reads `\p{Han}` as the script alone, it is `\p{Script=Han}`.
@@ -931,11 +956,18 @@ foreach ($report->violations as $violation) {
 
 ### OptimizationResult
 
-Returned by `optimize()`. Shows what changed: `$changes` names each kind of
-rewrite once, in the order the optimizer first made it, and is empty when the
-pattern comes back as written.
+Returned by `optimize()`. Shows what changed: `$kinds` lists each kind of
+rewrite once, a `RewriteKind`, in the order the optimizer first made it,
+`$changes` the sentence of each (`RewriteKind::message()`), and both are empty
+when the pattern comes back as written. `$proven` says whether the automata
+checked that the rewrite matches what the pattern matches: true for a rewrite
+`verifyWithAutomata` checked, and for a possessive one, which is checked
+whatever the options; false for a rewrite shipped unchecked and for a pattern
+left as written.
 
 ```php
+use PHPRegex\Optimizer\RewriteKind;
+
 $result = Regex::create()->optimize('/[0-9]+/');
 
 echo $result->original;    // '/[0-9]+/'
@@ -946,6 +978,9 @@ foreach ($result->changes as $change) {
 }
 // Output:
 // - Wrote [0-9] as \d.
+
+var_dump($result->kinds === [RewriteKind::Digits]); // bool(true)
+var_dump($result->proven);                          // bool(true)
 ```
 
 ---
@@ -1170,7 +1205,7 @@ freezes for all of 2.x: a name will not be renamed or removed within 2.x.
 | `NodeFilter` | `Parser\NodeFinder` | `Closure(NodeInterface): bool` |
 | `LengthRange` | `Parser\Analysis\LengthRangeCalculator` | `{0: int, 1: int\|null}` — min and max match length |
 | `Metrics` | `Parser\Analysis\MetricsCollector` | `{counts: array<string, int>, total: int, maxDepth: int}` |
-| `WitnessArray` | `Redos\RedosWitness` | `{prefix, pump, suffix}` strings of the attack |
+| `WitnessArray` | `Redos\RedosWitness` | `{prefix, pump, suffix}` strings of the attack and its `call` |
 | `SearchCostArray` | `Redos\RedosSearchCost` | degree, witness and replay of a search |
 | `AlphabetRange` | `Automata\Model\Dfa` | `{0: int, 1: int}` — code point range, both ends in |
 | `RangeTransition` | `Automata\Model\DfaState` | `{0: int, 1: int, 2: int}` — range start, end, target state |

@@ -47,4 +47,12 @@ interface SearchCostReplayerInterface
      * the options leave the replay unable to finish its count.
      */
     public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
+
+    /**
+     * Whether the attempts of a loop that calls preg_match() again where
+     * each match ends, started inside the run, each read what is left of it
+     * before they end on a short match, or on an empty one; null when the
+     * limits of the options leave the replay unable to finish its count.
+     */
+    public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): ?bool;
 }

@@ -77,15 +77,36 @@ final class Optimizer
         $result = $this->rewrite($regex, $ast, $optimizer, $options, $options->possessive);
 
         // The check proves a possessive quantifier less often than the
-        // other rewrites, none in a pattern that holds a lookaround or
-        // "\b": a rewrite it refuses with one is made again without the
-        // possessive step, and the others ship on their own, "/\d+x(?!y)/s"
-        // losing its "s".
+        // other rewrites, none in a pattern that holds "\b" or a
+        // reference: a rewrite it refuses with one is made again without
+        // the possessive step, and the others ship on their own,
+        // "/\d+y\b/s" losing its "s".
         if (null === $result && \in_array(Rewriter::POSSESSIVE, $optimizer->changes(), true)) {
             $result = $this->rewrite($regex, $ast, self::rewriter($options, false), $options, false);
         }
 
-        return $result ?? new OptimizationResult($regex, $regex, []);
+        // A refused rewrite takes with it the "s" or the "m" nothing in
+        // the pattern reads: the flag goes on its own, the rest as written.
+        return $result ?? $this->withoutUselessFlags($regex, $ast);
+    }
+
+    /**
+     * The pattern without the "s" and the "m" nothing in it reads, the rest
+     * as written: no bracket and no repeat moves, and PCRE compiles the
+     * pattern alike with or without them, so the check has nothing to
+     * prove. It refuses every rewrite of a pattern that holds a possessive
+     * quantifier where a call runs, "/(\[(?:[^\]\[]+|(?R))*+\])/m" keeping
+     * an "m" no anchor reads, and the rewrite of "/a+(?:b)?+a/m" whole, for
+     * the group it takes out.
+     */
+    private function withoutUselessFlags(string $regex, RegexNode $ast): OptimizationResult
+    {
+        $flags = (new FlagRewrites())->removeUselessFlags($ast->flags, $ast->pattern);
+        if ($flags === $ast->flags) {
+            return new OptimizationResult($regex, $regex, []);
+        }
+
+        return new OptimizationResult($regex, $this->written($regex, $ast, new RegexNode($ast->pattern, $flags, $ast->delimiter, $ast->startPosition, $ast->endPosition)), kinds: [RewriteKind::UnusedFlag]);
     }
 
     private static function rewriter(OptimizerOptions $options, bool $possessive): Rewriter
@@ -122,6 +143,69 @@ final class Optimizer
             return new OptimizationResult($regex, $regex, []);
         }
 
+        $optimizedPattern = $this->written($regex, $ast, $optimizedAst);
+
+        // A rewrite PCRE refuses where it compiles the original is no
+        // rewrite, whatever the options say: the automata read what a
+        // pattern matches, never whether PCRE compiles it, and prove
+        // "(?<=abc|abde)" factorized for a release that refuses a
+        // lookbehind branch of two lengths.
+        // Nor is one of a pattern PCRE refuses: it has no matches to keep.
+        if (!$this->parser->validate($regex)->isValid) {
+            return new OptimizationResult($regex, $regex, []);
+        }
+
+        if (!$this->parser->validate($optimizedPattern)->isValid) {
+            return null;
+        }
+
+        // Whether the automata checked the rewrite that ships.
+        $proven = false;
+        if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || (!$options->verifyWithAutomata && $this->movesAutoPossession($ast, $optimizedPattern)))) {
+            // A rewrite that adds a possessive quantifier or an atomic group
+            // ships only when the solver verifies it: the solver refuses the
+            // possessive forms it cannot prove safe, and an unverified one can
+            // change the language PCRE matches. This gate runs on its own, not
+            // only under verifyWithAutomata, because the rewrite rules that
+            // possessify are on by default. So does one that changes the
+            // brackets PCRE2 reads to make a repeat possessive, or rewrites
+            // a pattern whose calls run a repeat, which the next branch
+            // checks when the options ask for every check.
+            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
+                return null;
+            }
+            $proven = true;
+        } elseif ($optimizedPattern !== $regex && $options->verifyWithAutomata) {
+            // Only a proven rewrite ships: one the automata disprove, or
+            // cannot prove, leaves the pattern as written.
+            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
+                return null;
+            }
+            $proven = true;
+        }
+
+        if ($optimizedPattern === $regex) {
+            return new OptimizationResult($regex, $regex, []);
+        }
+
+        // A member of a class or a literal the rewrite built again is
+        // written without the backslash it does not need: "[^\)]" becomes
+        // "[^)]" with nothing else to name.
+        $appliedChanges = $optimizer->changes();
+        if ([] === $appliedChanges) {
+            $appliedChanges = [Rewriter::RESPELLED];
+        }
+
+        return new OptimizationResult($regex, $optimizedPattern, kinds: array_map(RewriteKind::named(...), $appliedChanges), proven: $proven);
+    }
+
+    /**
+     * The rewritten tree as a pattern: the text of $regex with the flags of
+     * the rewrite where its body reads as the original's, the rewrite
+     * printed otherwise.
+     */
+    private function written(string $regex, RegexNode $ast, RegexNode $optimizedAst): string
+    {
         $pretty = str_contains($ast->flags, 'x');
         // Both sides are normalized so that a pattern only counts as optimized
         // when its structure changed, not when it merely spells an escape
@@ -146,53 +230,7 @@ final class Optimizer
             $optimizedPattern = $this->keepLayout($regex, $ast, $optimizedAst) ?? $optimizedPattern;
         }
 
-        // A rewrite PCRE refuses where it compiles the original is no
-        // rewrite, whatever the options say: the automata read what a
-        // pattern matches, never whether PCRE compiles it, and prove
-        // "(?<=abc|abde)" factorized for a release that refuses a
-        // lookbehind branch of two lengths.
-        // Nor is one of a pattern PCRE refuses: it has no matches to keep.
-        if (!$this->parser->validate($regex)->isValid) {
-            return new OptimizationResult($regex, $regex, []);
-        }
-
-        if (!$this->parser->validate($optimizedPattern)->isValid) {
-            return null;
-        }
-
-        if ($optimizedPattern !== $regex && ($this->mayIntroduceAtomicity($regex, $optimizedPattern, $possessive) || (!$options->verifyWithAutomata && $this->movesAutoPossession($ast, $optimizedPattern)))) {
-            // A rewrite that adds a possessive quantifier or an atomic group
-            // ships only when the solver verifies it: the solver refuses the
-            // possessive forms it cannot prove safe, and an unverified one can
-            // change the language PCRE matches. This gate runs on its own, not
-            // only under verifyWithAutomata, because the rewrite rules that
-            // possessify are on by default. So does one that changes the
-            // brackets PCRE2 reads to make a repeat possessive, which the
-            // next branch checks when the options ask for every check.
-            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
-                return null;
-            }
-        } elseif ($optimizedPattern !== $regex && $options->verifyWithAutomata) {
-            // Only a proven rewrite ships: one the automata disprove, or
-            // cannot prove, leaves the pattern as written.
-            if (!$this->verifyOptimizedPatternWithAutomata($regex, $optimizedPattern)) {
-                return null;
-            }
-        }
-
-        if ($optimizedPattern === $regex) {
-            return new OptimizationResult($regex, $regex, []);
-        }
-
-        // A member of a class or a literal the rewrite built again is
-        // written without the backslash it does not need: "[^\)]" becomes
-        // "[^)]" with nothing else to name.
-        $appliedChanges = $optimizer->changes();
-        if ([] === $appliedChanges) {
-            $appliedChanges = [Rewriter::RESPELLED];
-        }
-
-        return new OptimizationResult($regex, $optimizedPattern, $appliedChanges);
+        return $optimizedPattern;
     }
 
     /**
@@ -236,10 +274,18 @@ final class Optimizer
      * the byte 0xFF possessive before "\w", and one of "\w" before that
      * byte, as if 0xFF were no word character: where the tables may hold it
      * in "\w", a rewrite of a pattern that holds such a repeat, or that
-     * makes one, is checked.
+     * makes one, is checked. So is any rewrite of a pattern that repeats
+     * something some number of times inside a group a call runs: PCRE2
+     * makes such a repeat possessive by how the pattern writes it, and its
+     * JIT misses matches of it, "/(a+b)c(?1)d/" none in "abcabcabd" where
+     * "/((?:a)+b)c(?1)d/" finds "abcabd".
      */
     private function movesAutoPossession(RegexNode $original, string $optimized): bool
     {
+        if ([] !== AutoPossession::repeatingPartsACallRuns($original->pattern)) {
+            return true;
+        }
+
         try {
             $rewritten = $this->parser->parse($optimized);
         } catch (RegexException) {

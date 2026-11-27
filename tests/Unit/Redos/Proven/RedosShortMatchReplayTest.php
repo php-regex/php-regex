@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The replay of a short match on the subject the prefix, 256 run words and
  * the breaker make: the attempts pinned 64 and 128 run words into the run
- * each match past their start within four run words, a retry after a match
+ * each match past their start within 64 run words, a retry after a match
  * "\K" leaves empty reads no further, and the attempt pinned at 64 takes one
  * more step at least per run word than the one pinned at 128.
  */
@@ -32,7 +32,7 @@ final class RedosShortMatchReplayTest extends TestCase
 
     private const QUARTER = 64;
 
-    private const MAX_MATCH_WORDS = 4;
+    private const MAX_MATCH_WORDS = 64;
 
     #[Test]
     #[DataProvider('provideShortMatchWitnesses')]
@@ -54,7 +54,8 @@ final class RedosShortMatchReplayTest extends TestCase
         yield 'same run started where the pattern starts' => ['pattern' => '/b(?:(?:ab)+\d)?/', 'prefix' => 'a', 'run' => 'ba', 'breaker' => '', 'replays' => true];
         // The bound counts run words, not characters.
         yield 'match of four run words' => ['pattern' => '/abababab(?:(?:ab)+\d)?/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => true];
-        yield 'match past four run words' => ['pattern' => '/ababababab(?:(?:ab)+\d)?/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => false];
+        yield 'match of 64 run words' => ['pattern' => '/(?:ab){64}(?:(?:ab)+\d)?/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => true];
+        yield 'match past 64 run words' => ['pattern' => '/(?:ab){65}(?:(?:ab)+\d)?/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => false];
         yield 'attempt that reads the run before a match that reads it too' => ['pattern' => '/a(?:a+\d)?a*/', 'prefix' => '', 'run' => 'a', 'breaker' => '', 'replays' => false];
         // Each attempt takes the same 42 steps: they add up past a quarter
         // of the run, but do not grow with it.
@@ -62,6 +63,8 @@ final class RedosShortMatchReplayTest extends TestCase
         yield 'attempts that match only a quarter and half-way through the run' => ['pattern' => '/(?<=^a{128}|^a{64})a(?:a+\d)?/', 'prefix' => '', 'run' => 'a', 'breaker' => '', 'replays' => true];
         yield 'retry after a kept empty match that reads the run' => ['pattern' => '/a\K(?:(?:ba)+\d)?|b(?:ab)+/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => false];
         yield 'retry after a kept empty match that reads four run words' => ['pattern' => '/a\K(?:(?:ba)+\d)?|babababa/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => true];
+        yield 'retry after a kept empty match that reads 64 run words' => ['pattern' => '/a\K(?:(?:ba)+\d)?|b(?:ab){63}a/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => true];
+        yield 'retry after a kept empty match that reads 65 run words' => ['pattern' => '/a\K(?:(?:ba)+\d)?|b(?:ab){64}a/', 'prefix' => '', 'run' => 'ab', 'breaker' => '', 'replays' => false];
         // Pinned, the retry fails where the kept empty match ends; a search
         // from there would match the breaker.
         yield 'retry after a kept empty match that fails where it is pinned' => ['pattern' => '/\Ga\K(?:(?:ba)+\d)?|!/', 'prefix' => '', 'run' => 'ab', 'breaker' => '!', 'replays' => true];
@@ -86,7 +89,7 @@ final class RedosShortMatchReplayTest extends TestCase
 
     /**
      * What the engine shows of the witness: each pinned attempt matches past
-     * its start within four run words, the retry after a kept empty match
+     * its start within 64 run words, the retry after a kept empty match
      * reads no further, and the first attempt takes a step at least per run
      * word more than the second.
      */

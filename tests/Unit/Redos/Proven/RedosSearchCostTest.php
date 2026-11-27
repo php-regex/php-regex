@@ -32,6 +32,7 @@ use PHPRegex\Redos\RedosSeverity;
 use PHPRegex\Redos\SearchCostCause;
 use PHPRegex\Tests\Support\PcreAttemptSteps;
 use PHPRegex\Tests\Support\PcreGates;
+use PHPRegex\Tests\Support\PcreInterpreter;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
@@ -523,6 +524,103 @@ final class RedosSearchCostTest extends TestCase
         yield 'just above the cutoff' => ['pattern' => '/\s{1,17}$/'];
         yield 'a hundred' => ['pattern' => '/\s{1,100}$/'];
         yield 'above the replay subject' => ['pattern' => '/\s{1,300}$/'];
+    }
+
+    /**
+     * A possessive bounded repeat above the unrolling cutoff is read as a
+     * possessive run without a bound, which leaves only before a character
+     * it does not read. On the engine it also leaves at its bound, and the
+     * pattern may match from there: on a run longer than the bound the
+     * first attempt matches the whole run, and each function finds one
+     * match. No witness holds a character such a repeat reads, in either
+     * mode, for the search of preg_match() nor for the loop of every match.
+     */
+    #[Test]
+    #[DataProvider('provideBoundedPossessiveRunsTheEngineLeaves')]
+    public function test_search_cost_is_not_reported_through_a_possessive_bounded_repeat_read_as_unbounded(string $pattern): void
+    {
+        $interpreted = PcreInterpreter::pattern($pattern);
+        $subject = str_repeat('a', 1000);
+        $this->assertSame(1, preg_match($interpreted, $subject, $matches, \PREG_OFFSET_CAPTURE), 'Oracle: '.$pattern.' finds no match in 1,000 "a".');
+        $this->assertGreaterThanOrEqual(999, \strlen($matches[0][0]), 'Oracle: the first match of '.$pattern.' stops inside the run.');
+        $this->assertLessThanOrEqual(2, preg_match_all($interpreted, $subject), 'Oracle: the loop of every match of '.$pattern.' goes on inside the run.');
+
+        $analyzer = new RedosAnalyzer();
+        foreach ([$analyzer->analyze($pattern), $analyzer->analyze($pattern, new RedosOptions(RedosMode::Confirmed, RedosSeverity::Low))] as $analysis) {
+            $this->assertSame(RedosComplexity::Linear, $analysis->complexity, $pattern);
+            $this->assertNull($analysis->searchCost, $pattern.' in '.$analysis->mode->value.' mode');
+            $this->assertNull($analysis->everyMatchSearchCost, $pattern.' in '.$analysis->mode->value.' mode');
+        }
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string}>
+     */
+    public static function provideBoundedPossessiveRunsTheEngineLeaves(): iterable
+    {
+        yield 'a possessive repeat before its own character' => ['pattern' => '/a+\d|a{1,300}+aa*/'];
+        yield 'just above the cutoff' => ['pattern' => '/a+\d|a{1,17}+aa*/'];
+        yield 'an atomic group around the repeat' => ['pattern' => '/a+\d|(?>a{1,300})aa*/'];
+        yield 'a possessive repeat of an alternation of characters' => ['pattern' => '/a+\d|(?:a|b){1,300}+aa*/'];
+        yield 'in an optional group' => ['pattern' => '/(?:a+\d|a{1,300}+aa*)?/'];
+        yield 'after a character, in an optional group' => ['pattern' => '/a(?:a+\d|a{1,300}+aa*)?/'];
+    }
+
+    /**
+     * Such a repeat keeps no witness away when it reads no character of
+     * the witness, when it is unrolled, or when it gives back: the repeat
+     * before "$" under m or before "\z" leaves through a check of its own.
+     */
+    #[Test]
+    #[DataProvider('provideBoundedRepeatsBesideTheRun')]
+    public function test_search_cost_is_reported_beside_a_bounded_repeat_the_run_does_not_cross(string $pattern, string $run): void
+    {
+        $subject = str_repeat($run, 1000).'!';
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $far = PcreAttemptSteps::steps($pinned, $subject, 250);
+        $near = PcreAttemptSteps::steps($pinned, $subject, 500);
+        $this->assertGreaterThanOrEqual(250, $far - $near, \sprintf('Oracle: the attempts of %s take %d then %d steps.', $pattern, $far, $near));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches its run.');
+
+        $cost = (new RedosAnalyzer())->analyze($pattern)->searchCost;
+        $this->assertInstanceOf(RedosSearchCost::class, $cost, $pattern);
+        $this->assertSame($run, $cost->run, $pattern);
+    }
+
+    /**
+     * @return iterable<string, array{pattern: string, run: string}>
+     */
+    public static function provideBoundedRepeatsBesideTheRun(): iterable
+    {
+        yield 'a possessive repeat of another character' => ['pattern' => '/a+b|c{1,300}+d/', 'run' => 'a'];
+        // Kept with every way through it, the group reads none of the run.
+        yield 'an atomic group of another character' => ['pattern' => '/a+b|(?>c{1,300})d/', 'run' => 'a'];
+        yield 'a group a repeat of one character stands before' => ['pattern' => '/a+b|x*(?:y)?+z/', 'run' => 'a'];
+        yield 'a possessive repeat at the cutoff, unrolled' => ['pattern' => '/a+b|a{1,16}+c/', 'run' => 'a'];
+        yield 'a repeat that gives back before the end of a line' => ['pattern' => '/a+b|a{1,100}$/m', 'run' => 'a'];
+        yield 'a repeat that gives back before the end of the subject' => ['pattern' => '/a+b|a{1,100}\z/', 'run' => 'a'];
+    }
+
+    /**
+     * The code unit the pattern requires last is one the possessive repeat
+     * reads: every breaker holds it, and none is kept. The attempts of the
+     * run grow all the same on the engine, which the analysis leaves
+     * unreported rather than vouch for a breaker the repeat may cross.
+     */
+    #[Test]
+    public function test_search_cost_is_not_reported_when_every_breaker_holds_a_character_of_the_possessive_bounded_repeat(): void
+    {
+        $pattern = '/(?:a+b|c{1,300}+d)c/';
+        $subject = str_repeat('a', 1000).'!c';
+        $pinned = PcreAttemptSteps::pinned($pattern);
+        $far = PcreAttemptSteps::steps($pinned, $subject, 250);
+        $near = PcreAttemptSteps::steps($pinned, $subject, 500);
+        $this->assertGreaterThanOrEqual(250, $far - $near, \sprintf('Oracle: the attempts of %s take %d then %d steps.', $pattern, $far, $near));
+        $this->assertSame(0, preg_match(PcreInterpreter::pattern($pattern), $subject), 'Oracle: '.$pattern.' matches its run.');
+
+        $analyzer = new RedosAnalyzer();
+        $this->assertInstanceOf(RedosSearchCost::class, $analyzer->analyze('/(?:a+b|c{1,300}d)c/')->searchCost, 'control: the repeat that gives back keeps the witness');
+        $this->assertNull($analyzer->analyze($pattern)->searchCost, $pattern);
     }
 
     /**
@@ -1035,6 +1133,11 @@ final class RedosSearchCostTest extends TestCase
             {
                 throw new \LogicException('The replay of short matches is not asked.');
             }
+
+            public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of a loop of preg_match() calls is not asked.');
+            }
         };
 
         $this->assertNull(self::findSearchCost('/\s+$/', $failing));
@@ -1074,6 +1177,11 @@ final class RedosSearchCostTest extends TestCase
             public function replaysShortMatches(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
             {
                 throw new \LogicException('The replay of short matches is not asked.');
+            }
+
+            public function replaysMatchLoop(string $pattern, string $prefix, string $run, string $breaker, ?ConfirmationOptions $options = null): bool
+            {
+                throw new \LogicException('The replay of a loop of preg_match() calls is not asked.');
             }
         };
 

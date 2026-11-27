@@ -120,6 +120,11 @@ final class ServerEveryMatchSearchCostTest extends TestCase
         yield 'a constant preg_match reads before preg_replace' => ['code' => "const P = '/(?:a+\\d)?/';\nfunction f(\$s) { preg_match(P, \$s); return preg_replace(P, '', \$s); }", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace', self::retried())]];
         yield 'a RegexIterator splitting' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::SPLIT);", 'messages' => [RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
         yield 'a RegexIterator matching' => ['code' => "new RegexIterator(\$it, '/(?:a+\\d)?/', RegexIterator::GET_MATCH);", 'messages' => []];
+        yield 'nette/utils matchAll' => ['code' => "Nette\\Utils\\Strings::matchAll(\$s, '/(?:a+\\d)?/');", 'messages' => [RedosVerdict::everyMatchMessage('preg_match_all', self::retried())]];
+        // The loop a lazy matchAll() runs itself pays another cost, which
+        // the server does not price.
+        yield 'nette/utils lazy matchAll' => ['code' => "Nette\\Utils\\Strings::matchAll(\$s, '/(?:a+\\d)?/', lazy: true);", 'messages' => []];
+        yield 'a literal a lazy matchAll and preg_split read' => ['code' => "function f(\$s) {\n\$p = '/(?:a+\\d)?/';\nNette\\Utils\\Strings::matchAll(\$s, \$p, lazy: true);\npreg_split(\$p, \$s);\n}", 'messages' => [RedosVerdict::everyMatchMessage('preg_split', self::retried())]];
         yield 'a callback through Laravel\'s Str' => ['code' => "Illuminate\\Support\\Str::replaceMatches('/(?:a+\\d)?/', static fn (array \$m): string => '', \$s);", 'messages' => [RedosVerdict::everyMatchMessage('preg_replace_callback', self::retried())]];
     }
 

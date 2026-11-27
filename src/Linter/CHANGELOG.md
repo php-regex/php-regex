@@ -6,6 +6,42 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex.lint.overlap.charset` reads the text a branch starts with through
+   an atomic group and a script run, and tells two texts one of which
+   starts the other apart by what follows the shorter one, where both are
+   read in their own case: `/(?:(?>ab)|ac)+/`, `/(?:(*sr:öa)|öb)+x/u`,
+   `/(?:a\d|aa)+/` and `/(?:a\d|a[a-z])+/`, no input of which starts two
+   branches, are no longer reported. `/(?:a\w|ab)+/` still is, and so are
+   `/(?:a\d|aa)+/i` and `/(?:a\d|aa)+/u`: read caselessly, or where the
+   bytes of what follows are not known, the texts alone are compared. Two
+   literal branches written alike are reported wherever they stand:
+   `/(?:é|é|)+/u` and `/(?:É|É|)+/iu` were missed, past ASCII beside a
+   branch that may match nothing, though `/^(?:é|é|)+$/u` exhausts the
+   backtrack limit on 20 `é` then `!`.
+ * Under u, `regex.lint.alternation.overlap`, `regex.lint.overlap.charset`,
+   `regex.lint.quantifier.nested` and `regex.lint.quantifier.concatenation`
+   read an ASCII letter written alone, `i`, `\x69`, `[i]` or `[^i]`, with
+   the case the tables of the target's locale give it, as PCRE2 compares
+   it, where they read Unicode's: a class of several characters and a
+   backreference still read Unicode's cases. Under glibc's tr_TR.UTF-8,
+   whose tables give `i` and `I` no other case and where `/^I$/iu` does not
+   match `i`, `/(?:i|I)+$/iu`, `/(?:i+I)+$/iu` and `/i+I+$/iu` are no
+   longer reported, while `/(?:[ij]|I)+$/iu` still is and
+   `/(?:[^i]+I)+$/iu`, whose class takes `I` there, now is. `k` and `s`,
+   which Unicode pairs with the Kelvin sign and the long s, keep both
+   cases. Nothing changes under C.
+ * `regex.lint.quantifier.nested` no longer reports the loops of a pattern
+   whose every repeat is bounded and that the engine reads in few ways:
+   one attempt then costs a number of steps the pattern alone bounds. The
+   whole pattern is counted, and 2,048 ways are allowed where every attempt
+   starts at one place (`^` without m, `\A`, `\G` or the A modifier), 7
+   where a search may start anywhere, as it pays the attempt at every
+   offset. `/^(a{0,4}){0,4}$/`, `/^(a?){0,10}$/`, `/(a?){0,2}(?:b|c)/` and
+   the syllable patterns of an Indic shaper that nest `?`, `{0,2}`, `{0,3}`
+   and `{0,4}`, 73 steps at most on PCRE2 10.49, are no longer reported;
+   `/^(a?){0,12}$/`, `/^(a{0,16}){0,16}$/`, `/^(a?){0,10}(a?){0,10}$/`,
+   `/^\w*(a?){0,10}$/` and `/(a?){0,10}(?:b|c)/`, which takes about ten
+   seconds on 100,000 `a` without the JIT, still are.
  * The overlap rules read an escape that names one character, `\x41`,
    `\x{E9}`, `\101`, `\o{101}`, `\N{U+E9}` or `\cA`, as that character,
    literal text included, as the engine does: `/(?:\x41x|ax)+/i` is reported
@@ -46,9 +82,13 @@ CHANGELOG
    the latest assignment before it when that one runs first on every path
    to it: a statement of the body or of the block of braces the call
    stands in, the head of a `foreach` over literals, or a composition of
-   such values. Where one in a branch or a loop of its own may stand
-   between, in a `switch` or in a block of the alternative syntax, the
-   call names no loop.
+   such values. A list of patterns a variable is assigned,
+   `$l = ['/a/', '/b/']; preg_replace($l, '', $s);`, gives each of its
+   items the loop of the call, unless an item reads a variable. Where one
+   in a branch or a loop of its own may stand between, in a `switch` or in
+   a block of the alternative syntax, the call names no loop. A block of
+   braces ends at its brace whatever stands before it, an empty statement
+   or text out of PHP (`?>…<?php`), with nikic/php-parser as without it.
  * Without u, under another locale's tables than PCRE2's own,
    `regex.lint.quantifier.nested`, `regex.lint.quantifier.concatenation`
    and `regex.lint.overlap.charset` read the characters of a run or a
@@ -88,6 +128,40 @@ CHANGELOG
    `/(?:a)+(?:b)?+a/`, `(?:)` in `/a+(?>(?:)|b)a/` and `a?` in
    `/[ab]{2,}a?(?:b){0,2}+a/` were reported, where the pattern without them
    matches otherwise.
+ * `regex.lint.group.redundant` reports again a group PCRE2 does not read
+   to make a repeat possessive: it kept quiet about every group of a
+   pattern that holds, anywhere, a character repeated before an atomic
+   group or a possessive repeat of a group that may match nothing, and
+   `(?:\\)` in `/(?:\\)?define [a-z]++ (?:,x)*+ /` was not reported. PCRE2
+   judges a repeated character against what stands after it, no further
+   than the first item that must take a character, and only the brackets
+   it reads on the way stay: `(?:b)` in `/a+c?(?:b)?+a/` and `(?:a)` in
+   `/(?:a)+c?(?:b)?+a/` stay, `(?:b)` in `/a+x(?:b)?+a/` and `(?:a)` in
+   `/(?:a)+x(?:b)?+a/` are reported, each pattern matching alike with and
+   without them, with and without the JIT, from PCRE2 10.39 to 10.49. A
+   group repeated more than once is compiled once per round, so that the
+   repeat of one round stands before what opens the next: `(?:b)` in
+   `/(?:(?>(?:b)?)a+){2}/`, which finds nothing in `aa` where
+   `/(?:(?>b?)a+){2}/` finds it, was reported and no longer is. A pattern
+   that holds a subroutine call is read whole, as before.
+ * `regex.lint.group.empty` no longer calls `(?:)` removable in
+   `/(?:(?>(?:)|b)a+){2}/`, which finds `aa` where `/(?:(?>|b)a+){2}/`
+   finds nothing: in a counted group, compiled once per round, the repeat
+   that ends one round is read against the atomic group that opens the
+   next. `regex.lint.quantifier.concatenation` keeps a repeat of such a
+   round as written, and so does `regex.lint.group.redundant` where the
+   pattern holds a subroutine call.
+ * `regex.lint.group.redundant` and `regex.lint.group.empty` no longer call
+   a group removable inside a group a call runs that repeats something
+   some number of times, nor anywhere in a pattern that calls itself whole:
+   PCRE2 makes such a repeat possessive by the brackets around it, and its
+   JIT then misses matches. `(?:a)` in `/((?:a)+b)c(?1)d/` and `(?:b)` in
+   `/(a+(?:b))c(?1)d/` were reported, yet `/(a+b)c(?1)d/` finds nothing in
+   `abcabcabd` with the JIT where both find `abcabd`, from PCRE2 10.39 to
+   10.49; so was `(?:a)` in `/x(?R)a|(?:a)*/`, yet `/x(?R)a|a*/` finds the
+   empty string in `xaa`, with and without the JIT from PCRE2 10.44, and
+   `(?:)` in `/(a+(?:)c)x(?1)d/`. `(?:a)` in `/(?:a)+b(?1)(c)/`, outside
+   the group the call runs, is still reported.
  * Without u, `regex.lint.group.redundant` and `regex.lint.group.empty` no
    longer call a group removable in a pattern that holds a repeat of the
    byte 0xFF before `\w`, or of `\w` before that byte, or would hold one
@@ -145,10 +219,23 @@ CHANGELOG
    with the message `Quadratic search after an empty match: ...` naming the
    function, `preg_replace_callback()` for a replacement written as a
    closure. A literal limit that bounds the call keeps it quiet, and so does
-   a `preg_match()` call, a lazy nette/utils `Strings::matchAll()` and a
-   `RegexIterator` mode the call does not spell out.
+   a `preg_match()` call and a `RegexIterator` mode the call does not spell
+   out.
    Severity `medium`: hidden at the default `high`
    threshold, shown from `--redos-threshold=medium`.
+ * `regex.lint.redos.search` prices the loop a lazy nette/utils
+   `Strings::matchAll()` runs itself: `preg_match()` again where each match
+   ended, one byte on after an empty one, with no retry there. A call that
+   spells out `lazy: true` gets the cost of that loop where each of its
+   attempts reads to the end of the run before it settles on a match, short
+   or empty, with a message that names it, `Quadratic search over short
+   matches: ... the loop that calls preg_match() again where each match
+   ends ...`. `/(?:a+\d)?/` costs that loop 1.2, 3.7 and 13 ms on 2,000,
+   4,000 and 8,000 `a` (`pcre.jit=1`) and is reported there; `/(?:a+\d)??/`,
+   which costs it 0.5, 1.1 and 2.1 ms and `preg_match_all()` its retries, is
+   reported at the `preg_match_all()` call alone. A pattern holding `\K`
+   is not read for that loop, and the language server leaves the call
+   unreported.
  * The class rules read the bytes PCRE2 reads in a class without UTF mode:
    `regex.lint.charclass.redundant` reports a character written twice,
    `/[ää]/` or `/[ö¤ää]/`, and a byte written beside a character that
@@ -288,6 +375,55 @@ CHANGELOG
    no longer keep the flag, and `\P{Lu}` and `\p{^Lu}` keep it from 10.45,
    where i changes them: `/\P{Lu}/iu` was reported though it matches 2,314
    characters fewer with i on PCRE2 10.49.
+ * Under u or `(*UCP)`, `regex.lint.flag.useless.i` reads `[:upper:]` and
+   `[:lower:]` as PCRE2 reads them in a class there, as `\p{Lu}` and
+   `\p{Ll}`, which i leaves as written on every release:
+   `/[aA[:upper:]]/iu`, `/[[:lower:]]/iu` and `/(*UCP)[aA[:upper:]]/i` are
+   reported, where they kept the flag. Without UCP, i widens them to the
+   letters: `/[aA[:upper:]]/i` and `/(*UTF)[[:upper:]]/i` keep it, as does
+   a pattern that sets an ASCII option, `(?aP)` or `(?a)`, which gives the
+   POSIX classes back to the tables.
+ * `regex.lint.flag.useless.i` reads `[:upper:]` and `[:lower:]` where they
+   stand on their own among the operands of an extended class, from PCRE2
+   10.45: `/(?[ [:upper:] ])/i`, which matches the 52 letters with i and
+   the 26 capitals without, and `/(?[ [:alpha:] - [:lower:] ])/i`, which
+   matches nothing with i, were reported and are no more.
+ * Under u, `regex.lint.flag.useless.i` reads a class under the
+   restriction of caseless matching, set by `(?r)`, the r modifier or
+   `(*CASELESS_RESTRICT)`, as PCRE2 does from 10.43: a caseless set that
+   starts with an ASCII letter is not read, so `k` and `K` fold with each
+   other alone, and the Kelvin sign and the long s with nothing.
+   `/(?r)[kK]/iu`, `/(?r)[sS]/iu` and `/(?r)[a-zA-Z]/iu` are reported,
+   where they kept the flag; `/(?r)[k]/iu`, `/(?r)(?-r)[kK]/iu`, where the
+   restriction is lifted, and `/(?r)[\x{C5}\x{E5}]/iu`, whose set holds the
+   Angstrom sign and no ASCII letter, still keep it.
+ * Under u, `regex.lint.flag.useless.i` no longer gives a character a case
+   for a full mapping of mbstring, one character to several, which PCRE2
+   does not fold: `/\x{149}/iu`, whose `ŉ` has `ʼN` for capital, and
+   `/\x{FB00}/iu` are reported, as `/[\x{149}]/iu` was. Such a character is
+   read from PCRE2's tables of the target's release, which pair the sharp
+   s with its capital, so `/\x{DF}/iu` keeps its flag, and from 10.45
+   `\x{390}` with `\x{1FD3}`. The simple mappings of mbstring are still
+   read: the long s, the Kelvin sign, `İ` and `ı` keep the flag.
+ * `regex.lint.flag.useless.i` reads a backreference to a group that
+   holds a lookaround, a call or the decimal digits. What a lookaround
+   reads is no part of the text the group captures, a call matches what
+   the group it runs matches, and `\p{Nd}` holds no character with a
+   case, as `\d` holds none: `/(\d(?=\w))\1/i`, `/(\d)((?1))\2/i` and
+   `/([\p{Nd}])\1/i` are reported, where they kept the flag.
+   `/(\w)((?1))\2/i`, `/(\P{Nd})\1/i` and a group that calls the whole
+   pattern, `(?R)`, still keep it, as `\p{Nd}` does under another
+   locale's tables.
+ * Without u, under another locale's tables, `regex.lint.flag.useless.i`
+   reads a class of two bytes or more from the pairs of the tables alone,
+   as PCRE2 compiles it with i and without: a byte the interpreter reads
+   otherwise matched alone no longer keeps the flag there. Under macOS's
+   tr_TR.ISO8859-9, whose interpreter takes `\xDD` for `I` or `i` alone,
+   `/[Ii\xDD\xFD]/i`, `/(*UCP)[iI]/i` and `/(*UCP)[iI\xDD\xFD]/i` are
+   reported, each matching the same bytes with i and without; `/[I]/i`,
+   a class of one byte, and `/[i\xDD]/i`, which matches `I` with i alone,
+   keep it. A byte the tables of either side of PCRE2 10.43 hold
+   otherwise still keeps the flag whatever the class holds.
  * An `exclude` of `regex.json` or `--exclude` leaves out the file or the
    directory its path names, from the working directory, behind `./` or
    absolute: `--exclude=src/Kernel.php`, `--exclude=./var/cache` and

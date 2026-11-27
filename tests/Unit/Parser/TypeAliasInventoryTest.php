@@ -44,6 +44,7 @@ use PHPRegex\Parser\Analysis\MetricsCollector;
 use PHPRegex\Parser\Cache\RemovableCacheInterface;
 use PHPRegex\Parser\NodeFinder;
 use PHPRegex\Parser\ParserOptions;
+use PHPRegex\Parser\PcreTarget;
 use PHPRegex\Parser\Text\Path;
 use PHPRegex\PHPStan\RegexPatternRule;
 use PHPRegex\PHPStan\ReplacementReferences;
@@ -102,6 +103,7 @@ final class TypeAliasInventoryTest extends TestCase
         RemovableCacheInterface::class => ['CacheStats'],
         NodeFinder::class => ['NodeFilter'],
         ParserOptions::class => ['OptionsArray'],
+        PcreTarget::class => ['TargetArray'],
         OptimizerOptions::class => ['OptimizerOptionsArray'],
         Regex::class => ['RegexOptionsArray'],
         RedosSearchCost::class => ['SearchCostArray'],

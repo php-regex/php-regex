@@ -106,6 +106,8 @@ final class PackageManifestTest extends TestCase
             'Parser\Hir\ClassHir', 'Parser\Hir\ConcatHir', 'Parser\Hir\ConditionalHir', 'Parser\Hir\EmptyHir',
             'Parser\Hir\Greed', 'Parser\Hir\Hir', 'Parser\Hir\HirTranslator', 'Parser\Hir\LiteralHir',
             'Parser\Hir\LookHir', 'Parser\Hir\LookKind', 'Parser\Hir\OpaqueHir', 'Parser\Hir\RepetitionHir',
+            // The character a lookahead asserts, read as the HIR spells it.
+            'Parser\Hir\Utf8',
             'Parser\Text\Bytes', 'Parser\Engine\LibraryPcre', 'Parser\Syntax\StartOptions',
             'Parser\Cache\StaticCaches', 'Parser\NodeWalker', 'Parser\TraversalAction',
             // Whether a possessive quantifier or an atomic group commits to
@@ -171,6 +173,8 @@ final class PackageManifestTest extends TestCase
             'Linter\Extraction\IgnoreMarker', 'Linter\Extraction\InlineIgnores', 'Linter\Extraction\LiteralSpelling',
             'Linter\Extraction\MemoryBudget', 'Linter\Extraction\PatternAttributeScanner',
             'Linter\Extraction\PatternFunctionRegistry', 'Linter\Extraction\PhpStringLiteral',
+            // A loop of preg_match() calls is named as the lint names it.
+            'Linter\Extraction\PregFunctions',
             // The constants of the workspace, read as the lint reads them.
             'Linter\Extraction\ProjectConstants', 'Linter\Extraction\ValueExpr',
             'Linter\Extraction\TargetMarker', 'Linter\Extraction\TargetMarkers',
@@ -273,6 +277,9 @@ final class PackageManifestTest extends TestCase
             // <redos> runs the analysis the PHPStan extension runs, and
             // words its findings in the extension's words.
             'Linter\AnalysisService', 'Linter\RedosFinding',
+            // The static methods of the wrapper libraries are read through
+            // the presets the lint and the PHPStan extension read.
+            'Linter\Extraction\PatternFunction', 'Linter\Extraction\PatternFunctionRegistry',
         ],
         'Redos' => [
             'Parser\Analysis\ByteCharSet', 'Parser\Analysis\CharSetAnalyzer', 'Parser\Hir\CharSet',
@@ -320,6 +327,9 @@ final class PackageManifestTest extends TestCase
             // The character a byte of a class without u is part of, found in
             // the source so that the refusal still advises u for it.
             'Parser\Text\Utf8',
+            // A repeat PCRE2 makes possessive before a group it may skip,
+            // which the targets run as written, is warned of.
+            'Automata\Transform\AutoPossession',
         ],
     ];
 

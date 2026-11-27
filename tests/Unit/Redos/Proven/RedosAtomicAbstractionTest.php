@@ -256,7 +256,9 @@ final class RedosAtomicAbstractionTest extends TestCase
     public static function provideBodiesWhoseBranchesMayStartAlike(): iterable
     {
         yield 'branches starting with the same character' => ['pattern' => '/(?>a+|ab)c/', 'spelled' => '/(?:(?>a+)|ab)c/', 'subject' => 'abc'];
-        yield 'branch that may read nothing first' => ['pattern' => '/(?>a*|b)c/', 'spelled' => '/(?:(?>a*)|b)c/', 'subject' => 'bc'];
+        // A first branch that is one repeat allowed no round is the whole
+        // body (RedosAtomicFirstBranchTest); one of two parts is not read so.
+        yield 'branch that may read nothing first' => ['pattern' => '/(?>a*x?|b)c/', 'spelled' => '/(?:(?>a*x?)|b)c/', 'subject' => 'bc'];
         yield 'branches of overlapping classes' => ['pattern' => '/(?>[ab]+|bc)d/', 'spelled' => '/(?:(?>[ab]+)|bc)d/', 'subject' => 'bcd'];
     }
 

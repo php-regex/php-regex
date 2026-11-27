@@ -13,6 +13,7 @@ declare(strict_types=1);
 
 namespace PHPRegex\Linter;
 
+use PHPRegex\Linter\Extraction\PregFunctions;
 use PHPRegex\Parser\Text\Ascii;
 use PHPRegex\Redos\Confirmation;
 use PHPRegex\Redos\RedosAnalysis;
@@ -223,6 +224,16 @@ final class RedosVerdict
      */
     public static function everyMatchMessage(string $function, RedosSearchCost $cost): string
     {
+        // A loop that calls preg_match() itself makes no retry: its cost
+        // is the one of the attempts that read the run before they settle
+        // on a match, short or empty.
+        if (PregFunctions::MATCH_LOOP === $function) {
+            return \sprintf(
+                "Quadratic search over short matches: one attempt is linear (proven), but the loop that calls preg_match() again where each match ends finds a short or an empty match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: %s.",
+                Ascii::upper(self::searchSeverity()->value),
+            );
+        }
+
         if (SearchCostCause::ShortMatch === $cost->cause) {
             return \sprintf(
                 "Quadratic search over short matches: one attempt is linear (proven), but %s() finds a short match at each position of the run, and each attempt reads to the end of the run before it settles on it; that is quadratic in PCRE2's interpreter (pcre.jit=0, a build without JIT, or (*NO_JIT)), and the JIT may avoid it for some patterns. Severity: %s.",

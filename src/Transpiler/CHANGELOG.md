@@ -4,6 +4,22 @@ CHANGELOG
 2.0
 ---
 
+ * A pattern whose repeat PCRE2 makes possessive where the target runs it
+   as written is transpiled with a warning. PCRE2 makes a character repeated
+   before an atomic group, or a possessive repeat of a group, that may match
+   nothing possessive, as if the group could not be skipped: `/a+(?:b)?+a/`
+   finds nothing in `aa`, where JavaScript finds it with `/a+(?:b)?a/`, and
+   Python 3.11.5 with `a+(?:b)?+a`; `/a+(?>(?:b)?)a/` reads alike. Both were
+   written without a word. `TranspileResult::$warnings` now names the first
+   such repeat and the group PCRE2 reads it against, once per pattern, for
+   JavaScript, the HTML pattern attribute and Python: `PCRE2 makes "a+" at
+   offset 0 possessive before "(?:b)?+" at offset 2, as if that group could
+   not be skipped, and this target does not: the two differ on a subject
+   where the repeat must give back to what follows the group.` No warning
+   where a character that must be there parts the repeat from the group,
+   `/a+x(?:b)?+a/`, nor for a repeat that runs lazy, which PCRE2 leaves as
+   written. The package requires `php-regex/regex-automata`, which reads
+   where PCRE2 makes such a repeat possessive.
  * `TranspileResult::$dialect` is the `Dialect` the pattern was written
    for, where `$target` held its name; its name is `$dialect->value`.
  * The `Dialect` enum names the dialects a pattern transpiles to:

@@ -216,6 +216,18 @@ final class PnfaBuilder
      */
     private array $singles = [];
 
+    /**
+     * The largest bound of a repeat read as unbounded past the cutoff.
+     */
+    private ?int $widestBound = null;
+
+    /**
+     * @var array<int, true> the atomic groups and possessive repeats of a
+     *                       group a repeat of one character may stand right
+     *                       before, by object id (exposures())
+     */
+    private array $possessedBefore = [];
+
     private readonly bool $unicode;
 
     private readonly bool $dollarEndOnly;
@@ -286,6 +298,10 @@ final class PnfaBuilder
      * @param bool            $inPlace whether the lookarounds are read in place, in the
      *                                 pattern's own search, instead of as searches of
      *                                 their own
+     * @param bool            $written whether a bounded repeat within the cutoff is built as
+     *                                 its copies even when they read the same input in two
+     *                                 ways, instead of as an unbounded loop: what the engine
+     *                                 reads, for the count of the paths it tries at once
      */
     public function __construct(
         private readonly RegexNode $regex,
@@ -293,6 +309,7 @@ final class PnfaBuilder
         private readonly int $boundedRepeatCutoff,
         private readonly ?PcreTarget $target = null,
         private readonly bool $inPlace = false,
+        private readonly bool $written = false,
     ) {
         $this->locale = $target?->locale;
         $this->unicode = str_contains($regex->flags, 'u');
@@ -315,6 +332,7 @@ final class PnfaBuilder
             default => null,
         };
         $this->collectAbstractions($regex->pattern);
+        $this->exposures($regex->pattern, false);
     }
 
     /**
@@ -351,9 +369,11 @@ final class PnfaBuilder
             $lineStart = $lineStart || $search->hasLineStart;
         }
 
+        $possessive = self::holdsPossessive($this->regex->pattern);
         foreach ($this->searches as $search) {
             $search->wordSet ??= $wordSet;
             $search->hasLineStart = $search->hasLineStart || $lineStart;
+            $search->holdsPossessive = $possessive;
         }
 
         return $this->searches;
@@ -370,11 +390,142 @@ final class PnfaBuilder
     }
 
     /**
+     * The largest bound of a repeat read as unbounded because it is past
+     * the cutoff; null when there is none.
+     */
+    public function widestBound(): ?int
+    {
+        return $this->widestBound;
+    }
+
+    /**
+     * Whether a bounded repeat was read as unbounded for the two ways its
+     * copies read the same input.
+     */
+    public function hasAmbiguousRepeats(): bool
+    {
+        return [] !== $this->ambiguousRepeats;
+    }
+
+    /**
      * Whether a set was read as any character: no safe verdict then.
      */
     public function hasApproximatedSets(): bool
     {
         return null !== $this->anyCharacter;
+    }
+
+    /**
+     * Marks the atomic groups and possessive repeats of a group a repeat of
+     * one character may stand right before; whether such a repeat may stand
+     * right before what follows the node. PCRE2 makes the repeat possessive
+     * when what comes next cannot start with its character, and passes over
+     * what may read nothing, out of a group and into each alternative of
+     * one, not out of a group repeated more than once, nor into a
+     * lookaround. Into an atomic group, or a bounded possessive repeat of a
+     * group, it may read a part that matches nothing as if the group could
+     * not be skipped: "\n*" before "(?:y)?+" then never gives a newline
+     * back (keptWhole()).
+     */
+    private function exposures(NodeInterface $node, bool $open): bool
+    {
+        if ($node instanceof SequenceNode) {
+            foreach ($node->children as $child) {
+                $open = $this->exposures($child, $open);
+            }
+
+            return $open;
+        }
+
+        if ($node instanceof AlternationNode) {
+            $after = false;
+            foreach ($node->alternatives as $alternative) {
+                $after = $this->exposures($alternative, $open) || $after;
+            }
+
+            return $after;
+        }
+
+        if ($node instanceof QuantifierNode) {
+            $skipped = $open && 0 === ($node->bounds->min ?? 0);
+            if (!$node->node instanceof GroupNode && !$node->node instanceof SequenceNode && !$node->node instanceof AlternationNode) {
+                return QuantifierType::Possessive !== $node->type || $skipped;
+            }
+
+            if ($open && QuantifierType::Possessive === $node->type) {
+                $this->possessedBefore[spl_object_id($node)] = true;
+            }
+
+            $inside = $this->exposures($node->node, $open);
+            $max = $node->bounds->max ?? null;
+
+            return (null !== $max && $max <= 1 && $inside) || $skipped;
+        }
+
+        if ($node instanceof GroupNode) {
+            if (\in_array($node->type, [GroupType::LookaheadPositive, GroupType::LookaheadNegative, GroupType::LookbehindPositive, GroupType::LookbehindNegative], true)) {
+                $this->exposures($node->child, false);
+
+                return false;
+            }
+
+            if ($open && GroupType::Atomic === $node->type) {
+                $this->possessedBefore[spl_object_id($node)] = true;
+            }
+
+            return $this->exposures($node->child, $open);
+        }
+
+        foreach ($node->getChildren() as $child) {
+            $this->exposures($child, $open);
+        }
+
+        return !self::isCharacter($node) && $open;
+    }
+
+    /**
+     * Whether the node reads one character, every time.
+     */
+    private static function isCharacter(NodeInterface $node): bool
+    {
+        return $node instanceof CharLiteralNode || $node instanceof ControlCharNode || $node instanceof CharClassNode
+            || $node instanceof CharTypeNode || $node instanceof DotNode || $node instanceof UnicodePropNode
+            || $node instanceof ExtendedCharClassNode || ($node instanceof LiteralNode && '' !== $node->value);
+    }
+
+    /**
+     * Whether PCRE2 may make a repeat of one character before the atomic
+     * group or possessive repeat possessive as if the body could not be
+     * skipped (exposures()): a body that may match nothing, other than one
+     * repeat of one character, which it reads as it is.
+     */
+    private function keptWhole(NodeInterface $group, NodeInterface $body): bool
+    {
+        if (!isset($this->possessedBefore[spl_object_id($group)]) || !self::nullable($body)) {
+            return false;
+        }
+
+        $body = $this->unwrap($body);
+
+        return !$body instanceof QuantifierNode || !self::isCharacter($body->node);
+    }
+
+    /**
+     * Whether the node holds an atomic group or a possessive repeat.
+     */
+    private static function holdsPossessive(NodeInterface $node): bool
+    {
+        if (($node instanceof GroupNode && GroupType::Atomic === $node->type) || ($node instanceof QuantifierNode && QuantifierType::Possessive === $node->type)) {
+            return true;
+        }
+
+        foreach ($node->getChildren() as $child) {
+            if (self::holdsPossessive($child)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -594,6 +745,10 @@ final class PnfaBuilder
                 return $pnfa->mark($index, $next);
 
             case GroupType::Atomic:
+                if ($this->keptWhole($node, $node->child)) {
+                    return $this->approximated($node->getStartPosition(), $node->child, $next, $flags, $pnfa, $search);
+                }
+
                 // A run of one character set: the atomic group keeps its longest
                 // run, or its shortest when the quantifier is lazy (under (?U)
                 // too), exactly the minimum.
@@ -603,6 +758,15 @@ final class PnfaBuilder
                 }
 
                 $child = $this->unwrap($node->child);
+                // A first alternative allowed no round at all always matches:
+                // the group commits to it, and never tries the others.
+                if ($child instanceof AlternationNode) {
+                    $first = $this->unwrap($child->alternatives[0]);
+                    if ($first instanceof QuantifierNode && 0 === ($first->bounds->min ?? 1)) {
+                        $child = $first;
+                    }
+                }
+
                 if ($child instanceof QuantifierNode && null !== ($this->runSet($child->node, $flags) ?? $this->unionOf($child->node, $flags) ?? $this->nestedRun($child, $flags))) {
                     if (!$this->isLazy($child, $flags)) {
                         return $this->quantifier($child, $next, $flags, $pnfa, $search, true);
@@ -650,7 +814,7 @@ final class PnfaBuilder
 
             // Copies that read the same input in two ways: the unbounded loop
             // carries that ambiguity, the unrolled copies hide it.
-            if (($max <= $this->boundedRepeatCutoff || $max === $min) && $this->repeatsAmbiguously($node->node, $flags)) {
+            if (($max <= $this->boundedRepeatCutoff || $max === $min) && !$this->written && $this->repeatsAmbiguously($node->node, $flags)) {
                 $abstracted = true;
                 $this->ambiguousRepeats[$node->getStartPosition()] ??= \sprintf(
                     '%s at offset %d analysed as {%d,} (its copies read the same input in two ways)',
@@ -679,14 +843,20 @@ final class PnfaBuilder
 
         $possessive = $atomic || QuantifierType::Possessive === $node->type;
         $greedy = $possessive || !$this->isLazy($node, $flags);
+        // A bounded possessive repeat of a group a repeat of one character
+        // may stand before is kept with every way through it (keptWhole()),
+        // and so is a bounded repeat read as unbounded: as a possessive run
+        // it would read on past the bound, where the engine stops and leaves
+        // the rest to what follows.
+        $exact = $possessive && !($abstracted ?? false) && !(null !== $bounds->max && $this->keptWhole($node, $node));
 
         // A possessive run of one character set leaves only before a
         // character outside the set: the one way PCRE reads it.
-        $run = $possessive ? $this->runSet($node->node, $flags) ?? $this->unionOf($node->node, $flags) : null;
+        $run = $exact ? $this->runSet($node->node, $flags) ?? $this->unionOf($node->node, $flags) : null;
         $body = $node->node;
         // So does a possessive repeat of a greedy run, "(?:a+)++": its first
         // way out reads the longest run, the one it commits to.
-        $nested = $possessive && null === $run ? $this->nestedRun($node, $flags) : null;
+        $nested = $exact && null === $run ? $this->nestedRun($node, $flags) : null;
         if (null !== $nested) {
             [$run, $body, $min] = $nested;
         }
@@ -1026,6 +1196,7 @@ final class PnfaBuilder
         if ($node instanceof QuantifierNode) {
             $bounds = $node->bounds;
             if (null !== $bounds && null !== $bounds->max && $bounds->max > $this->boundedRepeatCutoff && $bounds->max !== $bounds->min) {
+                $this->widestBound = max($this->widestBound ?? 0, $bounds->max);
                 $this->abstractions[] = \sprintf(
                     '%s at offset %d analysed as {%d,}',
                     $node->quantifier,

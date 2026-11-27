@@ -6,6 +6,83 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `RedosWitness::$call`, a `WitnessCall` (`WithMatches`, `WithoutMatches`),
+   is the call of `preg_match()` a witness gives up in, `call` in its JSON
+   and in `toArray()`, and `ConfirmationRunner` replays a witness by it.
+   The runner replayed every witness with `$matches`: `/(?:|(?:a|a)*$)/`,
+   which gives up on `"aa" x n . "!"` only without them, was `replayed`
+   true from the analyzer's own replay and false once the same
+   `ConfirmationRunner` was passed to `RedosAnalyzer`.
+ * `RedosAnalysis::$target` is the `PcreTarget` the verdict was computed
+   for: the PHP version, the PCRE2 release and the locale of the analyzer's
+   parser. `$pcreVersion` and `$phpVersion` stay the engine that ran the
+   analysis, which the target need not be: under one running engine,
+   `/^(?:a{,3}b?)+$/` is exponential for PHP 8.4 and linear for PHP 8.2.
+   In JSON the analysis carries it as `target`, `{"php": "8.4", "pcre":
+   "10.44", "locale": "C"}`, before `pcre_version`.
+ * The paths one attempt tries at once are counted more exactly where they
+   meet. Counted stretch by stretch, a loop is entered by the ways of every
+   stretch before it, added up whether or not one input brings them
+   together: a chain of loops each reached both from the loop before it and
+   around that loop doubles the sum at each loop. Past 1,024 that way, the
+   attempt is now read whole on one input, its loops included, in the order
+   the engine tries its paths and up to a success it stops at: nothing after
+   that success is tried, but at the attempt start, where a success that
+   reads nothing may be refused. The pattern of semver.org (189 then 717
+   steps on sixteen then sixty-four `0a0.` of a prerelease and a `!`) and
+   `/^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){8}$/`, nine numbers joined by dots,
+   are safe (proven), where they got the heuristics' verdict. A bounded
+   repeat whose copies read one input in two ways, read as a loop that holds
+   more paths at each round, is then read as its copies in a pattern without
+   lookaround: two patterns of an Indic shaper, every repeat bounded (67
+   and 68 steps on the text of four copies of the repeat, as many on eight),
+   are safe (proven) again. Ten groups `(?:b{0}|)` before an `x` and ten
+   after it, then `\ba`, and
+   `/^a+a{0,15}b+b{0,15}c+c{0,15}d+d{0,15}e+e{0,15}f/` keep the heuristics'
+   verdict, and so does a pattern whose reading takes more than 16,384 steps.
+   An exponential or polynomial verdict stands.
+ * A loop whose success fails only at the end of the subject is set aside
+   when every character that may follow it leads to a sure success: the
+   engine reads the loop's last character at the end only, gives it back
+   and succeeds before it. `/\A(?:\n|\n)+^/m`, `/\A(?:\n|\n)+(?:^|x)/m`,
+   `/\A(?:\n|\n)+(?:^$|[^\n])/mD` and `/\A\n*\n*^/m`, linear on the engine,
+   are safe (proven) where they got the heuristics' verdict since `^` under
+   m holds after a newline only where something follows, and
+   `/\A(?:\n|\n)+(?:^\z|[^\n])/m` stays exponential. A pattern whose
+   exponential ambiguity was left without witness for that reason may now
+   be proven polynomial: `/^\w+[bj]+(?:c|k)+?\w{0,14}[dl]+\w{0,14}[e]+.{0,2}f+\w{0,6}(?:g|g)+./s`,
+   quadratic on the engine, is.
+ * An atomic group, or a bounded possessive repeat of a group, whose body
+   may match nothing is kept with every way through it where a repeat of
+   one character may stand right before it, unless the body is one repeat
+   of one character: PCRE2 makes that repeat possessive as if the group
+   could not be skipped, and it never gives back what the pattern after the
+   group needs. `/^(?:\n|\n)+\n*(?:y)?+[\s\S]/` and
+   `/^(?:\n|\n)+\n*(?>(?:y|z)*)[\s\S]/` were safe (proven), while PHP
+   exhausts its backtrack limit on 26 newlines, which both match without
+   auto-possession.
+ * A possessive run whose bound is read as unbounded, alone or in an atomic
+   group, is kept with every way through it: read as the longest run, it
+   left nothing to what follows, where the engine stops at the bound.
+   `/x.{0,20}+\b(?:a|a)+$/` and `/x(?>.{0,20})\b(?:a|a)+$/` were safe
+   (proven), while PHP exhausts its backtrack limit on an `x`, twenty `!`,
+   thirty `a` and a `!`; they are exponential.
+ * An atomic group whose first alternative is a repeat allowed no round is
+   read as that alternative: it always matches, and the group never tries
+   the others. `(?>[^x]*|y)` is read as `(?>[^x]*)`, where the body was kept
+   with every way through it and no success was taken as sure after it:
+   `/^(?:a|a)+(?>[^x]*|y)(?:x|\z)/` is safe (proven) and
+   `/^(?:a+)+(?>.*|y)\b/` exponential, where both got the heuristics'
+   verdict. Patterns proven exponential or polynomial only through the
+   other alternatives may be proven linear or of a lower degree, as the
+   engine runs them: `/^(?>.*|x)(?:a|a)*?$/i` is linear.
+ * An ambiguity left without witness where a bounded repeat past the cutoff
+   was read as unbounded is looked for again with the bounded repeats
+   written out as their copies, up to 64: read as a loop, such a repeat
+   accepts whatever follows. `/^(?:a|a)+[^x]{0,20}(?:x|\z)/`, which PHP
+   fails on with 20 `a` and 30 `b`, is exponential (proven) and
+   `/^a*a*[^x]{0,20}(?:x|\z)/` quadratic, where both got the heuristics'
+   verdict.
  * `RedosOptions` says how a pattern is analysed, in one object: `$mode`,
    `$threshold` (the severity a verdict is replayed from in confirmed mode),
    `$confirmation` (the limits of the replay) and the budget of the proof.
@@ -33,6 +110,34 @@ CHANGELOG
    on 16,000 `a` with `pcre.jit=0`, 43 to 65 ms with `pcre.jit=1`, and
    0.01 ms through `preg_match()`. `RedosSearchCost::$cause` says so,
    and confirmed mode replays the attempt pinned inside the run.
+ * The cost of short matches reads three more shapes, each measured through
+   `preg_match_all()` on 16,000 `a` with `pcre.jit=0`. A match of up to 64
+   run words, where it stopped at four: `/a{5}(?:a+\d)?/` (12.4 ms). The
+   last success an attempt meets in the order PCRE2 tries its paths, where
+   it took the first and gave up when a path tried before it matched
+   later: `/a(?:a+\d|a{20})?/` settles on twenty-one characters, its
+   `a{20}` tried after `a+\d` and before the group is left out (3.0 ms). A
+   first call whose first attempt fails inside the run, the search going on
+   at the next character: `/\Ba(?:a+\d)?/` (62 ms), not under the `A`
+   modifier nor `\G`, which tie the call to its start. Confirmed mode
+   replays each, a match now short within 64 run words of the pinned
+   attempt. `/(?<=a)a(?:a+\d)?/` stays unreported: the model keeps no
+   lookaround's condition.
+ * The cost of short matches is also read for a loop that looks for every
+   match with `preg_match()` itself, called again where each match ended
+   and one byte on after an empty one, with no retry there, as the
+   generator nette/utils' `Strings::matchAll()` returns under `lazy` does:
+   a call may then end on an empty match, once its attempt has read to the
+   end of the run. `/(?:a+\d)?/` costs that loop 1.2, 3.7 and 13 ms on
+   2,000, 4,000 and 8,000 `a` with `pcre.jit=1`; `/(?:a+\d)??/`, which
+   costs `preg_match_all()` its retries, costs it 0.5, 1.1 and 2.1 ms.
+   Confirmed mode replays the attempt pinned inside the run and the calls
+   the loop makes after it, past one run word: on a run of `ab`,
+   `/b(?:ab)*|(?:(?:ab)+\d)?/` reads the run before each empty match on an
+   `a`, but the call one byte on matches from the `b` to the end of the
+   run. The linter and the PHPStan extension ask for it at the calls that
+   run such a loop; `RedosAnalyzer::analyze()` keeps the cost of the
+   functions that look for every match.
  * The search cost lets the attempts after the run match: the search tries
    those the breaker starts, and the one at the subject's end, once every
    attempt of the run has read to its end and failed. `/\s*$/` (131, 521
@@ -83,6 +188,52 @@ CHANGELOG
    `\xdf` with no breaker, on which the engine tries no attempt; its
    breaker now holds `\xff`, and confirmed mode replays it
    (`replayed: true`).
+ * The search cost reads the first code unit PCRE2's compiler sets as it
+   reads the last one it requires: the interpreter starts an attempt only
+   where the subject holds it, in the one case it looks for, the attempt
+   the `A` modifier pins included. Under `ru_RU.KOI8-R`, `/\xff+!/i` and
+   `/[\xff\xdf]+!/` were reported with a run of `\xdf`, on which
+   `pcre.jit=0` starts no attempt (0.0 ms on 20,000 of them, where the JIT
+   finds a match in `\xdf!` that the interpreter misses), and confirmed
+   mode said `replayed: false`. The run is now `\xff`, which both try (9,
+   34 then 133 ms on 5,000, 10,000 then 20,000 with `pcre.jit=0`), and
+   confirmed mode replays it; so are the short matches of
+   `/\xff(?:\xff+\d)?/i` through `preg_match_all()`. A run word at whose
+   first character no attempt starts is passed over, and `(*NO_START_OPT)`
+   keeps the run as it was.
+ * No search cost is reported through a possessive bounded repeat the
+   proof reads as unbounded, one whose maximum is above the cutoff: the
+   model leaves such a run only before a character it does not read, where
+   the engine also leaves it at its bound, and may match from there.
+   `/a+\d|a{1,300}+aa*/`, `/a+\d|(?>a{1,300})aa*/` and
+   `/(?:a+\d|a{1,17}+aa*)?/` were reported quadratic, the first two
+   replayed on the 256 run words of the replay, though each matches a run
+   of 302 `a` or more at once (0.02 ms on 16,000 through
+   `preg_match_all()`). A witness that holds no character of such a
+   repeat, as the one of `/a+b|c{1,300}+d/`, stays.
+ * In confirmed mode a witness the model does not read exactly, through a
+   lookaround or an atomic body it keeps whole and that reads one of the
+   witness's characters, is replayed only where the
+   pattern counts within the reach of the replay: 64, a quarter of the 256
+   run words it counts on. A repeat that counts past it (`a{200}`, the
+   counts of nested repeats multiplied), a lookaround that must read more
+   than 64 characters and one that goes round a loop of several characters
+   tell the two attempts the replay pins from those of a longer run.
+   `/a+\d|(?=a{300})a+/`, `/(?:a+\d|(?=a{200})a+)?/`,
+   `/a(?:a+\d|(?<=a{200})a*)?/` and `/a(?:a+\d|(?=(?:a{5})*\z)a*)?/` were
+   reported with `replayed: true`, though each function is linear on a
+   longer run: one to 200 matches in 16,000 `a`, in 0.02 to 1.5 ms. They
+   are no longer reported; `/[a-z]+(?=\d{64})/` and `/[a-z]+(?=\d*x)/`
+   still are, and `/[a-z]+(?=\d{65})/`, one count past that reach, is not.
+ * The cost of the retry after an empty match is no longer reported where
+   the loop never reaches the run. Under the `A` modifier, and behind
+   `\G`, a call tries the offset it is given alone, and the loop ends where
+   the first one fails: `/\B(?:a+\d)?/A` and `/\G\B(?:a+\d)?/` were
+   reported with the witness `"0" . "a" x n` (`replayed: true`), in which
+   `preg_match_all()` finds no match, `\B` failing before the `0` that
+   starts the subject. The witness of a pattern tied so must start with an
+   empty match where the subject starts, as the one of `/(?:\Ba+\d)?/A`
+   does; `/\B(?:a+\d)?/`, whose search goes on, keeps its cost.
  * Without u, under another locale's tables, the proof reads a byte whose
    case the engine's paths read apart as any character, listed in
    `abstractions`, and the heuristics read what either path takes: a

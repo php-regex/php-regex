@@ -6,6 +6,10 @@ CHANGELOG
 
  * First release as its own package, split from `yoeunes/regex-parser`;
    see the [main changelog](https://github.com/php-regex/php-regex/blob/2.x/CHANGELOG.md).
+ * `regex:routes` leaves out the pairs of a route whose requirement PCRE2
+   refuses to compile, as `\d{2,1}`, and reads the other routes, as it did
+   for a route the solver could not read: the route was compared as if its
+   regex matched nothing. Its reachability says why, the validation error.
  * `regex:routes` reads the trailing slashes of a request as the
    application's `symfony/routing` does: since 6.4.51, 7.4.24 and 8.1.12,
    the router looks a route with no variable up for a request with one
@@ -17,6 +21,37 @@ CHANGELOG
    route requirement as non-capturing too where the router drops its name,
    on the same releases: `(?<l>en|fr)` is linted as `(?:en|fr)`, and
    `(?<n>a)\k<n>` is invalid there.
+ * `regex:routes` reads the optional slash the router writes after every
+   route it tries with a regex: it takes as is the path that slash ends
+   when the value of the variable the route ends on ends on the slash, or
+   is empty, so `/{p<admin/>}` takes `/admin//` too and `/a{y<b?>}` takes
+   `/a/`. A later route that keeps such a path is an overlap where it was
+   reported shadowed: `/{p<admin/>}` after `/{x<admin>}`, which redirects
+   `GET /admin/` alone, `/{y<a/>}` after `/{x<a>}/`, `/{y<a//>}` after
+   `/{x<a/?>}`, and, since symfony/routing 6.4.51, 7.4.24 and 8.1.12,
+   `/{p<admin/>}` after `/admin` and `/blog{slash}` (`/?`) after `/blog`.
+   `regex:routes --reachability` no longer reports such a route
+   unreachable.
+ * `regex:routes` skips two routes the router may try in either order
+   before symfony/routing 6.4.51, 7.4.24 and 8.1.12, and on 8.0, where it
+   sorts the routes on every variable of their host: a route on
+   `app-{sub}.example.com` declared after one on `{sub}.example.com` was
+   reported shadowed, while the router tries it first once an earlier
+   route names its host. Two routes on distinct hosts whose shared end
+   holds a variable next to other characters in its label, or one whose
+   requirement may match a dot, are counted among the pairs skipped on
+   those releases, and read in the order they are declared since.
+ * `regex:routes` reads a route that takes no `GET` as redirecting
+   nothing: it passes on the `HEAD` request of a path it reads for its
+   trailing slash, so `/files/{q<a>}/` for `HEAD` after `/files/{p<a|a/>}`
+   for `HEAD` keeps `HEAD /files/a/`, where it was reported shadowed.
+   `regex:routes --reachability` reads the requests a route may pass on
+   so too: `/a/` after `/{x<.+?>}` keeps `POST /a/`, where it was reported
+   unreachable.
+ * `regex:routes` skips two routes whose hosts part on letter case alone
+   before a variable they share, `A.{sub}.example.com` and
+   `a.{sub}.example.com`, as it skips `A.COM` and `a.com`: the router may
+   try the later one first, which was reported shadowed.
  * `regex:validator`, and the `validator` section of `regex:analyze`, audit
    the `Regex` constraints of the validated classes: a pattern with flags,
    or a pair of delimiters, whose HTML pattern `getHtmlPattern()` drops,

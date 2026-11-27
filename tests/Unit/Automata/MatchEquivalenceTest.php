@@ -17,6 +17,7 @@ use PHPRegex\Automata\Exception\ComplexityException;
 use PHPRegex\Automata\LanguageSolver;
 use PHPRegex\Automata\Options\MatchMode;
 use PHPRegex\Automata\Options\SolverOptions;
+use PHPRegex\Tests\Support\JitInAFreshProcess;
 use PHPRegex\Tests\Support\PcreGates;
 use PHPRegex\Tests\Support\PhpUnitCompat\PhpUnitForwardCompat;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -394,6 +395,7 @@ final class MatchEquivalenceTest extends TestCase
         // one "\na" at 1. With the JIT both find "\na".
         $between = 'may skip a match that starts between "\r" and "\n"';
         yield 'a space before a letter under (*ANYCRLF)' => ['left' => '/(*NO_JIT)(*ANYCRLF)\sa/', 'right' => '/(*NO_JIT)(*ANYCRLF)\sa|[^\s\S]\n/', 'reason' => $between, 'witness' => "\r\na"];
+        yield 'a space before a letter under (*CRLF)' => ['left' => '/(*NO_JIT)(*CRLF)\sa/', 'right' => '/(*NO_JIT)(*CRLF)\sa|[^\s\S]\n/', 'reason' => $between, 'witness' => "\r\na"];
         yield 'a space before a letter under (*ANY)' => ['left' => '/(*NO_JIT)(*ANY)\sa/', 'right' => '/(*NO_JIT)(*ANY)\sa|[^\s\S]\n/', 'reason' => $between, 'witness' => "\r\na"];
         yield 'an empty match under (*ANYCRLF)' => ['left' => '/(*ANYCRLF)a?/', 'right' => '/(*ANYCRLF)a??/', 'reason' => $between];
         // "$" and "\Z" stand before the final newline the convention sets.
@@ -445,6 +447,67 @@ final class MatchEquivalenceTest extends TestCase
         $this->assertSame($equivalent, $result->isEquivalent);
         if (null !== $result->counterExample) {
             $this->assertNotSame(self::matchesOf($left, $result->counterExample), self::matchesOf($right, $result->counterExample));
+        }
+    }
+
+    /**
+     * Under (*CRLF), (*ANYCRLF) and (*ANY) a search skips the start between
+     * "\r" and "\n" after a try at the "\r", unless the pattern writes a
+     * "\r" or a "\n": then it tries every start, with the JIT and without,
+     * as under the default convention. In the witness the match starts
+     * between the two, for both patterns, the JIT's in a PHP of its own.
+     */
+    #[Test]
+    #[DataProvider('provideSearchesFromEveryStart')]
+    public function test_a_search_from_every_start_is_compared_under_a_convention_of_cr_and_lf(string $left, string $right, string $witness): void
+    {
+        foreach (self::subjects("a\r\n", 4) as $subject) {
+            $this->assertSame(self::matchesOf($left, $subject), self::matchesOf($right, $subject), \sprintf('%s and %s on %s.', $left, $right, json_encode($subject)));
+            $this->assertSame(self::matchesOf('/(*NO_JIT)'.substr($left, 1), $subject), self::matchesOf('/(*NO_JIT)'.substr($right, 1), $subject), \sprintf('%s and %s on %s, without the JIT.', $left, $right, json_encode($subject)));
+        }
+        $matches = JitInAFreshProcess::matches($left, $witness);
+        $this->assertSame($matches, JitInAFreshProcess::matches($right, $witness));
+        $this->assertSame(1, \is_array($matches) && \is_array($matches[0] ?? null) ? $matches[0][1] : null);
+        $this->assertSame($matches, self::matchesOf('/(*NO_JIT)'.substr($left, 1), $witness));
+
+        $result = (new LanguageSolver())->matchEquivalent($left, $right);
+
+        $this->assertTrue($result->isEquivalent);
+        $this->assertNull($result->counterExample);
+    }
+
+    /**
+     * @return iterable<string, array{left: string, right: string, witness: string}>
+     */
+    public static function provideSearchesFromEveryStart(): iterable
+    {
+        yield 'a line feed before a letter under (*CRLF)' => ['left' => '/(*CRLF)\na/', 'right' => '/\na/', 'witness' => "\r\na"];
+        // The branch nothing takes writes the "\n" the search asks for.
+        yield 'a space before a letter under (*ANYCRLF)' => ['left' => '/(*ANYCRLF)\sa|[^\s\S]\n/', 'right' => '/\sa/', 'witness' => "\r\na"];
+        yield 'a line feed or a letter under (*ANY)' => ['left' => '/(*ANY)\n|b/', 'right' => '/\n|b/', 'witness' => "\r\n"];
+    }
+
+    /**
+     * Under (*CRLF) the dot takes a "\r" alone but not the "\r" a "\n"
+     * follows, which the match solver does not read: it refuses the
+     * pattern where the dot stands, and reads one that holds no dot.
+     */
+    #[Test]
+    public function test_a_dot_under_crlf_is_refused_where_it_stands(): void
+    {
+        foreach (['/(*CRLF)\na.b/', '/(*NO_JIT)(*CRLF)\na.b/'] as $pattern) {
+            $this->assertSame(0, preg_match($pattern, "\na\r\nb"));
+            $this->assertSame(1, preg_match($pattern, "\na\rb"));
+        }
+        $this->assertSame(0, JitInAFreshProcess::matched('/(*CRLF)\na.b/', "\na\r\nb"));
+
+        try {
+            (new LanguageSolver())->matchEquivalent('/(*CRLF)\na.b/', '/(*CRLF)\na\rb/');
+
+            $this->fail('The match solver reads the dot.');
+        } catch (ComplexityException $refusal) {
+            $this->assertStringContainsString('Under (*CRLF) the dot reads a "\r" alone', $refusal->getMessage());
+            $this->assertSame(10, $refusal->offset);
         }
     }
 
