@@ -36,6 +36,8 @@ The generic pattern accepts 13 to 19 digits and nothing else — no space, no hy
 
 One character class under one bounded count: nothing is open, nothing nests. The analyzer's verdict is `safe (proven)` for the five patterns of this page.
 
+The generic pattern checks the length range, nothing else: a Luhn checksum is arithmetic a pattern cannot carry, so run the sum in PHP once the length has filtered the input.
+
 ## How to tell the card by its first digits
 
 Four patterns recognize a card by the digits it starts with and by its length, and by nothing else: a Luhn checksum is arithmetic a pattern cannot carry.
