@@ -93,8 +93,8 @@ final class CookbookPagesTest extends TestCase
         $fences = self::fences($this->text($slug));
 
         $lists = self::lists($fences);
-        $matches = $lists['✓'] ?? null;
-        $rejects = $lists['✗'] ?? null;
+        $matches = $lists['✓'];
+        $rejects = $lists['✗'];
         if (null === $matches || null === $rejects) {
             self::fail($slug.' shows what its pattern '.(null === $matches ? 'matches' : 'rejects').'.');
         }
@@ -110,7 +110,8 @@ final class CookbookPagesTest extends TestCase
                 $at = $slug.' line '.$line.': ';
 
                 $this->assertSame(1, preg_match(self::EXAMPLE, $text, $example), $at.'a line is the mark, one space, then the subject.');
-                $parts = (array) preg_split('/ {2,}/', $example['rest'], 2);
+                $parts = preg_split('/ {2,}/', $example['rest'], 2);
+                $this->assertNotFalse($parts, $at.'the subject and its reason are split.');
                 $subject = $parts[0];
                 $reason = trim($parts[1] ?? '');
                 $this->assertTrue('' === $reason || 1 === preg_match('/^\(.*\)$/u', $reason), $at.'a reason stands in parentheses.');
