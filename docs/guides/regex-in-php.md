@@ -27,7 +27,7 @@ PCRE = Perl Compatible Regular Expressions
 |--------------------|-------------------------|------------|
 | `preg_match()`     | Find first match        | `1` or `0` |
 | `preg_match_all()` | Find all matches        | count      |
-| `preg_replace()`   | Find and replace        | string     |
+| `preg_replace()`   | Find and replace        | string, array or `null` |
 | `preg_split()`     | Split string            | array      |
 | `preg_grep()`      | Filter array by pattern | array      |
 

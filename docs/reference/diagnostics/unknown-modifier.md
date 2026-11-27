@@ -46,11 +46,11 @@ preg_match('/foo/e', $text);
 // preg_match(): Unknown modifier 'e'
 ```
 
-`e` ran the replacement of `preg_replace()` as PHP code. PHP 7.0 removed it: `preg_replace_callback()` does the same work.
+`e` ran the replacement of `preg_replace()` as PHP code. PHP 7.0 removed it, and since 8.4 its letter is no longer known: the warning above is the one PHP 8.4 and later print. PHP 7.0 to 8.3 name the removal instead: `The /e modifier is no longer supported, use preg_replace_callback instead`. Either way `preg_replace_callback()` does the same work.
 
 ### There is no `g` modifier in PHP
 
-The `g` of JavaScript and Perl says: every match. PHP has no such letter, and needs none: its functions find every match by default.
+The `g` of JavaScript and Perl says: every match. PHP has no such letter, and needs none: `preg_replace()` and `preg_split()` act on every match by default, `preg_match_all()` finds all of them, and `preg_match()` stops at the first.
 
 ```php
 preg_replace('/foo/g', 'x', 'foo foo');
