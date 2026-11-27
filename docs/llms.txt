@@ -56,6 +56,8 @@ License: MIT
 - [Backtrack limit exhausted](https://php-regex.com/reference/diagnostics/backtrack-limit-exhausted/): preg_match() returned false: the loop and the fixes
 - [Malformed UTF-8 characters](https://php-regex.com/reference/diagnostics/malformed-utf-8-characters/): the subject of a /u pattern that is not UTF-8
 - [PCRE2 does not support \u](https://php-regex.com/reference/diagnostics/pcre2-does-not-support-unicode-escapes/): the \uXXXX of other languages, and \x{...} instead
+- [Allocation of JIT memory failed](https://php-regex.com/reference/diagnostics/allocation-of-jit-memory-failed/): PHP turns its JIT off and matches on: executable memory denied, or pcre.jit=0
+- [JIT compilation failed](https://php-regex.com/reference/diagnostics/jit-compilation-failed/): thousands of capturing groups, the wordings by release, pcre.jit=0
 - [Diagnostics cheat sheet](https://php-regex.com/reference/diagnostics-cheatsheet/): the quick fix of each common error, each linked to its page
 - [JSON output](https://php-regex.com/reference/json-output/): every key the regex command and the Symfony and Laravel reports print
 - [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/): which PCRE construct each analysis layer supports

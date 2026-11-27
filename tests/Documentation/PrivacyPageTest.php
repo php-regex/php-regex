@@ -57,11 +57,27 @@ final class PrivacyPageTest extends TestCase
         $this->assertStringContainsString('Nothing you type leaves your browser', $page, 'The chip in the playground and the page say one thing.');
         $this->assertStringNotContainsString('by name only', $page, 'The events carry details: the page says which.');
         $this->assertStringNotContainsString('one detail at most', $page);
-        foreach (['trigger', 'example_name', 'finding_id', 'method', 'voice', 'php_version'] as $detail) {
+        foreach (['trigger', 'example_name', 'finding_id', 'method', 'voice', 'php_version', 'package', 'kind', 'search_term'] as $detail) {
             $this->assertStringContainsString('`'.$detail.'`', $page);
         }
-        foreach (['run', 'example_loaded', 'finding_opened', 'share_clicked', 'voice_toggled', 'version_changed'] as $event) {
+        foreach (['run', 'example_loaded', 'finding_opened', 'share_clicked', 'voice_toggled', 'version_changed', 'install_copied', 'github_clicked', 'view_search_results'] as $event) {
             $this->assertStringContainsString('`'.$event.'`', $page, 'Every gesture measured is named.');
         }
+
+        $search = self::between($page, '## What the search sends', '**Retention and the rest.**');
+        $this->assertStringContainsString('the words you search for in the documentation', $search, 'What leaves the browser for the search is said in so many words.');
+        $this->assertStringContainsString('`search_term`', $search);
+        $this->assertStringNotContainsString('page_location', $search);
+        $this->assertStringContainsString('An automated browser is not measured', $page, 'The page says who is not measured.');
+    }
+
+    private static function between(string $text, string $from, string $to): string
+    {
+        $start = strpos($text, $from);
+        self::assertNotFalse($start, $from);
+        $end = strpos($text, $to, $start + \strlen($from));
+        self::assertNotFalse($end, $to);
+
+        return substr($text, $start, $end - $start);
     }
 }

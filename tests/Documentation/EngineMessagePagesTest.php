@@ -44,24 +44,51 @@ final class EngineMessagePagesTest extends TestCase
      * Where a message comes from, as the index groups the pages: the
      * checks PHP makes before it compiles, the compilation, the match.
      */
-    private const FAMILIES = ['The checks of PHP', 'Compilation failed', 'The match'];
+    private const FAMILIES = ['The checks of PHP', 'Compilation failed', 'The match', 'The JIT'];
+
+    /**
+     * What the sources of the releases print, where a message cannot be
+     * produced on the machine that runs the tests: the JIT refusing the
+     * memory or the frame a pattern needs depends on the build.
+     */
+    private const SOURCES = __DIR__.'/Fixtures/engine-source/';
 
     /**
      * What a page says of the engine, under the keys the test reads.
      */
-    private const ENGINE_KEYS = ['message', 'also', 'from', 'setting', 'pattern', 'pattern_hex', 'subject', 'subject_hex'];
+    private const ENGINE_KEYS = ['message', 'short', 'also', 'from', 'setting', 'pattern', 'pattern_hex', 'repeat', 'outcome', 'source', 'subject', 'subject_hex'];
 
     #[Test]
     #[DataProvider('provideMessagePages')]
     public function test_the_engine_prints_for_that_pattern_the_message_the_page_documents(string $slug): void
     {
         $engine = $this->engine($slug);
+        $wordings = [$engine['message'], ...$engine['also']];
+
+        if (null !== $engine['source']) {
+            // The message cannot be produced on every build: the sources of PHP print it.
+            $printedBy = self::printedBy($engine['source']);
+            foreach ($wordings as $wording) {
+                $this->assertContains(self::withoutOffset($wording), $printedBy, $slug.': the sources print the wording: '.$wording);
+            }
+        }
+
         $answer = self::engineAnswer($engine['pattern'], $engine['subject'], $engine['setting']);
-        $this->assertFalse($answer['returned'], $slug.': the engine refuses the pattern, or the match gives up.');
+        if ('goes on' === $engine['outcome']) {
+            $this->assertIsInt($answer['returned'], $slug.': the call goes on, the JIT of the build is what failed.');
+        } else {
+            $this->assertFalse($answer['returned'], $slug.': the engine refuses the pattern, or the match gives up.');
+        }
 
         $printed = 'warning' === $engine['from'] ? $answer['warning'] : $answer['lastError'];
+        if ('' === $printed && null !== $engine['source']) {
+            // The build at hand takes the pattern without a word: the sources said them.
+
+            return;
+        }
+
         $accepted = array_filter(
-            [$engine['message'], ...$engine['also']],
+            $wordings,
             static fn (string $wording): bool => self::withoutOffset($wording) === self::withoutOffset($printed),
         );
         $this->assertNotEmpty($accepted, $slug.' documents what the engine prints for the pattern it opens on: '.$printed);
@@ -72,13 +99,21 @@ final class EngineMessagePagesTest extends TestCase
     public function test_phpregex_answers_that_pattern_with_a_code_the_page_names(string $slug): void
     {
         $codes = $this->page($slug)['codes'];
+        $engine = $this->engine($slug);
         if ([] === $codes) {
-            $this->assertSame('preg_last_error_msg', $this->engine($slug)['from'], $slug.' names no code only when a match gives up: a pattern PHP refuses is refused under a code.');
+            if ('goes on' === $engine['outcome']) {
+                // The pattern is sound: the JIT of the build is what failed, and the library refuses nothing.
+                $this->assertTrue(Regex::create()->validate($engine['pattern'])->isValid, $slug.' names no code: the pattern is sound.');
+
+                return;
+            }
+
+            $this->assertSame('preg_last_error_msg', $engine['from'], $slug.' names no code only when a match gives up: a pattern PHP refuses is refused under a code.');
 
             return;
         }
 
-        $result = Regex::create()->validate($this->engine($slug)['pattern']);
+        $result = Regex::create()->validate($engine['pattern']);
         $this->assertFalse($result->isValid, $slug.': PHPRegex refuses the pattern too.');
         $this->assertContains($result->errorCode?->value, $codes, $slug.' names the code PHPRegex gives the pattern.');
     }
@@ -142,6 +177,18 @@ final class EngineMessagePagesTest extends TestCase
     #[DataProvider('provideMessagePages')]
     public function test_an_example_that_shows_a_message_shows_what_php_prints(string $slug): void
     {
+        $engine = $this->engine($slug);
+        if ([] !== $engine['repeat'] || null !== $engine['source']) {
+            // A pattern built in the code, or a message the build cannot print: the words stand under a call.
+            if ('warning' === $engine['from']) {
+                $source = (string) file_get_contents(self::PAGES.$slug.'.md');
+                $shown = array_filter([$engine['message'], ...$engine['also']], static fn (string $wording): bool => str_contains($source, '// preg_match(): '.$wording));
+                $this->assertNotEmpty($shown, $slug.' shows the message under a call.');
+            }
+
+            return;
+        }
+
         $examples = 0;
         foreach (DocumentationPages::phpFences('docs/reference/diagnostics/'.$slug.'.md') as $fence) {
             $lines = preg_split('/\R/', $fence['code']) ?: [];
@@ -171,7 +218,7 @@ final class EngineMessagePagesTest extends TestCase
             }
         }
 
-        if ('warning' === $this->engine($slug)['from']) {
+        if ('warning' === $engine['from']) {
             $this->assertGreaterThan(0, $examples, $slug.' shows the message on an example.');
         }
     }
@@ -336,8 +383,14 @@ final class EngineMessagePagesTest extends TestCase
      * What the page asks the engine: the pattern, the subject, and where
      * PHP says the message. A byte that is not text — a pattern that is
      * not valid UTF-8, a subject that is not — is given in hexadecimal.
+     * A pattern too long to hold in a line is `repeat`: a delimiter, an
+     * item and a count. `outcome` says whether the call is refused
+     * (`refuses`, the default) or goes on (`goes on`: a warning the
+     * engine prints and runs past). `source` names, under the fixtures,
+     * the lines of PHP's sources that print the message, for a message
+     * the build at hand may not be able to produce.
      *
-     * @return array{message: string, also: list<string>, from: string, setting: ?string, subject: string, pattern: string}
+     * @return array{message: string, also: list<string>, from: string, setting: ?string, subject: string, pattern: string, repeat: array<mixed>, outcome: string, source: ?string}
      */
     private function engine(string $slug): array
     {
@@ -360,7 +413,21 @@ final class EngineMessagePagesTest extends TestCase
         $setting = $engine['setting'] ?? null;
         $this->assertTrue(null === $setting || \is_string($setting), $slug.' names the setting as one line.');
 
+        $repeat = $engine['repeat'] ?? null;
+        $this->assertTrue(null === $repeat || \is_array($repeat), $slug.' names how its pattern repeats as a map.');
         $pattern = $engine['pattern'] ?? null;
+        if (null !== $repeat) {
+            $this->assertNull($pattern, $slug.' names its pattern once.');
+            $this->assertNull($engine['pattern_hex'] ?? null, $slug.' names its pattern once.');
+            $delimiter = $repeat['delimiter'] ?? null;
+            $item = $repeat['item'] ?? null;
+            $count = $repeat['count'] ?? null;
+            $this->assertIsString($delimiter, $slug.' names the delimiter of its pattern.');
+            $this->assertIsString($item, $slug.' names what its pattern repeats.');
+            $this->assertIsInt($count, $slug.' names how many times its pattern repeats.');
+            $this->assertGreaterThan(0, $count, $slug.' repeats its item at least once.');
+            $pattern = $delimiter.str_repeat($item, $count).$delimiter;
+        }
         if (null !== ($engine['pattern_hex'] ?? null)) {
             $this->assertNull($pattern, $slug.' names its pattern once.');
             $this->assertIsString($engine['pattern_hex'], $slug.' gives its pattern in hexadecimal.');
@@ -377,6 +444,52 @@ final class EngineMessagePagesTest extends TestCase
         }
         $this->assertIsString($subject, $slug.' names its subject as one line.');
 
-        return ['message' => $message, 'also' => $also, 'from' => $from, 'setting' => $setting, 'subject' => $subject, 'pattern' => $pattern];
+        $outcome = $engine['outcome'] ?? 'refuses';
+        $this->assertIsString($outcome, $slug.' names what the call does once warned.');
+        $this->assertContains($outcome, ['refuses', 'goes on'], $slug.' names what the call does once warned.');
+
+        $source = $engine['source'] ?? null;
+        if (null !== $source) {
+            $this->assertIsString($source, $slug.' names the file of the sources that print its message.');
+            $this->assertFileExists(self::SOURCES.$source, $slug.' names a file under the fixtures.');
+            $this->assertSame('goes on', $outcome, $slug.' verifies a message in the sources only when the call goes on past it.');
+        }
+
+        return ['message' => $message, 'also' => $also, 'from' => $from, 'setting' => $setting, 'subject' => $subject, 'pattern' => $pattern, 'repeat' => $repeat ?? [], 'outcome' => $outcome, 'source' => $source];
+    }
+
+    /**
+     * What an excerpt of the sources prints: the message of each warning
+     * they raise, with the text of a format (`%s`) replaced by each text
+     * the excerpt holds — the ones PCRE2 gives its error codes.
+     *
+     * @return list<string>
+     */
+    private static function printedBy(string $file): array
+    {
+        $source = (string) file_get_contents(self::SOURCES.$file);
+        $literal = '/"((?:[^"\\\\]|\\\\.)*)"/';
+        $read = static fn (array $literals): string => implode('', array_map(static fn (string $literal): string => str_replace(['\\"', '\\\\'], ['"', '\\'], $literal), $literals));
+        preg_match_all($literal, $source, $literals);
+        // The texts PCRE2 gives its error codes, as its table spells them: a string closed by a NUL.
+        $texts = array_map(static fn (string $literal): string => rtrim($literal, '\\0'), $literals[1]);
+
+        $printed = $texts;
+        preg_match_all('/php_error_docref\((.*?)\);/s', $source, $calls);
+        foreach ($calls[1] as $call) {
+            preg_match_all($literal, $call, $parts);
+            $format = $read($parts[1]);
+            if (str_contains($format, '%s')) {
+                foreach ($texts as $text) {
+                    $printed[] = str_replace('%s', $text, $format);
+                }
+
+                continue;
+            }
+
+            $printed[] = $format;
+        }
+
+        return array_values(array_unique($printed));
     }
 }

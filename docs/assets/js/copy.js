@@ -16,6 +16,14 @@
     return;
   }
 
+  // The analytics hear a gesture by its name and its details, never a
+  // text: the helper of the page says it, or nothing outside production.
+  function track(name, params) {
+    if (typeof window.phpregexTrack === 'function') {
+      window.phpregexTrack(name, params);
+    }
+  }
+
   var status = document.createElement('p');
   status.className = 'visually-hidden';
   status.setAttribute('role', 'status');
@@ -57,6 +65,12 @@
       if (copied) {
         button.setAttribute('data-copied', '');
         announce('Copied to clipboard');
+        // An install command taken away is the one gesture of a reader on
+        // their way to use the library: its package is what is said of it.
+        if (code.closest('.install')) {
+          var required = text.match(/composer require (?:--dev )?([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)/);
+          track('install_copied', { package: required ? required[1] : '' });
+        }
       } else {
         announce('Copy is unavailable, select the code manually.');
       }

@@ -114,14 +114,28 @@
     gate and no banner. What a visitor types in the playground stays
     behind anyway — gtag.js drops the fragment of the address it reports,
     and the fragment is where the patterns live.
+
+    An automated browser is not a visitor: one a script drives says so in
+    navigator.webdriver, and a crawler names itself in its user agent.
+    The tag is not configured for either, so it sends nothing for them:
+    half of what the property counted came from such machines. Every
+    gesture of the site goes through the one helper written last, which
+    hands the tag a name and the details the privacy page lists.
   {% endcomment %}
   <link rel="preconnect" href="https://www.googletagmanager.com">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-QSYBM5HXPS"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'G-QSYBM5HXPS');
+    if (!navigator.webdriver && !/bot|crawl|spid|slurp|headless|lighthouse|fetcher|scanner/i.test(navigator.userAgent)) {
+      gtag('js', new Date());
+      gtag('config', 'G-QSYBM5HXPS');
+    }
+    window.phpregexTrack = function (name, params) {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', name, params || {});
+      }
+    };
   </script>
   {% endif %}
 </head>

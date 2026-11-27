@@ -1,12 +1,13 @@
 ---
 layout: landing
-title: "See a PHP regex as a tree"
-description: "PHPRegex lexes and parses PCRE patterns into an immutable AST, then explains, validates, and transforms the tree. Try it on the real PHP and PCRE2, in your browser."
+title: "PHP regex tester and analyzer, in the browser"
+head_title: "PHP regex tester: run preg_match online"
+description: "Test a PHP regex online on the real PHP and PCRE2, in your browser: the matches, the diagnostics, the syntax tree, a ReDoS verdict and the fix of each error."
 ---
 
 <div class="hero hero-playground">
   <div class="hero-inner">
-    <h1 class="visually-hidden">See a PHP regex as a tree</h1>
+    <h1 class="visually-hidden">PHP regex tester and analyzer, in the browser</h1>
     {% include playground.html %}
   </div>
 </div>

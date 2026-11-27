@@ -48,6 +48,24 @@ preg_match('/foo/e', $text);
 
 `e` ran the replacement of `preg_replace()` as PHP code. PHP 7.0 removed it: `preg_replace_callback()` does the same work.
 
+### There is no `g` modifier in PHP
+
+The `g` of JavaScript and Perl says: every match. PHP has no such letter, and needs none: its functions find every match by default.
+
+```php
+preg_replace('/foo/g', 'x', 'foo foo');
+// preg_replace(): Unknown modifier 'g'
+
+// preg_replace() replaces every occurrence, and the third argument limits them
+var_dump(preg_replace('/foo/', 'x', 'foo foo')); // string(3) "x x"
+var_dump(preg_replace('/foo/', 'x', 'foo foo', 1)); // string(5) "x foo"
+
+// preg_match_all() finds every occurrence, where preg_match() stops at the first
+var_dump(preg_match_all('/foo/', 'foo foo', $matches)); // int(2)
+```
+
+The modifier page of the guide says the rest: [PHP regex modifiers](../../guides/php-regex-modifiers.md).
+
 ## How to fix it
 
 Escape the delimiter where it stands, or choose a delimiter the pattern does not hold. The second reads better when the delimiter appears more than once, as in a date, a path or a URL.

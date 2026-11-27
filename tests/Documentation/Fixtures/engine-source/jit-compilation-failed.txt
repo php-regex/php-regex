@@ -1,0 +1,20 @@
+# What PHP prints when its JIT refuses a pattern: the lines of the releases, read one by one.
+#
+# 1. ext/pcre/php_pcre.c of PHP 8.4.28, lines 819-823: every refusal of the JIT but the lack of memory.
+#    The same lines stand from PHP 7.3.0 to 8.6.0; until 7.3.10 they said the lack of memory too.
+#    https://github.com/php/php-src/blob/PHP-8.4.28/ext/pcre/php_pcre.c#L819-L823
+		} else {
+			pcre2_get_error_message(rc, error, sizeof(error));
+			php_error_docref(NULL, E_WARNING, "JIT compilation failed: %s", error);
+			pcre_handle_exec_error(PCRE2_ERROR_INTERNAL);
+		}
+
+# 2. The text of PCRE2_ERROR_NOMEMORY, the one PHP 7.3.0 to 7.3.10 printed after the colon:
+#    src/pcre2_error.c of the copy PHP 8.3.27 bundles, line 252.
+#    https://github.com/php/php-src/blob/php-8.3.27/ext/pcre/pcre2lib/pcre2_error.c#L252
+  "no more memory\0"
+
+# 3. What a JIT stack frame over its limit gives in the release PCRE2 10.49: src/pcre2_error.c, line 300.
+#    Seen on a PHP 8.4.28 linked with that release: 2728 capturing groups compile, 2729 give this text.
+#    https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/src/pcre2_error.c#L300
+  "feature is not supported by the JIT compiler\0"

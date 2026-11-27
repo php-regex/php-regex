@@ -50,6 +50,17 @@ The pattern compiles. The call returns `false`, prints no warning, and `preg_las
 {%- endfor -%}
 </ul>
 
+### The JIT
+
+The pattern compiled. PHP handed it to its JIT, and the JIT refused it: PHP prints the warning, then matches without the JIT.
+
+<ul class="message-index">
+{%- assign messages_of_the_family = message_pages | where_exp: "p", "p.engine_family == 'The JIT'" -%}
+{%- for p in messages_of_the_family -%}
+{%- include message-row.html p=p -%}
+{%- endfor -%}
+</ul>
+
 ---
 
 ## Table of Contents

@@ -32,6 +32,10 @@
           url: /tutorial/10-real-world-php/
     - title: Regex in PHP
       url: /guides/regex-in-php/
+    - title: PHP regex modifiers
+      url: /guides/php-regex-modifiers/
+    - title: preg_replace
+      url: /guides/preg-replace/
     - title: Articles
       url: /blog/
     - title: ReDoS guide
@@ -40,6 +44,8 @@
       url: /guides/formatting/
     - title: Cookbook
       url: /cookbook/
+    - title: Cheat sheet
+      url: /cheat-sheet/
     - title: Troubleshooting
       url: /troubleshooting/
 - title: Integrations

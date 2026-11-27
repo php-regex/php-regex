@@ -1,9 +1,10 @@
 {% comment %}
-  The landing's structured data: the project as a software application.
-  A library is a developer application for the purposes of a rich
-  result - the category, the license, and the price carry what an
-  evaluator's snippet needs. The version label travels with the
-  product data the header already reads.
+  The landing's structured data: the tool on the page as a software
+  application. The page is the tester, so the description and the
+  features name what a visitor does there; the category, the license and
+  the price carry what an evaluator's snippet needs. The version label
+  travels with the product data the header already reads. A search
+  engine reads the features as a list: one feature per entry, no markup.
 {% endcomment %}
 <script type="application/ld+json">
 {
@@ -11,9 +12,20 @@
   "@type": "SoftwareApplication",
   "name": "PHPRegex",
   "applicationCategory": "DeveloperApplication",
-  "operatingSystem": "Linux, macOS, Windows",
+  "applicationSubCategory": "Regex tester",
+  "operatingSystem": "Any (web browser)",
   "url": "https://php-regex.com/",
-  "description": "Parses PCRE patterns into an immutable AST and gives structured answers about validity, meaning, backtracking risk, capture shape, and equivalence.",
+  "description": "Online PHP regex tester: a pattern runs on the real PHP and PCRE2 in the browser, and the page shows the matches, the diagnostics, the syntax tree, the lint findings, a ReDoS verdict and the fix of each error.",
+  "featureList": [
+    "PHP regex tester on the real PHP and PCRE2, in the browser",
+    "Matches and capture groups of a pattern, PHP 8.0 to 8.6",
+    "Syntax tree of a pattern, and its explanation in plain English",
+    "Diagnostics: what PHP prints for a pattern, and what the linter finds in it",
+    "ReDoS verdict with the string that breaks the pattern",
+    "Translation of a pattern to JavaScript, HTML and Python",
+    "A pattern formatted over several lines",
+    "A match stepped through as PCRE2 runs it"
+  ],
   "softwareVersion": "{{ site.data.product.version_label }}",
   "license": "https://github.com/php-regex/php-regex/blob/2.x/LICENSE",
   "offers": {

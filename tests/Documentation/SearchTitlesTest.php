@@ -29,9 +29,9 @@ use PHPUnit\Framework\TestCase;
  * description past a hundred and sixty — and long enough to say
  * something. No two pages say the same thing twice there.
  *
- * The landing page is the project's own to title, the error page has no
- * result of its own, the articles are drafts until a hand validates them,
- * and the pages of the projects are written by the corpus run.
+ * The error page has no result of its own, the articles are drafts until
+ * a hand validates them, and the pages of the projects are written by the
+ * corpus run.
  */
 #[Group('documentation')]
 final class SearchTitlesTest extends TestCase
@@ -41,7 +41,6 @@ final class SearchTitlesTest extends TestCase
     private const SITE_NAME = ' — PHPRegex';
 
     private const OUTSIDE = [
-        'index.md',
         '404.html',
         'search-index.html',
     ];

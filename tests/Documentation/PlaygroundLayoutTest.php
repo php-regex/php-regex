@@ -131,7 +131,7 @@ final class PlaygroundLayoutTest extends TestCase
         $xpath = self::include();
 
         $this->assertSame(0, self::nodes($xpath, '//h1 | //h2 | //h3 | //h4 | //h5 | //h6'), 'The tabs name the panels; the home holds the one title.');
-        $this->assertStringContainsString('<h1 class="visually-hidden">See a PHP regex as a tree</h1>', self::source(self::HOME));
+        $this->assertStringContainsString('<h1 class="visually-hidden">PHP regex tester and analyzer, in the browser</h1>', self::source(self::HOME), 'The one title is hidden, and names the tool.');
     }
 
     #[Test]

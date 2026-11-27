@@ -1,0 +1,70 @@
+name: IndexNow
+
+on:
+  push:
+    branches: [ 2.x ]
+    paths:
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # The event in the key: a push starts one run at a time, and a run a
+  # hand starts is neither cancelled by it nor cancels it.
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  submit:
+    # IndexNow is how a site tells Bing, DuckDuckGo, Yahoo and the other
+    # engines of the protocol that its pages changed, without waiting for
+    # their crawlers. The site is built after the push: the run waits until
+    # the home page carries a build time later than the push, then sends
+    # every page of the sitemap. The key is public by design: a file that
+    # holds it, served at the root under its own name, is the proof that
+    # the site is the one sending.
+    name: indexnow
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Wait for the site to serve the documentation of the push
+        env:
+          PUSHED_AT: ${{ github.event.head_commit.timestamp }}
+        run: |
+          pushed=$(date -d "${PUSHED_AT:-1970-01-01}" +%s)
+          deadline=$((SECONDS + 1500))
+          while :; do
+            served=$(curl -fsS https://php-regex.com/ | grep -oE 'main\.css\?v=[0-9]+' | head -n 1 | cut -d= -f2)
+            if [ -n "$served" ] && [ "$served" -gt "$pushed" ]; then
+              echo "The site serves the build of $(date -u -d "@$served" +%Y-%m-%dT%H:%M:%SZ)."
+              break
+            fi
+            if [ "$SECONDS" -ge "$deadline" ]; then
+              echo "the site still serves the documentation of before the push" >&2
+              exit 1
+            fi
+            sleep 30
+          done
+
+      - name: Tell IndexNow every page of the site
+        run: |
+          key_file=$(ls docs/*.txt | grep -E '/[a-f0-9]{32}\.txt$')
+          key=$(cat "$key_file")
+          urls=$(curl -fsS https://php-regex.com/sitemap.xml | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g' | jq -R . | jq -s .)
+          echo "$(echo "$urls" | jq length) pages"
+          status=$(curl -sS -w '\n%{http_code}' -X POST https://api.indexnow.org/indexnow \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            -d "$(jq -n --arg host php-regex.com --arg key "$key" --argjson urlList "$urls" '{host: $host, key: $key, urlList: $urlList}')" | tail -n 1)
+          echo "IndexNow answers $status"
+          case "$status" in
+            200|202) ;;
+            *) echo "IndexNow refused the pages" >&2; exit 1 ;;
+          esac

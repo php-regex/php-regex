@@ -4730,8 +4730,8 @@
   // most: never a pattern, never a text. Without the analytics (outside
   // production, or blocked), nothing is said.
   function track(name, params) {
-    if (typeof window.gtag === 'function') {
-      window.gtag('event', name, params || {});
+    if (typeof window.phpregexTrack === 'function') {
+      window.phpregexTrack(name, params);
     }
   }
 

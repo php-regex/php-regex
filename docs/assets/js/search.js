@@ -105,6 +105,20 @@
     return loading;
   }
 
+  // The analytics hear a gesture by its name and its details. A result
+  // opened says what was looked for: the words of the search, which the
+  // privacy page names as the one typed text that leaves the browser.
+  function track(name, params) {
+    if (typeof window.phpregexTrack === 'function') {
+      window.phpregexTrack(name, params);
+    }
+  }
+
+  function searched() {
+    var term = input.value.replace(/\s+/g, ' ').trim().slice(0, 150);
+    return term;
+  }
+
   function announce(message) {
     status.textContent = message;
   }
@@ -380,6 +394,7 @@
       event.preventDefault();
       var link = options[active === -1 ? 0 : active].querySelector('a');
       if (link) {
+        track('view_search_results', { search_term: searched() });
         window.location.assign(link.href);
       }
     }
@@ -556,6 +571,8 @@
   dialog.addEventListener('click', function (event) {
     if (event.target === dialog) {
       closeDialog();
+    } else if (event.target.closest('li[role="option"] > a')) {
+      track('view_search_results', { search_term: searched() });
     }
   });
 

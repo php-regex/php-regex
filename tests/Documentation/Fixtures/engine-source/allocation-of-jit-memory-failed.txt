@@ -1,0 +1,36 @@
+# What PHP prints when its JIT could not get the memory it needs: the lines of the releases, read one by one.
+#
+# 1. ext/pcre/php_pcre.c of PHP 8.4.28, lines 813-818: the branch of PCRE2_ERROR_NOMEMORY.
+#    The same lines stand from PHP 7.3.11 to 8.6.0.
+#    https://github.com/php/php-src/blob/PHP-8.4.28/ext/pcre/php_pcre.c#L813-L818
+		} else if (rc == PCRE2_ERROR_NOMEMORY) {
+			php_error_docref(NULL, E_WARNING,
+				"Allocation of JIT memory failed, PCRE JIT will be disabled. "
+				"This is likely caused by security restrictions. "
+				"Either grant PHP permission to allocate executable memory, or set pcre.jit=0");
+			PCRE_G(jit) = 0;
+		} else {
+
+# 2. The same file of PHP 7.3.0, lines 785-789: until 7.3.10, the failure had no message of its own.
+#    https://github.com/php/php-src/blob/php-7.3.0/ext/pcre/php_pcre.c#L785-L789
+		} else {
+			pcre2_get_error_message(rc, error, sizeof(error));
+			php_error_docref(NULL, E_WARNING, "JIT compilation failed: %s", error);
+			pcre_handle_exec_error(PCRE2_ERROR_INTERNAL);
+		}
+
+# 3. The text PCRE2 gives PCRE2_ERROR_NOMEMORY: src/pcre2_error.c of the copy PHP 8.3.27 bundles, line 252
+#    (line 276 in the release 10.49).
+#    https://github.com/php/php-src/blob/php-8.3.27/ext/pcre/pcre2lib/pcre2_error.c#L252
+  "no more memory\0"
+
+# 4. One way to that error code: a JIT stack frame over its limit. src/pcre2_jit_compile.c of the copy
+#    PHP 8.3.27 bundles, lines 13901-13905. The limit, SLJIT_MAX_LOCAL_SIZE, is 65536 in every copy
+#    PHP 7.3 to 8.3 bundles, and 1048576 from 8.4.
+#    https://github.com/php/php-src/blob/php-8.3.27/ext/pcre/pcre2lib/pcre2_jit_compile.c#L13901-L13905
+if (private_data_size > SLJIT_MAX_LOCAL_SIZE)
+  {
+  SLJIT_FREE(common->private_data_ptrs, allocator_data);
+  SLJIT_FREE(common->optimized_cbracket, allocator_data);
+  return PCRE2_ERROR_NOMEMORY;
+  }

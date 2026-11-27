@@ -6,4 +6,5 @@
 {%- endcomment -%}
 {%- assign said = p.engine.message | remove: "Compilation failed: " -%}
 {%- assign said = said | split: " at offset" | first -%}
+{%- assign said = p.engine.short | default: said -%}
 <li><a href="{{ p.url }}">{{ p.title }}</a> — <span class="message-index-ids"><code>{{ said }}</code>{%- for c in p.codes %} <code>{{ c }}</code>{%- endfor %}</span>{{ p.description }}</li>
