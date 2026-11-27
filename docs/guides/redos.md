@@ -1,5 +1,6 @@
 ---
 description: "How PHPRegex proves a regex safe from ReDoS or hands you the attack that kills it: verdicts, witnesses, confirmed mode, and the fixes that keep patterns linear."
+head_title: "ReDoS in PHP: verdicts, attack strings and fixes"
 redirect_from:
   - /REDOS_GUIDE.html
   - /redos_guide.html

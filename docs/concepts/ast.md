@@ -1,5 +1,6 @@
 ---
 description: "What an AST is and why PHPRegex parses a pattern into one node per character: structure, precise error reporting, and the tooling it enables."
+head_title: "What is an AST? The tree behind a regex"
 ---
 # What is an AST?
 

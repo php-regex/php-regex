@@ -1,5 +1,6 @@
 ---
 description: "What CaptureShapeAnalyzer reads from a pattern alone: which groups every match sets, their values, lengths and facts, and the $matches type it writes."
+head_title: "Capture shapes: what goes into $matches"
 ---
 
 # Capture Shapes

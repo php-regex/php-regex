@@ -1,5 +1,6 @@
 ---
-description: "How PCRE2 matches a pattern, read from its own traces: items, match attempts, backtracking, leftmost-first alternation, atomic groups, lookbehind, captures mid-match and the two limits PHP exposes."
+description: "How PCRE2 matches a pattern, read from its own traces: match attempts, backtracking, atomic groups, lookbehind, and the two limits PHP exposes."
+head_title: "How PCRE2 matches a pattern, step by step"
 ---
 # How PCRE2 Matches
 

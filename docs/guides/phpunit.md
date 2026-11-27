@@ -1,5 +1,6 @@
 ---
-description: "The PHPRegex PHPUnit assertions: assert what a pattern captures with exact capture semantics, that the running engine compiles it, and that it is proven linear — with group names validated against the pattern itself."
+description: "The PHPRegex PHPUnit assertions: what a pattern captures, that the engine compiles it, and that it is proven linear."
+head_title: "PHPUnit assertions for regex patterns"
 ---
 # PHPUnit
 

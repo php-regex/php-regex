@@ -1,5 +1,6 @@
 ---
 description: "The PHPRegex facade — Regex::create() and every method, validate to transpile — with executed examples, result objects and the exception map."
+head_title: "PHPRegex API reference: Regex and its results"
 ---
 # API Reference
 

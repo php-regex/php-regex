@@ -1,6 +1,7 @@
 ---
 permalink: /visitors/
 description: "The built-in PHPRegex visitors — print, rewrite, modernize, validate, explain, render — each with its real output, and the base classes to extend for your own."
+head_title: "Every built-in visitor of PHPRegex, and yours"
 ---
 # AST Visitor Reference
 

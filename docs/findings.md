@@ -1,5 +1,6 @@
 ---
 title: Projects
+head_title: "Regex findings in open-source PHP projects"
 description: "What PHPRegex's linter reports on the regular expressions of real open-source PHP projects, each judged for the PHP and PCRE2 its own composer.json requires."
 permalink: /findings/
 projects_index: true

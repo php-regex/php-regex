@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Reuse captured text with backreferences, and see how subroutines and recursion work for more advanced patterns."
+head_title: "Backreferences, subroutines and recursion in PHP"
 ---
 
 # Chapter 7: Backreferences, Subroutines & Recursion

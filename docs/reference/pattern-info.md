@@ -1,5 +1,6 @@
 ---
-description: "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths, a sure match — and the PHP and PCRE2 versions it is valid on."
+description: "The facts PatternInfo reads from a pattern — capture counts, names, limits, anchors, match lengths — and the PHP and PCRE2 versions it is valid on."
+head_title: "The facts PCRE2 computes on a pattern"
 ---
 
 # Pattern Info and Compatibility

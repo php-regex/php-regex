@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Understand catastrophic backtracking, spot risky patterns, and write safer ones."
+head_title: "Regex performance and ReDoS in PHP"
 ---
 
 # Chapter 8: Performance & ReDoS

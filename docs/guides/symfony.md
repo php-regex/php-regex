@@ -1,5 +1,6 @@
 ---
 description: "Register the PHPRegex bundle in Symfony 6.4, 7.4 or 8.x: the php_regex.regex service, regex:* console commands, route and firewall analysis, the 1.x upgrade."
+head_title: "Symfony: the PHPRegex bundle and regex:lint"
 ---
 
 # Symfony Bundle Guide

@@ -1,6 +1,7 @@
 ---
 title: Privacy
-description: "What php-regex.com measures, and what it never sees: Google Analytics counts visits with its cookies, and nothing you type in the playground leaves your browser."
+head_title: "Privacy: what php-regex.com measures"
+description: "What php-regex.com measures, and what it never sees: Google Analytics counts visits with its cookies; nothing typed in the playground leaves your browser."
 permalink: /privacy/
 ---
 

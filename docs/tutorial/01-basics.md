@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Learn what a regex pattern is, match literal text, understand delimiters and escaping — with no prior regex knowledge required."
+head_title: "Regex basics in PHP: literals, delimiters, flags"
 ---
 
 # Chapter 1: Regex Basics

@@ -1,5 +1,6 @@
 ---
-description: "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what the plugin leaves to Psalm, its ReDoS findings, and the PHP version patterns are judged for."
+description: "The PHPRegex Psalm plugin: how $matches gets the shape of the pattern, what it leaves to Psalm, its ReDoS findings, and the PHP version it judges for."
+head_title: "Psalm and PHP regexes: the PHPRegex plugin"
 ---
 # Psalm
 

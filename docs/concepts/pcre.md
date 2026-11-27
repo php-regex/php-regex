@@ -1,5 +1,6 @@
 ---
 description: "How PCRE2 relates to PHP and other engines: syntax by PCRE2 release, target versioning, a known JIT crash, and the engine comparison matrix."
+head_title: "PCRE2 against other regex engines"
 ---
 # PCRE vs Other Engines
 

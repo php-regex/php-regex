@@ -1,5 +1,6 @@
 ---
 description: "The formal guarantee of each PHPRegex analysis — parser, lint, optimizer, the ReDoS model, the automata solver — sound, complete or best-effort."
+head_title: "What PHPRegex proves, and what it estimates"
 ---
 
 # Safety and Correctness Contracts

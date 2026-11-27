@@ -1,5 +1,6 @@
 ---
 description: "Point any LSP editor at the PHPRegex language server: install it, configure VS Code, PhpStorm, Neovim or Zed, pick its target PHP and PCRE2, and debug it."
+head_title: "PHPRegex in your editor: the language server"
 ---
 
 # LSP Integration Guide

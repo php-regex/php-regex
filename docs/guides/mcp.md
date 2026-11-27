@@ -1,5 +1,6 @@
 ---
-description: "Give a coding agent the regex judgement of PHPRegex over the Model Context Protocol: install the server, wire it into Claude Code, Claude Desktop, Cursor, Zed or VS Code, read what each tool answers, and debug it."
+description: "Give a coding agent the regex judgement of PHPRegex over the Model Context Protocol: install the server, wire it into your client, and debug it."
+head_title: "PHPRegex as an MCP server for a coding agent"
 ---
 
 # MCP Server Guide

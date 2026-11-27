@@ -1,5 +1,6 @@
 ---
 description: "A PHP regex primer: how PCRE2 powers preg_match(), delimiters, flags, limits and common mistakes, plus the PHPRegex calls that analyze each pattern."
+head_title: "Regex in PHP: preg_match, delimiters and flags"
 ---
 # Regex in PHP
 

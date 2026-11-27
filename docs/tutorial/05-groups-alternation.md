@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Group patterns with (...), use alternation with |, and learn capturing, non-capturing, and named groups."
+head_title: "Groups, capture and alternation in a PHP regex"
 ---
 
 # Chapter 5: Groups & Alternation

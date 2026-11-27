@@ -1,5 +1,6 @@
 ---
 title: Documentation
+head_title: "PHPRegex documentation: where to start"
 description: "Choose your path into PHPRegex: first run, regex tutorial, integration, API reference, or the correctness contracts behind each verdict."
 permalink: /docs/
 redirect_from:

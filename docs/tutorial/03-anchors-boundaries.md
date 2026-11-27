@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: 'Control where a match can happen with anchors (^, $, \A, \z) and word boundaries (\b).'
+head_title: "Anchors and word boundaries in a PHP regex"
 ---
 
 # Chapter 3: Anchors & Boundaries

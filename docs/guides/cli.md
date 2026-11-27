@@ -1,5 +1,6 @@
 ---
 description: "Install the PHPRegex CLI and drive it end to end: parse, explain, analyze and lint patterns, with every option, exit code, output format and CI recipe."
+head_title: "The regex command: lint and analyze patterns"
 ---
 
 # CLI Guide

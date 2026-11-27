@@ -1,5 +1,6 @@
 ---
 description: "Why backtracking blows up: ambiguity, witnesses and the proof model behind PHPRegex's ReDoS verdicts, with the fix cookbook in the ReDoS guide."
+head_title: "ReDoS deep dive: why backtracking explodes"
 ---
 # ReDoS Deep Dive
 

@@ -1,5 +1,6 @@
 ---
 description: "Lay a long regex out over lines under x, or compact a laid-out one to a single line, with the guarantee that the result matches exactly what the input matched."
+head_title: "Format a long regex over several lines"
 ---
 # Formatting Patterns
 

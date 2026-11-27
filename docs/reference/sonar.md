@@ -1,5 +1,6 @@
 ---
 description: "The PHPRegex identifier behind each of SonarPHP's 25 regex rules — covered, covered in part, or out of scope — for teams moving from Sonar or running both."
+head_title: "SonarPHP regex rules and their PHPRegex ids"
 ---
 
 # SonarPHP Regex Rules

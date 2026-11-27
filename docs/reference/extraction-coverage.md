@@ -1,5 +1,6 @@
 ---
-description: "Which calls each PHPRegex tool reads a regex pattern from: regex lint with and without nikic/php-parser, the language server, the PHPStan and Psalm extensions, and the Laravel and Symfony regex:lint commands."
+description: "Which calls each PHPRegex tool reads a regex pattern from: the lint, the language server, the PHPStan and Psalm extensions, and the framework lints."
+head_title: "Which calls PHPRegex reads a pattern from"
 ---
 
 # Extraction Coverage

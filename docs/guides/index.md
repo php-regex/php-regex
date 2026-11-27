@@ -1,5 +1,6 @@
 ---
 title: Guides
+head_title: "PHPRegex integrations: every guide, by tool"
 description: "Choose the PHPRegex integration that fits your workflow: PHPStan, Psalm, Rector, PHPUnit, Infection, Laravel, Symfony, the language server, or the CLI."
 ---
 

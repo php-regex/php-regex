@@ -1,5 +1,6 @@
 ---
 description: "How often Regex::validate() reaches the same compile verdict as PHP's own PCRE2 engine, measured on PCRE2's official test suite, pinned to 10.49."
+head_title: "PCRE2 conformance of PHPRegex validation"
 ---
 
 # PCRE2 Conformance

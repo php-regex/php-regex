@@ -1,5 +1,6 @@
 ---
 description: "Which PCRE constructs each PHPRegex layer reads: the parser, the lint and optimizer rules, the ReDoS model, and the automata solver's regular subset."
+head_title: "Which PCRE construct each analysis supports"
 ---
 
 # Feature Support Matrix

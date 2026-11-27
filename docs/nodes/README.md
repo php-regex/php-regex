@@ -1,6 +1,7 @@
 ---
 permalink: /nodes/
 description: "Every AST node type in PHPRegex with its fields and runnable examples — groups, quantifiers, classes, verbs — and the position rules all nodes share."
+head_title: "Every AST node of PHPRegex, with its fields"
 ---
 # AST Node Reference
 

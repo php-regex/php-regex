@@ -1,5 +1,6 @@
 ---
 title: Reference Index
+head_title: "PHPRegex reference: diagnostics, contracts, data"
 description: "Find the PHPRegex reference page you need by task: diagnostics, compatibility, programmatic data, or background material."
 permalink: /reference/
 ---

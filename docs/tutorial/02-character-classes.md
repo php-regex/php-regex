@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: 'Match sets of characters with [abc], ranges, negation, shorthand classes like \d and \w, and when to use them.'
+head_title: "Character classes and escapes in a PHP regex"
 ---
 
 # Chapter 2: Character Classes & Escapes

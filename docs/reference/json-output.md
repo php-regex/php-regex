@@ -1,5 +1,6 @@
 ---
-description: "Every key of every JSON document the regex command prints — lint report, analyze, debug, redos, transpile, format, validate, explain — and of the Symfony and Laravel reports, frozen for all of 2.x."
+description: "Every key of every JSON document the regex command prints, and of the Symfony and Laravel reports, frozen for all of 2.x."
+head_title: "JSON output of the regex command and the reports"
 ---
 
 # JSON Output

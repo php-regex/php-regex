@@ -1,5 +1,6 @@
 ---
-description: "Infection mutators for the regex literals of preg_*() calls: no mutant the automata prove equivalent to the original, and each mutant with the subject that kills it, ready to paste into a test."
+description: "Infection mutators for the regex literals of preg_*() calls: no mutant the automata prove equivalent to the original, each with the subject that kills it."
+head_title: "Infection mutators for PHP regex literals"
 ---
 # Infection
 

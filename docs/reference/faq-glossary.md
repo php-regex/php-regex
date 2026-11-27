@@ -1,5 +1,6 @@
 ---
 description: "Short answers to common PHPRegex questions — CI integration, caching, exceptions — plus a glossary of the terms used across the documentation."
+head_title: "PHP regex FAQ and PHPRegex glossary"
 ---
 
 # FAQ and Glossary

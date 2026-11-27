@@ -1,5 +1,6 @@
 ---
 description: "The external sources PHPRegex trusts: PCRE2 and PHP manuals, ReDoS references, engine theory, testers and Unicode standards."
+head_title: "Where PHPRegex verifies its diagnostics"
 redirect_from:
   - /references.html
 ---

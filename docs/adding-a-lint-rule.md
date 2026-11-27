@@ -1,5 +1,6 @@
 ---
-description: "For contributors: add a lint rule to PHPRegex, from the rule class and its registration to its configuration key, its PHPStan identifier, its documentation and its engine-first tests."
+description: "For contributors: add a lint rule to PHPRegex, from the rule class and its registration to its configuration key, its documentation and its engine-first tests."
+head_title: "Add a lint rule to PHPRegex, step by step"
 ---
 # Adding a Lint Rule
 

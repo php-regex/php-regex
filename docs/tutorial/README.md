@@ -2,6 +2,7 @@
 layout: tutorial
 permalink: /tutorial/
 description: "Learn regular expressions from scratch, step by step — with clear examples, exercises, and PHP `preg_match()` along the way."
+head_title: "PHP regex tutorial: ten chapters from zero"
 ---
 
 # Regex Tutorial

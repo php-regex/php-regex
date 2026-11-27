@@ -1,5 +1,6 @@
 ---
 description: "Install PHPRegex and run your first regex analysis in five minutes with the CLI or the PHP API."
+head_title: "PHPRegex quick start: install and first analysis"
 redirect_from:
   - /QUICK_START.html
 ---

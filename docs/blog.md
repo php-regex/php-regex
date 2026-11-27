@@ -1,5 +1,6 @@
 ---
 title: Articles
+head_title: "Articles on PHP regular expressions"
 description: "In-depth articles on PHP regular expressions: every example run against the engine it names, every release claim checked against that release's own sources."
 permalink: /blog/
 ---

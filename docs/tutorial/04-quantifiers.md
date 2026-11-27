@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Control repetition with *, +, ?, and {n,m} — and understand greedy vs lazy matching."
+head_title: "Quantifiers, greediness and laziness in PHP regex"
 ---
 
 # Chapter 4: Quantifiers & Greediness

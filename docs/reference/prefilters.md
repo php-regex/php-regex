@@ -1,5 +1,6 @@
 ---
-description: "When a string function can answer before preg_match() runs: the literals every match holds, and the patterns the automata prove equal to str_contains() and friends."
+description: "When a string function can answer before preg_match() runs: the literals every match holds, and the patterns proven equal to str_contains() and friends."
+head_title: "Prefilters: answer before preg_match() runs"
 ---
 
 # Prefilters

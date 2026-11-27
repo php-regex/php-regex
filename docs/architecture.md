@@ -1,5 +1,6 @@
 ---
 description: "How the PHPRegex pipeline is built: lexer, immutable AST, visitors, and the packages the monorepo splits into."
+head_title: "Inside PHPRegex: lexer, parser, AST, visitors"
 redirect_from:
   - /ARCHITECTURE.html
 ---

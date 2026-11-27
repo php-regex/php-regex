@@ -1,5 +1,6 @@
 ---
-description: "Embed PHPRegex in your own tool: configuration options, the exception surface, machine-readable lint JSON for CI gates, and the wrapper and visitor integration patterns."
+description: "Embed PHPRegex in your own tool: configuration options, the exception surface, lint JSON for CI gates, and the wrapper and visitor integration patterns."
+head_title: "Embed PHPRegex in your own tool"
 redirect_from:
   - /MAINTAINERS_GUIDE.html
 ---

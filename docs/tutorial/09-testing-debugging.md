@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Learn a simple way to test and debug regex patterns using plain PHP first."
+head_title: "Test and debug a regex in plain PHP"
 ---
 
 # Chapter 9: Testing & Debugging

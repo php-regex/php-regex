@@ -1,5 +1,6 @@
 ---
 description: "Install the PHPRegex PHPStan extension: the invalid-for-target check that runs by default, plus lint, ReDoS and optimization checks on demand."
+head_title: "PHPStan and PHP regexes: the PHPRegex extension"
 ---
 # PHPStan
 

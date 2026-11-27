@@ -1,5 +1,6 @@
 ---
 description: "The visitor pattern in PHPRegex: how accept() dispatches work, which base class to extend, and working collectors you can copy and run."
+head_title: "Understanding visitors: operations on the tree"
 ---
 # Understanding Visitors
 

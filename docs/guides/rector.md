@@ -1,5 +1,6 @@
 ---
 description: "PHPRegex Rector rules that turn a preg_* call into the string function the automata prove equivalent: sets, single rules, and what each rewrite proves."
+head_title: "Rector rules that rewrite preg_* calls"
 ---
 # Rector
 

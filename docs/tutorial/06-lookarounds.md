@@ -1,6 +1,7 @@
 ---
 layout: tutorial
 description: "Match context without consuming it with lookaheads and lookbehinds — positive and negative."
+head_title: "Lookahead and lookbehind in a PHP regex"
 ---
 
 # Chapter 6: Lookarounds & Assertions

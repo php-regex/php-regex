@@ -1,6 +1,7 @@
 ---
 layout: tutorial
-description: "Practical regex patterns for everyday tasks in PHP."
+description: "Practical regex patterns for everyday tasks in PHP: email, dates, URLs, phone numbers, form validation, with the production tips that keep them safe."
+head_title: "Real-world PHP regex patterns for everyday tasks"
 ---
 
 # Chapter 10: Real-World Patterns in PHP

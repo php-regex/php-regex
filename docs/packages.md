@@ -1,5 +1,6 @@
 ---
 title: Choose a package
+head_title: "Choose the PHPRegex package for your task"
 description: "Choose the PHPRegex package that matches your task: parsing, application API, CLI, static analysis, editor integration, or a framework bridge."
 permalink: /packages/
 ---

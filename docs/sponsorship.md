@@ -1,5 +1,6 @@
 ---
 title: Sponsorship
+head_title: "Sponsor PHPRegex: spots, backers, what it funds"
 permalink: /sponsorship/
 description: "How sponsoring PHPRegex works: what the money funds, what each sponsor gets, the spots a company can back for a whole release, and where each name appears."
 sponsor: false

@@ -1,5 +1,6 @@
 ---
 description: "What a PHPRegex minor or patch release may change, what stays for all of 2.x, and what only the next major release may touch."
+head_title: "The backward compatibility promise of PHPRegex"
 ---
 
 # Backward Compatibility Promise

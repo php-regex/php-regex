@@ -1,5 +1,6 @@
 ---
 description: "Wire PHPRegex into a Laravel 10.37 to 13 app: the Regex service and facade, the regex:* artisan commands, lint targets, ReDoS findings and the 1.x upgrade."
+head_title: "Laravel: the Regex service, facade and commands"
 ---
 
 # Laravel Guide

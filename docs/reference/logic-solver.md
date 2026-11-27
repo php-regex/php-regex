@@ -1,5 +1,6 @@
 ---
 description: "Compare two patterns as languages — intersection, subset, equivalence, prefix — answered on a DFA built from the pattern, with the engine's own character sets."
+head_title: "Logic solver: equivalence, subset, samples"
 ---
 
 # Regex Logic & Automata Solver

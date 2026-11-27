@@ -1,6 +1,7 @@
 ---
 permalink: /concepts/
 description: "The concepts section at a glance: AST and visitor foundations for newcomers, plus PCRE2 targeting and ReDoS internals for tool authors."
+head_title: "The concepts behind PHPRegex"
 ---
 # Key Concepts
 
