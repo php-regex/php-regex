@@ -1,5 +1,5 @@
 ---
-description: "PHP regexes for 24-hour times with or without seconds and 12-hour times with AM or PM, proven safe from ReDoS: what each matches, what each rejects, and a PHP example."
+description: "PHP regexes for times, proven safe from ReDoS: 24-hour with or without seconds, and 12-hour with AM or PM, with matches, rejects and a PHP example."
 head_title: "PHP regex for time: 24-hour, seconds, AM/PM"
 parent: /cookbook/
 pattern: "/^(?:[01]?[0-9]|2[0-3]):[0-5][0-9]$/"

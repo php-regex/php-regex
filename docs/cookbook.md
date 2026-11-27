@@ -1,5 +1,5 @@
 ---
-description: "Fifteen PHP regex recipes, one page each: email, URL, UUID, IPv4, IPv6, dates, times, slug, username, password, phone, credit card, hex color and SemVer, all proven safe from ReDoS."
+description: "Fifteen copy-ready PHP regex recipes, one page each — email, URL, date, phone and more — each one proven safe from ReDoS, with matched and rejected examples."
 head_title: "PHP regex cookbook: safe, proven patterns"
 redirect_from:
   - /COOKBOOK.html

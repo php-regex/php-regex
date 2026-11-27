@@ -1,5 +1,5 @@
 ---
-description: "A PHP regex for IPv6 addresses in full form, eight groups of hex digits, proven safe from ReDoS: matches, rejects, and why compressed addresses need filter_var()."
+description: "A PHP regex for the full form of IPv6 addresses, eight groups of hex digits, proven safe from ReDoS: its matches, its rejects, and filter_var() for the rest."
 head_title: "PHP regex for IPv6 addresses: eight hex groups"
 parent: /cookbook/
 pattern: "/^(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}$/i"

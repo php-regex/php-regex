@@ -1,5 +1,5 @@
 ---
-description: "PHP regexes for credit card numbers: 13 to 19 digits, then Visa, Mastercard, Amex and Discover by their first digits, proven safe from ReDoS, with the Luhn check."
+description: "PHP regexes for credit card numbers, proven safe from ReDoS: 13 to 19 digits, and Visa, Mastercard, Amex and Discover by their first digits."
 head_title: "PHP regex for credit card numbers, by card type"
 parent: /cookbook/
 pattern: "/^[0-9]{13,19}$/"

@@ -1,5 +1,5 @@
 ---
-description: "PHP regexes for phone numbers in E.164 and North American formats, digits only, proven safe from ReDoS: what each matches, what each rejects, and a PHP example."
+description: "PHP regexes for phone numbers in E.164 and North American formats, digits only, proven safe from ReDoS: what each matches, what each rejects, a PHP example."
 head_title: "PHP regex for phone numbers: E.164 and US"
 parent: /cookbook/
 pattern: "/^\\+[1-9]\\d{6,14}$/"

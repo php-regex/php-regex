@@ -1,5 +1,5 @@
 ---
-description: "A PHP regex for slugs: lower-case letters and digits in segments separated by single hyphens, proven safe from ReDoS, with its matches, rejects and a PHP example."
+description: "A PHP regex for slugs, proven safe from ReDoS: lower-case letters and digits in segments separated by single hyphens, with matches, rejects and a PHP example."
 head_title: "PHP regex for slugs: letters, digits, hyphens"
 parent: /cookbook/
 pattern: "/^[a-z0-9]+(?:-[a-z0-9]+)*$/"
