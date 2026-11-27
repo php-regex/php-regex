@@ -2998,39 +2998,51 @@ a:focus-visible .article-nav-arrow {
   transform: translateX(.25em);
 }
 
-/* ---- The rule reference's index --------------------------------------------
- * One rule per row: its page, the identifiers it is reported under as
- * quiet chips, then what it reports, in the page's own words. A row
- * carries the anchor of the heading a report linked to before the rules
- * had pages of their own.
+/* ---- The indexes of the reference ------------------------------------------
+ * One page per row, in the rule reference, in the index of the messages
+ * the engine prints, and in the cheat sheet: its page, what the engine
+ * or the library says of it as quiet chips, then what the page holds, in
+ * the page's own words. A row of the rules carries the anchor of the
+ * heading a report linked to before the rules had pages of their own.
    -------------------------------------------------------------------------- */
 
-.rule-index {
+.rule-index,
+.message-index,
+.fix-index {
   margin: .4rem 0 0;
   padding: 0;
   list-style: none;
 }
 
-.rule-index > li {
+.rule-index > li,
+.message-index > li,
+.fix-index > li {
   padding: .75rem 0;
   border-bottom: 1px solid var(--line-soft);
   line-height: 1.65;
 }
 
-.rule-index > li:last-child {
+.rule-index > li:last-child,
+.message-index > li:last-child,
+.fix-index > li:last-child {
   border-bottom: 0;
 }
 
-.rule-index-ids {
+.rule-index-ids,
+.message-index-ids {
   display: inline-flex;
   flex-wrap: wrap;
   gap: .3rem;
   margin-right: .35rem;
 }
 
-.rule-index-ids code {
-  font-size: .74em;
-  white-space: nowrap;
+.rule-index-ids code,
+.message-index code {
+  font-size: .82em;
+}
+
+.fix-index code {
+  margin-left: .3rem;
 }
 
 /* ---- The projects directory -----------------------------------------------

@@ -2,6 +2,8 @@
 description: "One literal alternative that is a prefix of another, as (a|aa)+b: the backtracking it causes, and the atomic group or simplification that fixes it."
 head_title: "(a|aa)+ in PHP regex: overlapping branches"
 parent: /reference/rules/
+quick_fix: "Use an atomic group, or merge the branches"
+quick_fix_order: 14
 rule_category: "Alternation"
 rule_order: 3
 rule_ids:

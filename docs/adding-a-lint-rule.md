@@ -213,8 +213,9 @@ expected tips end with the new `Read more:` line.
   a SonarPHP rule.
 - **`docs/guides/lsp.md`**: a row in the table of diagnostic codes, with the
   LSP severity its `LintSeverity` maps to.
-- **`docs/reference/diagnostics-cheatsheet.md`**: a quick fix, when the
-  finding is one people will often meet.
+- **The cheat sheet**: a `quick_fix` and a `quick_fix_order` in the front
+  matter of the rule's page, when the finding is one people will often
+  meet. `docs/reference/diagnostics-cheatsheet.md` lists them.
 - **The rule count**: `src/Linter/README.md`, `src/Cli/README.md` and
   `src/PHPStan/README.md` each give the number of lint rules.
   `LintRuleInventoryTest::test_a_page_counts_the_rules_the_registry_holds`

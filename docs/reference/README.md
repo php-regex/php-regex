@@ -10,9 +10,10 @@ This section freezes behavior you build against: diagnostics, output shapes, com
 
 ## Find a diagnostic
 
+- [The errors PHP prints](diagnostics.md#the-errors-php-prints): one page per warning `preg_*` prints, with its cause and its fix.
 - [Lint rules](rules.md): every rule, severity, identifier, and fix.
-- [Diagnostics](diagnostics.md): validation errors and their messages.
-- [Diagnostics cheat sheet](diagnostics-cheatsheet.md): the short lookup table.
+- [Diagnostics](diagnostics.md): how the library reports an error, and the code of each.
+- [Diagnostics cheat sheet](diagnostics-cheatsheet.md): the quick fix of each common error, each linked to its page.
 - [Sonar rule mapping](sonar.md): where SonarPHP rules map to PHPRegex identifiers.
 
 ## Check compatibility

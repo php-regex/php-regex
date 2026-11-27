@@ -2,6 +2,8 @@
 description: "A variable quantifier inside another, as in (a+)+, lets a PHP pattern backtrack catastrophically: when it is reported, when it is safe, and the fixes."
 head_title: "Nested quantifiers in PHP regex: (a+)+ ReDoS"
 parent: /reference/rules/
+quick_fix: "Use an atomic group or a possessive quantifier, and check the rewrite matches the same text"
+quick_fix_order: 12
 rule_category: "Quantifiers"
 rule_order: 1
 rule_ids:

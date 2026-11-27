@@ -2,6 +2,8 @@
 description: "A backreference written before its group can be set, or to a group that is always empty, as \\1(a): why it adds no constraint, and where to move it."
 head_title: "Useless backreference in a PHP regex"
 parent: /reference/rules/
+quick_fix: "Move it after its group, or remove it"
+quick_fix_order: 20
 rule_category: "Backreferences"
 rule_order: 1
 rule_ids:

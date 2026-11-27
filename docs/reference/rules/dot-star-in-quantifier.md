@@ -2,6 +2,8 @@
 description: "An unbounded quantifier around .* makes a PHP pattern backtrack heavily: the atomic and possessive forms, and a negated class instead."
 head_title: "(?:.*)+ in PHP regex: dot-star under a quantifier"
 parent: /reference/rules/
+quick_fix: "Make it possessive, or use a negated class"
+quick_fix_order: 13
 rule_category: "Quantifiers"
 rule_order: 2
 rule_ids:

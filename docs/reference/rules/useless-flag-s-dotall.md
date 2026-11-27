@@ -2,6 +2,8 @@
 description: "The s modifier only moves the dot: in a PHP pattern with no unescaped dot outside a character class it changes nothing, and the linter reports it."
 head_title: "PHP regex s flag (DOTALL) does nothing here"
 parent: /reference/rules/
+quick_fix: "Remove the flag that changes nothing"
+quick_fix_order: 22
 rule_category: "Flags"
 rule_order: 1
 rule_ids:

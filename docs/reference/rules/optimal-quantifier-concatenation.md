@@ -2,6 +2,8 @@
 description: "Two adjacent quantified tokens where one set is a subset of the other, as \\d+\\w+, can be tightened or dropped: what the rule proves before it speaks."
 head_title: "Adjacent quantifiers in PHP regex: \\d+\\w+"
 parent: /reference/rules/
+quick_fix: "Tighten the smaller quantifier, or drop it"
+quick_fix_order: 21
 rule_category: "Quantifiers"
 rule_order: 5
 rule_ids:

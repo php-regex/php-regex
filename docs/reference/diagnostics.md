@@ -1,31 +1,70 @@
 ---
 description: "How PHPRegex reports errors: validation layers, ValidationResult fields, CLI and JSON output, error-code categories and the fixes for each diagnostic."
+head_title: "PHP regex errors: every message and its fix"
 ---
 # Diagnostics and Error Messages
 
-This comprehensive guide explains how PHPRegex reports errors and warnings, how to read diagnostic output, and how to map diagnostics to fixes.
+Two things meet here. The messages PHP itself prints for a pattern, each with a page of its own under [The errors PHP prints](#the-errors-php-prints). And the way PHPRegex reports an error or a warning: its layers, the fields of a result, the CLI and JSON output, and the code of every diagnostic. For a fix at a glance, the [cheat sheet](diagnostics-cheatsheet.md) gives one line per common error.
 <div class="page-filter">
-  <label class="visually-hidden" for="page-filter-input">Filter the diagnostics reference</label>
-  <input type="search" id="page-filter-input" data-unit="sections" data-unit-level="any" placeholder="Filter by code, message or fix — e.g. delimiter, backreference, unicode" autocomplete="off" spellcheck="false">
+  <label class="visually-hidden" for="page-filter-input">Filter the messages of the engine</label>
+  <input type="search" id="page-filter-input" data-items=".message-index > li" data-unit="messages" placeholder="Filter by message, code or cause — e.g. unknown modifier, lookbehind, regex.group.unclosed" autocomplete="off" spellcheck="false">
   <span class="page-count"></span>
 </div>
-<p class="page-empty" role="status" hidden>Nothing matches that filter — try a shorter fragment, or press Escape to see the whole page again.</p>
+<p class="page-empty" role="status" hidden>No message matches that filter — try a shorter fragment, or press Escape to see them all again.</p>
+
+## The errors PHP prints
+
+Every warning `preg_match()` and the other `preg_*` functions print for a pattern, and every error a match ends with, has a page of its own: the smallest pattern that prints the message, why the engine prints it, how to fix it, where the cause hides, and the code PHPRegex gives the same pattern.
+
+{%- assign message_pages = site.pages | where_exp: "p", "p.engine" | sort: "engine_order" %}
+### The checks of PHP
+
+PHP reads the delimiter and the modifiers before PCRE2 sees anything.
+
+<ul class="message-index">
+{%- assign messages_of_the_family = message_pages | where_exp: "p", "p.engine_family == 'The checks of PHP'" -%}
+{%- for p in messages_of_the_family -%}
+{%- include message-row.html p=p -%}
+{%- endfor -%}
+</ul>
+
+### Compilation failed
+
+PCRE2 refuses the pattern: nothing matches, and every `preg_*` function prints the message under its own name.
+
+<ul class="message-index">
+{%- assign messages_of_the_family = message_pages | where_exp: "p", "p.engine_family == 'Compilation failed'" -%}
+{%- for p in messages_of_the_family -%}
+{%- include message-row.html p=p -%}
+{%- endfor -%}
+</ul>
+
+### The match
+
+The pattern compiles. The call returns `false`, prints no warning, and `preg_last_error_msg()` says why.
+
+<ul class="message-index">
+{%- assign messages_of_the_family = message_pages | where_exp: "p", "p.engine_family == 'The match'" -%}
+{%- for p in messages_of_the_family -%}
+{%- include message-row.html p=p -%}
+{%- endfor -%}
+</ul>
+
+---
 
 ## Table of Contents
 {: .filter-toc }
 
 | Section                                             | Description                          |
 |-----------------------------------------------------|--------------------------------------|
+| [The errors PHP prints](#the-errors-php-prints)     | One page per message                 |
 | [Validation Layers](#validation-layers)             | How validation works                 |
 | [Reading Diagnostics](#reading-diagnostics)         | Output and ValidationResult fields   |
 | [CLI Examples](#cli-examples)                       | Command-line output                  |
 | [CLI Output Types](#cli-output-types)               | What each command prints             |
 | [Lint Diagnostics](#lint-diagnostics)               | Linting output                       |
-| [Common Fixes](#common-fixes)                       | Quick solutions                      |
 | [Error Code Categories](#error-code-categories)     | Which layer refused the pattern      |
 | [Error Codes](#error-codes)                         | Every stable code                    |
-
----
 
 ## Validation Layers
 
@@ -384,126 +423,6 @@ See the [severity table](rules.md#quick-reference-table) for the severity of eac
 
 ---
 
-## Common Fixes
-
-Quick solutions for frequently encountered diagnostics:
-
-### Lookbehind Errors
-
-**Problem:** `Lookbehind is unbounded`
-
-**Solution:** Make the lookbehind bounded, or restart the match after the run
-
-```php
-// ERROR: (?<=a+) is unbounded
-preg_match('/(?<=a+)b/', $input);
-
-// FIX 1: Use bounded quantifier (variable length needs PCRE2 10.43+, PHP 8.4)
-preg_match('/(?<=a{1,10})b/', $input);
-
-// FIX 2: Restart the match after the run
-preg_match('/a+\Kb/', $input);  // matches "b" on "aaab"
-```
-
----
-
-### Backreference Errors
-
-**Problem:** `Backreference to non-existent group`
-
-**Solution:** Ensure the referenced group exists
-
-```php
-// ERROR: \2 refers to non-existent group
-preg_match('/(\w+)\2/', $input);  // Only one group
-
-// FIX 1: Use correct group number
-preg_match('/(\w+)\1/', $input);  // \1 refers to group 1
-
-// FIX 2: Add the missing group
-preg_match('/(\w+)(\w+)\2/', $input);  // Now \2 exists
-```
-
----
-
-### Nested Quantifiers (ReDoS)
-
-**Problem:** `Nested quantifiers detected`
-
-**Solution:** Use atomic groups or simplify
-
-```php
-// VULNERABLE: (a+)+ can cause ReDoS
-preg_match('/(a+)+$/', $input);
-
-// FIX 1: Use atomic group
-preg_match('/(?>a+)+$/', $input);
-
-// FIX 2: Simplify (often equivalent)
-preg_match('/a+$/', $input);
-```
-
----
-
-### Duplicate Group Names
-
-**Problem:** `Duplicate group name`
-
-**Solution:** Use unique names or enable J flag
-
-```php
-// ERROR: Duplicate name 'id'
-preg_match('/(?<id>\w+)(?<id>\d+)/', $input);
-
-// FIX 1: Use unique names
-preg_match('/(?<id>\w+)(?<number>\d+)/', $input);
-
-// FIX 2: Enable J flag for duplicates
-preg_match('/(?J)(?<id>\w+)(?<id>\d+)/', $input);
-```
-
----
-
-### Invalid Quantifier Range
-
-**Problem:** `Invalid quantifier range: min > max`
-
-**Solution:** Swap or fix the range
-
-```php
-// ERROR: {5,2} is invalid (min > max)
-preg_match('/\d{5,2}/', $input);
-
-// FIX: Swap to {2,5}
-preg_match('/\d{2,5}/', $input);
-```
-
----
-
-### Character Class Pitfalls
-
-**Problem:** Suspicious ASCII ranges or alternation-like character classes.
-
-**Solution:** Split ranges or use alternation groups.
-
-```php
-// WARNING: Includes punctuation between Z and a
-preg_match('/[A-z]/', $input);
-
-// FIX: Split ranges
-preg_match('/[A-Za-z]/', $input);
-
-// WARNING: | is literal in []
-preg_match('/[error|failure]/', $input);
-
-// FIX: Use alternation
-preg_match('/(error|failure)/', $input);
-```
-
-For the same fixes on one table, see the [Diagnostics Cheat Sheet](diagnostics-cheatsheet.md).
-
----
-
 ## Error Code Categories
 
 `ValidationResult::$category` tells which layer refused the pattern:
@@ -531,7 +450,9 @@ or a cache failure (`CacheException`) is no judgement on a pattern and carries n
 ids of its own, `regex.lint.<area>.<rule>` in camelCase (see the lint rule reference): PHPStan reports
 them as identifiers, and PHPStan identifiers take no underscore. The values are stable: match
 on the enum case, or on its string value when the code crosses a process boundary (the CLI's
-JSON output and the lint problems carry the string).
+JSON output and the lint problems carry the string). A code that an error of the engine triggers
+has a page of its own under [The errors PHP prints](#the-errors-php-prints), which names the
+message PHP prints and the fix.
 
 ```php
 use PHPRegex\Parser\ErrorCode;

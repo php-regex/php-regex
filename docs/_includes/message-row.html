@@ -1,0 +1,9 @@
+{%- comment -%}
+  One row of the index of the messages the engine prints (diagnostics.md):
+  the page, the message as PHP gives it without its offset, the codes
+  PHPRegex answers the same pattern with, and what the page holds. The
+  offset is the engine's to give, and the page shows it.
+{%- endcomment -%}
+{%- assign said = p.engine.message | remove: "Compilation failed: " -%}
+{%- assign said = said | split: " at offset" | first -%}
+<li><a href="{{ p.url }}">{{ p.title }}</a> — <span class="message-index-ids"><code>{{ said }}</code>{%- for c in p.codes %} <code>{{ c }}</code>{%- endfor %}</span>{{ p.description }}</li>

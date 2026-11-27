@@ -2,6 +2,8 @@
 description: "An alternation with an empty branch, as a trailing |, matches the empty string: why the rule reports it, and the quantifier to write instead."
 head_title: "Empty alternative in a PHP regex: a|"
 parent: /reference/rules/
+quick_fix: "Write a quantifier, as a?"
+quick_fix_order: 16
 rule_category: "Alternation"
 rule_order: 2
 rule_ids:

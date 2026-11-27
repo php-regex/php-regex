@@ -2,6 +2,8 @@
 description: "The same alternative written twice in an alternation, as (a|a): the rule that reports it, and the single literal or character class to write instead."
 head_title: "Duplicate branch in a PHP regex alternation"
 parent: /reference/rules/
+quick_fix: "Keep one branch"
+quick_fix_order: 15
 rule_category: "Alternation"
 rule_order: 1
 rule_ids:

@@ -46,7 +46,17 @@ License: MIT
 - [Lint rules](https://php-regex.com/reference/rules/): every diagnostic, rule and optimization
 - [API](https://php-regex.com/reference/api/): entry points, return objects, exceptions
 - [Diagnostics](https://php-regex.com/reference/diagnostics/): error types, messages, and how to map them to fixes
-- [Diagnostics cheat sheet](https://php-regex.com/reference/diagnostics-cheatsheet/): fast fixes for the most common diagnostics
+- [Errors PHP prints](https://php-regex.com/reference/diagnostics/#the-errors-php-prints): one page per warning preg_* prints and per error of a match — the pattern that prints it, the cause, the fix, the code PHPRegex gives
+- [Unknown modifier](https://php-regex.com/reference/diagnostics/unknown-modifier/): a delimiter inside the pattern, or a modifier PHP does not know
+- [No ending delimiter found](https://php-regex.com/reference/diagnostics/no-ending-delimiter/): a delimiter missing, or escaped by the backslash before it
+- [Missing terminating ] for character class](https://php-regex.com/reference/diagnostics/missing-terminating-bracket-for-character-class/): a [ that no ] closes
+- [Missing closing parenthesis](https://php-regex.com/reference/diagnostics/missing-closing-parenthesis/): a group that never closes
+- [Reference to non-existent subpattern](https://php-regex.com/reference/diagnostics/reference-to-non-existent-subpattern/): a backreference or a call that names no group
+- [Lookbehind assertion is not fixed length](https://php-regex.com/reference/diagnostics/lookbehind-assertion-is-not-fixed-length/): a lookbehind with no bounded length, and the rewrites
+- [Backtrack limit exhausted](https://php-regex.com/reference/diagnostics/backtrack-limit-exhausted/): preg_match() returned false: the loop and the fixes
+- [Malformed UTF-8 characters](https://php-regex.com/reference/diagnostics/malformed-utf-8-characters/): the subject of a /u pattern that is not UTF-8
+- [PCRE2 does not support \u](https://php-regex.com/reference/diagnostics/pcre2-does-not-support-unicode-escapes/): the \uXXXX of other languages, and \x{...} instead
+- [Diagnostics cheat sheet](https://php-regex.com/reference/diagnostics-cheatsheet/): the quick fix of each common error, each linked to its page
 - [JSON output](https://php-regex.com/reference/json-output/): every key the regex command and the Symfony and Laravel reports print
 - [Feature support matrix](https://php-regex.com/reference/feature-support-matrix/): which PCRE construct each analysis layer supports
 - [Correctness contracts](https://php-regex.com/reference/correctness-contracts/): what is sound, what is heuristic, per feature

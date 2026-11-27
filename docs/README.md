@@ -38,10 +38,10 @@ PHPRegex parses a PCRE pattern into an AST and gives structured answers about va
   <span>Guides</span>
 </a>
 
-<a class="task-card" href="/reference/rules/">
+<a class="task-card" href="/reference/diagnostics/">
   <h3>Understand a warning</h3>
-  <p>Every diagnostic, what it means, and what stands behind it.</p>
-  <span>Lint rules</span>
+  <p>Every error PHP and PHPRegex print, what it means, and how to fix it.</p>
+  <span>Diagnostics</span>
 </a>
 
 </div>
@@ -53,6 +53,7 @@ Deeper in, the same paths continue:
 - [Check what is proved or heuristic](/reference/correctness-contracts/) — the correctness contracts.
 - [Extend or embed the engine](/architecture/) — architecture and internals.
 - [Lint a codebase from the terminal](/guides/cli/) — the CLI guide.
+- [Read the page of a lint rule](/reference/rules/) — every rule the linter applies, one page each.
 
 ## Read findings correctly
 

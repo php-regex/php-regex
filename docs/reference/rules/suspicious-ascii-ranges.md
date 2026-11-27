@@ -2,6 +2,8 @@
 description: "The range A-z spans the ASCII punctuation between Z and a: write [A-Za-z] for the letters alone. What the rule reports, and how to fix it."
 head_title: "[A-z] in PHP regex also matches punctuation"
 parent: /reference/rules/
+quick_fix: "Write [A-Za-z] for the letters"
+quick_fix_order: 18
 rule_category: "Character Classes"
 rule_order: 4
 rule_ids:

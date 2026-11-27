@@ -2,6 +2,8 @@
 description: "A non-capturing group around one atom changes nothing, as x(?:a)y: when the linter reports it, and the groups that are needed after all."
 head_title: "Redundant non-capturing group (?:…) in PHP regex"
 parent: /reference/rules/
+quick_fix: "Remove the group"
+quick_fix_order: 17
 rule_category: "Groups"
 rule_order: 1
 rule_ids:
