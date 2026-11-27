@@ -453,12 +453,14 @@ final class CookbookPagesTest extends TestCase
     }
 
     /**
-     * The page without its code: a pattern spells brackets and
-     * parentheses that read as the end and the start of a link.
+     * The page without its front matter and without its code: a pattern
+     * spells brackets and parentheses that read as the end and the start
+     * of a link.
      */
     private static function prose(string $text): string
     {
-        $withoutFences = (string) preg_replace('/^\s*(`{3,}|~{3,}).*?^\s*\1\s*$/ms', '', $text);
+        $body = (string) preg_replace('/\A---\n.*?\n---\n/s', '', $text);
+        $withoutFences = (string) preg_replace('/^\s*(`{3,}|~{3,}).*?^\s*\1\s*$/ms', '', $body);
 
         return (string) preg_replace('/`[^`\n]*`/', '`x`', $withoutFences);
     }

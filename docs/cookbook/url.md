@@ -2,7 +2,7 @@
 description: "A PHP regex for http and https URLs, proven safe from ReDoS: what it accepts, what it refuses, why it is linear, and how to validate a URL in PHP."
 head_title: "PHP regex for URL validation: a proven pattern"
 parent: /cookbook/
-pattern: "/^https?$/i"
+pattern: "/^https?:\\/\\/[a-z0-9]([a-z0-9.-]*[a-z0-9])?(?::\\d{1,5})?(\\/[^\\s]*)?$/i"
 ---
 # PHP regex for URLs
 
