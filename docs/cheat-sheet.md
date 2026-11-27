@@ -344,8 +344,10 @@ The message PHP prints, and the page that says why and how to fix it:
 - `UTF-8 error: illegal byte (0xfe or 0xff)` — [under `u`, the pattern is not valid UTF-8](reference/diagnostics/utf-8-error-in-pattern.md)
 - `Backtrack limit exhausted` — [the pattern backtracked past its limit](reference/diagnostics/backtrack-limit-exhausted.md)
 - `JIT stack limit exhausted` — [a recursion with no way out](reference/diagnostics/jit-stack-limit-exhausted.md)
+- `JIT compilation failed` — [the JIT refused the pattern, and PHP matches without it](reference/diagnostics/jit-compilation-failed.md)
+- `Allocation of JIT memory failed` — [PHP could not allocate the memory the JIT runs in, and turned it off](reference/diagnostics/allocation-of-jit-memory-failed.md)
 
-Every message has its page under [the errors PHP prints](reference/diagnostics.md), the two warnings of the JIT included.
+Every message has its page under [the errors PHP prints](reference/diagnostics.md).
 
 **The releases.** What this page says of a PHP release comes from the sources: [`ext/pcre/php_pcre.c`](https://github.com/php/php-src/blob/php-8.4.28/ext/pcre/php_pcre.c) and the bundled [`ext/pcre/pcre2lib/pcre2.h`](https://github.com/php/php-src/blob/php-8.4.0/ext/pcre/pcre2lib/pcre2.h) at the release tags of php-src, the `UPGRADING` notes of [PHP 8.2.0](https://github.com/php/php-src/blob/php-8.2.0/UPGRADING) and [PHP 8.4.0](https://github.com/php/php-src/blob/php-8.4.0/UPGRADING), the pages of the PHP manual on [the modifiers](https://www.php.net/manual/en/reference.pcre.pattern.modifiers.php) and on [assertions](https://www.php.net/manual/en/regexp.reference.assertions.php), and [the change log of PCRE2](https://github.com/PCRE2Project/pcre2/blob/pcre2-10.49/ChangeLog). Every line of code was then run on the official `php:X.Y-cli` images, 8.0 to 8.6, and prints what its comment says on every release it names.
 

@@ -148,6 +148,8 @@ $pattern = '/(
 | `U`  | Ungreedy by default                 |
 | `J`  | Allow duplicate names in groups     |
 
+Every modifier, the release it arrived in, and the flags of other languages it answers — the `g` of JavaScript has no counterpart in PHP: [PHP regex modifiers](php-regex-modifiers.md).
+
 ---
 
 ## Common Use Cases with Code
@@ -186,6 +188,8 @@ preg_replace('/\s+/', ' ', 'hello    world');  // "hello world"
 // Convert dates from YYYY-MM-DD to DD/MM/YYYY
 preg_replace('/(\d{4})-(\d{2})-(\d{2})/', '$3/$2/$1', '2024-01-15');  // "15/01/2024"
 ```
+
+Every match or the first, the references `$1` and `${1}`, arrays and callbacks: [preg_replace in PHP](preg-replace.md).
 
 ### 4. Input Validation
 

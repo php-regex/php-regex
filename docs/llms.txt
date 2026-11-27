@@ -14,6 +14,9 @@ License: MIT
 - [Quick Start](https://php-regex.com/quick-start/): install and first analysis in a few runnable steps
 - [Regex 101 tutorial](https://php-regex.com/tutorial/): regular expressions from basics to real-world PHP, ten chapters
 - [Regex in PHP](https://php-regex.com/guides/regex-in-php/): how PCRE behaves inside preg_* — delimiters, flags, the functions and their return values
+- [PHP regex modifiers](https://php-regex.com/guides/php-regex-modifiers/): every modifier of PHP, what each one changes, and the flags of other languages it answers
+- [preg_replace](https://php-regex.com/guides/preg-replace/): every match or the first, references, arrays and callbacks
+- [PHP regex cheat sheet](https://php-regex.com/cheat-sheet/): every symbol on one line with a checked example, the preg functions, and the fix of each message PHP prints
 
 ## Integrations
 
@@ -29,7 +32,23 @@ License: MIT
 - [MCP](https://php-regex.com/guides/mcp/): validation, explanations, layout, translation and ReDoS verdicts for a coding agent, over the Model Context Protocol
 - [CLI](https://php-regex.com/guides/cli/): seventeen subcommands, config files, output formats, CI recipes
 - [ReDoS guide](https://php-regex.com/guides/redos/): verdicts, guarantees, confirmed mode, fixes
+- [Formatting patterns](https://php-regex.com/guides/formatting/): a long pattern laid out over lines, or compacted to one, without changing what it matches
 - [Cookbook](https://php-regex.com/cookbook/): ready-made patterns with their safety verdicts
+  - [Email](https://php-regex.com/cookbook/email/): a simplified RFC 5322 address — what it accepts, what it refuses, why it is linear
+  - [URL](https://php-regex.com/cookbook/url/): http and https URLs — what it accepts, what it refuses, why it is linear
+  - [UUID](https://php-regex.com/cookbook/uuid/): versions 1 to 5, with what it accepts and refuses
+  - [IPv4](https://php-regex.com/cookbook/ipv4/): four octets from 0 to 255, without a leading zero
+  - [IPv6](https://php-regex.com/cookbook/ipv6/): the full form, eight groups of hex digits, and filter_var() for the rest
+  - [Date](https://php-regex.com/cookbook/date/): ISO 8601, US and European formats, and checkdate() to complete them
+  - [Time](https://php-regex.com/cookbook/time/): 24-hour with or without seconds, and 12-hour with AM or PM
+  - [Date-time](https://php-regex.com/cookbook/datetime/): a date, a T, a time and an optional zone offset, in ISO 8601
+  - [Slug](https://php-regex.com/cookbook/slug/): lower-case letters and digits in segments separated by single hyphens
+  - [Username](https://php-regex.com/cookbook/username/): 3 to 32 characters from a letter, with the patterns of Linux, GitHub and X for comparison
+  - [Password](https://php-regex.com/cookbook/password/): eight characters with a lower-case letter, a capital and a digit, or twelve with a symbol too
+  - [Phone number](https://php-regex.com/cookbook/phone-number/): E.164 and North American formats, digits only
+  - [Credit card](https://php-regex.com/cookbook/credit-card/): 13 to 19 digits, and Visa, Mastercard, Amex and Discover by their first digits
+  - [Hex color](https://php-regex.com/cookbook/hex-color/): #rgb and #rrggbb
+  - [Semantic version](https://php-regex.com/cookbook/semantic-version/): the regular expression SemVer suggests, and why it is linear
 - [Troubleshooting](https://php-regex.com/troubleshooting/): common errors and their fixes
 
 ## Concepts

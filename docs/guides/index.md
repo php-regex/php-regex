@@ -117,3 +117,5 @@ One binary for parsing, validation, explanations, diagrams, linting, ReDoS analy
 - [ReDoS guide](redos.md): verdicts, guarantees, confirmed mode, and fixes.
 - [Formatting patterns](formatting.md): lay a long pattern out over lines, or compact it to one, without changing what it matches.
 - [Regex in PHP](regex-in-php.md): how PCRE behaves inside `preg_*`.
+- [PHP regex modifiers](php-regex-modifiers.md): every modifier of PHP, what each one changes, and the flags of other languages it answers.
+- [preg_replace](preg-replace.md): every match or the first, references, arrays and callbacks.

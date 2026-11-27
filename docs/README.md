@@ -55,6 +55,8 @@ Deeper in, the same paths continue:
 - [Extend or embed the engine](/architecture/) — architecture and internals.
 - [Lint a codebase from the terminal](/guides/cli/) — the CLI guide.
 - [Read the page of a lint rule](/reference/rules/) — every rule the linter applies, one page each.
+- [Look a symbol or a function up](/cheat-sheet/) — the cheat sheet: every symbol on one line, with a checked example.
+- [Start from a ready-made pattern](/cookbook/) — the cookbook, one page per recipe, each pattern proven safe.
 
 ## Read findings correctly
 
@@ -79,7 +81,7 @@ The [correctness contracts](/reference/correctness-contracts/) define those boun
 
 ## Documentation map
 
-- [Learn](/tutorial/): tutorial, PHP regex guide, ReDoS guide, cookbook, troubleshooting.
+- [Learn](/tutorial/): tutorial, PHP regex guide, modifiers, preg_replace, cheat sheet, ReDoS guide, cookbook, troubleshooting.
 - [Integrations](/guides/): CLI, PHPStan, Psalm, Rector, PHPUnit, Laravel, Symfony, language server.
 - [Concepts](/concepts/): AST, visitors, PCRE behavior, and ReDoS theory.
 - [Reference](/reference/): diagnostics, API, output contracts, support matrices, compatibility.
