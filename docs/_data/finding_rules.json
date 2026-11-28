@@ -385,7 +385,7 @@
         ]
     },
     "regex.lint.charclass.literalMetachar": {
-        "findings": 31,
+        "findings": 34,
         "projects": 18,
         "docs": "/reference/rules/literal-metacharacter-in-a-character-class/",
         "examples": [
@@ -427,7 +427,7 @@
         ]
     },
     "regex.lint.charclass.redundant": {
-        "findings": 257,
+        "findings": 298,
         "projects": 57,
         "docs": "/reference/rules/redundant-character-class-elements/",
         "examples": [
@@ -449,7 +449,7 @@
                 "repo": "WordPress/wordpress-develop",
                 "id": "f-d0e74851a5",
                 "file": "src/wp-admin/includes/ajax-actions.php",
-                "line": 4313,
+                "line": 4302,
                 "pattern": "/[^A-z0-9_\\-]/"
             },
             {
@@ -505,7 +505,7 @@
                 "repo": "WordPress/wordpress-develop",
                 "id": "f-d0e74851a5",
                 "file": "src/wp-admin/includes/ajax-actions.php",
-                "line": 4313,
+                "line": 4302,
                 "pattern": "/[^A-z0-9_\\-]/"
             },
             {
@@ -567,7 +567,7 @@
         ]
     },
     "regex.lint.dotstar.nested": {
-        "findings": 56,
+        "findings": 52,
         "projects": 28,
         "docs": "/reference/rules/dot-star-in-quantifier/",
         "examples": [
@@ -609,10 +609,18 @@
         ]
     },
     "regex.lint.flag.override": {
-        "findings": 71,
+        "findings": 72,
         "projects": 2,
         "docs": "/reference/rules/inline-flag-override/",
-        "examples": []
+        "examples": [
+            {
+                "repo": "phan/phan",
+                "id": "f-12e120d55c",
+                "file": "src/Phan/Language/Element/Comment/Builder.php",
+                "line": 453,
+                "pattern": "/::|\\bint(?:-range)?\\s*<|\\b(?:non-empty-)?(?:numeric|literal|lowercase)-string\\b|\\b(?:class|interface|trait|enum)-string\\b|\\b(?:closed-resource|finite-float)\\b|(?<![-\\\\$'\"a-zA-Z0-9_])(?-i:numeric)(?![-a-zA-Z0-9_\\\\]|\\s*\\??:(?!:))/i"
+            }
+        ]
     },
     "regex.lint.flag.redundant": {
         "findings": 19,
@@ -804,8 +812,8 @@
         ]
     },
     "regex.lint.flag.useless.x": {
-        "findings": 50,
-        "projects": 19,
+        "findings": 49,
+        "projects": 18,
         "docs": "/reference/rules/useless-flag-x-extended/",
         "examples": [
             {
@@ -854,7 +862,7 @@
                 "repo": "freescout-help-desk/freescout",
                 "id": "f-d6d18b0d06",
                 "file": "app/Thread.php",
-                "line": 392,
+                "line": 435,
                 "pattern": "/target=['\"]?(.*?)['\"]?/i"
             },
             {
@@ -909,8 +917,8 @@
         ]
     },
     "regex.lint.group.redundant": {
-        "findings": 156,
-        "projects": 35,
+        "findings": 160,
+        "projects": 36,
         "docs": "/reference/rules/redundant-non-capturing-group/",
         "examples": [
             {
@@ -971,8 +979,8 @@
         "examples": []
     },
     "regex.lint.overlap.charset": {
-        "findings": 132,
-        "projects": 30,
+        "findings": 130,
+        "projects": 28,
         "docs": "/reference/rules/overlapping-character-sets/",
         "examples": [
             {
@@ -1000,7 +1008,7 @@
                 "repo": "freescout-help-desk/freescout",
                 "id": "f-7a259bf246",
                 "file": "app/Misc/Helper.php",
-                "line": 2035,
+                "line": 2042,
                 "pattern": "/<!--(.|\\s)*?-->/"
             },
             {
@@ -1140,7 +1148,7 @@
                 "repo": "freescout-help-desk/freescout",
                 "id": "f-d6d18b0d06",
                 "file": "app/Thread.php",
-                "line": 392,
+                "line": 435,
                 "pattern": "/target=['\"]?(.*?)['\"]?/i"
             },
             {
@@ -1153,8 +1161,8 @@
         ]
     },
     "regex.lint.quantifier.nested": {
-        "findings": 694,
-        "projects": 93,
+        "findings": 693,
+        "projects": 92,
         "docs": "/reference/rules/nested-quantifiers-redos-risk/",
         "examples": [
             {
