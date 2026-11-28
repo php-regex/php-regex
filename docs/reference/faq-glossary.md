@@ -33,7 +33,7 @@ Short answers to common questions plus quick definitions of core terms used thro
       "name": "Does this guarantee ReDoS safety?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Within limits. For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: safe (proven) means no input makes that attempt backtrack beyond a linear number of steps. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so."
+        "text": "Within limits. For the patterns its backtracking model covers, PHPRegex proves the cost of one match attempt: safe (proven) means no input can make that attempt take more than a number of steps proportional to the input's length. Three limits bound that guarantee: it covers one attempt at one position, so the retries of an unanchored search and of preg_match_all() are not counted; it covers the pattern as the analysis read it, and its abstractions say where the analysis simplified a part; and it holds for the PCRE2 release it ran with. Patterns with backreferences, conditionals or recursion are judged by heuristics, and say so."
       }
     },
     {

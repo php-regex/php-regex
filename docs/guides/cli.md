@@ -1209,7 +1209,7 @@ vendor/bin/regex lint app/ --report-dynamic
 
 Their identifiers are `regex.lint.source.dynamic`,
 `regex.lint.source.dynamicPart` and `regex.lint.source.quotedPart` (see the
-[rule reference](../reference/rules.md#pattern-built-at-run-time)). An info
+[rule reference](../reference/rules/pattern-built-at-run-time.md)). An info
 never fails a run: the exit code is the one the other issues leave. In the
 JSON report such a result has no `pattern`: the argument is under
 `expression`, as the file writes it. A marker on the line silences the
@@ -1974,7 +1974,7 @@ What runs where:
   change of meaning that keeps the tree, from the release table: a possessive
   `{1}+` on a group (PCRE2 10.34), a group that refers to itself, a repeated
   assertion holding a group and `(*UCP)` casing without UTF (10.35), a bare
-  script name (10.40); see [the rules reference](../reference/rules.md#meaning-that-changes-across-php-versions).
+  script name (10.40); see [the rules reference](../reference/rules/meaning-that-changes-across-php-versions.md).
 
 The console banner names the floor, then the later versions judged:
 
