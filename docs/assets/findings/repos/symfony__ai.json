@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -193,7 +193,7 @@
                     "rule": "regex.lint.alternation.overlap",
                     "message": "Alternation branches \"ms\" and \"m\" overlap.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-alternation-branches/"
                 }
             ],
             "rewrite": null,

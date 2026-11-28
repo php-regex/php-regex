@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*,\\s*[`\"\\w]+\\s*(?:\\([^)]*…\" at offset 81 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -489,7 +489,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {

@@ -1,6 +1,6 @@
 {
     "repo": "elementor/elementor",
-    "sha": "d897017a159668b87a6862a39b6c20f1ea1bb8a6",
+    "sha": "78616c1e01d0d20724f8644f8ef55b3aa327ec22",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"{{\" . \" || \" x n . \"|}}\" Replayed on PCRE2 10.49: preg_match fails from length 29 (backtrack_limit 100000, JIT off). The risky part is: (?:([^.}]+)\\.)? Hotspot offsets: 37-52 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?: *\\|\\| *(?:([^.}]+)\\.)?([^}…\" at offset 26 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "{{ ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  ||  || |}}",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/core/files/css/base.php#L373-L379",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/core/files/css/base.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -316,13 +316,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/core/utils/svg/svg-sanitizer.php#L230-L236",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/core/utils/svg/svg-sanitizer.php#L230-L236",
             "snippet": [
                 {
                     "number": 230,
@@ -523,13 +523,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/core/utils/svg/svg-sanitizer.php#L236-L242",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/core/utils/svg/svg-sanitizer.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -694,20 +694,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/includes/db.php#L606-L612",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/includes/db.php#L606-L612",
             "snippet": [
                 {
                     "number": 606,
@@ -896,7 +896,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -907,7 +907,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/includes/embed.php#L175-L181",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/includes/embed.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -1100,13 +1100,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/modules/mcp/abilities/appliers/v3/adapters/color-adapter.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -1359,13 +1359,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/modules/mcp/media/media-mime-validator.php#L39-L45",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/modules/mcp/media/media-mime-validator.php#L39-L45",
             "snippet": [
                 {
                     "number": 39,
@@ -1574,13 +1574,13 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/modules/mcp/media/media-mime-validator.php#L41-L47",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/modules/mcp/media/media-mime-validator.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -1713,20 +1713,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\\\' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/elementor/elementor/blob/d897017a159668b87a6862a39b6c20f1ea1bb8a6/php-scoper/twig-inc.php#L31-L37",
+            "permalink": "https://github.com/elementor/elementor/blob/78616c1e01d0d20724f8644f8ef55b3aa327ec22/php-scoper/twig-inc.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,

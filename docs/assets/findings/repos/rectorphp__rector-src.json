@@ -1,6 +1,6 @@
 {
     "repo": "rectorphp/rector-src",
-    "sha": "eef8017c3297984530af0f9262a5c467fe1f3947",
+    "sha": "bdf29877956ad65b7dff54079aea3466c204deb4",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/eef8017c3297984530af0f9262a5c467fe1f3947/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php#L34-L40",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/bdf29877956ad65b7dff54079aea3466c204deb4/rules/CodingStyle/Rector/Catch_/CatchExceptionNameMatchingTypeRector.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -281,13 +281,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/eef8017c3297984530af0f9262a5c467fe1f3947/scoper.php#L120-L126",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/bdf29877956ad65b7dff54079aea3466c204deb4/scoper.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -496,13 +496,13 @@
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?<new_line>\\r\\n|\\n)\" with \"{2,}\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/eef8017c3297984530af0f9262a5c467fe1f3947/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php#L29-L35",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/bdf29877956ad65b7dff54079aea3466c204deb4/src/BetterPhpDocParser/PhpDocParser/BetterPhpDocParser.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -643,7 +643,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -654,7 +654,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/eef8017c3297984530af0f9262a5c467fe1f3947/src/Util/NodePrinter.php#L14-L20",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/bdf29877956ad65b7dff54079aea3466c204deb4/src/Util/NodePrinter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -803,13 +803,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/rectorphp/rector-src/blob/eef8017c3297984530af0f9262a5c467fe1f3947/src/Util/NodePrinter.php#L19-L25",
+            "permalink": "https://github.com/rectorphp/rector-src/blob/bdf29877956ad65b7dff54079aea3466c204deb4/src/Util/NodePrinter.php#L19-L25",
             "snippet": [
                 {
                     "number": 19,

@@ -1,6 +1,6 @@
 {
     "repo": "processwire/processwire",
-    "sha": "fb163ab99b5762769e5105e73622eba6af29f3dc",
+    "sha": "95f47665dfb09635880336195b302948f471b576",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -10,7 +10,7 @@
         {
             "id": "f-d9659dc1ba",
             "file": "wire/core/Field.php",
-            "line": 1068,
+            "line": 1072,
             "column": 27,
             "pattern": "/([_|a-zA-Z0-9]+)*([-._|a-zA-Z0-9]*)([=!%*<>]+)/",
             "source": "preg_replace()",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" x n Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). The risky part is: [_|a-zA-Z0-9]+ Hotspot offsets: 1-15 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([_|a-zA-Z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -43,10 +43,10 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Field.php#L1065-L1071",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Field.php#L1069-L1075",
             "snippet": [
                 {
-                    "number": 1065,
+                    "number": 1069,
                     "focus": false,
                     "runs": [
                         [
@@ -56,7 +56,7 @@
                     ]
                 },
                 {
-                    "number": 1066,
+                    "number": 1070,
                     "focus": false,
                     "runs": [
                         [
@@ -66,7 +66,7 @@
                     ]
                 },
                 {
-                    "number": 1067,
+                    "number": 1071,
                     "focus": false,
                     "runs": [
                         [
@@ -76,7 +76,7 @@
                     ]
                 },
                 {
-                    "number": 1068,
+                    "number": 1072,
                     "focus": true,
                     "runs": [
                         [
@@ -230,7 +230,7 @@
                     ]
                 },
                 {
-                    "number": 1069,
+                    "number": 1073,
                     "focus": false,
                     "runs": [
                         [
@@ -240,7 +240,7 @@
                     ]
                 },
                 {
-                    "number": 1070,
+                    "number": 1074,
                     "focus": false,
                     "runs": [
                         [
@@ -250,7 +250,7 @@
                     ]
                 },
                 {
-                    "number": 1071,
+                    "number": 1075,
                     "focus": false,
                     "runs": [
                         [
@@ -276,7 +276,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -287,7 +287,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/FileCompiler.php#L284-L290",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/FileCompiler.php#L284-L290",
             "snippet": [
                 {
                     "number": 284,
@@ -448,7 +448,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -459,7 +459,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/FileCompiler.php#L287-L293",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/FileCompiler.php#L287-L293",
             "snippet": [
                 {
                     "number": 287,
@@ -620,13 +620,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/FileCompiler.php#L615-L621",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/FileCompiler.php#L615-L621",
             "snippet": [
                 {
                     "number": 615,
@@ -715,13 +715,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L603-L609",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L603-L609",
             "snippet": [
                 {
                     "number": 603,
@@ -846,13 +846,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L609-L615",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L609-L615",
             "snippet": [
                 {
                     "number": 609,
@@ -977,7 +977,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -988,7 +988,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L2114-L2120",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L2114-L2120",
             "snippet": [
                 {
                     "number": 2114,
@@ -1077,7 +1077,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1088,7 +1088,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L2122-L2128",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L2122-L2128",
             "snippet": [
                 {
                     "number": 2122,
@@ -1217,13 +1217,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L2130-L2136",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L2130-L2136",
             "snippet": [
                 {
                     "number": 2130,
@@ -1344,7 +1344,7 @@
         {
             "id": "f-64f937104c",
             "file": "wire/core/Sanitizer.php",
-            "line": 2742,
+            "line": 2758,
             "column": 29,
             "pattern": "/\"([^\"]+)\"/s",
             "source": "preg_replace()",
@@ -1356,7 +1356,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1367,10 +1367,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L2739-L2745",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L2755-L2761",
             "snippet": [
                 {
-                    "number": 2739,
+                    "number": 2755,
                     "focus": false,
                     "runs": [
                         [
@@ -1380,7 +1380,7 @@
                     ]
                 },
                 {
-                    "number": 2740,
+                    "number": 2756,
                     "focus": false,
                     "runs": [
                         [
@@ -1390,7 +1390,7 @@
                     ]
                 },
                 {
-                    "number": 2741,
+                    "number": 2757,
                     "focus": false,
                     "runs": [
                         [
@@ -1400,7 +1400,7 @@
                     ]
                 },
                 {
-                    "number": 2742,
+                    "number": 2758,
                     "focus": true,
                     "runs": [
                         [
@@ -1466,7 +1466,7 @@
                     ]
                 },
                 {
-                    "number": 2743,
+                    "number": 2759,
                     "focus": false,
                     "runs": [
                         [
@@ -1476,7 +1476,7 @@
                     ]
                 },
                 {
-                    "number": 2744,
+                    "number": 2760,
                     "focus": false,
                     "runs": [
                         [
@@ -1486,7 +1486,7 @@
                     ]
                 },
                 {
-                    "number": 2745,
+                    "number": 2761,
                     "focus": false,
                     "runs": [
                         [
@@ -1500,7 +1500,7 @@
         {
             "id": "f-2e6b3e4fa8",
             "file": "wire/core/Sanitizer.php",
-            "line": 3810,
+            "line": 3826,
             "column": 7,
             "pattern": "!(?:\\xF0[\\x90-\\xBF][\\x80-\\xBF]{2}|[\\xF1-\\xF3][\\x80-\\xBF]{3}|\\xF4[\\x80-\\x8F][\\x80-\\xBF]{2})!s",
             "source": "preg_replace()",
@@ -1512,7 +1512,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1523,10 +1523,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L3807-L3813",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L3823-L3829",
             "snippet": [
                 {
-                    "number": 3807,
+                    "number": 3823,
                     "focus": false,
                     "runs": [
                         [
@@ -1536,7 +1536,7 @@
                     ]
                 },
                 {
-                    "number": 3808,
+                    "number": 3824,
                     "focus": false,
                     "runs": [
                         [
@@ -1546,7 +1546,7 @@
                     ]
                 },
                 {
-                    "number": 3809,
+                    "number": 3825,
                     "focus": false,
                     "runs": [
                         [
@@ -1556,7 +1556,7 @@
                     ]
                 },
                 {
-                    "number": 3810,
+                    "number": 3826,
                     "focus": true,
                     "runs": [
                         [
@@ -1566,7 +1566,7 @@
                     ]
                 },
                 {
-                    "number": 3811,
+                    "number": 3827,
                     "focus": false,
                     "runs": [
                         [
@@ -1576,7 +1576,7 @@
                     ]
                 },
                 {
-                    "number": 3812,
+                    "number": 3828,
                     "focus": false,
                     "runs": [
                         [
@@ -1586,7 +1586,7 @@
                     ]
                 },
                 {
-                    "number": 3813,
+                    "number": 3829,
                     "focus": false,
                     "runs": [
                         [
@@ -1600,7 +1600,7 @@
         {
             "id": "f-c717854ad1",
             "file": "wire/core/Sanitizer.php",
-            "line": 5064,
+            "line": 5080,
             "column": 51,
             "pattern": "/\\d+[-–\\d,. ]*/",
             "source": "preg_replace()",
@@ -1612,23 +1612,23 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"–\", which without /u is the bytes \\xE2 \\x80 \\x93: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L5061-L5067",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L5077-L5083",
             "snippet": [
                 {
-                    "number": 5061,
+                    "number": 5077,
                     "focus": false,
                     "runs": [
                         [
@@ -1638,7 +1638,7 @@
                     ]
                 },
                 {
-                    "number": 5062,
+                    "number": 5078,
                     "focus": false,
                     "runs": [
                         [
@@ -1648,7 +1648,7 @@
                     ]
                 },
                 {
-                    "number": 5063,
+                    "number": 5079,
                     "focus": false,
                     "runs": [
                         [
@@ -1658,7 +1658,7 @@
                     ]
                 },
                 {
-                    "number": 5064,
+                    "number": 5080,
                     "focus": true,
                     "runs": [
                         [
@@ -1720,7 +1720,7 @@
                     ]
                 },
                 {
-                    "number": 5065,
+                    "number": 5081,
                     "focus": false,
                     "runs": [
                         [
@@ -1730,7 +1730,7 @@
                     ]
                 },
                 {
-                    "number": 5066,
+                    "number": 5082,
                     "focus": false,
                     "runs": [
                         [
@@ -1740,7 +1740,7 @@
                     ]
                 },
                 {
-                    "number": 5067,
+                    "number": 5083,
                     "focus": false,
                     "runs": [
                         [
@@ -1754,7 +1754,7 @@
         {
             "id": "f-7e73a74643",
             "file": "wire/core/Sanitizer.php",
-            "line": 5187,
+            "line": 5203,
             "column": 34,
             "pattern": "!([-−])(\\d+)!",
             "source": "preg_match_all()",
@@ -1766,16 +1766,16 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"−\", which without /u is the bytes \\xE2 \\x88 \\x92: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Sanitizer.php#L5184-L5190",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Sanitizer.php#L5200-L5206",
             "snippet": [
                 {
-                    "number": 5184,
+                    "number": 5200,
                     "focus": false,
                     "runs": [
                         [
@@ -1785,7 +1785,7 @@
                     ]
                 },
                 {
-                    "number": 5185,
+                    "number": 5201,
                     "focus": false,
                     "runs": [
                         [
@@ -1795,7 +1795,7 @@
                     ]
                 },
                 {
-                    "number": 5186,
+                    "number": 5202,
                     "focus": false,
                     "runs": [
                         [
@@ -1805,7 +1805,7 @@
                     ]
                 },
                 {
-                    "number": 5187,
+                    "number": 5203,
                     "focus": true,
                     "runs": [
                         [
@@ -1867,7 +1867,7 @@
                     ]
                 },
                 {
-                    "number": 5188,
+                    "number": 5204,
                     "focus": false,
                     "runs": [
                         [
@@ -1877,7 +1877,7 @@
                     ]
                 },
                 {
-                    "number": 5189,
+                    "number": 5205,
                     "focus": false,
                     "runs": [
                         [
@@ -1887,7 +1887,7 @@
                     ]
                 },
                 {
-                    "number": 5190,
+                    "number": 5206,
                     "focus": false,
                     "runs": [
                         [
@@ -1913,13 +1913,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/Selector.php#L1278-L1284",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/Selector.php#L1278-L1284",
             "snippet": [
                 {
                     "number": 1278,
@@ -2064,13 +2064,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/WireDatabaseBackup.php#L1198-L1204",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/WireDatabaseBackup.php#L1198-L1204",
             "snippet": [
                 {
                     "number": 1198,
@@ -2263,13 +2263,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/WireFileTools.php#L1830-L1836",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/WireFileTools.php#L1830-L1836",
             "snippet": [
                 {
                     "number": 1830,
@@ -2498,14 +2498,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -2516,7 +2516,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/WireShutdown.php#L355-L361",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/WireShutdown.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -2709,20 +2709,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/WireTextTools.php#L123-L129",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/WireTextTools.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -2895,13 +2895,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/core/WireTextTools.php#L334-L340",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/core/WireTextTools.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,
@@ -3134,7 +3134,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3145,7 +3145,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCEFormats.php#L175-L181",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCEFormats.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -3298,13 +3298,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCESettings.php#L464-L470",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCESettings.php#L464-L470",
             "snippet": [
                 {
                     "number": 464,
@@ -3433,7 +3433,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3444,7 +3444,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCETools.php#L168-L174",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Inputfield/InputfieldTinyMCE/InputfieldTinyMCETools.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -3613,7 +3613,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3624,7 +3624,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/LanguageSupport/LanguageParser.php#L154-L160",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/LanguageSupport/LanguageParser.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -3713,13 +3713,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/LanguageSupport/LanguageParser.php#L229-L235",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/LanguageSupport/LanguageParser.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,
@@ -3808,13 +3808,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/LanguageSupport/LanguageParser.php#L237-L243",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/LanguageSupport/LanguageParser.php#L237-L243",
             "snippet": [
                 {
                     "number": 237,
@@ -3903,7 +3903,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3914,7 +3914,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L13565-L13571",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L13565-L13571",
             "snippet": [
                 {
                     "number": 13565,
@@ -4003,7 +4003,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4014,7 +4014,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L13614-L13620",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L13614-L13620",
             "snippet": [
                 {
                     "number": 13614,
@@ -4175,13 +4175,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L19050-L19056",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Markup/MarkupHTMLPurifier/htmlpurifier/HTMLPurifier.standalone.php#L19050-L19056",
             "snippet": [
                 {
                     "number": 19050,
@@ -4330,13 +4330,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Process/ProcessModule/ProcessModuleInstall.php#L173-L179",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Process/ProcessModule/ProcessModuleInstall.php#L173-L179",
             "snippet": [
                 {
                     "number": 173,
@@ -4561,7 +4561,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4572,7 +4572,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1467-L1473",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1467-L1473",
             "snippet": [
                 {
                     "number": 1467,
@@ -4737,7 +4737,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4748,7 +4748,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1475-L1481",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1475-L1481",
             "snippet": [
                 {
                     "number": 1475,
@@ -4921,13 +4921,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/processwire/processwire/blob/fb163ab99b5762769e5105e73622eba6af29f3dc/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1559-L1565",
+            "permalink": "https://github.com/processwire/processwire/blob/95f47665dfb09635880336195b302948f471b576/wire/modules/Textformatter/TextformatterMarkdownExtra/parsedown/Parsedown.php#L1559-L1565",
             "snippet": [
                 {
                     "number": 1559,

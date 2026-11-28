@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -190,7 +190,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {

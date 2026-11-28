@@ -1,6 +1,6 @@
 {
     "repo": "silverstripe/silverstripe-framework",
-    "sha": "e99004cd179b1f0e47122734038c2ce610e1bc10",
+    "sha": "be9d7726f95bb51a446b9f795a9a5cbb099dd769",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Control/ContentNegotiator.php#L192-L198",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Control/ContentNegotiator.php#L192-L198",
             "snippet": [
                 {
                     "number": 192,
@@ -217,14 +217,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -235,7 +235,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Control/ContentNegotiator.php#L193-L199",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Control/ContentNegotiator.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -412,13 +412,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Core/Convert.php#L309-L315",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Core/Convert.php#L309-L315",
             "snippet": [
                 {
                     "number": 309,
@@ -555,14 +555,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -574,7 +574,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Core/Convert.php#L411-L417",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Core/Convert.php#L411-L417",
             "snippet": [
                 {
                     "number": 411,
@@ -783,14 +783,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -801,7 +801,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Core/Convert.php#L419-L425",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Core/Convert.php#L419-L425",
             "snippet": [
                 {
                     "number": 419,
@@ -982,13 +982,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Dev/CsvBulkLoader.php#L83-L89",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Dev/CsvBulkLoader.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -1129,7 +1129,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1140,7 +1140,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Dev/SapphireTest.php#L858-L864",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Dev/SapphireTest.php#L858-L864",
             "snippet": [
                 {
                     "number": 858,
@@ -1261,13 +1261,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/Forms/MoneyField.php#L168-L174",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/Forms/MoneyField.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -1456,20 +1456,20 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.overlap",
                     "message": "Alternation branches \"\\r\\n\" and \"\\r\" overlap.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-alternation-branches/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/Connect/DBConnector.php#L154-L160",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/Connect/DBConnector.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -1558,13 +1558,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/Connect/MySQLDatabase.php#L469-L475",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/Connect/MySQLDatabase.php#L469-L475",
             "snippet": [
                 {
                     "number": 469,
@@ -1753,13 +1753,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/Connect/MySQLDatabase.php#L486-L492",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/Connect/MySQLDatabase.php#L486-L492",
             "snippet": [
                 {
                     "number": 486,
@@ -1948,13 +1948,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/Connect/MySQLDatabase.php#L498-L504",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/Connect/MySQLDatabase.php#L498-L504",
             "snippet": [
                 {
                     "number": 498,
@@ -2143,13 +2143,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/Connect/MySQLDatabase.php#L504-L510",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/Connect/MySQLDatabase.php#L504-L510",
             "snippet": [
                 {
                     "number": 504,
@@ -2338,13 +2338,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/DataList.php#L458-L464",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/DataList.php#L458-L464",
             "snippet": [
                 {
                     "number": 458,
@@ -2509,13 +2509,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/DataObjectSchema.php#L322-L328",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/DataObjectSchema.php#L322-L328",
             "snippet": [
                 {
                     "number": 322,
@@ -2684,13 +2684,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/EagerLoadedList.php#L749-L755",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/EagerLoadedList.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -2855,13 +2855,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/ORM/FieldType/DBString.php#L174-L180",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/ORM/FieldType/DBString.php#L174-L180",
             "snippet": [
                 {
                     "number": 174,
@@ -2990,7 +2990,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3001,7 +3001,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/View/Parsers/HTMLValue.php#L32-L38",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/View/Parsers/HTMLValue.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -3182,13 +3182,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"(http[s]?:)\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:(//)|(http[s]?:))\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/View/Requirements_Backend.php#L1036-L1042",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/View/Requirements_Backend.php#L1036-L1042",
             "snippet": [
                 {
                     "number": 1036,
@@ -3349,13 +3349,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/View/Requirements_Backend.php#L1367-L1373",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/View/Requirements_Backend.php#L1367-L1373",
             "snippet": [
                 {
                     "number": 1367,
@@ -3528,21 +3528,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<IFRAME\" . \"\\\"\\\"\\\"\\\"\" x n . \"!<iframe\" Replayed on PCRE2 10.49: preg_match fails from length 5003 (backtrack_limit 100000, JIT off). The risky part is: \"[^\"]*\"|'[^']*'|[^>] Hotspot offsets: 11-31 Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\"[^\"]*\"|'[^']*'|[^>])\" at offset 8 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\"[^\"]*\"\" and \"[^>]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -3556,7 +3556,7 @@
                 "limit": 100000
             },
             "subject": "<IFRAME\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"!<iframe",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/View/Shortcodes/EmbedShortcodeProvider.php#L440-L446",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/View/Shortcodes/EmbedShortcodeProvider.php#L440-L446",
             "snippet": [
                 {
                     "number": 440,
@@ -3757,7 +3757,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3768,7 +3768,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/i18n/TextCollection/i18nTextCollector.php#L930-L936",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/i18n/TextCollection/i18nTextCollector.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -3905,7 +3905,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3916,7 +3916,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/i18n/TextCollection/i18nTextCollector.php#L938-L944",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/i18n/TextCollection/i18nTextCollector.php#L938-L944",
             "snippet": [
                 {
                     "number": 938,
@@ -4121,14 +4121,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4139,7 +4139,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/e99004cd179b1f0e47122734038c2ce610e1bc10/src/i18n/TextCollection/i18nTextCollector.php#L969-L975",
+            "permalink": "https://github.com/silverstripe/silverstripe-framework/blob/be9d7726f95bb51a446b9f795a9a5cbb099dd769/src/i18n/TextCollection/i18nTextCollector.php#L969-L975",
             "snippet": [
                 {
                     "number": 969,

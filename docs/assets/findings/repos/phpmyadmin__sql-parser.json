@@ -22,7 +22,7 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'f' (covered by range 'a'-'z'), 'f' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,

@@ -1,6 +1,6 @@
 {
     "repo": "PrestaShop/PrestaShop",
-    "sha": "1aa05415318967ec6aea1901fdb47ffc2c22bc08",
+    "sha": "10f52f090621f9d0bc23c223106457a9b94dc406",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"/Grid/\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:src/Core/Grid/|/Grid/)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/.ai/bin/check-conventions.php#L51-L57",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/.ai/bin/check-conventions.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -153,13 +153,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/.ai/bin/check-conventions.php#L355-L361",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/.ai/bin/check-conventions.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -344,20 +344,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/AddressFormat.php#L94-L100",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/AddressFormat.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -498,7 +498,7 @@
                     "rule": "regex.lint.alternation.duplicateDisjunction",
                     "message": "Duplicate alternation branch \"ESI\".",
                     "hint": "Remove the redundant alternative.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-alternation-branches/"
                 }
             ],
             "rewrite": {
@@ -509,7 +509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Connection.php#L125-L131",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Connection.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -598,13 +598,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Cookie.php#L137-L143",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Cookie.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -945,49 +945,49 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -998,7 +998,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Cookie.php#L142-L148",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Cookie.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -1087,13 +1087,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Cookie.php#L157-L163",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Cookie.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -1294,13 +1294,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Dispatcher.php#L1000-L1006",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Dispatcher.php#L1000-L1006",
             "snippet": [
                 {
                     "number": 1000,
@@ -1461,13 +1461,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\x{FD3F}' (covered by range '\\x{FD3E}'-'\\x{FD3F}'), range '\\x{FDFC}'-'\\x{FDFD}' (covered by range '\\x{FDFC}'-'\\x{FE6B}')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Search.php#L192-L198",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Search.php#L192-L198",
             "snippet": [
                 {
                     "number": 192,
@@ -1556,13 +1556,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\x{FD3F}' (covered by range '\\x{FD3E}'-'\\x{FD3F}'), range '\\x{FDFC}'-'\\x{FDFD}' (covered by range '\\x{FDFC}'-'\\x{FE6B}')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Search.php#L193-L199",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Search.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -1651,13 +1651,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L413-L419",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L413-L419",
             "snippet": [
                 {
                     "number": 413,
@@ -1786,13 +1786,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L413-L419",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L413-L419",
             "snippet": [
                 {
                     "number": 413,
@@ -1981,13 +1981,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L414-L420",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L414-L420",
             "snippet": [
                 {
                     "number": 414,
@@ -2112,13 +2112,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L414-L420",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L414-L420",
             "snippet": [
                 {
                     "number": 414,
@@ -2247,13 +2247,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L1412-L1418",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L1412-L1418",
             "snippet": [
                 {
                     "number": 1412,
@@ -2454,7 +2454,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2465,7 +2465,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L1415-L1421",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L1415-L1421",
             "snippet": [
                 {
                     "number": 1415,
@@ -2678,14 +2678,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -2696,7 +2696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L1416-L1422",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L1416-L1422",
             "snippet": [
                 {
                     "number": 1416,
@@ -2849,7 +2849,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2860,7 +2860,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L1418-L1424",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L1418-L1424",
             "snippet": [
                 {
                     "number": 1418,
@@ -3021,14 +3021,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -3039,7 +3039,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Tools.php#L1471-L1477",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Tools.php#L1471-L1477",
             "snippet": [
                 {
                     "number": 1471,
@@ -3192,13 +3192,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L370-L376",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L370-L376",
             "snippet": [
                 {
                     "number": 370,
@@ -3315,21 +3315,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -3340,7 +3340,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L475-L481",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -3549,14 +3549,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3567,7 +3567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3704,14 +3704,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3722,7 +3722,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3811,7 +3811,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3822,7 +3822,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L548-L554",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L548-L554",
             "snippet": [
                 {
                     "number": 548,
@@ -3943,14 +3943,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3961,7 +3961,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L552-L558",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L552-L558",
             "snippet": [
                 {
                     "number": 552,
@@ -4146,13 +4146,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"catalog\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:both|catalog|search|none)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L971-L977",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L971-L977",
             "snippet": [
                 {
                     "number": 971,
@@ -4301,13 +4301,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L1076-L1082",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L1076-L1082",
             "snippet": [
                 {
                     "number": 1076,
@@ -4476,7 +4476,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4487,7 +4487,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L1350-L1356",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L1350-L1356",
             "snippet": [
                 {
                     "number": 1350,
@@ -4668,7 +4668,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4679,7 +4679,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L1363-L1369",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L1363-L1369",
             "snippet": [
                 {
                     "number": 1363,
@@ -4832,7 +4832,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4843,7 +4843,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/Validate.php#L1375-L1381",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/Validate.php#L1375-L1381",
             "snippet": [
                 {
                     "number": 1375,
@@ -5020,14 +5020,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"([^<]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -5038,7 +5038,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/controller/AdminController.php#L1093-L1099",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/controller/AdminController.php#L1093-L1099",
             "snippet": [
                 {
                     "number": 1093,
@@ -5267,13 +5267,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L1721-L1727",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L1721-L1727",
             "snippet": [
                 {
                     "number": 1721,
@@ -5426,13 +5426,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L1723-L1729",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L1723-L1729",
             "snippet": [
                 {
                     "number": 1723,
@@ -5573,21 +5573,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5598,7 +5598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3045-L3051",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3045-L3051",
             "snippet": [
                 {
                     "number": 3045,
@@ -5731,7 +5731,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5742,7 +5742,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -5875,7 +5875,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5886,7 +5886,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -6019,14 +6019,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6037,7 +6037,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3108-L3114",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3108-L3114",
             "snippet": [
                 {
                     "number": 3108,
@@ -6186,21 +6186,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6211,7 +6211,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3284-L3290",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3284-L3290",
             "snippet": [
                 {
                     "number": 3284,
@@ -6344,13 +6344,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3424-L3430",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3424-L3430",
             "snippet": [
                 {
                     "number": 3424,
@@ -6495,13 +6495,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3426-L3432",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3426-L3432",
             "snippet": [
                 {
                     "number": 3426,
@@ -6638,13 +6638,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3430-L3436",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3430-L3436",
             "snippet": [
                 {
                     "number": 3430,
@@ -6781,13 +6781,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/module/Module.php#L3431-L3437",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/module/Module.php#L3431-L3437",
             "snippet": [
                 {
                     "number": 3431,
@@ -6920,13 +6920,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/webservice/WebserviceRequest.php#L1120-L1126",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/webservice/WebserviceRequest.php#L1120-L1126",
             "snippet": [
                 {
                     "number": 1120,
@@ -7071,13 +7071,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/webservice/WebserviceRequest.php#L1194-L1200",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/webservice/WebserviceRequest.php#L1194-L1200",
             "snippet": [
                 {
                     "number": 1194,
@@ -7222,13 +7222,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/webservice/WebserviceRequest.php#L1367-L1373",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/webservice/WebserviceRequest.php#L1367-L1373",
             "snippet": [
                 {
                     "number": 1367,
@@ -7373,13 +7373,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/webservice/WebserviceRequest.php#L1570-L1576",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/webservice/WebserviceRequest.php#L1570-L1576",
             "snippet": [
                 {
                     "number": 1570,
@@ -7524,13 +7524,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/classes/webservice/WebserviceRequest.php#L2042-L2048",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/classes/webservice/WebserviceRequest.php#L2042-L2048",
             "snippet": [
                 {
                     "number": 2042,
@@ -7667,13 +7667,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminCustomerThreadsController.php#L856-L862",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminCustomerThreadsController.php#L856-L862",
             "snippet": [
                 {
                     "number": 856,
@@ -7858,13 +7858,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminCustomerThreadsController.php#L1080-L1086",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminCustomerThreadsController.php#L1080-L1086",
             "snippet": [
                 {
                     "number": 1080,
@@ -8025,13 +8025,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"index\\.php\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\..*|index\\.php)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminImportController.php#L582-L588",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminImportController.php#L582-L588",
             "snippet": [
                 {
                     "number": 582,
@@ -8168,7 +8168,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8179,7 +8179,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminImportController.php#L690-L696",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminImportController.php#L690-L696",
             "snippet": [
                 {
                     "number": 690,
@@ -8384,14 +8384,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -8402,7 +8402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminTranslationsController.php#L1495-L1501",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminTranslationsController.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -8543,13 +8543,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'r' (duplicate), 'a' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminTranslationsController.php#L1710-L1716",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminTranslationsController.php#L1710-L1716",
             "snippet": [
                 {
                     "number": 1710,
@@ -8638,13 +8638,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'r' (duplicate), 'a' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminTranslationsController.php#L1711-L1717",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminTranslationsController.php#L1711-L1717",
             "snippet": [
                 {
                     "number": 1711,
@@ -8733,7 +8733,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8744,7 +8744,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/controllers/admin/AdminTranslationsController.php#L2664-L2670",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/controllers/admin/AdminTranslationsController.php#L2664-L2670",
             "snippet": [
                 {
                     "number": 2664,
@@ -8889,13 +8889,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Adapter/ImageThumbnailsRegenerator.php#L130-L136",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Adapter/ImageThumbnailsRegenerator.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -9056,21 +9056,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"__\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). The risky part is: [~\\-_\\/&.+]|\\w|%\\d+|\\s Hotspot offsets: 4-28 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[~\\-_\\/&\\.\\+]|\\w|%\\d+|\\s)\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"[~\\-_\\/&\\.\\+]\" and \"\\w\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -9084,7 +9084,7 @@
                 "limit": 100000
             },
             "subject": "________________________________________________________!",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Adapter/Meta/ShopUrlDataConfiguration.php#L116-L122",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Adapter/Meta/ShopUrlDataConfiguration.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -9253,14 +9253,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9271,7 +9271,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Adapter/Product/Validate/ProductValidator.php#L135-L141",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Adapter/Product/Validate/ProductValidator.php#L135-L141",
             "snippet": [
                 {
                     "number": 135,
@@ -9456,13 +9456,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Adapter/Requirement/CheckMissingOrUpdatedFiles.php#L41-L47",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Adapter/Requirement/CheckMissingOrUpdatedFiles.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -9551,14 +9551,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9569,7 +9569,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/CleanHtmlValidator.php#L17-L23",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/CleanHtmlValidator.php#L17-L23",
             "snippet": [
                 {
                     "number": 17,
@@ -9754,14 +9754,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9772,7 +9772,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -9909,7 +9909,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -9920,7 +9920,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/CleanHtmlValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -10041,21 +10041,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -10066,7 +10066,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/CleanHtmlValidator.php#L52-L58",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/CleanHtmlValidator.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,
@@ -10275,14 +10275,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -10293,7 +10293,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
             "snippet": [
                 {
                     "number": 224,
@@ -10430,7 +10430,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -10441,7 +10441,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/TypedRegexValidator.php#L224-L230",
             "snippet": [
                 {
                     "number": 224,
@@ -10562,14 +10562,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -10580,7 +10580,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/ConstraintValidator/TypedRegexValidator.php#L228-L234",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/ConstraintValidator/TypedRegexValidator.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,
@@ -10765,20 +10765,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Domain/Country/AddressFormat/AddressFormatChecker.php#L35-L41",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Domain/Country/AddressFormat/AddressFormatChecker.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -10919,14 +10919,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -10938,7 +10938,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Domain/Customer/ValueObject/ApeCode.php#L22-L28",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Domain/Customer/ValueObject/ApeCode.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -11147,13 +11147,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Domain/CustomerService/CommandHandler/ForwardCustomerThreadHandler.php#L309-L315",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Domain/CustomerService/CommandHandler/ForwardCustomerThreadHandler.php#L309-L315",
             "snippet": [
                 {
                     "number": 309,
@@ -11338,7 +11338,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -11349,7 +11349,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Import/File/FileUploader.php#L119-L125",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Import/File/FileUploader.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -11554,20 +11554,20 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \" \", which without /u is the bytes \\xC2 \\xA0: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Localization/Currency/PatternTransformer.php#L79-L85",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Localization/Currency/PatternTransformer.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -11656,13 +11656,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \" \", which without /u is the bytes \\xC2 \\xA0: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Localization/Currency/PatternTransformer.php#L80-L86",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Localization/Currency/PatternTransformer.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -11751,20 +11751,20 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \" \", which without /u is the bytes \\xC2 \\xA0: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Localization/Currency/PatternTransformer.php#L81-L87",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Localization/Currency/PatternTransformer.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -11853,13 +11853,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \" \", which without /u is the bytes \\xC2 \\xA0: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Localization/Currency/PatternTransformer.php#L82-L88",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Localization/Currency/PatternTransformer.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -11948,13 +11948,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Translation/Storage/Loader/LegacyTranslationKey.php#L18-L24",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Translation/Storage/Loader/LegacyTranslationKey.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -12239,13 +12239,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*,\\s*)\" at offset 0 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Util/String/StringModifier.php#L78-L84",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Util/String/StringModifier.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -12386,13 +12386,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '%' (duplicate), '5' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/Core/Util/Url/UrlCleaner.php#L32-L38",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/Core/Util/Url/UrlCleaner.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -12533,7 +12533,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -12544,7 +12544,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/PrestaShopBundle/DependencyInjection/Compiler/ModulesDoctrineCompilerPass.php#L104-L110",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/PrestaShopBundle/DependencyInjection/Compiler/ModulesDoctrineCompilerPass.php#L104-L110",
             "snippet": [
                 {
                     "number": 104,
@@ -12713,13 +12713,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/PrestaShopBundle/Install/SqlLoader.php#L88-L94",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/PrestaShopBundle/Install/SqlLoader.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -12856,7 +12856,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -12867,7 +12867,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/PrestaShopBundle/Translation/Exporter/ThemeExporter.php#L380-L386",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/PrestaShopBundle/Translation/Exporter/ThemeExporter.php#L380-L386",
             "snippet": [
                 {
                     "number": 380,
@@ -13032,13 +13032,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/1aa05415318967ec6aea1901fdb47ffc2c22bc08/src/PrestaShopBundle/Translation/Loader/LegacyTranslationKey.php#L16-L22",
+            "permalink": "https://github.com/PrestaShop/PrestaShop/blob/10f52f090621f9d0bc23c223106457a9b94dc406/src/PrestaShopBundle/Translation/Loader/LegacyTranslationKey.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,

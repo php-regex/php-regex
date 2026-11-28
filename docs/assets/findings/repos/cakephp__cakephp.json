@@ -1,6 +1,6 @@
 {
     "repo": "cakephp/cakephp",
-    "sha": "0c1cc741b5294f3e70ad0dc0a5132800e131429a",
+    "sha": "5c11b5e2c081a309712c8bf32a1a3e9837d55a85",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Console/CommandCollection.php#L75-L81",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Console/CommandCollection.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -205,7 +205,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -216,7 +216,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Console/ConsoleOutput.php#L239-L245",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Console/ConsoleOutput.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -429,13 +429,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\\\' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Core/StaticConfigTrait.php#L218-L224",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Core/StaticConfigTrait.php#L218-L224",
             "snippet": [
                 {
                     "number": 218,
@@ -524,7 +524,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -535,7 +535,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Core/functions.php#L445-L451",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Core/functions.php#L445-L451",
             "snippet": [
                 {
                     "number": 445,
@@ -672,7 +672,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -683,7 +683,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Core/functions.php#L486-L492",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Core/functions.php#L486-L492",
             "snippet": [
                 {
                     "number": 486,
@@ -820,13 +820,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Database/Driver/Mysql.php#L346-L352",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Database/Driver/Mysql.php#L346-L352",
             "snippet": [
                 {
                     "number": 346,
@@ -1023,14 +1023,14 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:['\"])\" at offset 1; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:['\"])\" at offset 25; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -1041,7 +1041,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Database/Expression/QueryExpression.php#L881-L887",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Database/Expression/QueryExpression.php#L881-L887",
             "snippet": [
                 {
                     "number": 881,
@@ -1246,14 +1246,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\([^)]*\\)[^)]*)\" at offset 45 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -1264,7 +1264,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Database/Schema/SqliteSchemaDialect.php#L709-L715",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Database/Schema/SqliteSchemaDialect.php#L709-L715",
             "snippet": [
                 {
                     "number": 709,
@@ -1529,13 +1529,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Http/HeaderUtility.php#L32-L38",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Http/HeaderUtility.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1724,13 +1724,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Http/HeaderUtility.php#L53-L59",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Http/HeaderUtility.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -1899,7 +1899,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\")\" at offset 9; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -1910,7 +1910,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Http/HeaderUtility.php#L114-L120",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Http/HeaderUtility.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2095,7 +2095,7 @@
         {
             "id": "f-c8565d4d67",
             "file": "src/Mailer/Message.php",
-            "line": 1666,
+            "line": 1684,
             "column": 29,
             "pattern": "/<[a-z]+.*>/i",
             "source": "preg_match()",
@@ -2107,16 +2107,16 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Mailer/Message.php#L1663-L1669",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Mailer/Message.php#L1681-L1687",
             "snippet": [
                 {
-                    "number": 1663,
+                    "number": 1681,
                     "focus": false,
                     "runs": [
                         [
@@ -2126,7 +2126,7 @@
                     ]
                 },
                 {
-                    "number": 1664,
+                    "number": 1682,
                     "focus": false,
                     "runs": [
                         [
@@ -2136,7 +2136,7 @@
                     ]
                 },
                 {
-                    "number": 1665,
+                    "number": 1683,
                     "focus": false,
                     "runs": [
                         [
@@ -2146,7 +2146,7 @@
                     ]
                 },
                 {
-                    "number": 1666,
+                    "number": 1684,
                     "focus": true,
                     "runs": [
                         [
@@ -2220,7 +2220,7 @@
                     ]
                 },
                 {
-                    "number": 1667,
+                    "number": 1685,
                     "focus": false,
                     "runs": [
                         [
@@ -2230,7 +2230,7 @@
                     ]
                 },
                 {
-                    "number": 1668,
+                    "number": 1686,
                     "focus": false,
                     "runs": [
                         [
@@ -2240,7 +2240,7 @@
                     ]
                 },
                 {
-                    "number": 1669,
+                    "number": 1687,
                     "focus": false,
                     "runs": [
                         [
@@ -2266,14 +2266,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0::0\" . \"/A=-\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 57 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 27-36 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Flatten nested quantifiers or introduce atomic groups. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:/(?:[a-z][a-z0-9-_]*=)?(?:(…\" at offset 219 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -2287,7 +2287,7 @@
                 "limit": 100000
             },
             "subject": "0::0/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-/A=-!",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Routing/Router.php#L824-L830",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Routing/Router.php#L824-L830",
             "snippet": [
                 {
                     "number": 824,
@@ -2376,7 +2376,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2387,7 +2387,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/TestSuite/TestCase.php#L804-L810",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/TestSuite/TestCase.php#L804-L810",
             "snippet": [
                 {
                     "number": 804,
@@ -2508,13 +2508,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Utility/Text.php#L623-L629",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Utility/Text.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -2715,13 +2715,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/Utility/Text.php#L637-L643",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/Utility/Text.php#L637-L643",
             "snippet": [
                 {
                     "number": 637,
@@ -2870,20 +2870,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/View/Helper/TextHelper.php#L111-L117",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/View/Helper/TextHelper.php#L111-L117",
             "snippet": [
                 {
                     "number": 111,
@@ -3120,13 +3120,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/cakephp/cakephp/blob/0c1cc741b5294f3e70ad0dc0a5132800e131429a/src/View/Helper/TextHelper.php#L241-L247",
+            "permalink": "https://github.com/cakephp/cakephp/blob/5c11b5e2c081a309712c8bf32a1a3e9837d55a85/src/View/Helper/TextHelper.php#L241-L247",
             "snippet": [
                 {
                     "number": 241,

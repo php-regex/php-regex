@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -158,7 +158,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -294,7 +294,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -422,7 +422,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -569,7 +569,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -740,7 +740,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -911,7 +911,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1047,7 +1047,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1231,7 +1231,7 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'd' (covered by range 'a'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -1398,7 +1398,7 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^>\"']|\"[^\"]*\"|'[^']*')\" at offset 33 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1673,7 +1673,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1877,7 +1877,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2025,7 +2025,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2173,7 +2173,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2321,14 +2321,14 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2464,7 +2464,7 @@
                     "rule": "regex.lint.group.alwaysEmptyCapture",
                     "message": "Capturing group \"(\\d+)\" never captures any text: it is empty or unset wherever the pattern matches.",
                     "hint": "Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.",
-                    "docs": "https://php-regex.com/reference/rules/#capture-that-never-captures-text"
+                    "docs": "https://php-regex.com/reference/rules/capture-that-never-captures-text/"
                 }
             ],
             "rewrite": null,
@@ -3011,14 +3011,14 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3154,7 +3154,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3290,7 +3290,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -3461,7 +3461,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3609,7 +3609,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3757,7 +3757,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3905,7 +3905,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4149,7 +4149,7 @@
                     "rule": "regex.lint.charclass.backrefAsOctal",
                     "message": "Suspicious \\2 inside character class: this is octal (\\x02), not a backreference to group 2.",
                     "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 2, move the check outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/backreference-written-inside-a-character-class/"
                 }
             ],
             "rewrite": null,

@@ -22,7 +22,7 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\s+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\s*=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=|\\s+)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
@@ -117,7 +117,7 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=\\s*\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:=\\?[^?=]+\\?[QBqb]\\?[^\\?]+\\?=\\s*|\\s+)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
@@ -212,7 +212,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,

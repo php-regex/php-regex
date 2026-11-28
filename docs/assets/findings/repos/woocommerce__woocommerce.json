@@ -1,6 +1,6 @@
 {
     "repo": "woocommerce/woocommerce",
-    "sha": "57738f1fb356d162fdb6a31a751b998214d74ef3",
+    "sha": "d769a1302f5e6784f1c23dafb7413768d7a7a65c",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/.github/workflows/scripts/post-request-shared.php#L116-L122",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/.github/workflows/scripts/post-request-shared.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,
@@ -177,13 +177,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/blueprint/src/Importers/ImportRunSql.php#L247-L253",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/blueprint/src/Importers/ImportRunSql.php#L247-L253",
             "snippet": [
                 {
                     "number": 247,
@@ -312,13 +312,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()\"'\\\\]+|\\\\.|\"[^\"\\\\]*+(?:…\" at offset 102 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php#L99-L105",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/ContentRenderer/class-css-selector-normalizer.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -407,14 +407,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -425,7 +425,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L152-L158",
             "snippet": [
                 {
                     "number": 152,
@@ -554,14 +554,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -572,7 +572,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L159-L165",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L159-L165",
             "snippet": [
                 {
                     "number": 159,
@@ -705,14 +705,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -723,7 +723,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -852,14 +852,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -870,7 +870,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L178-L184",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L178-L184",
             "snippet": [
                 {
                     "number": 178,
@@ -991,14 +991,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1009,7 +1009,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L366-L372",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L366-L372",
             "snippet": [
                 {
                     "number": 366,
@@ -1138,14 +1138,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1156,7 +1156,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L374-L380",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L374-L380",
             "snippet": [
                 {
                     "number": 374,
@@ -1281,14 +1281,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1299,7 +1299,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L646-L652",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L646-L652",
             "snippet": [
                 {
                     "number": 646,
@@ -1416,14 +1416,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1434,7 +1434,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L650-L656",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/Renderer/class-html2text.php#L650-L656",
             "snippet": [
                 {
                     "number": 650,
@@ -1551,13 +1551,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Engine/class-theme-controller.php#L263-L269",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Engine/class-theme-controller.php#L263-L269",
             "snippet": [
                 {
                     "number": 263,
@@ -1754,13 +1754,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -1969,13 +1969,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-audio.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2184,13 +2184,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L114-L120",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2387,13 +2387,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L154-L160",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Integrations/Core/Renderer/Blocks/class-text.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -2582,13 +2582,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L714-L720",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/src/Integrations/Utils/class-html-processing-helper.php#L714-L720",
             "snippet": [
                 {
                     "number": 714,
@@ -2913,13 +2913,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -3076,14 +3076,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3094,7 +3094,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -3211,14 +3211,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3229,7 +3229,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3346,14 +3346,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3364,7 +3364,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/email-editor/vendor-prefixed/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -3485,7 +3485,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -3496,7 +3496,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/packages/php/woocommerce-analytics/src/class-pixel-builder.php#L41-L47",
             "snippet": [
                 {
                     "number": 41,
@@ -3705,13 +3705,13 @@
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/admin/class-wc-admin-marketplace-promotions.php#L711-L717",
             "snippet": [
                 {
                     "number": 711,
@@ -3880,13 +3880,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -4031,13 +4031,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/admin/helper/class-wc-helper-sanitization.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -4126,13 +4126,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/class-wc-download-handler.php#L656-L662",
             "snippet": [
                 {
                     "number": 656,
@@ -4341,13 +4341,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/class-wc-product-download.php#L354-L360",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/class-wc-product-download.php#L354-L360",
             "snippet": [
                 {
                     "number": 354,
@@ -4504,7 +4504,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:s)\" at offset 11; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -4515,7 +4515,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L1014-L1020",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/import/class-wc-product-csv-importer.php#L1014-L1020",
             "snippet": [
                 {
                     "number": 1014,
@@ -4792,13 +4792,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/rest-api/Controllers/Version3/class-wc-rest-controller.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -4927,7 +4927,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -4938,7 +4938,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/includes/tracks/class-wc-tracks-event.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -5147,13 +5147,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -5310,14 +5310,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5328,7 +5328,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -5445,14 +5445,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5463,7 +5463,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/lib/packages/Sabberworm/CSS/Parsing/ParserState.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -5580,14 +5580,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5598,7 +5598,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/lib/packages/Sabberworm/CSS/Value/CSSString.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -5719,7 +5719,7 @@
                     "rule": "regex.lint.alternation.duplicateDisjunction",
                     "message": "Duplicate alternation branch \"94\".",
                     "hint": "Remove the redundant alternative.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-alternation-branches/"
                 }
             ],
             "rewrite": {
@@ -5730,7 +5730,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php#L107-L113",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Admin/Features/Fulfillments/Providers/USPSShippingProvider.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -5931,7 +5931,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5942,7 +5942,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L151-L157",
             "snippet": [
                 {
                     "number": 151,
@@ -6099,7 +6099,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6110,7 +6110,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L175-L181",
             "snippet": [
                 {
                     "number": 175,
@@ -6315,7 +6315,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6326,7 +6326,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -6483,7 +6483,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6494,7 +6494,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Cart.php#L194-L200",
             "snippet": [
                 {
                     "number": 194,
@@ -6651,20 +6651,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/CartOrderSummaryBlock.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -6797,7 +6797,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6808,7 +6808,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -7013,7 +7013,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7024,7 +7024,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L286-L292",
             "snippet": [
                 {
                     "number": 286,
@@ -7181,7 +7181,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7192,7 +7192,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L287-L293",
             "snippet": [
                 {
                     "number": 287,
@@ -7349,7 +7349,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7360,7 +7360,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L298-L304",
             "snippet": [
                 {
                     "number": 298,
@@ -7517,7 +7517,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7528,7 +7528,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -7685,7 +7685,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7696,7 +7696,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L310-L316",
             "snippet": [
                 {
                     "number": 310,
@@ -7853,7 +7853,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7864,7 +7864,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/Checkout.php#L314-L320",
             "snippet": [
                 {
                     "number": 314,
@@ -8021,20 +8021,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/BlockTypes/CheckoutOrderSummaryBlock.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -8167,20 +8167,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '_' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/Patterns/PatternRegistry.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -8329,13 +8329,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Utils/Utils.php#L25-L31",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/Utils/Utils.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -8484,13 +8484,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Blocks/Utils/Utils.php#L26-L32",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Blocks/Utils/Utils.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -8639,13 +8639,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/Admin/OrderMilestoneEasterEgg.php#L441-L447",
             "snippet": [
                 {
                     "number": 441,
@@ -8806,20 +8806,20 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^>\"']|\"[^\"]*\"|'[^']*')\" at offset 9 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^>\"']|\"[^\"]*\"|'[^']*')\" at offset 88 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php#L22-L28",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/AgentReadiness/JsonLd.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -9200,13 +9200,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -9359,13 +9359,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -9518,13 +9518,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L79-L85",
             "snippet": [
                 {
                     "number": 79,
@@ -9677,13 +9677,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -9836,13 +9836,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -9995,13 +9995,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -10154,13 +10154,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/Internal/EmailEditor/WooContentProcessor.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -10313,13 +10313,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/plugins/woocommerce/src/StoreApi/Authentication.php#L457-L463",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/plugins/woocommerce/src/StoreApi/Authentication.php#L457-L463",
             "snippet": [
                 {
                     "number": 457,
@@ -10464,13 +10464,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/woocommerce/woocommerce/blob/57738f1fb356d162fdb6a31a751b998214d74ef3/tools/monorepo/check-changelogger-use.php#L82-L88",
+            "permalink": "https://github.com/woocommerce/woocommerce/blob/d769a1302f5e6784f1c23dafb7413768d7a7a65c/tools/monorepo/check-changelogger-use.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,

@@ -1,6 +1,6 @@
 {
     "repo": "espocrm/espocrm",
-    "sha": "79a88dad96df2914bba808bcc542ac79063d6c33",
+    "sha": "837278edb203d14dc0dd6e05e14a74ef905741b8",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -22,20 +22,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'r' (duplicate), 'e' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousPipe",
                     "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
                     "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
-                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                    "docs": "https://php-regex.com/reference/rules/alternation-like-character-classes/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Mail/Account/GroupAccount/BouncedRecognizer.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -172,13 +172,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/Cache/FileCacheItemPool.php#L164-L170",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Utils/Cache/FileCacheItemPool.php#L164-L170",
             "snippet": [
                 {
                     "number": 164,
@@ -319,13 +319,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/File/Manager.php#L978-L984",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Utils/File/Manager.php#L978-L984",
             "snippet": [
                 {
                     "number": 978,
@@ -446,13 +446,13 @@
                     "rule": "regex.lint.quantifier.assertion",
                     "message": "Quantifier \"+\" on an assertion changes nothing: PCRE checks it once.",
                     "hint": "Remove the quantifier.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-assertion"
+                    "docs": "https://php-regex.com/reference/rules/quantified-assertion/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/Preload.php#L77-L83",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Utils/Preload.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -597,13 +597,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/System.php#L42-L48",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Utils/System.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -740,13 +740,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/espocrm/espocrm/blob/79a88dad96df2914bba808bcc542ac79063d6c33/application/Espo/Core/Utils/System.php#L45-L51",
+            "permalink": "https://github.com/espocrm/espocrm/blob/837278edb203d14dc0dd6e05e14a74ef905741b8/application/Espo/Core/Utils/System.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,

@@ -1,6 +1,6 @@
 {
     "repo": "codeigniter4/CodeIgniter4",
-    "sha": "71f6dccfebcd7e1d8eee95eb507ee351238953fc",
+    "sha": "418fe84687ddc4a13bfd6c236ba63ab01a4ccf47",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.quantifier.assertion",
                     "message": "Quantifier \"+\" on an assertion changes nothing: PCRE checks it once.",
                     "hint": "Remove the quantifier.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-assertion"
+                    "docs": "https://php-regex.com/reference/rules/quantified-assertion/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/preload.php#L89-L95",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/preload.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -173,13 +173,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Commands/Encryption/GenerateKey.php#L184-L190",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Commands/Encryption/GenerateKey.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -384,14 +384,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": {
@@ -402,7 +402,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Database/OCI8/Connection.php#L257-L263",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Database/OCI8/Connection.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -543,7 +543,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -554,7 +554,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Debug/Toolbar.php#L524-L530",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Debug/Toolbar.php#L524-L530",
             "snippet": [
                 {
                     "number": 524,
@@ -687,13 +687,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\[[^]]*\\]\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:(?:[^\\[]+)|\\[[^]]*\\])\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/HTTP/RequestTrait.php#L320-L326",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/HTTP/RequestTrait.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -858,20 +858,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'o' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousPipe",
                     "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
                     "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
-                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                    "docs": "https://php-regex.com/reference/rules/alternation-like-character-classes/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Helpers/inflector_helper.php#L35-L41",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Helpers/inflector_helper.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -1008,13 +1008,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Helpers/url_helper.php#L156-L162",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Helpers/url_helper.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -1159,13 +1159,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Helpers/url_helper.php#L189-L195",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Helpers/url_helper.php#L189-L195",
             "snippet": [
                 {
                     "number": 189,
@@ -1310,13 +1310,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/ThirdParty/Kint/Parser/ColorPlugin.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -1525,13 +1525,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class. Holds when DIRECTORY_SEPARATOR is \"/\".",
                     "hint": "Redundant elements: '/' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L53-L59",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/ThirdParty/Kint/Parser/FsPathPlugin.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -1620,7 +1620,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1631,7 +1631,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/ThirdParty/Kint/Renderer/Rich/CallablePlugin.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -1784,13 +1784,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Typography/Typography.php#L108-L114",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Typography/Typography.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -1919,13 +1919,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Typography/Typography.php#L112-L118",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Typography/Typography.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2054,14 +2054,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<\" . \"!\" x n . \"<>\" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: [^<>]+ Hotspot offsets: 5-11 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^<>]+(?:\"[^\"]*\"|'[^']*')?)\" at offset 2 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -2075,7 +2075,7 @@
                 "limit": 100000
             },
             "subject": "<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!<>",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/Typography/Typography.php#L130-L136",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/Typography/Typography.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -2292,7 +2292,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2303,7 +2303,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/71f6dccfebcd7e1d8eee95eb507ee351238953fc/system/View/Parser.php#L463-L469",
+            "permalink": "https://github.com/codeigniter4/CodeIgniter4/blob/418fe84687ddc4a13bfd6c236ba63ab01a4ccf47/system/View/Parser.php#L463-L469",
             "snippet": [
                 {
                     "number": 463,

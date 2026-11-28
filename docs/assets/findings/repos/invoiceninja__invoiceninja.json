@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -281,14 +281,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -456,7 +456,7 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,

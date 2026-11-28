@@ -1,6 +1,6 @@
 {
     "repo": "reactphp/http",
-    "sha": "77e779503453ab91013426c77594fd5f3b0cbad1",
+    "sha": "1fd99183fd3508f47a29f630bccc0505c2b9d11a",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.php#L53-L59",
+            "permalink": "https://github.com/reactphp/http/blob/1fd99183fd3508f47a29f630bccc0505c2b9d11a/src/Message/Uri.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -145,13 +145,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.php#L171-L177",
+            "permalink": "https://github.com/reactphp/http/blob/1fd99183fd3508f47a29f630bccc0505c2b9d11a/src/Message/Uri.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -268,13 +268,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.v1.php#L47-L53",
+            "permalink": "https://github.com/reactphp/http/blob/1fd99183fd3508f47a29f630bccc0505c2b9d11a/src/Message/Uri.v1.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -391,13 +391,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/reactphp/http/blob/77e779503453ab91013426c77594fd5f3b0cbad1/src/Message/Uri.v1.php#L165-L171",
+            "permalink": "https://github.com/reactphp/http/blob/1fd99183fd3508f47a29f630bccc0505c2b9d11a/src/Message/Uri.v1.php#L165-L171",
             "snippet": [
                 {
                     "number": 165,

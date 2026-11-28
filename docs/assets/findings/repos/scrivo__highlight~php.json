@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -162,7 +162,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -302,14 +302,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": {

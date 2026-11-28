@@ -1,6 +1,6 @@
 {
     "repo": "slevomat/coding-standard",
-    "sha": "a3626af1ca230c42b8e0486c1448c19a8fb9d09f",
+    "sha": "a64969ebd9c2224ad55a1fc920b7a5fd5430f191",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php#L173-L179",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a64969ebd9c2224ad55a1fc920b7a5fd5430f191/SlevomatCodingStandard/Sniffs/Commenting/InlineDocCommentDeclarationSniff.php#L173-L179",
             "snippet": [
                 {
                     "number": 173,
@@ -193,7 +193,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -204,7 +204,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L73-L79",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a64969ebd9c2224ad55a1fc920b7a5fd5430f191/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -341,7 +341,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -352,7 +352,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L74-L80",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a64969ebd9c2224ad55a1fc920b7a5fd5430f191/SlevomatCodingStandard/Sniffs/Commenting/RequireOneDocCommentSniff.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -489,13 +489,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/slevomat/coding-standard/blob/a3626af1ca230c42b8e0486c1448c19a8fb9d09f/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php#L52-L58",
+            "permalink": "https://github.com/slevomat/coding-standard/blob/a64969ebd9c2224ad55a1fc920b7a5fd5430f191/SlevomatCodingStandard/Sniffs/PHP/TypeCastSniff.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,

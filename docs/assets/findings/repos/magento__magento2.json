@@ -1,6 +1,6 @@
 {
     "repo": "magento/magento2",
-    "sha": "ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4",
+    "sha": "9b6e66a85527966527bacb7ee2ef143bd97cc0ef",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php#L62-L68",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/Product/Attribute/Backend/Stock.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -197,13 +197,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L76-L82",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -392,13 +392,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L81-L87",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/Product/Option/Type/Date.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -555,7 +555,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -566,7 +566,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/Product/Option/Type/File/Validator.php#L134-L140",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/Product/Option/Type/File/Validator.php#L134-L140",
             "snippet": [
                 {
                     "number": 134,
@@ -727,7 +727,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -738,7 +738,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/Product/ReservedAttributeList.php#L26-L32",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/Product/ReservedAttributeList.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -895,13 +895,13 @@
                     "rule": "regex.lint.alternation.overlap",
                     "message": "Alternation branches \"<\" and \"<=\" overlap.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-alternation-branches/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Catalog/Model/ResourceModel/Product/Collection.php#L2335-L2341",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Catalog/Model/ResourceModel/Product/Collection.php#L2335-L2341",
             "snippet": [
                 {
                     "number": 2335,
@@ -1094,14 +1094,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"HTTP://-\" . \"----\" x n . \"!!http\" Replayed on PCRE2 10.49: preg_match fails from length 34 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9\\-]+ Hotspot offsets: 24-34 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(.[a-z0-9-]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1115,7 +1115,7 @@
                 "limit": 100000
             },
             "subject": "HTTP://---------------------------------------------------------------------------------!!http",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/CatalogImportExport/Model/Import/Product/Validator/Media.php#L16-L22",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/CatalogImportExport/Model/Import/Product/Validator/Media.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -1400,13 +1400,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/CatalogSearch/Model/Indexer/Fulltext/Action/DataProvider.php#L630-L636",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/CatalogSearch/Model/Indexer/Fulltext/Action/DataProvider.php#L630-L636",
             "snippet": [
                 {
                     "number": 630,
@@ -1527,14 +1527,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \"____\" x n . \"!::\" Replayed on PCRE2 10.49: preg_match fails from length 28 (backtrack_limit 100000, JIT off). The risky part is: [A-Za-z0-9_]+ Hotspot offsets: 18-31 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:_[A-Za-z0-9_]+)\" at offset 14 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1548,7 +1548,7 @@
                 "limit": 100000
             },
             "subject": "0________________________________________________________________________________________________!::",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Model/Validator/DirectiveValidator.php#L60-L66",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Model/Validator/DirectiveValidator.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -1805,7 +1805,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1816,7 +1816,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Model/Wysiwyg/Images/Storage.php#L32-L38",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Model/Wysiwyg/Images/Storage.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -1969,20 +1969,20 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"(.*?{{widget.*?}})\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Setup/ContentConverter.php#L63-L69",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Setup/ContentConverter.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -2159,7 +2159,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2170,7 +2170,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L332-L338",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L332-L338",
             "snippet": [
                 {
                     "number": 332,
@@ -2307,14 +2307,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2325,7 +2325,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L333-L339",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L333-L339",
             "snippet": [
                 {
                     "number": 333,
@@ -2442,14 +2442,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2460,7 +2460,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L337-L343",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Cms/Setup/Patch/Data/CreateDefaultPages.php#L337-L343",
             "snippet": [
                 {
                     "number": 337,
@@ -2577,13 +2577,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php#L87-L93",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Config/Model/Config/Structure/ElementVisibility/ConcealInProduction.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2752,7 +2752,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2763,7 +2763,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Csp/Helper/InlineUtil.php#L131-L137",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Csp/Helper/InlineUtil.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -2936,7 +2936,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[\\p{L}\\p{M}\\,\\-\\_\\.'’`&\\s\\d])\" at offset 0; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -2947,7 +2947,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Customer/Model/Validator/Name.php#L15-L21",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Customer/Model/Validator/Name.php#L15-L21",
             "snippet": [
                 {
                     "number": 15,
@@ -3092,7 +3092,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3103,7 +3103,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Directory/Model/Country.php#L157-L163",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Directory/Model/Country.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -3260,7 +3260,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3271,7 +3271,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Directory/Model/Country.php#L159-L165",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Directory/Model/Country.php#L159-L165",
             "snippet": [
                 {
                     "number": 159,
@@ -3408,13 +3408,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Eav/Model/Validator/Attribute/Code.php#L24-L30",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Eav/Model/Validator/Attribute/Code.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -3607,14 +3607,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0<00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off). The risky part is: \\d+ Hotspot offsets: 11-14 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"((\\d+<)?-?\\d+%?\\s?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3628,7 +3628,7 @@
                 "limit": 100000
             },
             "subject": "0<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<000<00!",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Elasticsearch/Model/Config/Backend/MinimumShouldMatch.php#L36-L42",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Elasticsearch/Model/Config/Backend/MinimumShouldMatch.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -3809,7 +3809,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:.)\" at offset 13; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -3820,7 +3820,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Email/Model/AbstractTemplate.php#L319-L325",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Email/Model/AbstractTemplate.php#L319-L325",
             "snippet": [
                 {
                     "number": 319,
@@ -3977,13 +3977,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Email/Model/Template/Config.php#L140-L146",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Email/Model/Template/Config.php#L140-L146",
             "snippet": [
                 {
                     "number": 140,
@@ -4204,20 +4204,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.backrefAsOctal",
                     "message": "Suspicious \\1 inside character class: this is octal (\\x01), not a backreference to group 1.",
                     "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/backreference-written-inside-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Email/Model/Template/Filter.php#L61-L67",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Email/Model/Template/Filter.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -4422,13 +4422,13 @@
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\{\\{[^}]*\\}\\}\" and \"[^\\s\"'<>`]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Email/Model/Template/Validator.php#L20-L26",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Email/Model/Template/Validator.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -4517,21 +4517,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"URL(\" . \"{{}}{{}}\" x n . \"\\\")\" Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: \\{\\{[^}]*\\}\\}|[^\\s\"')] Hotspot offsets: 73-95 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\{\\{[^}]*\\}\\}|[^\\s\"')])\" at offset 70 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\{\\{[^}]*\\}\\}\" and \"[^\\s\"')]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -4545,7 +4545,7 @@
                 "limit": 100000
             },
             "subject": "URL({{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}{{}}\")",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Email/Model/Template/Validator.php#L31-L37",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Email/Model/Template/Validator.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -4634,7 +4634,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4645,7 +4645,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/JwtUserToken/Model/SecretBasedJwksFactory.php#L34-L40",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/JwtUserToken/Model/SecretBasedJwksFactory.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -4766,14 +4766,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -4784,7 +4784,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/PageCache/Model/Config.php#L262-L268",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/PageCache/Model/Config.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -4969,14 +4969,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -4987,7 +4987,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/PageCache/Model/Varnish/VclGenerator.php#L131-L137",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/PageCache/Model/Varnish/VclGenerator.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -5172,13 +5172,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"62[4-6][0-9]{13,16}\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:622(1(2[6-9][0-9]{10,13}|[3-9][0-9]{11,14})|[3-8][0-9]{12,15}|9([[0-1][0-9]{11,14}|2[0-5][0-9]{10,13}))|62[4-6][0-9]{13,16}|628[2-8][0-9]{12,15})\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Payment/Model/Method/Cc.php#L145-L151",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Payment/Model/Method/Cc.php#L145-L151",
             "snippet": [
                 {
                     "number": 145,
@@ -5267,13 +5267,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/ReleaseNotification/Ui/Renderer/NotificationRenderer.php#L184-L190",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/ReleaseNotification/Ui/Renderer/NotificationRenderer.php#L184-L190",
             "snippet": [
                 {
                     "number": 184,
@@ -5482,14 +5482,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '^' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -5500,7 +5500,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/SalesRule/Model/Rule/Condition/Product.php#L245-L251",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/SalesRule/Model/Rule/Condition/Product.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -5625,13 +5625,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Store/Model/ResourceModel/Website.php#L68-L74",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Store/Model/ResourceModel/Website.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -5808,7 +5808,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5819,7 +5819,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Theme/Model/Wysiwyg/Storage.php#L51-L57",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Theme/Model/Wysiwyg/Storage.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,
@@ -5972,13 +5972,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
             "snippet": [
                 {
                     "number": 1649,
@@ -6107,14 +6107,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6125,7 +6125,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Usps/Model/Carrier.php#L1649-L1655",
             "snippet": [
                 {
                     "number": 1649,
@@ -6262,20 +6262,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Usps/Model/Carrier.php#L2297-L2303",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Usps/Model/Carrier.php#L2297-L2303",
             "snippet": [
                 {
                     "number": 2297,
@@ -6416,20 +6416,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Usps/Model/ShipmentService.php#L1027-L1033",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Usps/Model/ShipmentService.php#L1027-L1033",
             "snippet": [
                 {
                     "number": 1027,
@@ -6570,20 +6570,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 't' (duplicate), '/' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Webapi/Model/Soap/Wsdl/ComplexTypeStrategy.php#L403-L409",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Webapi/Model/Soap/Wsdl/ComplexTypeStrategy.php#L403-L409",
             "snippet": [
                 {
                     "number": 403,
@@ -6768,13 +6768,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/app/code/Magento/Wishlist/Model/Validator/MessageValidator.php#L23-L29",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/app/code/Magento/Wishlist/Model/Validator/MessageValidator.php#L23-L29",
             "snippet": [
                 {
                     "number": 23,
@@ -6891,7 +6891,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6902,7 +6902,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Api/DataObjectHelper.php#L302-L308",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Api/DataObjectHelper.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -7063,7 +7063,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7074,7 +7074,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Api/SimpleDataObjectConverter.php#L172-L178",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Api/SimpleDataObjectConverter.php#L172-L178",
             "snippet": [
                 {
                     "number": 172,
@@ -7215,13 +7215,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/App/Config/Scope/Validator.php#L84-L90",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/App/Config/Scope/Validator.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -7398,13 +7398,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/App/Scope/Validator.php#L82-L88",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/App/Scope/Validator.php#L82-L88",
             "snippet": [
                 {
                     "number": 82,
@@ -7581,13 +7581,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:\\+|\\-\\d{4})$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L201-L207",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -7720,13 +7720,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:\\+|\\-\\d{4})$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L292-L298",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L292-L298",
             "snippet": [
                 {
                     "number": 292,
@@ -7859,13 +7859,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:\\+|\\-\\d{4})$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L334-L340",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/App/Test/Unit/Response/FileTest.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,
@@ -7998,7 +7998,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1,1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -8009,7 +8009,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Cache/Core.php#L38-L44",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Cache/Core.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -8166,7 +8166,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -8177,7 +8177,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L301-L307",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L301-L307",
             "snippet": [
                 {
                     "number": 301,
@@ -8298,7 +8298,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -8309,7 +8309,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L302-L308",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Code/Generator/EntityAbstract.php#L302-L308",
             "snippet": [
                 {
                     "number": 302,
@@ -8434,13 +8434,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Communication/Config/ConfigParser.php#L26-L32",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Communication/Config/ConfigParser.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -8689,13 +8689,13 @@
                     "rule": "regex.lint.group.alwaysEmptyCapture",
                     "message": "Capturing group \"(^|[^a-zA-Z_])\" never captures any text: it is empty or unset wherever the pattern matches.",
                     "hint": "Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.",
-                    "docs": "https://php-regex.com/reference/rules/#capture-that-never-captures-text"
+                    "docs": "https://php-regex.com/reference/rules/capture-that-never-captures-text/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/DB/Helper.php#L195-L201",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/DB/Helper.php#L195-L201",
             "snippet": [
                 {
                     "number": 195,
@@ -8924,13 +8924,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/DB/Helper/InitStatementsCleanup.php#L43-L49",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/DB/Helper/InitStatementsCleanup.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -9175,7 +9175,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9186,7 +9186,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/DB/Select.php#L274-L280",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/DB/Select.php#L274-L280",
             "snippet": [
                 {
                     "number": 274,
@@ -9319,13 +9319,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"https\\:\\/\\/\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:http\\:\\/\\/|https\\:\\/\\/)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Data/Form/Element/Image.php#L74-L80",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Data/Form/Element/Image.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -9450,7 +9450,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9461,7 +9461,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/DataObject.php#L373-L379",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/DataObject.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -9622,7 +9622,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9633,7 +9633,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Encryption/Encryptor.php#L145-L151",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Encryption/Encryptor.php#L145-L151",
             "snippet": [
                 {
                     "number": 145,
@@ -9754,28 +9754,28 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \"/00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 44 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9_]+[a-z0-9._]* Hotspot offsets: 27-49 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(\\/[a-z0-9_]+[a-z0-9\\._]*)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -9789,7 +9789,7 @@
                 "limit": 100000
             },
             "subject": "0/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00/00!",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L149-L155",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L149-L155",
             "snippet": [
                 {
                     "number": 149,
@@ -10062,7 +10062,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -10073,7 +10073,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L181-L187",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Filesystem/DirectoryList.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -10198,20 +10198,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L270-L276",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L270-L276",
             "snippet": [
                 {
                     "number": 270,
@@ -10300,42 +10300,42 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -10346,7 +10346,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L330-L336",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L330-L336",
             "snippet": [
                 {
                     "number": 330,
@@ -10435,21 +10435,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -10460,7 +10460,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L341-L347",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L341-L347",
             "snippet": [
                 {
                     "number": 341,
@@ -10549,14 +10549,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -10567,7 +10567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L346-L352",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L346-L352",
             "snippet": [
                 {
                     "number": 346,
@@ -10656,28 +10656,28 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -10688,7 +10688,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L385-L391",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L385-L391",
             "snippet": [
                 {
                     "number": 385,
@@ -10777,28 +10777,28 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -10809,7 +10809,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L392-L398",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/GraphQlSchemaStitching/GraphQlReader.php#L392-L398",
             "snippet": [
                 {
                     "number": 392,
@@ -10898,14 +10898,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '^' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -10916,7 +10916,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Locale/Format.php#L90-L96",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Locale/Format.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -11041,13 +11041,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L148-L154",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L148-L154",
             "snippet": [
                 {
                     "number": 148,
@@ -11192,13 +11192,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L156-L162",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L156-L162",
             "snippet": [
                 {
                     "number": 156,
@@ -11343,13 +11343,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L200-L206",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Search/Request/Cleaner.php#L200-L206",
             "snippet": [
                 {
                     "number": 200,
@@ -11494,7 +11494,7 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -11505,7 +11505,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Setup/Declaration/Schema/Db/MySQL/Definition/Columns/OnUpdate.php#L38-L44",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Setup/Declaration/Schema/Db/MySQL/Definition/Columns/OnUpdate.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -11658,7 +11658,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -11669,7 +11669,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Stdlib/DateTime/Timezone.php#L371-L377",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Stdlib/DateTime/Timezone.php#L371-L377",
             "snippet": [
                 {
                     "number": 371,
@@ -11798,14 +11798,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -11816,7 +11816,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Stdlib/StringUtils.php#L84-L90",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Stdlib/StringUtils.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -11937,14 +11937,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -11955,7 +11955,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Validator/HTML/StyleAttributeValidator.php#L24-L30",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Validator/HTML/StyleAttributeValidator.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -12176,7 +12176,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -12187,7 +12187,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/View/Asset/NotationResolver/Variable.php#L16-L22",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/View/Asset/NotationResolver/Variable.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -12340,13 +12340,13 @@
                     "rule": "regex.lint.alternation.overlap",
                     "message": "Alternation branches \"/index\" and \"/\" overlap.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-alternation-branches/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/View/Element/Html/Link/Current.php#L27-L33",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/View/Element/Html/Link/Current.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,
@@ -12507,7 +12507,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": {
@@ -12518,7 +12518,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/View/Helper/PathPattern.php#L64-L70",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/View/Helper/PathPattern.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -12671,14 +12671,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": {
@@ -12689,7 +12689,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L119-L125",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L119-L125",
             "snippet": [
                 {
                     "number": 119,
@@ -12854,14 +12854,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -12872,7 +12872,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L161-L167",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/View/Template/Html/Minifier.php#L161-L167",
             "snippet": [
                 {
                     "number": 161,
@@ -13005,13 +13005,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/lib/internal/Magento/Framework/Xml/Generator.php#L77-L83",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/lib/internal/Magento/Framework/Xml/Generator.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -13132,13 +13132,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/setup/src/Magento/Setup/Console/CompilerPreparation.php#L136-L142",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/setup/src/Magento/Setup/Console/CompilerPreparation.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,
@@ -13275,13 +13275,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L44-L50",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -13514,13 +13514,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L47-L53",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/setup/src/Magento/Setup/Model/FixtureGenerator/SqlCollector.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,
@@ -13645,7 +13645,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -13656,7 +13656,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/magento/magento2/blob/ae45a28332e7eb7e1f73b14f4c00fbe5b5bc2cd4/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanner.php#L62-L68",
+            "permalink": "https://github.com/magento/magento2/blob/9b6e66a85527966527bacb7ee2ef143bd97cc0ef/setup/src/Magento/Setup/Module/Di/Code/Scanner/PhpScanner.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,

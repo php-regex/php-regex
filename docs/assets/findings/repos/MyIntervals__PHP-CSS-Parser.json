@@ -1,6 +1,6 @@
 {
     "repo": "MyIntervals/PHP-CSS-Parser",
-    "sha": "b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f",
+    "sha": "a02268d5b747e9dc91a00bc3e9055792a61e8818",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -8,172 +8,9 @@
     },
     "findings": [
         {
-            "id": "f-2587d28302",
-            "file": "src/Parsing/ParserState.php",
-            "line": 132,
-            "column": 40,
-            "pattern": "/[a-zA-Z0-9\\x{00A0}-\\x{FFFF}_-]/Sux",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.flag.useless.x",
-                    "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
-                    "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L129-L135",
-            "snippet": [
-                {
-                    "number": 129,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            throw new UnexpectedTokenException('', $this->peek(5), 'identifier', $this->lineNumber);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 130,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        }",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 131,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "        while (!$this->isEnd() && ($character = $this->parseCharacter(true)) !== null) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 132,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "            $matchResult = \\preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "\\\\x{00A0}",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\\\x{FFFF}",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "_-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Sux",
-                            "pg-snippet-pattern pg-tok-flag"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", $character);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 133,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            if (!\\is_int($matchResult)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 134,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "                throw new \\RuntimeException('The CSS is not valid UTF-8.', 1787112617);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 135,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "            }",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-ff7f5eec4b",
             "file": "src/Parsing/ParserState.php",
-            "line": 174,
+            "line": 170,
             "column": 44,
             "pattern": "/\\s/isSu",
             "source": "preg_match()",
@@ -185,14 +22,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -203,10 +40,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L171-L177",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a02268d5b747e9dc91a00bc3e9055792a61e8818/src/Parsing/ParserState.php#L167-L173",
             "snippet": [
                 {
-                    "number": 171,
+                    "number": 167,
                     "focus": false,
                     "runs": [
                         [
@@ -216,7 +53,7 @@
                     ]
                 },
                 {
-                    "number": 172,
+                    "number": 168,
                     "focus": false,
                     "runs": [
                         [
@@ -226,7 +63,7 @@
                     ]
                 },
                 {
-                    "number": 173,
+                    "number": 169,
                     "focus": false,
                     "runs": [
                         [
@@ -236,7 +73,7 @@
                     ]
                 },
                 {
-                    "number": 174,
+                    "number": 170,
                     "focus": true,
                     "runs": [
                         [
@@ -274,7 +111,7 @@
                     ]
                 },
                 {
-                    "number": 175,
+                    "number": 171,
                     "focus": false,
                     "runs": [
                         [
@@ -284,7 +121,7 @@
                     ]
                 },
                 {
-                    "number": 176,
+                    "number": 172,
                     "focus": false,
                     "runs": [
                         [
@@ -294,7 +131,7 @@
                     ]
                 },
                 {
-                    "number": 177,
+                    "number": 173,
                     "focus": false,
                     "runs": [
                         [
@@ -306,11 +143,11 @@
             ]
         },
         {
-            "id": "f-ff7f5eec4b-2",
+            "id": "f-4d5999452b",
             "file": "src/Parsing/ParserState.php",
-            "line": 234,
+            "line": 228,
             "column": 44,
-            "pattern": "/\\s/isSu",
+            "pattern": "/\\s/isS",
             "source": "preg_match()",
             "location": null,
             "level": "warn",
@@ -320,28 +157,28 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
-                "optimized": "/\\s/iSu",
+                "optimized": "/\\s/iS",
                 "changes": [
                     "Removed a flag nothing in the pattern reads."
                 ]
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Parsing/ParserState.php#L231-L237",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a02268d5b747e9dc91a00bc3e9055792a61e8818/src/Parsing/ParserState.php#L225-L231",
             "snippet": [
                 {
-                    "number": 231,
+                    "number": 225,
                     "focus": false,
                     "runs": [
                         [
@@ -351,7 +188,7 @@
                     ]
                 },
                 {
-                    "number": 232,
+                    "number": 226,
                     "focus": false,
                     "runs": [
                         [
@@ -361,7 +198,7 @@
                     ]
                 },
                 {
-                    "number": 233,
+                    "number": 227,
                     "focus": false,
                     "runs": [
                         [
@@ -371,7 +208,7 @@
                     ]
                 },
                 {
-                    "number": 234,
+                    "number": 228,
                     "focus": true,
                     "runs": [
                         [
@@ -395,7 +232,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "isSu",
+                            "isS",
                             "pg-snippet-pattern pg-tok-flag"
                         ],
                         [
@@ -409,7 +246,7 @@
                     ]
                 },
                 {
-                    "number": 235,
+                    "number": 229,
                     "focus": false,
                     "runs": [
                         [
@@ -419,17 +256,17 @@
                     ]
                 },
                 {
-                    "number": 236,
+                    "number": 230,
                     "focus": false,
                     "runs": [
                         [
-                            "                    throw new \\RuntimeException('The CSS is not valid UTF-8.', 1787112621);",
+                            "                    throw new \\RuntimeException('The regular expression match failed.', 1795787521);",
                             ""
                         ]
                     ]
                 },
                 {
-                    "number": 237,
+                    "number": 231,
                     "focus": false,
                     "runs": [
                         [
@@ -441,11 +278,11 @@
             ]
         },
         {
-            "id": "f-748694f7d2",
+            "id": "f-1f3edb34c6",
             "file": "src/Value/CSSString.php",
             "line": 60,
             "column": 44,
-            "pattern": "/[\\s{}()<>\\[\\]]/isu",
+            "pattern": "/[\\s{}()<>\\[\\]]/is",
             "source": "preg_match()",
             "location": null,
             "level": "warn",
@@ -455,25 +292,25 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
-                "optimized": "/[\\s{}()<>\\[\\]]/iu",
+                "optimized": "/[\\s{}()<>\\[\\]]/i",
                 "changes": [
                     "Removed a flag nothing in the pattern reads."
                 ]
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/b5b6f0bd2c3107b096c0fdc52dfd23d69fd6417f/src/Value/CSSString.php#L57-L63",
+            "permalink": "https://github.com/MyIntervals/PHP-CSS-Parser/blob/a02268d5b747e9dc91a00bc3e9055792a61e8818/src/Value/CSSString.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -534,7 +371,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "isu",
+                            "is",
                             "pg-snippet-pattern pg-tok-flag"
                         ],
                         [
@@ -562,7 +399,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "                    throw new \\RuntimeException('The CSS is not valid UTF-8.', 1787548272);",
+                            "                    throw new \\RuntimeException('The regular expression match failed.', 1795787522);",
                             ""
                         ]
                     ]

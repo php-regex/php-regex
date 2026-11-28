@@ -22,14 +22,14 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -256,7 +256,7 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{L}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
@@ -387,7 +387,7 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -594,14 +594,14 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(.|\\r?\\n)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\r?\\n\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -776,21 +776,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<\" . \"\\n\\n\" x n . \"!)>\" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: .|\\r?\\n Hotspot offsets: 18-25 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(.|\\r?\\n)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\r?\\n\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,

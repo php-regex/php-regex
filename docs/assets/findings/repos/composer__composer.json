@@ -1,6 +1,6 @@
 {
     "repo": "composer/composer",
-    "sha": "c4899ab08f9e05c3a2d99843221704fcc71739b2",
+    "sha": "a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:l)\" at offset 19; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/GlobalCommand.php#L154-L160",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Command/GlobalCommand.php#L154-L160",
             "snippet": [
                 {
                     "number": 154,
@@ -234,21 +234,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([_.-]?[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(([_.]|-{1,2})?[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -262,7 +262,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/InitCommand.php#L86-L92",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Command/InitCommand.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -575,21 +575,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([_.-]?[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(([_.]|-{1,2})?[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -603,7 +603,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/InitCommand.php#L297-L303",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Command/InitCommand.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -916,13 +916,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Command/PackageDiscoveryTrait.php#L221-L227",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Command/PackageDiscoveryTrait.php#L221-L227",
             "snippet": [
                 {
                     "number": 221,
@@ -1127,13 +1127,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Downloader/GitDownloader.php#L357-L363",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Downloader/GitDownloader.php#L357-L363",
             "snippet": [
                 {
                     "number": 357,
@@ -1270,13 +1270,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Downloader/SvnDownloader.php#L144-L150",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Downloader/SvnDownloader.php#L144-L150",
             "snippet": [
                 {
                     "number": 144,
@@ -1413,13 +1413,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Installer/BinaryInstaller.php#L338-L344",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Installer/BinaryInstaller.php#L338-L344",
             "snippet": [
                 {
                     "number": 338,
@@ -1588,27 +1588,20 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"\\\\[\"\\\\bfnrt\\/]\" and \"\\\\u[0-9A-Fa-f]{4}\" have overlapping character sets, which may cause unnecessary backtracking.",
-                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&string)\\s*:\\s*(?&json)\\s…\" at offset 562 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Json/JsonManipulator.php#L266-L272",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Json/JsonManipulator.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -1697,13 +1690,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Package/Version/VersionGuesser.php#L167-L173",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Package/Version/VersionGuesser.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -1836,14 +1829,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 71-80 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[_.-]?[a-z0-9]+)\" at offset 62 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1857,7 +1850,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/PlatformRepository.php#L36-L42",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Repository/PlatformRepository.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -2202,13 +2195,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/Vcs/GitDriver.php#L209-L215",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Repository/Vcs/GitDriver.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -2349,13 +2342,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Repository/Vcs/HgDriver.php#L199-L205",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Repository/Vcs/HgDriver.php#L199-L205",
             "snippet": [
                 {
                     "number": 199,
@@ -2556,13 +2549,13 @@
                     "rule": "regex.lint.quantifier.possessiveImpossible",
                     "message": "\"([^:/\\\\]++)\" never gives back a character, and takes every one \" \" could read: the pattern can never match through here.",
                     "hint": "Make the repeat greedy, or exclude from it what must follow.",
-                    "docs": "https://php-regex.com/reference/rules/#impossible-possessive-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/impossible-possessive-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/composer/blob/c4899ab08f9e05c3a2d99843221704fcc71739b2/src/Composer/Util/ProcessExecutor.php#L128-L134",
+            "permalink": "https://github.com/composer/composer/blob/a52d230b3a1224b5f2f2f587022cbe4bdb72d1aa/src/Composer/Util/ProcessExecutor.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,

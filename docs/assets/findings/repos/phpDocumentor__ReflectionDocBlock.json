@@ -22,7 +22,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[\\s\\(\\{])\" at offset 17; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -122,7 +122,7 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
@@ -337,7 +337,7 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
@@ -552,7 +552,7 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
@@ -767,7 +767,7 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?!\\.\\n|\\n{2})[\\n.]*(?![ \\t…\" at offset 270 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,

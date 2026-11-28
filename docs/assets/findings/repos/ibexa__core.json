@@ -1,6 +1,6 @@
 {
     "repo": "ibexa/core",
-    "sha": "1ebe05876c60e04bb3cefe38e4bef1dfa5d3fc7b",
+    "sha": "31fc3287398e6fb48aace4483819f437cd65bd46",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^\\\\\"]+|\\\\\\\\|\\\\'|\\\\\")\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/1ebe05876c60e04bb3cefe38e4bef1dfa5d3fc7b/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
+            "permalink": "https://github.com/ibexa/core/blob/31fc3287398e6fb48aace4483819f437cd65bd46/src/lib/Persistence/TransformationProcessor/PcreCompiler.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -197,13 +197,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"(desc)\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:(asc)|(desc)|(\\.)|(,)|(-?[0-9]+\\.[0-9]+)|(-?[0-9]+)|([a-zA-Z_][a-zA-Z0-9_]*)|\\s+)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/1ebe05876c60e04bb3cefe38e4bef1dfa5d3fc7b/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
+            "permalink": "https://github.com/ibexa/core/blob/31fc3287398e6fb48aace4483819f437cd65bd46/src/lib/QueryType/BuiltIn/SortSpec/SortSpecLexer.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -292,13 +292,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/ibexa/core/blob/1ebe05876c60e04bb3cefe38e4bef1dfa5d3fc7b/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
+            "permalink": "https://github.com/ibexa/core/blob/31fc3287398e6fb48aace4483819f437cd65bd46/src/lib/Repository/NameSchema/SchemaIdentifierExtractor.php#L27-L33",
             "snippet": [
                 {
                     "number": 27,

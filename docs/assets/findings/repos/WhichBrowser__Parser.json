@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -389,14 +389,14 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -771,7 +771,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -1138,14 +1138,14 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'W' (covered by range 'A'-'Z'), 'A' (covered by range 'A'-'Z'), 'P' (covered by range 'A'-'Z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[0-9])\" at offset 50; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -1449,7 +1449,7 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -1628,14 +1628,14 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?: )\" at offset 10; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\\/)\" at offset 49; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -1883,14 +1883,14 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'U' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"+\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -2181,14 +2181,14 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'U' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"+\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -2471,14 +2471,14 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'U' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"+\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -2741,7 +2741,7 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -2908,7 +2908,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,

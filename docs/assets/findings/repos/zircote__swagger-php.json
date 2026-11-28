@@ -1,6 +1,6 @@
 {
     "repo": "zircote/swagger-php",
-    "sha": "e5c7acbd167b0341e0a70e8e4f3f082ba78bf428",
+    "sha": "421d4cd5e819772821ad88216164cbc42a48fc55",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -40,7 +40,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/zircote/swagger-php/blob/e5c7acbd167b0341e0a70e8e4f3f082ba78bf428/src/Annotations/Operation.php#L218-L224",
+            "permalink": "https://github.com/zircote/swagger-php/blob/421d4cd5e819772821ad88216164cbc42a48fc55/src/Annotations/Operation.php#L218-L224",
             "snippet": [
                 {
                     "number": 218,

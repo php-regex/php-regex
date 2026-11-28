@@ -1,6 +1,6 @@
 {
     "repo": "wikimedia/mediawiki",
-    "sha": "dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5",
+    "sha": "f0fe6cd265a8e507b5765484bbe4910d2a88c024",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/EditPage/EditPage.php#L2539-L2545",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/EditPage/EditPage.php#L2539-L2545",
             "snippet": [
                 {
                     "number": 2539,
@@ -205,13 +205,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:0*25[0-5]|0*2[0-4][0-9]|…\" at offset 123 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/ExternalLinks/LinkFilter.php#L137-L143",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/ExternalLinks/LinkFilter.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -300,13 +300,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Installer/WebInstallerReleaseNotes.php#L16-L22",
             "snippet": [
                 {
                     "number": 16,
@@ -467,13 +467,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/JobQueue/JobRunner.php#L600-L606",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/JobQueue/JobRunner.php#L600-L606",
             "snippet": [
                 {
                     "number": 600,
@@ -638,13 +638,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Language/Converters/MniConverter.php#L81-L87",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Language/Converters/MniConverter.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -781,13 +781,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \" ([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)| ([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*))\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Language/Language.php#L3060-L3066",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Language/Language.php#L3060-L3066",
             "snippet": [
                 {
                     "number": 3060,
@@ -1036,13 +1036,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"[ \\-\\(\\)\\}\\{\\.,\\?!]([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*)|[ \\-\\(\\)\\}\\{\\.,\\?!]([a-z]|[\\xc0-\\xff][\\x80-\\xbf]*))\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Language/Language.php#L3089-L3095",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Language/Language.php#L3089-L3095",
             "snippet": [
                 {
                     "number": 3089,
@@ -1131,13 +1131,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Language/Language.php#L4331-L4337",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Language/Language.php#L4331-L4337",
             "snippet": [
                 {
                     "number": 4331,
@@ -1262,13 +1262,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"ä\", which without /u is the bytes \\xC3 \\xA4: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Languages/LanguageFi.php#L30-L36",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Languages/LanguageFi.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1405,14 +1405,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<H1\" . \"!\" x n . \"!>\" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: [^'\">]* Hotspot offsets: 32-39 Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^'\">]*|\"([^\"]*)\"|'([^']*)'…\" at offset 29 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1426,7 +1426,7 @@
                 "limit": 100000
             },
             "subject": "<H1!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/OutputTransform/Stages/HandleSectionLinks.php#L24-L30",
             "snippet": [
                 {
                     "number": 24,
@@ -1759,13 +1759,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/PageEdit/PageEdit.php#L284-L290",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/PageEdit/PageEdit.php#L284-L290",
             "snippet": [
                 {
                     "number": 284,
@@ -1946,21 +1946,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<STYLE></STYLE><LINK</STYLE>\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 225 (backtrack_limit 100000, JIT off). The risky part is: <style\\b[^>]*>.*?<\\/style>\\s*|<link\\b[^>]*>\\s* Hotspot offsets: 4-50 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:<style\\b[^>]*>.*?<\\/style>…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1974,7 +1974,7 @@
                 "limit": 100000
             },
             "subject": "<STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE><STYLE></STYLE><LINK</STYLE>!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/BlockLevelPass.php#L369-L375",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/BlockLevelPass.php#L369-L375",
             "snippet": [
                 {
                     "number": 369,
@@ -2195,13 +2195,13 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{Zs}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/CoreParserFunctions.php#L2070-L2076",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/CoreParserFunctions.php#L2070-L2076",
             "snippet": [
                 {
                     "number": 2070,
@@ -2290,13 +2290,13 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{Zs}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Parser.php#L1775-L1781",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Parser.php#L1775-L1781",
             "snippet": [
                 {
                     "number": 1775,
@@ -2385,13 +2385,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Parser.php#L2223-L2229",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Parser.php#L2223-L2229",
             "snippet": [
                 {
                     "number": 2223,
@@ -2480,28 +2480,28 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": {
@@ -2513,7 +2513,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Parser.php#L5746-L5752",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Parser.php#L5746-L5752",
             "snippet": [
                 {
                     "number": 5746,
@@ -2602,13 +2602,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Sanitizer.php#L44-L50",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Sanitizer.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -2697,20 +2697,20 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Sanitizer.php#L94-L100",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Sanitizer.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -2799,13 +2799,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"＿\", which without /u is the bytes \\xEF \\xBC \\xBF: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Sanitizer.php#L572-L578",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Sanitizer.php#L572-L578",
             "snippet": [
                 {
                     "number": 572,
@@ -2954,13 +2954,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"[\\x00-\\x20!\"#$%&'()*+,.\\/:;<=>?@[\\]^`{|}~]\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:([0-9\\-])|[\\x00-\\x20!\"#$%&'()*+,.\\/:;<=>?@[\\]^`{|}~]|\\xC2\\xA0)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Sanitizer.php#L1090-L1096",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Sanitizer.php#L1090-L1096",
             "snippet": [
                 {
                     "number": 1090,
@@ -3129,13 +3129,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Parser/Sanitizer.php#L1911-L1917",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Parser/Sanitizer.php#L1911-L1917",
             "snippet": [
                 {
                     "number": 1911,
@@ -3328,20 +3328,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Rest/Router.php#L34-L40",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Rest/Router.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -3542,13 +3542,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '!' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Search/SearchHighlighter.php#L403-L409",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Search/SearchHighlighter.php#L403-L409",
             "snippet": [
                 {
                     "number": 403,
@@ -3661,13 +3661,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Search/SearchHighlighter.php#L487-L493",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Search/SearchHighlighter.php#L487-L493",
             "snippet": [
                 {
                     "number": 487,
@@ -3804,20 +3804,20 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Title/Title.php#L2207-L2213",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Title/Title.php#L2207-L2213",
             "snippet": [
                 {
                     "number": 2207,
@@ -4014,13 +4014,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"[\\r\\n\\t]\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:[_ ]|[\\r\\n\\t]|[_ ])$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Title/TitleValue.php#L188-L194",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Title/TitleValue.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -4165,7 +4165,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4176,7 +4176,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L361-L367",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L361-L367",
             "snippet": [
                 {
                     "number": 361,
@@ -4381,7 +4381,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4392,7 +4392,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L367-L373",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L367-L373",
             "snippet": [
                 {
                     "number": 367,
@@ -4601,7 +4601,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4612,7 +4612,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L373-L379",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L373-L379",
             "snippet": [
                 {
                     "number": 373,
@@ -4797,7 +4797,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4808,7 +4808,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L852-L858",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L852-L858",
             "snippet": [
                 {
                     "number": 852,
@@ -4961,7 +4961,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4972,7 +4972,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L863-L869",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L863-L869",
             "snippet": [
                 {
                     "number": 863,
@@ -5125,7 +5125,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5136,7 +5136,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/Upload/UploadVerification.php#L903-L909",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/Upload/UploadVerification.php#L903-L909",
             "snippet": [
                 {
                     "number": 903,
@@ -5297,13 +5297,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"ä\", which without /u is the bytes \\xC3 \\xA4: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/libs/Leximorph/Handler/Overrides/Grammar/GrammarFi.php#L37-L43",
             "snippet": [
                 {
                     "number": 37,
@@ -5440,35 +5440,35 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \" <!ENTITY ! \\\"&amp;\\\">\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 261 (backtrack_limit 100000, JIT off). The risky part is: \\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^\"%&;]{1,64};|(?:[^\"%&]|&amp;|&quot;){0,255})\"|'(?:&[^'%&;]{1,64};|(?:[^'%&]|&amp;|&apos;){0,255})')\\s*>|\\s*<!--(?:[^\\-]|-[^\\-])*-->|\\s*<!ATTLIST svg xmlns:xlink CDATA #FIXED \"http:\\/\\/www.w3.org\\/1999\\/xlink\"> Hotspot offsets: 4-241 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\s*<!ENTITY\\s+\\S+\\s+(?:\"(?:&[^…\" and \"\\s*<!--(?:[^-]|-[^-])*-->\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"&[^\"%&;]{1,64};\" and \"(?:[^\"%&]|&amp;|&quot;){0,255}\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"&[^'%&;]{1,64};\" and \"(?:[^'%&]|&amp;|&apos;){0,255}\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -5482,7 +5482,7 @@
                 "limit": 100000
             },
             "subject": " <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\"> <!ENTITY ! \"&amp;\">!",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/libs/Mime/XmlTypeCheck.php#L437-L443",
             "snippet": [
                 {
                     "number": 437,
@@ -5571,21 +5571,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"{\\\"\\\"\\\"\\\"\" x n Replayed on PCRE2 10.49: preg_match fails from length 25 (backtrack_limit 100000, JIT off). The risky part is: \\{?\"([^\"\\\\]|\\\\.)*\"|[^,{}]+ Hotspot offsets: 1-27 Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"(\\{?\"([^\"\\\\]|\\\\.)*\"|[^,{}]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\{?\"([^\"\\\\]|\\\\.)*\"\" and \"[^,{}]+\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -5599,7 +5599,7 @@
                 "limit": 100000
             },
             "subject": "{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"{\"\"\"\"",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/libs/Rdbms/Database/DatabasePostgres.php#L616-L622",
             "snippet": [
                 {
                     "number": 616,
@@ -5808,13 +5808,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/libs/Rdbms/Database/Position/MySQLPrimaryPos.php#L267-L273",
             "snippet": [
                 {
                     "number": 267,
@@ -6035,13 +6035,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/includes/libs/Rdbms/Platform/PostgresPlatform.php#L236-L242",
             "snippet": [
                 {
                     "number": 236,
@@ -6202,13 +6202,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wikimedia/mediawiki/blob/dc7af1a5c0a24a27c9810b5c3ffdd129a2b0c7b5/maintenance/storage/trackBlobs.php#L116-L122",
+            "permalink": "https://github.com/wikimedia/mediawiki/blob/f0fe6cd265a8e507b5765484bbe4910d2a88c024/maintenance/storage/trackBlobs.php#L116-L122",
             "snippet": [
                 {
                     "number": 116,

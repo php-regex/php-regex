@@ -1,6 +1,6 @@
 {
     "repo": "roundcube/roundcubemail",
-    "sha": "fba9bf2e31ae014bf31d4cf0abe760fd3455e97b",
+    "sha": "b8f1e741f9836e7588aecfb7c155352654244228",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/archive/archive.php#L490-L496",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/archive/archive.php#L490-L496",
             "snippet": [
                 {
                     "number": 490,
@@ -185,13 +185,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/enigma/lib/enigma_engine.php#L608-L614",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/enigma/lib/enigma_engine.php#L608-L614",
             "snippet": [
                 {
                     "number": 608,
@@ -332,20 +332,20 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/identity_select/identity_select.php#L86-L92",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/identity_select/identity_select.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -526,13 +526,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L749-L755",
             "snippet": [
                 {
                     "number": 749,
@@ -685,13 +685,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L811-L817",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L811-L817",
             "snippet": [
                 {
                     "number": 811,
@@ -844,13 +844,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L932-L938",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L932-L938",
             "snippet": [
                 {
                     "number": 932,
@@ -1003,13 +1003,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/managesieve/lib/Roundcube/rcube_sieve_engine.php#L1112-L1118",
             "snippet": [
                 {
                     "number": 1112,
@@ -1154,13 +1154,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/plugins/markasjunk/drivers/cmd_learn.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -1301,13 +1301,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/headers.php#L54-L60",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/headers.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1428,7 +1428,7 @@
         {
             "id": "f-939aa8b2ed",
             "file": "program/actions/mail/index.php",
-            "line": 946,
+            "line": 945,
             "column": 30,
             "pattern": "/<meta[^>]+charset=[a-z0-9_\"-]+[^>]*>/Ui",
             "source": "preg_replace()",
@@ -1440,16 +1440,16 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/index.php#L943-L949",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/index.php#L942-L948",
             "snippet": [
                 {
-                    "number": 943,
+                    "number": 942,
                     "focus": false,
                     "runs": [
                         [
@@ -1459,7 +1459,7 @@
                     ]
                 },
                 {
-                    "number": 944,
+                    "number": 943,
                     "focus": false,
                     "runs": [
                         [
@@ -1469,7 +1469,7 @@
                     ]
                 },
                 {
-                    "number": 945,
+                    "number": 944,
                     "focus": false,
                     "runs": [
                         [
@@ -1479,7 +1479,7 @@
                     ]
                 },
                 {
-                    "number": 946,
+                    "number": 945,
                     "focus": true,
                     "runs": [
                         [
@@ -1589,7 +1589,7 @@
                     ]
                 },
                 {
-                    "number": 947,
+                    "number": 946,
                     "focus": false,
                     "runs": [
                         [
@@ -1599,7 +1599,7 @@
                     ]
                 },
                 {
-                    "number": 948,
+                    "number": 947,
                     "focus": false,
                     "runs": [
                         [
@@ -1609,7 +1609,7 @@
                     ]
                 },
                 {
-                    "number": 949,
+                    "number": 948,
                     "focus": false,
                     "runs": [
                         [
@@ -1623,7 +1623,7 @@
         {
             "id": "f-34350aef90",
             "file": "program/actions/mail/index.php",
-            "line": 1280,
+            "line": 1279,
             "column": 27,
             "pattern": "/\\.([^.]+)$/i",
             "source": "preg_match()",
@@ -1635,16 +1635,16 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/index.php#L1277-L1283",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/index.php#L1276-L1282",
             "snippet": [
                 {
-                    "number": 1277,
+                    "number": 1276,
                     "focus": false,
                     "runs": [
                         [
@@ -1654,7 +1654,7 @@
                     ]
                 },
                 {
-                    "number": 1278,
+                    "number": 1277,
                     "focus": false,
                     "runs": [
                         [
@@ -1664,7 +1664,7 @@
                     ]
                 },
                 {
-                    "number": 1279,
+                    "number": 1278,
                     "focus": false,
                     "runs": [
                         [
@@ -1674,7 +1674,7 @@
                     ]
                 },
                 {
-                    "number": 1280,
+                    "number": 1279,
                     "focus": true,
                     "runs": [
                         [
@@ -1740,7 +1740,7 @@
                     ]
                 },
                 {
-                    "number": 1281,
+                    "number": 1280,
                     "focus": false,
                     "runs": [
                         [
@@ -1750,7 +1750,7 @@
                     ]
                 },
                 {
-                    "number": 1282,
+                    "number": 1281,
                     "focus": false,
                     "runs": [
                         [
@@ -1760,7 +1760,7 @@
                     ]
                 },
                 {
-                    "number": 1283,
+                    "number": 1282,
                     "focus": false,
                     "runs": [
                         [
@@ -1772,11 +1772,11 @@
             ]
         },
         {
-            "id": "f-4360c9caea",
+            "id": "f-53b6b254b0",
             "file": "program/actions/mail/search.php",
             "line": 255,
             "column": 28,
-            "pattern": "/^(-?[a-zA-Z-]+):(.*)$/",
+            "pattern": "/^(-?[a-zA-Z_-]+):(.*)$/",
             "source": "preg_match()",
             "location": null,
             "level": "warn",
@@ -1786,13 +1786,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/search.php#L252-L258",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/search.php#L252-L258",
             "snippet": [
                 {
                     "number": 252,
@@ -1877,7 +1877,7 @@
                             "pg-snippet-pattern pg-tok-meta"
                         ],
                         [
-                            "Z-",
+                            "Z_-",
                             "pg-snippet-pattern pg-tok-literal"
                         ],
                         [
@@ -1965,7 +1965,7 @@
         {
             "id": "f-4dfa1f8680",
             "file": "program/actions/mail/search.php",
-            "line": 384,
+            "line": 383,
             "column": 38,
             "pattern": "|^([0-9]{4})[-/]([0-9]{1,2})[-/]([0-9]{1,2})$|i",
             "source": "preg_match()",
@@ -1977,16 +1977,16 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/search.php#L381-L387",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/search.php#L380-L386",
             "snippet": [
                 {
-                    "number": 381,
+                    "number": 380,
                     "focus": false,
                     "runs": [
                         [
@@ -1996,7 +1996,7 @@
                     ]
                 },
                 {
-                    "number": 382,
+                    "number": 381,
                     "focus": false,
                     "runs": [
                         [
@@ -2006,7 +2006,7 @@
                     ]
                 },
                 {
-                    "number": 383,
+                    "number": 382,
                     "focus": false,
                     "runs": [
                         [
@@ -2016,7 +2016,7 @@
                     ]
                 },
                 {
-                    "number": 384,
+                    "number": 383,
                     "focus": true,
                     "runs": [
                         [
@@ -2178,7 +2178,7 @@
                     ]
                 },
                 {
-                    "number": 385,
+                    "number": 384,
                     "focus": false,
                     "runs": [
                         [
@@ -2188,7 +2188,7 @@
                     ]
                 },
                 {
-                    "number": 386,
+                    "number": 385,
                     "focus": false,
                     "runs": [
                         [
@@ -2198,7 +2198,7 @@
                     ]
                 },
                 {
-                    "number": 387,
+                    "number": 386,
                     "focus": false,
                     "runs": [
                         [
@@ -2224,13 +2224,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/send.php#L107-L113",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/send.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -2387,13 +2387,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/mail/sendmdn.php#L122-L128",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/mail/sendmdn.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -2518,13 +2518,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/actions/settings/index.php#L1782-L1788",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/actions/settings/index.php#L1782-L1788",
             "snippet": [
                 {
                     "number": 1782,
@@ -2741,7 +2741,7 @@
         {
             "id": "f-75c6a5abb2",
             "file": "program/include/rcmail_output_html.php",
-            "line": 1094,
+            "line": 1093,
             "column": 20,
             "pattern": "/<roundcube:if\\s+([^>]+)>/is",
             "source": "preg_match()",
@@ -2753,7 +2753,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2764,10 +2764,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1091-L1097",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_output_html.php#L1090-L1096",
             "snippet": [
                 {
-                    "number": 1091,
+                    "number": 1090,
                     "focus": false,
                     "runs": [
                         [
@@ -2777,7 +2777,7 @@
                     ]
                 },
                 {
-                    "number": 1092,
+                    "number": 1091,
                     "focus": false,
                     "runs": [
                         [
@@ -2787,7 +2787,7 @@
                     ]
                 },
                 {
-                    "number": 1093,
+                    "number": 1092,
                     "focus": false,
                     "runs": [
                         [
@@ -2797,7 +2797,7 @@
                     ]
                 },
                 {
-                    "number": 1094,
+                    "number": 1093,
                     "focus": true,
                     "runs": [
                         [
@@ -2871,7 +2871,7 @@
                     ]
                 },
                 {
-                    "number": 1095,
+                    "number": 1094,
                     "focus": false,
                     "runs": [
                         [
@@ -2881,7 +2881,7 @@
                     ]
                 },
                 {
-                    "number": 1096,
+                    "number": 1095,
                     "focus": false,
                     "runs": [
                         [
@@ -2891,7 +2891,7 @@
                     ]
                 },
                 {
-                    "number": 1097,
+                    "number": 1096,
                     "focus": false,
                     "runs": [
                         [
@@ -2905,7 +2905,7 @@
         {
             "id": "f-1e02e775d4",
             "file": "program/include/rcmail_output_html.php",
-            "line": 1095,
+            "line": 1094,
             "column": 20,
             "pattern": "/<roundcube:(if|elseif|else|endif)\\s*([^>]*)>/is",
             "source": "preg_match()",
@@ -2917,7 +2917,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2928,10 +2928,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1092-L1098",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_output_html.php#L1091-L1097",
             "snippet": [
                 {
-                    "number": 1092,
+                    "number": 1091,
                     "focus": false,
                     "runs": [
                         [
@@ -2941,7 +2941,7 @@
                     ]
                 },
                 {
-                    "number": 1093,
+                    "number": 1092,
                     "focus": false,
                     "runs": [
                         [
@@ -2951,7 +2951,7 @@
                     ]
                 },
                 {
-                    "number": 1094,
+                    "number": 1093,
                     "focus": false,
                     "runs": [
                         [
@@ -2961,7 +2961,7 @@
                     ]
                 },
                 {
-                    "number": 1095,
+                    "number": 1094,
                     "focus": true,
                     "runs": [
                         [
@@ -3071,7 +3071,7 @@
                     ]
                 },
                 {
-                    "number": 1096,
+                    "number": 1095,
                     "focus": false,
                     "runs": [
                         [
@@ -3081,7 +3081,7 @@
                     ]
                 },
                 {
-                    "number": 1097,
+                    "number": 1096,
                     "focus": false,
                     "runs": [
                         [
@@ -3091,7 +3091,7 @@
                     ]
                 },
                 {
-                    "number": 1098,
+                    "number": 1097,
                     "focus": false,
                     "runs": [
                         [
@@ -3105,7 +3105,7 @@
         {
             "id": "f-953d7a3fcf",
             "file": "program/include/rcmail_output_html.php",
-            "line": 1312,
+            "line": 1311,
             "column": 19,
             "pattern": "/<roundcube:([-_a-z]+)\\s+((?:[^>]|\\\\>)+)(?<!\\\\)>/Ui",
             "source": "preg_replace_callback()",
@@ -3117,16 +3117,16 @@
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"[^>]\" and \"\\\\>\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L1309-L1315",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_output_html.php#L1308-L1314",
             "snippet": [
                 {
-                    "number": 1309,
+                    "number": 1308,
                     "focus": false,
                     "runs": [
                         [
@@ -3136,7 +3136,7 @@
                     ]
                 },
                 {
-                    "number": 1310,
+                    "number": 1309,
                     "focus": false,
                     "runs": [
                         [
@@ -3146,7 +3146,7 @@
                     ]
                 },
                 {
-                    "number": 1311,
+                    "number": 1310,
                     "focus": false,
                     "runs": [
                         [
@@ -3156,7 +3156,7 @@
                     ]
                 },
                 {
-                    "number": 1312,
+                    "number": 1311,
                     "focus": true,
                     "runs": [
                         [
@@ -3278,7 +3278,7 @@
                     ]
                 },
                 {
-                    "number": 1313,
+                    "number": 1312,
                     "focus": false,
                     "runs": [
                         [
@@ -3288,7 +3288,7 @@
                     ]
                 },
                 {
-                    "number": 1314,
+                    "number": 1313,
                     "focus": false,
                     "runs": [
                         [
@@ -3298,7 +3298,7 @@
                     ]
                 },
                 {
-                    "number": 1315,
+                    "number": 1314,
                     "focus": false,
                     "runs": [
                         [
@@ -3312,7 +3312,7 @@
         {
             "id": "f-4265aa01ef",
             "file": "program/include/rcmail_output_html.php",
-            "line": 2404,
+            "line": 2402,
             "column": 30,
             "pattern": "/[\\s\\t\\n,]+/",
             "source": "preg_split()",
@@ -3324,16 +3324,16 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_output_html.php#L2401-L2407",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_output_html.php#L2399-L2405",
             "snippet": [
                 {
-                    "number": 2401,
+                    "number": 2399,
                     "focus": false,
                     "runs": [
                         [
@@ -3343,7 +3343,7 @@
                     ]
                 },
                 {
-                    "number": 2402,
+                    "number": 2400,
                     "focus": false,
                     "runs": [
                         [
@@ -3353,7 +3353,7 @@
                     ]
                 },
                 {
-                    "number": 2403,
+                    "number": 2401,
                     "focus": false,
                     "runs": [
                         [
@@ -3363,7 +3363,7 @@
                     ]
                 },
                 {
-                    "number": 2404,
+                    "number": 2402,
                     "focus": true,
                     "runs": [
                         [
@@ -3409,7 +3409,7 @@
                     ]
                 },
                 {
-                    "number": 2405,
+                    "number": 2403,
                     "focus": false,
                     "runs": [
                         [
@@ -3419,7 +3419,7 @@
                     ]
                 },
                 {
-                    "number": 2406,
+                    "number": 2404,
                     "focus": false,
                     "runs": [
                         [
@@ -3429,7 +3429,7 @@
                     ]
                 },
                 {
-                    "number": 2407,
+                    "number": 2405,
                     "focus": false,
                     "runs": [
                         [
@@ -3455,13 +3455,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L243-L249",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_sendmail.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -3610,13 +3610,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L266-L272",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_sendmail.php#L266-L272",
             "snippet": [
                 {
                     "number": 266,
@@ -3741,13 +3741,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3836,7 +3836,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -3847,7 +3847,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L763-L769",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_sendmail.php#L763-L769",
             "snippet": [
                 {
                     "number": 763,
@@ -3936,13 +3936,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/include/rcmail_sendmail.php#L786-L792",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/include/rcmail_sendmail.php#L786-L792",
             "snippet": [
                 {
                     "number": 786,
@@ -4031,7 +4031,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4042,7 +4042,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_charset.php#L580-L586",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_charset.php#L580-L586",
             "snippet": [
                 {
                     "number": 580,
@@ -4131,13 +4131,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_db.php#L1470-L1476",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_db.php#L1470-L1476",
             "snippet": [
                 {
                     "number": 1470,
@@ -4298,7 +4298,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4309,7 +4309,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_enriched.php#L70-L76",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_enriched.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -4498,7 +4498,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4509,7 +4509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_enriched.php#L81-L87",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_enriched.php#L81-L87",
             "snippet": [
                 {
                     "number": 81,
@@ -4698,7 +4698,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4709,7 +4709,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_html2text.php#L649-L655",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_html2text.php#L649-L655",
             "snippet": [
                 {
                     "number": 649,
@@ -4866,7 +4866,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4877,7 +4877,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_html2text.php#L661-L667",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_html2text.php#L661-L667",
             "snippet": [
                 {
                     "number": 661,
@@ -5026,7 +5026,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5037,7 +5037,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_imap_generic.php#L137-L143",
             "snippet": [
                 {
                     "number": 137,
@@ -5190,13 +5190,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'E' (duplicate), 'R' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L1310-L1316",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_imap_generic.php#L1310-L1316",
             "snippet": [
                 {
                     "number": 1310,
@@ -5333,7 +5333,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5344,7 +5344,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2209-L2215",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_imap_generic.php#L2209-L2215",
             "snippet": [
                 {
                     "number": 2209,
@@ -5469,13 +5469,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2618-L2624",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_imap_generic.php#L2618-L2624",
             "snippet": [
                 {
                     "number": 2618,
@@ -5608,13 +5608,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'E' (duplicate), 'R' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_imap_generic.php#L2681-L2687",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_imap_generic.php#L2681-L2687",
             "snippet": [
                 {
                     "number": 2681,
@@ -5739,7 +5739,7 @@
         {
             "id": "f-e553611642",
             "file": "program/lib/Roundcube/rcube_message.php",
-            "line": 1277,
+            "line": 1275,
             "column": 28,
             "pattern": "/begin [0-7]{3,4} ([^\\r\\n]+)\\r?\\n/s",
             "source": "preg_match()",
@@ -5751,7 +5751,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5762,10 +5762,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message.php#L1274-L1280",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_message.php#L1272-L1278",
             "snippet": [
                 {
-                    "number": 1274,
+                    "number": 1272,
                     "focus": false,
                     "runs": [
                         [
@@ -5775,7 +5775,7 @@
                     ]
                 },
                 {
-                    "number": 1275,
+                    "number": 1273,
                     "focus": false,
                     "runs": [
                         [
@@ -5785,7 +5785,7 @@
                     ]
                 },
                 {
-                    "number": 1276,
+                    "number": 1274,
                     "focus": false,
                     "runs": [
                         [
@@ -5795,7 +5795,7 @@
                     ]
                 },
                 {
-                    "number": 1277,
+                    "number": 1275,
                     "focus": true,
                     "runs": [
                         [
@@ -5897,7 +5897,7 @@
                     ]
                 },
                 {
-                    "number": 1278,
+                    "number": 1276,
                     "focus": false,
                     "runs": [
                         [
@@ -5907,7 +5907,7 @@
                     ]
                 },
                 {
-                    "number": 1279,
+                    "number": 1277,
                     "focus": false,
                     "runs": [
                         [
@@ -5917,7 +5917,7 @@
                     ]
                 },
                 {
-                    "number": 1280,
+                    "number": 1278,
                     "focus": false,
                     "runs": [
                         [
@@ -5931,7 +5931,7 @@
         {
             "id": "f-31294f0d98",
             "file": "program/lib/Roundcube/rcube_message.php",
-            "line": 1278,
+            "line": 1276,
             "column": 26,
             "pattern": "/`\\r?\\nend((\\r?\\n)|($))/s",
             "source": "preg_match()",
@@ -5943,7 +5943,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5954,10 +5954,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message.php#L1275-L1281",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_message.php#L1273-L1279",
             "snippet": [
                 {
-                    "number": 1275,
+                    "number": 1273,
                     "focus": false,
                     "runs": [
                         [
@@ -5967,7 +5967,7 @@
                     ]
                 },
                 {
-                    "number": 1276,
+                    "number": 1274,
                     "focus": false,
                     "runs": [
                         [
@@ -5977,7 +5977,7 @@
                     ]
                 },
                 {
-                    "number": 1277,
+                    "number": 1275,
                     "focus": false,
                     "runs": [
                         [
@@ -5987,7 +5987,7 @@
                     ]
                 },
                 {
-                    "number": 1278,
+                    "number": 1276,
                     "focus": true,
                     "runs": [
                         [
@@ -6069,7 +6069,7 @@
                     ]
                 },
                 {
-                    "number": 1279,
+                    "number": 1277,
                     "focus": false,
                     "runs": [
                         [
@@ -6079,7 +6079,7 @@
                     ]
                 },
                 {
-                    "number": 1280,
+                    "number": 1278,
                     "focus": false,
                     "runs": [
                         [
@@ -6089,7 +6089,7 @@
                     ]
                 },
                 {
-                    "number": 1281,
+                    "number": 1279,
                     "focus": false,
                     "runs": [
                         [
@@ -6115,13 +6115,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message_part.php#L158-L164",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_message_part.php#L158-L164",
             "snippet": [
                 {
                     "number": 158,
@@ -6254,13 +6254,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_message_part.php#L210-L216",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_message_part.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -6393,21 +6393,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 18 (backtrack_limit 100000, JIT off). The risky part is: [^\"\\f\\n\\r\\t\\v\\b\\s]+ Hotspot offsets: 23-42 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)\" at offset 20 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -6421,7 +6421,7 @@
                 "limit": 100000
             },
             "subject": "<\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L349-L355",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_mime.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -6510,21 +6510,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). The risky part is: [^\"\\f\\n\\r\\t\\v\\b\\s]+ Hotspot offsets: 19-38 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)\" at offset 16 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -6538,7 +6538,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L355-L361",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_mime.php#L355-L361",
             "snippet": [
                 {
                     "number": 355,
@@ -6585,7 +6585,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "                $address = $m[1];",
+                            "                // $name = '';",
                             ""
                         ]
                     ]
@@ -6595,7 +6595,7 @@
                     "focus": false,
                     "runs": [
                         [
-                            "                $name = '';",
+                            "                $address = $m[1];",
                             ""
                         ]
                     ]
@@ -6627,21 +6627,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\\"\" . \"!\" x n . \"!@\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). The risky part is: [^\"\\f\\n\\r\\t\\v\\b\\s]+ Hotspot offsets: 18-37 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^\"\\f\\n\\r\\t\\v\\b\\s]+\\s*)\" at offset 15 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -6655,7 +6655,7 @@
                 "limit": 100000
             },
             "subject": "\"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!@",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_mime.php#L363-L369",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_mime.php#L363-L369",
             "snippet": [
                 {
                     "number": 363,
@@ -6732,7 +6732,7 @@
         {
             "id": "f-439ee70877",
             "file": "program/lib/Roundcube/rcube_smtp.php",
-            "line": 513,
+            "line": 512,
             "column": 36,
             "pattern": "/[\\s\\t]*\\r?\\n/",
             "source": "preg_replace()",
@@ -6744,23 +6744,23 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_smtp.php#L510-L516",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_smtp.php#L509-L515",
             "snippet": [
                 {
-                    "number": 510,
+                    "number": 509,
                     "focus": false,
                     "runs": [
                         [
@@ -6770,7 +6770,7 @@
                     ]
                 },
                 {
-                    "number": 511,
+                    "number": 510,
                     "focus": false,
                     "runs": [
                         [
@@ -6780,7 +6780,7 @@
                     ]
                 },
                 {
-                    "number": 512,
+                    "number": 511,
                     "focus": false,
                     "runs": [
                         [
@@ -6790,7 +6790,7 @@
                     ]
                 },
                 {
-                    "number": 513,
+                    "number": 512,
                     "focus": true,
                     "runs": [
                         [
@@ -6848,7 +6848,7 @@
                     ]
                 },
                 {
-                    "number": 514,
+                    "number": 513,
                     "focus": false,
                     "runs": [
                         [
@@ -6858,7 +6858,7 @@
                     ]
                 },
                 {
-                    "number": 515,
+                    "number": 514,
                     "focus": false,
                     "runs": [
                         [
@@ -6868,7 +6868,7 @@
                     ]
                 },
                 {
-                    "number": 516,
+                    "number": 515,
                     "focus": false,
                     "runs": [
                         [
@@ -6894,13 +6894,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_utils.php#L297-L303",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_utils.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -7021,7 +7021,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7032,7 +7032,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_utils.php#L925-L931",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_utils.php#L925-L931",
             "snippet": [
                 {
                     "number": 925,
@@ -7149,7 +7149,7 @@
         {
             "id": "f-00ba1c4d03",
             "file": "program/lib/Roundcube/rcube_vcard.php",
-            "line": 839,
+            "line": 838,
             "column": 42,
             "pattern": "/[\\s\\t\\n\\r\\0\\x0B]/",
             "source": "preg_replace()",
@@ -7161,16 +7161,16 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_vcard.php#L836-L842",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_vcard.php#L835-L841",
             "snippet": [
                 {
-                    "number": 836,
+                    "number": 835,
                     "focus": false,
                     "runs": [
                         [
@@ -7180,7 +7180,7 @@
                     ]
                 },
                 {
-                    "number": 837,
+                    "number": 836,
                     "focus": false,
                     "runs": [
                         [
@@ -7190,7 +7190,7 @@
                     ]
                 },
                 {
-                    "number": 838,
+                    "number": 837,
                     "focus": false,
                     "runs": [
                         [
@@ -7200,7 +7200,7 @@
                     ]
                 },
                 {
-                    "number": 839,
+                    "number": 838,
                     "focus": true,
                     "runs": [
                         [
@@ -7242,7 +7242,7 @@
                     ]
                 },
                 {
-                    "number": 840,
+                    "number": 839,
                     "focus": false,
                     "runs": [
                         [
@@ -7252,7 +7252,7 @@
                     ]
                 },
                 {
-                    "number": 841,
+                    "number": 840,
                     "focus": false,
                     "runs": [
                         [
@@ -7262,7 +7262,7 @@
                     ]
                 },
                 {
-                    "number": 842,
+                    "number": 841,
                     "focus": false,
                     "runs": [
                         [
@@ -7276,7 +7276,7 @@
         {
             "id": "f-39c9d2b1ca",
             "file": "program/lib/Roundcube/rcube_washtml.php",
-            "line": 612,
+            "line": 609,
             "column": 31,
             "pattern": "#/\\*.*\\*/#Ums",
             "source": "preg_replace()",
@@ -7288,7 +7288,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7299,10 +7299,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L609-L615",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_washtml.php#L606-L612",
             "snippet": [
                 {
-                    "number": 609,
+                    "number": 606,
                     "focus": false,
                     "runs": [
                         [
@@ -7312,7 +7312,7 @@
                     ]
                 },
                 {
-                    "number": 610,
+                    "number": 607,
                     "focus": false,
                     "runs": [
                         [
@@ -7322,7 +7322,7 @@
                     ]
                 },
                 {
-                    "number": 611,
+                    "number": 608,
                     "focus": false,
                     "runs": [
                         [
@@ -7332,7 +7332,7 @@
                     ]
                 },
                 {
-                    "number": 612,
+                    "number": 609,
                     "focus": true,
                     "runs": [
                         [
@@ -7382,7 +7382,7 @@
                     ]
                 },
                 {
-                    "number": 613,
+                    "number": 610,
                     "focus": false,
                     "runs": [
                         [
@@ -7392,7 +7392,7 @@
                     ]
                 },
                 {
-                    "number": 614,
+                    "number": 611,
                     "focus": false,
                     "runs": [
                         [
@@ -7402,7 +7402,7 @@
                     ]
                 },
                 {
-                    "number": 615,
+                    "number": 612,
                     "focus": false,
                     "runs": [
                         [
@@ -7416,7 +7416,7 @@
         {
             "id": "f-d5c8cda83e",
             "file": "program/lib/Roundcube/rcube_washtml.php",
-            "line": 776,
+            "line": 773,
             "column": 24,
             "pattern": "/<base\\s+href=['\"]*([^'\"]+)/is",
             "source": "preg_match()",
@@ -7428,7 +7428,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7439,10 +7439,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L773-L779",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_washtml.php#L770-L776",
             "snippet": [
                 {
-                    "number": 773,
+                    "number": 770,
                     "focus": false,
                     "runs": [
                         [
@@ -7452,7 +7452,7 @@
                     ]
                 },
                 {
-                    "number": 774,
+                    "number": 771,
                     "focus": false,
                     "runs": [
                         [
@@ -7462,7 +7462,7 @@
                     ]
                 },
                 {
-                    "number": 775,
+                    "number": 772,
                     "focus": false,
                     "runs": [
                         [
@@ -7472,7 +7472,7 @@
                     ]
                 },
                 {
-                    "number": 776,
+                    "number": 773,
                     "focus": true,
                     "runs": [
                         [
@@ -7562,7 +7562,7 @@
                     ]
                 },
                 {
-                    "number": 777,
+                    "number": 774,
                     "focus": false,
                     "runs": [
                         [
@@ -7572,7 +7572,7 @@
                     ]
                 },
                 {
-                    "number": 778,
+                    "number": 775,
                     "focus": false,
                     "runs": [
                         [
@@ -7582,7 +7582,7 @@
                     ]
                 },
                 {
-                    "number": 779,
+                    "number": 776,
                     "focus": false,
                     "runs": [
                         [
@@ -7596,7 +7596,7 @@
         {
             "id": "f-00fc12960b",
             "file": "program/lib/Roundcube/rcube_washtml.php",
-            "line": 856,
+            "line": 853,
             "column": 13,
             "pattern": "/<\\!doctype[^>]+>[^<]*/im",
             "source": "preg_replace()",
@@ -7608,7 +7608,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7619,10 +7619,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/roundcube/roundcubemail/blob/fba9bf2e31ae014bf31d4cf0abe760fd3455e97b/program/lib/Roundcube/rcube_washtml.php#L853-L859",
+            "permalink": "https://github.com/roundcube/roundcubemail/blob/b8f1e741f9836e7588aecfb7c155352654244228/program/lib/Roundcube/rcube_washtml.php#L850-L856",
             "snippet": [
                 {
-                    "number": 853,
+                    "number": 850,
                     "focus": false,
                     "runs": [
                         [
@@ -7632,7 +7632,7 @@
                     ]
                 },
                 {
-                    "number": 854,
+                    "number": 851,
                     "focus": false,
                     "runs": [
                         [
@@ -7642,7 +7642,7 @@
                     ]
                 },
                 {
-                    "number": 855,
+                    "number": 852,
                     "focus": false,
                     "runs": [
                         [
@@ -7652,7 +7652,7 @@
                     ]
                 },
                 {
-                    "number": 856,
+                    "number": 853,
                     "focus": true,
                     "runs": [
                         [
@@ -7726,7 +7726,7 @@
                     ]
                 },
                 {
-                    "number": 857,
+                    "number": 854,
                     "focus": false,
                     "runs": [
                         [
@@ -7736,7 +7736,7 @@
                     ]
                 },
                 {
-                    "number": 858,
+                    "number": 855,
                     "focus": false,
                     "runs": [
                         [
@@ -7746,7 +7746,7 @@
                     ]
                 },
                 {
-                    "number": 859,
+                    "number": 856,
                     "focus": false,
                     "runs": [
                         [

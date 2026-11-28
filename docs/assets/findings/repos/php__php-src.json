@@ -1,6 +1,6 @@
 {
     "repo": "php/php-src",
-    "sha": "eb9aebeee7be34c8957bb1f36977cbc1ec137765",
+    "sha": "43a7692443aae0fc962ee32788c8a2580390eedf",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L799-L805",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L799-L805",
             "snippet": [
                 {
                     "number": 799,
@@ -170,7 +170,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -181,7 +181,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L800-L806",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L800-L806",
             "snippet": [
                 {
                     "number": 800,
@@ -350,7 +350,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -361,7 +361,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L801-L807",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L801-L807",
             "snippet": [
                 {
                     "number": 801,
@@ -570,7 +570,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -581,7 +581,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L836-L842",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L836-L842",
             "snippet": [
                 {
                     "number": 836,
@@ -718,7 +718,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -729,7 +729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L837-L843",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -898,7 +898,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -909,7 +909,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L838-L844",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L838-L844",
             "snippet": [
                 {
                     "number": 838,
@@ -1118,7 +1118,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1129,7 +1129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L874-L880",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L874-L880",
             "snippet": [
                 {
                     "number": 874,
@@ -1266,7 +1266,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1277,7 +1277,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L875-L881",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L875-L881",
             "snippet": [
                 {
                     "number": 875,
@@ -1446,7 +1446,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1457,7 +1457,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L876-L882",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L876-L882",
             "snippet": [
                 {
                     "number": 876,
@@ -1666,7 +1666,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1677,7 +1677,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L898-L904",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L898-L904",
             "snippet": [
                 {
                     "number": 898,
@@ -1814,7 +1814,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1825,7 +1825,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L899-L905",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L899-L905",
             "snippet": [
                 {
                     "number": 899,
@@ -1994,7 +1994,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2005,7 +2005,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L900-L906",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L900-L906",
             "snippet": [
                 {
                     "number": 900,
@@ -2214,13 +2214,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^(,]|\\([^()]*|(?R)*\\))\" at offset 197 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L2679-L2685",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L2679-L2685",
             "snippet": [
                 {
                     "number": 2679,
@@ -2309,7 +2309,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2320,7 +2320,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/Zend/zend_vm_gen.php#L2830-L2836",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/Zend/zend_vm_gen.php#L2830-L2836",
             "snippet": [
                 {
                     "number": 2830,
@@ -2489,27 +2489,27 @@
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?<parens>\\((?<inparens>(?:(?&…\" with \"*\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?<inparens>(?:(?&parens)|[^()…\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/build/gen_stub.php#L4834-L4840",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/build/gen_stub.php#L4834-L4840",
             "snippet": [
                 {
                     "number": 4834,
@@ -2866,13 +2866,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/build/gen_stub.php#L5686-L5692",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/build/gen_stub.php#L5686-L5692",
             "snippet": [
                 {
                     "number": 5686,
@@ -3057,13 +3057,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/build/gen_stub.php#L6032-L6038",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/build/gen_stub.php#L6032-L6038",
             "snippet": [
                 {
                     "number": 6032,
@@ -3232,7 +3232,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3243,7 +3243,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/ext/curl/sync-constants.php#L246-L252",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/ext/curl/sync-constants.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -3716,13 +3716,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/run-tests.php#L3980-L3986",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/run-tests.php#L3980-L3986",
             "snippet": [
                 {
                     "number": 3980,
@@ -3939,7 +3939,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3950,7 +3950,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/scripts/dev/bless_tests.php#L62-L68",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/scripts/dev/bless_tests.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -4123,7 +4123,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4134,7 +4134,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/scripts/dev/bless_tests.php#L63-L69",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/scripts/dev/bless_tests.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -4307,14 +4307,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0 0\" . \" , 0\" x n . \"!;\" Replayed on PCRE2 10.49: preg_match fails from length 37 (backtrack_limit 100000, JIT off). The risky part is: [^,;]+ Hotspot offsets: 141-147 Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*,\\s*\\**\\s*\\w+(?:\\[\\s*\\w*…\" at offset 97 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -4328,7 +4328,7 @@
                 "limit": 100000
             },
             "subject": "0 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0!;",
-            "permalink": "https://github.com/php/php-src/blob/eb9aebeee7be34c8957bb1f36977cbc1ec137765/scripts/dev/check_parameters.php#L97-L103",
+            "permalink": "https://github.com/php/php-src/blob/43a7692443aae0fc962ee32788c8a2580390eedf/scripts/dev/check_parameters.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,

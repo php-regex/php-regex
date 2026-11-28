@@ -22,7 +22,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -177,7 +177,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -396,7 +396,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -575,7 +575,7 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"?\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"?\" matches a literal \"?\". If you meant to quantify a shorthand like \\w, use \\w? outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
@@ -746,7 +746,7 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"?\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"?\" matches a literal \"?\". If you meant to quantify a shorthand like \\w, use \\w? outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
@@ -889,7 +889,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3017,7 +3017,7 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"?\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"?\" matches a literal \"?\". If you meant to quantify a shorthand like \\w, use \\w? outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
@@ -3140,7 +3140,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,

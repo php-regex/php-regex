@@ -1,6 +1,6 @@
 {
     "repo": "Heyosseus/sloppy",
-    "sha": "45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd",
+    "sha": "07bb67c9e2462b8660077fca95d17530039847b8",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/PlaceholderImplementationRule.php#L58-L64",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/PlaceholderImplementationRule.php#L58-L64",
             "snippet": [
                 {
                     "number": 58,
@@ -185,13 +185,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/UnexplainedSuppressionRule.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -324,13 +324,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/UnexplainedSuppressionRule.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -463,13 +463,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/UnexplainedSuppressionRule.php#L214-L220",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/UnexplainedSuppressionRule.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -558,13 +558,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/UnexplainedSuppressionRule.php#L215-L221",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/UnexplainedSuppressionRule.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -653,13 +653,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Heyosseus/sloppy/blob/45c8e96ff8335f03cb1e199c449fe9e0d46bbcdd/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
+            "permalink": "https://github.com/Heyosseus/sloppy/blob/07bb67c9e2462b8660077fca95d17530039847b8/src/Rules/Php/UnexplainedSuppressionRule.php#L217-L223",
             "snippet": [
                 {
                     "number": 217,

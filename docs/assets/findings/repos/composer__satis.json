@@ -1,6 +1,6 @@
 {
     "repo": "composer/satis",
-    "sha": "8fc25f3a85e189b44fb58f244da4bc192f586dad",
+    "sha": "2168a9bc73fab45296d621fd115a2644078ed91d",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/composer/satis/blob/8fc25f3a85e189b44fb58f244da4bc192f586dad/src/PackageSelection/PackageSelection.php#L626-L632",
+            "permalink": "https://github.com/composer/satis/blob/2168a9bc73fab45296d621fd115a2644078ed91d/src/PackageSelection/PackageSelection.php#L626-L632",
             "snippet": [
                 {
                     "number": 626,

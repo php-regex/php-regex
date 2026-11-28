@@ -1,6 +1,6 @@
 {
     "repo": "salesagility/SuiteCRM",
-    "sha": "be6191927d643872942a364bc5877493a6ae25a2",
+    "sha": "48c583a2fec123df12c573890ba6af908b4d21cd",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L103-L109",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/SugarSecurity.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -190,7 +190,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -201,7 +201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L108-L114",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/SugarSecurity.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -358,7 +358,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -369,7 +369,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L113-L119",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/SugarSecurity.php#L113-L119",
             "snippet": [
                 {
                     "number": 113,
@@ -526,7 +526,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -537,7 +537,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L118-L124",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/SugarSecurity.php#L118-L124",
             "snippet": [
                 {
                     "number": 118,
@@ -694,7 +694,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -705,7 +705,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/SugarSecurity.php#L123-L129",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/SugarSecurity.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -862,21 +862,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \" ORDER BY\" . \"!()\" x n . \"(\" Replayed on PCRE2 10.49: preg_match fails from length 49 (backtrack_limit 100000, JIT off). The risky part is: (?:[^()]*|\\([^()]*\\))* Hotspot offsets: 26-48 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()]|\\((?:[^()]*|\\([^()]*…\" at offset 15 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()]*|\\([^()]*\\))\" at offset 26 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -890,7 +890,7 @@
                 "limit": 100000
             },
             "subject": " ORDER BY!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()!()(",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/data/SugarBean.php#L998-L1004",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/data/SugarBean.php#L998-L1004",
             "snippet": [
                 {
                     "number": 998,
@@ -1123,14 +1123,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -1141,7 +1141,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/data/SugarBean.php#L4443-L4449",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/data/SugarBean.php#L4443-L4449",
             "snippet": [
                 {
                     "number": 4443,
@@ -1306,7 +1306,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1317,7 +1317,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/EditView/EditView2.php#L891-L897",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/EditView/EditView2.php#L891-L897",
             "snippet": [
                 {
                     "number": 891,
@@ -1490,7 +1490,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1501,7 +1501,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/EditView/QuickCreate.php#L73-L79",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/EditView/QuickCreate.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -1674,7 +1674,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1685,7 +1685,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/InlineEditing/InlineEditing.php#L193-L199",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/InlineEditing/InlineEditing.php#L193-L199",
             "snippet": [
                 {
                     "number": 193,
@@ -1858,13 +1858,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Localization/Localization.php#L802-L808",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Localization/Localization.php#L802-L808",
             "snippet": [
                 {
                     "number": 802,
@@ -1981,7 +1981,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1992,7 +1992,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SearchForm/SearchForm2.php#L213-L219",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SearchForm/SearchForm2.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -2165,7 +2165,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2176,7 +2176,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/block.minify.php#L8-L14",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/block.minify.php#L8-L14",
             "snippet": [
                 {
                     "number": 8,
@@ -2397,13 +2397,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.fetch.php#L95-L101",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/function.fetch.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -2540,7 +2540,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2551,7 +2551,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_evalcolumn.php#L89-L95",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/function.sugar_evalcolumn.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -2744,7 +2744,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2755,7 +2755,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_evalcolumn.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/function.sugar_evalcolumn.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -2948,7 +2948,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2959,7 +2959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_include.php#L78-L84",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/function.sugar_include.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -3088,7 +3088,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3099,7 +3099,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/function.sugar_include.php#L80-L86",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/function.sugar_include.php#L80-L86",
             "snippet": [
                 {
                     "number": 80,
@@ -3228,7 +3228,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3239,7 +3239,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/modifier.regex_replace.php#L36-L42",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/modifier.regex_replace.php#L36-L42",
             "snippet": [
                 {
                     "number": 36,
@@ -3400,7 +3400,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3411,7 +3411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/Smarty/plugins/outputfilter.trimwhitespace.php#L56-L62",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/Smarty/plugins/outputfilter.trimwhitespace.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,
@@ -3560,7 +3560,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3571,7 +3571,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Collection/ViewSugarFieldCollection.php#L386-L392",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Fields/Collection/ViewSugarFieldCollection.php#L386-L392",
             "snippet": [
                 {
                     "number": 386,
@@ -3720,7 +3720,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3731,7 +3731,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -3848,7 +3848,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3859,7 +3859,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L226-L232",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Fields/Relate/SugarFieldRelate.php#L226-L232",
             "snippet": [
                 {
                     "number": 226,
@@ -3976,13 +3976,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/DetailViewMetaParser.php#L143-L149",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/DetailViewMetaParser.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -4147,7 +4147,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4158,7 +4158,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L88-L94",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/EditViewMetaParser.php#L88-L94",
             "snippet": [
                 {
                     "number": 88,
@@ -4275,7 +4275,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4286,7 +4286,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L190-L196",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/EditViewMetaParser.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -4439,13 +4439,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L201-L207",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/EditViewMetaParser.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -4610,13 +4610,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L215-L221",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/EditViewMetaParser.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -4781,7 +4781,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4792,7 +4792,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/EditViewMetaParser.php#L261-L267",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/EditViewMetaParser.php#L261-L267",
             "snippet": [
                 {
                     "number": 261,
@@ -4909,7 +4909,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4920,7 +4920,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L92-L98",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/MetaParser.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -5113,7 +5113,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5124,7 +5124,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L109-L115",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/MetaParser.php#L109-L115",
             "snippet": [
                 {
                     "number": 109,
@@ -5413,13 +5413,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L234-L240",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/MetaParser.php#L234-L240",
             "snippet": [
                 {
                     "number": 234,
@@ -5556,14 +5556,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5574,7 +5574,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L341-L347",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/MetaParser.php#L341-L347",
             "snippet": [
                 {
                     "number": 341,
@@ -5767,7 +5767,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5778,7 +5778,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/MetaParser.php#L739-L745",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/MetaParser.php#L739-L745",
             "snippet": [
                 {
                     "number": 739,
@@ -5991,7 +5991,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6002,7 +6002,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L125-L131",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -6155,13 +6155,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L136-L142",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L136-L142",
             "snippet": [
                 {
                     "number": 136,
@@ -6326,13 +6326,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L147-L153",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L147-L153",
             "snippet": [
                 {
                     "number": 147,
@@ -6497,13 +6497,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L150-L156",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L150-L156",
             "snippet": [
                 {
                     "number": 150,
@@ -6636,7 +6636,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6647,7 +6647,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L190-L196",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -6764,7 +6764,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6775,7 +6775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L243-L249",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L243-L249",
             "snippet": [
                 {
                     "number": 243,
@@ -6920,7 +6920,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6931,7 +6931,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/QuickCreateMetaParser.php#L254-L260",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/QuickCreateMetaParser.php#L254-L260",
             "snippet": [
                 {
                     "number": 254,
@@ -7048,7 +7048,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7059,7 +7059,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L64-L70",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L64-L70",
             "snippet": [
                 {
                     "number": 64,
@@ -7176,13 +7176,13 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L73-L79",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L73-L79",
             "snippet": [
                 {
                     "number": 73,
@@ -7327,13 +7327,13 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L83-L89",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -7478,7 +7478,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7489,7 +7489,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L84-L90",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -7614,7 +7614,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7625,7 +7625,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L85-L91",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -7750,7 +7750,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7761,7 +7761,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L86-L92",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -7886,7 +7886,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7897,7 +7897,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L100-L106",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/Rules/EmailAddressRule.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -8014,7 +8014,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8025,7 +8025,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFields/Parsers/SearchFormMetaParser.php#L210-L216",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFields/Parsers/SearchFormMetaParser.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -8142,14 +8142,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -8160,7 +8160,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFolders/SugarFolders.php#L586-L592",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFolders/SugarFolders.php#L586-L592",
             "snippet": [
                 {
                     "number": 586,
@@ -8325,7 +8325,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8336,7 +8336,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarFolders/SugarFolders.php#L593-L599",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarFolders/SugarFolders.php#L593-L599",
             "snippet": [
                 {
                     "number": 593,
@@ -8469,13 +8469,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarHtml/SugarHtml.php#L350-L356",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarHtml/SugarHtml.php#L350-L356",
             "snippet": [
                 {
                     "number": 350,
@@ -8592,14 +8592,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8610,7 +8610,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/SugarPHPMailer.php#L348-L354",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/SugarPHPMailer.php#L348-L354",
             "snippet": [
                 {
                     "number": 348,
@@ -8811,7 +8811,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8822,7 +8822,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L435-L441",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L435-L441",
             "snippet": [
                 {
                     "number": 435,
@@ -8955,7 +8955,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8966,7 +8966,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L438-L444",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L438-L444",
             "snippet": [
                 {
                     "number": 438,
@@ -9131,7 +9131,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9142,7 +9142,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L553-L559",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L553-L559",
             "snippet": [
                 {
                     "number": 553,
@@ -9275,7 +9275,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9286,7 +9286,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L557-L563",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L557-L563",
             "snippet": [
                 {
                     "number": 557,
@@ -9407,7 +9407,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9418,7 +9418,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L558-L564",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L558-L564",
             "snippet": [
                 {
                     "number": 558,
@@ -9539,7 +9539,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9550,7 +9550,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L559-L565",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L559-L565",
             "snippet": [
                 {
                     "number": 559,
@@ -9715,7 +9715,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9726,7 +9726,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/TemplateHandler/TemplateHandler.php#L611-L617",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/TemplateHandler/TemplateHandler.php#L611-L617",
             "snippet": [
                 {
                     "number": 611,
@@ -9847,20 +9847,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2301-L2307",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/DBManager.php#L2301-L2307",
             "snippet": [
                 {
                     "number": 2301,
@@ -10081,13 +10081,13 @@
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?P<arg>\\((?P<len>\\w+)\\s*(,\\s*…\" with \"*\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2577-L2583",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/DBManager.php#L2577-L2583",
             "snippet": [
                 {
                     "number": 2577,
@@ -10332,13 +10332,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/DBManager.php#L2907-L2913",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/DBManager.php#L2907-L2913",
             "snippet": [
                 {
                     "number": 2907,
@@ -10463,14 +10463,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -10481,7 +10481,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L519-L525",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MssqlManager.php#L519-L525",
             "snippet": [
                 {
                     "number": 519,
@@ -10606,14 +10606,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -10624,7 +10624,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L521-L527",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MssqlManager.php#L521-L527",
             "snippet": [
                 {
                     "number": 521,
@@ -10749,13 +10749,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L1461-L1467",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MssqlManager.php#L1461-L1467",
             "snippet": [
                 {
                     "number": 1461,
@@ -10916,13 +10916,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"[\\\"'\\*\\/\\?\\:\\<\\>\\-\\ \\&\\!\\(\\)\\[\\]\\{\\}\\;\\,\\.\\`\\~\\|\\\\]+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:[0-9#@]+|[\\\"'\\*\\/\\?\\:\\<\\>\\-\\ \\&\\!\\(\\)\\[\\]\\{\\}\\;\\,\\.\\`\\~\\|\\\\]+)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MssqlManager.php#L2089-L2095",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MssqlManager.php#L2089-L2095",
             "snippet": [
                 {
                     "number": 2089,
@@ -11075,13 +11075,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L344-L350",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MysqlManager.php#L344-L350",
             "snippet": [
                 {
                     "number": 344,
@@ -11302,13 +11302,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L607-L613",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MysqlManager.php#L607-L613",
             "snippet": [
                 {
                     "number": 607,
@@ -11437,13 +11437,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/MysqlManager.php#L609-L615",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/MysqlManager.php#L609-L615",
             "snippet": [
                 {
                     "number": 609,
@@ -11572,13 +11572,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/database/SqlsrvManager.php#L420-L426",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/database/SqlsrvManager.php#L420-L426",
             "snippet": [
                 {
                     "number": 420,
@@ -11739,20 +11739,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate), 'm' (duplicate), 'M' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousPipe",
                     "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
                     "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
-                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                    "docs": "https://php-regex.com/reference/rules/alternation-like-character-classes/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/export_utils.php#L293-L299",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/export_utils.php#L293-L299",
             "snippet": [
                 {
                     "number": 293,
@@ -11885,20 +11885,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate), 'm' (duplicate), 'M' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousPipe",
                     "message": "Character class contains \"|\" which is literal inside []. It looks like an alternation typo.",
                     "hint": "Did you mean an alternation like \"(error|failure)\" instead of a character class?",
-                    "docs": "https://php-regex.com/reference/rules/#alternation-like-character-classes"
+                    "docs": "https://php-regex.com/reference/rules/alternation-like-character-classes/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/export_utils.php#L727-L733",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/export_utils.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,
@@ -12031,13 +12031,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/nusoap/class.soap_parser.php#L300-L306",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/nusoap/class.soap_parser.php#L300-L306",
             "snippet": [
                 {
                     "number": 300,
@@ -12358,13 +12358,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/nusoap/nusoap.php#L8551-L8557",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/nusoap/nusoap.php#L8551-L8557",
             "snippet": [
                 {
                     "number": 8551,
@@ -12685,14 +12685,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -12703,7 +12703,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/parsecsv.lib.php#L626-L632",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/parsecsv.lib.php#L626-L632",
             "snippet": [
                 {
                     "number": 626,
@@ -12848,21 +12848,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -12873,7 +12873,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/parsecsv.lib.php#L704-L710",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/parsecsv.lib.php#L704-L710",
             "snippet": [
                 {
                     "number": 704,
@@ -13050,7 +13050,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": {
@@ -13061,7 +13061,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/php-sql-parser.php#L174-L180",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/php-sql-parser.php#L174-L180",
             "snippet": [
                 {
                     "number": 174,
@@ -13150,13 +13150,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L1634-L1640",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L1634-L1640",
             "snippet": [
                 {
                     "number": 1634,
@@ -13325,21 +13325,21 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -13350,7 +13350,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2089-L2095",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2089-L2095",
             "snippet": [
                 {
                     "number": 2089,
@@ -13599,13 +13599,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2200-L2206",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2200-L2206",
             "snippet": [
                 {
                     "number": 2200,
@@ -13722,35 +13722,35 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<0\" . \" 0=\\\"\\\" 0=\\\"\\\"\" x n . \"!>\" Replayed on PCRE2 10.49: preg_match fails from length 74 (backtrack_limit 100000, JIT off). The risky part is: \\w|\\w[\\w\\-]*\\w Hotspot offsets: 19-32 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s+(?:\\w|\\w[\\w-]*\\w)(?:\\s*=…\" at offset 10 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\w\" and \"\\w[\\w-]*\\w\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": {
@@ -13769,7 +13769,7 @@
                 "limit": 100000
             },
             "subject": "<0 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\"!>",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2284-L2290",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2284-L2290",
             "snippet": [
                 {
                     "number": 2284,
@@ -14094,13 +14094,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2377-L2383",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2377-L2383",
             "snippet": [
                 {
                     "number": 2377,
@@ -14225,13 +14225,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2379-L2385",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2379-L2385",
             "snippet": [
                 {
                     "number": 2379,
@@ -14348,13 +14348,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L2382-L2388",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L2382-L2388",
             "snippet": [
                 {
                     "number": 2382,
@@ -14479,20 +14479,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L4992-L4998",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L4992-L4998",
             "snippet": [
                 {
                     "number": 4992,
@@ -14633,14 +14633,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -14651,7 +14651,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5313-L5319",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L5313-L5319",
             "snippet": [
                 {
                     "number": 5313,
@@ -14848,13 +14848,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5331-L5337",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L5331-L5337",
             "snippet": [
                 {
                     "number": 5331,
@@ -14999,7 +14999,7 @@
         {
             "id": "f-4cc1c4ff98",
             "file": "include/utils.php",
-            "line": 5857,
+            "line": 5865,
             "column": 16,
             "pattern": "/[oc]:[^:]*\\d+:/i",
             "source": "preg_match()",
@@ -15011,16 +15011,16 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L5854-L5860",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L5862-L5868",
             "snippet": [
                 {
-                    "number": 5854,
+                    "number": 5862,
                     "focus": false,
                     "runs": [
                         [
@@ -15030,7 +15030,7 @@
                     ]
                 },
                 {
-                    "number": 5855,
+                    "number": 5863,
                     "focus": false,
                     "runs": [
                         [
@@ -15040,7 +15040,7 @@
                     ]
                 },
                 {
-                    "number": 5856,
+                    "number": 5864,
                     "focus": false,
                     "runs": [
                         [
@@ -15050,7 +15050,7 @@
                     ]
                 },
                 {
-                    "number": 5857,
+                    "number": 5865,
                     "focus": true,
                     "runs": [
                         [
@@ -15124,7 +15124,7 @@
                     ]
                 },
                 {
-                    "number": 5858,
+                    "number": 5866,
                     "focus": false,
                     "runs": [
                         [
@@ -15134,7 +15134,7 @@
                     ]
                 },
                 {
-                    "number": 5859,
+                    "number": 5867,
                     "focus": false,
                     "runs": [
                         [
@@ -15144,7 +15144,7 @@
                     ]
                 },
                 {
-                    "number": 5860,
+                    "number": 5868,
                     "focus": false,
                     "runs": [
                         [
@@ -15158,7 +15158,7 @@
         {
             "id": "f-6940918923",
             "file": "include/utils.php",
-            "line": 6199,
+            "line": 6207,
             "column": 26,
             "pattern": "/^[\\w\\-\\_\\.]+$/",
             "source": "preg_match()",
@@ -15170,16 +15170,16 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils.php#L6196-L6202",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils.php#L6204-L6210",
             "snippet": [
                 {
-                    "number": 6196,
+                    "number": 6204,
                     "focus": false,
                     "runs": [
                         [
@@ -15189,7 +15189,7 @@
                     ]
                 },
                 {
-                    "number": 6197,
+                    "number": 6205,
                     "focus": false,
                     "runs": [
                         [
@@ -15199,7 +15199,7 @@
                     ]
                 },
                 {
-                    "number": 6198,
+                    "number": 6206,
                     "focus": false,
                     "runs": [
                         [
@@ -15209,7 +15209,7 @@
                     ]
                 },
                 {
-                    "number": 6199,
+                    "number": 6207,
                     "focus": true,
                     "runs": [
                         [
@@ -15267,7 +15267,7 @@
                     ]
                 },
                 {
-                    "number": 6200,
+                    "number": 6208,
                     "focus": false,
                     "runs": [
                         [
@@ -15277,7 +15277,7 @@
                     ]
                 },
                 {
-                    "number": 6201,
+                    "number": 6209,
                     "focus": false,
                     "runs": [
                         [
@@ -15287,7 +15287,7 @@
                     ]
                 },
                 {
-                    "number": 6202,
+                    "number": 6210,
                     "focus": false,
                     "runs": [
                         [
@@ -15313,20 +15313,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/include/utils/file_utils.php#L523-L529",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/include/utils/file_utils.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -15455,13 +15455,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/checkDBSettings.php#L115-L121",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/install/checkDBSettings.php#L115-L121",
             "snippet": [
                 {
                     "number": 115,
@@ -15586,13 +15586,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/checkDBSettings.php#L124-L130",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/install/checkDBSettings.php#L124-L130",
             "snippet": [
                 {
                     "number": 124,
@@ -15723,7 +15723,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/install/install_utils.php#L338-L344",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/install/install_utils.php#L338-L344",
             "snippet": [
                 {
                     "number": 338,
@@ -15828,13 +15828,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOD_Index/LuceneUtils.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/AOD_Index/LuceneUtils.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -15979,13 +15979,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOD_Index/PdfParser.php#L110-L116",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/AOD_Index/PdfParser.php#L110-L116",
             "snippet": [
                 {
                     "number": 110,
@@ -16130,7 +16130,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -16141,7 +16141,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOP_Case_Updates/CaseUpdatesHook.php#L320-L326",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/AOP_Case_Updates/CaseUpdatesHook.php#L320-L326",
             "snippet": [
                 {
                     "number": 320,
@@ -16282,13 +16282,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'L' (covered by range 'A'-'Z'), 'W' (covered by range 'A'-'Z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOR_Scheduled_Reports/lib/Cron/DayOfMonthField.php#L98-L104",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/AOR_Scheduled_Reports/lib/Cron/DayOfMonthField.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,
@@ -16445,7 +16445,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -16456,7 +16456,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/AOW_WorkFlow/aow_utils.php#L494-L500",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/AOW_WorkFlow/aow_utils.php#L494-L500",
             "snippet": [
                 {
                     "number": 494,
@@ -16629,21 +16629,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -16655,7 +16655,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Administration/SyncInboundEmailAccounts/SyncInboundEmailAccountsSubActionHandler.php#L455-L461",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Administration/SyncInboundEmailAccounts/SyncInboundEmailAccountsSubActionHandler.php#L455-L461",
             "snippet": [
                 {
                     "number": 455,
@@ -16832,7 +16832,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -16843,7 +16843,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Calls/CallFormBase.php#L245-L251",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Calls/CallFormBase.php#L245-L251",
             "snippet": [
                 {
                     "number": 245,
@@ -17016,7 +17016,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -17027,7 +17027,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Calls/Reschedule.php#L18-L24",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Calls/Reschedule.php#L18-L24",
             "snippet": [
                 {
                     "number": 18,
@@ -17200,14 +17200,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -17218,7 +17218,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Campaigns/Campaign.php#L440-L446",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Campaigns/Campaign.php#L440-L446",
             "snippet": [
                 {
                     "number": 440,
@@ -17383,7 +17383,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -17394,7 +17394,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/DynamicFields/templates/Fields/TemplateEnum.php#L176-L182",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/DynamicFields/templates/Fields/TemplateEnum.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -17511,13 +17511,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/EmailMan/EmailImage.php#L42-L48",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/EmailMan/EmailImage.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -17654,13 +17654,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/EmailTemplates/EmailTemplateFormBase.php#L185-L191",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/EmailTemplates/EmailTemplateFormBase.php#L185-L191",
             "snippet": [
                 {
                     "number": 185,
@@ -17889,55 +17889,55 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '_' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z') (and 2 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4523-L4529",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Emails/Email.php#L4523-L4529",
             "snippet": [
                 {
                     "number": 4523,
@@ -18206,55 +18206,55 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '_' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z') (and 2 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4568-L4574",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Emails/Email.php#L4568-L4574",
             "snippet": [
                 {
                     "number": 4568,
@@ -18523,55 +18523,55 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z'), '[' (covered by range 'A'-'z') (and 1 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z'), '^' (covered by range 'A'-'z'), '_' (covered by range 'A'-'z'), '`' (covered by range 'A'-'z') (and 2 more).",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Emails/Email.php#L4612-L4618",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Emails/Email.php#L4612-L4618",
             "snippet": [
                 {
                     "number": 4612,
@@ -18840,7 +18840,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -18851,7 +18851,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Home/QuickSearch.php#L492-L498",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Home/QuickSearch.php#L492-L498",
             "snippet": [
                 {
                     "number": 492,
@@ -18972,7 +18972,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -18983,7 +18983,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Home/QuickSearch.php#L493-L499",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Home/QuickSearch.php#L493-L499",
             "snippet": [
                 {
                     "number": 493,
@@ -19104,7 +19104,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -19115,7 +19115,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Import/Forms.php#L135-L141",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Import/Forms.php#L135-L141",
             "snippet": [
                 {
                     "number": 135,
@@ -19288,13 +19288,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Import/views/view.error.php#L105-L111",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Import/views/view.error.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -19431,13 +19431,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/InboundEmail/InboundEmail.php#L4940-L4946",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/InboundEmail/InboundEmail.php#L4940-L4946",
             "snippet": [
                 {
                     "number": 4940,
@@ -19574,21 +19574,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -19600,7 +19600,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/InboundEmail/InboundEmail.php#L8417-L8423",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/InboundEmail/InboundEmail.php#L8417-L8423",
             "snippet": [
                 {
                     "number": 8417,
@@ -19777,7 +19777,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -19788,7 +19788,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Meetings/MeetingFormBase.php#L210-L216",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Meetings/MeetingFormBase.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -19961,13 +19961,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L621-L627",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L621-L627",
             "snippet": [
                 {
                     "number": 621,
@@ -20092,13 +20092,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L624-L630",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/ModuleBuilder/parsers/relationships/AbstractRelationship.php#L624-L630",
             "snippet": [
                 {
                     "number": 624,
@@ -20223,14 +20223,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"lbl_city\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:lbl_city|lbl_country|lbl_billing_address|lbl_alt_address|lbl_shipping_address|lbl_postal_code|lbl_state)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": {
@@ -20241,7 +20241,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/ModuleBuilder/views/view.labels.php#L133-L139",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/ModuleBuilder/views/view.labels.php#L133-L139",
             "snippet": [
                 {
                     "number": 133,
@@ -20410,7 +20410,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -20421,7 +20421,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L99-L105",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -20654,7 +20654,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -20665,7 +20665,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -20834,7 +20834,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -20845,7 +20845,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L108-L114",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -21014,13 +21014,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L126-L132",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -21413,13 +21413,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L143-L149",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -21812,7 +21812,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -21823,7 +21823,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L368-L374",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L368-L374",
             "snippet": [
                 {
                     "number": 368,
@@ -22004,7 +22004,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -22015,7 +22015,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L446-L452",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L446-L452",
             "snippet": [
                 {
                     "number": 446,
@@ -22208,7 +22208,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -22219,7 +22219,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Studio/parsers/StudioParser.php#L451-L457",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Studio/parsers/StudioParser.php#L451-L457",
             "snippet": [
                 {
                     "number": 451,
@@ -22412,7 +22412,7 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -22423,7 +22423,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L596-L602",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L596-L602",
             "snippet": [
                 {
                     "number": 596,
@@ -22620,13 +22620,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L598-L604",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/SugarFeed/Dashlets/SugarFeedDashlet/SugarFeedDashlet.php#L598-L604",
             "snippet": [
                 {
                     "number": 598,
@@ -22823,7 +22823,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -22834,7 +22834,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/Tasks/Save.php#L60-L66",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/Tasks/Save.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -23007,7 +23007,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -23018,7 +23018,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/SugarMerge/SugarMerge.php#L107-L113",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/UpgradeWizard/SugarMerge/SugarMerge.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -23147,7 +23147,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -23158,7 +23158,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/upgradeMetaHelper.php#L313-L319",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/UpgradeWizard/upgradeMetaHelper.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -23327,13 +23327,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/UpgradeWizard/uw_utils.php#L4539-L4545",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/UpgradeWizard/uw_utils.php#L4539-L4545",
             "snippet": [
                 {
                     "number": 4539,
@@ -23462,13 +23462,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/jjwg_Areas/jjwg_Areas.php#L86-L92",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/jjwg_Areas/jjwg_Areas.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -23593,13 +23593,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/modules/jjwg_Maps/jjwg_Maps.php#L1224-L1230",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/modules/jjwg_Maps/jjwg_Maps.php#L1224-L1230",
             "snippet": [
                 {
                     "number": 1224,
@@ -23724,20 +23724,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/salesagility/SuiteCRM/blob/be6191927d643872942a364bc5877493a6ae25a2/service/JsonRPCServer/JsonRPCServerCalls.php#L126-L132",
+            "permalink": "https://github.com/salesagility/SuiteCRM/blob/48c583a2fec123df12c573890ba6af908b4d21cd/service/JsonRPCServer/JsonRPCServerCalls.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,

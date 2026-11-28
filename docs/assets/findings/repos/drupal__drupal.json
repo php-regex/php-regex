@@ -1,6 +1,6 @@
 {
     "repo": "drupal/drupal",
-    "sha": "75a5600d2cdd7f3df2d3b9d4440df08b95abd665",
+    "sha": "5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -22,28 +22,28 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"FTP://\" . \"!%00\" x n Replayed on PCRE2 10.49: preg_match fails from length 62 (backtrack_limit 100000, JIT off). The risky part is: [\\w.\\-+%!$&'()*+,;=]|%[0-9a-f]{2} Hotspot offsets: 422-460 Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '+' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '+' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"[\\w\\.\\-\\+%!$&'\\(\\)*\\+,;=]\" and \"%[0-9a-f]{2}\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -57,7 +57,7 @@
                 "limit": 100000
             },
             "subject": "FTP://!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00!%00",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Component/Utility/UrlHelper.php#L453-L459",
             "snippet": [
                 {
                     "number": 453,
@@ -146,13 +146,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Component/Utility/Xss.php#L385-L391",
             "snippet": [
                 {
                     "number": 385,
@@ -241,42 +241,42 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"@IMPORTURL(\\\"\" . \"\\\"\\\"\" x n . \"!;\" Replayed on PCRE2 10.49: preg_match fails from length 28 (backtrack_limit 100000, JIT off). The risky part is: \\\\'|. Hotspot offsets: 17-22 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \".\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \".\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\[\\)\\'\\\"]\" and \"[^'\")]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\'\" and \".\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\"\" and \".\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -290,7 +290,7 @@
                 "limit": 100000
             },
             "subject": "@IMPORTURL(\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"!;",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Core/Asset/CssCollectionOptimizerLazy.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -379,21 +379,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"a\" . \"00\" x n . \"!:\" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9_\\-]* Hotspot offsets: 7-21 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([a-zA-Z0-9_-]*[a-zA-Z0-9])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"([a-zA-Z0-9_-]*[a-zA-Z0-9])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -407,7 +407,7 @@
                 "limit": 100000
             },
             "subject": "a0000000000000000000000000000000000000000000000000000000000000000!:",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Core/Template/ComponentNodeVisitor.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -744,13 +744,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Core/Template/Loader/ComponentLoader.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -971,13 +971,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Core/Test/EnvironmentCleaner.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -1110,13 +1110,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/lib/Drupal/Core/Validation/Plugin/Validation/Constraint/PrimitiveTypeConstraintValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1317,13 +1317,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/field/src/Entity/FieldStorageConfig.php#L269-L275",
             "snippet": [
                 {
                     "number": 269,
@@ -1496,13 +1496,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/file/src/EventSubscriber/FileEventSubscriber.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -1659,14 +1659,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 2-11 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([a-z0-9]+([._][a-z0-9])* ?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1680,7 +1680,7 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/file/src/Plugin/Field/FieldType/FileItem.php#L262-L268",
             "snippet": [
                 {
                     "number": 262,
@@ -1897,13 +1897,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L153-L159",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/filter/src/Plugin/Filter/FilterUrl.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -2040,13 +2040,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/jsonapi/src/Revisions/ResourceVersionRouteEnhancer.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -2335,13 +2335,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/link/src/AttributeXss.php#L129-L135",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/link/src/AttributeXss.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -2430,13 +2430,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/File/LocaleFile.php#L86-L92",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/locale/src/File/LocaleFile.php#L86-L92",
             "snippet": [
                 {
                     "number": 86,
@@ -2525,48 +2525,48 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 179 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \"[^']\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \"[^\"]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 653 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \"[^']\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \"[^\"]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L190-L196",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/locale/src/LocaleJs.php#L190-L196",
             "snippet": [
                 {
                     "number": 190,
@@ -2655,69 +2655,69 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 235 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \"[^']\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \"[^\"]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 409 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \"[^']\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \"[^\"]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:'(?:\\\\'|[^'])*'|\"(?:\\\\\"|…\" at offset 1377 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\'\" and \"[^']\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"\\\\\"\" and \"[^\"]\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L201-L207",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/locale/src/LocaleJs.php#L201-L207",
             "snippet": [
                 {
                     "number": 201,
@@ -2806,7 +2806,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2817,7 +2817,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/locale/src/LocaleJs.php#L452-L458",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/locale/src/LocaleJs.php#L452-L458",
             "snippet": [
                 {
                     "number": 452,
@@ -2982,13 +2982,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/mysql/src/Driver/Database/mysql/Connection.php#L278-L284",
             "snippet": [
                 {
                     "number": 278,
@@ -3181,14 +3181,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 71-80 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[_.-]?[a-z0-9]+)\" at offset 62 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3202,7 +3202,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/package_manager/src/SandboxManagerBase.php#L130-L136",
             "snippet": [
                 {
                     "number": 130,
@@ -3547,21 +3547,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \"-00\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 45 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 16-25 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([_.-]?[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(([_.]?|-{0,2})[a-z0-9]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3575,7 +3575,7 @@
                 "limit": 100000
             },
             "subject": "0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!/",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/package_manager/src/SandboxManagerBase.php#L143-L149",
             "snippet": [
                 {
                     "number": 143,
@@ -3888,13 +3888,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\x0A' (covered by range '\\x00'-'/'), '\\x0A' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/drupal/drupal/blob/75a5600d2cdd7f3df2d3b9d4440df08b95abd665/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
+            "permalink": "https://github.com/drupal/drupal/blob/5c016bfacce7ff1d1ac750d8da4e1d8d2fa2fd7d/core/modules/views/src/Plugin/views/field/FieldPluginBase.php#L1873-L1879",
             "snippet": [
                 {
                     "number": 1873,

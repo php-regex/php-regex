@@ -1,6 +1,6 @@
 {
     "repo": "api-platform/core",
-    "sha": "fd866f21d5149bfbbefe70a17a7dbd30b345c2f4",
+    "sha": "2d692a6f89e1c339213c82b9d92e2a20321d6887",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/fd866f21d5149bfbbefe70a17a7dbd30b345c2f4/src/JsonApi/Serializer/ItemNormalizerTrait.php#L169-L175",
+            "permalink": "https://github.com/api-platform/core/blob/2d692a6f89e1c339213c82b9d92e2a20321d6887/src/JsonApi/Serializer/ItemNormalizerTrait.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,
@@ -173,13 +173,13 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/fd866f21d5149bfbbefe70a17a7dbd30b345c2f4/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
+            "permalink": "https://github.com/api-platform/core/blob/2d692a6f89e1c339213c82b9d92e2a20321d6887/src/Metadata/Util/CamelCaseToSnakeCaseNameConverter.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -332,13 +332,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"(\\w+)=(?<=\\w=)(.*?)(?=;\\w+=)\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:(\\w+)=(?<=\\w=)(.*?)(?=;\\w+=)|(\\w+)=([^;]*);?)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/api-platform/core/blob/fd866f21d5149bfbbefe70a17a7dbd30b345c2f4/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
+            "permalink": "https://github.com/api-platform/core/blob/2d692a6f89e1c339213c82b9d92e2a20321d6887/src/Metadata/Util/CompositeIdentifierParser.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,

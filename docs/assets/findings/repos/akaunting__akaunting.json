@@ -1,6 +1,6 @@
 {
     "repo": "akaunting/akaunting",
-    "sha": "7c9a4e39250e7a64b268f049a68a9a92a625f2e5",
+    "sha": "c03ef234001746fce391fc292d1257f361f18e87",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/akaunting/akaunting/blob/7c9a4e39250e7a64b268f049a68a9a92a625f2e5/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php#L51-L57",
+            "permalink": "https://github.com/akaunting/akaunting/blob/c03ef234001746fce391fc292d1257f361f18e87/app/Http/Middleware/AuthenticateOnceWithDynamicApi.php#L51-L57",
             "snippet": [
                 {
                     "number": 51,

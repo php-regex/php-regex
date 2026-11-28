@@ -1,6 +1,6 @@
 {
     "repo": "symfony/symfony",
-    "sha": "9222647836686bff1283e060108107318f9db3e7",
+    "sha": "a120f2797b94b52e8089dff79a12cb658d2015ae",
     "target": {
         "php": "8.4.1",
         "pcre": "10.49",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Bundle/FrameworkBundle/Console/Descriptor/Descriptor.php#L153-L159",
             "snippet": [
                 {
                     "number": 153,
@@ -158,7 +158,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -169,7 +169,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Bundle/FrameworkBundle/Resources/bin/check-unused-known-tags.php#L19-L24",
             "snippet": [
                 {
                     "number": 19,
@@ -296,13 +296,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/AssetMapper/ImportMap/ImportMapManager.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -539,7 +539,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\\/)\" at offset 94; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -550,7 +550,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Cache/Adapter/CouchbaseCollectionAdapter.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -799,21 +799,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<\" . \"0=,0\" x n . \"!>\" Replayed on PCRE2 10.49: preg_match fails from length 59 (backtrack_limit 100000, JIT off). The risky part is: \\w+ Hotspot offsets: 3-6 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(\\w+=[\\w,]+;?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 4 \"(\\w+=\\w+;?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -827,7 +827,7 @@
                 "limit": 100000
             },
             "subject": "<0=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,00=,0!>",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Console/Helper/Table.php#L671-L677",
             "snippet": [
                 {
                     "number": 671,
@@ -1104,13 +1104,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Console/Input/StringInput.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -1199,13 +1199,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/DependencyInjection/Dumper/GraphvizDumper.php#L232-L238",
             "snippet": [
                 {
                     "number": 232,
@@ -1322,7 +1322,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1333,7 +1333,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1731-L1737",
             "snippet": [
                 {
                     "number": 1731,
@@ -1498,7 +1498,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1509,7 +1509,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/DependencyInjection/Dumper/PhpDumper.php#L1738-L1744",
             "snippet": [
                 {
                     "number": 1738,
@@ -1674,13 +1674,13 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Dotenv/Dotenv.php#L518-L524",
             "snippet": [
                 {
                     "number": 518,
@@ -1845,7 +1845,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1856,7 +1856,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Emoji/Resources/bin/build.php#L234-L240",
             "snippet": [
                 {
                     "number": 234,
@@ -1985,14 +1985,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\\\AA\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9_\\x80-\\xff]* Hotspot offsets: 25-47 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\\\?[a-zA-Z_\\x80-\\xff][a-zA-…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -2006,7 +2006,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1027-L1033",
             "snippet": [
                 {
                     "number": 1027,
@@ -2231,27 +2231,27 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1423-L1429",
             "snippet": [
                 {
                     "number": 1423,
@@ -2564,27 +2564,27 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1460-L1466",
             "snippet": [
                 {
                     "number": 1460,
@@ -2877,27 +2877,27 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/ErrorHandler/DebugClassLoader.php#L1484-L1490",
             "snippet": [
                 {
                     "number": 1484,
@@ -3190,13 +3190,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"(Host: )\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:[*<]|(Host: ))\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/HttpClient/DataCollector/HttpClientDataCollector.php#L259-L265",
             "snippet": [
                 {
                     "number": 259,
@@ -3333,13 +3333,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpClient/HttpClientTrait.php#L391-L397",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/HttpClient/HttpClientTrait.php#L391-L397",
             "snippet": [
                 {
                     "number": 391,
@@ -3540,7 +3540,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3551,7 +3551,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/HttpKernel/HttpCache/Esi.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -3688,7 +3688,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -3700,7 +3700,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Intl/Resources/bin/update-data.php#L77-L83",
             "snippet": [
                 {
                     "number": 77,
@@ -3877,13 +3877,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/JsonPath/JsonCrawler.php#L521-L527",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/JsonPath/JsonCrawler.php#L521-L527",
             "snippet": [
                 {
                     "number": 521,
@@ -4092,13 +4092,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesApiAsyncAwsTransport.php#L128-L134",
             "snippet": [
                 {
                     "number": 128,
@@ -4311,13 +4311,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Mailer/Bridge/Amazon/Transport/SesHttpAsyncAwsTransport.php#L101-L107",
             "snippet": [
                 {
                     "number": 101,
@@ -4530,13 +4530,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Mime/Email.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -4625,13 +4625,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Email.php#L475-L481",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Mime/Email.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -4720,111 +4720,111 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:(?:(?:(?:[ \\t]*(?:\\r…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" and \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 48 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 263 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 550 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 765 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1016 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1231 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x19…\" and \"(?:\\[\\x00-\\x08\\x0B\\x0C\\x0E-…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1639 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1854 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Mime/Header/AbstractHeader.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -4913,13 +4913,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Notifier/Bridge/Smsbox/SmsboxTransport.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -5076,7 +5076,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -5087,7 +5087,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L270-L276",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/PropertyInfo/Extractor/PhpStanExtractor.php#L270-L276",
             "snippet": [
                 {
                     "number": 270,
@@ -5224,13 +5224,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()\\\\]+|\\\\.|\\((?1)\\))\" at offset 18 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -5435,13 +5435,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()\\\\]+|\\\\.|\\((?1)\\))\" at offset 18 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L256-L262",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Routing/Generator/UrlGenerator.php#L256-L262",
             "snippet": [
                 {
                     "number": 256,
@@ -5646,14 +5646,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\\\AA\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 46 (backtrack_limit 100000, JIT off). The risky part is: [a-zA-Z0-9_\\x7f-\\xff]* Hotspot offsets: 25-47 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\\\?[a-zA-Z_\\x7f-\\xff][a-zA-…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -5667,7 +5667,7 @@
                 "limit": 100000
             },
             "subject": "\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA\\AA!",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Routing/Loader/AttributeClassLoader.php#L246-L252",
             "snippet": [
                 {
                     "number": 246,
@@ -5892,13 +5892,13 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag '-i' is redundant; the flag is not set at this position.",
                     "hint": "Remove '-i' from the inline flag group; it has no effect unless the flag is enabled first.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Routing/RouteCompiler.php#L209-L215",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Routing/RouteCompiler.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -6139,13 +6139,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Serializer/Encoder/XmlEncoder.php#L239-L245",
             "snippet": [
                 {
                     "number": 239,
@@ -6306,13 +6306,13 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Serializer/NameConverter/CamelCaseToSnakeCaseNameConverter.php#L75-L81",
             "snippet": [
                 {
                     "number": 75,
@@ -6465,13 +6465,13 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Serializer/NameConverter/SnakeCaseToCamelCaseNameConverter.php#L45-L51",
             "snippet": [
                 {
                     "number": 45,
@@ -6624,13 +6624,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L93-L99",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Serializer/Normalizer/DataUriNormalizer.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -7031,20 +7031,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '*' (duplicate), '+' (duplicate), '?' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Translation/Dumper/PoFileDumper.php#L183-L189",
             "snippet": [
                 {
                     "number": 183,
@@ -7133,7 +7133,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -7144,7 +7144,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/Validator/Constraints/Isin.php#L25-L31",
             "snippet": [
                 {
                     "number": 25,
@@ -7329,13 +7329,13 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/VarExporter/ProxyHelper.php#L405-L411",
             "snippet": [
                 {
                     "number": 405,
@@ -7508,20 +7508,20 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"*\" repeats an item that can match the empty string: an empty iteration matches nothing more.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Component/VarExporter/ProxyHelper.php#L425-L431",
             "snippet": [
                 {
                     "number": 425,
@@ -7754,20 +7754,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '*' (duplicate), '+' (duplicate), '?' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/symfony/symfony/blob/9222647836686bff1283e060108107318f9db3e7/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
+            "permalink": "https://github.com/symfony/symfony/blob/a120f2797b94b52e8089dff79a12cb658d2015ae/src/Symfony/Contracts/Translation/TranslatorTrait.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,

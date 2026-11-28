@@ -1,6 +1,6 @@
 {
     "repo": "FOSSBilling/FOSSBilling",
-    "sha": "b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2",
+    "sha": "b92fbd3b8e6571db99192f7fd2339eb6082b0e73",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,21 +22,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -47,7 +47,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Doctrine/InstallSeeder.php#L307-L313",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Doctrine/InstallSeeder.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -184,13 +184,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Doctrine/PaymentFenceConnection.php#L123-L129",
             "snippet": [
                 {
                     "number": 123,
@@ -373,668 +373,6 @@
             ]
         },
         {
-            "id": "f-1578783509",
-            "file": "src/core/System/Version.php",
-            "line": 20,
-            "column": 39,
-            "pattern": "^(?P<major>0|[1-9]\\d*)\\.(?P<minor>0|[1-9]\\d*)\\.(?P<patch>0|[1-9]\\d*)(?:-(?P<prerelease>(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$^",
-            "source": "preg_match()",
-            "location": "via self::semverRegex",
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in \"(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-…\" at offset 126 can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.overlap.charset",
-                    "message": "Alternation branches \"0\" and \"\\d*[a-zA-Z-][0-9a-zA-Z-]*\" have overlapping character sets, which may cause unnecessary backtracking.",
-                    "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/System/Version.php#L17-L23",
-            "snippet": [
-                {
-                    "number": 17,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const int PATCH = 0;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 18,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const int MINOR = 1;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 19,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    public const int MAJOR = 2;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 20,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "    public const string semverRegex = ",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(?P<",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "major",
-                            "pg-snippet-pattern pg-tok-identifier"
-                        ],
-                        [
-                            ">",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "1",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\.",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?P<",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "minor",
-                            "pg-snippet-pattern pg-tok-identifier"
-                        ],
-                        [
-                            ">",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "1",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\.",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?P<",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "patch",
-                            "pg-snippet-pattern pg-tok-identifier"
-                        ],
-                        [
-                            ">",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "1",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?P<",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "prerelease",
-                            "pg-snippet-pattern pg-tok-identifier"
-                        ],
-                        [
-                            ">(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "1",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "][",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\.",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "1",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "\\d",
-                            "pg-snippet-pattern pg-tok-escape"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "][",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\+",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(?P<",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "buildmetadata",
-                            "pg-snippet-pattern pg-tok-identifier"
-                        ],
-                        [
-                            ">",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(?:",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "\\.",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "0",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "9a",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "zA",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "-",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "Z-",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "+",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "*",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "$",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ";",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 21,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 22,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "    /**",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 23,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "     * Compare the specified FOSSBilling version string $version",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-117d7692c3",
             "file": "src/core/Update/Patch/Patch52.php",
             "line": 79,
@@ -1049,7 +387,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1060,7 +398,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch52.php#L76-L82",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Update/Patch/Patch52.php#L76-L82",
             "snippet": [
                 {
                     "number": 76,
@@ -1257,7 +595,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1268,7 +606,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch57.php#L120-L126",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Update/Patch/Patch57.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -1465,7 +803,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1476,7 +814,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Update/Patch/Patch90.php#L121-L127",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Update/Patch/Patch90.php#L121-L127",
             "snippet": [
                 {
                     "number": 121,
@@ -1673,13 +1011,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/core/Validation/DomainValidator.php#L46-L52",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/core/Validation/DomainValidator.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1896,21 +1234,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"{%block subject%}\" . \"!\" x n . \"!endblock\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: .*? Hotspot offsets: 23-26 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(.*?)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1924,7 +1262,7 @@
                 "limit": 100000
             },
             "subject": "{%block subject%}!!!!!!!!!!!!!!!!!!!!!!!!!endblock",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Email/Service.php#L517-L523",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/modules/Email/Service.php#L517-L523",
             "snippet": [
                 {
                     "number": 517,
@@ -2117,7 +1455,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2128,7 +1466,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Email/Service.php#L523-L529",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/modules/Email/Service.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -2325,13 +1663,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b4b6bdb2cabfcede3b177b8ddfb532e3892adcd2/src/modules/Theme/Model/Theme.php#L180-L186",
+            "permalink": "https://github.com/FOSSBilling/FOSSBilling/blob/b92fbd3b8e6571db99192f7fd2339eb6082b0e73/src/modules/Theme/Model/Theme.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,

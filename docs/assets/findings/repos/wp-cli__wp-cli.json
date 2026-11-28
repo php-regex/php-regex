@@ -1,6 +1,6 @@
 {
     "repo": "wp-cli/wp-cli",
-    "sha": "e9266b6939e65c76132d78750ff0a2ab37dd04b9",
+    "sha": "dc9df327f59e3b633a5bffae7165b111feedebab",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\x00-\\x7F])\" at offset 0; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/bundle/rmccue/requests/src/IdnaEncoder.php#L141-L147",
             "snippet": [
                 {
                     "number": 141,
@@ -170,13 +170,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/bundle/rmccue/requests/src/Requests.php#L765-L771",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/bundle/rmccue/requests/src/Requests.php#L765-L771",
             "snippet": [
                 {
                     "number": 765,
@@ -305,21 +305,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: (?:[\\w\\-]*)* Hotspot offsets: 33-44 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[\\w-]*)\" at offset 33 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\r\\n])\" at offset 46; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -338,7 +338,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/bundle/rmccue/requests/src/Requests.php#L853-L859",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/bundle/rmccue/requests/src/Requests.php#L853-L859",
             "snippet": [
                 {
                     "number": 853,
@@ -623,21 +623,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" . \";=\" x n . \"!\\x0D\\n\" Replayed on PCRE2 10.49: preg_match fails from length 32 (backtrack_limit 100000, JIT off). The risky part is: (?:[\\w\\-]*)* Hotspot offsets: 33-44 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[\\w-]*)\" at offset 33 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\r\\n])\" at offset 46; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -656,7 +656,7 @@
                 "limit": 100000
             },
             "subject": "0;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=;=!\r\n",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/bundle/rmccue/requests/src/Requests.php#L861-L867",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/bundle/rmccue/requests/src/Requests.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -941,13 +941,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Configurator.php#L155-L161",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Configurator.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -1036,13 +1036,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Configurator.php#L196-L202",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Configurator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,
@@ -1131,13 +1131,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Configurator.php#L276-L282",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Configurator.php#L276-L282",
             "snippet": [
                 {
                     "number": 276,
@@ -1226,13 +1226,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Configurator.php#L483-L489",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Configurator.php#L483-L489",
             "snippet": [
                 {
                     "number": 483,
@@ -1309,7 +1309,7 @@
         {
             "id": "f-404f9f9def",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1054,
+            "line": 1133,
             "column": 18,
             "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
             "source": "preg_match()",
@@ -1321,16 +1321,16 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Runner.php#L1051-L1057",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Runner.php#L1130-L1136",
             "snippet": [
                 {
-                    "number": 1051,
+                    "number": 1130,
                     "focus": false,
                     "runs": [
                         [
@@ -1340,7 +1340,7 @@
                     ]
                 },
                 {
-                    "number": 1052,
+                    "number": 1131,
                     "focus": false,
                     "runs": [
                         [
@@ -1350,7 +1350,7 @@
                     ]
                 },
                 {
-                    "number": 1053,
+                    "number": 1132,
                     "focus": false,
                     "runs": [
                         [
@@ -1360,7 +1360,7 @@
                     ]
                 },
                 {
-                    "number": 1054,
+                    "number": 1133,
                     "focus": true,
                     "runs": [
                         [
@@ -1370,7 +1370,7 @@
                     ]
                 },
                 {
-                    "number": 1055,
+                    "number": 1134,
                     "focus": false,
                     "runs": [
                         [
@@ -1380,7 +1380,7 @@
                     ]
                 },
                 {
-                    "number": 1056,
+                    "number": 1135,
                     "focus": false,
                     "runs": [
                         [
@@ -1390,7 +1390,7 @@
                     ]
                 },
                 {
-                    "number": 1057,
+                    "number": 1136,
                     "focus": false,
                     "runs": [
                         [
@@ -1404,7 +1404,7 @@
         {
             "id": "f-d9f175e288",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1057,
+            "line": 1136,
             "column": 21,
             "pattern": "#^--ssh(?:-args)?(?:=|$)|--alias=#",
             "source": "preg_match()",
@@ -1416,16 +1416,16 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"--alias=\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:--ssh(?:-args)?(?:=|$)|--alias=)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Runner.php#L1054-L1060",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Runner.php#L1133-L1139",
             "snippet": [
                 {
-                    "number": 1054,
+                    "number": 1133,
                     "focus": false,
                     "runs": [
                         [
@@ -1435,7 +1435,7 @@
                     ]
                 },
                 {
-                    "number": 1055,
+                    "number": 1134,
                     "focus": false,
                     "runs": [
                         [
@@ -1445,7 +1445,7 @@
                     ]
                 },
                 {
-                    "number": 1056,
+                    "number": 1135,
                     "focus": false,
                     "runs": [
                         [
@@ -1455,7 +1455,7 @@
                     ]
                 },
                 {
-                    "number": 1057,
+                    "number": 1136,
                     "focus": true,
                     "runs": [
                         [
@@ -1537,7 +1537,7 @@
                     ]
                 },
                 {
-                    "number": 1058,
+                    "number": 1137,
                     "focus": false,
                     "runs": [
                         [
@@ -1547,7 +1547,7 @@
                     ]
                 },
                 {
-                    "number": 1059,
+                    "number": 1138,
                     "focus": false,
                     "runs": [
                         [
@@ -1557,7 +1557,7 @@
                     ]
                 },
                 {
-                    "number": 1060,
+                    "number": 1139,
                     "focus": false,
                     "runs": [
                         [
@@ -1571,7 +1571,7 @@
         {
             "id": "f-404f9f9def-2",
             "file": "php/WP_CLI/Runner.php",
-            "line": 1797,
+            "line": 1876,
             "column": 43,
             "pattern": "#^@[A-Za-z0-9-_\\.\\-]+$#",
             "source": "preg_match()",
@@ -1583,16 +1583,16 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/Runner.php#L1794-L1800",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/Runner.php#L1873-L1879",
             "snippet": [
                 {
-                    "number": 1794,
+                    "number": 1873,
                     "focus": false,
                     "runs": [
                         [
@@ -1602,7 +1602,7 @@
                     ]
                 },
                 {
-                    "number": 1795,
+                    "number": 1874,
                     "focus": false,
                     "runs": [
                         [
@@ -1612,7 +1612,7 @@
                     ]
                 },
                 {
-                    "number": 1796,
+                    "number": 1875,
                     "focus": false,
                     "runs": [
                         [
@@ -1622,7 +1622,7 @@
                     ]
                 },
                 {
-                    "number": 1797,
+                    "number": 1876,
                     "focus": true,
                     "runs": [
                         [
@@ -1632,7 +1632,7 @@
                     ]
                 },
                 {
-                    "number": 1798,
+                    "number": 1877,
                     "focus": false,
                     "runs": [
                         [
@@ -1642,7 +1642,7 @@
                     ]
                 },
                 {
-                    "number": 1799,
+                    "number": 1878,
                     "focus": false,
                     "runs": [
                         [
@@ -1652,7 +1652,7 @@
                     ]
                 },
                 {
-                    "number": 1800,
+                    "number": 1879,
                     "focus": false,
                     "runs": [
                         [
@@ -1678,13 +1678,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/WP_CLI/SynopsisParser.php#L21-L27",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/WP_CLI/SynopsisParser.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -1809,20 +1809,20 @@
                     "rule": "regex.lint.charclass.backrefAsOctal",
                     "message": "Suspicious \\1 inside character class: this is octal (\\x01), not a backreference to group 1.",
                     "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/backreference-written-inside-a-character-class/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.backrefAsOctal",
                     "message": "Suspicious \\5 inside character class: this is octal (\\x05), not a backreference to group 5.",
                     "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 5, move the check outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/backreference-written-inside-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/wp-cli/wp-cli/blob/e9266b6939e65c76132d78750ff0a2ab37dd04b9/php/utils.php#L1537-L1543",
+            "permalink": "https://github.com/wp-cli/wp-cli/blob/dc9df327f59e3b633a5bffae7165b111feedebab/php/utils.php#L1537-L1543",
             "snippet": [
                 {
                     "number": 1537,

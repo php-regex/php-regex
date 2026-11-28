@@ -1,6 +1,6 @@
 {
     "repo": "shopware/shopware",
-    "sha": "fe5541a5b006cc37df97445097b6f13aa42b0239",
+    "sha": "ec8b7141762457f03741e59f85cb1eeb852b062d",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/Content/Cms/DataResolver/Element/AbstractCmsElementResolver.php#L181-L187",
             "snippet": [
                 {
                     "number": 181,
@@ -201,7 +201,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -212,7 +212,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/Content/Media/Util/PathHelper.php#L14-L20",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/Content/Media/Util/PathHelper.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -421,13 +421,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L28-L34",
             "snippet": [
                 {
                     "number": 28,
@@ -584,13 +584,13 @@
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/Danger/Rules/RemovedTwigBlocks.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -747,7 +747,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -758,7 +758,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -895,7 +895,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -906,7 +906,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L122-L128",
             "snippet": [
                 {
                     "number": 122,
@@ -1043,7 +1043,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1054,7 +1054,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L126-L132",
             "snippet": [
                 {
                     "number": 126,
@@ -1191,7 +1191,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1202,7 +1202,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/StaticAnalyze/PHPStan/Rules/Migration/AddColumnRule.php#L131-L137",
             "snippet": [
                 {
                     "number": 131,
@@ -1339,14 +1339,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"A\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: [A-Z]+ Hotspot offsets: 4-10 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[A-Z]+(_[A-Z]+)*)\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1360,7 +1360,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/DevOps/Test/AnnotationTagTester.php#L187-L193",
             "snippet": [
                 {
                     "number": 187,
@@ -1557,7 +1557,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1568,7 +1568,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Core/Test/FixtureLoader.php#L54-L60",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Core/Test/FixtureLoader.php#L54-L60",
             "snippet": [
                 {
                     "number": 54,
@@ -1697,13 +1697,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Storefront/Theme/ThemeConfigValueAccessor.php#L253-L259",
             "snippet": [
                 {
                     "number": 253,
@@ -1868,13 +1868,13 @@
                     "rule": "regex.lint.flag.useless.D",
                     "message": "Flag 'D' is useless: the pattern contains no $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-d-dollar-end-only"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-d-dollar-end-only/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shopware/shopware/blob/fe5541a5b006cc37df97445097b6f13aa42b0239/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
+            "permalink": "https://github.com/shopware/shopware/blob/ec8b7141762457f03741e59f85cb1eeb852b062d/src/Storefront/Theme/Validator/SCSSValidator.php#L196-L202",
             "snippet": [
                 {
                     "number": 196,

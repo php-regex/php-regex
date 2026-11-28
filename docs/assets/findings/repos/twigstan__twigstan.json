@@ -22,7 +22,7 @@
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?<line_number>\\d+)\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 }
             ],
             "rewrite": null,

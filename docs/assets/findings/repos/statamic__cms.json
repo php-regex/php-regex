@@ -1,6 +1,6 @@
 {
     "repo": "statamic/cms",
-    "sha": "c32098a85ee501bfe577c7d52d42454c5aff0fd5",
+    "sha": "37db9920e3d3ebd440195f8a915157516e8e9ffb",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Console/Commands/ProEnable.php#L270-L276",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Console/Commands/ProEnable.php#L270-L276",
             "snippet": [
                 {
                     "number": 270,
@@ -218,7 +218,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -229,7 +229,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Console/Composer/Json.php#L53-L59",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Console/Composer/Json.php#L53-L59",
             "snippet": [
                 {
                     "number": 53,
@@ -366,7 +366,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -377,7 +377,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Console/Composer/Json.php#L55-L61",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Console/Composer/Json.php#L55-L61",
             "snippet": [
                 {
                     "number": 55,
@@ -514,13 +514,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\x0A' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Facades/Endpoint/Parse.php#L62-L68",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Facades/Endpoint/Parse.php#L62-L68",
             "snippet": [
                 {
                     "number": 62,
@@ -645,7 +645,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -656,7 +656,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Fieldtypes/Concerns/ResolvesStatamicUrls.php#L13-L19",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Fieldtypes/Concerns/ResolvesStatamicUrls.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,
@@ -853,7 +853,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -864,7 +864,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Fieldtypes/UpdatesReferences.php#L103-L109",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Fieldtypes/UpdatesReferences.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -1061,21 +1061,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1086,7 +1086,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Modifiers/CoreModifiers.php#L869-L875",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Modifiers/CoreModifiers.php#L869-L875",
             "snippet": [
                 {
                     "number": 869,
@@ -1235,21 +1235,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1260,7 +1260,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Search/Comb/Comb.php#L465-L471",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Search/Comb/Comb.php#L465-L471",
             "snippet": [
                 {
                     "number": 465,
@@ -1381,21 +1381,21 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1406,7 +1406,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Search/Comb/Comb.php#L477-L483",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Search/Comb/Comb.php#L477-L483",
             "snippet": [
                 {
                     "number": 477,
@@ -1527,13 +1527,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Search/Comb/Comb.php#L873-L879",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Search/Comb/Comb.php#L873-L879",
             "snippet": [
                 {
                     "number": 873,
@@ -1654,13 +1654,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Search/Comb/Comb.php#L890-L896",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Search/Comb/Comb.php#L890-L896",
             "snippet": [
                 {
                     "number": 890,
@@ -1781,13 +1781,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/StaticCaching/Replacers/NoCacheReplacer.php#L11-L17",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/StaticCaching/Replacers/NoCacheReplacer.php#L11-L17",
             "snippet": [
                 {
                     "number": 11,
@@ -1928,14 +1928,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1946,7 +1946,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Support/Str.php#L186-L192",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Support/Str.php#L186-L192",
             "snippet": [
                 {
                     "number": 186,
@@ -2143,14 +2143,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2161,7 +2161,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Support/Str.php#L188-L194",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Support/Str.php#L188-L194",
             "snippet": [
                 {
                     "number": 188,
@@ -2290,13 +2290,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/Support/Svg.php#L42-L48",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/Support/Svg.php#L42-L48",
             "snippet": [
                 {
                     "number": 42,
@@ -2445,13 +2445,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '\\x0A' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/statamic/cms/blob/c32098a85ee501bfe577c7d52d42454c5aff0fd5/src/View/Antlers/Language/Runtime/RuntimeParser.php#L228-L234",
+            "permalink": "https://github.com/statamic/cms/blob/37db9920e3d3ebd440195f8a915157516e8e9ffb/src/View/Antlers/Language/Runtime/RuntimeParser.php#L228-L234",
             "snippet": [
                 {
                     "number": 228,

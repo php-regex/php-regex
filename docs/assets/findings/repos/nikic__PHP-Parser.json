@@ -1,6 +1,6 @@
 {
     "repo": "nikic/PHP-Parser",
-    "sha": "24c72b4d84130ea4ae01b926631faf53f6aea7e0",
+    "sha": "629652bf65b156ccfd9efdab721a18a265dc0cde",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/nikic/PHP-Parser/blob/24c72b4d84130ea4ae01b926631faf53f6aea7e0/lib/PhpParser/ParserAbstract.php#L727-L733",
+            "permalink": "https://github.com/nikic/PHP-Parser/blob/629652bf65b156ccfd9efdab721a18a265dc0cde/lib/PhpParser/ParserAbstract.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,

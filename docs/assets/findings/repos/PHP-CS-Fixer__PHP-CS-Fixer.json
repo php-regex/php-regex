@@ -1,6 +1,6 @@
 {
     "repo": "PHP-CS-Fixer/PHP-CS-Fixer",
-    "sha": "511285399374ac4f95597276b2b6b652d42b9ea9",
+    "sha": "81f2254af444362710f5a2e781689b4d848ebd2d",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,146 +22,146 @@
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4558 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L475-L481",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -250,153 +250,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4619 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L704-L710",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L704-L710",
             "snippet": [
                 {
                     "number": 704,
@@ -485,160 +485,160 @@
                     "rule": "regex.lint.lookaround.impossible",
                     "message": "Lookahead \"(?=1)\" asks for what the pattern after it can never read: the pattern can never match through here.",
                     "hint": "Fix the lookahead or what follows it, or remove the branch.",
-                    "docs": "https://php-regex.com/reference/rules/#impossible-lookaround"
+                    "docs": "https://php-regex.com/reference/rules/impossible-lookaround/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L727-L733",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L727-L733",
             "snippet": [
                 {
                     "number": 727,
@@ -727,153 +727,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L740-L746",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L740-L746",
             "snippet": [
                 {
                     "number": 740,
@@ -962,160 +962,160 @@
                     "rule": "regex.lint.lookaround.impossible",
                     "message": "Lookahead \"(?=1)\" asks for what the pattern after it can never read: the pattern can never match through here.",
                     "hint": "Fix the lookahead or what follows it, or remove the branch.",
-                    "docs": "https://php-regex.com/reference/rules/#impossible-lookaround"
+                    "docs": "https://php-regex.com/reference/rules/impossible-lookaround/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L777-L783",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L777-L783",
             "snippet": [
                 {
                     "number": 777,
@@ -1204,153 +1204,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L790-L796",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L790-L796",
             "snippet": [
                 {
                     "number": 790,
@@ -1439,160 +1439,160 @@
                     "rule": "regex.lint.lookaround.impossible",
                     "message": "Lookahead \"(?=1)\" asks for what the pattern after it can never read: the pattern can never match through here.",
                     "hint": "Fix the lookahead or what follows it, or remove the branch.",
-                    "docs": "https://php-regex.com/reference/rules/#impossible-lookaround"
+                    "docs": "https://php-regex.com/reference/rules/impossible-lookaround/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4628 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L812-L818",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L812-L818",
             "snippet": [
                 {
                     "number": 812,
@@ -1681,153 +1681,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4618 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/DocBlock/TypeExpression.php#L825-L831",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/DocBlock/TypeExpression.php#L825-L831",
             "snippet": [
                 {
                     "number": 825,
@@ -1916,13 +1916,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"(\\R\\s*\\*\\s*)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Doctrine/Annotation/Tokens.php#L191-L197",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Doctrine/Annotation/Tokens.php#L191-L197",
             "snippet": [
                 {
                     "number": 191,
@@ -2079,13 +2079,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Comment/NoEmptyCommentFixer.php#L157-L163",
             "snippet": [
                 {
                     "number": 157,
@@ -2238,153 +2238,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4638 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Import/FullyQualifiedStrictTypesFixer.php#L686-L692",
             "snippet": [
                 {
                     "number": 686,
@@ -2473,153 +2473,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4634 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L586-L592",
             "snippet": [
                 {
                     "number": 586,
@@ -2708,153 +2708,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L588-L594",
             "snippet": [
                 {
                     "number": 588,
@@ -2943,153 +2943,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4635 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/NoSuperfluousPhpdocTagsFixer.php#L590-L596",
             "snippet": [
                 {
                     "number": 590,
@@ -3178,153 +3178,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocNoDuplicateTypesFixer.php#L90-L96",
             "snippet": [
                 {
                     "number": 90,
@@ -3413,13 +3413,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocParamOrderFixer.php#L242-L248",
             "snippet": [
                 {
                     "number": 242,
@@ -3556,13 +3556,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\R\\h*(?:\\*\\h*)?(?!\\R\\h*\\*/)…\" at offset 72 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L89-L95",
             "snippet": [
                 {
                     "number": 89,
@@ -3651,13 +3651,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?<!/\\*\\*)\\R\\h*(?:\\*\\h*)?)\" at offset 88 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocTrimFixer.php#L108-L114",
             "snippet": [
                 {
                     "number": 108,
@@ -3746,153 +3746,153 @@
                     "rule": "regex.lint.flag.redundant",
                     "message": "Inline flag 'x' is redundant; it is already set by an earlier inline flag group.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-redundant"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-redundant/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?&identifier)\\*?)\" at offset 4632 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.override",
                     "message": "Inline flag '-i' overrides a flag set by an earlier inline flag group.",
                     "hint": "Consider removing the outer flag or limiting it to specific groups.",
-                    "docs": "https://php-regex.com/reference/rules/#inline-flag-override"
+                    "docs": "https://php-regex.com/reference/rules/inline-flag-override/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocTypesOrderFixer.php#L185-L191",
             "snippet": [
                 {
                     "number": 185,
@@ -3981,13 +3981,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^<\\s]|<[^>]*>)\" at offset 36 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Phpdoc/PhpdocVarAnnotationCorrectOrderFixer.php#L74-L80",
             "snippet": [
                 {
                     "number": 74,
@@ -4252,7 +4252,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -4263,7 +4263,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/511285399374ac4f95597276b2b6b652d42b9ea9/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
+            "permalink": "https://github.com/PHP-CS-Fixer/PHP-CS-Fixer/blob/81f2254af444362710f5a2e781689b4d848ebd2d/src/Fixer/Whitespace/MethodChainingIndentationFixer.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,

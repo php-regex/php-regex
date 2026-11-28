@@ -22,7 +22,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -177,21 +177,21 @@
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 }
             ],
             "rewrite": null,
@@ -286,7 +286,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -449,7 +449,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -593,7 +593,7 @@
                     "rule": "regex.lint.alternation.dotNewline",
                     "message": "Alternation (.|\\n) is an anti-pattern for matching any character including newlines.",
                     "hint": "Use the \"s\" (PCRE_DOTALL) flag to make \".\" match newlines, or use [\\s\\S] instead of (.|\\n).",
-                    "docs": "https://php-regex.com/reference/rules/#dot-or-newline-alternation"
+                    "docs": "https://php-regex.com/reference/rules/dot-or-newline-alternation/"
                 }
             ],
             "rewrite": null,
@@ -824,7 +824,7 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,

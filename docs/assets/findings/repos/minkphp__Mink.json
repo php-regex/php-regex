@@ -22,7 +22,7 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"*\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"*\" matches a literal \"*\". If you meant to quantify a shorthand like \\w, use \\w* outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,

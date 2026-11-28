@@ -1,6 +1,6 @@
 {
     "repo": "phpstan/phpstan-src",
-    "sha": "4df5bec996a59e827fb1eb32733d18b0958745e1",
+    "sha": "63e920271510e721d5631cd7d49f959e75489787",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/4df5bec996a59e827fb1eb32733d18b0958745e1/src/Parser/RichParser.php#L182-L188",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/63e920271510e721d5631cd7d49f959e75489787/src/Parser/RichParser.php#L182-L188",
             "snippet": [
                 {
                     "number": 182,
@@ -108,9 +108,199 @@
             ]
         },
         {
+            "id": "f-d92f862205",
+            "file": "src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php",
+            "line": 66,
+            "column": 18,
+            "pattern": "{\n\t\t\t(?:\n\t\t\t\t\\b(?<![\\$:>])(?:\n\t\t\t\t\t(?: (?P<type>class|interface|trait) \\s++ (?P<name>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) )\n\t\t\t\t\t| (?: (?P<function>function) \\s++ (?:&\\s*)? (?P<fname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) \\s*+ [&\\(] )\n\t\t\t\t\t| (?: (?P<constant>const) \\s++ (?P<cname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) \\s*+ [^;] )\n\t\t\t\t\t| (?: (?:\\\\)? (?P<define>define) \\s*+ \\( \\s*+ ['\"] (?P<dname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+(?:[\\\\]{1,2}[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+)*+) )\n\t\t\t\t\t| (?: (?P<ns>namespace) (?P<nsname>\\s++[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+(?:\\s*+\\\\\\s*+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+)*+)? \\s*+ [\\{;] )\n\t\t\t\t)\n\t\t\t)\n\t\t}ix",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:\\\\)\" at offset 362; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/63e920271510e721d5631cd7d49f959e75489787/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "snippet": [
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$contents = $this->cleaner->clean($contents, count($matches[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tpreg_match_all(sprintf('{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\\b(?<![\\$:>])(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t(?: (?P<type>class|interface|trait%s) \\s++ (?P<name>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) )",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "f-02cb1fa93f",
+            "file": "src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php",
+            "line": 66,
+            "column": 18,
+            "pattern": "{\n\t\t\t(?:\n\t\t\t\t\\b(?<![\\$:>])(?:\n\t\t\t\t\t(?: (?P<type>class|interface|trait|enum) \\s++ (?P<name>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) )\n\t\t\t\t\t| (?: (?P<function>function) \\s++ (?:&\\s*)? (?P<fname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) \\s*+ [&\\(] )\n\t\t\t\t\t| (?: (?P<constant>const) \\s++ (?P<cname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) \\s*+ [^;] )\n\t\t\t\t\t| (?: (?:\\\\)? (?P<define>define) \\s*+ \\( \\s*+ ['\"] (?P<dname>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+(?:[\\\\]{1,2}[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+)*+) )\n\t\t\t\t\t| (?: (?P<ns>namespace) (?P<nsname>\\s++[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+(?:\\s*+\\\\\\s*+[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff]*+)*+)? \\s*+ [\\{;] )\n\t\t\t\t)\n\t\t\t)\n\t\t}ix",
+            "source": "preg_match_all()",
+            "location": null,
+            "level": "warn",
+            "issues": [
+                {
+                    "level": "warn",
+                    "rule": "regex.lint.group.redundant",
+                    "message": "Redundant non-capturing group \"(?:\\\\)\" at offset 367; it can be removed without changing behavior.",
+                    "hint": null,
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
+                }
+            ],
+            "rewrite": null,
+            "witness": null,
+            "subject": "",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/63e920271510e721d5631cd7d49f959e75489787/src/Reflection/BetterReflection/SourceLocator/SymbolFinderInFiles.php#L63-L69",
+            "snippet": [
+                {
+                    "number": 63,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 64,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t$contents = $this->cleaner->clean($contents, count($matches[0]));",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 65,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 66,
+                    "focus": true,
+                    "runs": [
+                        [
+                            "\t\tpreg_match_all(sprintf('{",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 67,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 68,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\\b(?<![\\$:>])(?:",
+                            ""
+                        ]
+                    ]
+                },
+                {
+                    "number": 69,
+                    "focus": false,
+                    "runs": [
+                        [
+                            "\t\t\t\t\t(?: (?P<type>class|interface|trait%s) \\s++ (?P<name>[a-zA-Z_\\x7f-\\xff][a-zA-Z0-9_\\x7f-\\xff\\-]*+) )",
+                            ""
+                        ]
+                    ]
+                }
+            ]
+        },
+        {
             "id": "f-0150e14ce8",
             "file": "src/Type/Constant/ConstantArrayType.php",
-            "line": 3822,
+            "line": 3824,
             "column": 36,
             "pattern": "~^(?:[\\\\]?+[a-z_\\x80-\\xFF][0-9a-z_\\x80-\\xFF-]*+)++$~si",
             "source": "Strings::match()",
@@ -122,7 +312,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -133,10 +323,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/4df5bec996a59e827fb1eb32733d18b0958745e1/src/Type/Constant/ConstantArrayType.php#L3819-L3825",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/63e920271510e721d5631cd7d49f959e75489787/src/Type/Constant/ConstantArrayType.php#L3821-L3827",
             "snippet": [
                 {
-                    "number": 3819,
+                    "number": 3821,
                     "focus": false,
                     "runs": [
                         [
@@ -146,7 +336,7 @@
                     ]
                 },
                 {
-                    "number": 3820,
+                    "number": 3822,
                     "focus": false,
                     "runs": [
                         [
@@ -156,7 +346,7 @@
                     ]
                 },
                 {
-                    "number": 3821,
+                    "number": 3823,
                     "focus": false,
                     "runs": [
                         [
@@ -166,7 +356,7 @@
                     ]
                 },
                 {
-                    "number": 3822,
+                    "number": 3824,
                     "focus": true,
                     "runs": [
                         [
@@ -312,7 +502,7 @@
                     ]
                 },
                 {
-                    "number": 3823,
+                    "number": 3825,
                     "focus": false,
                     "runs": [
                         [
@@ -322,7 +512,7 @@
                     ]
                 },
                 {
-                    "number": 3824,
+                    "number": 3826,
                     "focus": false,
                     "runs": [
                         [
@@ -332,7 +522,7 @@
                     ]
                 },
                 {
-                    "number": 3825,
+                    "number": 3827,
                     "focus": false,
                     "runs": [
                         [
@@ -358,7 +548,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -369,7 +559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/phpstan/phpstan-src/blob/4df5bec996a59e827fb1eb32733d18b0958745e1/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
+            "permalink": "https://github.com/phpstan/phpstan-src/blob/63e920271510e721d5631cd7d49f959e75489787/src/Type/Php/SscanfFunctionDynamicReturnTypeExtension.php#L47-L53",
             "snippet": [
                 {
                     "number": 47,

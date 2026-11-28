@@ -1,6 +1,6 @@
 {
     "repo": "yiisoft/yii2",
-    "sha": "bb279a35ea6b51490ba55b7e979221735a6e06fc",
+    "sha": "cd4208c2d90a5f2d6bf0d7a73ba65081917b0273",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/console/controllers/BaseMigrateController.php#L509-L515",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/console/controllers/BaseMigrateController.php#L509-L515",
             "snippet": [
                 {
                     "number": 509,
@@ -249,13 +249,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/Query.php#L696-L702",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/Query.php#L696-L702",
             "snippet": [
                 {
                     "number": 696,
@@ -456,13 +456,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/QueryBuilder.php#L420-L426",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/QueryBuilder.php#L420-L426",
             "snippet": [
                 {
                     "number": 420,
@@ -663,13 +663,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/QueryBuilder.php#L1264-L1270",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/QueryBuilder.php#L1264-L1270",
             "snippet": [
                 {
                     "number": 1264,
@@ -870,13 +870,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/QueryBuilder.php#L1785-L1791",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/QueryBuilder.php#L1785-L1791",
             "snippet": [
                 {
                     "number": 1785,
@@ -1069,20 +1069,20 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/conditions/LikeConditionBuilder.php#L105-L111",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/conditions/LikeConditionBuilder.php#L105-L111",
             "snippet": [
                 {
                     "number": 105,
@@ -1247,7 +1247,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1258,7 +1258,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/mysql/Schema.php#L470-L476",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/mysql/Schema.php#L470-L476",
             "snippet": [
                 {
                     "number": 470,
@@ -1503,28 +1503,28 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"UNIQUE KEY \\\"!\\\"(\" . \"\\\"\\\"\\\"\\\"\\\"\\\"\" x n . \"!)\" Replayed on PCRE2 10.49: preg_match fails from length 47 (backtrack_limit 100000, JIT off). The risky part is: .+ Hotspot offsets: 35-37 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"([`\"].+[`\"])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -1543,7 +1543,7 @@
                 "limit": 100000
             },
             "subject": "UNIQUE KEY \"!\"(\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"\"!)",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/mysql/Schema.php#L506-L512",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/mysql/Schema.php#L506-L512",
             "snippet": [
                 {
                     "number": 506,
@@ -1768,7 +1768,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1779,7 +1779,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/db/mysql/Schema.php#L653-L659",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/db/mysql/Schema.php#L653-L659",
             "snippet": [
                 {
                     "number": 653,
@@ -1948,7 +1948,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1959,7 +1959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/helpers/BaseConsole.php#L713-L719",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/helpers/BaseConsole.php#L713-L719",
             "snippet": [
                 {
                     "number": 713,
@@ -2144,7 +2144,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2155,7 +2155,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/helpers/BaseConsole.php#L718-L724",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/helpers/BaseConsole.php#L718-L724",
             "snippet": [
                 {
                     "number": 718,
@@ -2332,7 +2332,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2343,7 +2343,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/mail/BaseMailer.php#L213-L219",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/mail/BaseMailer.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -2464,13 +2464,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/validators/EmailValidator.php#L93-L99",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/validators/EmailValidator.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -2775,7 +2775,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2786,7 +2786,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/MultipartFormDataParser.php#L307-L313",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/MultipartFormDataParser.php#L307-L313",
             "snippet": [
                 {
                     "number": 307,
@@ -2903,7 +2903,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2914,7 +2914,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/MultipartFormDataParser.php#L346-L352",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/MultipartFormDataParser.php#L346-L352",
             "snippet": [
                 {
                     "number": 346,
@@ -3039,7 +3039,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3050,7 +3050,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/MultipartFormDataParser.php#L387-L393",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/MultipartFormDataParser.php#L387-L393",
             "snippet": [
                 {
                     "number": 387,
@@ -3175,7 +3175,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3186,7 +3186,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/Request.php#L995-L1001",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/Request.php#L995-L1001",
             "snippet": [
                 {
                     "number": 995,
@@ -3275,13 +3275,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/UrlRule.php#L251-L257",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/UrlRule.php#L251-L257",
             "snippet": [
                 {
                     "number": 251,
@@ -3426,13 +3426,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/UrlRule.php#L282-L288",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/UrlRule.php#L282-L288",
             "snippet": [
                 {
                     "number": 282,
@@ -3613,13 +3613,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/yiisoft/yii2/blob/bb279a35ea6b51490ba55b7e979221735a6e06fc/framework/web/UrlRule.php#L334-L340",
+            "permalink": "https://github.com/yiisoft/yii2/blob/cd4208c2d90a5f2d6bf0d7a73ba65081917b0273/framework/web/UrlRule.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,

@@ -22,7 +22,7 @@
                     "rule": "regex.lint.quantifier.zero",
                     "message": "Quantifier always repeats zero times; it can be removed.",
                     "hint": "Remove the quantified element or replace it with an empty pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#zero-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/zero-quantifier/"
                 }
             ],
             "rewrite": {
@@ -202,7 +202,7 @@
                     "rule": "regex.lint.charclass.backrefAsOctal",
                     "message": "Suspicious \\1 inside character class: this is octal (\\x01), not a backreference to group 1.",
                     "hint": "Backreferences do not work inside character classes. If you intended to match the same text as group 1, move the check outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#backreference-written-inside-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/backreference-written-inside-a-character-class/"
                 }
             ],
             "rewrite": null,
@@ -453,21 +453,21 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"+\" is lazy under the U flag and is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"*\" is lazy under the U flag and is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"?\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -782,14 +782,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,

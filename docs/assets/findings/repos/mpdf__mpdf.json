@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -247,7 +247,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -484,7 +484,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -729,14 +729,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -868,7 +868,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1012,7 +1012,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -1179,14 +1179,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -1342,7 +1342,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -1529,7 +1529,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -1672,7 +1672,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -1815,7 +1815,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -1958,7 +1958,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -2101,14 +2101,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2248,7 +2248,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -2411,7 +2411,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -2574,7 +2574,7 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -2729,7 +2729,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -2912,7 +2912,7 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -3071,7 +3071,7 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -3230,7 +3230,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3438,7 +3438,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -3573,7 +3573,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -3732,7 +3732,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3860,7 +3860,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4000,7 +4000,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4256,7 +4256,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4516,7 +4516,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4788,7 +4788,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4936,7 +4936,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5105,7 +5105,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5254,7 +5254,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5438,14 +5438,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5633,7 +5633,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5809,7 +5809,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5973,7 +5973,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6137,14 +6137,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6312,7 +6312,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6476,7 +6476,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6624,14 +6624,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6807,7 +6807,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -6970,7 +6970,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -7133,14 +7133,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7316,7 +7316,7 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -7475,7 +7475,7 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
@@ -7634,7 +7634,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7782,7 +7782,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7930,14 +7930,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8065,7 +8065,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8201,7 +8201,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8357,7 +8357,7 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
@@ -8516,7 +8516,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8672,7 +8672,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8908,7 +8908,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9052,7 +9052,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9200,7 +9200,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9348,7 +9348,7 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
@@ -9521,1828 +9521,6 @@
             ]
         },
         {
-            "id": "f-09b56a24cb",
-            "file": "src/Shaper/Indic.php",
-            "line": 309,
-            "column": 19,
-            "pattern": "/^r?([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G(JN?)?){0,4}[CR]J?((Z?F)?[N]{0,2})?A?((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 1 \"([CR]J?((Z?F)?[N]{0,2})?[ZJ]?G…\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 12 \"([ZJ]{0,3}MN?(H|JHJR)?)\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Shaper/Indic.php#L306-L312",
-            "snippet": [
-                {
-                    "number": 306,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t$syllable_length = 1;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 307,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t$syllable_type = self::NON_INDIC_CLUSTER;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 308,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t// CONSONANT_SYLLABLE Consonant syllable",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 309,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "\t\t\tif (preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "r",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "A",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "GZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "GJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,3}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "MN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "H",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "JHJR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "V",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "SZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "v",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", substr($s, $ptr), $ma)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 310,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_length = strlen($ma[0]);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 311,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_type = self::CONSONANT_SYLLABLE;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 312,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t} // VOWEL_SYLLABLE Vowel-based syllable",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-423608fd57",
-            "file": "src/Shaper/Indic.php",
-            "line": 313,
-            "column": 23,
-            "pattern": "/^(RH|r)?V((Z?F)?[N]{0,2})?(J|([ZJ]?G(JN?)?[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})?(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2})/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 5 \"([ZJ]?G(JN?)?[CR]J?((Z?F)?[N]{…\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 14 \"([ZJ]{0,3}MN?(H|JHJR)?)\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Shaper/Indic.php#L310-L316",
-            "snippet": [
-                {
-                    "number": 310,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_length = strlen($ma[0]);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 311,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_type = self::CONSONANT_SYLLABLE;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 312,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t} // VOWEL_SYLLABLE Vowel-based syllable",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 313,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "\t\t\telseif (preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "RH",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "r",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "V",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "GZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "GJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,3}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "MN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "H",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "JHJR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "V",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "SZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "v",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", substr($s, $ptr), $ma)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 314,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_length = strlen($ma[0]);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 315,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_type = self::VOWEL_SYLLABLE;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 316,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t} // BROKEN_CLUSTER syllable",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
-            "id": "f-864a72766a",
-            "file": "src/Shaper/Indic.php",
-            "line": 317,
-            "column": 23,
-            "pattern": "/^(RH|r)?((Z?F)?[N]{0,2})?(([ZJ]?G(JN?)?)[CR]J?((Z?F)?[N]{0,2})?){0,4}((([ZJ]?G(JN?)?)|GZ)|(GJ)?([ZJ]{0,3}MN?(H|JHJR)?){0,4})(G([CR]J?((Z?F)?[N]{0,2})?|V))?(SZ?)?[v]{0,2}/",
-            "source": "preg_match()",
-            "location": null,
-            "level": "warn",
-            "issues": [
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 4 \"(([ZJ]?G(JN?)?)[CR]J?((Z?F)?[N…\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                },
-                {
-                    "level": "warn",
-                    "rule": "regex.lint.quantifier.nested",
-                    "message": "Nested quantifiers in capturing group 14 \"([ZJ]{0,3}MN?(H|JHJR)?)\" can cause catastrophic backtracking.",
-                    "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
-                }
-            ],
-            "rewrite": null,
-            "witness": null,
-            "subject": "",
-            "permalink": "https://github.com/mpdf/mpdf/blob/9ee7834e427542ba1bcc10cbc1a34fe9f39c8d3c/src/Shaper/Indic.php#L314-L320",
-            "snippet": [
-                {
-                    "number": 314,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_length = strlen($ma[0]);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 315,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t$syllable_type = self::VOWEL_SYLLABLE;",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 316,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t} // BROKEN_CLUSTER syllable",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 317,
-                    "focus": true,
-                    "runs": [
-                        [
-                            "\t\t\telseif (preg_match(",
-                            ""
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "^",
-                            "pg-snippet-pattern pg-tok-anchor"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "RH",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "r",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "JN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "GZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "GJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "ZJ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,3}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "MN",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "H",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "JHJR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "{0,4}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "G",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "CR",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "J",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "((",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "Z",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "F",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "N",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "|",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "V",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "))",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "(",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "SZ",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            ")",
-                            "pg-snippet-pattern pg-tok-group"
-                        ],
-                        [
-                            "?",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "[",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "v",
-                            "pg-snippet-pattern pg-tok-literal"
-                        ],
-                        [
-                            "]",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "{0,2}",
-                            "pg-snippet-pattern pg-tok-quantifier"
-                        ],
-                        [
-                            "/",
-                            "pg-snippet-pattern pg-tok-meta"
-                        ],
-                        [
-                            "'",
-                            "pg-snippet-pattern pg-snippet-quote"
-                        ],
-                        [
-                            ", substr($s, $ptr), $ma)) {",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 318,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\tif (strlen($ma[0])) { // May match blank",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 319,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t\t$syllable_length = strlen($ma[0]);",
-                            ""
-                        ]
-                    ]
-                },
-                {
-                    "number": 320,
-                    "focus": false,
-                    "runs": [
-                        [
-                            "\t\t\t\t\t$syllable_type = self::BROKEN_CLUSTER;",
-                            ""
-                        ]
-                    ]
-                }
-            ]
-        },
-        {
             "id": "f-4e4379e138",
             "file": "src/Shaper/Myanmar.php",
             "line": 274,
@@ -11357,7 +9535,7 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
@@ -12016,7 +10194,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -12164,7 +10342,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {

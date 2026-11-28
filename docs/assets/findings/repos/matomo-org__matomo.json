@@ -1,6 +1,6 @@
 {
     "repo": "matomo-org/matomo",
-    "sha": "3b19364aa4afa4404fbc1567ba10ccc44707d395",
+    "sha": "e39ae2a4b331d2a3784bac7486564fd6f6520976",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/DbHelper.php#L401-L407",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/DbHelper.php#L401-L407",
             "snippet": [
                 {
                     "number": 401,
@@ -117,7 +117,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -128,7 +128,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Period.php#L95-L101",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Period.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -305,13 +305,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"Ä\", which without /u is the bytes \\xC3 \\x84: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Piwik.php#L772-L778",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Piwik.php#L772-L778",
             "snippet": [
                 {
                     "number": 772,
@@ -472,13 +472,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Segment/SegmentExpression.php#L371-L377",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Segment/SegmentExpression.php#L371-L377",
             "snippet": [
                 {
                     "number": 371,
@@ -771,20 +771,20 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Theme.php#L93-L99",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Theme.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -1005,20 +1005,20 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Theme.php#L96-L102",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Theme.php#L96-L102",
             "snippet": [
                 {
                     "number": 96,
@@ -1215,20 +1215,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '.' (duplicate), 'p' (duplicate), 'g' (duplicate), '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Theme.php#L99-L105",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Theme.php#L99-L105",
             "snippet": [
                 {
                     "number": 99,
@@ -1425,13 +1425,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/core/Twig.php#L689-L695",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/core/Twig.php#L689-L695",
             "snippet": [
                 {
                     "number": 689,
@@ -1564,20 +1564,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/libs/HTML/QuickForm2/Renderer/Smarty.php#L263-L269",
             "snippet": [
                 {
                     "number": 263,
@@ -1738,13 +1738,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/libs/Zend/Session/Namespace.php#L117-L123",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/libs/Zend/Session/Namespace.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -1889,13 +1889,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/Actions/ArchivingHelper.php#L1152-L1158",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/Actions/ArchivingHelper.php#L1152-L1158",
             "snippet": [
                 {
                     "number": 1152,
@@ -1984,20 +1984,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '(' (covered by range '\\x00'-'\\x7F'), ')' (covered by range '\\x00'-'\\x7F')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/CoreConsole/Commands/GeneratePluginBase.php#L248-L254",
             "snippet": [
                 {
                     "number": 248,
@@ -2134,7 +2134,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2145,7 +2145,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/CoreVue/Commands/Build.php#L297-L303",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/CoreVue/Commands/Build.php#L297-L303",
             "snippet": [
                 {
                     "number": 297,
@@ -2386,21 +2386,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": {
@@ -2411,7 +2411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/Diagnostics/Commands/Run.php#L87-L93",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/Diagnostics/Commands/Run.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2600,13 +2600,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"privacy\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:privacy|terms|legal|cookie|login|signin|sign-in|blog)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/Goals/Recommendations/HomepageAnalyzer.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -2783,20 +2783,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/LanguagesManager/Commands/Update.php#L162-L168",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/LanguagesManager/Commands/Update.php#L162-L168",
             "snippet": [
                 {
                     "number": 162,
@@ -2953,20 +2953,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: range 'a'-'z' (covered by range 'A'-'z')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/LanguagesManager/Commands/Update.php#L167-L173",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/LanguagesManager/Commands/Update.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -3123,13 +3123,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"Ä\", which without /u is the bytes \\xC3 \\x84: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/matomo-org/matomo/blob/3b19364aa4afa4404fbc1567ba10ccc44707d395/plugins/UsersManager/Validators/Login.php#L40-L46",
+            "permalink": "https://github.com/matomo-org/matomo/blob/e39ae2a4b331d2a3784bac7486564fd6f6520976/plugins/UsersManager/Validators/Login.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,

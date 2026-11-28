@@ -1,6 +1,6 @@
 {
     "repo": "craftcms/cms",
-    "sha": "054dfbd9f40a2758bd61f431211dd9b1d633b7e2",
+    "sha": "7ced5d7a352b63a09ef46f81d7083d4b20573883",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/db/mysql/Schema.php#L299-L305",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/db/mysql/Schema.php#L299-L305",
             "snippet": [
                 {
                     "number": 299,
@@ -250,7 +250,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -261,7 +261,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/db/mysql/Schema.php#L409-L415",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/db/mysql/Schema.php#L409-L415",
             "snippet": [
                 {
                     "number": 409,
@@ -578,13 +578,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/App.php#L337-L343",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/App.php#L337-L343",
             "snippet": [
                 {
                     "number": 337,
@@ -729,13 +729,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"(?<=\\/)\\/+\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:\\/+|(?<=\\/)\\/+|\\/+)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/ElementHelper.php#L254-L260",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/ElementHelper.php#L254-L260",
             "snippet": [
                 {
                     "number": 254,
@@ -896,13 +896,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/FileHelper.php#L256-L262",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/FileHelper.php#L256-L262",
             "snippet": [
                 {
                     "number": 256,
@@ -1019,13 +1019,13 @@
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/Html.php#L898-L904",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/Html.php#L898-L904",
             "snippet": [
                 {
                     "number": 898,
@@ -1166,13 +1166,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/Json.php#L93-L99",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/Json.php#L93-L99",
             "snippet": [
                 {
                     "number": 93,
@@ -1349,14 +1349,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"<0\" . \" 0=\\\"\\\" 0=\\\"\\\"\" x n . \"!>\" Replayed on PCRE2 10.49: preg_match fails from length 74 (backtrack_limit 100000, JIT off). The risky part is: \\s+ Hotspot offsets: 13-16 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s+\\w+(?:\\s*=\\s*(?:\".*?\"|'.…\" at offset 10 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1370,7 +1370,7 @@
                 "limit": 100000
             },
             "subject": "<0 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\" 0=\"\"!>",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/StringHelper.php#L1024-L1030",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/StringHelper.php#L1024-L1030",
             "snippet": [
                 {
                     "number": 1024,
@@ -1659,13 +1659,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The second quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/StringHelper.php#L1435-L1441",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/StringHelper.php#L1435-L1441",
             "snippet": [
                 {
                     "number": 1435,
@@ -1826,21 +1826,21 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Quantifier \"*\" is lazy under the U flag and ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": {
@@ -1851,7 +1851,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/StringHelper.php#L1854-L1860",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/StringHelper.php#L1854-L1860",
             "snippet": [
                 {
                     "number": 1854,
@@ -2092,13 +2092,13 @@
                     "rule": "regex.lint.unicode.multibyteInClassWithoutU",
                     "message": "Character class holds \"‘\", which without /u is the bytes \\xE2 \\x80 \\x98: the class matches each byte on its own.",
                     "hint": "Add the /u flag; write the bytes as \\x escapes if bytes are meant.",
-                    "docs": "https://php-regex.com/reference/rules/#multibyte-character-in-a-class"
+                    "docs": "https://php-regex.com/reference/rules/multibyte-character-in-a-class/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/helpers/StringHelper.php#L2497-L2503",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/helpers/StringHelper.php#L2497-L2503",
             "snippet": [
                 {
                     "number": 2497,
@@ -2211,13 +2211,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/models/ProjectConfigData.php#L183-L189",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/models/ProjectConfigData.php#L183-L189",
             "snippet": [
                 {
                     "number": 183,
@@ -2306,13 +2306,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/models/ProjectConfigData.php#L205-L211",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/models/ProjectConfigData.php#L205-L211",
             "snippet": [
                 {
                     "number": 205,
@@ -2401,14 +2401,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 71-80 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[_.-]?[a-z0-9]+)\" at offset 62 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -2422,7 +2422,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/services/Composer.php#L318-L324",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/services/Composer.php#L318-L324",
             "snippet": [
                 {
                     "number": 318,
@@ -2767,13 +2767,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/web/RedirectRule.php#L71-L77",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/web/RedirectRule.php#L71-L77",
             "snippet": [
                 {
                     "number": 71,
@@ -2954,13 +2954,13 @@
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/craftcms/cms/blob/054dfbd9f40a2758bd61f431211dd9b1d633b7e2/src/web/twig/variables/Cp.php#L398-L404",
+            "permalink": "https://github.com/craftcms/cms/blob/7ced5d7a352b63a09ef46f81d7083d4b20573883/src/web/twig/variables/Cp.php#L398-L404",
             "snippet": [
                 {
                     "number": 398,

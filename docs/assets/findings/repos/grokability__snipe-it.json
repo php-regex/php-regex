@@ -1,6 +1,6 @@
 {
     "repo": "grokability/snipe-it",
-    "sha": "c424a814f9139ee6e6335e3f4ec70926445b9f25",
+    "sha": "8986cbdbffb9ac7b5a50a75efb0442f236336e95",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\pL\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L439-L445",
+            "permalink": "https://github.com/grokability/snipe-it/blob/8986cbdbffb9ac7b5a50a75efb0442f236336e95/app/Providers/ValidationServiceProvider.php#L439-L445",
             "snippet": [
                 {
                     "number": 439,
@@ -141,13 +141,13 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\pN\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L443-L449",
+            "permalink": "https://github.com/grokability/snipe-it/blob/8986cbdbffb9ac7b5a50a75efb0442f236336e95/app/Providers/ValidationServiceProvider.php#L443-L449",
             "snippet": [
                 {
                     "number": 443,
@@ -260,27 +260,27 @@
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{Z}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 },
                 {
                     "level": "fail",
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{S}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 },
                 {
                     "level": "fail",
                     "rule": "regex.lint.unicode.propertyWithoutU",
                     "message": "Without the /u flag, Unicode property \"\\p{P}\" only covers the first 256 code points.",
                     "hint": "Add the /u flag to match beyond the first 256 code points.",
-                    "docs": "https://php-regex.com/reference/rules/#unicode-property-without-u"
+                    "docs": "https://php-regex.com/reference/rules/unicode-property-without-u/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/grokability/snipe-it/blob/c424a814f9139ee6e6335e3f4ec70926445b9f25/app/Providers/ValidationServiceProvider.php#L451-L457",
+            "permalink": "https://github.com/grokability/snipe-it/blob/8986cbdbffb9ac7b5a50a75efb0442f236336e95/app/Providers/ValidationServiceProvider.php#L451-L457",
             "snippet": [
                 {
                     "number": 451,

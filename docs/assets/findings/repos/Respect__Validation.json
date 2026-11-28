@@ -22,7 +22,7 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
@@ -221,7 +221,7 @@
                     "rule": "regex.lint.group.alwaysEmptyCapture",
                     "message": "Capturing group \"(.+)\" never captures any text: it is empty or unset wherever the pattern matches.",
                     "hint": "Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.",
-                    "docs": "https://php-regex.com/reference/rules/#capture-that-never-captures-text"
+                    "docs": "https://php-regex.com/reference/rules/capture-that-never-captures-text/"
                 }
             ],
             "rewrite": null,
@@ -392,56 +392,56 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\u{1F1E6}\\u{1F1E6}\\u{A9}\\u{200D}\\u{2640}\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 193 (backtrack_limit 100000, JIT off). The risky part is: # Tag sequence for country flags\n[\\x{1F1E6}-\\x{1F1FF}]{2}|# Tag sequence for subdivision flags\n\\x{1F3F4}[\\x{E0020}-\\x{E007E}]+\\x{E007F}|# Keycap sequences\n[0-9#*](?:\\x{FE0F})?\\x{20E3}|# Standard emoji cluster:\n\\p{Extended_Pictographic}# base emoji\n(?:\\x{FE0F})?# optional emoji variant selector\n(?:[\\x{1F3FB}-\\x{1F3FF}])?# optional skin tone modifier\n(?:# optionally repeat ZWJ sequences:\n\\x{200D}#   ZWJ\n(?:#   joined element:\n\\p{Extended_Pictographic}#     another emoji\n|[\\x{2640}\\x{2642}\\x{26A7}]#     or gender symbol\n)(?:\\x{FE0F})?#   optional variant selector\n(?:[\\x{1F3FB}-\\x{1F3FF}])?#   optional skin tone modifier\n)*# ...zero or more times\n Hotspot offsets: 4-1038 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[\\x{1F1E6}-\\x{1F1FF}]{2}|…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 203; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 322; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[\\x{1F3FB}-\\x{1F3FF}])\" at offset 400; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\x{200D}(?:\\p{Extended_Pict…\" at offset 474 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:\\x{FE0F})\" at offset 828; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[\\x{1F3FB}-\\x{1F3FF}])\" at offset 902; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {

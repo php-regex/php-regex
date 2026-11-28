@@ -1,6 +1,6 @@
 {
     "repo": "PHPOffice/PhpSpreadsheet",
-    "sha": "d7fb3e9505e2c83ca1f2b87464d14aa193a40a42",
+    "sha": "fe2bcf7a7b318884be4c94deee538739a3994e02",
     "target": {
         "php": "8.2.99",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/samples/Pdf/21b_Pdf.php#L10-L16",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/samples/Pdf/21b_Pdf.php#L10-L16",
             "snippet": [
                 {
                     "number": 10,
@@ -162,35 +162,35 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"(A\" . \" ,'0'!A\" x n . \"!)\" Replayed on PCRE2 10.49: preg_match fails from length 88 (backtrack_limit 100000, JIT off). The risky part is: ((([^\\s,!&%\\^\\/*+<>=:`\\-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\\$?\\b([a-z]{1,3})\\$?(\\d{1,7})(?![\\w.])(?::((([^\\s,!&%\\^\\/*+<>=:`\\-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?\\$?\\b([a-z]{1,3})\\$?(\\d{1,7})(?![\\w.]))?|((([^\\s,!&%\\^\\/*+<>=\\-]*)|('(?:[^']|'[^!])+?')|(\"(?:[^\"]|\"[^!])+?\"))!)?([_\\p{L}][_\\p{L}\\p{N}.]*) Hotspot offsets: 374-712 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested bounded quantifiers detected. May cause polynomial backtracking. Consider simplifying the pattern or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Flatten nested quantifiers or introduce atomic groups. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*,\\s*(?:((([^\\s,!&%^\\/\\*…\" at offset 361 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"([^\\s,!&%^\\/\\*\\+<>=:`-]*)\" and \"('(?:[^']|'[^!])+?')\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"([^\\s,!&%^\\/\\*\\+<>=:`-]*)\" and \"('(?:[^']|'[^!])+?')\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"([^\\s,!&%^\\/\\*\\+<>=-]*)\" and \"('(?:[^']|'[^!])+?')\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -204,7 +204,7 @@
                 "limit": 100000
             },
             "subject": "(A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A ,'0'!A!)",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1175-L1181",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1175-L1181",
             "snippet": [
                 {
                     "number": 1175,
@@ -293,7 +293,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\d\\]+-])\" at offset 594; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -304,7 +304,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1203-L1209",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1203-L1209",
             "snippet": [
                 {
                     "number": 1203,
@@ -393,14 +393,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\d\\]+-])\" at offset 33; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -411,7 +411,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1474-L1480",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1474-L1480",
             "snippet": [
                 {
                     "number": 1474,
@@ -500,13 +500,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1501-L1507",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1501-L1507",
             "snippet": [
                 {
                     "number": 1501,
@@ -595,13 +595,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1578-L1584",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1578-L1584",
             "snippet": [
                 {
                     "number": 1578,
@@ -690,13 +690,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1605-L1611",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1605-L1611",
             "snippet": [
                 {
                     "number": 1605,
@@ -785,13 +785,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1669-L1675",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1669-L1675",
             "snippet": [
                 {
                     "number": 1669,
@@ -880,14 +880,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:[^\\d\\]+-])\" at offset 33; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -898,7 +898,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1671-L1677",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1671-L1677",
             "snippet": [
                 {
                     "number": 1671,
@@ -975,7 +975,7 @@
         {
             "id": "f-5894c342e1",
             "file": "src/PhpSpreadsheet/Calculation/Calculation.php",
-            "line": 1907,
+            "line": 1913,
             "column": 44,
             "pattern": "/$((([^\\s,!&%^\\/\\*\\+<>=-]*)|('(?:[^']|'[^!])+?')|(\\\"(?:[^\\\"]|\\\"[^!])+?\\\"))!)?([_\\p{L}][_\\p{L}\\p{N}\\.]*)^/mui",
             "source": "preg_match()",
@@ -987,23 +987,23 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.anchor.impossible.end",
                     "message": "End anchor '$' appears before consuming characters, making it impossible to match.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#anchor-conflicts"
+                    "docs": "https://php-regex.com/reference/rules/anchor-conflicts/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L1904-L1910",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L1910-L1916",
             "snippet": [
                 {
-                    "number": 1904,
+                    "number": 1910,
                     "focus": false,
                     "runs": [
                         [
@@ -1013,7 +1013,7 @@
                     ]
                 },
                 {
-                    "number": 1905,
+                    "number": 1911,
                     "focus": false,
                     "runs": [
                         [
@@ -1023,7 +1023,7 @@
                     ]
                 },
                 {
-                    "number": 1906,
+                    "number": 1912,
                     "focus": false,
                     "runs": [
                         [
@@ -1033,7 +1033,7 @@
                     ]
                 },
                 {
-                    "number": 1907,
+                    "number": 1913,
                     "focus": true,
                     "runs": [
                         [
@@ -1043,7 +1043,7 @@
                     ]
                 },
                 {
-                    "number": 1908,
+                    "number": 1914,
                     "focus": false,
                     "runs": [
                         [
@@ -1053,7 +1053,7 @@
                     ]
                 },
                 {
-                    "number": 1909,
+                    "number": 1915,
                     "focus": false,
                     "runs": [
                         [
@@ -1063,7 +1063,7 @@
                     ]
                 },
                 {
-                    "number": 1910,
+                    "number": 1916,
                     "focus": false,
                     "runs": [
                         [
@@ -1077,7 +1077,7 @@
         {
             "id": "f-5ef32ccd26",
             "file": "src/PhpSpreadsheet/Calculation/Calculation.php",
-            "line": 2396,
+            "line": 2402,
             "column": 38,
             "pattern": "/^((([^\\s,!&%^\\/\\*\\+<>=-]*)|('(?:[^']|'[^!])+?')|(\\\"(?:[^\\\"]|\\\"[^!])+?\\\"))!)?([_\\p{L}][_\\p{L}\\p{N}\\.]*)$/miu",
             "source": "preg_match()",
@@ -1089,16 +1089,16 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Calculation.php#L2393-L2399",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Calculation.php#L2399-L2405",
             "snippet": [
                 {
-                    "number": 2393,
+                    "number": 2399,
                     "focus": false,
                     "runs": [
                         [
@@ -1108,7 +1108,7 @@
                     ]
                 },
                 {
-                    "number": 2394,
+                    "number": 2400,
                     "focus": false,
                     "runs": [
                         [
@@ -1118,7 +1118,7 @@
                     ]
                 },
                 {
-                    "number": 2395,
+                    "number": 2401,
                     "focus": false,
                     "runs": [
                         [
@@ -1128,7 +1128,7 @@
                     ]
                 },
                 {
-                    "number": 2396,
+                    "number": 2402,
                     "focus": true,
                     "runs": [
                         [
@@ -1138,7 +1138,7 @@
                     ]
                 },
                 {
-                    "number": 2397,
+                    "number": 2403,
                     "focus": false,
                     "runs": [
                         [
@@ -1148,7 +1148,7 @@
                     ]
                 },
                 {
-                    "number": 2398,
+                    "number": 2404,
                     "focus": false,
                     "runs": [
                         [
@@ -1158,7 +1158,7 @@
                     ]
                 },
                 {
-                    "number": 2399,
+                    "number": 2405,
                     "focus": false,
                     "runs": [
                         [
@@ -1184,13 +1184,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Database/DatabaseAbstract.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -1379,20 +1379,25 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
-            "rewrite": null,
+            "rewrite": {
+                "optimized": "/([\\p{L}_\\\\][\\p{L}\\p{N}\\._]+)?(\\[(?:[^\\]\\[]+|(?R))*+\\])/iu",
+                "changes": [
+                    "Removed a flag nothing in the pattern reads."
+                ]
+            },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -1601,7 +1606,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1612,7 +1617,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1701,7 +1706,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1712,7 +1717,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1801,7 +1806,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1812,7 +1817,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -1901,7 +1906,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1912,7 +1917,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Engine/Operands/StructuredReference.php#L313-L319",
             "snippet": [
                 {
                     "number": 313,
@@ -2001,14 +2006,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -2019,7 +2024,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/FormulaParser.php#L216-L222",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/FormulaParser.php#L216-L222",
             "snippet": [
                 {
                     "number": 216,
@@ -2192,13 +2197,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/Functions.php#L170-L176",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/Functions.php#L170-L176",
             "snippet": [
                 {
                     "number": 170,
@@ -2315,13 +2320,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/LookupRef/Indirect.php#L78-L84",
             "snippet": [
                 {
                     "number": 78,
@@ -2410,13 +2415,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Calculation/LookupRef/Offset.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -2505,14 +2510,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2523,7 +2528,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/DefinedName.php#L114-L120",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/DefinedName.php#L114-L120",
             "snippet": [
                 {
                     "number": 114,
@@ -2612,7 +2617,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2623,7 +2628,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Helper/Html.php#L663-L669",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Helper/Html.php#L663-L669",
             "snippet": [
                 {
                     "number": 663,
@@ -2744,13 +2749,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Helper/Sample.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -2875,14 +2880,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2893,7 +2898,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L30-L36",
             "snippet": [
                 {
                     "number": 30,
@@ -3126,14 +3131,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3144,7 +3149,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L31-L37",
             "snippet": [
                 {
                     "number": 31,
@@ -3345,14 +3350,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3363,7 +3368,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L32-L38",
             "snippet": [
                 {
                     "number": 32,
@@ -3536,14 +3541,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3554,7 +3559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -3723,14 +3728,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3741,7 +3746,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L34-L40",
             "snippet": [
                 {
                     "number": 34,
@@ -3882,14 +3887,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3900,7 +3905,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L35-L41",
             "snippet": [
                 {
                     "number": 35,
@@ -4017,14 +4022,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4035,7 +4040,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L65-L71",
             "snippet": [
                 {
                     "number": 65,
@@ -4240,14 +4245,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4258,7 +4263,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L66-L72",
             "snippet": [
                 {
                     "number": 66,
@@ -4435,14 +4440,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4453,7 +4458,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L67-L73",
             "snippet": [
                 {
                     "number": 67,
@@ -4626,14 +4631,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4644,7 +4649,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -4789,14 +4794,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -4807,7 +4812,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Ods/FormulaTranslator.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -4924,7 +4929,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4935,7 +4940,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Security/XmlScanner.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -5100,13 +5105,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Reader/Xlsx.php#L1978-L1984",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Reader/Xlsx.php#L1978-L1984",
             "snippet": [
                 {
                     "number": 1978,
@@ -5303,14 +5308,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5321,7 +5326,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L813-L819",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L813-L819",
             "snippet": [
                 {
                     "number": 813,
@@ -5410,7 +5415,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5421,7 +5426,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L837-L843",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -5510,7 +5515,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5521,7 +5526,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L861-L867",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L861-L867",
             "snippet": [
                 {
                     "number": 861,
@@ -5610,7 +5615,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5621,7 +5626,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L887-L893",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L887-L893",
             "snippet": [
                 {
                     "number": 887,
@@ -5710,7 +5715,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5721,7 +5726,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L951-L957",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L951-L957",
             "snippet": [
                 {
                     "number": 951,
@@ -5810,7 +5815,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5821,7 +5826,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L992-L998",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L992-L998",
             "snippet": [
                 {
                     "number": 992,
@@ -5910,14 +5915,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -5928,7 +5933,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/ReferenceHelper.php#L1031-L1037",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/ReferenceHelper.php#L1031-L1037",
             "snippet": [
                 {
                     "number": 1031,
@@ -6017,14 +6022,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6035,7 +6040,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L14-L20",
             "snippet": [
                 {
                     "number": 14,
@@ -6228,14 +6233,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6246,7 +6251,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -6439,7 +6444,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6450,7 +6455,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L61-L67",
             "snippet": [
                 {
                     "number": 61,
@@ -6539,13 +6544,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L206-L212",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L206-L212",
             "snippet": [
                 {
                     "number": 206,
@@ -6670,7 +6675,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6681,7 +6686,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L213-L219",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -6826,14 +6831,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -6844,7 +6849,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L215-L221",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Formatter.php#L215-L221",
             "snippet": [
                 {
                     "number": 215,
@@ -6997,13 +7002,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L22-L28",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/FractionFormatter.php#L22-L28",
             "snippet": [
                 {
                     "number": 22,
@@ -7172,13 +7177,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L207-L213",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L207-L213",
             "snippet": [
                 {
                     "number": 207,
@@ -7359,14 +7364,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7377,7 +7382,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L273-L279",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/NumberFormatter.php#L273-L279",
             "snippet": [
                 {
                     "number": 273,
@@ -7570,13 +7575,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/PercentageFormatter.php#L38-L44",
             "snippet": [
                 {
                     "number": 38,
@@ -7725,14 +7730,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7743,7 +7748,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Wizard/Accounting.php#L26-L32",
             "snippet": [
                 {
                     "number": 26,
@@ -7864,14 +7869,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -7882,7 +7887,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Style/NumberFormat/Wizard/CurrencyBase.php#L107-L113",
             "snippet": [
                 {
                     "number": 107,
@@ -8003,13 +8008,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Worksheet/Table.php#L117-L123",
             "snippet": [
                 {
                     "number": 117,
@@ -8138,13 +8143,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Worksheet/Table.php#L120-L126",
             "snippet": [
                 {
                     "number": 120,
@@ -8305,13 +8310,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Worksheet/Worksheet.php#L57-L63",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Worksheet/Worksheet.php#L57-L63",
             "snippet": [
                 {
                     "number": 57,
@@ -8464,13 +8469,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1304-L1310",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Worksheet/Worksheet.php#L1304-L1310",
             "snippet": [
                 {
                     "number": 1304,
@@ -8559,13 +8564,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Ods/Formula.php#L59-L65",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Ods/Formula.php#L59-L65",
             "snippet": [
                 {
                     "number": 59,
@@ -8654,14 +8659,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -8672,7 +8677,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Ods/Formula.php#L69-L75",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Ods/Formula.php#L69-L75",
             "snippet": [
                 {
                     "number": 69,
@@ -8761,7 +8766,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -8772,7 +8777,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Ods/Formula.php#L95-L101",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Ods/Formula.php#L95-L101",
             "snippet": [
                 {
                     "number": 95,
@@ -8861,7 +8866,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -8872,7 +8877,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Ods/NamedExpressions.php#L83-L89",
             "snippet": [
                 {
                     "number": 83,
@@ -8961,7 +8966,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -8972,7 +8977,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L529-L535",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L529-L535",
             "snippet": [
                 {
                     "number": 529,
@@ -9133,13 +9138,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L532-L538",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L532-L538",
             "snippet": [
                 {
                     "number": 532,
@@ -9228,7 +9233,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -9239,7 +9244,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1142-L1148",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1142-L1148",
             "snippet": [
                 {
                     "number": 1142,
@@ -9400,13 +9405,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1156-L1162",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1156-L1162",
             "snippet": [
                 {
                     "number": 1156,
@@ -9495,7 +9500,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -9506,7 +9511,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1268-L1274",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1268-L1274",
             "snippet": [
                 {
                     "number": 1268,
@@ -9667,13 +9672,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1473-L1479",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Parser.php#L1473-L1479",
             "snippet": [
                 {
                     "number": 1473,
@@ -9762,7 +9767,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -9773,7 +9778,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xls/Workbook.php#L505-L511",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xls/Workbook.php#L505-L511",
             "snippet": [
                 {
                     "number": 505,
@@ -9862,7 +9867,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -9873,7 +9878,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L209-L215",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xlsx/DefinedNames.php#L209-L215",
             "snippet": [
                 {
                     "number": 209,
@@ -9962,14 +9967,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.alternation.duplicateDisjunction",
                     "message": "Duplicate alternation branch \"textjoin\".",
                     "hint": "Remove the redundant alternative.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-alternation-branches/"
                 }
             ],
             "rewrite": {
@@ -9981,7 +9986,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L7-L13",
             "snippet": [
                 {
                     "number": 7,
@@ -10070,7 +10075,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -10081,7 +10086,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/d7fb3e9505e2c83ca1f2b87464d14aa193a40a42/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
+            "permalink": "https://github.com/PHPOffice/PhpSpreadsheet/blob/fe2bcf7a7b318884be4c94deee538739a3994e02/src/PhpSpreadsheet/Writer/Xlsx/FunctionPrefix.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,

@@ -1,6 +1,6 @@
 {
     "repo": "modelcontextprotocol/php-sdk",
-    "sha": "92bfdcefc47f6ba03ea1f2ed26b92892c343a75f",
+    "sha": "1c7f8c4d78fcfe8d0056c82d9a80001c32d81338",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L864-L870",
             "snippet": [
                 {
                     "number": 864,
@@ -197,13 +197,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L911-L917",
             "snippet": [
                 {
                     "number": 911,
@@ -376,13 +376,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -555,13 +555,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L982-L988",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L982-L988",
             "snippet": [
                 {
                     "number": 982,
@@ -814,13 +814,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:'[^']*'|\"[^\"]*\"|[^<>{},'\"]|…\" at offset 29 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L1032-L1038",
             "snippet": [
                 {
                     "number": 1032,
@@ -1133,13 +1133,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/92bfdcefc47f6ba03ea1f2ed26b92892c343a75f/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
+            "permalink": "https://github.com/modelcontextprotocol/php-sdk/blob/1c7f8c4d78fcfe8d0056c82d9a80001c32d81338/src/Server/Capability/Discovery/SchemaGenerator.php#L1046-L1052",
             "snippet": [
                 {
                     "number": 1046,

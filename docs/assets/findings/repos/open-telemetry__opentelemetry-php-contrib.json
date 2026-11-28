@@ -1,6 +1,6 @@
 {
     "repo": "open-telemetry/opentelemetry-php-contrib",
-    "sha": "23cfaedaaf4298c31079c78179d002c366df7d95",
+    "sha": "b60285bac786bfcb006914e0ede3034e90b23384",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,21 +22,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"--\\n/**//**/\" x n Replayed on PCRE2 10.49: preg_match fails from length 77 (backtrack_limit 100000, JIT off). The risky part is: [\\s\\S]*? Hotspot offsets: 22-30 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:--[^\\n]*\\n|\\/\\*[\\s\\S]*?\\*\\/…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -50,7 +50,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/23cfaedaaf4298c31079c78179d002c366df7d95/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/b60285bac786bfcb006914e0ede3034e90b23384/src/Instrumentation/MySqli/src/MySqliInstrumentation.php#L882-L888",
             "snippet": [
                 {
                     "number": 882,
@@ -323,21 +323,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"--\\n/**//**/\" x n Replayed on PCRE2 10.49: preg_match fails from length 77 (backtrack_limit 100000, JIT off). The risky part is: [\\s\\S]*? Hotspot offsets: 22-30 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:--[^\\n]*\\n|\\/\\*[\\s\\S]*?\\*\\/…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -351,7 +351,7 @@
                 "limit": 100000
             },
             "subject": "--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/--\n/**//**/",
-            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/23cfaedaaf4298c31079c78179d002c366df7d95/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
+            "permalink": "https://github.com/open-telemetry/opentelemetry-php-contrib/blob/b60285bac786bfcb006914e0ede3034e90b23384/src/Instrumentation/PostgreSql/src/PostgreSqlInstrumentation.php#L639-L645",
             "snippet": [
                 {
                     "number": 639,

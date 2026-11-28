@@ -1,6 +1,6 @@
 {
     "repo": "TYPO3/typo3",
-    "sha": "2b54d06fd82b2d52440d571965adea4ea8debdc2",
+    "sha": "c296d81713c3e45e5347f0bc5f510877df785b00",
     "target": {
         "php": "8.5",
         "pcre": "10.44",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L1011-L1017",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/backend/Classes/Form/FormDataProvider/AbstractItemProvider.php#L1011-L1017",
             "snippet": [
                 {
                     "number": 1011,
@@ -178,7 +178,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -189,7 +189,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -314,7 +314,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -325,7 +325,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Configuration/Extension/ExtLocalconfFactory.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -502,20 +502,20 @@
                     "rule": "regex.lint.alternation.overlap",
                     "message": "Alternation branches \"a\" and \"abbr\" overlap.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-alternation-branches"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-alternation-branches/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:\\s+\\w[\\w-]*(?:\\s*=?\\s*(?…\" at offset 1022 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/HtmlCropper.php#L155-L161",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/HtmlCropper.php#L155-L161",
             "snippet": [
                 {
                     "number": 155,
@@ -604,7 +604,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -615,7 +615,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/HtmlParser.php#L324-L330",
             "snippet": [
                 {
                     "number": 324,
@@ -816,7 +816,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -827,7 +827,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/HtmlParser.php#L449-L455",
             "snippet": [
                 {
                     "number": 449,
@@ -948,7 +948,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -959,7 +959,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/HtmlParser.php#L785-L791",
             "snippet": [
                 {
                     "number": 785,
@@ -1080,7 +1080,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1091,7 +1091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1332,7 +1332,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1343,7 +1343,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Html/RteHtmlParser.php#L623-L629",
             "snippet": [
                 {
                     "number": 623,
@@ -1584,13 +1584,13 @@
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Localization/TranslationDomainResolver.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -1775,13 +1775,13 @@
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Log/LogDataTrait.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -1930,14 +1930,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0.\" . \"00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 19 (backtrack_limit 100000, JIT off). The risky part is: [.a-z0-9]* Hotspot offsets: 23-34 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[a-z0-9][\\.a-z0-9]*)\" at offset 12 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -1951,7 +1951,7 @@
                 "limit": 100000
             },
             "subject": "0.0000000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Package/PackageInterface.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -2180,14 +2180,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"....\" x n . \"!/\" Replayed on PCRE2 10.49: preg_match fails from length 26 (backtrack_limit 100000, JIT off). The risky part is: \\.{2,} Hotspot offsets: 4-10 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\.{2,})\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -2201,7 +2201,7 @@
                 "limit": 100000
             },
             "subject": "................................................................................................!/",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Service/Archive/ZipService.php#L70-L76",
             "snippet": [
                 {
                     "number": 70,
@@ -2338,13 +2338,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2433,13 +2433,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Utility/ClassNamingUtility.php#L72-L78",
             "snippet": [
                 {
                     "number": 72,
@@ -2528,13 +2528,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"s(?:ftp|cp):\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:(?:http|ftp)s?|s(?:ftp|cp):)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1495-L1501",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Utility/GeneralUtility.php#L1495-L1501",
             "snippet": [
                 {
                     "number": 1495,
@@ -2707,20 +2707,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '/' (covered by range '+'-'^')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '/' (covered by range '+'-'^')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/core/Classes/Utility/MathUtility.php#L125-L131",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/core/Classes/Utility/MathUtility.php#L125-L131",
             "snippet": [
                 {
                     "number": 125,
@@ -2809,13 +2809,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L229-L235",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/extensionmanager/Classes/Controller/UploadExtensionFileController.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,
@@ -3012,7 +3012,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3023,7 +3023,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/extensionmanager/Classes/ViewHelpers/ProcessAvailableActionsViewHelper.php#L43-L49",
             "snippet": [
                 {
                     "number": 43,
@@ -3148,13 +3148,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/indexed_search/Classes/Indexer.php#L294-L300",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/indexed_search/Classes/Indexer.php#L294-L300",
             "snippet": [
                 {
                     "number": 294,
@@ -3387,13 +3387,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/indexed_search/Classes/TextExtraction/HtmlContentConverter.php#L33-L39",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/indexed_search/Classes/TextExtraction/HtmlContentConverter.php#L33-L39",
             "snippet": [
                 {
                     "number": 33,
@@ -3626,13 +3626,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L493-L499",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/install/Classes/Controller/MaintenanceController.php#L493-L499",
             "snippet": [
                 {
                     "number": 493,
@@ -3749,13 +3749,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/install/Classes/SystemEnvironment/DatabaseCheck/Platform/MySql.php#L146-L152",
             "snippet": [
                 {
                     "number": 146,
@@ -3940,13 +3940,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s*\\{[!\\w\\-,\\s\\*]+\\}\\s*|\\s*…\" at offset 18 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/TYPO3/typo3/blob/2b54d06fd82b2d52440d571965adea4ea8debdc2/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
+            "permalink": "https://github.com/TYPO3/typo3/blob/c296d81713c3e45e5347f0bc5f510877df785b00/typo3/sysext/rte_ckeditor/Classes/Configuration/CKEditor5Migrator.php#L728-L734",
             "snippet": [
                 {
                     "number": 728,

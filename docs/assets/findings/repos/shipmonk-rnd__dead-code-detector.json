@@ -1,6 +1,6 @@
 {
     "repo": "shipmonk-rnd/dead-code-detector",
-    "sha": "c754c4f5ae747d6c8113ba4489d2df8724d6bbc3",
+    "sha": "5340633573d09709c96bf8e428ce74239a4a4269",
     "target": {
         "php": "8.1",
         "pcre": "10.39",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/shipmonk-rnd/dead-code-detector/blob/c754c4f5ae747d6c8113ba4489d2df8724d6bbc3/src/Provider/NetteUsageProvider.php#L179-L185",
+            "permalink": "https://github.com/shipmonk-rnd/dead-code-detector/blob/5340633573d09709c96bf8e428ce74239a4a4269/src/Provider/NetteUsageProvider.php#L179-L185",
             "snippet": [
                 {
                     "number": 179,

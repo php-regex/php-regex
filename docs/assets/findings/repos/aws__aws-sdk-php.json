@@ -1,6 +1,6 @@
 {
     "repo": "aws/aws-sdk-php",
-    "sha": "6ef06d2fbda9570d766b4146e1dadc5e24f6bc78",
+    "sha": "3376270d16bcaa5dd9eaddb9bd72929e6d2040ce",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/aws/aws-sdk-php/blob/6ef06d2fbda9570d766b4146e1dadc5e24f6bc78/src/CloudFront/Signer.php#L171-L177",
+            "permalink": "https://github.com/aws/aws-sdk-php/blob/3376270d16bcaa5dd9eaddb9bd72929e6d2040ce/src/CloudFront/Signer.php#L171-L177",
             "snippet": [
                 {
                     "number": 171,
@@ -150,56 +150,56 @@
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.literal.invisible",
                     "message": "The pattern holds a raw control character U+000A, which does not show where the pattern is read.",
                     "hint": "Write \"\\n\".",
-                    "docs": "https://php-regex.com/reference/rules/#invisible-character-written-raw"
+                    "docs": "https://php-regex.com/reference/rules/invisible-character-written-raw/"
                 }
             ],
             "rewrite": {
@@ -211,7 +211,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/aws/aws-sdk-php/blob/6ef06d2fbda9570d766b4146e1dadc5e24f6bc78/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
+            "permalink": "https://github.com/aws/aws-sdk-php/blob/3376270d16bcaa5dd9eaddb9bd72929e6d2040ce/src/EndpointV2/Ruleset/RulesetStandardLibrary.php#L13-L19",
             "snippet": [
                 {
                     "number": 13,

@@ -1,6 +1,6 @@
 {
     "repo": "Yoast/wordpress-seo",
-    "sha": "a1b4af48cbec2b042f520da339709003edcafe44",
+    "sha": "495e35ac44e4fe74bc3891f6821cfc7d7fa738db",
     "target": {
         "php": "7.4",
         "pcre": "10.33",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.group.redundant",
                     "message": "Redundant non-capturing group \"(?:s)\" at offset 5; it can be removed without changing behavior.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#redundant-non-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/redundant-non-capturing-group/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/inc/options/class-wpseo-option-social.php#L271-L277",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/inc/options/class-wpseo-option-social.php#L271-L277",
             "snippet": [
                 {
                     "number": 271,
@@ -278,13 +278,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/lib/migrations/adapter.php#L972-L978",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/lib/migrations/adapter.php#L972-L978",
             "snippet": [
                 {
                     "number": 972,
@@ -417,7 +417,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -428,7 +428,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/src/helpers/string-helper.php#L40-L46",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/src/helpers/string-helper.php#L40-L46",
             "snippet": [
                 {
                     "number": 40,
@@ -565,20 +565,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '-' (covered by range '\\x00'-'\\x7F')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/src/integrations/front-end/crawl-cleanup-searches.php#L198-L204",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/src/integrations/front-end/crawl-cleanup-searches.php#L198-L204",
             "snippet": [
                 {
                     "number": 198,
@@ -727,7 +727,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -738,7 +738,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/src/integrations/third-party/elementor.php#L214-L220",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/src/integrations/third-party/elementor.php#L214-L220",
             "snippet": [
                 {
                     "number": 214,
@@ -923,13 +923,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '_' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/Yoast/wordpress-seo/blob/a1b4af48cbec2b042f520da339709003edcafe44/src/llms-txt/application/markdown-escaper.php#L20-L26",
+            "permalink": "https://github.com/Yoast/wordpress-seo/blob/495e35ac44e4fe74bc3891f6821cfc7d7fa738db/src/llms-txt/application/markdown-escaper.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,

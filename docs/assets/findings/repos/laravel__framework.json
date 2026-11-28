@@ -1,6 +1,6 @@
 {
     "repo": "laravel/framework",
-    "sha": "a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13",
+    "sha": "7dc9081d8ed54fadd5b21d4b37f5ac926c154b07",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Console/Scheduling/Schedule.php#L362-L368",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Console/Scheduling/Schedule.php#L362-L368",
             "snippet": [
                 {
                     "number": 362,
@@ -181,13 +181,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Console/View/Components/Task.php#L29-L35",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Console/View/Components/Task.php#L29-L35",
             "snippet": [
                 {
                     "number": 29,
@@ -344,13 +344,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Database/Query/Builder.php#L3805-L3811",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Database/Query/Builder.php#L3805-L3811",
             "snippet": [
                 {
                     "number": 3805,
@@ -439,14 +439,14 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": {
@@ -457,7 +457,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L257-L263",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L257-L263",
             "snippet": [
                 {
                     "number": 257,
@@ -626,7 +626,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -637,7 +637,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L316-L322",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Foundation/Exceptions/Renderer/Mappers/BladeMapper.php#L316-L322",
             "snippet": [
                 {
                     "number": 316,
@@ -798,13 +798,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Mail/Transport/SesTransport.php#L102-L108",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Mail/Transport/SesTransport.php#L102-L108",
             "snippet": [
                 {
                     "number": 102,
@@ -1017,13 +1017,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Mail/Transport/SesV2Transport.php#L106-L112",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Mail/Transport/SesV2Transport.php#L106-L112",
             "snippet": [
                 {
                     "number": 106,
@@ -1236,76 +1236,76 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Support/Str.php#L1613-L1619",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Support/Str.php#L1613-L1619",
             "snippet": [
                 {
                     "number": 1613,
@@ -1394,20 +1394,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Support/Str.php#L1631-L1637",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Support/Str.php#L1631-L1637",
             "snippet": [
                 {
                     "number": 1631,
@@ -1496,62 +1496,62 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ' ' (duplicate), '\\x09' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Support/Str.php#L1652-L1658",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Support/Str.php#L1652-L1658",
             "snippet": [
                 {
                     "number": 1652,
@@ -1640,13 +1640,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "The first quantifier can match zero times already: consider dropping the whole quantified term.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Testing/Concerns/TestDatabases.php#L180-L186",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Testing/Concerns/TestDatabases.php#L180-L186",
             "snippet": [
                 {
                     "number": 180,
@@ -1827,13 +1827,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '*' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Translation/MessageSelector.php#L58-L64",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Translation/MessageSelector.php#L58-L64",
             "snippet": [
                 {
                     "number": 58,
@@ -2046,13 +2046,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '*' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/Translation/MessageSelector.php#L92-L98",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/Translation/MessageSelector.php#L92-L98",
             "snippet": [
                 {
                     "number": 92,
@@ -2233,13 +2233,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/View/Compilers/BladeCompiler.php#L984-L990",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/View/Compilers/BladeCompiler.php#L984-L990",
             "snippet": [
                 {
                     "number": 984,
@@ -2392,20 +2392,20 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s+(?:(?:@(?:class)(\\((?:(?…\" at offset 122 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@%]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L103-L109",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L103-L109",
             "snippet": [
                 {
                     "number": 103,
@@ -2494,20 +2494,20 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s+(?:(?:@(?:class)(\\((?:(?…\" at offset 142 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@%]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L167-L173",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L167-L173",
             "snippet": [
                 {
                     "number": 167,
@@ -2596,20 +2596,20 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\s+(?:(?:@(?:class)(\\((?:(?…\" at offset 312 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:@(?:class)(\\((?:(?>[^()]+)|…\" and \"(?:[\\w\\-:.@]+(=(?:\\\"[^\\\"]*\\\"|…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L523-L529",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L523-L529",
             "snippet": [
                 {
                     "number": 523,
@@ -2698,13 +2698,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L666-L672",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/src/Illuminate/View/Compilers/ComponentTagCompiler.php#L666-L672",
             "snippet": [
                 {
                     "number": 666,
@@ -2847,7 +2847,7 @@
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/laravel/framework/blob/a6887ee7b1ceafdadea1d8cfaa7c7c7422671f13/types/Support/Str.php#L98-L104",
+            "permalink": "https://github.com/laravel/framework/blob/7dc9081d8ed54fadd5b21d4b37f5ac926c154b07/types/Support/Str.php#L98-L104",
             "snippet": [
                 {
                     "number": 98,

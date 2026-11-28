@@ -1,6 +1,6 @@
 {
     "repo": "spiral/framework",
-    "sha": "9bf2503f1ae7ec9cecd4ab350431b4b46635f635",
+    "sha": "e674d66eb48a2a6563dc2b6d5aa4e9c4ebeebc29",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/spiral/framework/blob/9bf2503f1ae7ec9cecd4ab350431b4b46635f635/src/SendIt/src/Renderer/ViewRenderer.php#L52-L58",
+            "permalink": "https://github.com/spiral/framework/blob/e674d66eb48a2a6563dc2b6d5aa4e9c4ebeebc29/src/SendIt/src/Renderer/ViewRenderer.php#L52-L58",
             "snippet": [
                 {
                     "number": 52,

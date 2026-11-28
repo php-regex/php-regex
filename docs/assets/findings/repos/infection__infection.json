@@ -1,6 +1,6 @@
 {
     "repo": "infection/infection",
-    "sha": "c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd",
+    "sha": "6e6f63b66d1aef0cf817b2414284ded881bc8ab1",
     "target": {
         "php": "8.3",
         "pcre": "10.42",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/CoverageChecker.php#L168-L174",
+            "permalink": "https://github.com/infection/infection/blob/6e6f63b66d1aef0cf817b2414284ded881bc8ab1/src/TestFramework/Coverage/CoverageChecker.php#L168-L174",
             "snippet": [
                 {
                     "number": 168,
@@ -190,7 +190,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -201,7 +201,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/CoverageChecker.php#L176-L182",
+            "permalink": "https://github.com/infection/infection/blob/6e6f63b66d1aef0cf817b2414284ded881bc8ab1/src/TestFramework/Coverage/CoverageChecker.php#L176-L182",
             "snippet": [
                 {
                     "number": 176,
@@ -358,13 +358,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L97-L103",
+            "permalink": "https://github.com/infection/infection/blob/6e6f63b66d1aef0cf817b2414284ded881bc8ab1/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L97-L103",
             "snippet": [
                 {
                     "number": 97,
@@ -513,13 +513,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L100-L106",
+            "permalink": "https://github.com/infection/infection/blob/6e6f63b66d1aef0cf817b2414284ded881bc8ab1/src/TestFramework/Coverage/JUnit/JUnitTestFileDataProvider.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -668,13 +668,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"+?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Write the minimum count, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/infection/infection/blob/c8b51a1aeccf507b55ca917c7fe7b8710d0f86cd/src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php#L132-L138",
+            "permalink": "https://github.com/infection/infection/blob/6e6f63b66d1aef0cf817b2414284ded881bc8ab1/src/TestFramework/PhpUnit/CommandLine/TestFrameworkExtraArgs.php#L132-L138",
             "snippet": [
                 {
                     "number": 132,

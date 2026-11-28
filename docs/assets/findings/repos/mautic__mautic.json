@@ -1,6 +1,6 @@
 {
     "repo": "mautic/mautic",
-    "sha": "26c72e21da761a8d9564850e70fe94d286945798",
+    "sha": "e062ab859be228969574d750f305db6a9c466f08",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.x",
                     "message": "Flag 'x' is useless: the pattern contains no whitespace and no # comment.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-x-extended"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-x-extended/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/ApiBundle/Form/Validator/Constraints/OAuthCallbackValidator.php#L10-L16",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/ApiBundle/Form/Validator/Constraints/OAuthCallbackValidator.php#L10-L16",
             "snippet": [
                 {
                     "number": 10,
@@ -269,14 +269,14 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"(((?!-))(xn--|_)?[a-z0-9-]{0,6…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1,1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -287,7 +287,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/CoreBundle/Form/Type/ConfigType.php#L212-L218",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/CoreBundle/Form/Type/ConfigType.php#L212-L218",
             "snippet": [
                 {
                     "number": 212,
@@ -652,14 +652,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: '|' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": {
@@ -670,7 +670,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/CoreBundle/Helper/InputHelper.php#L393-L399",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/CoreBundle/Helper/InputHelper.php#L393-L399",
             "snippet": [
                 {
                     "number": 393,
@@ -827,7 +827,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -838,7 +838,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/CoreBundle/Helper/InputHelper.php#L498-L504",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/CoreBundle/Helper/InputHelper.php#L498-L504",
             "snippet": [
                 {
                     "number": 498,
@@ -1059,28 +1059,28 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[a-z\\x{00a1}-\\x{ffff}0-9]+-…\" at offset 307 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:\\.(?:[a-z\\x{00a1}-\\x{ffff}0…\" at offset 367 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[a-z\\x{00a1}-\\x{ffff}0-9]+-…\" at offset 372 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -1091,7 +1091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/CoreBundle/Helper/UrlHelper.php#L112-L118",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/CoreBundle/Helper/UrlHelper.php#L112-L118",
             "snippet": [
                 {
                     "number": 112,
@@ -2168,13 +2168,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/CoreBundle/Helper/UrlHelper.php#L258-L264",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/CoreBundle/Helper/UrlHelper.php#L258-L264",
             "snippet": [
                 {
                     "number": 258,
@@ -2339,14 +2339,14 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:{(?!\\/\\1})[^{]*)\" at offset 40 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -2357,7 +2357,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/DynamicContentBundle/Helper/DynamicContentHelper.php#L21-L27",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/DynamicContentBundle/Helper/DynamicContentHelper.php#L21-L27",
             "snippet": [
                 {
                     "number": 21,
@@ -2618,13 +2618,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L84-L90",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L84-L90",
             "snippet": [
                 {
                     "number": 84,
@@ -2741,13 +2741,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L85-L91",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -2864,7 +2864,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -2875,7 +2875,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L327-L333",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L327-L333",
             "snippet": [
                 {
                     "number": 327,
@@ -3032,7 +3032,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3043,7 +3043,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L345-L351",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/Helper/PlainTextHelper.php#L345-L351",
             "snippet": [
                 {
                     "number": 345,
@@ -3192,7 +3192,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3203,7 +3203,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L272-L278",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L272-L278",
             "snippet": [
                 {
                     "number": 272,
@@ -3404,7 +3404,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3415,7 +3415,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L284-L290",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/BodyParser.php#L284-L290",
             "snippet": [
                 {
                     "number": 284,
@@ -3716,7 +3716,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3727,7 +3727,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L68-L74",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L68-L74",
             "snippet": [
                 {
                     "number": 68,
@@ -3912,7 +3912,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3923,7 +3923,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L129-L135",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L129-L135",
             "snippet": [
                 {
                     "number": 129,
@@ -4040,7 +4040,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4051,7 +4051,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L142-L148",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -4168,7 +4168,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4179,7 +4179,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L169-L175",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L169-L175",
             "snippet": [
                 {
                     "number": 169,
@@ -4296,7 +4296,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4307,7 +4307,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L251-L257",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L251-L257",
             "snippet": [
                 {
                     "number": 251,
@@ -4484,7 +4484,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4495,7 +4495,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L282-L288",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L282-L288",
             "snippet": [
                 {
                     "number": 282,
@@ -4672,7 +4672,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4683,7 +4683,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L304-L310",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L304-L310",
             "snippet": [
                 {
                     "number": 304,
@@ -4860,7 +4860,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4871,7 +4871,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L314-L320",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L314-L320",
             "snippet": [
                 {
                     "number": 314,
@@ -4988,7 +4988,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4999,7 +4999,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L363-L369",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L363-L369",
             "snippet": [
                 {
                     "number": 363,
@@ -5116,7 +5116,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5127,7 +5127,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L372-L378",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L372-L378",
             "snippet": [
                 {
                     "number": 372,
@@ -5304,7 +5304,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5315,7 +5315,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L455-L461",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L455-L461",
             "snippet": [
                 {
                     "number": 455,
@@ -5432,7 +5432,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5443,7 +5443,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L475-L481",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L475-L481",
             "snippet": [
                 {
                     "number": 475,
@@ -5560,7 +5560,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5571,7 +5571,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L511-L517",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L511-L517",
             "snippet": [
                 {
                     "number": 511,
@@ -5748,7 +5748,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5759,7 +5759,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L520-L526",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L520-L526",
             "snippet": [
                 {
                     "number": 520,
@@ -5936,7 +5936,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -5947,7 +5947,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L549-L555",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L549-L555",
             "snippet": [
                 {
                     "number": 549,
@@ -6080,7 +6080,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6091,7 +6091,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L576-L582",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L576-L582",
             "snippet": [
                 {
                     "number": 576,
@@ -6268,7 +6268,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6279,7 +6279,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L603-L609",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L603-L609",
             "snippet": [
                 {
                     "number": 603,
@@ -6396,7 +6396,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6407,7 +6407,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L612-L618",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L612-L618",
             "snippet": [
                 {
                     "number": 612,
@@ -6524,7 +6524,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6535,7 +6535,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L630-L636",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L630-L636",
             "snippet": [
                 {
                     "number": 630,
@@ -6652,7 +6652,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6663,7 +6663,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L651-L657",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L651-L657",
             "snippet": [
                 {
                     "number": 651,
@@ -6780,7 +6780,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6791,7 +6791,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L660-L666",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L660-L666",
             "snippet": [
                 {
                     "number": 660,
@@ -6908,7 +6908,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -6919,7 +6919,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L678-L684",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L678-L684",
             "snippet": [
                 {
                     "number": 678,
@@ -7036,7 +7036,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7047,7 +7047,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L687-L693",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L687-L693",
             "snippet": [
                 {
                     "number": 687,
@@ -7164,7 +7164,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7175,7 +7175,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L710-L716",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L710-L716",
             "snippet": [
                 {
                     "number": 710,
@@ -7292,7 +7292,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7303,7 +7303,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L719-L725",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L719-L725",
             "snippet": [
                 {
                     "number": 719,
@@ -7420,7 +7420,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7431,7 +7431,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L728-L734",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L728-L734",
             "snippet": [
                 {
                     "number": 728,
@@ -7548,7 +7548,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7559,7 +7559,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L737-L743",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L737-L743",
             "snippet": [
                 {
                     "number": 737,
@@ -7676,7 +7676,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7687,7 +7687,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L755-L761",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L755-L761",
             "snippet": [
                 {
                     "number": 755,
@@ -7804,7 +7804,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7815,7 +7815,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L783-L789",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L783-L789",
             "snippet": [
                 {
                     "number": 783,
@@ -7932,7 +7932,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -7943,7 +7943,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L792-L798",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L792-L798",
             "snippet": [
                 {
                     "number": 792,
@@ -8060,7 +8060,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8071,7 +8071,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L819-L825",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L819-L825",
             "snippet": [
                 {
                     "number": 819,
@@ -8188,7 +8188,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8199,7 +8199,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L828-L834",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L828-L834",
             "snippet": [
                 {
                     "number": 828,
@@ -8316,7 +8316,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8327,7 +8327,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L837-L843",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L837-L843",
             "snippet": [
                 {
                     "number": 837,
@@ -8444,7 +8444,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8455,7 +8455,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L855-L861",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L855-L861",
             "snippet": [
                 {
                     "number": 855,
@@ -8572,7 +8572,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8583,7 +8583,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L900-L906",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L900-L906",
             "snippet": [
                 {
                     "number": 900,
@@ -8700,7 +8700,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8711,7 +8711,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L909-L915",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L909-L915",
             "snippet": [
                 {
                     "number": 909,
@@ -8828,7 +8828,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8839,7 +8839,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L927-L933",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L927-L933",
             "snippet": [
                 {
                     "number": 927,
@@ -8956,7 +8956,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -8967,7 +8967,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L944-L950",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L944-L950",
             "snippet": [
                 {
                     "number": 944,
@@ -9084,7 +9084,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9095,7 +9095,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L953-L959",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L953-L959",
             "snippet": [
                 {
                     "number": 953,
@@ -9212,7 +9212,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9223,7 +9223,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L971-L977",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L971-L977",
             "snippet": [
                 {
                     "number": 971,
@@ -9340,7 +9340,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -9351,7 +9351,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L980-L986",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/EmailBundle/MonitoredEmail/Processor/Bounce/DsnParser.php#L980-L986",
             "snippet": [
                 {
                     "number": 980,
@@ -9468,13 +9468,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/PageBundle/Model/TrackableModel.php#L442-L448",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/PageBundle/Model/TrackableModel.php#L442-L448",
             "snippet": [
                 {
                     "number": 442,
@@ -9611,13 +9611,13 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: 't' (duplicate), 'p' (duplicate), 's' (duplicate), '?' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/app/bundles/PageBundle/Model/TrackableModel.php#L579-L585",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/app/bundles/PageBundle/Model/TrackableModel.php#L579-L585",
             "snippet": [
                 {
                     "number": 579,
@@ -9790,7 +9790,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -9801,7 +9801,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/plugins/MauticCrmBundle/Api/SalesforceApi.php#L20-L26",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/plugins/MauticCrmBundle/Api/SalesforceApi.php#L20-L26",
             "snippet": [
                 {
                     "number": 20,
@@ -10050,13 +10050,13 @@
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" ends the pattern, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/mautic/mautic/blob/26c72e21da761a8d9564850e70fe94d286945798/plugins/MauticSocialBundle/Integration/TwitterIntegration.php#L229-L235",
+            "permalink": "https://github.com/mautic/mautic/blob/e062ab859be228969574d750f305db6a9c466f08/plugins/MauticSocialBundle/Integration/TwitterIntegration.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,

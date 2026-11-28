@@ -22,7 +22,7 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\b(\n            (a(bstract|nd|rray|s))|\n            (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))|\n            (d(e(clare|fault)|ie|o))|\n            (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))|\n            (f(inal|or(each)?|unction))|\n            (g(lobal|oto))|\n            (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))|\n            (n(amespace|ew))|\n            (p(arent|r(i(nt|vate)|otected)|ublic))|\n            (re(quire(_once)?|turn))|\n            (s(elf|tatic|witch))|\n            (t(hrow|r(ait|y)))|\n            (u(nset|se))|\n            (__halt_compiler|break|list|(x)?or|var|while)\n        )\\b\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"^(?:([0-9])|\\b(\n            (a(bstract|nd|rray|s))|\n            (c(a(llable|se|tch)|l(ass|one)|on(st|tinue)))|\n            (d(e(clare|fault)|ie|o))|\n            (e(cho|lse(if)?|mpty|nd(declare|for(each)?|if|switch|while)|val|x(it|tends)))|\n            (f(inal|or(each)?|unction))|\n            (g(lobal|oto))|\n            (i(f|mplements|n(clude(_once)?|st(anceof|eadof)|terface)|sset))|\n            (n(amespace|ew))|\n            (p(arent|r(i(nt|vate)|otected)|ublic))|\n            (re(quire(_once)?|turn))|\n            (s(elf|tatic|witch))|\n            (t(hrow|r(ait|y)))|\n            (u(nset|se))|\n            (__halt_compiler|break|list|(x)?or|var|while)\n        )\\b)\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
@@ -117,7 +117,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -269,7 +269,7 @@
                     "rule": "regex.lint.group.quantifiedCapture",
                     "message": "Quantified named group \"(?<separator>[^a-zA-Z0-9_{}])\" with \"+\": only the last iteration's capture is retained.",
                     "hint": "Use a non-capturing group (?:...) for the repetition and capture the whole match, or restructure the pattern.",
-                    "docs": "https://php-regex.com/reference/rules/#quantified-capturing-group"
+                    "docs": "https://php-regex.com/reference/rules/quantified-capturing-group/"
                 }
             ],
             "rewrite": null,
@@ -496,7 +496,7 @@
                     "rule": "regex.lint.quantifier.emptyRepeat",
                     "message": "Quantifier \"+\" repeats a group that can match the empty string: the last, empty iteration is redundant, and changes the capture to \"\".",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#repeat-that-can-match-empty"
+                    "docs": "https://php-regex.com/reference/rules/repeat-that-can-match-empty/"
                 }
             ],
             "rewrite": null,

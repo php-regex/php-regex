@@ -1,6 +1,6 @@
 {
     "repo": "phpunit/phpunit",
-    "sha": "be98021237c49c48ff532d061ccfc6888456f6d6",
+    "sha": "04eb84520c9500ac88e1e02d154bbfd1985dc971",
     "target": {
         "php": "8.5.12",
         "pcre": "10.44",
@@ -22,14 +22,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"EXT-0\" . \"-00\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 51 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9]+ Hotspot offsets: 71-80 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[_.-]?[a-z0-9]+)\" at offset 62 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -43,7 +43,7 @@
                 "limit": 100000
             },
             "subject": "EXT-0-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00-00!",
-            "permalink": "https://github.com/phpunit/phpunit/blob/be98021237c49c48ff532d061ccfc6888456f6d6/build/scripts/phar-manifest.php#L663-L669",
+            "permalink": "https://github.com/phpunit/phpunit/blob/04eb84520c9500ac88e1e02d154bbfd1985dc971/build/scripts/phar-manifest.php#L663-L669",
             "snippet": [
                 {
                     "number": 663,

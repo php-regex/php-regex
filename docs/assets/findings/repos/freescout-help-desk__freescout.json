@@ -1,6 +1,6 @@
 {
     "repo": "freescout-help-desk/freescout",
-    "sha": "1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39",
+    "sha": "aef194057f860e882e5699f043612e1bcedfa71e",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1044-L1050",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Console/Commands/FetchEmails.php#L1044-L1050",
             "snippet": [
                 {
                     "number": 1044,
@@ -189,13 +189,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1108-L1114",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Console/Commands/FetchEmails.php#L1108-L1114",
             "snippet": [
                 {
                     "number": 1108,
@@ -356,7 +356,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -367,7 +367,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1115-L1121",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Console/Commands/FetchEmails.php#L1115-L1121",
             "snippet": [
                 {
                     "number": 1115,
@@ -456,7 +456,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -467,7 +467,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1138-L1144",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Console/Commands/FetchEmails.php#L1138-L1144",
             "snippet": [
                 {
                     "number": 1138,
@@ -556,7 +556,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -567,7 +567,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Console/Commands/FetchEmails.php#L1335-L1341",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Console/Commands/FetchEmails.php#L1335-L1341",
             "snippet": [
                 {
                     "number": 1335,
@@ -656,7 +656,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -667,7 +667,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Http/Controllers/ConversationsController.php#L426-L432",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Http/Controllers/ConversationsController.php#L426-L432",
             "snippet": [
                 {
                     "number": 426,
@@ -832,7 +832,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -843,7 +843,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Http/Controllers/SystemController.php#L59-L65",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Http/Controllers/SystemController.php#L59-L65",
             "snippet": [
                 {
                     "number": 59,
@@ -968,7 +968,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -979,7 +979,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L629-L635",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Misc/Helper.php#L629-L635",
             "snippet": [
                 {
                     "number": 629,
@@ -1088,7 +1088,7 @@
         {
             "id": "f-7a259bf246",
             "file": "app/Misc/Helper.php",
-            "line": 2035,
+            "line": 2042,
             "column": 41,
             "pattern": "/<!--(.|\\s)*?-->/",
             "source": "preg_replace()",
@@ -1100,16 +1100,16 @@
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\s\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L2032-L2038",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Misc/Helper.php#L2039-L2045",
             "snippet": [
                 {
-                    "number": 2032,
+                    "number": 2039,
                     "focus": false,
                     "runs": [
                         [
@@ -1119,7 +1119,7 @@
                     ]
                 },
                 {
-                    "number": 2033,
+                    "number": 2040,
                     "focus": false,
                     "runs": [
                         [
@@ -1129,7 +1129,7 @@
                     ]
                 },
                 {
-                    "number": 2034,
+                    "number": 2041,
                     "focus": false,
                     "runs": [
                         [
@@ -1139,7 +1139,7 @@
                     ]
                 },
                 {
-                    "number": 2035,
+                    "number": 2042,
                     "focus": true,
                     "runs": [
                         [
@@ -1197,7 +1197,7 @@
                     ]
                 },
                 {
-                    "number": 2036,
+                    "number": 2043,
                     "focus": false,
                     "runs": [
                         [
@@ -1207,7 +1207,7 @@
                     ]
                 },
                 {
-                    "number": 2037,
+                    "number": 2044,
                     "focus": false,
                     "runs": [
                         [
@@ -1217,7 +1217,7 @@
                     ]
                 },
                 {
-                    "number": 2038,
+                    "number": 2045,
                     "focus": false,
                     "runs": [
                         [
@@ -1231,7 +1231,7 @@
         {
             "id": "f-f0bb6fbcf9",
             "file": "app/Misc/Helper.php",
-            "line": 2971,
+            "line": 2978,
             "column": 33,
             "pattern": "/([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}.*)+$/i",
             "source": "preg_match()",
@@ -1243,35 +1243,35 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"AA, 0 AA 0000 0:0:00\" x n . \"\\n!\" Replayed on PCRE2 10.49: preg_match fails from length 162 (backtrack_limit 100000, JIT off). The risky part is: .* Hotspot offsets: 90-92 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -1285,10 +1285,10 @@
                 "limit": 100000
             },
             "subject": "AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00\n!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L2968-L2974",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Misc/Helper.php#L2975-L2981",
             "snippet": [
                 {
-                    "number": 2968,
+                    "number": 2975,
                     "focus": false,
                     "runs": [
                         [
@@ -1298,7 +1298,7 @@
                     ]
                 },
                 {
-                    "number": 2969,
+                    "number": 2976,
                     "focus": false,
                     "runs": [
                         [
@@ -1308,7 +1308,7 @@
                     ]
                 },
                 {
-                    "number": 2970,
+                    "number": 2977,
                     "focus": false,
                     "runs": [
                         [
@@ -1318,7 +1318,7 @@
                     ]
                 },
                 {
-                    "number": 2971,
+                    "number": 2978,
                     "focus": true,
                     "runs": [
                         [
@@ -1580,7 +1580,7 @@
                     ]
                 },
                 {
-                    "number": 2972,
+                    "number": 2979,
                     "focus": false,
                     "runs": [
                         [
@@ -1590,7 +1590,7 @@
                     ]
                 },
                 {
-                    "number": 2973,
+                    "number": 2980,
                     "focus": false,
                     "runs": [
                         [
@@ -1600,7 +1600,7 @@
                     ]
                 },
                 {
-                    "number": 2974,
+                    "number": 2981,
                     "focus": false,
                     "runs": [
                         [
@@ -1614,7 +1614,7 @@
         {
             "id": "f-6e0358496d",
             "file": "app/Misc/Helper.php",
-            "line": 3054,
+            "line": 3061,
             "column": 41,
             "pattern": "/enable/m",
             "source": "preg_match()",
@@ -1626,7 +1626,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -1637,10 +1637,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Helper.php#L3051-L3057",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Misc/Helper.php#L3058-L3064",
             "snippet": [
                 {
-                    "number": 3051,
+                    "number": 3058,
                     "focus": false,
                     "runs": [
                         [
@@ -1650,7 +1650,7 @@
                     ]
                 },
                 {
-                    "number": 3052,
+                    "number": 3059,
                     "focus": false,
                     "runs": [
                         [
@@ -1660,7 +1660,7 @@
                     ]
                 },
                 {
-                    "number": 3053,
+                    "number": 3060,
                     "focus": false,
                     "runs": [
                         [
@@ -1670,7 +1670,7 @@
                     ]
                 },
                 {
-                    "number": 3054,
+                    "number": 3061,
                     "focus": true,
                     "runs": [
                         [
@@ -1708,7 +1708,7 @@
                     ]
                 },
                 {
-                    "number": 3055,
+                    "number": 3062,
                     "focus": false,
                     "runs": [
                         [
@@ -1718,7 +1718,7 @@
                     ]
                 },
                 {
-                    "number": 3056,
+                    "number": 3063,
                     "focus": false,
                     "runs": [
                         [
@@ -1728,7 +1728,7 @@
                     ]
                 },
                 {
-                    "number": 3057,
+                    "number": 3064,
                     "focus": false,
                     "runs": [
                         [
@@ -1742,7 +1742,7 @@
         {
             "id": "f-dab0c48821",
             "file": "app/Misc/Mail.php",
-            "line": 1412,
+            "line": 1437,
             "column": 66,
             "pattern": "/[\r\n\t ]+[^=]/i",
             "source": "preg_match()",
@@ -1754,16 +1754,16 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Misc/Mail.php#L1409-L1415",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Misc/Mail.php#L1434-L1440",
             "snippet": [
                 {
-                    "number": 1409,
+                    "number": 1434,
                     "focus": false,
                     "runs": [
                         [
@@ -1773,7 +1773,7 @@
                     ]
                 },
                 {
-                    "number": 1410,
+                    "number": 1435,
                     "focus": false,
                     "runs": [
                         [
@@ -1783,7 +1783,7 @@
                     ]
                 },
                 {
-                    "number": 1411,
+                    "number": 1436,
                     "focus": false,
                     "runs": [
                         [
@@ -1793,7 +1793,7 @@
                     ]
                 },
                 {
-                    "number": 1412,
+                    "number": 1437,
                     "focus": true,
                     "runs": [
                         [
@@ -1847,7 +1847,7 @@
                     ]
                 },
                 {
-                    "number": 1413,
+                    "number": 1438,
                     "focus": false,
                     "runs": [
                         [
@@ -1857,7 +1857,7 @@
                     ]
                 },
                 {
-                    "number": 1414,
+                    "number": 1439,
                     "focus": false,
                     "runs": [
                         [
@@ -1867,7 +1867,7 @@
                     ]
                 },
                 {
-                    "number": 1415,
+                    "number": 1440,
                     "focus": false,
                     "runs": [
                         [
@@ -1881,7 +1881,7 @@
         {
             "id": "f-d6d18b0d06",
             "file": "app/Thread.php",
-            "line": 392,
+            "line": 435,
             "column": 28,
             "pattern": "/target=['\"]?(.*?)['\"]?/i",
             "source": "preg_match()",
@@ -1893,23 +1893,23 @@
                     "rule": "regex.lint.group.alwaysEmptyCapture",
                     "message": "Capturing group \"(.*?)\" never captures any text: it is empty or unset wherever the pattern matches.",
                     "hint": "Remove the group, or check what precedes it: a greedy repeat may take everything the group could read.",
-                    "docs": "https://php-regex.com/reference/rules/#capture-that-never-captures-text"
+                    "docs": "https://php-regex.com/reference/rules/capture-that-never-captures-text/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.lazyEnd",
                     "message": "Lazy quantifier \"*?\" is followed only by what may match nothing, so it always matches its minimum.",
                     "hint": "Remove the quantified item, make the quantifier greedy, or anchor what must follow it.",
-                    "docs": "https://php-regex.com/reference/rules/#lazy-quantifier-at-the-end"
+                    "docs": "https://php-regex.com/reference/rules/lazy-quantifier-at-the-end/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/app/Thread.php#L389-L395",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/app/Thread.php#L432-L438",
             "snippet": [
                 {
-                    "number": 389,
+                    "number": 432,
                     "focus": false,
                     "runs": [
                         [
@@ -1919,7 +1919,7 @@
                     ]
                 },
                 {
-                    "number": 390,
+                    "number": 433,
                     "focus": false,
                     "runs": [
                         [
@@ -1929,7 +1929,7 @@
                     ]
                 },
                 {
-                    "number": 391,
+                    "number": 434,
                     "focus": false,
                     "runs": [
                         [
@@ -1939,7 +1939,7 @@
                     ]
                 },
                 {
-                    "number": 392,
+                    "number": 435,
                     "focus": true,
                     "runs": [
                         [
@@ -2025,7 +2025,7 @@
                     ]
                 },
                 {
-                    "number": 393,
+                    "number": 436,
                     "focus": false,
                     "runs": [
                         [
@@ -2035,7 +2035,7 @@
                     ]
                 },
                 {
-                    "number": 394,
+                    "number": 437,
                     "focus": false,
                     "runs": [
                         [
@@ -2045,7 +2045,7 @@
                     ]
                 },
                 {
-                    "number": 395,
+                    "number": 438,
                     "focus": false,
                     "runs": [
                         [
@@ -2071,28 +2071,28 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"-\" . \"....\" x n . \")\" Replayed on PCRE2 10.49: preg_match fails from length 26 (backtrack_limit 100000, JIT off). The risky part is: [^\\x01) ]+ Hotspot offsets: 20-28 Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"([.][^\\x01)\\ ]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": {
@@ -2111,7 +2111,7 @@
                 "limit": 100000
             },
             "subject": "-................................................................................................)",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/barryvdh/laravel-translation-manager/src/Manager.php#L409-L415",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/barryvdh/laravel-translation-manager/src/Manager.php#L409-L415",
             "snippet": [
                 {
                     "number": 409,
@@ -2320,7 +2320,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2331,7 +2331,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1334-L1340",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/erusev/parsedown/Parsedown.php#L1334-L1340",
             "snippet": [
                 {
                     "number": 1334,
@@ -2496,7 +2496,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2507,7 +2507,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1342-L1348",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/erusev/parsedown/Parsedown.php#L1342-L1348",
             "snippet": [
                 {
                     "number": 1342,
@@ -2680,13 +2680,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/erusev/parsedown/Parsedown.php#L1429-L1435",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/erusev/parsedown/Parsedown.php#L1429-L1435",
             "snippet": [
                 {
                     "number": 1429,
@@ -2851,27 +2851,27 @@
                     "rule": "regex.lint.charclass.suspiciousRange",
                     "message": "Suspicious ASCII range \"A-z\" includes non-letters between \"A\" and \"z\" in ASCII order.",
                     "hint": "Use separate ranges like [A-Z] and [a-z] (or combine as [A-Za-z]).",
-                    "docs": "https://php-regex.com/reference/rules/#suspicious-ascii-ranges"
+                    "docs": "https://php-regex.com/reference/rules/suspicious-ascii-ranges/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"([-\\w\\.]+[-\\w])\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L87-L93",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L87-L93",
             "snippet": [
                 {
                     "number": 87,
@@ -3180,20 +3180,20 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L222-L228",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/filp/whoops/src/Whoops/Util/TemplateHelper.php#L222-L228",
             "snippet": [
                 {
                     "number": 222,
@@ -3302,7 +3302,7 @@
         {
             "id": "f-3b9a529112",
             "file": "overrides/html2text/html2text/src/Html2Text.php",
-            "line": 462,
+            "line": 464,
             "column": 27,
             "pattern": "/<pre[^>]*>(.*)<\\/pre>/ismU",
             "source": "preg_match()",
@@ -3314,7 +3314,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3325,10 +3325,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/html2text/html2text/src/Html2Text.php#L459-L465",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/html2text/html2text/src/Html2Text.php#L461-L467",
             "snippet": [
                 {
-                    "number": 459,
+                    "number": 461,
                     "focus": false,
                     "runs": [
                         [
@@ -3338,7 +3338,7 @@
                     ]
                 },
                 {
-                    "number": 460,
+                    "number": 462,
                     "focus": false,
                     "runs": [
                         [
@@ -3348,7 +3348,7 @@
                     ]
                 },
                 {
-                    "number": 461,
+                    "number": 463,
                     "focus": false,
                     "runs": [
                         [
@@ -3358,7 +3358,7 @@
                     ]
                 },
                 {
-                    "number": 462,
+                    "number": 464,
                     "focus": true,
                     "runs": [
                         [
@@ -3436,7 +3436,7 @@
                     ]
                 },
                 {
-                    "number": 463,
+                    "number": 465,
                     "focus": false,
                     "runs": [
                         [
@@ -3446,7 +3446,7 @@
                     ]
                 },
                 {
-                    "number": 464,
+                    "number": 466,
                     "focus": false,
                     "runs": [
                         [
@@ -3456,7 +3456,7 @@
                     ]
                 },
                 {
-                    "number": 465,
+                    "number": 467,
                     "focus": false,
                     "runs": [
                         [
@@ -3470,7 +3470,7 @@
         {
             "id": "f-eb0cfc37cb",
             "file": "overrides/html2text/html2text/src/Html2Text.php",
-            "line": 481,
+            "line": 483,
             "column": 17,
             "pattern": "/<pre[^>]*>.*<\\/pre>/ismU",
             "source": "preg_replace_callback()",
@@ -3482,7 +3482,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -3493,10 +3493,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/html2text/html2text/src/Html2Text.php#L478-L484",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/html2text/html2text/src/Html2Text.php#L480-L486",
             "snippet": [
                 {
-                    "number": 478,
+                    "number": 480,
                     "focus": false,
                     "runs": [
                         [
@@ -3506,7 +3506,7 @@
                     ]
                 },
                 {
-                    "number": 479,
+                    "number": 481,
                     "focus": false,
                     "runs": [
                         [
@@ -3516,7 +3516,7 @@
                     ]
                 },
                 {
-                    "number": 480,
+                    "number": 482,
                     "focus": false,
                     "runs": [
                         [
@@ -3526,7 +3526,7 @@
                     ]
                 },
                 {
-                    "number": 481,
+                    "number": 483,
                     "focus": true,
                     "runs": [
                         [
@@ -3596,7 +3596,7 @@
                     ]
                 },
                 {
-                    "number": 482,
+                    "number": 484,
                     "focus": false,
                     "runs": [
                         [
@@ -3606,7 +3606,7 @@
                     ]
                 },
                 {
-                    "number": 483,
+                    "number": 485,
                     "focus": false,
                     "runs": [
                         [
@@ -3616,7 +3616,7 @@
                     ]
                 },
                 {
-                    "number": 484,
+                    "number": 486,
                     "focus": false,
                     "runs": [
                         [
@@ -3642,14 +3642,14 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 9 \"([\\pL]|xn\\-\\-[\\pL\\pN-]+)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"[\\pL]\" and \"xn\\-\\-[\\pL\\pN-]+\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": {
@@ -3660,7 +3660,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/laravel/framework/src/Illuminate/Validation/Concerns/ValidatesAttributes.php#L1360-L1366",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/laravel/framework/src/Illuminate/Validation/Concerns/ValidatesAttributes.php#L1360-L1366",
             "snippet": [
                 {
                     "number": 1360,
@@ -3749,7 +3749,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -3760,7 +3760,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/league/flysystem/src/Util.php#L344-L350",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/league/flysystem/src/Util.php#L344-L350",
             "snippet": [
                 {
                     "number": 344,
@@ -3917,7 +3917,7 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -3928,7 +3928,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/league/flysystem/src/Util.php#L349-L355",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/league/flysystem/src/Util.php#L349-L355",
             "snippet": [
                 {
                     "number": 349,
@@ -4081,111 +4081,111 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:(?:(?:(?:[ \\t]*(?:\\r…\" at offset 4 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" and \"(?:(?:(?:(?:(?:[ \\t]*(?:\\r\\n))…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 48 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 263 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 550 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 765 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1016 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1231 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:[\\x01-\\x08\\x0B\\x0C\\x0E-\\x19…\" and \"(?:\\[\\x00-\\x08\\x0B\\x0C\\x0E-…\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1639 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" and \"(?:(?:[ \\t]*(?:\\r\\n))?[ \\t])\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:(?:(?:[ \\t]*(?:\\r\\n))?[ \\t]…\" at offset 1854 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/swiftmailer/swiftmailer/lib/classes/Swift/Mime/Headers/AbstractHeader.php#L206-L212",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/swiftmailer/swiftmailer/lib/classes/Swift/Mime/Headers/AbstractHeader.php#L206-L212",
             "snippet": [
                 {
                     "number": 206,
@@ -4274,13 +4274,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/console/Application.php#L560-L566",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/symfony/console/Application.php#L560-L566",
             "snippet": [
                 {
                     "number": 560,
@@ -4417,13 +4417,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/console/Application.php#L618-L624",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/symfony/console/Application.php#L618-L624",
             "snippet": [
                 {
                     "number": 618,
@@ -4560,13 +4560,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()\\\\]+|\\\\.|\\((?1)\\))\" at offset 18 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/routing/Generator/UrlGenerator.php#L142-L148",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/symfony/routing/Generator/UrlGenerator.php#L142-L148",
             "snippet": [
                 {
                     "number": 142,
@@ -4771,13 +4771,13 @@
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[^()\\\\]+|\\\\.|\\((?1)\\))\" at offset 18 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/symfony/routing/Generator/UrlGenerator.php#L205-L211",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/symfony/routing/Generator/UrlGenerator.php#L205-L211",
             "snippet": [
                 {
                     "number": 205,
@@ -4982,14 +4982,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"\\\"\" . \"\\\\\\\\\" x n Replayed on PCRE2 10.49: preg_match fails from length 15 (backtrack_limit 100000, JIT off). The risky part is: .|\\\\|\" Hotspot offsets: 7-14 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Overlapping alternation branches inside a quantifier. e.g. (a|a)* or (ab|a)*. This can lead to catastrophic backtracking. Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Make alternatives mutually exclusive or order longer alternatives first. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\\\\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
@@ -5003,7 +5003,7 @@
                 "limit": 100000
             },
             "subject": "\"\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php#L295-L301",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/webklex/php-imap/src/Connection/Protocols/ImapProtocol.php#L295-L301",
             "snippet": [
                 {
                     "number": 295,
@@ -5160,7 +5160,7 @@
         {
             "id": "f-f83e9efae1",
             "file": "overrides/webklex/php-imap/src/Header.php",
-            "line": 1019,
+            "line": 1025,
             "column": 33,
             "pattern": "/([0-9]{4}\\.[0-9]{1,2}\\.[0-9]{1,2}\\-[0-9]{1,2}\\.[0-9]{1,2}.[0-9]{1,2})+$/i",
             "source": "preg_match()",
@@ -5172,21 +5172,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0000.0.0-0.0000\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 196 (backtrack_limit 100000, JIT off). The risky part is: [0-9]{1,2} Hotspot offsets: 58-68 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). A count of variable length in a loop splits a run in many ways, as nested unbounded quantifiers do. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([0-9]{4}\\.[0-9]{1,2}\\.[0-9]{1…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -5200,10 +5200,10 @@
                 "limit": 100000
             },
             "subject": "0000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.00000000.0.0-0.0000!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Header.php#L1016-L1022",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/webklex/php-imap/src/Header.php#L1022-L1028",
             "snippet": [
                 {
-                    "number": 1016,
+                    "number": 1022,
                     "focus": false,
                     "runs": [
                         [
@@ -5213,7 +5213,7 @@
                     ]
                 },
                 {
-                    "number": 1017,
+                    "number": 1023,
                     "focus": false,
                     "runs": [
                         [
@@ -5223,7 +5223,7 @@
                     ]
                 },
                 {
-                    "number": 1018,
+                    "number": 1024,
                     "focus": false,
                     "runs": [
                         [
@@ -5233,7 +5233,7 @@
                     ]
                 },
                 {
-                    "number": 1019,
+                    "number": 1025,
                     "focus": true,
                     "runs": [
                         [
@@ -5443,7 +5443,7 @@
                     ]
                 },
                 {
-                    "number": 1020,
+                    "number": 1026,
                     "focus": false,
                     "runs": [
                         [
@@ -5453,7 +5453,7 @@
                     ]
                 },
                 {
-                    "number": 1021,
+                    "number": 1027,
                     "focus": false,
                     "runs": [
                         [
@@ -5463,7 +5463,7 @@
                     ]
                 },
                 {
-                    "number": 1022,
+                    "number": 1028,
                     "focus": false,
                     "runs": [
                         [
@@ -5477,7 +5477,7 @@
         {
             "id": "f-dd04d4e877",
             "file": "overrides/webklex/php-imap/src/Header.php",
-            "line": 1061,
+            "line": 1067,
             "column": 33,
             "pattern": "/([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,2}\\ [A-Z]{2,3}\\ [0-9]{4}\\ [0-9]{1,2}\\:[0-9]{1,2}\\:[0-9]{1,2}.*)+$/i",
             "source": "preg_match()",
@@ -5489,35 +5489,35 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"AA, 0 AA 0000 0:0:00\" x n . \"\\n!\" Replayed on PCRE2 10.49: preg_match fails from length 162 (backtrack_limit 100000, JIT off). The risky part is: .* Hotspot offsets: 90-92 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Adjacent quantified tokens with overlapping character sets can cause ambiguous backtracking (e.g., a+a+ or a*a*). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Merge repetitions, add a delimiter, or make one quantifier possessive to remove ambiguity. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Suggested (verify behavior): use possessive quantifiers .*+ instead of .* to prevent backtracking. Suggested (verify behavior): replace * with *+ in groups to prevent backtracking or wrap in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"([A-Z]{2,3}[\\,|\\ \\,]\\ [0-9]{1,…\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
@@ -5531,10 +5531,10 @@
                 "limit": 100000
             },
             "subject": "AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00AA, 0 AA 0000 0:0:00\n!",
-            "permalink": "https://github.com/freescout-help-desk/freescout/blob/1ffabc9cefe7a04ce302ccb7435a1eabbeae9f39/overrides/webklex/php-imap/src/Header.php#L1058-L1064",
+            "permalink": "https://github.com/freescout-help-desk/freescout/blob/aef194057f860e882e5699f043612e1bcedfa71e/overrides/webklex/php-imap/src/Header.php#L1064-L1070",
             "snippet": [
                 {
-                    "number": 1058,
+                    "number": 1064,
                     "focus": false,
                     "runs": [
                         [
@@ -5544,7 +5544,7 @@
                     ]
                 },
                 {
-                    "number": 1059,
+                    "number": 1065,
                     "focus": false,
                     "runs": [
                         [
@@ -5554,7 +5554,7 @@
                     ]
                 },
                 {
-                    "number": 1060,
+                    "number": 1066,
                     "focus": false,
                     "runs": [
                         [
@@ -5564,7 +5564,7 @@
                     ]
                 },
                 {
-                    "number": 1061,
+                    "number": 1067,
                     "focus": true,
                     "runs": [
                         [
@@ -5826,7 +5826,7 @@
                     ]
                 },
                 {
-                    "number": 1062,
+                    "number": 1068,
                     "focus": false,
                     "runs": [
                         [
@@ -5836,7 +5836,7 @@
                     ]
                 },
                 {
-                    "number": 1063,
+                    "number": 1069,
                     "focus": false,
                     "runs": [
                         [
@@ -5846,7 +5846,7 @@
                     ]
                 },
                 {
-                    "number": 1064,
+                    "number": 1070,
                     "focus": false,
                     "runs": [
                         [

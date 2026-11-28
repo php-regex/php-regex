@@ -1,6 +1,6 @@
 {
     "repo": "smalot/pdfparser",
-    "sha": "a71c6dd38e60a995fdb4d36e4433b8b3557c65dc",
+    "sha": "7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38",
     "target": {
         "php": "7.3",
         "pcre": "10.32",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementArray.php#L109-L115",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementArray.php#L109-L115",
             "snippet": [
                 {
                     "number": 109,
@@ -181,7 +181,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -192,7 +192,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementBoolean.php#L63-L69",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementBoolean.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -345,7 +345,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -356,7 +356,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementHexa.php#L44-L50",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementHexa.php#L44-L50",
             "snippet": [
                 {
                     "number": 44,
@@ -537,7 +537,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -548,7 +548,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementName.php#L56-L62",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementName.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,
@@ -717,7 +717,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -728,7 +728,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementNull.php#L60-L66",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementNull.php#L60-L66",
             "snippet": [
                 {
                     "number": 60,
@@ -865,7 +865,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -876,7 +876,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementNumeric.php#L50-L56",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementNumeric.php#L50-L56",
             "snippet": [
                 {
                     "number": 50,
@@ -1049,7 +1049,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1060,7 +1060,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementString.php#L63-L69",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementString.php#L63-L69",
             "snippet": [
                 {
                     "number": 63,
@@ -1209,13 +1209,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementStruct.php#L46-L52",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementStruct.php#L46-L52",
             "snippet": [
                 {
                     "number": 46,
@@ -1368,7 +1368,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1379,7 +1379,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Element/ElementXRef.php#L85-L91",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Element/ElementXRef.php#L85-L91",
             "snippet": [
                 {
                     "number": 85,
@@ -1588,7 +1588,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1599,7 +1599,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Encoding.php#L144-L150",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Encoding.php#L144-L150",
             "snippet": [
                 {
                     "number": 144,
@@ -1732,7 +1732,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1743,7 +1743,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L213-L219",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L213-L219",
             "snippet": [
                 {
                     "number": 213,
@@ -1988,7 +1988,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1999,7 +1999,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L229-L235",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L229-L235",
             "snippet": [
                 {
                     "number": 229,
@@ -2244,7 +2244,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2255,7 +2255,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L261-L267",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L261-L267",
             "snippet": [
                 {
                     "number": 261,
@@ -2604,7 +2604,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2615,7 +2615,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L303-L309",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L303-L309",
             "snippet": [
                 {
                     "number": 303,
@@ -2788,7 +2788,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2799,7 +2799,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L395-L401",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L395-L401",
             "snippet": [
                 {
                     "number": 395,
@@ -2964,7 +2964,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2975,7 +2975,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L398-L404",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L398-L404",
             "snippet": [
                 {
                     "number": 398,
@@ -3140,7 +3140,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3151,7 +3151,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/Font.php#L407-L413",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/Font.php#L407-L413",
             "snippet": [
                 {
                     "number": 407,
@@ -3268,21 +3268,21 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"[\" . \"()--\" x n . \"!]\" Replayed on PCRE2 10.49: preg_match fails from length 39 (backtrack_limit 100000, JIT off). The risky part is: .*? Hotspot offsets: 6-9 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Quantifier repeats a subpattern that can match empty. This creates ambiguous backtracking paths and can be catastrophic. Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Ensure the repeated subpattern consumes at least one character, or wrap it in (?>...) / use possessive quantifiers. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.dotstar.nested",
                     "message": "An unbounded quantifier wraps a dot-star, which can cause severe backtracking.",
                     "hint": "Refactor with atomic groups or a more specific character class — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#dot-star-in-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/dot-star-in-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 2 \"(\\(.*?\\)|[0-9\\.\\-\\s]*)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3296,7 +3296,7 @@
                 "limit": 100000
             },
             "subject": "[()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--()--!]",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L161-L167",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L161-L167",
             "snippet": [
                 {
                     "number": 161,
@@ -3481,13 +3481,13 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L173-L179",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L173-L179",
             "snippet": [
                 {
                     "number": 173,
@@ -3620,7 +3620,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3631,7 +3631,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L200-L206",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L200-L206",
             "snippet": [
                 {
                     "number": 200,
@@ -3764,7 +3764,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3775,7 +3775,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L238-L244",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L238-L244",
             "snippet": [
                 {
                     "number": 238,
@@ -3852,7 +3852,7 @@
         {
             "id": "f-33c919b581",
             "file": "src/Smalot/PdfParser/PDFObject.php",
-            "line": 822,
+            "line": 911,
             "column": 44,
             "pattern": "/\\s+/s",
             "source": "preg_split()",
@@ -3864,7 +3864,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -3875,10 +3875,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L819-L825",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L908-L914",
             "snippet": [
                 {
-                    "number": 819,
+                    "number": 908,
                     "focus": false,
                     "runs": [
                         [
@@ -3888,7 +3888,7 @@
                     ]
                 },
                 {
-                    "number": 820,
+                    "number": 909,
                     "focus": false,
                     "runs": [
                         [
@@ -3898,7 +3898,7 @@
                     ]
                 },
                 {
-                    "number": 821,
+                    "number": 910,
                     "focus": false,
                     "runs": [
                         [
@@ -3908,7 +3908,7 @@
                     ]
                 },
                 {
-                    "number": 822,
+                    "number": 911,
                     "focus": true,
                     "runs": [
                         [
@@ -3950,7 +3950,7 @@
                     ]
                 },
                 {
-                    "number": 823,
+                    "number": 912,
                     "focus": false,
                     "runs": [
                         [
@@ -3960,7 +3960,7 @@
                     ]
                 },
                 {
-                    "number": 824,
+                    "number": 913,
                     "focus": false,
                     "runs": [
                         [
@@ -3970,7 +3970,7 @@
                     ]
                 },
                 {
-                    "number": 825,
+                    "number": 914,
                     "focus": false,
                     "runs": [
                         [
@@ -3984,7 +3984,7 @@
         {
             "id": "f-751a8b0794",
             "file": "src/Smalot/PdfParser/PDFObject.php",
-            "line": 835,
+            "line": 924,
             "column": 44,
             "pattern": "/\\s/s",
             "source": "preg_split()",
@@ -3996,7 +3996,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4007,10 +4007,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L832-L838",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L921-L927",
             "snippet": [
                 {
-                    "number": 832,
+                    "number": 921,
                     "focus": false,
                     "runs": [
                         [
@@ -4020,7 +4020,7 @@
                     ]
                 },
                 {
-                    "number": 833,
+                    "number": 922,
                     "focus": false,
                     "runs": [
                         [
@@ -4030,7 +4030,7 @@
                     ]
                 },
                 {
-                    "number": 834,
+                    "number": 923,
                     "focus": false,
                     "runs": [
                         [
@@ -4040,7 +4040,7 @@
                     ]
                 },
                 {
-                    "number": 835,
+                    "number": 924,
                     "focus": true,
                     "runs": [
                         [
@@ -4078,7 +4078,7 @@
                     ]
                 },
                 {
-                    "number": 836,
+                    "number": 925,
                     "focus": false,
                     "runs": [
                         [
@@ -4088,7 +4088,7 @@
                     ]
                 },
                 {
-                    "number": 837,
+                    "number": 926,
                     "focus": false,
                     "runs": [
                         [
@@ -4098,7 +4098,7 @@
                     ]
                 },
                 {
-                    "number": 838,
+                    "number": 927,
                     "focus": false,
                     "runs": [
                         [
@@ -4112,7 +4112,7 @@
         {
             "id": "f-33c919b581-2",
             "file": "src/Smalot/PdfParser/PDFObject.php",
-            "line": 1050,
+            "line": 1146,
             "column": 44,
             "pattern": "/\\s+/s",
             "source": "preg_split()",
@@ -4124,7 +4124,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4135,10 +4135,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1047-L1053",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L1143-L1149",
             "snippet": [
                 {
-                    "number": 1047,
+                    "number": 1143,
                     "focus": false,
                     "runs": [
                         [
@@ -4148,7 +4148,7 @@
                     ]
                 },
                 {
-                    "number": 1048,
+                    "number": 1144,
                     "focus": false,
                     "runs": [
                         [
@@ -4158,7 +4158,7 @@
                     ]
                 },
                 {
-                    "number": 1049,
+                    "number": 1145,
                     "focus": false,
                     "runs": [
                         [
@@ -4168,7 +4168,7 @@
                     ]
                 },
                 {
-                    "number": 1050,
+                    "number": 1146,
                     "focus": true,
                     "runs": [
                         [
@@ -4210,7 +4210,7 @@
                     ]
                 },
                 {
-                    "number": 1051,
+                    "number": 1147,
                     "focus": false,
                     "runs": [
                         [
@@ -4220,7 +4220,7 @@
                     ]
                 },
                 {
-                    "number": 1052,
+                    "number": 1148,
                     "focus": false,
                     "runs": [
                         [
@@ -4230,7 +4230,7 @@
                     ]
                 },
                 {
-                    "number": 1053,
+                    "number": 1149,
                     "focus": false,
                     "runs": [
                         [
@@ -4244,7 +4244,7 @@
         {
             "id": "f-751a8b0794-2",
             "file": "src/Smalot/PdfParser/PDFObject.php",
-            "line": 1065,
+            "line": 1161,
             "column": 44,
             "pattern": "/\\s/s",
             "source": "preg_split()",
@@ -4256,7 +4256,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4267,10 +4267,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1062-L1068",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L1158-L1164",
             "snippet": [
                 {
-                    "number": 1062,
+                    "number": 1158,
                     "focus": false,
                     "runs": [
                         [
@@ -4280,7 +4280,7 @@
                     ]
                 },
                 {
-                    "number": 1063,
+                    "number": 1159,
                     "focus": false,
                     "runs": [
                         [
@@ -4290,7 +4290,7 @@
                     ]
                 },
                 {
-                    "number": 1064,
+                    "number": 1160,
                     "focus": false,
                     "runs": [
                         [
@@ -4300,7 +4300,7 @@
                     ]
                 },
                 {
-                    "number": 1065,
+                    "number": 1161,
                     "focus": true,
                     "runs": [
                         [
@@ -4338,7 +4338,7 @@
                     ]
                 },
                 {
-                    "number": 1066,
+                    "number": 1162,
                     "focus": false,
                     "runs": [
                         [
@@ -4348,7 +4348,7 @@
                     ]
                 },
                 {
-                    "number": 1067,
+                    "number": 1163,
                     "focus": false,
                     "runs": [
                         [
@@ -4358,7 +4358,7 @@
                     ]
                 },
                 {
-                    "number": 1068,
+                    "number": 1164,
                     "focus": false,
                     "runs": [
                         [
@@ -4372,7 +4372,7 @@
         {
             "id": "f-33c919b581-3",
             "file": "src/Smalot/PdfParser/PDFObject.php",
-            "line": 1090,
+            "line": 1186,
             "column": 44,
             "pattern": "/\\s+/s",
             "source": "preg_split()",
@@ -4384,7 +4384,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4395,10 +4395,10 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/PDFObject.php#L1087-L1093",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/PDFObject.php#L1183-L1189",
             "snippet": [
                 {
-                    "number": 1087,
+                    "number": 1183,
                     "focus": false,
                     "runs": [
                         [
@@ -4408,7 +4408,7 @@
                     ]
                 },
                 {
-                    "number": 1088,
+                    "number": 1184,
                     "focus": false,
                     "runs": [
                         [
@@ -4418,7 +4418,7 @@
                     ]
                 },
                 {
-                    "number": 1089,
+                    "number": 1185,
                     "focus": false,
                     "runs": [
                         [
@@ -4428,7 +4428,7 @@
                     ]
                 },
                 {
-                    "number": 1090,
+                    "number": 1186,
                     "focus": true,
                     "runs": [
                         [
@@ -4470,7 +4470,7 @@
                     ]
                 },
                 {
-                    "number": 1091,
+                    "number": 1187,
                     "focus": false,
                     "runs": [
                         [
@@ -4480,7 +4480,7 @@
                     ]
                 },
                 {
-                    "number": 1092,
+                    "number": 1188,
                     "focus": false,
                     "runs": [
                         [
@@ -4490,7 +4490,7 @@
                     ]
                 },
                 {
-                    "number": 1093,
+                    "number": 1189,
                     "focus": false,
                     "runs": [
                         [
@@ -4516,20 +4516,20 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (covered by range '!'-'u'), 't' (covered by range '!'-'u')",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.duplicateChars",
                     "message": "Character class contains duplicate elements that do not add new matches.",
                     "hint": "Remove the redundant character class element.",
-                    "docs": "https://php-regex.com/reference/rules/#duplicate-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/duplicate-character-class-elements/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/FilterHelper.php#L166-L172",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/RawData/FilterHelper.php#L166-L172",
             "snippet": [
                 {
                     "number": 166,
@@ -4658,14 +4658,14 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4676,7 +4676,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L835-L841",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/RawData/RawDataParser.php#L835-L841",
             "snippet": [
                 {
                     "number": 835,
@@ -4837,7 +4837,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -4848,7 +4848,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L843-L849",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/RawData/RawDataParser.php#L843-L849",
             "snippet": [
                 {
                     "number": 843,
@@ -4981,20 +4981,20 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the second quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/smalot/pdfparser/blob/a71c6dd38e60a995fdb4d36e4433b8b3557c65dc/src/Smalot/PdfParser/RawData/RawDataParser.php#L956-L962",
+            "permalink": "https://github.com/smalot/pdfparser/blob/7bc5b066b32d1d749a64f9bdfa8bbc60c6990a38/src/Smalot/PdfParser/RawData/RawDataParser.php#L956-L962",
             "snippet": [
                 {
                     "number": 956,

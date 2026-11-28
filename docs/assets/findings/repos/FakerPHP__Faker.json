@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -186,7 +186,7 @@
                     "rule": "regex.lint.compat.meaningChanges",
                     "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
                     "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
-                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                    "docs": "https://php-regex.com/reference/rules/meaning-that-changes-across-php-versions/"
                 }
             ],
             "rewrite": null,
@@ -313,7 +313,7 @@
                     "rule": "regex.lint.compat.meaningChanges",
                     "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
                     "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
-                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                    "docs": "https://php-regex.com/reference/rules/meaning-that-changes-across-php-versions/"
                 }
             ],
             "rewrite": null,
@@ -440,7 +440,7 @@
                     "rule": "regex.lint.compat.meaningChanges",
                     "message": "From PHP 8.2 (PCRE2 10.40) \\p{Arabic} holds the characters whose script extensions name the script, not only those of the script, as U+30FB for \\p{Katakana}, which PHP 8.2 matches and PHP 8.1 does not.",
                     "hint": "No spelling reads alike on both: \"\\p{sc:Arabic}\" keeps the script alone from PHP 8.2 on, and PHP 8.1 refuses it.",
-                    "docs": "https://php-regex.com/reference/rules/#meaning-that-changes-across-php-versions"
+                    "docs": "https://php-regex.com/reference/rules/meaning-that-changes-across-php-versions/"
                 }
             ],
             "rewrite": null,
@@ -567,42 +567,42 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {
@@ -702,14 +702,14 @@
                     "rule": "regex.lint.charclass.redundant",
                     "message": "Redundant elements detected in character class.",
                     "hint": "Redundant elements: ',' (duplicate)",
-                    "docs": "https://php-regex.com/reference/rules/#redundant-character-class-elements"
+                    "docs": "https://php-regex.com/reference/rules/redundant-character-class-elements/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 }
             ],
             "rewrite": {

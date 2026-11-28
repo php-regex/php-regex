@@ -1,6 +1,6 @@
 {
     "repo": "octobercms/october",
-    "sha": "84ddc71413b54522d302ccb62b91206403078e5a",
+    "sha": "acb18c037ef6c1470e6d2132b9a4d3695a7be6b5",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/classes/CodeParser.php#L100-L106",
+            "permalink": "https://github.com/octobercms/october/blob/acb18c037ef6c1470e6d2132b9a4d3695a7be6b5/modules/cms/classes/CodeParser.php#L100-L106",
             "snippet": [
                 {
                     "number": 100,
@@ -290,13 +290,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/classes/PageManager.php#L197-L203",
+            "permalink": "https://github.com/octobercms/october/blob/acb18c037ef6c1470e6d2132b9a4d3695a7be6b5/modules/cms/classes/PageManager.php#L197-L203",
             "snippet": [
                 {
                     "number": 197,
@@ -489,14 +489,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": {
@@ -507,7 +507,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/twig/DebugExtension.php#L516-L522",
+            "permalink": "https://github.com/octobercms/october/blob/acb18c037ef6c1470e6d2132b9a4d3695a7be6b5/modules/cms/twig/DebugExtension.php#L516-L522",
             "snippet": [
                 {
                     "number": 516,
@@ -672,14 +672,14 @@
                     "rule": "regex.lint.quantifier.useless",
                     "message": "Quantifier is redundant; it matches exactly once.",
                     "hint": "Remove the {1} quantifier; it does not change the match.",
-                    "docs": "https://php-regex.com/reference/rules/#useless-quantifier"
+                    "docs": "https://php-regex.com/reference/rules/useless-quantifier/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.charclass.literalMetachar",
                     "message": "\"+\" is a literal character inside a character class, not a quantifier.",
                     "hint": "Inside [...], \"+\" matches a literal \"+\". If you meant to quantify a shorthand like \\w, use \\w+ outside the class.",
-                    "docs": "https://php-regex.com/reference/rules/#literal-metacharacter-in-a-character-class"
+                    "docs": "https://php-regex.com/reference/rules/literal-metacharacter-in-a-character-class/"
                 }
             ],
             "rewrite": {
@@ -690,7 +690,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/cms/twig/DebugExtension.php#L520-L526",
+            "permalink": "https://github.com/octobercms/october/blob/acb18c037ef6c1470e6d2132b9a4d3695a7be6b5/modules/cms/twig/DebugExtension.php#L520-L526",
             "snippet": [
                 {
                     "number": 520,
@@ -859,13 +859,13 @@
                     "rule": "regex.lint.quantifier.concatenation",
                     "message": "Concatenated quantifiers can be optimized when one character set is a subset of the other.",
                     "hint": "Consider tightening the first quantifier to its minimum.",
-                    "docs": "https://php-regex.com/reference/rules/#optimal-quantifier-concatenation"
+                    "docs": "https://php-regex.com/reference/rules/optimal-quantifier-concatenation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/octobercms/october/blob/84ddc71413b54522d302ccb62b91206403078e5a/modules/media/helpers/MediaView.php#L56-L62",
+            "permalink": "https://github.com/octobercms/october/blob/acb18c037ef6c1470e6d2132b9a4d3695a7be6b5/modules/media/helpers/MediaView.php#L56-L62",
             "snippet": [
                 {
                     "number": 56,

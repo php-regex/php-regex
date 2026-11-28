@@ -1,6 +1,6 @@
 {
     "repo": "doctrine/dbal",
-    "sha": "66b4dd24fa740e3ce0782498b97e9cee84b10acf",
+    "sha": "733584dee0675bb8f436205eb48f05c17308f839",
     "target": {
         "php": "8.2",
         "pcre": "10.40",
@@ -22,7 +22,7 @@
                     "rule": "regex.lint.flag.useless.m",
                     "message": "Flag 'm' is useless: the pattern contains no ^ or $ anchor.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-m-multiline"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-m-multiline/"
                 }
             ],
             "rewrite": {
@@ -33,7 +33,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/66b4dd24fa740e3ce0782498b97e9cee84b10acf/src/Platforms/SQLServerPlatform.php#L1305-L1311",
+            "permalink": "https://github.com/doctrine/dbal/blob/733584dee0675bb8f436205eb48f05c17308f839/src/Platforms/SQLServerPlatform.php#L1305-L1311",
             "snippet": [
                 {
                     "number": 1305,
@@ -178,7 +178,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -189,7 +189,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/66b4dd24fa740e3ce0782498b97e9cee84b10acf/src/Platforms/SQLite/SQLiteMetadataProvider.php#L632-L638",
+            "permalink": "https://github.com/doctrine/dbal/blob/733584dee0675bb8f436205eb48f05c17308f839/src/Platforms/SQLite/SQLiteMetadataProvider.php#L632-L638",
             "snippet": [
                 {
                     "number": 632,
@@ -278,7 +278,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -289,7 +289,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/66b4dd24fa740e3ce0782498b97e9cee84b10acf/src/Platforms/SQLite/SQLiteMetadataProvider.php#L780-L786",
+            "permalink": "https://github.com/doctrine/dbal/blob/733584dee0675bb8f436205eb48f05c17308f839/src/Platforms/SQLite/SQLiteMetadataProvider.php#L780-L786",
             "snippet": [
                 {
                     "number": 780,
@@ -426,7 +426,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -437,7 +437,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/66b4dd24fa740e3ce0782498b97e9cee84b10acf/src/Schema/SQLiteSchemaManager.php#L258-L264",
+            "permalink": "https://github.com/doctrine/dbal/blob/733584dee0675bb8f436205eb48f05c17308f839/src/Schema/SQLiteSchemaManager.php#L258-L264",
             "snippet": [
                 {
                     "number": 258,
@@ -574,7 +574,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -585,7 +585,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/doctrine/dbal/blob/66b4dd24fa740e3ce0782498b97e9cee84b10acf/src/Schema/SQLiteSchemaManager.php#L334-L340",
+            "permalink": "https://github.com/doctrine/dbal/blob/733584dee0675bb8f436205eb48f05c17308f839/src/Schema/SQLiteSchemaManager.php#L334-L340",
             "snippet": [
                 {
                     "number": 334,

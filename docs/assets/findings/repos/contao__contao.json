@@ -1,6 +1,6 @@
 {
     "repo": "contao/contao",
-    "sha": "bc7ef229523cdf5db0a8d3f728407f00cf1c95cd",
+    "sha": "6350f36e0f8b06453285d165be117d78a30d7a12",
     "target": {
         "php": "8.4",
         "pcre": "10.49",
@@ -22,13 +22,13 @@
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\s\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/dca/tl_content.php#L1090-L1096",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/dca/tl_content.php#L1090-L1096",
             "snippet": [
                 {
                     "number": 1090,
@@ -165,13 +165,13 @@
                     "rule": "regex.lint.alternation.empty",
                     "message": "Alternation contains an empty alternative.",
                     "hint": "Use a quantifier (e.g., \"?\") if the empty string should be allowed.",
-                    "docs": "https://php-regex.com/reference/rules/#empty-alternatives"
+                    "docs": "https://php-regex.com/reference/rules/empty-alternatives/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/File.php#L896-L902",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/File.php#L896-L902",
             "snippet": [
                 {
                     "number": 896,
@@ -400,13 +400,13 @@
                     "rule": "regex.lint.anchor.alternationPrecedence",
                     "message": "An anchor holds for its own alternative only: \"\\s+([a-z][a-z0-9_:-]*)(?:\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\\s>]*))?\" matches anywhere in the subject.",
                     "hint": "If the anchors are meant for every alternative, group them: \"(?:\\s+([a-z][a-z0-9_:-]*)(?:\\s*=\\s*(\"[^\"]*\"|'[^']*'|[^\\s>]*))?|/)$\".",
-                    "docs": "https://php-regex.com/reference/rules/#anchor-precedence-in-alternation"
+                    "docs": "https://php-regex.com/reference/rules/anchor-precedence-in-alternation/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L822-L828",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L822-L828",
             "snippet": [
                 {
                     "number": 822,
@@ -699,13 +699,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L915-L921",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L915-L921",
             "snippet": [
                 {
                     "number": 915,
@@ -870,7 +870,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -881,7 +881,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L930-L936",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L930-L936",
             "snippet": [
                 {
                     "number": 930,
@@ -1114,7 +1114,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1125,7 +1125,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L931-L937",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L931-L937",
             "snippet": [
                 {
                     "number": 931,
@@ -1334,7 +1334,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1345,7 +1345,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L932-L938",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L932-L938",
             "snippet": [
                 {
                     "number": 932,
@@ -1542,7 +1542,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1553,7 +1553,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L933-L939",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L933-L939",
             "snippet": [
                 {
                     "number": 933,
@@ -1738,7 +1738,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1749,7 +1749,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L934-L940",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L934-L940",
             "snippet": [
                 {
                     "number": 934,
@@ -1934,7 +1934,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -1945,7 +1945,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L935-L941",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L935-L941",
             "snippet": [
                 {
                     "number": 935,
@@ -2118,7 +2118,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2129,7 +2129,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L936-L942",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L936-L942",
             "snippet": [
                 {
                     "number": 936,
@@ -2338,7 +2338,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2349,7 +2349,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L937-L943",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L937-L943",
             "snippet": [
                 {
                     "number": 937,
@@ -2522,7 +2522,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2533,7 +2533,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L938-L944",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L938-L944",
             "snippet": [
                 {
                     "number": 938,
@@ -2718,7 +2718,7 @@
                     "rule": "regex.lint.flag.useless.s",
                     "message": "Flag 's' is useless: the pattern contains no unescaped dot outside a character class.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-s-dotall"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-s-dotall/"
                 }
             ],
             "rewrite": {
@@ -2729,7 +2729,7 @@
             },
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Input.php#L939-L945",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Input.php#L939-L945",
             "snippet": [
                 {
                     "number": 939,
@@ -2914,13 +2914,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/InsertTags.php#L425-L431",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/InsertTags.php#L425-L431",
             "snippet": [
                 {
                     "number": 425,
@@ -3009,13 +3009,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/StringUtil.php#L211-L217",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/StringUtil.php#L211-L217",
             "snippet": [
                 {
                     "number": 211,
@@ -3180,14 +3180,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"0\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 16 (backtrack_limit 100000, JIT off). The risky part is: \\d+ Hotspot offsets: 7-10 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in capturing group 1 \"(\\d+[ +()\\/-]*)\" can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3201,7 +3201,7 @@
                 "limit": 100000
             },
             "subject": "000000000000000000000000000000000000000000000000000000000000!",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/contao/library/Contao/Validator.php#L210-L216",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/contao/library/Contao/Validator.php#L210-L216",
             "snippet": [
                 {
                     "number": 210,
@@ -3370,14 +3370,14 @@
                     "rule": "regex.lint.redos",
                     "message": "Exponential backtracking (proven). Severity: CRITICAL, confidence: HIGH.",
                     "hint": "Attack: \"AA\" x n . \"!\" Replayed on PCRE2 10.49: preg_match fails from length 17 (backtrack_limit 100000, JIT off). The risky part is: [a-z0-9_\\x80-\\xff]* Hotspot offsets: 19-38 Unbounded quantifier detected. May cause backtracking on non-matching input. Consider making it possessive (*+) or using atomic groups (?>...). Nested unbounded quantifiers detected. This allows exponential backtracking. Consider using atomic groups (?>...) or possessive quantifiers (*+, ++). Suggested (verify behavior): Consider using possessive quantifiers or atomic groups to limit backtracking. Suggested (verify behavior): Replace inner quantifiers with possessive variants or wrap them in (?>...). Suggested (verify behavior): replace nested quantifiers like (a+)+ with atomic groups (?>a+) or possessive quantifiers a++. Test with adversarial inputs like repeated strings followed by a non-matching character.",
-                    "docs": "https://php-regex.com/reference/rules/#catastrophic-backtracking"
+                    "docs": "https://php-regex.com/reference/rules/catastrophic-backtracking/"
                 },
                 {
                     "level": "warn",
                     "rule": "regex.lint.quantifier.nested",
                     "message": "Nested quantifiers in \"(?:[a-z_\\x80-\\xff][a-z0-9_\\x80…\" at offset 1 can cause catastrophic backtracking.",
                     "hint": "Consider atomic groups (?>...) or possessive quantifiers — verify the rewrite still matches everything you need.",
-                    "docs": "https://php-regex.com/reference/rules/#nested-quantifiers-redos-risk"
+                    "docs": "https://php-regex.com/reference/rules/nested-quantifiers-redos-risk/"
                 }
             ],
             "rewrite": null,
@@ -3391,7 +3391,7 @@
                 "limit": 100000
             },
             "subject": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA!",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/src/Cache/CacheTagManager.php#L332-L338",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/src/Cache/CacheTagManager.php#L332-L338",
             "snippet": [
                 {
                     "number": 332,
@@ -3616,13 +3616,13 @@
                     "rule": "regex.lint.overlap.charset",
                     "message": "Alternation branches \".\" and \"\\s\" have overlapping character sets, which may cause unnecessary backtracking.",
                     "hint": "Consider using atomic groups (?>...) to prevent backtracking. Do not reorder overlapping alternatives as it changes match semantics.",
-                    "docs": "https://php-regex.com/reference/rules/#overlapping-character-sets"
+                    "docs": "https://php-regex.com/reference/rules/overlapping-character-sets/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/src/EventListener/DataContainer/ContentElementViewListener.php#L94-L100",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/src/EventListener/DataContainer/ContentElementViewListener.php#L94-L100",
             "snippet": [
                 {
                     "number": 94,
@@ -3759,13 +3759,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/src/String/HtmlAttributes.php#L606-L612",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/src/String/HtmlAttributes.php#L606-L612",
             "snippet": [
                 {
                     "number": 606,
@@ -3854,13 +3854,13 @@
                     "rule": "regex.lint.flag.useless.i",
                     "message": "Flag 'i' is useless: the pattern contains no case-sensitive characters.",
                     "hint": null,
-                    "docs": "https://php-regex.com/reference/rules/#useless-flag-i-caseless"
+                    "docs": "https://php-regex.com/reference/rules/useless-flag-i-caseless/"
                 }
             ],
             "rewrite": null,
             "witness": null,
             "subject": "",
-            "permalink": "https://github.com/contao/contao/blob/bc7ef229523cdf5db0a8d3f728407f00cf1c95cd/core-bundle/src/String/HtmlAttributes.php#L667-L673",
+            "permalink": "https://github.com/contao/contao/blob/6350f36e0f8b06453285d165be117d78a30d7a12/core-bundle/src/String/HtmlAttributes.php#L667-L673",
             "snippet": [
                 {
                     "number": 667,
